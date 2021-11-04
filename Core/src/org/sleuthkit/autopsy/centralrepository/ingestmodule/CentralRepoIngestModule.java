@@ -87,6 +87,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private Blackboard blackboard;
     private final boolean createCorrelationProperties;
     private final boolean flagUniqueArtifacts;
+    private IngestJobContext context;
 
     /**
      * Instantiate the Central Repository ingest module.
@@ -229,6 +230,8 @@ final class CentralRepoIngestModule implements FileIngestModule {
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
+        
         IngestEventsListener.incrementCorrelationEngineModuleCount();
 
         /*
@@ -256,7 +259,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         }
         if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagUniqueArtifacts()) {
             IngestEventsListener.setFlagUniqueArtifacts(flagUniqueArtifacts);
-        }        
+        }
 
         if (CentralRepository.isEnabled() == false) {
             /*
@@ -360,12 +363,12 @@ final class CentralRepoIngestModule implements FileIngestModule {
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_PREVIOUSLY_NOTABLE, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, Score.SCORE_NOTABLE, 
+                        BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, Score.SCORE_NOTABLE,
                         null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), justification, attributes)
                         .getAnalysisResult();
                 try {
                     // index the artifact for keyword search
-                    blackboard.postArtifact(tifArtifact, MODULE_NAME);
+                    blackboard.postArtifact(tifArtifact, MODULE_NAME, context.getJobId());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
                 }

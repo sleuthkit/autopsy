@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public final class IngestServices {
 
-    private static Logger logger = Logger.getLogger(IngestServices.class.getName());
+    private final static Logger logger = Logger.getLogger(IngestServices.class.getName());
     private static IngestServices instance = null;
 
     /**
@@ -115,7 +115,7 @@ public final class IngestServices {
     public void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         try {
             Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
-            blackboard.postArtifacts(moduleDataEvent.getArtifacts(), moduleDataEvent.getModuleName());
+            blackboard.postArtifacts(moduleDataEvent.getArtifacts(), moduleDataEvent.getModuleName(), null);
         } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Failed to post artifacts", ex);
         }

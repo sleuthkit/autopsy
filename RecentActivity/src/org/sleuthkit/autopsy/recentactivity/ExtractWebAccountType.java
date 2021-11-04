@@ -43,9 +43,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ExtractWebAccountType extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractWebAccountType.class.getName());
+    private final IngestJobContext context;
 
-    ExtractWebAccountType() {
-        super(NbBundle.getMessage(ExtractWebAccountType.class, "ExtractWebAccountType.moduleName.text"));
+    ExtractWebAccountType(IngestJobContext context) {
+        super(NbBundle.getMessage(ExtractWebAccountType.class, "ExtractWebAccountType.moduleName.text"), context);
+        this.context = context;
     }
 
     private static final List<BlackboardArtifact.Type> QUERY_ARTIFACTS = Arrays.asList(
@@ -53,7 +55,7 @@ class ExtractWebAccountType extends Extract {
             new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT)
     );
 
-    private void extractDomainRoles(Content dataSource, IngestJobContext context) {
+    private void extractDomainRoles(Content dataSource) {
         try {
             // Get web history blackboard artifacts
             Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getBlackboard().getArtifacts(
@@ -84,7 +86,7 @@ class ExtractWebAccountType extends Extract {
     /**
      * Extract and store any role found in the given artifact.
      *
-     * @param artifact The original artifact
+     * @param artifact      The original artifact
      * @param roleProcessor Object to collect and process domain roles.
      *
      * @throws TskCoreException
@@ -109,21 +111,21 @@ class ExtractWebAccountType extends Extract {
         roleFound = findPhpBbRole(url, domain, artifact, roleProcessor) || roleFound;
         roleFound = findJoomlaRole(url, domain, artifact, roleProcessor) || roleFound;
         roleFound = findWordPressRole(url, domain, artifact, roleProcessor) || roleFound;
-        
+
         // if no other role for this url was found and it is a TSK_SERVICE_ACCOUNT, add a general user role.
         if (!roleFound && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT.getTypeID()) {
             roleProcessor.addRole(domain, domain, Role.USER, url, artifact);
         }
     }
-    
-    
+
     /**
      * Extract myBB role.
      *
-     * @param url The full URL.
-     * @param domain The domain.
-     * @param artifact The original artifact.
+     * @param url           The full URL.
+     * @param domain        The domain.
+     * @param artifact      The original artifact.
      * @param roleProcessor Object to collect and process domain roles.
+     *
      * @return True if a myBB role is found.
      */
     private boolean findMyBbRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
@@ -146,10 +148,11 @@ class ExtractWebAccountType extends Extract {
     /**
      * Extract phpBB role.
      *
-     * @param url The full URL.
-     * @param domain The domain.
-     * @param artifact The original artifact.
+     * @param url           The full URL.
+     * @param domain        The domain.
+     * @param artifact      The original artifact.
      * @param roleProcessor Object to collect and process domain roles.
+     *
      * @return True if a phpBB role is found.
      */
     private boolean findPhpBbRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
@@ -172,10 +175,11 @@ class ExtractWebAccountType extends Extract {
     /**
      * Extract Joomla role.
      *
-     * @param url The full URL.
-     * @param domain The domain.
-     * @param artifact The original artifact.
+     * @param url           The full URL.
+     * @param domain        The domain.
+     * @param artifact      The original artifact.
      * @param roleProcessor Object to collect and process domain roles.
+     *
      * @return True if a Joomla role is found.
      */
     private boolean findJoomlaRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
@@ -192,10 +196,11 @@ class ExtractWebAccountType extends Extract {
     /**
      * Extract WordPress role.
      *
-     * @param url The full URL.
-     * @param domain The domain.
-     * @param artifact The original artifact.
+     * @param url           The full URL.
+     * @param domain        The domain.
+     * @param artifact      The original artifact.
      * @param roleProcessor Object to collect and process domain roles.
+     *
      * @return True if a WordPress role is found.
      */
     private boolean findWordPressRole(String url, String domain, BlackboardArtifact artifact, RoleProcessor roleProcessor) {
@@ -220,8 +225,8 @@ class ExtractWebAccountType extends Extract {
     }
 
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
-        extractDomainRoles(dataSource, context);
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
+        extractDomainRoles(dataSource);
     }
 
     /**
@@ -245,10 +250,10 @@ class ExtractWebAccountType extends Extract {
          * domain/platform - The level of the role is higher than previously
          * seen for this domain/platform
          *
-         * @param domain The domain.
+         * @param domain   The domain.
          * @param platform The probable platform for this role.
-         * @param role The role level.
-         * @param url The URL (stored for efficiency).
+         * @param role     The role level.
+         * @param url      The URL (stored for efficiency).
          * @param artifact The original blackboard artifact the URL came from.
          */
         void addRole(String domain, String platform, Role role, String url, BlackboardArtifact artifact) {
@@ -298,9 +303,9 @@ class ExtractWebAccountType extends Extract {
                             NbBundle.getMessage(this.getClass(),
                                     "ExtractWebAccountType.parentModuleName"), role.getUrl()));
 
-                    artifactList.add(createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE, file, bbattributes));
+                    artifactList.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_ACCOUNT_TYPE, file, bbattributes));
                 }
-                
+
                 if (!context.dataSourceIngestIsCancelled()) {
                     postArtifacts(artifactList);
                 }

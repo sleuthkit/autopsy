@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -117,7 +117,7 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                             current_case.getSleuthkitCase(), self._PARSER_NAME, 
-                            contact_and_message_db.getDBFile(), Account.Type.LINE) 
+                            contact_and_message_db.getDBFile(), Account.Type.LINE, context.getJobId()) 
                 self.parse_contacts(contact_and_message_db, helper)
                 self.parse_messages(contact_and_message_db, helper, current_case)
 
@@ -125,7 +125,7 @@ class LineAnalyzer(general.AndroidComponentAnalyzer):
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                             current_case.getSleuthkitCase(), self._PARSER_NAME,
-                            calllog_db.getDBFile(), Account.Type.LINE)
+                            calllog_db.getDBFile(), Account.Type.LINE, context.getJobId())
                 self.parse_calllogs(dataSource, calllog_db, helper)
 
         except NoCurrentCaseException as ex:

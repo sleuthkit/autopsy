@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -148,11 +148,11 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                 if self.selfAccountId is not None:
                     contactsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
                                         self._MODULE_NAME, contactsDb.getDBFile(),
-                                        Account.Type.FACEBOOK, Account.Type.FACEBOOK, self.selfAccountId )
+                                        Account.Type.FACEBOOK, Account.Type.FACEBOOK, self.selfAccountId, context.getJobId())
                 else:
                     contactsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
                                         self._MODULE_NAME, contactsDb.getDBFile(),
-                                        Account.Type.FACEBOOK)
+                                        Account.Type.FACEBOOK, context.getJobId())
 
                 ## get the other contacts/friends
                 contactsResultSet = contactsDb.runQuery("SELECT fbid, display_name, added_time_ms FROM contacts WHERE added_time_ms <> 0")
@@ -492,11 +492,11 @@ class FBMessengerAnalyzer(general.AndroidComponentAnalyzer):
                 if self.selfAccountId is not None:
                     threadsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
                                         self._MODULE_NAME, threadsDb.getDBFile(),
-                                        Account.Type.FACEBOOK, Account.Type.FACEBOOK, self.selfAccountId )
+                                        Account.Type.FACEBOOK, Account.Type.FACEBOOK, self.selfAccountId, context.getJobId())
                 else:
                     threadsDBHelper = CommunicationArtifactsHelper(self.current_case.getSleuthkitCase(),
                                         self._MODULE_NAME, threadsDb.getDBFile(),
-                                        Account.Type.FACEBOOK)
+                                        Account.Type.FACEBOOK, context.getJobId())
                 
                 self.analyzeMessages(threadsDb, threadsDBHelper)
                 self.analyzeCallLogs(threadsDb, threadsDBHelper)

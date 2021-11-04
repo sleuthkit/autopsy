@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-2020 Basis Technology Corp.
+Copyright 2016-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,7 +78,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
             wwfDbFiles = AppSQLiteDB.findAppDatabases(dataSource, "WordsFramework", True, self._PACKAGE_NAME)
             for wwfDbFile in wwfDbFiles:
                 try:
-                    self.__findWWFMessagesInDB(wwfDbFile, dataSource)
+                    self.__findWWFMessagesInDB(wwfDbFile, dataSource, context)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing WWF messages", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -88,7 +88,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, traceback.format_exc())
             pass
 
-    def __findWWFMessagesInDB(self, wwfDb, dataSource):
+    def __findWWFMessagesInDB(self, wwfDb, dataSource, context):
         if not wwfDb:
             return
 
@@ -98,7 +98,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
         wwfDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                                     self._PARSER_NAME,
                                                     wwfDb.getDBFile(),
-                                                    wwfAccountType )
+                                                    wwfAccountType, context.getJobId())
             
         uuid = UUID.randomUUID().toString()
 

@@ -22,37 +22,35 @@ import org.sleuthkit.datamodel.Content;
 
 /**
  * An ingest task that will be executed by an ingest thread using a given ingest
- * job pipeline. Three examples of concrete types of ingest tasks are tasks to
+ * job executor. Three examples of concrete types of ingest tasks are tasks to
  * analyze a data source, tasks to analyze the files in a data source, and tasks
- * that analyze data artifacts.
+ * to analyze data artifacts.
  */
 abstract class IngestTask {
 
     private final static long NOT_SET = Long.MIN_VALUE;
-    private final IngestJobPipeline ingestJobPipeline;
+    private final IngestJobExecutor ingestJobExecutor;
     private long threadId;
 
     /**
      * Constructs an ingest task that will be executed by an ingest thread using
-     * a given ingest job pipeline. Three examples of concrete types of ingest
-     * tasks are tasks to analyze a data source, tasks to analyze the files in a
-     * data source, and tasks that analyze data artifacts.
+     * a given ingest job executor.
      *
-     * @param ingestJobPipeline The ingest job pipeline to use to execute the
+     * @param ingestJobExecutor The ingest job executor to use to execute the
      *                          task.
      */
-    IngestTask(IngestJobPipeline ingestJobPipeline) {
-        this.ingestJobPipeline = ingestJobPipeline;
+    IngestTask(IngestJobExecutor ingestJobExecutor) {
+        this.ingestJobExecutor = ingestJobExecutor;
         threadId = NOT_SET;
     }
 
     /**
-     * Gets the ingest job pipeline used to complete this task.
+     * Gets the ingest job executor to use to execute this task.
      *
-     * @return The ingest job pipeline.
+     * @return The ingest job executor.
      */
-    IngestJobPipeline getIngestJobPipeline() {
-        return ingestJobPipeline;
+    IngestJobExecutor getIngestJobExecutor() {
+        return ingestJobExecutor;
     }
 
     /**
@@ -61,7 +59,7 @@ abstract class IngestTask {
      * @return The data source.
      */
     Content getDataSource() {
-        return getIngestJobPipeline().getDataSource();
+        return getIngestJobExecutor().getDataSource();
     }
 
     /**
@@ -84,8 +82,8 @@ abstract class IngestTask {
 
     /**
      * Records the ingest thread ID of the calling thread and executes this task
-     * using the ingest job pipeline specified when the task was created. The
-     * implementation of the method should simple call
+     * using the ingest job executor specified when the task was created. The
+     * implementation of the method should simply call
      * super.setThreadId(threadId) and getIngestJobPipeline().process(this).
      *
      * @param threadId The numeric ID of the ingest thread executing this task.
