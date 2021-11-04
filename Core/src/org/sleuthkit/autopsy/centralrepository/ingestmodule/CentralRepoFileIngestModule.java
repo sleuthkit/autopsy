@@ -67,6 +67,7 @@ import org.sleuthkit.datamodel.Score;
 final class CentralRepoFileIngestModule implements FileIngestModule {
 
     private final static Logger logger = Logger.getLogger(CentralRepoFileIngestModule.class.getName());
+    private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
     private final IngestServices services = IngestServices.getInstance();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
@@ -302,16 +303,16 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         String justification = "Previously marked as notable in cases " + prevCases;
         Collection<BlackboardAttribute> attributes = Arrays.asList(
                 new BlackboardAttribute(
-                        TSK_SET_NAME, CentralRepoIngestModuleFactory.getModuleName(),
+                        TSK_SET_NAME, MODULE_NAME,
                         Bundle.CentralRepoIngestModule_prevTaggedSet_text()),
                 new BlackboardAttribute(
-                        TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(),
+                        TSK_CORRELATION_TYPE, MODULE_NAME,
                         aType.getDisplayName()),
                 new BlackboardAttribute(
-                        TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(),
+                        TSK_CORRELATION_VALUE, MODULE_NAME,
                         value),
                 new BlackboardAttribute(
-                        TSK_OTHER_CASES, CentralRepoIngestModuleFactory.getModuleName(),
+                        TSK_OTHER_CASES, MODULE_NAME,
                         prevCases));
         try {
             // Create artifact if it doesn't already exist.
@@ -321,7 +322,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                         null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), justification, attributes)
                         .getAnalysisResult();
                 try {
-                    blackboard.postArtifact(tifArtifact, CentralRepoIngestModuleFactory.getModuleName(), jobId);
+                    blackboard.postArtifact(tifArtifact, MODULE_NAME, jobId);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
                 }
@@ -361,7 +362,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
             detailsSb.append(str).append("<br>");
         }
         detailsSb.append("</html>");
-        services.postMessage(IngestMessage.createDataMessage(CentralRepoIngestModuleFactory.getModuleName(),
+        services.postMessage(IngestMessage.createDataMessage(MODULE_NAME,
                 Bundle.CentralRepoIngestModule_postToBB_knownBadMsg(name),
                 detailsSb.toString(),
                 name + md5Hash,
