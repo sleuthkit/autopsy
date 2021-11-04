@@ -67,6 +67,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResult
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
@@ -1306,6 +1308,19 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     "There was an error fetching data for Tags filter: {0} and data source id: {1}.",
                     tagParams.getTagName(),
                     tagParams.getDataSourceId() == null ? "<null>" : tagParams.getDataSourceId()),
+                    ex);
+        }
+    }
+    
+    void displayFileSystemContent(FileSystemContentSearchParam fileSystemKey) {
+        try {
+            this.searchResultManager = new SearchManager(new FileSystemFetcher(fileSystemKey), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for file system filter: {0}.",
+                    fileSystemKey.getContentObjectId()),
                     ex);
         }
     }

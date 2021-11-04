@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.beans.PropertyChangeEvent;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -30,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
@@ -197,5 +200,35 @@ public class FileSystemDAO {
         }
 
         return searchParamsCache.get(searchParams, () -> fetchHostsForTable(searchParams));
+    }
+        /**
+     * Handles fetching and paging of data for file types by mime type.
+     */
+    public static class FileSystemFetcher extends DAOFetcher<FileSystemContentSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public FileSystemFetcher(FileSystemContentSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getFileSystemDAO().getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            Content content = this.getContentFromEvt(evt);
+            if (content == null) {
+                return false;
+            }
+
+            // I am not sure what to do here.
+            return false;
+        }
     }
 }
