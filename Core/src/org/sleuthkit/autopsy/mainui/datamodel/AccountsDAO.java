@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -52,20 +53,19 @@ import org.sleuthkit.datamodel.TskCoreException;
     "AccountsDAO.createSheet.score.displayName=S",
     "AccountsDAO.createSheet.comment.displayName=C",
     "AccountsDAO.createSheet.count.displayName=O",
-    "AccountsDAO.fileColumns.noDescription=No Description",
-})
+    "AccountsDAO.fileColumns.noDescription=No Description",})
 public class AccountsDAO {
 
     private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;    
+    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
     private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-    
+
     private static final String OS_ACCOUNTS_TYPE_ID = "OS_ACCOUNTS";
-    
-        private static final List<ColumnKey> OS_ACCOUNTS_WITH_SCO_COLUMNS = Arrays.asList(
+
+    private static final List<ColumnKey> OS_ACCOUNTS_WITH_SCO_COLUMNS = Arrays.asList(
             getFileColumnKey(Bundle.AccountsDAO_accountNameProperty_displayName()),
-            getFileColumnKey(Bundle.AccountsDAO_createSheet_score_displayName()), 
+            getFileColumnKey(Bundle.AccountsDAO_createSheet_score_displayName()),
             getFileColumnKey(Bundle.AccountsDAO_createSheet_comment_displayName()),
             getFileColumnKey(Bundle.AccountsDAO_createSheet_count_displayName()),
             getFileColumnKey(Bundle.AccountsDAO_loginNameProperty_displayName()),
@@ -87,14 +87,14 @@ public class AccountsDAO {
     private static ColumnKey getFileColumnKey(String name) {
         return new ColumnKey(name, name, Bundle.AccountsDAO_fileColumns_noDescription());
     }
-    
+
     public SearchResultsDTO getAccounts(AccountsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (key == null) {
             throw new IllegalArgumentException("Search parameters are null");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
-        
+
         SearchParams<AccountsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
         if (hardRefresh) {
             this.searchParamsCache.invalidate(searchParams);
@@ -102,17 +102,17 @@ public class AccountsDAO {
 
         return searchParamsCache.get(searchParams, () -> fetchAccountsDTOs(searchParams));
     }
-    
+
     /**
      * Returns a list of paged OS Accounts results.
      *
-     * @param tags         The OS Accounts results.
+     * @param accounts     The OS Accounts results.
      * @param searchParams The search parameters including the paging.
      *
      * @return The list of paged OS Accounts results.
      */
-    List<OsAccount> getPaged(List<OsAccount> tags, SearchParams<?> searchParams) {
-        Stream<OsAccount> pagedAccountsStream = tags.stream()
+    List<OsAccount> getPaged(List<OsAccount> accounts, SearchParams<?> searchParams) {
+        Stream<OsAccount> pagedAccountsStream = accounts.stream()
                 .sorted(Comparator.comparing((acct) -> acct.getId()))
                 .skip(searchParams.getStartItem());
 
@@ -123,15 +123,16 @@ public class AccountsDAO {
         return pagedAccountsStream.collect(Collectors.toList());
     }
 
+    @NbBundle.Messages({"OsAccounts.name.text=OS Accounts"})
     private SearchResultsDTO fetchAccountsDTOs(SearchParams<AccountsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
-        
+
         // get all accounts
         List<OsAccount> allAccounts = (dataSourceId != null && dataSourceId > 0)
                 ? Case.getCurrentCaseThrows().getSleuthkitCase().getOsAccountManager().getOsAccountsByDataSourceObjId(dataSourceId)
                 : Case.getCurrentCaseThrows().getSleuthkitCase().getOsAccountManager().getOsAccounts();
-        
+
         // get current page of accounts results
         List<OsAccount> pagedAccounts = getPaged(allAccounts, cacheKey);
 
@@ -143,18 +144,18 @@ public class AccountsDAO {
             String timeDisplayStr
                     = creationTimeValue.isPresent() ? TimeZoneUtils.getFormattedTime(creationTimeValue.get()) : "";
             List<Object> cellValues = Arrays.asList(
-                account.getName() != null ? account.getName() : "",
-                // GVDTODO handle SCO
-                // GVDTODO only show if (!UserPreferences.getHideSCOColumns())
-                null,
-                null,            
-                // GVDTODO only show if central repository enabled
-                null,
-                optional.isPresent() ? optional.get() : "",
-                "",
-                "",
-                "", // GVDTODO this is filled by a background GetOsAccountRealmTask task 
-                timeDisplayStr);                
+                    account.getName() != null ? account.getName() : "",
+                    // GVDTODO handle SCO
+                    // GVDTODO only show if (!UserPreferences.getHideSCOColumns())
+                    null,
+                    null,
+                    // GVDTODO only show if central repository enabled
+                    null,
+                    optional.isPresent() ? optional.get() : "",
+                    "",
+                    "",
+                    "", // GVDTODO this is filled by a background GetOsAccountRealmTask task 
+                    timeDisplayStr);
 
             fileRows.add(new BaseRowDTO(
                     cellValues,
@@ -162,9 +163,9 @@ public class AccountsDAO {
                     account.getId()));
         };
 
-        return new BaseSearchResultsDTO(OS_ACCOUNTS_TYPE_ID, Bundle.ResultTag_name_text(), OS_ACCOUNTS_WITH_SCO_COLUMNS, fileRows, 0, allAccounts.size());
+        return new BaseSearchResultsDTO(OS_ACCOUNTS_TYPE_ID, Bundle.OsAccounts_name_text(), OS_ACCOUNTS_WITH_SCO_COLUMNS, fileRows, 0, allAccounts.size());
     }
-    
+
     /**
      * Handles fetching and paging of data for accounts.
      */
@@ -188,7 +189,7 @@ public class AccountsDAO {
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
             if (eventType.equals(Case.Events.OS_ACCOUNTS_ADDED.toString())
-                        || eventType.equals(Case.Events.OS_ACCOUNTS_DELETED.toString())) {
+                    || eventType.equals(Case.Events.OS_ACCOUNTS_DELETED.toString())) {
                 return true;
             }
             return false;
