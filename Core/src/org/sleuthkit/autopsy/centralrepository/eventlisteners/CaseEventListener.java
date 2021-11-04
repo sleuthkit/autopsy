@@ -163,7 +163,7 @@ public final class CaseEventListener implements PropertyChangeListener {
     }
 
     /**
-     * Determines whether or not a tag definition has notable status.
+     * Determines whether or not a tag definition calls for notable status.
      *
      * @param tagDef The tag definition.
      *
@@ -194,11 +194,11 @@ public final class CaseEventListener implements PropertyChangeListener {
      * Sets the notable (known) status of a central repository correlation
      * attribute corresponding to an artifact.
      *
-     * @param centralRepo The central repository.
-     * @param artifact    The artifact.
-     * @param knownStatus The new notable status.
+     * @param centralRepo   The central repository.
+     * @param artifact      The artifact.
+     * @param notableStatus The new notable status.
      */
-    private static void setArtifactKnownStatus(CentralRepository centralRepo, BlackboardArtifact artifact, TskData.FileKnown knownStatus) {
+    private static void setArtifactKnownStatus(CentralRepository centralRepo, BlackboardArtifact artifact, TskData.FileKnown notableStatus) {
         List<CorrelationAttributeInstance> corrAttrInstances = new ArrayList<>();
         if (artifact instanceof DataArtifact) {
             corrAttrInstances.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) artifact));
@@ -207,7 +207,7 @@ public final class CaseEventListener implements PropertyChangeListener {
         }
         for (CorrelationAttributeInstance corrAttrInstance : corrAttrInstances) {
             try {
-                centralRepo.setAttributeInstanceKnownStatus(corrAttrInstance, knownStatus);
+                centralRepo.setAttributeInstanceKnownStatus(corrAttrInstance, notableStatus);
             } catch (CentralRepoException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Error setting correlation attribute instance known status", corrAttrInstance), ex); //NON-NLS
             }

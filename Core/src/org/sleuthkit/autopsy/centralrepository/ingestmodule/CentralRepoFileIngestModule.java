@@ -47,7 +47,6 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
@@ -67,13 +66,13 @@ import org.sleuthkit.datamodel.Score;
     "CentralRepoIngestModule.prevCaseComment.text=Previous Case: "})
 final class CentralRepoFileIngestModule implements FileIngestModule {
 
-    private final static Logger LOGGER = Logger.getLogger(CentralRepoFileIngestModule.class.getName());
+    private final static Logger logger = Logger.getLogger(CentralRepoFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
     private long jobId;
-    private CorrelationCase eamCase;
-    private CorrelationDataSource eamDataSource;
+    private CorrelationCase centralRepoCase;
+    private CorrelationDataSource centralRepoDataSource;
     private CorrelationAttributeInstance.Type filesType;
     private final boolean flagTaggedNotableItems;
     private Blackboard blackboard;
@@ -104,7 +103,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         try {
             blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
         } catch (NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return ProcessResult.ERROR;
         }
 
@@ -120,7 +119,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         try {
             dbManager = CentralRepository.getInstance();
         } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
+            logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             return ProcessResult.ERROR;
         }
 
@@ -148,10 +147,10 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                     postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList, filesType, md5);
                 }
             } catch (CentralRepoException ex) {
-                LOGGER.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             } catch (CorrelationAttributeNormalizationException ex) {
-                LOGGER.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
+                logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
@@ -162,8 +161,8 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                 CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
                         filesType,
                         md5,
-                        eamCase,
-                        eamDataSource,
+                        centralRepoCase,
+                        centralRepoDataSource,
                         abstractFile.getParentPath() + abstractFile.getName(),
                         null,
                         TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
@@ -171,10 +170,10 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                          abstractFile.getId());
                 dbManager.addAttributeInstanceBulk(cefi);
             } catch (CentralRepoException ex) {
-                LOGGER.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             } catch (CorrelationAttributeNormalizationException ex) {
-                LOGGER.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+                logger.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
@@ -183,26 +182,26 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        if ((CentralRepository.isEnabled() == false) || (eamCase == null) || (eamDataSource == null)) {
+        if ((CentralRepository.isEnabled() == false) || (centralRepoCase == null) || (centralRepoDataSource == null)) {
             return;
         }
         CentralRepository dbManager;
         try {
             dbManager = CentralRepository.getInstance();
         } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
+            logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
             return;
         }
         try {
             dbManager.commitAttributeInstancesBulk();
         } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
         }
         try {
-            Long count = dbManager.getCountArtifactInstancesByCaseDataSource(eamDataSource);
-            LOGGER.log(Level.INFO, "{0} artifacts in db for case: {1} ds:{2}", new Object[]{count, eamCase.getDisplayName(), eamDataSource.getName()}); // NON-NLS
+            Long count = dbManager.getCountArtifactInstancesByCaseDataSource(centralRepoDataSource);
+            logger.log(Level.INFO, "{0} artifacts in db for case: {1} ds:{2}", new Object[]{count, centralRepoCase.getDisplayName(), centralRepoDataSource.getName()}); // NON-NLS
         } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "Error counting artifacts.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error counting artifacts.", ex); // NON-NLS
         }
 
         // TODO: once we implement shared cache, if refCounter is 1, then submit data in bulk.
@@ -235,14 +234,14 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         try {
             autopsyCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex);
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             throw new IngestModuleException("Exception while getting open case.", ex);
         }
 
         // Don't allow sqlite central repo databases to be used for multi user cases
         if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
                 && (CentralRepoDbManager.getSavedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE)) {
-            LOGGER.log(Level.SEVERE, "Cannot run Central Repository ingest module on a multi-user case with a SQLite central repository.");
+            logger.log(Level.SEVERE, "Cannot run Central Repository ingest module on a multi-user case with a SQLite central repository.");
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();
@@ -251,27 +250,27 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         try {
             centralRepoDb = CentralRepository.getInstance();
         } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
             throw new IngestModuleException("Error connecting to central repository database.", ex); // NON-NLS
         }
 
         try {
             filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
         } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
         }
 
         try {
-            eamCase = centralRepoDb.getCase(autopsyCase);
+            centralRepoCase = centralRepoDb.getCase(autopsyCase);
         } catch (CentralRepoException ex) {
             throw new IngestModuleException("Unable to get case from central repository database ", ex);
         }
 
         try {
-            eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
+            centralRepoDataSource = CorrelationDataSource.fromTSKDataSource(centralRepoCase, context.getDataSource());
         } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
             throw new IngestModuleException("Error getting data source info.", ex); // NON-NLS
         }
         // TODO: once we implement a shared cache, load/init it here w/ syncronized and define reference counter
@@ -281,11 +280,11 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                 == 1) {
             // ensure we have this data source in the EAM DB
             try {
-                if (null == centralRepoDb.getDataSource(eamCase, eamDataSource.getDataSourceObjectID())) {
-                    centralRepoDb.newDataSource(eamDataSource);
+                if (null == centralRepoDb.getDataSource(centralRepoCase, centralRepoDataSource.getDataSourceObjectID())) {
+                    centralRepoDb.newDataSource(centralRepoDataSource);
                 }
             } catch (CentralRepoException ex) {
-                LOGGER.log(Level.SEVERE, "Error adding data source to Central Repository.", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error adding data source to Central Repository.", ex); // NON-NLS
                 throw new IngestModuleException("Error adding data source to Central Repository.", ex); // NON-NLS
             }
 
@@ -324,15 +323,15 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                 try {
                     blackboard.postArtifact(tifArtifact, CentralRepoIngestModuleFactory.getModuleName(), jobId);
                 } catch (Blackboard.BlackboardException ex) {
-                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
                 }
                 // send inbox message
                 sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash(), caseDisplayNames);
             }
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
         }
     }
 
