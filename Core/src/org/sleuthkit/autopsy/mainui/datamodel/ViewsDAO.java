@@ -50,33 +50,6 @@ import org.sleuthkit.datamodel.TskData;
  * Provides information to populate the results viewer for data in the views
  * section.
  */
-@Messages({"ThreePanelViewsDAO.fileColumns.nameColLbl=Name",
-    "ThreePanelViewsDAO.fileColumns.originalName=Original Name",
-    "ThreePanelViewsDAO.fileColumns.scoreName=S",
-    "ThreePanelViewsDAO.fileColumns.commentName=C",
-    "ThreePanelViewsDAO.fileColumns.countName=O",
-    "ThreePanelViewsDAO.fileColumns.locationColLbl=Location",
-    "ThreePanelViewsDAO.fileColumns.modifiedTimeColLbl=Modified Time",
-    "ThreePanelViewsDAO.fileColumns.changeTimeColLbl=Change Time",
-    "ThreePanelViewsDAO.fileColumns.accessTimeColLbl=Access Time",
-    "ThreePanelViewsDAO.fileColumns.createdTimeColLbl=Created Time",
-    "ThreePanelViewsDAO.fileColumns.sizeColLbl=Size",
-    "ThreePanelViewsDAO.fileColumns.flagsDirColLbl=Flags(Dir)",
-    "ThreePanelViewsDAO.fileColumns.flagsMetaColLbl=Flags(Meta)",
-    "ThreePanelViewsDAO.fileColumns.modeColLbl=Mode",
-    "ThreePanelViewsDAO.fileColumns.useridColLbl=UserID",
-    "ThreePanelViewsDAO.fileColumns.groupidColLbl=GroupID",
-    "ThreePanelViewsDAO.fileColumns.metaAddrColLbl=Meta Addr.",
-    "ThreePanelViewsDAO.fileColumns.attrAddrColLbl=Attr. Addr.",
-    "ThreePanelViewsDAO.fileColumns.typeDirColLbl=Type(Dir)",
-    "ThreePanelViewsDAO.fileColumns.typeMetaColLbl=Type(Meta)",
-    "ThreePanelViewsDAO.fileColumns.knownColLbl=Known",
-    "ThreePanelViewsDAO.fileColumns.md5HashColLbl=MD5 Hash",
-    "ThreePanelViewsDAO.fileColumns.sha256HashColLbl=SHA-256 Hash",
-    "ThreePanelViewsDAO.fileColumns.objectId=Object ID",
-    "ThreePanelViewsDAO.fileColumns.mimeType=MIME Type",
-    "ThreePanelViewsDAO.fileColumns.extensionColLbl=Extension",
-    "ThreePanelViewsDAO.fileColumns.noDescription=No Description"})
 public class ViewsDAO {
 
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
@@ -86,34 +59,6 @@ public class ViewsDAO {
 
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
-    private static final List<ColumnKey> FILE_COLUMNS = Arrays.asList(
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_nameColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_originalName()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_scoreName()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_commentName()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_countName()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_locationColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_modifiedTimeColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_changeTimeColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_accessTimeColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_createdTimeColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_sizeColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_flagsDirColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_flagsMetaColLbl()),
-            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_modeColLbl()),
-            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_useridColLbl()),
-            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_groupidColLbl()),
-            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_metaAddrColLbl()),
-            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_attrAddrColLbl()),
-            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_typeDirColLbl()),
-            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_typeMetaColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_knownColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_md5HashColLbl()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_sha256HashColLbl()),
-            // getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_objectId()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_mimeType()),
-            getFileColumnKey(Bundle.ThreePanelViewsDAO_fileColumns_extensionColLbl()));
-
     private static ViewsDAO instance = null;
 
     synchronized static ViewsDAO getInstance() {
@@ -122,10 +67,6 @@ public class ViewsDAO {
         }
 
         return instance;
-    }
-
-    private static ColumnKey getFileColumnKey(String name) {
-        return new ColumnKey(name, name, Bundle.ThreePanelViewsDAO_fileColumns_noDescription());
     }
 
     static ExtensionMediaType getExtensionMediaType(String ext) {
@@ -374,38 +315,7 @@ public class ViewsDAO {
         List<RowDTO> fileRows = new ArrayList<>();
         for (AbstractFile file : files) {
 
-            List<Object> cellValues = Arrays.asList(
-                    file.getName(), // GVDTODO handle . and .. from getContentDisplayName()
-                    // GVDTODO translation column
-                    null,
-                    //GVDTDO replace nulls with SCO
-                    null,
-                    null,
-                    null,
-                    file.getUniquePath(),
-                    TimeZoneUtils.getFormattedTime(file.getMtime()),
-                    TimeZoneUtils.getFormattedTime(file.getCtime()),
-                    TimeZoneUtils.getFormattedTime(file.getAtime()),
-                    TimeZoneUtils.getFormattedTime(file.getCrtime()),
-                    file.getSize(),
-                    file.getDirFlagAsString(),
-                    file.getMetaFlagsAsString(),
-                    // mode,
-                    // userid,
-                    // groupid,
-                    // metaAddr,
-                    // attrAddr,
-                    // typeDir,
-                    // typeMeta,
-
-                    file.getKnown().getName(),
-                    StringUtils.defaultString(file.getMd5Hash()),
-                    StringUtils.defaultString(file.getSha256Hash()),
-                    // objectId,
-
-                    StringUtils.defaultString(file.getMIMEType()),
-                    file.getNameExtension()
-            );
+            List<Object> cellValues = FileSystemColumnUtils.getCellValuesForAbstractFile(file);
 
             fileRows.add(new FileRowDTO(
                     file,
@@ -418,7 +328,7 @@ public class ViewsDAO {
                     cellValues));
         }
 
-        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FILE_COLUMNS, fileRows, startItem, totalResultsCount);
+        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, startItem, totalResultsCount);
     }
 
     /**
