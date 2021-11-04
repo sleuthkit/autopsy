@@ -32,11 +32,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
-import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -59,18 +55,18 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.datamodel.Score;
 
 /**
- * Ingest module for inserting entries into the Central Repository database on
- * ingest of a data source
+ * A file ingest module that adds correlation attributes for files to the
+ * central repository and makes previously notable analysis results based on
+ * previous occurences.
  */
 @Messages({"CentralRepoIngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
     "CentralRepoIngestModule.prevCaseComment.text=Previous Case: "})
 final class CentralRepoFileIngestModule implements FileIngestModule {
 
-    private final static Logger logger = Logger.getLogger(CentralRepoFileIngestModule.class.getName());
+    private static final Logger logger = Logger.getLogger(CentralRepoFileIngestModule.class.getName());
     private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
     private final IngestServices services = IngestServices.getInstance();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
     private long jobId;
     private CorrelationCase centralRepoCase;
     private CorrelationDataSource centralRepoDataSource;
@@ -78,11 +74,14 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
     private final boolean flagTaggedNotableItems;
     private Blackboard blackboard;
     private final boolean createCorrelationProperties;
+    private CentralRepository centralRepoDb;
 
     /**
-     * Instantiate the Central Repository ingest module.
+     * Constructs a file ingest module that adds correlation attributes for
+     * files to the central repository and makes previously notable analysis
+     * results based on previous occurences.
      *
-     * @param settings The ingest settings for the module instance.
+     * @param settings The ingest job settings.
      */
     CentralRepoFileIngestModule(IngestSettings settings) {
         flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
@@ -91,22 +90,6 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
-        if (CentralRepository.isEnabled() == false) {
-            /*
-             * Not signaling an error for now. This is a workaround for the way
-             * all newly didscovered ingest modules are automatically anabled.
-             *
-             * TODO (JIRA-2731): Add isEnabled API for ingest modules.
-             */
-            return ProcessResult.OK;
-        }
-
-        try {
-            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            return ProcessResult.ERROR;
-        }
 
         if (!CorrelationAttributeUtil.isSupportedAbstractFileType(abstractFile)) {
             return ProcessResult.OK;
@@ -116,15 +99,6 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        CentralRepository dbManager;
-        try {
-            dbManager = CentralRepository.getInstance();
-        } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
-            return ProcessResult.ERROR;
-        }
-
-        // only continue if we are correlating filesType
         if (!filesType.isEnabled()) {
             return ProcessResult.OK;
         }
@@ -142,7 +116,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && flagTaggedNotableItems) {
             try {
                 TimingMetric timingMetric = HealthMonitor.getTimingMetric("Central Repository: Notable artifact query");
-                List<String> caseDisplayNamesList = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
+                List<String> caseDisplayNamesList = centralRepoDb.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
                 HealthMonitor.submitTimingMetric(timingMetric);
                 if (!caseDisplayNamesList.isEmpty()) {
                     postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList, filesType, md5);
@@ -169,7 +143,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                         TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
                         ,
                          abstractFile.getId());
-                dbManager.addAttributeInstanceBulk(cefi);
+                centralRepoDb.addAttributeInstanceBulk(cefi);
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
                 return ProcessResult.ERROR;
@@ -183,113 +157,68 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        if ((CentralRepository.isEnabled() == false) || (centralRepoCase == null) || (centralRepoDataSource == null)) {
-            return;
+        if (refCounter.decrementAndGet(jobId) == 0) {
+            try {
+                centralRepoDb.commitAttributeInstancesBulk();
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, "Error committing bulk insert of correlation attributes", ex); // NON-NLS
+            }
         }
-        CentralRepository dbManager;
-        try {
-            dbManager = CentralRepository.getInstance();
-        } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
-            return;
-        }
-        try {
-            dbManager.commitAttributeInstancesBulk();
-        } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
-        }
-        try {
-            Long count = dbManager.getCountArtifactInstancesByCaseDataSource(centralRepoDataSource);
-            logger.log(Level.INFO, "{0} artifacts in db for case: {1} ds:{2}", new Object[]{count, centralRepoCase.getDisplayName(), centralRepoDataSource.getName()}); // NON-NLS
-        } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error counting artifacts.", ex); // NON-NLS
-        }
-
-        // TODO: once we implement shared cache, if refCounter is 1, then submit data in bulk.
-        refCounter.decrementAndGet(jobId);
     }
 
-    // see ArtifactManagerTimeTester for details
     @Messages({
-        "CentralRepoIngestModule.notfyBubble.title=Central Repository Not Initialized",
-        "CentralRepoIngestModule.errorMessage.isNotEnabled=Central repository settings are not initialized, cannot run Central Repository ingest module."
+        "CentralRepoIngestModule_missingFileCorrAttrTypeErrMsg=Correlation attribute type for files not found in the central repository",
+        "CentralRepoIngestModule_cannotGetCrCaseErrMsg=Case not present in the central repository",
+        "CentralRepoIngestModule_cannotGetCrDataSourceErrMsg=Data source not present in the central repository"
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        if (CentralRepository.isEnabled() == false) {
-            /*
-             * Not throwing the customary exception for now. This is a
-             * workaround for the way all newly didscovered ingest modules are
-             * automatically anabled.
-             *
-             * TODO (JIRA-2731): Add isEnabled API for ingest modules.
-             */
-            if (RuntimeProperties.runningWithGUI()) {
-                if (1L == warningMsgRefCounter.incrementAndGet(jobId)) {
-                    MessageNotifyUtil.Notify.warn(Bundle.CentralRepoIngestModule_notfyBubble_title(), Bundle.CentralRepoIngestModule_errorMessage_isNotEnabled());
-                }
-            }
-            return;
+        jobId = context.getJobId();
+
+        /*
+         * IMPORTANT: Start up IngestModuleException messages are displayed to
+         * the user, if a user is present. Therefore, an exception to the policy
+         * that exception messages are not localized is appropriate here. Also,
+         * the exception messages should be user-friendly.
+         */
+        if (!CentralRepository.isEnabled()) {
+            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_crNotEnabledErrMsg());
         }
+
         Case autopsyCase;
         try {
             autopsyCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            throw new IngestModuleException("Exception while getting open case.", ex);
+            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_noCurrentCaseErrMsg(), ex);
         }
 
-        // Don't allow sqlite central repo databases to be used for multi user cases
-        if ((autopsyCase.getCaseType() == Case.CaseType.MULTI_USER_CASE)
-                && (CentralRepoDbManager.getSavedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE)) {
-            logger.log(Level.SEVERE, "Cannot run Central Repository ingest module on a multi-user case with a SQLite central repository.");
-            throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
-        }
-        jobId = context.getJobId();
+        blackboard = autopsyCase.getSleuthkitCase().getBlackboard();
 
-        CentralRepository centralRepoDb;
         try {
             centralRepoDb = CentralRepository.getInstance();
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
-            throw new IngestModuleException("Error connecting to central repository database.", ex); // NON-NLS
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_crInaccessibleErrMsg(), ex);
         }
 
         try {
             filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
-            throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_missingFileCorrAttrTypeErrMsg(), ex);
         }
 
         try {
             centralRepoCase = centralRepoDb.getCase(autopsyCase);
         } catch (CentralRepoException ex) {
-            throw new IngestModuleException("Unable to get case from central repository database ", ex);
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_cannotGetCrCaseErrMsg(), ex);
         }
 
         try {
             centralRepoDataSource = CorrelationDataSource.fromTSKDataSource(centralRepoCase, context.getDataSource());
         } catch (CentralRepoException ex) {
-            logger.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
-            throw new IngestModuleException("Error getting data source info.", ex); // NON-NLS
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_cannotGetCrDataSourceErrMsg(), ex);
         }
-        // TODO: once we implement a shared cache, load/init it here w/ syncronized and define reference counter
-        // if we are the first thread / module for this job, then make sure the case
-        // and image exist in the DB before we associate artifacts with it.
-        if (refCounter.incrementAndGet(jobId)
-                == 1) {
-            // ensure we have this data source in the EAM DB
-            try {
-                if (null == centralRepoDb.getDataSource(centralRepoCase, centralRepoDataSource.getDataSourceObjectID())) {
-                    centralRepoDb.newDataSource(centralRepoDataSource);
-                }
-            } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Error adding data source to Central Repository.", ex); // NON-NLS
-                throw new IngestModuleException("Error adding data source to Central Repository.", ex); // NON-NLS
-            }
 
-        }
+        refCounter.incrementAndGet(jobId);
     }
 
     /**
@@ -298,19 +227,18 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
      * @param abstractFile     The file from which to create an artifact.
      * @param caseDisplayNames Case names to be added to a TSK_COMMON attribute.
      */
-    private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames, CorrelationAttributeInstance.Type aType, String value) {
+    private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames, CorrelationAttributeInstance.Type corrAtrrType, String corrAttrValue) {
         String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
         String justification = "Previously marked as notable in cases " + prevCases;
-        Collection<BlackboardAttribute> attributes = Arrays.asList(
-                new BlackboardAttribute(
-                        TSK_SET_NAME, MODULE_NAME,
-                        Bundle.CentralRepoIngestModule_prevTaggedSet_text()),
+        Collection<BlackboardAttribute> attributes = Arrays.asList(new BlackboardAttribute(
+                TSK_SET_NAME, MODULE_NAME,
+                Bundle.CentralRepoIngestModule_prevTaggedSet_text()),
                 new BlackboardAttribute(
                         TSK_CORRELATION_TYPE, MODULE_NAME,
-                        aType.getDisplayName()),
+                        corrAtrrType.getDisplayName()),
                 new BlackboardAttribute(
                         TSK_CORRELATION_VALUE, MODULE_NAME,
-                        value),
+                        corrAttrValue),
                 new BlackboardAttribute(
                         TSK_OTHER_CASES, MODULE_NAME,
                         prevCases));
@@ -336,14 +264,6 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
         }
     }
 
-    @Messages({
-        "CentralRepoIngestModule_notable_message_header=<html>A file in this data source was previously seen and tagged as Notable.<br>",
-        "CentralRepoIngestModel_name_header=Name:<br>",
-        "CentralRepoIngestModel_previous_case_header=<br>Previous Cases:<br>",
-        "# {0} - Name of file that is Notable",
-        "CentralRepoIngestModule_postToBB_knownBadMsg=Notable: {0}"
-    })
-
     /**
      * Post a message to the ingest inbox alerting the user that a bad file was
      * found.
@@ -353,6 +273,13 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
      * @param md5Hash          badFile's md5 hash
      * @param caseDisplayNames List of cases that the artifact appears in.
      */
+    @Messages({
+        "CentralRepoIngestModule_notable_message_header=<html>A file in this data source was previously seen and tagged as Notable.<br>",
+        "CentralRepoIngestModel_name_header=Name:<br>",
+        "CentralRepoIngestModel_previous_case_header=<br>Previous Cases:<br>",
+        "# {0} - Name of file that is Notable",
+        "CentralRepoIngestModule_postToBB_knownBadMsg=Notable: {0}"
+    })
     private void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash, List<String> caseDisplayNames) {
         StringBuilder detailsSb = new StringBuilder(1024);
 
@@ -368,4 +295,5 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                 name + md5Hash,
                 artifact));
     }
+
 }

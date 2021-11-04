@@ -33,7 +33,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
@@ -103,16 +105,24 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
     }
 
     @NbBundle.Messages({
-        "CrDataArtifactIngestModule_crNotEnabledErrMsg=Central repository required, but not enabled",
-        "CrDataArtifactIngestModule_noCurrentCaseErrMsg=Error getting current case",
-        "CrDataArtifactIngestModule_osAcctMgrInaccessibleErrMsg=Error getting OS accounts manager",
-        "CrDataArtifactIngestModule_crInaccessibleErrMsg=Error accessing central repository",})
+        "CentralRepoIngestModule_crNotEnabledErrMsg=Central repository required, but not enabled",
+        "CentralRepoIngestModule_noCurrentCaseErrMsg=Error getting current case",
+        "CentralRepoIngestModule_osAcctMgrInaccessibleErrMsg=Error getting OS accounts manager",
+        "CentralRepoIngestModule_crInaccessibleErrMsg=Error accessing central repository",
+        "CentralRepoIngestModule_crDatabaseTypeMismatch=Mulit-user cases require a PostgreSQL central repository"
+    })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        /*
+         * IMPORTANT: Start up IngestModuleException messages are displayed to
+         * the user, if a user is present. Therefore, an exception to the policy
+         * that exception messages are not localized is appropriate here. Also,
+         * the exception messages should be user-friendly.
+         */
         dataSource = context.getDataSource();
         ingestJobId = context.getJobId();
         if (!CentralRepository.isEnabled()) {
-            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_crNotEnabledErrMsg()); // May be displayed to user.
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_crNotEnabledErrMsg()); // May be displayed to user.
         }
         try {
             currentCase = Case.getCurrentCaseThrows();
@@ -121,12 +131,17 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
             osAccountMgr = tskCase.getOsAccountManager();
             centralRepo = CentralRepository.getInstance();
         } catch (NoCurrentCaseException ex) {
-            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_noCurrentCaseErrMsg(), ex); // May be displayed to user.
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_noCurrentCaseErrMsg(), ex);
         } catch (TskCoreException ex) {
-            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_osAcctMgrInaccessibleErrMsg(), ex); // May be displayed to user.                    
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_osAcctMgrInaccessibleErrMsg(), ex);
         } catch (CentralRepoException ex) {
-            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_crInaccessibleErrMsg(), ex); // May be displayed to user.
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_crInaccessibleErrMsg(), ex);
         }
+        // Don't allow sqlite central repo databases to be used for multi user cases
+        if ((currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) && (CentralRepoDbManager.getSavedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE)) {
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_crDatabaseTypeMismatch());
+        }
+
     }
 
     /**
@@ -187,8 +202,8 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
      * accounts if they have been seen in other cases.
      */
     @NbBundle.Messages({
-        "CrDataArtifactIngestModule_prevSeenOsAcctSetName=Users seen in previous cases",
-        "CrDataArtifactIngestModule_prevSeenOsAcctConfig=Previously Seen Users (Central Repository)"
+        "CentralRepoIngestModule_prevSeenOsAcctSetName=Users seen in previous cases",
+        "CentralRepoIngestModule_prevSeenOsAcctConfig=Previously Seen Users (Central Repository)"
     })
     private void analyzeOsAccounts() {
         try {
@@ -360,14 +375,14 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
      * @param corrAttrValue The value of the matched correlation attribute.
      */
     @NbBundle.Messages({
-        "CrDataArtifactIngestModule_notableSetName=Previously Tagged As Notable (Central Repository)",
+        "CentralRepoIngestModule_notableSetName=Previously Tagged As Notable (Central Repository)",
         "# {0} - list of cases",
-        "CrDataArtifactIngestModule_notableJustification=Previously marked as notable in cases {0}"
+        "CentralRepoIngestModule_notableJustification=Previously marked as notable in cases {0}"
     })
     private void makePrevNotableAnalysisResult(Content content, Set<String> previousCases, CorrelationAttributeInstance.Type corrAttrType, String corrAttrValue) {
         String prevCases = previousCases.stream().collect(Collectors.joining(","));
-        String justification = Bundle.CrDataArtifactIngestModule_notableJustification(prevCases);
-        Collection<BlackboardAttribute> attributes = Arrays.asList(new BlackboardAttribute(TSK_SET_NAME, CentralRepoIngestModuleFactory.getModuleName(), Bundle.CrDataArtifactIngestModule_notableSetName()),
+        String justification = Bundle.CentralRepoIngestModule_notableJustification(prevCases);
+        Collection<BlackboardAttribute> attributes = Arrays.asList(new BlackboardAttribute(TSK_SET_NAME, CentralRepoIngestModuleFactory.getModuleName(), Bundle.CentralRepoIngestModule_notableSetName()),
                 new BlackboardAttribute(TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrType.getDisplayName()),
                 new BlackboardAttribute(TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrValue),
                 new BlackboardAttribute(TSK_OTHER_CASES, CentralRepoIngestModuleFactory.getModuleName(), prevCases));
@@ -385,17 +400,17 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
      * @param corrAttrValue The value of the matched correlation attribute.
      */
     @NbBundle.Messages({
-        "CrDataArtifactIngestModule_prevSeenSetName=Previously Seen (Central Repository)",
+        "CentralRepoIngestModule_prevSeenSetName=Previously Seen (Central Repository)",
         "# {0} - list of cases",
-        "CrDataArtifactIngestModule_prevSeenJustification=Previously seen in cases {0}"
+        "CentralRepoIngestModule_prevSeenJustification=Previously seen in cases {0}"
     })
     private void makePrevSeenAnalysisResult(Content content, Set<String> previousCases, CorrelationAttributeInstance.Type corrAttrType, String corrAttrValue) {
         Optional<Score> score = calculateScore(previousCases.size());
         if (score.isPresent()) {
             String prevCases = previousCases.stream().collect(Collectors.joining(","));
-            String justification = Bundle.CrDataArtifactIngestModule_prevSeenJustification(prevCases);
+            String justification = Bundle.CentralRepoIngestModule_prevSeenJustification(prevCases);
             Collection<BlackboardAttribute> analysisResultAttributes = Arrays.asList(
-                    new BlackboardAttribute(TSK_SET_NAME, CentralRepoIngestModuleFactory.getModuleName(), Bundle.CrDataArtifactIngestModule_prevSeenSetName()),
+                    new BlackboardAttribute(TSK_SET_NAME, CentralRepoIngestModuleFactory.getModuleName(), Bundle.CentralRepoIngestModule_prevSeenSetName()),
                     new BlackboardAttribute(TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrType.getDisplayName()),
                     new BlackboardAttribute(TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrValue),
                     new BlackboardAttribute(TSK_OTHER_CASES, CentralRepoIngestModuleFactory.getModuleName(), prevCases));
@@ -411,13 +426,13 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
      * @param corrAttrValue The value of the new correlation attribute.
      */
     @NbBundle.Messages({
-        "CrDataArtifactIngestModule_prevUnseenJustification=Previously seen in zero cases"
+        "CentralRepoIngestModule_prevUnseenJustification=Previously seen in zero cases"
     })
     private void makePrevUnseenAnalysisResult(Content content, CorrelationAttributeInstance.Type corrAttrType, String corrAttrValue) {
         Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
                 new BlackboardAttribute(TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrType.getDisplayName()),
                 new BlackboardAttribute(TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrValue));
-        makeAndPostAnalysisResult(content, BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, attributesForNewArtifact, "", Score.SCORE_LIKELY_NOTABLE, Bundle.CrDataArtifactIngestModule_prevUnseenJustification());
+        makeAndPostAnalysisResult(content, BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, attributesForNewArtifact, "", Score.SCORE_LIKELY_NOTABLE, Bundle.CentralRepoIngestModule_prevUnseenJustification());
     }
 
     /**
@@ -437,8 +452,8 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
             score = Score.SCORE_NONE;
         }
         return Optional.ofNullable(score);
-    }    
-    
+    }
+
     /**
      * Makes a new analysis result of a given type for a content and posts it to
      * the blackboard.

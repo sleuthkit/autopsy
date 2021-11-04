@@ -1,27 +1,29 @@
 CentralRepoIngestModel_name_header=Name:<br>
 CentralRepoIngestModel_previous_case_header=<br>Previous Cases:<br>
-CentralRepoIngestModule.errorMessage.isNotEnabled=Central repository settings are not initialized, cannot run Central Repository ingest module.
-CentralRepoIngestModule.notfyBubble.title=Central Repository Not Initialized
 CentralRepoIngestModule.prevCaseComment.text=Previous Case: 
 CentralRepoIngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)
+CentralRepoIngestModule_cannotGetCrCaseErrMsg=Case not present in the central repository
+CentralRepoIngestModule_cannotGetCrDataSourceErrMsg=Data source not present in the central repository
+CentralRepoIngestModule_crDatabaseTypeMismatch=Mulit-user cases require a PostgreSQL central repository
+CentralRepoIngestModule_crInaccessibleErrMsg=Error accessing central repository
+CentralRepoIngestModule_crNotEnabledErrMsg=Central repository required, but not enabled
+CentralRepoIngestModule_missingFileCorrAttrTypeErrMsg=Correlation attribute type for files not found in the central repository
+CentralRepoIngestModule_noCurrentCaseErrMsg=Error getting current case
 CentralRepoIngestModule_notable_message_header=<html>A file in this data source was previously seen and tagged as Notable.<br>
+# {0} - list of cases
+CentralRepoIngestModule_notableJustification=Previously marked as notable in cases {0}
+CentralRepoIngestModule_notableSetName=Previously Tagged As Notable (Central Repository)
+CentralRepoIngestModule_osAcctMgrInaccessibleErrMsg=Error getting OS accounts manager
 # {0} - Name of file that is Notable
 CentralRepoIngestModule_postToBB_knownBadMsg=Notable: {0}
+# {0} - list of cases
+CentralRepoIngestModule_prevSeenJustification=Previously seen in cases {0}
+CentralRepoIngestModule_prevSeenOsAcctConfig=Previously Seen Users (Central Repository)
+CentralRepoIngestModule_prevSeenOsAcctSetName=Users seen in previous cases
+CentralRepoIngestModule_prevSeenSetName=Previously Seen (Central Repository)
+CentralRepoIngestModule_prevUnseenJustification=Previously seen in zero cases
 CentralRepoIngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation
 CentralRepoIngestModuleFactory.ingestmodule.name=Central Repository
-CrDataArtifactIngestModule_crInaccessibleErrMsg=Error accessing central repository
-CrDataArtifactIngestModule_crNotEnabledErrMsg=Central repository required, but not enabled
-CrDataArtifactIngestModule_noCurrentCaseErrMsg=Error getting current case
-# {0} - list of cases
-CrDataArtifactIngestModule_notableJustification=Previously marked as notable in cases {0}
-CrDataArtifactIngestModule_notableSetName=Previously Tagged As Notable (Central Repository)
-CrDataArtifactIngestModule_osAcctMgrInaccessibleErrMsg=Error getting OS accounts manager
-# {0} - list of cases
-CrDataArtifactIngestModule_prevSeenJustification=Previously seen in cases {0}
-CrDataArtifactIngestModule_prevSeenOsAcctConfig=Previously Seen Users (Central Repository)
-CrDataArtifactIngestModule_prevSeenOsAcctSetName=Users seen in previous cases
-CrDataArtifactIngestModule_prevSeenSetName=Previously Seen (Central Repository)
-CrDataArtifactIngestModule_prevUnseenJustification=Previously seen in zero cases
 IngestSettingsPanel.ingestSettingsLabel.text=Ingest Settings
 IngestSettingsPanel.flagTaggedNotableItemsCheckbox.text=Flag items previously tagged as notable
 IngestSettingsPanel.flagPreviouslySeenDevicesCheckbox.text=Flag devices and users previously seen in other cases
