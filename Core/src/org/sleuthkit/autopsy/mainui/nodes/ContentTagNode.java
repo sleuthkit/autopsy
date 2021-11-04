@@ -45,12 +45,12 @@ public final class ContentTagNode extends AbstractNode {
      * @param results Search results.
      * @param rowData Row data.
      */
-    public ContentTagNode(SearchResultsDTO results, ContentTagsRowDTO rowData) {
+public ContentTagNode(SearchResultsDTO results, ContentTagsRowDTO rowData) {
         super(Children.LEAF, createLookup(rowData.getTag()));
         this.rowData = rowData;
         this.columns = results.getColumns();
-        setDisplayName(results.getDisplayName());
-        setName(results.getDisplayName());
+        setDisplayName(rowData.getDisplayName());
+        setName(rowData.getDisplayName());
         setIconBaseWithExtension(CONTENT_ICON_PATH);
     }
 

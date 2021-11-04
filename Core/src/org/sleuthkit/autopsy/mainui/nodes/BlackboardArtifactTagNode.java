@@ -49,8 +49,9 @@ public final class BlackboardArtifactTagNode extends AbstractNode {
         super(Children.LEAF, createLookup(rowData.getTag()));
         this.rowData = rowData;
         this.columns = results.getColumns();
-        setDisplayName(results.getDisplayName());
-        setName(results.getDisplayName());
+        setDisplayName(rowData.getDisplayName());
+        setShortDescription(rowData.getDisplayName());
+        setName(Long.toString(rowData.getId()));
         setIconBaseWithExtension(ICON_PATH);
     }
 

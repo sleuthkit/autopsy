@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.BlackboardArtifactTag;
  */
 public final class BlackboardArtifactTagsRowDTO extends BaseRowDTO {
 
-    private static final String TYPE_ID = "FILE_TAG";
+    private static final String TYPE_ID = "ARTIFACT_TAG";
 
     private final BlackboardArtifactTag tag;
 
@@ -46,6 +46,17 @@ public final class BlackboardArtifactTagsRowDTO extends BaseRowDTO {
      */
     public BlackboardArtifactTag getTag() {
         return tag;
+    }
+    
+    /**
+     * Returns the tags display name.
+     * 
+     * @return The display name for this tag.
+     */
+    public String getDisplayName() {
+       return getCellValues().size() > 0
+                ? getCellValues().get(0).toString()
+                : "";
     }
 
 }

@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.ContentTag;
  */
 public class ContentTagsRowDTO extends BaseRowDTO {
 
-    private static final String TYPE_ID = "RESULT_TAG";
+    private static final String TYPE_ID = "CONTENT_TAG";
 
     private final ContentTag tag;
 
@@ -46,6 +46,17 @@ public class ContentTagsRowDTO extends BaseRowDTO {
      */
     public ContentTag getTag() {
         return tag;
+    }
+    
+    /**
+     * Returns the tags display name.
+     * 
+     * @return The display name for this tag.
+     */
+    public String getDisplayName() {
+       return getCellValues().size() > 0
+                ? getCellValues().get(0).toString()
+                : "";
     }
 
 }
