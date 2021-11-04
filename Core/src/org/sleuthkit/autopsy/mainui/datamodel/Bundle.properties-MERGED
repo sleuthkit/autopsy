@@ -1,3 +1,14 @@
+AccountsDAO.createSheet.comment.displayName=C
+AccountsDAO.createSheet.comment.name=C
+AccountsDAO.createSheet.count.displayName=O
+AccountsDAO.createSheet.score.displayName=S
+AccountsDAO.fileColumns.noDescription=No Description
+AccountsDAO_accountHostNameProperty_displayName=Host
+AccountsDAO_accountNameProperty_displayName=Name
+AccountsDAO_accountRealmNameProperty_displayName=Realm Name
+AccountsDAO_accountScopeNameProperty_displayName=Scope
+AccountsDAO_createdTimeProperty_displayName=Creation Time
+AccountsDAO_loginNameProperty_displayName=Login Name
 AnalysisResultDAO.columnKeys.conclusion.description=Conclusion
 AnalysisResultDAO.columnKeys.conclusion.displayName=Conclusion
 AnalysisResultDAO.columnKeys.conclusion.name=Conclusion
