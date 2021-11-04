@@ -94,7 +94,7 @@ public final class ActionsFactory {
             group.addAll(getAssociatedFileActions(actionContext).get());
         }
 
-        if (actionContext.getSourceContent() != null) {
+        if (actionContext.getSourceContent().isPresent()) {
 
             Optional<ActionGroup> optionalGroup = getSourceContentActions(actionContext);
             if (optionalGroup.isPresent()) {
