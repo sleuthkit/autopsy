@@ -38,6 +38,7 @@ public class MainDAO {
     private final AnalysisResultDAO analysisResultDAO = AnalysisResultDAO.getInstance();
     private final ViewsDAO viewsDAO = ViewsDAO.getInstance();
     private final TagsDAO tagsDAO = TagsDAO.getInstance();
+    private final AccountsDAO accountsDAO = AccountsDAO.getInstance();
 
     public DataArtifactDAO getDataArtifactsDAO() {
         return dataArtifactDAO;
@@ -53,5 +54,9 @@ public class MainDAO {
     
     public TagsDAO getTagsDAO() {
         return tagsDAO;
-    }    
+    }
+    
+    public AccountsDAO getAccountsDAO() {
+        return accountsDAO;
+    }
 }
