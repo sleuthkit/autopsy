@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.CaseDbAccessManager.CasePreparedStatement;
+import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -427,7 +427,7 @@ public class ViewsDAO {
 
             Map<String, Long> typeCounts = new HashMap<>();
 
-            try (CasePreparedStatement casePreparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query)) {
+            try (CaseDbPreparedStatement casePreparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query)) {
 
                 if (likeItem != null) {
                     casePreparedStatement.setString(1, likeItem);
@@ -461,7 +461,7 @@ public class ViewsDAO {
 
                 return new TreeResultsDTO<>(treeList);
             }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
             throw new ExecutionException("An error occurred while fetching file counts.", ex);
         }
     }
