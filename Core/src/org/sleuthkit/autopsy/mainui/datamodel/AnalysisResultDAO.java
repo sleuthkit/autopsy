@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.CaseDbAccessManager.CasePreparedStatement;
+import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.HostAddress;
 import org.sleuthkit.datamodel.Image;
@@ -544,7 +544,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         try {
             // get artifact types and counts
             SleuthkitCase skCase = getCase();
-            try (CasePreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query)) {
+            try (CaseDbPreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query)) {
 
                 int paramIdx = 0;
                 if (dataSourceId != null) {
@@ -653,7 +653,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         try {
             // get artifact types and counts
             SleuthkitCase skCase = getCase();
-            CasePreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query);
+            CaseDbPreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query);
 
             int paramIdx = 0;
             if (dataSourceId != null) {
