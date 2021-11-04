@@ -48,7 +48,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.pictureanalyzer.PictureAnalyzerIngestModuleFactory;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -68,7 +67,6 @@ import org.sleuthkit.datamodel.Score;
 public class EXIFProcessor implements PictureProcessor {
 
     private static final Logger logger = Logger.getLogger(EXIFProcessor.class.getName());
-    private static final BlackboardArtifact.Type EXIF_METADATA = new BlackboardArtifact.Type(TSK_METADATA_EXIF);
 
     @Override
     @NbBundle.Messages({
@@ -151,7 +149,7 @@ public class EXIFProcessor implements PictureProcessor {
 
             final Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
-            if (!attributes.isEmpty() && !blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
+            if (!attributes.isEmpty() && !blackboard.artifactExists(file, BlackboardArtifact.Type.TSK_METADATA_EXIF, attributes)) {
                 List<BlackboardArtifact> artifacts = new ArrayList<>();
                 final BlackboardArtifact exifArtifact = (file.newAnalysisResult(
                         BlackboardArtifact.Type.TSK_METADATA_EXIF,

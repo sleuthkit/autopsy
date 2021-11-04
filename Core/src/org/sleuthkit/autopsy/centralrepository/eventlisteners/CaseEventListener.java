@@ -22,19 +22,13 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -44,7 +38,6 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
-import org.sleuthkit.autopsy.casemodule.events.OsAcctInstancesAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -62,21 +55,10 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.Blackboard;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
 import org.sleuthkit.datamodel.DataArtifact;
-import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.OsAccountInstance;
-import org.sleuthkit.datamodel.Score;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * An Autopsy events listener for case events relevant to the central
@@ -94,53 +76,8 @@ public final class CaseEventListener implements PropertyChangeListener {
             Case.Events.DATA_SOURCE_ADDED,
             Case.Events.TAG_DEFINITION_CHANGED,
             Case.Events.CURRENT_CASE,
-            Case.Events.DATA_SOURCE_NAME_CHANGED,
-            Case.Events.OS_ACCT_INSTANCES_ADDED);
-    private static final int MAX_PREV_CASES_FOR_NOTABLE_SCORE = 10; // Also appears in CentralRepoDataArtifactIngestModule
-    private static final int MAX_PREV_CASES_FOR_PREV_SEEN = 20; // Also appears in CentralRepoDataArtifactIngestModule
-    private static final AtomicBoolean createOSAcctCorrAttrs = new AtomicBoolean();
-    private static final AtomicBoolean flagPreviouslySeenOSAccts = new AtomicBoolean();
+            Case.Events.DATA_SOURCE_NAME_CHANGED);
     private final ExecutorService jobProcessingExecutor;
-
-    /**
-     * Set whether or not central repository case event listeners should create
-     * correlation attributes for new OS Accounts.
-     *
-     * @param flag True or false.
-     */
-    public static void setCreateOsAcctCorrAttrs(boolean flag) {
-        createOSAcctCorrAttrs.set(flag);
-    }
-
-    /**
-     * Gets whether or not central repository case event listeners should create
-     * correlation attributes for new OS Accounts.
-     *
-     * @return flag True or false.
-     */
-    public static boolean getCreateOsAcctCorrAttrs() {
-        return createOSAcctCorrAttrs.get();
-    }
-
-    /**
-     * Sets whether or not central repository case event listeners should create
-     * previously seen analyis results for OS accounts.
-     *
-     * @param flag True or false.
-     */
-    public static void setFlagPrevSeenOsAccts(boolean flag) {
-        flagPreviouslySeenOSAccts.set(flag);
-    }
-
-    /**
-     * Gets whether or not central repository case event listeners should create
-     * previously seen analyis results for OS accounts.
-     *
-     * @return flag True or false.
-     */
-    public static boolean getFlagPrevSeenOsAccts() {
-        return flagPreviouslySeenOSAccts.get();
-    }
 
     /**
      * Contructs an Autopsy events listener for case events relevant to the
@@ -209,10 +146,8 @@ public final class CaseEventListener implements PropertyChangeListener {
             case DATA_SOURCE_NAME_CHANGED:
                 jobProcessingExecutor.submit(new DataSourceNameChangedTask(centralRepo, evt));
                 break;
-            case OS_ACCT_INSTANCES_ADDED: {
-                jobProcessingExecutor.submit(new OsAccountInstancesAddedTask(centralRepo, evt));
-            }
-            break;
+            default:
+                break;
         }
     }
 
@@ -701,120 +636,6 @@ public final class CaseEventListener implements PropertyChangeListener {
                 }
             }
         } // CURRENT_CASE
-    }
-
-    /**
-     * Adds OS account instances to the central repository and creates
-     * previously seen analysis results for them if the instances havd been seen
-     * in other cases.
-     */
-    @NbBundle.Messages({"CaseEventsListener.module.name=Central Repository",
-        "CaseEventsListener.prevCaseComment.text=Users seen in previous cases",
-        "CaseEventsListener.prevExists.text=Previously Seen Users (Central Repository)"})
-    private final class OsAccountInstancesAddedTask implements Runnable {
-
-        private final CentralRepository dbManager;
-        private final PropertyChangeEvent event;
-        private final String MODULE_NAME = Bundle.CaseEventsListener_module_name();
-
-        private OsAccountInstancesAddedTask(CentralRepository db, PropertyChangeEvent evt) {
-            dbManager = db;
-            event = evt;
-        }
-
-        @Override
-        public void run() {
-            if (!getCreateOsAcctCorrAttrs() && !getFlagPrevSeenOsAccts()) {
-                return;
-            }
-            final OsAcctInstancesAddedEvent osAcctInstancesAddedEvent = (OsAcctInstancesAddedEvent) event;
-            List<OsAccountInstance> addedOsAccountNew = osAcctInstancesAddedEvent.getOsAccountInstances();
-            for (OsAccountInstance osAccountInstance : addedOsAccountNew) {
-                try {
-                    OsAccount osAccount = osAccountInstance.getOsAccount();
-                    List<CorrelationAttributeInstance> correlationAttributeInstances = CorrelationAttributeUtil.makeCorrAttrsToSave(osAccountInstance);
-                    if (correlationAttributeInstances.isEmpty()) {
-                        return;
-                    }
-
-                    Optional<String> accountAddr = osAccount.getAddr();
-                    try {
-                        if (getCreateOsAcctCorrAttrs()) {
-                            for (CorrelationAttributeInstance correlationAttributeInstance : correlationAttributeInstances) {
-                                dbManager.addArtifactInstance(correlationAttributeInstance);
-                            }
-                        }
-
-                        if (getFlagPrevSeenOsAccts()) {
-                            CorrelationAttributeInstance instanceWithTypeValue = null;
-                            for (CorrelationAttributeInstance instance : correlationAttributeInstances) {
-                                if (instance.getCorrelationType().getId() == CorrelationAttributeInstance.OSACCOUNT_TYPE_ID) {
-                                    instanceWithTypeValue = instance;
-                                    break;
-                                }
-                            }
-
-                            if (instanceWithTypeValue != null) {
-                                List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(instanceWithTypeValue.getCorrelationType(), instanceWithTypeValue.getCorrelationValue());
-
-                                for (CorrelationAttributeInstance instance : previousOccurences) {
-                                    //we can get the first instance here since the case for all attributes will be the same
-                                    if (!instance.getCorrelationCase().getCaseUUID().equals(instanceWithTypeValue.getCorrelationCase().getCaseUUID())) {
-                                        SleuthkitCase tskCase = osAccount.getSleuthkitCase();
-                                        Blackboard blackboard = tskCase.getBlackboard();
-
-                                        List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(instanceWithTypeValue.getCorrelationType(), instanceWithTypeValue.getCorrelationValue());
-
-                                        // calculate score
-                                        Score score;
-                                        int numCases = caseDisplayNames.size();
-                                        if (numCases <= MAX_PREV_CASES_FOR_NOTABLE_SCORE) {
-                                            score = Score.SCORE_LIKELY_NOTABLE;
-                                        } else if (numCases > MAX_PREV_CASES_FOR_NOTABLE_SCORE && numCases <= MAX_PREV_CASES_FOR_PREV_SEEN) {
-                                            score = Score.SCORE_NONE;
-                                        } else {
-                                            // don't make an Analysis Result, the artifact is too common.
-                                            continue;
-                                        }
-
-                                        String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
-                                        String justification = "Previously seen in cases " + prevCases;
-                                        Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
-                                                new BlackboardAttribute(
-                                                        TSK_SET_NAME, MODULE_NAME,
-                                                        Bundle.CaseEventsListener_prevExists_text()),
-                                                new BlackboardAttribute(
-                                                        TSK_CORRELATION_TYPE, MODULE_NAME,
-                                                        instance.getCorrelationType().getDisplayName()),
-                                                new BlackboardAttribute(
-                                                        TSK_CORRELATION_VALUE, MODULE_NAME,
-                                                        instanceWithTypeValue.getCorrelationValue()),
-                                                new BlackboardAttribute(
-                                                        TSK_OTHER_CASES, MODULE_NAME,
-                                                        prevCases));
-                                        BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
-                                                BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, score,
-                                                null, Bundle.CaseEventsListener_prevExists_text(), justification, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
-                                        try {
-                                            blackboard.postArtifact(newAnalysisResult, MODULE_NAME, null);
-                                            break;
-                                        } catch (Blackboard.BlackboardException ex) {
-                                            LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } catch (CorrelationAttributeNormalizationException ex) {
-                        LOGGER.log(Level.SEVERE, "Exception with Correlation Attribute Normalization.", ex);  //NON-NLS
-                    } catch (CentralRepoException ex) {
-                        LOGGER.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", accountAddr.get()), ex);  //NON-NLS
-                    }
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Cannot get central repository for OsAccount: " + "OsAccount", ex);
-                }
-            }
-        }
     }
 
     private final class DataSourceNameChangedTask implements Runnable {

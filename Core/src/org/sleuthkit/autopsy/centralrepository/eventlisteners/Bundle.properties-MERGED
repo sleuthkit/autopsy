@@ -1,7 +1,4 @@
 caseeventlistener.evidencetag=Evidence
-CaseEventsListener.module.name=Central Repository
-CaseEventsListener.prevCaseComment.text=Users seen in previous cases
-CaseEventsListener.prevExists.text=Previously Seen Users (Central Repository)
 CentralRepositoryNotificationDialog.bulletHeader=This data is used to:
 CentralRepositoryNotificationDialog.bulletOne=Ignore common items (files, domains, and accounts)
 CentralRepositoryNotificationDialog.bulletThree=Create personas that group accounts

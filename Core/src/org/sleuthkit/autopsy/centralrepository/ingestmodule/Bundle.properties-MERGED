@@ -15,8 +15,11 @@ CrDataArtifactIngestModule_noCurrentCaseErrMsg=Error getting current case
 # {0} - list of cases
 CrDataArtifactIngestModule_notableJustification=Previously marked as notable in cases {0}
 CrDataArtifactIngestModule_notableSetName=Previously Tagged As Notable (Central Repository)
+CrDataArtifactIngestModule_osAcctMgrInaccessibleErrMsg=Error getting OS accounts manager
 # {0} - list of cases
 CrDataArtifactIngestModule_prevSeenJustification=Previously seen in cases {0}
+CrDataArtifactIngestModule_prevSeenOsAcctConfig=Previously Seen Users (Central Repository)
+CrDataArtifactIngestModule_prevSeenOsAcctSetName=Users seen in previous cases
 CrDataArtifactIngestModule_prevSeenSetName=Previously Seen (Central Repository)
 CrDataArtifactIngestModule_prevUnseenJustification=Previously seen in zero cases
 IngestSettingsPanel.ingestSettingsLabel.text=Ingest Settings

@@ -114,8 +114,55 @@ public class CorrelationAttributeUtil {
         return Collections.emptyList();
     }
 
-    public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(OsAccountInstance osAccountInstance) {
-        return makeCorrAttrsForSearch(osAccountInstance);
+    /**
+     * Gets the correlation attributes for an OS account.
+     *
+     * @param account The OS account.
+     *
+     * @return The correlation attributes.
+     */
+    public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(OsAccount account) {
+        List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
+        if (CentralRepository.isEnabled()) {
+            Optional<String> accountAddr = account.getAddr();
+            if (accountAddr.isPresent() && !isSystemOsAccount(accountAddr.get())) {
+                try {
+                    Content dataSource = account.getDataSource();
+                    CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
+                    CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
+                            CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
+                            accountAddr.get(),
+                            correlationCase,
+                            CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource),
+                            dataSource.getName(),
+                            "",
+                            TskData.FileKnown.KNOWN,
+                            account.getId());
+                    correlationAttrs.add(correlationAttributeInstance);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Error getting data source for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
+                } catch (CentralRepoException ex) {
+                    logger.log(Level.SEVERE, String.format("Error querying central repository for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, String.format("Error getting current case for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
+                } catch (CorrelationAttributeNormalizationException ex) {
+                    logger.log(Level.SEVERE, String.format("Error normalizing correlation attribute for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
+                }
+            }
+        }
+        return correlationAttrs;
+    }
+
+    /**
+     * Determines whether or not a given OS account address is a system account
+     * address.
+     *
+     * @param accountAddr The OS account address.
+     *
+     * @return True ofr false.
+     */
+    private static boolean isSystemOsAccount(String accountAddr) {
+        return accountAddr.equals("S-1-5-18") || accountAddr.equals("S-1-5-19") || accountAddr.equals("S-1-5-20");
     }
 
     /**

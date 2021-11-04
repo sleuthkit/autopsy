@@ -316,7 +316,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
                         prevCases));
         try {
             // Create artifact if it doesn't already exist.
-            if (!blackboard.artifactExists(abstractFile, TSK_PREVIOUSLY_NOTABLE, attributes)) {
+            if (!blackboard.artifactExists(abstractFile, BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
                         BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, Score.SCORE_NOTABLE,
                         null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), justification, attributes)
