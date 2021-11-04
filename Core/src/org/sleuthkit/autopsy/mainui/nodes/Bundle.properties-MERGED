@@ -1,4 +1,5 @@
-FileNodev2.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E
-FileNodev2.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash
-FileNodev2.getActions.viewFileInDir.text=View File in Directory
-FileNodev2.getActions.viewInNewWin.text=View Item in New Window
+SearchResultRootNode_createSheet_childCount_displayName=Child Count
+SearchResultRootNode_createSheet_childCount_name=Child Count
+SearchResultRootNode_createSheet_type_displayName=Name
+SearchResultRootNode_createSheet_type_name=Name
+SearchResultRootNode_noDesc=No Description
