@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-2020 Basis Technology Corp.
+Copyright 2016-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,7 +72,7 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             tangoDbFiles = AppSQLiteDB.findAppDatabases(dataSource, "tc.db", True, self._PACKAGE_NAME)
             for tangoDbFile in tangoDbFiles:
                 try:
-                    self.__findTangoMessagesInDB(tangoDbFile, dataSource)
+                    self.__findTangoMessagesInDB(tangoDbFile, dataSource, context)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing Tango messages", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -80,7 +80,7 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             # Error finding Tango messages.
             pass
 
-    def __findTangoMessagesInDB(self, tangoDb, dataSource):
+    def __findTangoMessagesInDB(self, tangoDb, dataSource, context):
         if not tangoDb:
             return
 
@@ -91,7 +91,7 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             tangoDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                                     self._PARSER_NAME,
                                                     tangoDb.getDBFile(),
-                                                    Account.Type.TANGO )  
+                                                    Account.Type.TANGO, context.getJobId())  
 
             resultSet = tangoDb.runQuery(
                 "SELECT conv_id, create_time, direction, payload FROM messages ORDER BY create_time DESC;")

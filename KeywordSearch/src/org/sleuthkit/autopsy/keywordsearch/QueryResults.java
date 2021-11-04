@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,8 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestServices;;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -64,7 +65,7 @@ class QueryResults {
      * and publishing an event to notify subscribers of the blackboard posts.
      *
      * The KeywordSearchQuery is used to do the blackboard posts.
-     * 
+     *
      * @param query The query.
      */
     QueryResults(KeywordSearchQuery query) {
@@ -141,9 +142,10 @@ class QueryResults {
      *                    messages inbox if there is a keyword hit in the text
      *                    exrtacted from the text source object.
      * @param saveResults Flag whether to save search results as KWS artifacts.
-     *
+     * @param ingestJobId The numeric identifier of the ingest job within which
+     *                    the artifacts are being created, may be null.
      */
-    void process(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<?, ?> worker, boolean notifyInbox, boolean saveResults) {
+    void process(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<?, ?> worker, boolean notifyInbox, boolean saveResults, Long ingestJobId) {
         /*
          * Initialize the progress indicator to the number of keywords that will
          * be processed.
@@ -218,15 +220,15 @@ class QueryResults {
                 } catch (TskCoreException | NoCurrentCaseException tskCoreException) {
                     logger.log(Level.SEVERE, "Failed to get text source object for keyword hit", tskCoreException); //NON-NLS
                 }
-                
+
                 if ((content != null) && saveResults) {
                     /*
-                    * Post an artifact for the hit to the blackboard.
+                     * Post an artifact for the hit to the blackboard.
                      */
                     BlackboardArtifact artifact = query.createKeywordHitArtifact(content, keyword, hit, snippet, query.getKeywordList().getName());
 
                     /*
-                    * Send an ingest inbox message for the hit.
+                     * Send an ingest inbox message for the hit.
                      */
                     if (null != artifact) {
                         hitArtifacts.add(artifact);
@@ -253,7 +255,7 @@ class QueryResults {
                 SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                 Blackboard blackboard = tskCase.getBlackboard();
 
-                blackboard.postArtifacts(hitArtifacts, MODULE_NAME);
+                blackboard.postArtifacts(hitArtifacts, MODULE_NAME, ingestJobId);
             } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Failed to post KWH artifact to blackboard.", ex); //NON-NLS
             }
