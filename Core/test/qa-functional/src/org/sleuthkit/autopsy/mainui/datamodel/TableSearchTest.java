@@ -32,6 +32,7 @@ import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -51,6 +52,7 @@ import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.Volume;
@@ -81,6 +83,8 @@ public class TableSearchTest extends NbTestCase {
     private static final String ARTIFACT_CONFIGURATION = "Test configuration";
     private static final String ARTIFACT_JUSTIFICATION = "Test justification";
     private static final Score ARTIFACT_SCORE = Score.SCORE_LIKELY_NOTABLE;
+    private static final long ARTIFACT_COUNT_WEB_BOOKMARK = 125;
+    private static final long ARTIFACT_COUNT_YARA = 150;
     
     // Values for the hash set hit tests
     private static final String HASH_SET_1 = "Hash Set 1";
@@ -94,11 +98,21 @@ public class TableSearchTest extends NbTestCase {
     private static final String KEYWORD_PREVIEW = "There is a bomb.";
     
     // Extension and MIME type test
+    private static AbstractFile customFile;
     private static final String CUSTOM_MIME_TYPE = "fake/type";
     private static final String CUSTOM_MIME_TYPE_FILE_NAME = "test.fake";
     private static final String CUSTOM_EXTENSION = "fake";
     private static final Set<String> CUSTOM_EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("." + CUSTOM_EXTENSION))); //NON-NLS
     private static final Set<String> EMPTY_RESULT_SET_EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(".blah", ".blah2", ".crazy"))); //NON-NLS
+    
+    // Tag test
+    private static final String TAG_COMMENT = "Tag comment";
+    private static final String TAG_DESCRIPTION = "Tag description";
+    private static final String MD5_COLUMN = "MD5 Hash";
+    private static final String FILE_PATH_COLUMN = "File Path";
+    private static final String MODIFIED_TIME_COLUMN = "Modified Time";
+    private static final String SOURCE_NAME_COLUMN = "Source Name";
+    private static final String SOURCE_FILE_PATH_COLUMN = "Source File Path";
     
     /////////////////////////////////////////////////
     // Data to be used across the test methods.
@@ -107,6 +121,7 @@ public class TableSearchTest extends NbTestCase {
     Case openCase = null;          // The case for testing
     SleuthkitCase db = null;       // The case database
     Blackboard blackboard = null;  // The blackboard
+    TagsManager tagsManager = null;// Tags manager
 
     DataSource dataSource1 = null; // A local files data source
     DataSource dataSource2 = null; // A local files data source
@@ -146,6 +161,10 @@ public class TableSearchTest extends NbTestCase {
     Volume fsTestVolumeB1 = null; // Another volume
     Pool fsTestPoolB = null;       // A pool
 
+    // Tags test
+    TagName knownTag1 = null;
+    TagName tag2 = null;
+
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(TableSearchTest.class).
                 clusters(".*").
@@ -171,6 +190,7 @@ public class TableSearchTest extends NbTestCase {
         extensionSearchTest();
         sizeSearchTest();
         fileSystemTest();
+        tagsTest();
     }
 
     /**
@@ -183,6 +203,7 @@ public class TableSearchTest extends NbTestCase {
             openCase = CaseUtils.createAsCurrentCase("testTableSearchCase");
             db = openCase.getSleuthkitCase();
             blackboard = db.getBlackboard();
+            tagsManager = openCase.getServices().getTagsManager();
 
             // Add two logical files data sources
             trans = db.beginTransaction();
@@ -214,7 +235,7 @@ public class TableSearchTest extends NbTestCase {
             fileB1.setMIMEType("text/plain");
             fileB1.save();
 
-            AbstractFile customFile = db.addLocalFile(CUSTOM_MIME_TYPE_FILE_NAME, "", 67000000, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);
+            customFile = db.addLocalFile(CUSTOM_MIME_TYPE_FILE_NAME, "", 67000000, 0, 0, 0, 0, true, TskData.EncodingType.NONE, folderB1);
             customFile.setMIMEType(CUSTOM_MIME_TYPE);
             customFile.save();
 
@@ -251,6 +272,13 @@ public class TableSearchTest extends NbTestCase {
             customDataArtifactSourceFile = fileA3;
             customDataArtifactLinkedFile = fileA2;
             
+            // Add a lot of web bookmark data artifacts
+            for (int i = 0;i < ARTIFACT_COUNT_WEB_BOOKMARK;i++) {
+                attrs.clear();
+                attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COMMENT, MODULE_NAME, Integer.toString(i)));
+                fileA1.newDataArtifact(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, attrs);
+            }
+            
             // Add analysis results
             // Data source 1: Encryption detected (2), custom type
             // Data source 2: Encryption detected
@@ -274,6 +302,13 @@ public class TableSearchTest extends NbTestCase {
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_ENTROPY, MODULE_NAME, ARTIFACT_DOUBLE));
             customAnalysisResult = customDataArtifact.newAnalysisResult(customAnalysisResultType, ARTIFACT_SCORE, ARTIFACT_CONCLUSION, ARTIFACT_CONFIGURATION, ARTIFACT_JUSTIFICATION, attrs).getAnalysisResult();
             customAnalysisResultSource = customDataArtifact;
+            
+            // Add a lot of YARA hit analysis results
+            for (int i = 0;i < ARTIFACT_COUNT_YARA;i++) {
+                attrs.clear();
+                attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_COMMENT, MODULE_NAME, Integer.toString(i)));
+                fileA1.newAnalysisResult(BlackboardArtifact.Type.TSK_YARA_HIT, Score.SCORE_NOTABLE, "conclusion", "configuration", "justification", attrs);
+            }
             
             // Add hash hits
             attrs.clear();
@@ -400,12 +435,31 @@ public class TableSearchTest extends NbTestCase {
       
             trans.commit();
             trans = null;
-        } catch (TestUtilsException | TskCoreException | BlackboardException ex) {
+
+            // Add tags ----
+            knownTag1 = tagsManager.addTagName("Tag 1", TAG_DESCRIPTION, TagName.HTML_COLOR.RED, TskData.FileKnown.KNOWN);
+            tag2 = tagsManager.addTagName("Tag 2", "Descrition");
+            
+            // Tag the custom artifacts in data source 1
+            openCase.getServices().getTagsManager().addBlackboardArtifactTag(customDataArtifact, knownTag1, TAG_COMMENT);
+            openCase.getServices().getTagsManager().addBlackboardArtifactTag(customAnalysisResult, tag2, "Comment 2");
+            
+            // Tag file in data source 1
+            openCase.getServices().getTagsManager().addContentTag(fileA2, tag2);
+            openCase.getServices().getTagsManager().addContentTag(fileA3, tag2);            
+            
+            // Tag file in data source 2
+            openCase.getServices().getTagsManager().addContentTag(fileB1, tag2);
+            
+            // Tag the custom file in data source 2
+            openCase.getServices().getTagsManager().addContentTag(customFile, knownTag1);
+
+        } catch (TestUtilsException | TskCoreException | BlackboardException | TagsManager.TagNameAlreadyExistsException ex) {
             if (trans != null) {
                 try {
                     trans.rollback();
                 } catch (TskCoreException ex2) {
-                    ex2.printStackTrace();
+                    Exceptions.printStackTrace(ex2);
                 }
             }
             Exceptions.printStackTrace(ex);
@@ -474,6 +528,41 @@ public class TableSearchTest extends NbTestCase {
             assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_INT));
             assertTrue(dataArtifactRowDTO.getCellValues().contains(ARTIFACT_DOUBLE));
 
+            // Test paging
+            Long pageSize = new Long(100);
+            assertTrue(ARTIFACT_COUNT_WEB_BOOKMARK > pageSize);
+            
+            // Get the first page
+            param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, null);
+            results = dataArtifactDAO.getDataArtifactsForTable(param, 0, pageSize, false);
+            assertEquals(ARTIFACT_COUNT_WEB_BOOKMARK, results.getTotalResultsCount());
+            assertEquals(pageSize.longValue(), results.getItems().size());
+            
+            // Save all artifact IDs from the first page
+            Set<Long> firstPageObjIds = new HashSet<>();
+            for (RowDTO row : results.getItems()) {
+                assertTrue(row instanceof DataArtifactRowDTO);
+                DataArtifactRowDTO dataRow = (DataArtifactRowDTO) row;
+                assertTrue(dataRow.getDataArtifact() != null);
+                firstPageObjIds.add(dataRow.getDataArtifact().getId());
+            }
+            assertEquals(pageSize.longValue(), firstPageObjIds.size());
+         
+            // Get the second page
+            param = new DataArtifactSearchParam(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, null);
+            results = dataArtifactDAO.getDataArtifactsForTable(param, pageSize, pageSize, false);
+            assertEquals(ARTIFACT_COUNT_WEB_BOOKMARK, results.getTotalResultsCount());
+            assertEquals(ARTIFACT_COUNT_WEB_BOOKMARK - pageSize, results.getItems().size());
+            
+            // Make sure no artifacts from the second page appeared on the first
+            for (RowDTO row : results.getItems()) {
+                assertTrue(row instanceof DataArtifactRowDTO);
+                DataArtifactRowDTO dataRow = (DataArtifactRowDTO) row;
+                assertTrue(dataRow.getDataArtifact() != null);
+                assertFalse("Data artifact ID: " + dataRow.getDataArtifact().getId()  + " appeared on both page 1 and page 2", 
+                        firstPageObjIds.contains(dataRow.getDataArtifact().getId()));
+            }
+            
         } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -577,6 +666,87 @@ public class TableSearchTest extends NbTestCase {
         }
     }    
     
+    public void tagsTest() {
+        // Quick test that everything is initialized
+        assertTrue(db != null);
+
+        try {
+            TagsDAO tagsDAO = MainDAO.getInstance().getTagsDAO();
+
+            // Get "Tag1" file tags from data source 1
+            TagsSearchParams param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.FILE, dataSource1.getId());
+            SearchResultsDTO results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size());
+
+            // Get "Tag2" file tags from data source 1
+            param = new TagsSearchParams(tag2, TagsSearchParams.TagType.FILE, dataSource1.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
+
+            // Get "Tag2" file tags from all data sources
+            param = new TagsSearchParams(tag2, TagsSearchParams.TagType.FILE, null);
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
+            
+            // Get "Tag1" file tags from data source 2
+            param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.FILE, dataSource2.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+            
+            // Get the row
+            RowDTO rowDTO = results.getItems().get(0);
+            assertTrue(rowDTO instanceof BaseRowDTO);
+            BaseRowDTO tagResultRowDTO = (BaseRowDTO) rowDTO;
+
+            // Check that the file tag is for the custom file
+            assertTrue(tagResultRowDTO.getCellValues().contains(customFile.getName()));            
+            
+            // Check that a few of the expected file tag column names are present
+            List<String> columnDisplayNames = results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
+            assertTrue(columnDisplayNames.contains(MD5_COLUMN));
+            assertTrue(columnDisplayNames.contains(FILE_PATH_COLUMN));
+            assertTrue(columnDisplayNames.contains(MODIFIED_TIME_COLUMN));
+            
+            // Check that the result tag columns are not present
+            assertFalse(columnDisplayNames.contains(SOURCE_NAME_COLUMN));
+            assertFalse(columnDisplayNames.contains(SOURCE_FILE_PATH_COLUMN));
+            
+            // Get "Tag1" result tags from data source 2
+            param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.RESULT, dataSource2.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(0, results.getTotalResultsCount());
+            assertEquals(0, results.getItems().size());
+            
+            // Get "Tag2" result tags from data source 1
+            param = new TagsSearchParams(tag2, TagsSearchParams.TagType.RESULT, dataSource1.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+
+            // Get "Tag1" result tags from data source 1
+            param = new TagsSearchParams(knownTag1, TagsSearchParams.TagType.RESULT, dataSource1.getId());
+            results = tagsDAO.getTags(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+            
+            // Get the row
+            rowDTO = results.getItems().get(0);
+            assertTrue(rowDTO instanceof BaseRowDTO);
+            tagResultRowDTO = (BaseRowDTO) rowDTO;
+
+            // Check that some of the expected result tag column values are present
+            assertTrue(tagResultRowDTO.getCellValues().contains(TAG_COMMENT));
+            
+        } catch (ExecutionException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }    
+    
     public void analysisResultSearchTest() {
         // Quick test that everything is initialized
         assertTrue(db != null);
@@ -628,6 +798,41 @@ public class TableSearchTest extends NbTestCase {
             assertTrue(analysisResultRowDTO.getCellValues().contains(ARTIFACT_JUSTIFICATION));
             assertTrue(analysisResultRowDTO.getCellValues().contains(ARTIFACT_CONFIGURATION));
             assertTrue(analysisResultRowDTO.getCellValues().contains(ARTIFACT_CONCLUSION));
+            
+             // Test paging
+            Long pageSize = new Long(100);
+            assertTrue(ARTIFACT_COUNT_YARA > pageSize);
+            
+            // Get the first page
+            param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_YARA_HIT, null);
+            results = analysisResultDAO.getAnalysisResultsForTable(param, 0, pageSize, false);
+            assertEquals(ARTIFACT_COUNT_YARA, results.getTotalResultsCount());
+            assertEquals(pageSize.longValue(), results.getItems().size());
+            
+            // Save all artifact IDs from the first page
+            Set<Long> firstPageObjIds = new HashSet<>();
+            for (RowDTO row : results.getItems()) {
+                assertTrue(row instanceof AnalysisResultRowDTO);
+                AnalysisResultRowDTO analysisRow = (AnalysisResultRowDTO) row;
+                assertTrue(analysisRow.getAnalysisResult() != null);
+                firstPageObjIds.add(analysisRow.getAnalysisResult().getId());
+            }
+            assertEquals(pageSize.longValue(), firstPageObjIds.size());
+         
+            // Get the second page
+            param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_YARA_HIT, null);
+            results = analysisResultDAO.getAnalysisResultsForTable(param, pageSize, pageSize, false);
+            assertEquals(ARTIFACT_COUNT_YARA, results.getTotalResultsCount());
+            assertEquals(ARTIFACT_COUNT_YARA - pageSize, results.getItems().size());
+            
+            // Make sure no artifacts from the second page appeared on the first
+            for (RowDTO row : results.getItems()) {
+                assertTrue(row instanceof AnalysisResultRowDTO);
+                AnalysisResultRowDTO analysisRow = (AnalysisResultRowDTO) row;
+                assertTrue(analysisRow.getAnalysisResult() != null);
+                assertFalse("Analysis result ID: " + analysisRow.getAnalysisResult().getId()  + " appeared on both page 1 and page 2", 
+                        firstPageObjIds.contains(analysisRow.getAnalysisResult().getId()));
+            }
             
         } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);
@@ -894,5 +1099,7 @@ public class TableSearchTest extends NbTestCase {
         }
         openCase = null;
         db = null;
+        blackboard = null;
+        tagsManager = null;
     }
 }

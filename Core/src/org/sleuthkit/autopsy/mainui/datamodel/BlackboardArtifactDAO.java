@@ -1,6 +1,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.collect.ImmutableSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -10,13 +11,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle;
+import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_GEN_INFO;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_TL_EVENT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -61,6 +72,8 @@ import org.sleuthkit.datamodel.TskCoreException;
     "BlackboardArtifactDAO.columnKeys.dataSource.description=Data Source"
 })
 abstract class BlackboardArtifactDAO {
+
+    private static Logger logger = Logger.getLogger(BlackboardArtifactDAO.class.getName());
 
     // GVDTODO there is a different standard for normal attr strings and email attr strings
     static final int STRING_LENGTH_MAX = 160;
@@ -111,6 +124,31 @@ abstract class BlackboardArtifactDAO {
             Bundle.BlackboardArtifactDAO_columnKeys_dataSource_displayName(),
             Bundle.BlackboardArtifactDAO_columnKeys_dataSource_description()
     );
+
+    /**
+     * Types that should not be shown in the tree.
+     */
+    @SuppressWarnings("deprecation")
+    private static final Set<BlackboardArtifact.Type> IGNORED_TYPES = Sets.newHashSet(
+            // these are shown in other parts of the UI (and different node types)
+            TSK_DATA_SOURCE_USAGE,
+            TSK_GEN_INFO,
+            new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE),
+            TSK_TL_EVENT,
+            //This is not meant to be shown in the UI at all. It is more of a meta artifact.
+            TSK_ASSOCIATED_OBJECT
+    );
+
+    private static final String IGNORED_TYPES_SQL_SET = IGNORED_TYPES.stream()
+            .map(tp -> Integer.toString(tp.getTypeID()))
+            .collect(Collectors.joining(", "));
+
+    /**
+     * @return The set of types that are not shown in the tree.
+     */
+    protected static Set<BlackboardArtifact.Type> getIgnoredTreeTypes() {
+        return IGNORED_TYPES;
+    }
 
     TableData createTableData(BlackboardArtifact.Type artType, List<BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
         Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();
@@ -217,6 +255,40 @@ abstract class BlackboardArtifactDAO {
     boolean isTimelineSupported(Collection<BlackboardAttribute.Type> attrTypes) {
         return attrTypes.stream()
                 .anyMatch(tp -> BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME.equals(tp.getValueType()));
+    }
+    
+    String getWhereClause(SearchParams<BlackboardArtifactSearchParam> cacheKey) {
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
+
+        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() + " ";
+        if (dataSourceId != null) {
+            originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
+        }
+        
+        String pagedWhereClause = originalWhereClause
+            + " ORDER BY artifacts.obj_id ASC"                
+            + (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0 ? " LIMIT " + cacheKey.getMaxResultsCount() : "")
+            + (cacheKey.getStartItem() > 0 ? " OFFSET " + cacheKey.getStartItem() : "");
+        return pagedWhereClause;
+    }
+    
+    long getTotalResultsCount(SearchParams<BlackboardArtifactSearchParam> cacheKey, long currentPageSize) throws TskCoreException, NoCurrentCaseException {
+        Blackboard blackboard = getCase().getBlackboard();
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
+        
+        if ( (cacheKey.getStartItem() == 0) // offset is zero AND
+            && ( (cacheKey.getMaxResultsCount() != null && currentPageSize < cacheKey.getMaxResultsCount()) // number of results is less than max
+                || (cacheKey.getMaxResultsCount() == null)) ) { // OR max number of results was not specified
+            return currentPageSize;
+        } else {
+            if (dataSourceId != null) {
+                return blackboard.getArtifactsCount(artType.getTypeID(), dataSourceId);
+            } else {
+                return blackboard.getArtifactsCount(artType.getTypeID());
+            }
+        }  
     }
 
     String getDataSourceName(Content srcContent) throws TskCoreException {
@@ -327,5 +399,47 @@ abstract class BlackboardArtifactDAO {
             this.columnKeys = columnKeys;
             this.rows = rows;
         }
+    }
+
+    /**
+     * Returns the count of each artifact type in the category.
+     *
+     * @param category     The artifact type category.
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     *
+     * @return The mapping of type to count.
+     *
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     */
+    Map<BlackboardArtifact.Type, Long> getCounts(BlackboardArtifact.Category category, Long dataSourceId) throws NoCurrentCaseException, TskCoreException {
+
+        // get artifact types and counts
+        SleuthkitCase skCase = getCase();
+        String query = "artifact_type_id, COUNT(*) AS count "
+                + " FROM blackboard_artifacts "
+                + " WHERE artifact_type_id NOT IN (" + IGNORED_TYPES_SQL_SET + ") "
+                + " AND artifact_type_id IN "
+                + " (SELECT artifact_type_id FROM blackboard_artifact_types WHERE category_type = " + category.getID() + ")"
+                + (dataSourceId == null ? "" : (" AND data_source_obj_id = " + dataSourceId + " "))
+                + " GROUP BY artifact_type_id";
+        Map<BlackboardArtifact.Type, Long> typeCounts = new HashMap<>();
+
+        skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+            try {
+                while (resultSet.next()) {
+                    int artifactTypeId = resultSet.getInt("artifact_type_id");
+                    BlackboardArtifact.Type type = skCase.getBlackboard().getArtifactType(artifactTypeId);
+                    long count = resultSet.getLong("count");
+                    typeCounts.put(type, count);
+                }
+            } catch (TskCoreException | SQLException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
+            }
+        });
+
+        return typeCounts;
     }
 }

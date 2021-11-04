@@ -21,13 +21,25 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
+import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiFunction;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
@@ -49,6 +61,8 @@ import org.sleuthkit.datamodel.VolumeSystem;
  * DAO for providing data about analysis results to populate the results viewer.
  */
 public class AnalysisResultDAO extends BlackboardArtifactDAO {
+
+    private static Logger logger = Logger.getLogger(AnalysisResultDAO.class.getName());
 
     private static AnalysisResultDAO instance = null;
 
@@ -106,30 +120,34 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return instance;
     }
 
+    /**
+     * @return The set of types that are not shown in the tree.
+     */
+    public static Set<BlackboardArtifact.Type> getIgnoredTreeTypes() {
+        return BlackboardArtifactDAO.getIgnoredTreeTypes();
+    }
+
     // TODO We can probably combine all the caches at some point
-    private final Cache<SearchParams<AnalysisResultSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<SearchParams<HashHitSearchParam>, AnalysisResultTableSearchResultsDTO> hashHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
-    private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(SearchParams<AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
-
-        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
-
-        // get analysis results
+        
         List<BlackboardArtifact> arts = new ArrayList<>();
-        if (dataSourceId != null) {
-            arts.addAll(blackboard.getAnalysisResultsByType(artType.getTypeID(), dataSourceId));
-        } else {
-            arts.addAll(blackboard.getAnalysisResultsByType(artType.getTypeID()));
-        }
-
-        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
-        TableData tableData = createTableData(artType, pagedArtifacts);
-        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
+        String pagedWhereClause = getWhereClause(cacheKey);
+        arts.addAll(blackboard.getAnalysisResultsWhere(pagedWhereClause));
+        blackboard.loadBlackboardAttributes(arts);
+        
+        // Get total number of results
+        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());  
+        
+        TableData tableData = createTableData(artType, arts);
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
 
     private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(SearchParams<? extends AnalysisResultSetSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -140,26 +158,28 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
-        // Get all hash set hits
-        List<AnalysisResult> allHashHits;
+        // We currently can't make a query on the set name field because need to use a prepared statement
+        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() + " ";
         if (dataSourceId != null) {
-            allHashHits = blackboard.getAnalysisResultsByType(artType.getTypeID(), dataSourceId);
-        } else {
-            allHashHits = blackboard.getAnalysisResultsByType(artType.getTypeID());
+            originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
         }
-
+        
+        List<BlackboardArtifact> allHashHits = new ArrayList<>();
+        allHashHits.addAll(blackboard.getAnalysisResultsWhere(originalWhereClause));
+        blackboard.loadBlackboardAttributes(allHashHits);
+        
         // Filter for the selected set
-        List<BlackboardArtifact> arts = new ArrayList<>();
-        for (AnalysisResult art : allHashHits) {
+        List<BlackboardArtifact> hashHits = new ArrayList<>();
+        for (BlackboardArtifact art : allHashHits) {
             BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
             if ((setNameAttr != null) && cacheKey.getParamData().getSetName().equals(setNameAttr.getValueString())) {
-                arts.add(art);
+                hashHits.add(art);
             }
         }
 
-        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
+        List<BlackboardArtifact> pagedArtifacts = getPaged(hashHits, cacheKey);
         TableData tableData = createTableData(artType, pagedArtifacts);
-        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), hashHits.size());
     }
 
     @Override
@@ -237,7 +257,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     + "Received artifact type: {0}; data source id: {1}", artType, artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        SearchParams<AnalysisResultSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        SearchParams<BlackboardArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         if (hardRefresh) {
             analysisResultCache.invalidate(searchParams);
         }
@@ -264,6 +284,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return hashHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
+    // TODO - JIRA-8117
+    // This needs to use more than just the set name
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
@@ -291,6 +313,145 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         keywordHitCache.invalidateAll();
     }
 
+    /**
+     * Returns a search results dto containing rows of counts data.
+     *
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     *
+     * @return The results where rows are row of AnalysisResultSearchParam.
+     *
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<AnalysisResultSearchParam> getAnalysisResultCounts(Long dataSourceId) throws ExecutionException {
+        try {
+            // get row dto's sorted by display name
+            Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.ANALYSIS_RESULT, dataSourceId);
+            List<TreeResultsDTO.TreeItemDTO<AnalysisResultSearchParam>> treeItemRows = typeCounts.entrySet().stream()
+                    .map(entry -> {
+                        return new TreeResultsDTO.TreeItemDTO<>(
+                                BlackboardArtifact.Category.ANALYSIS_RESULT.name(),
+                                new AnalysisResultSearchParam(entry.getKey(), dataSourceId),
+                                entry.getKey().getTypeID(),
+                                entry.getKey().getDisplayName(),
+                                entry.getValue());
+                    })
+                    .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
+                    .collect(Collectors.toList());
+
+            // return results
+            return new TreeResultsDTO<>(treeItemRows);
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching analysis result counts.", ex);
+        }
+    }
+
+// GVDTODO code to use in a future PR
+//    /**
+//     *
+//     * @param type         The artifact type to filter on.
+//     * @param setNameAttr  The blackboard attribute denoting the set name.
+//     * @param dataSourceId The data source object id for which the results
+//     *                     should be filtered or null if no data source
+//     *                     filtering.
+//     *
+//     * @return A mapping of set names to their counts.
+//     *
+//     * @throws IllegalArgumentException
+//     * @throws ExecutionException
+//     */
+//    Map<String, Long> getSetCountsMap(BlackboardArtifact.Type type, BlackboardAttribute.Type setNameAttr, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+//        if (dataSourceId != null && dataSourceId <= 0) {
+//            throw new IllegalArgumentException("Expected data source id to be > 0");
+//        }
+//
+//        try {
+//            // get artifact types and counts
+//            SleuthkitCase skCase = getCase();
+//            String query = " set_name, COUNT(*) AS count \n"
+//                    + "FROM ( \n"
+//                    + "  SELECT art.artifact_id, \n"
+//                    + "  (SELECT value_text \n"
+//                    + "    FROM blackboard_attributes attr \n"
+//                    + "    WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = " + setNameAttr.getTypeID() + " LIMIT 1) AS set_name \n"
+//                    + "	 FROM blackboard_artifacts art \n"
+//                    + "	 WHERE  art.artifact_type_id = " + type.getTypeID() + " \n"
+//                    + ((dataSourceId == null) ? "" : "  AND art.data_source_obj_id = " + dataSourceId + " \n")
+//                    + ") \n"
+//                    + "GROUP BY set_name";
+//
+//            Map<String, Long> setCounts = new HashMap<>();
+//            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+//                try {
+//                    while (resultSet.next()) {
+//                        String setName = resultSet.getString("set_name");
+//                        long count = resultSet.getLong("count");
+//                        setCounts.put(setName, count);
+//                    }
+//                } catch (SQLException ex) {
+//                    logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
+//                }
+//            });
+//
+//            return setCounts;
+//        } catch (NoCurrentCaseException | TskCoreException ex) {
+//            throw new ExecutionException("An error occurred while fetching set counts", ex);
+//        }
+//    }
+//
+//    /**
+//     * Get counts for individual sets of the provided type to be used in the
+//     * tree view.
+//     *
+//     * @param type         The blackboard artifact type.
+//     * @param dataSourceId The data source object id for which the results
+//     *                     should be filtered or null if no data source
+//     *                     filtering.
+//     * @param nullSetName  For artifacts with no set, this is the name to
+//     *                     provide. If null, artifacts without a set name will
+//     *                     be ignored.
+//     * @param converter    Means of converting from data source id and set name
+//     *                     to an AnalysisResultSetSearchParam
+//     *
+//     * @return The sets along with counts to display.
+//     *
+//     * @throws IllegalArgumentException
+//     * @throws ExecutionException
+//     */
+//    private <T extends AnalysisResultSetSearchParam> TreeResultsDTO<T> getSetCounts(
+//            BlackboardArtifact.Type type,
+//            Long dataSourceId,
+//            String nullSetName,
+//            BiFunction<Long, String, T> converter) throws IllegalArgumentException, ExecutionException {
+//
+//        List<TreeItemDTO<T>> allSets
+//                = getSetCountsMap(type, BlackboardAttribute.Type.TSK_SET_NAME, dataSourceId).entrySet().stream()
+//                        .filter(entry -> nullSetName != null || entry.getKey() != null)
+//                        .map(entry -> {
+//                            return new TreeItemDTO<>(
+//                                    type.getTypeName(),
+//                                    converter.apply(dataSourceId, entry.getKey()),
+//                                    entry.getKey(),
+//                                    entry.getKey() == null ? nullSetName : entry.getKey(),
+//                                    entry.getValue());
+//                        })
+//                        .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
+//                        .collect(Collectors.toList());
+//
+//        return new TreeResultsDTO<>(allSets);
+//    }
+//
+//    public TreeResultsDTO<HashHitSearchParam> getHashHitSetCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+//        return getSetCounts(BlackboardArtifact.Type.TSK_HASHSET_HIT, dataSourceId, null, (dsId, setName) -> new HashHitSearchParam(dsId, setName));
+//    }
+//
+//    public TreeResultsDTO<AnalysisResultSetSearchParam> getSetCounts(BlackboardArtifact.Type type, Long dataSourceId, String nullSetName) throws IllegalArgumentException, ExecutionException {
+//        return getSetCounts(type, dataSourceId, nullSetName, (dsId, setName) -> new AnalysisResultSetSearchParam(type, dsId, setName));
+//    }
+
+    
     /**
      * Handles basic functionality of fetching and paging of analysis results.
      */
@@ -355,7 +516,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             return MainDAO.getInstance().getAnalysisResultDAO().getHashHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
     }
-    
+
     /**
      * Handles fetching and paging of keyword hits.
      */

@@ -38,6 +38,7 @@ public class MainDAO {
     private final AnalysisResultDAO analysisResultDAO = AnalysisResultDAO.getInstance();
     private final ViewsDAO viewsDAO = ViewsDAO.getInstance();
     private final FileSystemDAO fileSystemDAO = FileSystemDAO.getInstance();
+    private final TagsDAO tagsDAO = TagsDAO.getInstance();
 
     public DataArtifactDAO getDataArtifactsDAO() {
         return dataArtifactDAO;
@@ -53,5 +54,9 @@ public class MainDAO {
     
     public FileSystemDAO getFileSystemDAO() {
         return fileSystemDAO;
+    }
+    
+    public TagsDAO getTagsDAO() {
+        return tagsDAO;
     }
 }

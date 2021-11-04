@@ -22,26 +22,30 @@ import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Base class for search params for analysis results that filter by set name.
+ * Key for data artifact in order to retrieve data from DAO.
  */
-public class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
-    
-    private final String setName;
+public class BlackboardArtifactSearchParam {
+    private final BlackboardArtifact.Type artifactType;
+    private final Long dataSourceId;
 
-    public AnalysisResultSetSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, String setName) {
-        super(artifactType, dataSourceId);
-        this.setName = setName;
+    public BlackboardArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
+        this.artifactType = artifactType;
+        this.dataSourceId = dataSourceId;
     }
-    
-    public String getSetName() {
-        return setName;
+
+    public BlackboardArtifact.Type getArtifactType() {
+        return artifactType;
+    }
+
+    public Long getDataSourceId() {
+        return dataSourceId;
     }
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 79 * hash + Objects.hashCode(this.setName);
-        hash = 79 * hash + super.hashCode();
+        int hash = 7;
+        hash = 67 * hash + Objects.hashCode(this.artifactType);
+        hash = 67 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -56,12 +60,13 @@ public class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final AnalysisResultSetSearchParam other = (AnalysisResultSetSearchParam) obj;
-        if (!Objects.equals(this.setName, other.setName)) {
+        final BlackboardArtifactSearchParam other = (BlackboardArtifactSearchParam) obj;
+        if (!Objects.equals(this.artifactType, other.artifactType)) {
             return false;
         }
-        return super.equals(obj);
+        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+            return false;
+        }
+        return true;
     }
-
-    
 }
