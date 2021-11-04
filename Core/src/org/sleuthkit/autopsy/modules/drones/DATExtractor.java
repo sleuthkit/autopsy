@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -114,7 +114,7 @@ final class DATExtractor extends DroneExtractor {
                     GeoTrackPoints trackPoints = processCSVFile(context, DATFile, csvFilePath);
 
                     if (trackPoints != null && !trackPoints.isEmpty()) {
-                        (new GeoArtifactsHelper(getSleuthkitCase(), getName(), "DatCon", DATFile)).addTrack(DATFile.getName(), trackPoints, null);
+                        (new GeoArtifactsHelper(getSleuthkitCase(), getName(), "DatCon", DATFile, context.getJobId())).addTrack(DATFile.getName(), trackPoints, null);
                     } else {
                         logger.log(Level.INFO, String.format("No trackpoints with valid longitude or latitude found in %s", DATFile.getName())); //NON-NLS
                     }

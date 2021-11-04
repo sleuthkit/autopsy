@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +56,7 @@ public final class Blackboard implements Closeable {
     @Deprecated
     public synchronized void indexArtifact(BlackboardArtifact artifact) throws BlackboardException {
         try {
-            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(artifact, "");
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().postArtifact(artifact, "", null);
         } catch (org.sleuthkit.datamodel.Blackboard.BlackboardException ex) {
             throw new BlackboardException(ex.getMessage(), ex);
         }
@@ -117,6 +117,7 @@ public final class Blackboard implements Closeable {
      * @deprecated Do not use.
      */
     @Deprecated
+    @Override
     public void close() throws IOException {
         /*
          * No-op maintained for backwards compatibility. Clients should not

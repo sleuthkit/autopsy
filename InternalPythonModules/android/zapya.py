@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,7 +81,7 @@ class ZapyaAnalyzer(general.AndroidComponentAnalyzer):
                 # 
                 transferDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                     self._MODULE_NAME, transferDb.getDBFile(),
-                                    Account.Type.ZAPYA)
+                                    Account.Type.ZAPYA, context.getJobId())
 
                 queryString = "SELECT device, name, direction, createtime, path, title FROM transfer"
                 transfersResultSet = transferDb.runQuery(queryString)

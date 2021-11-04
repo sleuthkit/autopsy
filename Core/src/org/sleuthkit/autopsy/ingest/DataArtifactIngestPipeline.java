@@ -23,27 +23,28 @@ import java.util.Optional;
 import org.sleuthkit.datamodel.DataArtifact;
 
 /**
- * A pipeline of data artifact ingest modules used to execute data artifact
+ * A pipeline of data artifact ingest modules used to perform data artifact
  * ingest tasks for an ingest job.
  */
-final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIngestTask> {
+final class DataArtifactIngestPipeline extends IngestPipeline<DataArtifactIngestTask> {
 
     /**
-     * Constructs a pipeline of data artifact ingest modules used to execute
+     * Constructs a pipeline of data artifact ingest modules used to perform
      * data artifact ingest tasks for an ingest job.
      *
-     * @param ingestJobPipeline The ingest job pipeline that owns this ingest
-     *                          task pipeline.
-     * @param moduleTemplates   The ingest module templates that define this
-     *                          pipeline. May be an empty list.
+     * @param ingestJobExecutor The ingest job executor for this pipeline.
+     * @param moduleTemplates   The ingest module templates to be used to
+     *                          construct the ingest modules for this pipeline.
+     *                          May be an empty list if this type of pipeline is
+     *                          not needed for the ingest job.
      */
-    DataArtifactIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
-        super(ingestJobPipeline, moduleTemplates);
+    DataArtifactIngestPipeline(IngestJobExecutor ingestJobExecutor, List<IngestModuleTemplate> moduleTemplates) {
+        super(ingestJobExecutor, moduleTemplates);
     }
 
     @Override
     Optional<PipelineModule<DataArtifactIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
-        Optional<IngestTaskPipeline.PipelineModule<DataArtifactIngestTask>> module = Optional.empty();
+        Optional<IngestPipeline.PipelineModule<DataArtifactIngestTask>> module = Optional.empty();
         if (template.isDataArtifactIngestModuleTemplate()) {
             DataArtifactIngestModule ingestModule = template.createDataArtifactIngestModule();
             module = Optional.of(new DataArtifactIngestPipelineModule(ingestModule, template.getModuleName()));
@@ -52,18 +53,18 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
     }
 
     @Override
-    void prepareForTask(DataArtifactIngestTask task) throws IngestTaskPipelineException {
+    void prepareForTask(DataArtifactIngestTask task) throws IngestPipelineException {
     }
 
     @Override
-    void cleanUpAfterTask(DataArtifactIngestTask task) throws IngestTaskPipelineException {
+    void cleanUpAfterTask(DataArtifactIngestTask task) throws IngestPipelineException {
     }
 
     /**
      * A decorator that adds ingest infrastructure operations to a data artifact
      * ingest module.
      */
-    static final class DataArtifactIngestPipelineModule extends IngestTaskPipeline.PipelineModule<DataArtifactIngestTask> {
+    static final class DataArtifactIngestPipelineModule extends IngestPipeline.PipelineModule<DataArtifactIngestTask> {
 
         private final DataArtifactIngestModule module;
 
@@ -80,7 +81,7 @@ final class DataArtifactIngestPipeline extends IngestTaskPipeline<DataArtifactIn
         }
 
         @Override
-        void executeTask(IngestJobPipeline ingestJobPipeline, DataArtifactIngestTask task) throws IngestModuleException {
+        void process(IngestJobExecutor ingestJobExecutor, DataArtifactIngestTask task) throws IngestModuleException {
             DataArtifact artifact = task.getDataArtifact();
             module.process(artifact);
         }

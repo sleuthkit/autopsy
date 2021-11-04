@@ -53,16 +53,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Extract the LNK files from the jumplists and save them to ModuleOutput\RecentActivity\Jumplists
- * and then add them back into the case as a dervived file.
+ * Extract the LNK files from the jumplists and save them to
+ * ModuleOutput\RecentActivity\Jumplists and then add them back into the case as
+ * a dervived file.
  */
 final class ExtractJumpLists extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractJumpLists.class.getName());
-
-    private IngestJobContext context;
-
-    private static final String JUMPLIST_TSK_COMMENT = "Jumplist File";
     private static final String RA_DIR_NAME = "RecentActivity"; //NON-NLS
     private static final String AUTOMATIC_DESTINATIONS_FILE_DIRECTORY = "%/AppData/Roaming/Microsoft/Windows/Recent/AutomaticDestinations/";
     private static final String JUMPLIST_DIR_NAME = "jumplists"; //NON-NLS
@@ -70,26 +67,25 @@ final class ExtractJumpLists extends Extract {
     private String moduleName;
     private FileManager fileManager;
     private final IngestServices services = IngestServices.getInstance();
+    private final IngestJobContext context;
 
     @Messages({
-        "Jumplist_module_name=Windows Jumplist Extractor",
+        "Jumplist_module_name=Windows Jumplist Analyzer",
         "Jumplist_adding_extracted_files_msg=Chrome Cache: Adding %d extracted files for analysis."
     })
-    ExtractJumpLists() {
-        super(Bundle.Jumplist_module_name());
+    ExtractJumpLists(IngestJobContext context) {
+        super(Bundle.Jumplist_module_name(), context);
+        this.context = context;
     }
 
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
-
-        this.context = context;
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         moduleName = Bundle.Jumplist_module_name();
-        fileManager = currentCase.getServices().getFileManager(); 
+        fileManager = currentCase.getServices().getFileManager();
         long ingestJobId = context.getJobId();
 
-        String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), JUMPLIST_DIR_NAME , ingestJobId);
+        String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), JUMPLIST_DIR_NAME, ingestJobId);
         List<AbstractFile> jumpListFiles = extractJumplistFiles(dataSource, ingestJobId, baseRaTempPath);
-        
         if (jumpListFiles.isEmpty()) {
             return;
         }
@@ -102,26 +98,28 @@ final class ExtractJumpLists extends Extract {
         String derivedPath = null;
         String baseRaModPath = RAImageIngestModule.getRAOutputPath(Case.getCurrentCase(), JUMPLIST_DIR_NAME, ingestJobId);
         for (AbstractFile jumplistFile : jumpListFiles) {
-            if (!jumplistFile.getName().toLowerCase().contains("-slack") && !jumplistFile.getName().equals("..") && 
-                    !jumplistFile.getName().equals(".") && jumplistFile.getSize() > 0) {
-                String jlFile =  Paths.get(baseRaTempPath, jumplistFile.getName() + "_" + jumplistFile.getId()).toString();
-                String moduleOutPath =  baseRaModPath + File.separator + jumplistFile.getName() + "_" + jumplistFile.getId();
-                derivedPath = RA_DIR_NAME + File.separator + JUMPLIST_DIR_NAME + "_" + ingestJobId + File.separator + jumplistFile.getName()  + "_" + jumplistFile.getId();
+            if (!jumplistFile.getName().toLowerCase().contains("-slack") && !jumplistFile.getName().equals("..")
+                    && !jumplistFile.getName().equals(".") && jumplistFile.getSize() > 0) {
+                String jlFile = Paths.get(baseRaTempPath, jumplistFile.getName() + "_" + jumplistFile.getId()).toString();
+                String moduleOutPath = baseRaModPath + File.separator + jumplistFile.getName() + "_" + jumplistFile.getId();
+                derivedPath = RA_DIR_NAME + File.separator + JUMPLIST_DIR_NAME + "_" + ingestJobId + File.separator + jumplistFile.getName() + "_" + jumplistFile.getId();
                 File jlDir = new File(moduleOutPath);
                 if (jlDir.exists() == false) {
                     boolean dirMade = jlDir.mkdirs();
                     if (!dirMade) {
                         logger.log(Level.WARNING, "Error creating directory to store Jumplist LNK files %s", moduleOutPath); //NON-NLS
-                        continue; 
+                        continue;
                     }
                 }
                 derivedFiles.addAll(extractLnkFiles(jlFile, moduleOutPath, jumplistFile, derivedPath));
             }
         }
-        
+
         // notify listeners of new files and schedule for analysis
         progressBar.progress(String.format(Bundle.Jumplist_adding_extracted_files_msg(), derivedFiles.size()));
-        derivedFiles.forEach((derived) -> { services.fireModuleContentEvent(new ModuleContentEvent(derived)); });
+        derivedFiles.forEach((derived) -> {
+            services.fireModuleContentEvent(new ModuleContentEvent(derived));
+        });
         context.addFilesToJob(derivedFiles);
 
     }
@@ -132,8 +130,8 @@ final class ExtractJumpLists extends Extract {
      * @return - list of jumplist abstractfiles or empty list
      */
     private List<AbstractFile> extractJumplistFiles(Content dataSource, Long ingestJobId, String baseRaTempPath) {
-        List<AbstractFile> jumpListFiles  = new ArrayList<>();;
-        List<AbstractFile> tempJumpListFiles  = new ArrayList<>();;
+        List<AbstractFile> jumpListFiles = new ArrayList<>();;
+        List<AbstractFile> tempJumpListFiles = new ArrayList<>();;
 
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
 
@@ -141,22 +139,22 @@ final class ExtractJumpLists extends Extract {
             tempJumpListFiles = fileManager.findFiles(dataSource, "%", AUTOMATIC_DESTINATIONS_FILE_DIRECTORY); //NON-NLS
             if (!tempJumpListFiles.isEmpty()) {
                 jumpListFiles.addAll(tempJumpListFiles);
-            }            
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to find jumplist files.", ex); //NON-NLS
             return jumpListFiles;  // No need to continue
         }
-        
+
         for (AbstractFile jumpListFile : jumpListFiles) {
 
             if (context.dataSourceIngestIsCancelled()) {
                 return jumpListFiles;
             }
-            
-            if (!jumpListFile.getName().toLowerCase().contains("-slack") && !jumpListFile.getName().equals("..") && 
-                    !jumpListFile.getName().equals(".") && jumpListFile.getSize() > 0) {
+
+            if (!jumpListFile.getName().toLowerCase().contains("-slack") && !jumpListFile.getName().equals("..")
+                    && !jumpListFile.getName().equals(".") && jumpListFile.getSize() > 0) {
                 String fileName = jumpListFile.getName() + "_" + jumpListFile.getId();
-                String jlFile =  Paths.get(baseRaTempPath, fileName).toString();
+                String jlFile = Paths.get(baseRaTempPath, fileName).toString();
                 try {
                     ContentUtils.writeToFile(jumpListFile, new File(jlFile));
                 } catch (IOException ex) {
@@ -168,81 +166,80 @@ final class ExtractJumpLists extends Extract {
         return jumpListFiles;
 
     }
-    
+
     /*
-    *  Read each jumplist file and extract the lnk files to moduleoutput
-    */
+     * Read each jumplist file and extract the lnk files to moduleoutput
+     */
     private List<DerivedFile> extractLnkFiles(String jumpListFile, String moduleOutPath, AbstractFile jumpListAbsFile, String derivedPath) {
-        
+
         List<DerivedFile> derivedFiles = new ArrayList<>();
         DerivedFile derivedFile;
         String lnkFileName = "";
-        
+
         try (POIFSFileSystem fs = new POIFSFileSystem(new File(jumpListFile))) {
-                DirectoryEntry root = fs.getRoot();
-                for (Entry entry : root) {
-                    if (entry instanceof DirectoryEntry) {
-                        //If this data structure needed to recurse this is where it would do it but jumplists do not need to at this time
-                        continue;
-                    } else if (entry instanceof DocumentEntry) {
-                        String jmpListFileName = entry.getName();
-                        int fileSize = ((DocumentEntry) entry).getSize();
-                        
-                        if (fileSize > 0) {
-                            try (DocumentInputStream stream = fs.createDocumentInputStream(jmpListFileName)) {
-                                byte[] buffer = new byte[stream.available()];
-                                stream.read(buffer);
+            DirectoryEntry root = fs.getRoot();
+            for (Entry entry : root) {
+                if (entry instanceof DirectoryEntry) {
+                    //If this data structure needed to recurse this is where it would do it but jumplists do not need to at this time
+                    continue;
+                } else if (entry instanceof DocumentEntry) {
+                    String jmpListFileName = entry.getName();
+                    int fileSize = ((DocumentEntry) entry).getSize();
 
-                                JLnkParser lnkParser = new JLnkParser(fs.createDocumentInputStream(jmpListFileName), fileSize);
-                                JLNK lnk = lnkParser.parse();
-                                lnkFileName = lnk.getBestName() + ".lnk";
-                                File targetFile = new File(moduleOutPath + File.separator + entry.getName() + "-" + lnkFileName);
-                                String relativePath = Case.getCurrentCase().getModuleOutputDirectoryRelativePath();
-                                String derivedFileName = Case.getCurrentCase().getModuleOutputDirectoryRelativePath() + File.separator + derivedPath + File.separator + entry.getName() + "-" + lnkFileName;
-                                OutputStream outStream = new FileOutputStream(targetFile);
-                                outStream.write(buffer);
-                                outStream.close();
-                                derivedFile = fileManager.addDerivedFile(lnkFileName, derivedFileName,
-                                                                         fileSize, 
-                                                                         0, 
-                                                                         0, 
-                                                                         0, 
-                                                                         0, // TBD 
-                                                                         true, 
-                                                                         jumpListAbsFile, 
-                                                                         "",
-                                                                         moduleName, 
-                                                                         VERSION_NUMBER, 
-                                                                         "", 
-                                                                         TskData.EncodingType.NONE);
-                                derivedFiles.add(derivedFile);
+                    if (fileSize > 0) {
+                        try (DocumentInputStream stream = fs.createDocumentInputStream(jmpListFileName)) {
+                            byte[] buffer = new byte[stream.available()];
+                            stream.read(buffer);
 
-                            } catch (IOException | JLnkParserException ex) {
-                                logger.log(Level.WARNING, String.format("No such document, or the Entry represented by documentName is not a DocumentEntry link file is %s", jumpListFile), ex); //NON-NLS
-                            } catch (TskCoreException ex) {
-                                logger.log(Level.WARNING, String.format("Error trying to add dervived file %s", lnkFileName), ex); //NON-NLS
-                            } catch (IndexOutOfBoundsException ex) {
-                                // There is some type of corruption within the file that cannot be handled, ignoring it and moving on to next file
-                                // in the jumplist.
-                                logger.log(Level.WARNING, String.format("Error parsing the the jumplist file %s", jumpListFile), ex); //NON-NLS                
-                            }
+                            JLnkParser lnkParser = new JLnkParser(fs.createDocumentInputStream(jmpListFileName), fileSize);
+                            JLNK lnk = lnkParser.parse();
+                            lnkFileName = lnk.getBestName() + ".lnk";
+                            File targetFile = new File(moduleOutPath + File.separator + entry.getName() + "-" + lnkFileName);
+                            String relativePath = Case.getCurrentCase().getModuleOutputDirectoryRelativePath();
+                            String derivedFileName = Case.getCurrentCase().getModuleOutputDirectoryRelativePath() + File.separator + derivedPath + File.separator + entry.getName() + "-" + lnkFileName;
+                            OutputStream outStream = new FileOutputStream(targetFile);
+                            outStream.write(buffer);
+                            outStream.close();
+                            derivedFile = fileManager.addDerivedFile(lnkFileName, derivedFileName,
+                                    fileSize,
+                                    0,
+                                    0,
+                                    0,
+                                    0, // TBD 
+                                    true,
+                                    jumpListAbsFile,
+                                    "",
+                                    moduleName,
+                                    VERSION_NUMBER,
+                                    "",
+                                    TskData.EncodingType.NONE);
+                            derivedFiles.add(derivedFile);
+
+                        } catch (IOException | JLnkParserException ex) {
+                            logger.log(Level.WARNING, String.format("No such document, or the Entry represented by documentName is not a DocumentEntry link file is %s", jumpListFile), ex); //NON-NLS
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.WARNING, String.format("Error trying to add dervived file %s", lnkFileName), ex); //NON-NLS
+                        } catch (IndexOutOfBoundsException ex) {
+                            // There is some type of corruption within the file that cannot be handled, ignoring it and moving on to next file
+                            // in the jumplist.
+                            logger.log(Level.WARNING, String.format("Error parsing the the jumplist file %s", jumpListFile), ex); //NON-NLS                
                         }
-                    } else {
+                    }
+                } else {
                     // currently, either an Entry is a DirectoryEntry or a DocumentEntry,
                     // but in the future, there may be other entry subinterfaces.
                     // The internal data structure certainly allows for a lot more entry types.
                     continue;
-                    }
                 }
-            } catch (NotOLE2FileException | EmptyFileException ex1) {
-                 logger.log(Level.WARNING, String.format("Error file not a valid OLE2 Document $s", jumpListFile)); //NON-NLS
-            } catch (IOException ex) {
-                 logger.log(Level.WARNING, String.format("Error lnk parsing the file to get recent files $s", jumpListFile), ex); //NON-NLS
-            } 
-            
-        return derivedFiles;    
-        
+            }
+        } catch (NotOLE2FileException | EmptyFileException ex1) {
+            logger.log(Level.WARNING, String.format("Error file not a valid OLE2 Document $s", jumpListFile)); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, String.format("Error lnk parsing the file to get recent files $s", jumpListFile), ex); //NON-NLS
+        }
+
+        return derivedFiles;
+
     }
-    
+
 }
-		

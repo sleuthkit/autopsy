@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeFactory;
 
 /**
  * Analysis Results node support.
@@ -28,6 +32,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 @NbBundle.Messages({
     "DataArtifacts_name=Data Artifacts",})
 public class DataArtifacts implements AutopsyVisitableItem {
+
+    private static final Logger logger = Logger.getLogger(DataArtifacts.class.getName());
 
     /**
      * Returns the name of this node that is the key in the children object.
@@ -41,7 +47,13 @@ public class DataArtifacts implements AutopsyVisitableItem {
     /**
      * Parent node of all data artifacts.
      */
-    static class RootNode extends Artifacts.BaseArtifactNode {
+    public static class RootNode extends Artifacts.BaseArtifactNode {
+
+        private static Children getChildren(long filteringDSObjId) {
+            return Children.create(
+                    new DataArtifactTypeFactory(filteringDSObjId > 0 ? filteringDSObjId : null), true);
+        }
+        private final long filteringDSObjId;
 
         /**
          * Main constructor.
@@ -52,10 +64,15 @@ public class DataArtifacts implements AutopsyVisitableItem {
          *                         equal to 0.
          */
         RootNode(long filteringDSObjId) {
-            super(Children.create(new Artifacts.TypeFactory(BlackboardArtifact.Category.DATA_ARTIFACT, filteringDSObjId), true),
+            super(getChildren(filteringDSObjId),
                     "org/sleuthkit/autopsy/images/extracted_content.png",
                     DataArtifacts.getName(),
                     DataArtifacts.getName());
+            this.filteringDSObjId = filteringDSObjId;
+        }
+        
+        public Node clone() {
+            return new RootNode(this.filteringDSObjId);
         }
     }
 
