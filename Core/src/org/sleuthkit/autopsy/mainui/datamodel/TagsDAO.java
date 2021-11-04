@@ -81,9 +81,6 @@ public class TagsDAO {
     
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
     
-    private static final String FILE_TAG_TYPE_ID = "FILE_TAG";
-    private static final String RESULT_TAG_TYPE_ID = "RESULT_TAG";
-    
     private static final List<ColumnKey> FILE_TAG_COLUMNS = Arrays.asList(
             getFileColumnKey(Bundle.TagsDAO_fileColumns_nameColLbl()),
             getFileColumnKey(Bundle.TagsDAO_fileColumns_originalName()), // GVDTODO handle translation
@@ -218,13 +215,13 @@ public class TagsDAO {
                     blackboardTag.getComment(),
                     blackboardTag.getUserName());
 
-            fileRows.add(new BaseRowDTO(
+            fileRows.add(new BlackboardArtifactTagsRowDTO(
+                    blackboardTag,
                     cellValues,
-                    RESULT_TAG_TYPE_ID,
                     blackboardTag.getId()));
         }
 
-        return new BaseSearchResultsDTO(RESULT_TAG_TYPE_ID, Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allTags.size());
+        return new BaseSearchResultsDTO(BlackboardArtifactTagsRowDTO.getTypeIdForClass(), Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allTags.size());
     }
     
     private SearchResultsDTO fetchFileTags(SearchParams<TagsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -271,13 +268,13 @@ public class TagsDAO {
                     file != null ? StringUtils.defaultString(file.getMd5Hash()) : "",
                     contentTag.getUserName());
 
-            fileRows.add(new BaseRowDTO(
+            fileRows.add(new ContentTagsRowDTO(
+                    contentTag,
                     cellValues,
-                    FILE_TAG_TYPE_ID,
                     file.getId()));
         }
 
-        return new BaseSearchResultsDTO(FILE_TAG_TYPE_ID, Bundle.FileTag_name_text(), FILE_TAG_COLUMNS, fileRows, 0, allTags.size());
+        return new BaseSearchResultsDTO(ContentTagsRowDTO.getTypeIdForClass(), Bundle.FileTag_name_text(), FILE_TAG_COLUMNS, fileRows, 0, allTags.size());
     }
     
     /**
