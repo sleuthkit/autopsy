@@ -41,6 +41,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -73,7 +74,8 @@ import org.sleuthkit.datamodel.TskCoreException;
     "AccountsDAO.createSheet.count.name=O",
     "AccountsDAO.createSheet.count.displayName=O",
     "AccountsDAO.createSheet.comment.name=C",
-    "AccountsDAO.createSheet.comment.displayName=C"
+    "AccountsDAO.createSheet.comment.displayName=C",
+    "AccountsDAO.fileColumns.noDescription=No Description",
 })
 public class AccountsDAO {
 
@@ -112,12 +114,10 @@ public class AccountsDAO {
     }
     
     public SearchResultsDTO getAccounts(AccountsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-        if (key.getTagName() == null) {
-            throw new IllegalArgumentException("Must have non-null tag name");
+        if (key == null) {
+            throw new IllegalArgumentException("Search parameters are null");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
-        } else if (key.getTagType() == null) {
-            throw new IllegalArgumentException("Must have non-null tag type");
         }
         
         SearchParams<AccountsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
@@ -125,83 +125,89 @@ public class AccountsDAO {
             this.searchParamsCache.invalidate(searchParams);
         }
 
-        return searchParamsCache.get(searchParams, () -> fetchTagsDTOs(searchParams));
-    }   
-
-    @NbBundle.Messages({"FileTag.name.text=File Tag",
-            "ResultTag.name.text=Result Tag"})
-    private SearchResultsDTO fetchTagsDTOs(SearchParams<AccountsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
-        switch (cacheKey.getParamData().getTagType()) {
-            case FILE:
-                return fetchFileTags(cacheKey);
-            case RESULT:
-                return fetchResultTags(cacheKey);
-            default:
-                throw new IllegalArgumentException("Unsupported tag type");
-        }
+        return searchParamsCache.get(searchParams, () -> fetchAccountsDTOs(searchParams));
     }
     
     /**
-     * Returns a list of paged tag results.
+     * Returns a list of paged OS Accounts results.
      *
-     * @param tags         The tag results.
+     * @param tags         The OS Accounts results.
      * @param searchParams The search parameters including the paging.
      *
-     * @return The list of paged tag results.
+     * @return The list of paged OS Accounts results.
      */
-    List<? extends Tag> getPaged(List<? extends Tag> tags, SearchParams<?> searchParams) {
-        Stream<? extends Tag> pagedTagsStream = tags.stream()
-                .sorted(Comparator.comparing((tag) -> tag.getId()))
+    List<OsAccount> getPaged(List<OsAccount> tags, SearchParams<?> searchParams) {
+        Stream<OsAccount> pagedAccountsStream = tags.stream()
+                .sorted(Comparator.comparing((acct) -> acct.getId()))
                 .skip(searchParams.getStartItem());
 
         if (searchParams.getMaxResultsCount() != null) {
-            pagedTagsStream = pagedTagsStream.limit(searchParams.getMaxResultsCount());
+            pagedAccountsStream = pagedAccountsStream.limit(searchParams.getMaxResultsCount());
         }
 
-        return pagedTagsStream.collect(Collectors.toList());
+        return pagedAccountsStream.collect(Collectors.toList());
     }
 
-    private SearchResultsDTO fetchResultTags(SearchParams<AccountsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private SearchResultsDTO fetchAccountsDTOs(SearchParams<AccountsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
-        TagName tagName = cacheKey.getParamData().getTagName();
         
-        // get all tag results
-        List<BlackboardArtifactTag> allTags = new ArrayList<>();
-        List<BlackboardArtifactTag> artifactTags = (dataSourceId != null && dataSourceId > 0)
-                ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, dataSourceId)
-                : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName);
-        if (UserPreferences.showOnlyCurrentUserTags()) {
-            String userName = System.getProperty(USER_NAME_PROPERTY);
-            for (BlackboardArtifactTag tag : artifactTags) {
-                if (userName.equals(tag.getUserName())) {
-                    allTags.add(tag);
-                }
-            }
-        } else {
-            allTags.addAll(artifactTags);
-        }
+        // get all accounts
+        List<OsAccount> allAccounts = (dataSourceId != null && dataSourceId > 0)
+                ? Case.getCurrentCaseThrows().getSleuthkitCase().getOsAccountManager().getOsAccountsByDataSourceObjId(dataSourceId)
+                : Case.getCurrentCaseThrows().getSleuthkitCase().getOsAccountManager().getOsAccounts();
         
-        // get current page of tag results
-        List<? extends Tag> pagedTags = getPaged(allTags, cacheKey);
+        // get current page of accounts results
+        List<OsAccount> pagedAccounts = getPaged(allAccounts, cacheKey);
 
         List<RowDTO> fileRows = new ArrayList<>();
-        for (Tag tag : pagedTags) {
-            BlackboardArtifactTag blackboardTag = (BlackboardArtifactTag) tag;
+        for (OsAccount account : pagedAccounts) {
+
+            propertiesSet.put(new NodeProperty<>(
+                    Bundle.OsAccounts_accountNameProperty_name(),
+                    Bundle.OsAccounts_accountNameProperty_displayName(),
+                    Bundle.OsAccounts_accountNameProperty_desc(),
+                    account.getName() != null ? account.getName() : ""));
+            addSCOColumns(propertiesSet);
+            Optional<String> optional = account.getLoginName();
+            propertiesSet.put(new NodeProperty<>(
+                    Bundle.OsAccounts_loginNameProperty_name(),
+                    Bundle.OsAccounts_loginNameProperty_displayName(),
+                    Bundle.OsAccounts_loginNameProperty_desc(),
+                    optional.isPresent() ? optional.get() : ""));
+
+            // Fill with empty string, fetch on background task.
+            propertiesSet.put(new NodeProperty<>(
+                    Bundle.OsAccounts_accountHostNameProperty_name(),
+                    Bundle.OsAccounts_accountHostNameProperty_displayName(),
+                    Bundle.OsAccounts_accountHostNameProperty_desc(),
+                    ""));
+
+            propertiesSet.put(new NodeProperty<>(
+                    Bundle.OsAccounts_accountScopeNameProperty_name(),
+                    Bundle.OsAccounts_accountScopeNameProperty_displayName(),
+                    Bundle.OsAccounts_accountScopeNameProperty_desc(),
+                    ""));
+
+            propertiesSet.put(new NodeProperty<>(
+                    Bundle.OsAccounts_accountRealmNameProperty_name(),
+                    Bundle.OsAccounts_accountRealmNameProperty_displayName(),
+                    Bundle.OsAccounts_accountRealmNameProperty_desc(),
+                    ""));
+
+            Optional<Long> creationTimeValue = account.getCreationTime();
+            String timeDisplayStr
+                    = creationTimeValue.isPresent() ? TimeZoneUtils.getFormattedTime(creationTimeValue.get()) : "";
+
+            propertiesSet.put(new NodeProperty<>(
+                    Bundle.OsAccounts_createdTimeProperty_name(),
+                    Bundle.OsAccounts_createdTimeProperty_displayName(),
+                    Bundle.OsAccounts_createdTimeProperty_desc(),
+                    timeDisplayStr));            
             
-            String name = blackboardTag.getContent().getName();  // As a backup.
-            try {
-                name = blackboardTag.getArtifact().getShortDescription();
-            } catch (TskCoreException ignore) {
-                // it's a WARNING, skip
-            }
             
-            String contentPath;
-            try {
-                contentPath = blackboardTag.getContent().getUniquePath();
-            } catch (TskCoreException ex) {
-                contentPath = NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.unavail.text");
-            }
+            
+            
 
             List<Object> cellValues = Arrays.asList(name,
                     null, // GVDTODO translation column
@@ -216,7 +222,7 @@ public class AccountsDAO {
                     blackboardTag.getId()));
         }
 
-        return new BaseSearchResultsDTO(RESULT_TAG_TYPE_ID, Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allTags.size());
+        return new BaseSearchResultsDTO(RESULT_TAG_TYPE_ID, Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allAccounts.size());
     }
     
     /**

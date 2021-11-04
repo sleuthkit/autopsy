@@ -26,22 +26,10 @@ import org.sleuthkit.datamodel.OsAccount.OsAccountType;
  */
 public class AccountsSearchParams {
 
-    private final OsAccountType accountType;
-    private final long osAccountObjId;	// Object ID within the database
     private final Long dataSourceId;
  
     public AccountsSearchParams(long osAccountObjId, OsAccountType type, Long dataSourceId) {
-        this.osAccountObjId = osAccountObjId;
-        this.accountType = type;
         this.dataSourceId = dataSourceId;
-    }
-
-    public long getTagName() {
-        return osAccountObjId;
-    }
-
-    public OsAccountType getTagType() {
-        return accountType;
     }
 
     public Long getDataSourceId() {
@@ -51,8 +39,6 @@ public class AccountsSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.osAccountObjId);
-        hash = 23 * hash + Objects.hashCode(this.accountType);
         hash = 23 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
@@ -69,16 +55,9 @@ public class AccountsSearchParams {
             return false;
         }
         final AccountsSearchParams other = (AccountsSearchParams) obj;
-        if (this.osAccountObjId != other.osAccountObjId) {
-            return false;
-        }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
-            return false;
-        }
-        if (!Objects.equals(this.accountType, other.accountType)) {
             return false;
         }
         return true;
     }
-
 }
