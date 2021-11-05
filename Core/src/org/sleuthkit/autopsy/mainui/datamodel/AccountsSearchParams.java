@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.datamodel.OsAccount.OsAccountType;
 
 /**
  * Key for accessing data about OS Accounts from the DAO.
@@ -28,7 +27,7 @@ public class AccountsSearchParams {
 
     private final Long dataSourceId;
  
-    public AccountsSearchParams(long osAccountObjId, OsAccountType type, Long dataSourceId) {
+    public AccountsSearchParams(Long dataSourceId) {
         this.dataSourceId = dataSourceId;
     }
 
