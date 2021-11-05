@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -33,6 +32,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -93,6 +93,45 @@ public class FileSystemDAO {
         return fetchContentForTable(cacheKey, contentForTable, parentName);
     }    
     
+    private BaseSearchResultsDTO fetchHostsForTable(SearchParams<FileSystemPersonSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+
+        SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+
+        Long objectId = cacheKey.getParamData().getPersonObjectId();
+        List<Host> hostsForTable = new ArrayList<>();
+        String parentName = "";
+        
+        if (objectId != null) {
+            Optional<Person> person = skCase.getPersonManager().getPerson(objectId);
+            if (person.isPresent()) {
+                parentName = person.get().getName();
+                hostsForTable.addAll(skCase.getPersonManager().getHostsForPerson(person.get()));
+            } else {
+                throw new TskCoreException("Error loading person with ID " + objectId);
+            }
+        } else {
+            hostsForTable.addAll(skCase.getPersonManager().getHostsWithoutPersons());
+        }
+        
+        Stream<Host> pagedHostsStream = hostsForTable.stream()
+            .sorted(Comparator.comparing((host) -> host.getHostId()))
+            .skip(cacheKey.getStartItem());
+
+        if (cacheKey.getMaxResultsCount() != null) {
+            pagedHostsStream = pagedHostsStream.limit(cacheKey.getMaxResultsCount());
+        }
+
+        List<Host> pagedHosts = pagedHostsStream.collect(Collectors.toList());
+        List<ColumnKey> columnKeys = FileSystemColumnUtils.getColumnKeysForHost();
+        
+        List<RowDTO> rows = new ArrayList<>();
+        for (Host host : pagedHosts) {
+            List<Object> cellValues = FileSystemColumnUtils.getCellValuesForHost(host);
+            rows.add(new BaseRowDTO(cellValues, FILE_SYSTEM_TYPE_ID, host.getHostId()));
+        }
+        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, cacheKey.getStartItem(), hostsForTable.size());
+    }    
+    
     
     private BaseSearchResultsDTO fetchContentForTable(SearchParams<?> cacheKey, List<Content> contentForTable,
             String parentName) throws NoCurrentCaseException, TskCoreException {
@@ -116,7 +155,7 @@ public class FileSystemDAO {
      * @param contentObjects  The content objects.
      * @param searchParams    The search parameters including the paging.
      *
-     * @return The list of paged artifacts.
+     * @return The list of paged content.
      */
     private List<Content> getPaged(List<? extends Content> contentObjects, SearchParams<?> searchParams) {
         Stream<? extends Content> pagedArtsStream = contentObjects.stream()
@@ -148,5 +187,15 @@ public class FileSystemDAO {
         }
 
         return searchParamsCache.get(searchParams, () -> fetchContentForTableFromHost(searchParams));
+    }
+    
+    public BaseSearchResultsDTO getHostsForTable(FileSystemPersonSearchParam objectKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+
+        SearchParams<FileSystemPersonSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
+        if (hardRefresh) {
+            searchParamsCache.invalidate(searchParams);
+        }
+
+        return searchParamsCache.get(searchParams, () -> fetchHostsForTable(searchParams));
     }
 }

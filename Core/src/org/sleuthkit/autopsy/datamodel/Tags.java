@@ -39,8 +39,13 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
+import static org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType.FILE;
+import static org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType.RESULT;
+import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
 import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.ContentTag;
@@ -214,7 +219,7 @@ public class Tags implements AutopsyVisitableItem {
                 }
             }
         };
-        
+
         private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         /**
@@ -225,7 +230,7 @@ public class Tags implements AutopsyVisitableItem {
         TagNameNodeFactory(long objId) {
             this.filteringDSObjId = objId;
         }
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
@@ -411,18 +416,24 @@ public class Tags implements AutopsyVisitableItem {
      * and blackboard artifact tags, grouped first by tag type, then by tag
      * name.
      */
-    public class ContentTagTypeNode extends DisplayableItemNode implements Observer {
+    public class ContentTagTypeNode extends DisplayableItemNode implements Observer, SelectionResponder {
 
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
         private final TagName tagName;
 
         public ContentTagTypeNode(TagName tagName) {
-            super(Children.create(new ContentTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + CONTENT_DISPLAY_NAME));
+            super(Children.LEAF, Lookups.singleton(tagName.getDisplayName() + " " + CONTENT_DISPLAY_NAME));
             this.tagName = tagName;
             super.setName(CONTENT_DISPLAY_NAME);
             updateDisplayName();
             this.setIconBaseWithExtension(ICON_PATH);
             tagResults.addObserver(this);
+        }
+
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            dataResultPanel.displayTags(new TagsSearchParams(tagName, FILE,
+                    filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null));
         }
 
         private void updateDisplayName() {
@@ -479,51 +490,6 @@ public class Tags implements AutopsyVisitableItem {
         }
     }
 
-    private class ContentTagNodeFactory extends ChildFactory<ContentTag> implements Observer {
-
-        private final TagName tagName;
-
-        ContentTagNodeFactory(TagName tagName) {
-            super();
-            this.tagName = tagName;
-            tagResults.addObserver(this);
-        }
-
-        @Override
-        protected boolean createKeys(List<ContentTag> keys) {
-            // Use the content tags bearing the specified tag name as the keys.
-            try {
-                List<ContentTag> contentTags = (filteringDSObjId > 0)
-                        ? Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName, filteringDSObjId)
-                        : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName);
-                if (UserPreferences.showOnlyCurrentUserTags()) {
-                    String userName = System.getProperty(USER_NAME_PROPERTY);
-                    for (ContentTag tag : contentTags) {
-                        if (userName.equals(tag.getUserName())) {
-                            keys.add(tag);
-                        }
-                    }
-                } else {
-                    keys.addAll(contentTags);
-                }
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                Logger.getLogger(ContentTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
-            }
-            return true;
-        }
-
-        @Override
-        protected Node createNodeForKey(ContentTag key) {
-            // The content tags to be wrapped are used as the keys.
-            return new ContentTagNode(key);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
-    }
-
     private final String ARTIFACT_DISPLAY_NAME = NbBundle.getMessage(BlackboardArtifactTagTypeNode.class, "BlackboardArtifactTagTypeNode.displayName.text");
 
     /**
@@ -532,18 +498,24 @@ public class Tags implements AutopsyVisitableItem {
      * content and blackboard artifact tags, grouped first by tag type, then by
      * tag name.
      */
-    public class BlackboardArtifactTagTypeNode extends DisplayableItemNode implements Observer {
+    public class BlackboardArtifactTagTypeNode extends DisplayableItemNode implements Observer, SelectionResponder {
 
         private final TagName tagName;
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
         public BlackboardArtifactTagTypeNode(TagName tagName) {
-            super(Children.create(new BlackboardArtifactTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + ARTIFACT_DISPLAY_NAME));
+            super(Children.LEAF, Lookups.singleton(tagName.getDisplayName() + " " + ARTIFACT_DISPLAY_NAME));
             this.tagName = tagName;
             super.setName(ARTIFACT_DISPLAY_NAME);
             this.setIconBaseWithExtension(ICON_PATH);
             updateDisplayName();
             tagResults.addObserver(this);
+        }
+
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            dataResultPanel.displayTags(new TagsSearchParams(tagName, RESULT,
+                    filteringDataSourceObjId() > 0 ? filteringDataSourceObjId() : null));
         }
 
         private void updateDisplayName() {
@@ -596,51 +568,6 @@ public class Tags implements AutopsyVisitableItem {
         @Override
         public String getItemType() {
             return getClass().getName();
-        }
-    }
-
-    private class BlackboardArtifactTagNodeFactory extends ChildFactory<BlackboardArtifactTag> implements Observer {
-
-        private final TagName tagName;
-
-        BlackboardArtifactTagNodeFactory(TagName tagName) {
-            super();
-            this.tagName = tagName;
-            tagResults.addObserver(this);
-        }
-
-        @Override
-        protected boolean createKeys(List<BlackboardArtifactTag> keys) {
-            try {
-                // Use the blackboard artifact tags bearing the specified tag name as the keys.
-                List<BlackboardArtifactTag> artifactTags = (filteringDSObjId > 0)
-                        ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, filteringDSObjId)
-                        : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName);
-                if (UserPreferences.showOnlyCurrentUserTags()) {
-                    String userName = System.getProperty(USER_NAME_PROPERTY);
-                    for (BlackboardArtifactTag tag : artifactTags) {
-                        if (userName.equals(tag.getUserName())) {
-                            keys.add(tag);
-                        }
-                    }
-                } else {
-                    keys.addAll(artifactTags);
-                }
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                Logger.getLogger(BlackboardArtifactTagNodeFactory.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
-            }
-            return true;
-        }
-
-        @Override
-        protected Node createNodeForKey(BlackboardArtifactTag key) {
-            // The blackboard artifact tags to be wrapped are used as the keys.
-            return new BlackboardArtifactTagNode(key);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
         }
     }
 }

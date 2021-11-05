@@ -29,6 +29,8 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultTableSearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.BlackboardArtifactTagsRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentTagsRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
@@ -72,7 +74,11 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
                 return new FileNode(key.getSearchResults(), (FileRowDTO) key.getRow());
             } else if(AnalysisResultRowDTO.getTypeIdForClass().equals(typeId)) {
                 return new AnalysisResultNode((AnalysisResultTableSearchResultsDTO)key.getSearchResults(), (AnalysisResultRowDTO) key.getRow());
-            }else {
+            } else if(ContentTagsRowDTO.getTypeIdForClass().equals(typeId)) {
+                return new ContentTagNode(key.getSearchResults(), (ContentTagsRowDTO)key.getRow());
+            } else if(BlackboardArtifactTagsRowDTO.getTypeIdForClass().equals(typeId)) {
+                return new BlackboardArtifactTagNode(key.getSearchResults(), (BlackboardArtifactTagsRowDTO)key.getRow());
+            } else {
                 logger.log(Level.WARNING, MessageFormat.format("No known node for type id: {0} provided by row result: {1}", typeId, key.getRow()));
             }
         } catch (ClassCastException ex) {
