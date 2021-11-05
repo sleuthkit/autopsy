@@ -19,12 +19,16 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.beans.PropertyChangeEvent;
+import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams.FileSizeFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  *
@@ -32,41 +36,83 @@ import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
  */
 public class ViewsTypeFactory {
 
+    private static AbstractFile getFileFromEvt(PropertyChangeEvent evt, Long dataSourceId) {
+        if (!(evt.getOldValue() instanceof ModuleContentEvent)) {
+            return null;
+        }
+        
+        ModuleContentEvent contentEvt = (ModuleContentEvent) evt.getOldValue();
+        if (!(contentEvt.getSource() instanceof AbstractFile)) {
+            return null;
+        }
+        
+        AbstractFile file = (AbstractFile) contentEvt.getSource();
+        if (dataSourceId != null && file.getDataSourceObjectId() != dataSourceId) {
+            return null;
+        }
+        
+        return file;
+    }
+
     public static class FileSizeTypeFactory extends TreeChildFactory<FileTypeSizeSearchParams> {
 
-//        /**
-//         * Main constructor.
-//         *
-//         * @param itemData The data to display.
-//         */
-//        public FileSizeTypeFactory(TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> itemData) {
-//            super(itemData.getTypeId(),
-//                    ICON_TBD,
-//                    itemData);
-//        }
-//
-//        @Override
-//        public void respondSelection(DataResultTopComponent dataResultPanel) {
-//            dataResultPanel.displayFileSizes(this.getItemData().getTypeData());
-//        }
-//
-//        @Override
-//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-//            MainDAO.getInstance().getViewsDAO().isFilesBySizeInvalidating(this.getItemData().getTypeData(), evt);
-//        }
+        private final Long dataSourceId;
+
+        public FileSizeTypeFactory(Long dataSourceId) {
+            this.dataSourceId = dataSourceId;
+        }
+
+        @Override
+        protected TreeNode<FileTypeSizeSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> rowData) {
+            return new FileSizeTypeNode(rowData);
+        }
+
+        @Override
+        protected TreeResultsDTO<? extends FileTypeSizeSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
+            return MainDAO.getInstance().getViewsDAO().getFileSizeCounts(this.dataSourceId);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            AbstractFile evtFile = getFileFromEvt(evt, this.dataSourceId);
+            if (evtFile == null) {
+                return false;
+            }
+
+            long size = evtFile.getSize();
+            for (FileSizeFilter filter : FileSizeFilter.values()) {
+                if (size >= filter.getMinBound() || size < filter.getMaxBound()) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        static class FileSizeTypeNode extends TreeNode<FileTypeSizeSearchParams> {
+
+            FileSizeTypeNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> itemData) {
+                super("FILE_SIZE", "org/sleuthkit/autopsy/images/file-size-16.png", itemData);
+            }
+
+            @Override
+            public void respondSelection(DataResultTopComponent dataResultPanel) {
+                dataResultPanel.displayFileSizes(this.getItemData().getTypeData());
+            }
+
+        }
     }
 
     public static class FileMimePrefixFactory extends TreeChildFactory<FileTypeMimeSearchParams> {
-        
+
     }
-    
+
     public static class FileMimeSuffixFactory extends TreeChildFactory<FileTypeMimeSearchParams> {
-        
+
     }
-    
+
     public static class FileExtFactory extends TreeChildFactory<FileTypeExtensionsSearchParams> {
-        
+
     }
-    
-    
+
 }
