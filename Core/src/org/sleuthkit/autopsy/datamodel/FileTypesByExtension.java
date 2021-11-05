@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtSearchFilter;
 import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
+import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.FileExtFactory;
 
 /**
  * Filters database results by file extension.
@@ -196,7 +197,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
     /**
      * Node for root of file types view. Children are nodes for specific types.
      */
-    class FileTypesByExtNode extends DisplayableItemNode {
+    public class FileTypesByExtNode extends DisplayableItemNode {
 
         private final FileExtRootFilter filter;
 
@@ -206,22 +207,15 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param filter null to display root node of file type tree, pass in
          *               something to provide a sub-node.
          */
-        FileTypesByExtNode(SleuthkitCase skCase, FileExtRootFilter filter) {
-            this(skCase, filter, null);
-        }
-
-        /**
-         *
-         * @param skCase
-         * @param filter
-         * @param o      Observable that was created by a higher-level node that
-         *               provides updates on events
-         */
-        private FileTypesByExtNode(SleuthkitCase skCase, FileExtRootFilter filter, FileTypesByExtObservable o) {
-
-            super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, o), true),
-                    Lookups.singleton(filter == null ? FNAME : filter.getDisplayName()));
-            this.filter = filter;
+        FileTypesByExtNode() {
+            super(Children.create(
+                    new FileExtFactory(
+                            FileTypesByExtension.this.typesRoot.filteringDataSourceObjId() > 0 
+                                    ? FileTypesByExtension.this.typesRoot.filteringDataSourceObjId() 
+                                    : null), true),
+                    
+                    Lookups.singleton(FNAME));
+            this.filter = null;
 
             // root node of tree
             if (filter == null) {
@@ -235,6 +229,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png"); //NON-NLS
         }
 
+        public Node clone() {
+            return new FileTypesByExtNode();
+        }
+        
         @Override
         public boolean isLeafTypeNode() {
             return false;
@@ -282,57 +280,57 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
     }
-
-    private class FileTypesByExtNodeChildren extends ChildFactory<FileExtSearchFilter> {
-
-        private final SleuthkitCase skCase;
-        private final FileExtRootFilter filter;
-        private final FileTypesByExtObservable notifier;
-
-        /**
-         *
-         * @param skCase
-         * @param filter Is null for root node
-         * @param o      Observable that provides updates based on events being
-         *               fired (or null if one needs to be created)
-         */
-        private FileTypesByExtNodeChildren(SleuthkitCase skCase, FileExtRootFilter filter, FileTypesByExtObservable o) {
-            super();
-            this.skCase = skCase;
-            this.filter = filter;
-            if (o == null) {
-                this.notifier = new FileTypesByExtObservable();
-            } else {
-                this.notifier = o;
-            }
-        }
-
-        @Override
-        protected boolean createKeys(List<FileExtSearchFilter> list) {
-            // root node
-            if (filter == null) {
-                list.addAll(Arrays.asList(FileExtRootFilter.values()));
-            } // document and executable has another level of nodes
-            else if (filter.equals(FileExtRootFilter.TSK_DOCUMENT_FILTER)) {
-                list.addAll(Arrays.asList(FileExtDocumentFilter.values()));
-            } else if (filter.equals(FileExtRootFilter.TSK_EXECUTABLE_FILTER)) {
-                list.addAll(Arrays.asList(FileExtExecutableFilter.values()));
-            }
-            return true;
-        }
-
-        @Override
-        protected Node createNodeForKey(FileExtSearchFilter key) {
-            // make new nodes for the sub-nodes
-            if (key.getName().equals(FileExtRootFilter.TSK_DOCUMENT_FILTER.getName())) {
-                return new FileTypesByExtNode(skCase, FileExtRootFilter.TSK_DOCUMENT_FILTER, notifier);
-            } else if (key.getName().equals(FileExtRootFilter.TSK_EXECUTABLE_FILTER.getName())) {
-                return new FileTypesByExtNode(skCase, FileExtRootFilter.TSK_EXECUTABLE_FILTER, notifier);
-            } else {
-                return new FileExtensionNode(key, skCase, notifier);
-            }
-        }
-    }
+//
+//    private class FileTypesByExtNodeChildren extends ChildFactory<FileExtSearchFilter> {
+//
+//        private final SleuthkitCase skCase;
+//        private final FileExtRootFilter filter;
+//        private final FileTypesByExtObservable notifier;
+//
+//        /**
+//         *
+//         * @param skCase
+//         * @param filter Is null for root node
+//         * @param o      Observable that provides updates based on events being
+//         *               fired (or null if one needs to be created)
+//         */
+//        private FileTypesByExtNodeChildren(SleuthkitCase skCase, FileExtRootFilter filter, FileTypesByExtObservable o) {
+//            super();
+//            this.skCase = skCase;
+//            this.filter = filter;
+//            if (o == null) {
+//                this.notifier = new FileTypesByExtObservable();
+//            } else {
+//                this.notifier = o;
+//            }
+//        }
+//
+//        @Override
+//        protected boolean createKeys(List<FileExtSearchFilter> list) {
+//            // root node
+//            if (filter == null) {
+//                list.addAll(Arrays.asList(FileExtRootFilter.values()));
+//            } // document and executable has another level of nodes
+//            else if (filter.equals(FileExtRootFilter.TSK_DOCUMENT_FILTER)) {
+//                list.addAll(Arrays.asList(FileExtDocumentFilter.values()));
+//            } else if (filter.equals(FileExtRootFilter.TSK_EXECUTABLE_FILTER)) {
+//                list.addAll(Arrays.asList(FileExtExecutableFilter.values()));
+//            }
+//            return true;
+//        }
+//
+//        @Override
+//        protected Node createNodeForKey(FileExtSearchFilter key) {
+//            // make new nodes for the sub-nodes
+//            if (key.getName().equals(FileExtRootFilter.TSK_DOCUMENT_FILTER.getName())) {
+//                return new FileTypesByExtNode(skCase, FileExtRootFilter.TSK_DOCUMENT_FILTER, notifier);
+//            } else if (key.getName().equals(FileExtRootFilter.TSK_EXECUTABLE_FILTER.getName())) {
+//                return new FileTypesByExtNode(skCase, FileExtRootFilter.TSK_EXECUTABLE_FILTER, notifier);
+//            } else {
+//                return new FileExtensionNode(key, skCase, notifier);
+//            }
+//        }
+//    }
 
     /**
      * Node for a specific file type / extension. Children of it will be the

@@ -52,6 +52,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
+import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.FileMimePrefixFactory;
 
 /**
  * Class which contains the Nodes for the 'By Mime Type' view located in the
@@ -246,17 +247,23 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * when the file detection module has not been run and MIME type is
      * currently unknown.
      */
-    class ByMimeTypeNode extends DisplayableItemNode {
+    public class ByMimeTypeNode extends DisplayableItemNode {
 
         @NbBundle.Messages({"FileTypesByMimeType.name.text=By MIME Type"})
 
         final String NAME = Bundle.FileTypesByMimeType_name_text();
 
         ByMimeTypeNode() {
-            super(Children.create(new ByMimeTypeNodeChildren(), true), Lookups.singleton(Bundle.FileTypesByMimeType_name_text()));
+            super(Children.create(new FileMimePrefixFactory(FileTypesByMimeType.this.typesRoot.filteringDataSourceObjId() > 0
+                    ? FileTypesByMimeType.this.typesRoot.filteringDataSourceObjId()
+                    : null), true), Lookups.singleton(Bundle.FileTypesByMimeType_name_text()));
             super.setName(NAME);
             super.setDisplayName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
+        }
+        
+        public Node clone() {
+            return new ByMimeTypeNode();
         }
 
         @Override

@@ -34,7 +34,10 @@ import org.sleuthkit.autopsy.datamodel.DataArtifacts;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.FileSize;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
+import org.sleuthkit.autopsy.datamodel.FileTypesByExtension;
+import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
@@ -93,6 +96,15 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         } else if (origNode instanceof AnalysisResults.RootNode) {
             Node cloned = ((AnalysisResults.RootNode) origNode).clone();
             return new Node[]{cloned};
+        } else if (origNode instanceof FileTypesByExtension.FileTypesByExtNode) {
+            Node cloned = ((FileTypesByExtension.FileTypesByExtNode) origNode).clone();
+            return new Node[]{cloned};
+        } else if (origNode instanceof FileTypesByMimeType.ByMimeTypeNode) {
+            Node cloned = ((FileTypesByMimeType.ByMimeTypeNode) origNode).clone();
+            return new Node[]{cloned};            
+        } else if (origNode instanceof FileSize.FileSizeRootNode) {
+            Node cloned = ((FileSize.FileSizeRootNode) origNode).clone();
+            return new Node[]{cloned};            
         } else if (origNode == null || !(origNode instanceof DisplayableItemNode)) {
             return new Node[]{};
         }

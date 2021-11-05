@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams.FileSizeFilter;
 import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
+import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.FileSizeTypeFactory;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -88,14 +89,20 @@ public class FileSize implements AutopsyVisitableItem {
     public static class FileSizeRootNode extends DisplayableItemNode {
 
         private static final String NAME = NbBundle.getMessage(FileSize.class, "FileSize.fileSizeRootNode.name");
+        private final long dataSourceObjId;
 
-        FileSizeRootNode(SleuthkitCase skCase, long datasourceObjId) {
-            super(Children.create(new FileSizeRootChildren(skCase, datasourceObjId), true), Lookups.singleton(NAME));
+        FileSizeRootNode(long datasourceObjId) {
+            super(Children.create(new FileSizeTypeFactory(datasourceObjId > 0 ? datasourceObjId : null), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-size-16.png"); //NON-NLS
+            this.dataSourceObjId = datasourceObjId;
         }
 
+        public Node clone() {
+            return new FileSizeRootNode(this.dataSourceObjId);
+        }
+        
         @Override
         public boolean isLeafTypeNode() {
             return false;

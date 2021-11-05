@@ -85,7 +85,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(FileTypesByExtension sf) {
-            return sf.new FileTypesByExtNode(sf.getSleuthkitCase(), null);
+            return sf.new FileTypesByExtNode(null);
         }
 
         @Override
@@ -100,7 +100,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(FileSize dc) {
-            return new FileSize.FileSizeRootNode(dc.getSleuthkitCase(), dc.filteringDataSourceObjId());
+            return new FileSize.FileSizeRootNode(dc.filteringDataSourceObjId());
         }
 
         @Override
