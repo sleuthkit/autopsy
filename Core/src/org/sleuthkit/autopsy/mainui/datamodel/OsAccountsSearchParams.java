@@ -23,11 +23,11 @@ import java.util.Objects;
 /**
  * Key for accessing data about OS Accounts from the DAO.
  */
-public class AccountsSearchParams {
+public class OsAccountsSearchParams {
 
     private final Long dataSourceId;
  
-    public AccountsSearchParams(Long dataSourceId) {
+    public OsAccountsSearchParams(Long dataSourceId) {
         this.dataSourceId = dataSourceId;
     }
 
@@ -53,7 +53,7 @@ public class AccountsSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final AccountsSearchParams other = (AccountsSearchParams) obj;
+        final OsAccountsSearchParams other = (OsAccountsSearchParams) obj;
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }

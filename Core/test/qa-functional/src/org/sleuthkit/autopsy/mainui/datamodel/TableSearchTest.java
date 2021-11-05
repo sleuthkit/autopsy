@@ -792,22 +792,22 @@ public class TableSearchTest extends NbTestCase {
         assertTrue(db != null);
 
         try {
-            AccountsDAO accountsDAO = MainDAO.getInstance().getAccountsDAO();
+            OsAccountsDAO accountsDAO = MainDAO.getInstance().getOsAccountsDAO();
 
             // Get OS Accounts from data source 1
-            AccountsSearchParams param = new AccountsSearchParams(dataSource1.getId());
+            OsAccountsSearchParams param = new OsAccountsSearchParams(dataSource1.getId());
             SearchResultsDTO results = accountsDAO.getAccounts(param, 0, null, false);
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
 
             // Get OS Accounts from all data sources
-            param = new AccountsSearchParams(null);
+            param = new OsAccountsSearchParams(null);
             results = accountsDAO.getAccounts(param, 0, null, false);
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
             // Get OS Accounts from data source 1
-            param = new AccountsSearchParams(dataSource2.getId());
+            param = new OsAccountsSearchParams(dataSource2.getId());
             results = accountsDAO.getAccounts(param, 0, null, false);
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());

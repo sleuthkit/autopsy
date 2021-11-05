@@ -44,17 +44,17 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Accounts section.
  */
 @Messages({
-    "AccountsDAO_accountNameProperty_displayName=Name",
-    "AccountsDAO_accountRealmNameProperty_displayName=Realm Name",
-    "AccountsDAO_accountHostNameProperty_displayName=Host",
-    "AccountsDAO_accountScopeNameProperty_displayName=Scope",
-    "AccountsDAO_createdTimeProperty_displayName=Creation Time",
-    "AccountsDAO_loginNameProperty_displayName=Login Name",
-    "AccountsDAO.createSheet.score.displayName=S",
-    "AccountsDAO.createSheet.comment.displayName=C",
-    "AccountsDAO.createSheet.count.displayName=O",
-    "AccountsDAO.fileColumns.noDescription=No Description",})
-public class AccountsDAO {
+    "OsAccountsDAO_accountNameProperty_displayName=Name",
+    "OsAccountsDAO_accountRealmNameProperty_displayName=Realm Name",
+    "OsAccountsDAO_accountHostNameProperty_displayName=Host",
+    "OsAccountsDAO_accountScopeNameProperty_displayName=Scope",
+    "OsAccountsDAO_createdTimeProperty_displayName=Creation Time",
+    "OsAccountsDAO_loginNameProperty_displayName=Login Name",
+    "OsAccountsDAO.createSheet.score.displayName=S",
+    "OsAccountsDAO.createSheet.comment.displayName=C",
+    "OsAccountsDAO.createSheet.count.displayName=O",
+    "OsAccountsDAO.fileColumns.noDescription=No Description",})
+public class OsAccountsDAO {
 
     private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
@@ -64,38 +64,38 @@ public class AccountsDAO {
     private static final String OS_ACCOUNTS_TYPE_ID = "OS_ACCOUNTS";
 
     private static final List<ColumnKey> OS_ACCOUNTS_WITH_SCO_COLUMNS = Arrays.asList(
-            getFileColumnKey(Bundle.AccountsDAO_accountNameProperty_displayName()),
-            getFileColumnKey(Bundle.AccountsDAO_createSheet_score_displayName()),
-            getFileColumnKey(Bundle.AccountsDAO_createSheet_comment_displayName()),
-            getFileColumnKey(Bundle.AccountsDAO_createSheet_count_displayName()),
-            getFileColumnKey(Bundle.AccountsDAO_loginNameProperty_displayName()),
-            getFileColumnKey(Bundle.AccountsDAO_accountHostNameProperty_displayName()),
-            getFileColumnKey(Bundle.AccountsDAO_accountScopeNameProperty_displayName()),
-            getFileColumnKey(Bundle.AccountsDAO_accountRealmNameProperty_displayName()),
-            getFileColumnKey(Bundle.AccountsDAO_createdTimeProperty_displayName()));
+            getFileColumnKey(Bundle.OsAccountsDAO_accountNameProperty_displayName()),
+            getFileColumnKey(Bundle.OsAccountsDAO_createSheet_score_displayName()),
+            getFileColumnKey(Bundle.OsAccountsDAO_createSheet_comment_displayName()),
+            getFileColumnKey(Bundle.OsAccountsDAO_createSheet_count_displayName()),
+            getFileColumnKey(Bundle.OsAccountsDAO_loginNameProperty_displayName()),
+            getFileColumnKey(Bundle.OsAccountsDAO_accountHostNameProperty_displayName()),
+            getFileColumnKey(Bundle.OsAccountsDAO_accountScopeNameProperty_displayName()),
+            getFileColumnKey(Bundle.OsAccountsDAO_accountRealmNameProperty_displayName()),
+            getFileColumnKey(Bundle.OsAccountsDAO_createdTimeProperty_displayName()));
 
-    private static AccountsDAO instance = null;
+    private static OsAccountsDAO instance = null;
 
-    synchronized static AccountsDAO getInstance() {
+    synchronized static OsAccountsDAO getInstance() {
         if (instance == null) {
-            instance = new AccountsDAO();
+            instance = new OsAccountsDAO();
         }
 
         return instance;
     }
 
     private static ColumnKey getFileColumnKey(String name) {
-        return new ColumnKey(name, name, Bundle.AccountsDAO_fileColumns_noDescription());
+        return new ColumnKey(name, name, Bundle.OsAccountsDAO_fileColumns_noDescription());
     }
 
-    public SearchResultsDTO getAccounts(AccountsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public SearchResultsDTO getAccounts(OsAccountsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (key == null) {
             throw new IllegalArgumentException("Search parameters are null");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        SearchParams<AccountsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
+        SearchParams<OsAccountsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
         if (hardRefresh) {
             this.searchParamsCache.invalidate(searchParams);
         }
@@ -124,7 +124,7 @@ public class AccountsDAO {
     }
 
     @NbBundle.Messages({"OsAccounts.name.text=OS Accounts"})
-    private SearchResultsDTO fetchAccountsDTOs(SearchParams<AccountsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private SearchResultsDTO fetchAccountsDTOs(SearchParams<OsAccountsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
 
@@ -169,20 +169,20 @@ public class AccountsDAO {
     /**
      * Handles fetching and paging of data for accounts.
      */
-    public static class AccountFetcher extends DAOFetcher<AccountsSearchParams> {
+    public static class AccountFetcher extends DAOFetcher<OsAccountsSearchParams> {
 
         /**
          * Main constructor.
          *
          * @param params Parameters to handle fetching of data.
          */
-        public AccountFetcher(AccountsSearchParams params) {
+        public AccountFetcher(OsAccountsSearchParams params) {
             super(params);
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getAccountsDAO().getAccounts(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return MainDAO.getInstance().getOsAccountsDAO().getAccounts(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override

@@ -39,7 +39,7 @@ public class MainDAO {
     private final ViewsDAO viewsDAO = ViewsDAO.getInstance();
     private final FileSystemDAO fileSystemDAO = FileSystemDAO.getInstance();
     private final TagsDAO tagsDAO = TagsDAO.getInstance();
-    private final AccountsDAO accountsDAO = AccountsDAO.getInstance();
+    private final OsAccountsDAO accountsDAO = OsAccountsDAO.getInstance();
 
     public DataArtifactDAO getDataArtifactsDAO() {
         return dataArtifactDAO;
@@ -61,7 +61,7 @@ public class MainDAO {
         return tagsDAO;
     }
     
-    public AccountsDAO getAccountsDAO() {
+    public OsAccountsDAO getOsAccountsDAO() {
         return accountsDAO;
     }
 }
