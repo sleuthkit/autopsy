@@ -1185,8 +1185,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     })
     private void exportCSVButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportCSVButtonActionPerformed
         Node currentRoot = this.getExplorerManager().getRootContext();
-        // GVDTODO disabled for Search Result node
-        if (currentRoot != null && (!(currentRoot instanceof SearchResultRootNode)) && currentRoot.getChildren().getNodesCount() > 0) {
+        if (currentRoot != null && currentRoot.getChildren().getNodesCount() > 0) {
             org.sleuthkit.autopsy.directorytree.ExportCSVAction.saveNodesToCSV(java.util.Arrays.asList(currentRoot.getChildren().getNodes()), this);
         } else {
             MessageNotifyUtil.Message.info(Bundle.DataResultViewerTable_exportCSVButtonActionPerformed_empty());
