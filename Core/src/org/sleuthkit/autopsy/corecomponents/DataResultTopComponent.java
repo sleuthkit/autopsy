@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
@@ -374,7 +375,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     /**
      * Displays results of querying the DAO for analysis results matching the
      * search parameters query.
-     * 
+     *
      * @param analysisResultParams The search parameter query.
      */
     public void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
@@ -390,54 +391,53 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
         dataResultPanel.displayDataArtifact(dataArtifactParams);
     }
-    
+
     /**
-     * Displays results of querying the DAO for files matching the mime
-     * search parameters query.
-     * 
+     * Displays results of querying the DAO for files matching the mime search
+     * parameters query.
+     *
      * @param fileMimeKey The search parameter query.
      */
     public void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         dataResultPanel.displayFileMimes(fileMimeKey);
     }
-    
+
     /**
-     * Displays results of querying the DAO for files matching the file extension
-     * search parameters query.
+     * Displays results of querying the DAO for files matching the file
+     * extension search parameters query.
      *
      * @param fileExtensionsParams The search parameter query.
      */
     public void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
         dataResultPanel.displayFileExtensions(fileExtensionsParams);
     }
-    
+
     /**
-     * Displays results of querying the DAO for files matching the file size 
+     * Displays results of querying the DAO for files matching the file size
      * search parameters query.
-     * 
+     *
      * @param fileSizeParams The search parameter query.
      */
     public void displayFileSizes(FileTypeSizeSearchParams fileSizeParams) {
         dataResultPanel.displayFileSizes(fileSizeParams);
-    } 
-    
-    /** Displays results of querying the DAO for hash sets matching the
-     * search parameters query.
-     * 
-     * @param hashHitParams The search parameter query.
-     */
-    public void displayHashHits(HashHitSearchParam hashHitParams) {
-        dataResultPanel.displayHashHits(hashHitParams);
     }
-    
+
     /**
-     * Displays results of querying the DAO for keyword hits matching the
-     * search parameters query.
-     * 
+     * Displays results of querying the DAO for an artifact type and set name.
+     * @param params The search parameters.
+     */
+    public void displayAnalysisResultSet(AnalysisResultSetSearchParam params) {
+        dataResultPanel.displayAnalysisResultSet(params);
+    }
+
+    /**
+     * Displays results of querying the DAO for keyword hits matching the search
+     * parameters query.
+     *
      * @param keywordParams The search parameter query.
      */
     public void displayKeywordHits(KeywordHitSearchParam keywordParams) {
-       dataResultPanel.displayKeywordHits(keywordParams);
+        dataResultPanel.displayKeywordHits(keywordParams);
     }
     
     /**

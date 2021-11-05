@@ -62,9 +62,10 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFetcher;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.HashsetResultFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultSetFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
@@ -1272,20 +1273,21 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Displays results of querying the DAO for given search parameters query.
+     * Displays results of querying the DAO for given search parameters (set and
+     * artifact type) query.
      *
-     * @param hashHitKey The search parameter query.
+     * @param setKey The search parameter query.
      */
-    void displayHashHits(HashHitSearchParam hashHitKey) {
+    void displayAnalysisResultSet(AnalysisResultSetSearchParam setKey) {
         try {
-            this.searchResultManager = new SearchManager(new HashsetResultFetcher(hashHitKey), getPageSize());
+            this.searchResultManager = new SearchManager(new AnalysisResultSetFetcher(setKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for hash set filter: {0} and data source id: {1}.",
-                    hashHitKey.getSetName(),
-                    hashHitKey.getDataSourceId() == null ? "<null>" : hashHitKey.getDataSourceId()),
+                    setKey.getSetName(),
+                    setKey.getDataSourceId() == null ? "<null>" : setKey.getDataSourceId()),
                     ex);
         }
     }
