@@ -309,6 +309,18 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         /**
+         * Given the type name of the Account.Type, provides the count of those
+         * type.
+         *
+         * @param accountType The type name of the Account.Type.
+         *
+         * @return The number of results found for the given account type.
+         */
+        Long getCount(String accountType) {
+            return counts.get(accountType);
+        }
+
+        /**
          * Retrieves an alphabetically organized list of all the account types.
          *
          * @return An alphabetically organized list of all the account types.
@@ -317,18 +329,6 @@ final public class Accounts implements AutopsyVisitableItem {
             List<String> types = new ArrayList<>(counts.keySet());
             Collections.sort(types);
             return types;
-        }
-
-        /**
-         * Calculates the total count of accounts based on the values in the
-         * map.
-         *
-         * @return The total count.
-         */
-        Long getTotal() {
-            return counts.values().stream()
-                    .mapToLong(lng -> lng)
-                    .sum();
         }
 
         /**
