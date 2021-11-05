@@ -18,14 +18,12 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import static io.grpc.Context.key;
 import java.beans.PropertyChangeEvent;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.nodes.Children;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtDocumentFilter;
@@ -123,7 +121,7 @@ public class ViewsTypeFactory {
 
         @Override
         protected TreeNode<FileTypeMimeSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> rowData) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return new FileMimePrefixNode(rowData);
         }
 
         @Override
@@ -138,7 +136,7 @@ public class ViewsTypeFactory {
 
         static class FileMimePrefixNode extends TreeNode<FileTypeMimeSearchParams> {
 
-            public FileMimePrefixNode(String nodeName, String icon, TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> itemData, Children children, Lookup lookup) {
+            public FileMimePrefixNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> itemData) {
                 super(
                         "FILE_MIME_" + itemData.getTypeData().getMimeType(),
                         "org/sleuthkit/autopsy/images/file_types.png",

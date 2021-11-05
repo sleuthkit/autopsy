@@ -85,7 +85,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(FileTypesByExtension sf) {
-            return sf.new FileTypesByExtNode(null);
+            return sf.new FileTypesByExtNode();
         }
 
         @Override

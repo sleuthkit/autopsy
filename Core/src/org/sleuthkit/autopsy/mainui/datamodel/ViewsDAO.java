@@ -23,7 +23,6 @@ import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -37,12 +36,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
-import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
@@ -187,12 +184,22 @@ public class ViewsDAO {
         return size >= key.getSizeFilter().getMinBound() && (key.getSizeFilter().getMaxBound() == null || size < key.getSizeFilter().getMaxBound());
     }
 
+    /**
+     * Returns a sql 'and' clause to filter by data source id if one is present.
+     * @param dataSourceId The data source id or null.
+     * @return Returns clause if data source id is present or blank string if not.
+     */
     private static String getDataSourceAndClause(Long dataSourceId) {
         return (dataSourceId != null && dataSourceId > 0
                 ? " AND data_source_obj_id = " + dataSourceId
                 : " ");
     }
 
+    /**
+     * Returns clause that will determine if file extension is within the filter's set of extensions.
+     * @param filter The filter.
+     * @return The sql clause that will need to be proceeded with 'where' or 'and'.
+     */
     private static String getFileExtensionClause(FileExtSearchFilter filter) {
         return "extension IN (" + filter.getFilter().stream()
                 .map(String::toLowerCase)
@@ -200,6 +207,10 @@ public class ViewsDAO {
                 .collect(Collectors.joining(", ")) + ")";
     }
 
+    /**
+     * 
+     * @return 
+     */
     private String getBaseFileExtensionFilter() {
         return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known <> " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "");
@@ -337,7 +348,8 @@ public class ViewsDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<FileTypeMimeSearchParams> getFileMimeCounts(String prefix, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        String likeItem = StringUtils.isNotBlank(prefix) ? prefix.replaceAll("[%/]", "") + "/%" : null;
+        String prefixWithSlash = StringUtils.isNotBlank(prefix) ? prefix.replaceAll("/", "") + "/" : null;
+        String likeItem = StringUtils.isNotBlank(prefixWithSlash) ? prefixWithSlash.replaceAll("%", "") + "%" : null;
 
         String baseFilter = "WHERE " + getBaseFileMimeFilter()
                 + getDataSourceAndClause(dataSourceId)
@@ -351,10 +363,10 @@ public class ViewsDAO {
             } else {
                 switch (skCase.getDatabaseType()) {
                     case POSTGRESQL:
-                        mimeType = "SUBSTR(mime_type, 0, instr(mime_type, '/'))";
+                        mimeType = "SPLIT_PART(mime_type, '/', 1)";
                         break;
                     case SQLITE:
-                        mimeType = "SPLIT_PART(mime_type, '/', 1)";
+                        mimeType = "SUBSTR(mime_type, 0, instr(mime_type, '/'))";
                         break;
                     default:
                         throw new IllegalArgumentException("Unknown database type: " + skCase.getDatabaseType());
@@ -390,20 +402,38 @@ public class ViewsDAO {
 
                 List<TreeItemDTO<FileTypeMimeSearchParams>> treeList = typeCounts.entrySet().stream()
                         .map(entry -> {
+                            String name = prefixWithSlash != null && entry.getKey().startsWith(prefixWithSlash)
+                                    ? entry.getKey().substring(prefixWithSlash.length())
+                                    : entry.getKey();
+
                             return new TreeItemDTO<>(
                                     "FILE_MIME_TYPE",
                                     new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
-                                    entry.getKey(),
-                                    entry.getKey(),
+                                    name,
+                                    name,
                                     entry.getValue());
                         })
-                        .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getTypeData().getMimeType(), b.getTypeData().getMimeType()))
+                        .sorted((a, b) -> stringCompare(a.getTypeData().getMimeType(), b.getTypeData().getMimeType()))
                         .collect(Collectors.toList());
 
                 return new TreeResultsDTO<>(treeList);
+            } catch (TskCoreException | SQLException ex) {
+                throw new ExecutionException("An error occurred while fetching file counts with query:\n" + query, ex);
             }
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+        } catch (NoCurrentCaseException ex) {
             throw new ExecutionException("An error occurred while fetching file counts.", ex);
+        }
+    }
+
+    private int stringCompare(String a, String b) {
+        if (a == null && b == null) {
+            return 0;
+        } else if (a == null) {
+            return -1;
+        } else if (b == null) {
+            return 1;
+        } else {
+            return a.compareToIgnoreCase(b);
         }
     }
 
@@ -434,8 +464,8 @@ public class ViewsDAO {
         int idx = 0;
         for (Entry<T, String> e : whereClauses.entrySet()) {
             types.put(idx, e.getKey());
-            idx++;
             whenClauses += "    WHEN " + e.getValue() + " THEN " + idx + " \n";
+            idx++;
         }
 
         String switchStatement = "  CASE \n"
@@ -449,13 +479,13 @@ public class ViewsDAO {
                 .filter(s -> StringUtils.isNotBlank(s))
                 .collect(Collectors.joining(" AND "));
 
-        String query = "type_id, COUNT(*) AS count FROM \n"
+        String query = "res.type_id, COUNT(*) AS count FROM \n"
                 + "(SELECT \n"
                 + switchStatement
                 + "FROM tsk_files \n"
-                + (baseWhereClauses != null ? ("WHERE " + baseWhereClauses) : "") + ") \n"
-                + "WHERE type_id >= 0 \n"
-                + "GROUP BY type_id";
+                + (baseWhereClauses != null ? ("WHERE " + baseWhereClauses) : "") + ") res \n"
+                + "WHERE res.type_id >= 0 \n"
+                + "GROUP BY res.type_id";
 
         Map<T, Long> typeCounts = new HashMap<>();
         try {
@@ -476,7 +506,7 @@ public class ViewsDAO {
                 }
             });
         } catch (NoCurrentCaseException | TskCoreException ex) {
-            throw new ExecutionException("An error occurred while fetching file counts.", ex);
+            throw new ExecutionException("An error occurred while fetching file counts with query:\n" + query, ex);
         }
 
         if (includeZeroCount) {
