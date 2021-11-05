@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -296,8 +297,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     @Subscribe
     void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent tskEvent) {
         /*
-         * Add any new data artifacts to the source ingest job for possible
-         * analysis.
+         * Add any new data artifacts included in the event to the source ingest
+         * job for possible analysis.
          */
         List<DataArtifact> newDataArtifacts = new ArrayList<>();
         Collection<BlackboardArtifact> newArtifacts = tskEvent.getArtifacts();
@@ -308,18 +309,58 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         }
         if (!newDataArtifacts.isEmpty()) {
             IngestJob ingestJob = null;
-            Long ingestJobId = tskEvent.getIngestJobId();
-            if (ingestJobId != null) {
+            Optional<Long> ingestJobId = tskEvent.getIngestJobId();
+            if (ingestJobId.isPresent()) {
                 synchronized (ingestJobsById) {
-                    ingestJob = ingestJobsById.get(ingestJobId);
+                    ingestJob = ingestJobsById.get(ingestJobId.get());
                 }
             } else {
                 /*
-                 * Handle the case where ingest modules may not supply an ingest
-                 * job ID. In such cases, try to identify the ingest job, if
-                 * any, via its data source. There is a slight risk here that
-                 * the wrong ingest job will be selected if multiple ingests of
-                 * the same data source are in progress.
+                 * There are four use cases where the ingest job ID returned by
+                 * the event is expected be null:
+                 *
+                 * 1. The artifacts are being posted by a data source proccessor
+                 * (DSP) module that runs before the ingest job is created,
+                 * i.e., a DSP that does not support streaming ingest and has no
+                 * noton of an ingest job ID. In this use case, the event is
+                 * handled synchronously. The DSP calls
+                 * Blackboard.postArtifacts(), which puts the event on the event
+                 * bus to which this method subscribes, so the event will be
+                 * handled here before the DSP completes and calls
+                 * DataSourceProcessorCallback.done(). This means the code below
+                 * will execute before the ingest job is created, so it will not
+                 * find an ingest job to which to add the artifacts. However,
+                 * the artifacts WILL be analyzed after the ingest job is
+                 * started, when the ingest job executor, working in batch mode,
+                 * schedules ingest tasks for all of the data artifacts in the
+                 * case database. There is a slight risk that the wrong ingest
+                 * job will be selected if multiple ingests of the same data
+                 * source are in progress.
+                 *
+                 * 2. The artifacts were posted by an ingest module that either
+                 * has not been updated to use the current
+                 * Blackboard.postArtifacts() API, or is using it incorrectly.
+                 * In this use case, the code below should be able to find the
+                 * ingest job to which to add the artifacts via their data
+                 * source. There is a slight risk that the wrong ingest job will
+                 * be selected if multiple ingests of the same data source are
+                 * in progress.
+                 *
+                 * 3. The portable case generator uses a
+                 * CommunicationArtifactsHelper constructed with a null ingest
+                 * job ID, and the CommunicatonsArtifactHelper posts artifacts.
+                 * Ingest of that data source might be running, in which case
+                 * the data artifact will be analyzed. It also might be analyzed
+                 * by a subsequent ingest job for the data source. This is an
+                 * acceptable edge case.
+                 *
+                 * 4. The user can manually create timeline events with the
+                 * timeline tool, which posts the TSK_TL_EVENT data artifacts.
+                 * The user selects the data source for these artifacts. Ingest
+                 * of that data source might be running, in which case the data
+                 * artifact will be analyzed. It also might be analyzed by a
+                 * subsequent ingest job for the data source. This is an
+                 * acceptable edge case.
                  */
                 DataArtifact dataArtifact = newDataArtifacts.get(0);
                 try {

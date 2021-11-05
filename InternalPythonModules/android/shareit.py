@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,7 +85,7 @@ class ShareItAnalyzer(general.AndroidComponentAnalyzer):
                 current_case = Case.getCurrentCaseThrows()
                 historyDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                     self._MODULE_NAME, historyDb.getDBFile(),
-                                    Account.Type.SHAREIT)
+                                    Account.Type.SHAREIT, context.getJobId())
 
                 queryString = """
                                 SELECT history_type, device_id, device_name, description, timestamp, file_path

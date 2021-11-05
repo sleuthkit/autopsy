@@ -351,8 +351,7 @@ public class IngestEventsListener {
                         .getAnalysisResult();
 
                 try {
-                    // index the artifact for keyword search
-                    blackboard.postArtifact(newArtifact, MODULE_NAME);
+                    blackboard.postArtifact(newArtifact, MODULE_NAME, null);
                 } catch (Blackboard.BlackboardException ex) {
                     LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newArtifact.getArtifactID(), ex); //NON-NLS
                 }
