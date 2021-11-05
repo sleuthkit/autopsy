@@ -411,6 +411,7 @@ final public class Accounts implements AutopsyVisitableItem {
                      */
                     try {
                         Case.getCurrentCaseThrows();
+                        accountTypeResults.update();
                         refresh(true);
                     } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.
