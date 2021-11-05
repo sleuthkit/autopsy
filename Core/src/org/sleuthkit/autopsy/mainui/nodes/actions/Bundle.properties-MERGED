@@ -1,0 +1,18 @@
+ActionFactory_getViewSrcContentAction_type_DataArtifact=Data Artifact
+ActionFactory_getViewSrcContentAction_type_File=File
+ActionFactory_getViewSrcContentAction_type_OSAccount=OS Account
+ActionFactory_getViewSrcContentAction_type_unknown=Item
+# {0} - type
+ActionsFactory_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory
+# {0} - type
+ActionsFactory_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline...
+ActionsFactory_getAssociatedTypeStr_associated=Associated File
+ActionsFactory_getAssociatedTypeStr_webCache=Cached File
+ActionsFactory_getAssociatedTypeStr_webDownload=Downloaded File
+ActionsFactory_getSrcContentViewerActions_openInExtViewer=Open in External Viewer  Ctrl+E
+ActionsFactory_getSrcContentViewerActions_viewInNewWin=View Item in New Window
+ActionsFactory_getTimelineArtifactAction_displayName=View Selected Item in Timeline... 
+# {0} - contentType
+ActionsFactory_getTimelineSrcContentAction_actionDisplayName=View Source {0} in Timeline... 
+# {0} - contentType
+ArtifactFactory_getViewSrcContentAction_displayName=View Source {0} in Directory

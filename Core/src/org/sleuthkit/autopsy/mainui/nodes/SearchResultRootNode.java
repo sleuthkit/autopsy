@@ -22,6 +22,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
@@ -45,6 +46,13 @@ public class SearchResultRootNode extends AbstractNode {
         setDisplayName(initialResults.getDisplayName());
     }
 
+    @Messages({
+        "SearchResultRootNode_noDesc=No Description",
+        "SearchResultRootNode_createSheet_type_name=Name",
+        "SearchResultRootNode_createSheet_type_displayName=Name",
+        "SearchResultRootNode_createSheet_childCount_name=Child Count",
+        "SearchResultRootNode_createSheet_childCount_displayName=Child Count"
+    })
     @Override
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
@@ -54,14 +62,16 @@ public class SearchResultRootNode extends AbstractNode {
             sheet.put(sheetSet);
         }
 
-        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.name"),
-                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.displayName"),
-                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.artType.desc"),
+        sheetSet.put(new NodeProperty<>(
+                Bundle.SearchResultRootNode_createSheet_type_name(),
+                Bundle.SearchResultRootNode_createSheet_type_displayName(),
+                Bundle.SearchResultRootNode_noDesc(),
                 getDisplayName()));
 
-        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.name"),
-                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.displayName"),
-                NbBundle.getMessage(this.getClass(), "ArtifactTypeNode.createSheet.childCnt.desc"),
+        sheetSet.put(new NodeProperty<>(
+                Bundle.SearchResultRootNode_createSheet_childCount_name(),
+                Bundle.SearchResultRootNode_createSheet_childCount_displayName(),
+                Bundle.SearchResultRootNode_noDesc(),
                 this.factory.getResultCount()));
 
         return sheet;
