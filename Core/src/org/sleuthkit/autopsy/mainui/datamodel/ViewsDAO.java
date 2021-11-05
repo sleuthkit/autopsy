@@ -186,8 +186,11 @@ public class ViewsDAO {
 
     /**
      * Returns a sql 'and' clause to filter by data source id if one is present.
+     *
      * @param dataSourceId The data source id or null.
-     * @return Returns clause if data source id is present or blank string if not.
+     *
+     * @return Returns clause if data source id is present or blank string if
+     *         not.
      */
     private static String getDataSourceAndClause(Long dataSourceId) {
         return (dataSourceId != null && dataSourceId > 0
@@ -196,9 +199,13 @@ public class ViewsDAO {
     }
 
     /**
-     * Returns clause that will determine if file extension is within the filter's set of extensions.
+     * Returns clause that will determine if file extension is within the
+     * filter's set of extensions.
+     *
      * @param filter The filter.
-     * @return The sql clause that will need to be proceeded with 'where' or 'and'.
+     *
+     * @return The sql clause that will need to be proceeded with 'where' or
+     *         'and'.
      */
     private static String getFileExtensionClause(FileExtSearchFilter filter) {
         return "extension IN (" + filter.getFilter().stream()
@@ -208,14 +215,26 @@ public class ViewsDAO {
     }
 
     /**
-     * 
-     * @return 
+     * Returns a clause that will filter out files that aren't to be counted in
+     * the file extensions view.
+     *
+     * @return The filter that will need to be proceeded with 'where' or 'and'.
      */
     private String getBaseFileExtensionFilter() {
         return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
                 + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known <> " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "");
     }
 
+    /**
+     * Returns a statement to be proceeded with 'where' or 'and' that will
+     * filter results to the provided filter and data source id (if non null).
+     *
+     * @param filter       The file extension filter.
+     * @param dataSourceId The data source id or null if no data source
+     *                     filtering is to occur.
+     *
+     * @return The sql statement to be proceeded with 'and' or 'where'.
+     */
     private String getFileExtensionWhereStatement(FileExtSearchFilter filter, Long dataSourceId) {
         String whereClause = getBaseFileExtensionFilter()
                 + getDataSourceAndClause(dataSourceId)
@@ -223,6 +242,12 @@ public class ViewsDAO {
         return whereClause;
     }
 
+    /**
+     * Returns a statement to be proceeded with 'where' or 'and' that will
+     * filter out results that should not be viewed in mime types view.
+     *
+     * @return A statement to be proceeded with 'and' or 'where'.
+     */
     private String getBaseFileMimeFilter() {
         return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
                 + " AND (type IN ("
@@ -235,6 +260,16 @@ public class ViewsDAO {
                 + "))";
     }
 
+    /**
+     * Returns a sql statement to be proceeded with 'where' or 'and' that will
+     * filter to the specified mime type.
+     *
+     * @param mimeType     The mime type.
+     * @param dataSourceId The data source object id or null if no data source
+     *                     filtering is to occur.
+     *
+     * @return A statement to be proceeded with 'and' or 'where'.
+     */
     private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {
         String whereClause = getBaseFileMimeFilter()
                 + getDataSourceAndClause(dataSourceId)
