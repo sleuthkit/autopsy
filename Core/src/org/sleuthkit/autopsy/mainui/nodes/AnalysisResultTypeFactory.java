@@ -200,11 +200,6 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     Children.create(childFactory, true),
                     getDefaultLookup(itemData));
         }
-
-        @Override
-        public void respondSelection(DataResultTopComponent dataResultPanel) {
-            // GVDTODO...NO OP???
-        }
     }
 
     /**
@@ -303,14 +298,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     itemData,
                     Children.create(new KeywordSearchTermFactory(itemData.getTypeData()), true),
                     getDefaultLookup(itemData));
-        }
-
-        @Override
-        public void respondSelection(DataResultTopComponent dataResultPanel) {
-            // GVDTODO no-op for now
-        }
-        
-        
+        }        
     }
 
     /**
@@ -376,6 +364,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                                 searchParams.getSetName(),
                                 null,
                                 searchParams.getSearchTerm()));
+            } else {
+                super.respondSelection(dataResultPanel);
             }
         }
 

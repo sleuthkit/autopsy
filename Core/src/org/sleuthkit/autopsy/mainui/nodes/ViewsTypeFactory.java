@@ -184,12 +184,6 @@ public class ViewsTypeFactory {
                         Children.create(new FileMimeSuffixFactory(itemData.getTypeData().getDataSourceId(), itemData.getTypeData().getMimeType()), true),
                         getDefaultLookup(itemData));
             }
-
-            @Override
-            public void respondSelection(DataResultTopComponent dataResultPanel) {
-                // GVDTODO
-            }
-
         }
     }
 
@@ -345,6 +339,8 @@ public class ViewsTypeFactory {
             public void respondSelection(DataResultTopComponent dataResultPanel) {
                 if (childFilters == null) {
                     dataResultPanel.displayFileExtensions(this.getItemData().getTypeData());
+                } else {
+                    super.respondSelection(dataResultPanel);
                 }
             }
 
