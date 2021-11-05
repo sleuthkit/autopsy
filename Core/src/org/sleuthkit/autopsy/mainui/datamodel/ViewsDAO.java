@@ -279,18 +279,42 @@ public class ViewsDAO {
         return whereClause;
     }
 
+    /**
+     * Returns clause to be proceeded with 'where' or 'and' to filter files to
+     * those within the bounds of the filter.
+     *
+     * @param filter The size filter.
+     *
+     * @return The clause to be proceeded with 'where' or 'and'.
+     */
     private static String getFileSizeClause(FileTypeSizeSearchParams.FileSizeFilter filter) {
         return filter.getMaxBound() == null
                 ? "(size >= " + filter.getMinBound() + ")"
                 : "(size >= " + filter.getMinBound() + " AND size < " + filter.getMaxBound() + ")";
     }
 
+    /**
+     * The filter for all files to remove those that should never be seen in the
+     * file size views.
+     *
+     * @return The clause to be proceeded with 'where' or 'and'.
+     */
     private String getBaseFileSizeFilter() {
         // Ignore unallocated block files.
         return "(type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"
                 + ((hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")); //NON-NLS
     }
 
+    /**
+     * Creates a clause to be proceeded with 'where' or 'and' that will show
+     * files specified by the filter and the specified data source.
+     *
+     * @param filter       The file size filter.
+     * @param dataSourceId The id of the data source or null if no data source
+     *                     filtering.
+     *
+     * @return The clause to be proceeded with 'where' or 'and'.
+     */
     private String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
         String query = getBaseFileSizeFilter()
                 + " AND " + getFileSizeClause(filter)
@@ -460,6 +484,15 @@ public class ViewsDAO {
         }
     }
 
+    /**
+     * Provides case insensitive comparator integer for strings that may be
+     * null.
+     *
+     * @param a String that may be null.
+     * @param b String that may be null.
+     *
+     * @return The comparator value placing null first.
+     */
     private int stringCompare(String a, String b) {
         if (a == null && b == null) {
             return 0;

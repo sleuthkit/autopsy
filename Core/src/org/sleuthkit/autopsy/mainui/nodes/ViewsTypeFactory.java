@@ -44,6 +44,17 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class ViewsTypeFactory {
 
+    /**
+     * Returns an AbstractFile if the event contains a ModuleContentEvent which
+     * contains an abstract file and that file belongs to the data source if a
+     * data source id is specified. Otherwise, returns null.
+     *
+     * @param evt          The event
+     * @param dataSourceId The data source object id that will be the parent of
+     *                     the file or null.
+     *
+     * @return The file meeting criteria or null.
+     */
     private static AbstractFile getFileInDataSourceFromEvt(PropertyChangeEvent evt, Long dataSourceId) {
         if (!(evt.getOldValue() instanceof ModuleContentEvent)) {
             return null;
@@ -62,10 +73,18 @@ public class ViewsTypeFactory {
         return file;
     }
 
+    /**
+     * The factory for creating file size tree nodes.
+     */
     public static class FileSizeTypeFactory extends TreeChildFactory<FileTypeSizeSearchParams> {
 
         private final Long dataSourceId;
 
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceId The data source to filter files to or null.
+         */
         public FileSizeTypeFactory(Long dataSourceId) {
             this.dataSourceId = dataSourceId;
         }
@@ -97,8 +116,16 @@ public class ViewsTypeFactory {
             return false;
         }
 
+        /**
+         * Shows a file size tree node.
+         */
         static class FileSizeTypeNode extends TreeNode<FileTypeSizeSearchParams> {
 
+            /**
+             * Main constructor.
+             *
+             * @param itemData The data for the node.
+             */
             FileSizeTypeNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> itemData) {
                 super("FILE_SIZE_" + itemData.getTypeData().getSizeFilter().getName(), "org/sleuthkit/autopsy/images/file-size-16.png", itemData);
             }
@@ -111,10 +138,18 @@ public class ViewsTypeFactory {
         }
     }
 
+    /**
+     * Factory to display mime type prefix tree nodes (i.e. audio, multipart).
+     */
     public static class FileMimePrefixFactory extends TreeChildFactory<FileTypeMimeSearchParams> {
 
         private final Long dataSourceId;
 
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceId The data source to filter files to or null.
+         */
         public FileMimePrefixFactory(Long dataSourceId) {
             this.dataSourceId = dataSourceId;
         }
@@ -136,6 +171,11 @@ public class ViewsTypeFactory {
 
         static class FileMimePrefixNode extends TreeNode<FileTypeMimeSearchParams> {
 
+            /**
+             * Main constructor.
+             *
+             * @param itemData The data for the node.
+             */
             public FileMimePrefixNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> itemData) {
                 super(
                         "FILE_MIME_" + itemData.getTypeData().getMimeType(),
@@ -153,14 +193,25 @@ public class ViewsTypeFactory {
         }
     }
 
+    /**
+     * Displays mime type suffixes of a prefix (i.e. for prefix 'audio', a
+     * suffix could be 'aac').
+     */
     public static class FileMimeSuffixFactory extends TreeChildFactory<FileTypeMimeSearchParams> {
 
         private final String mimeTypePrefix;
         private final Long dataSourceId;
 
-        private FileMimeSuffixFactory(Long dataSourceId, String mimeType) {
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceId   The data source to filter files to or null.
+         * @param mimeTypePrefix The mime type prefix (i.e. 'audio',
+         *                       'multipart').
+         */
+        private FileMimeSuffixFactory(Long dataSourceId, String mimeTypePrefix) {
             this.dataSourceId = dataSourceId;
-            this.mimeTypePrefix = mimeType;
+            this.mimeTypePrefix = mimeTypePrefix;
         }
 
         @Override
@@ -183,8 +234,17 @@ public class ViewsTypeFactory {
             return file.getMIMEType().toLowerCase().startsWith(this.mimeTypePrefix.toLowerCase());
         }
 
+        /**
+         * Displays an individual suffix node in the tree (i.e. 'aac' underneath
+         * 'audio').
+         */
         static class FileMimeSuffixNode extends TreeNode<FileTypeMimeSearchParams> {
 
+            /**
+             * Main constructor.
+             *
+             * @param itemData The data for the node.
+             */
             public FileMimeSuffixNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> itemData) {
                 super("FILE_MIME_" + itemData.getTypeData().getMimeType(),
                         "org/sleuthkit/autopsy/images/file-filter-icon.png",
@@ -199,15 +259,31 @@ public class ViewsTypeFactory {
         }
     }
 
+    /**
+     * Displays file extension tree nodes with possibly nested tree nodes (for
+     * documents and executables).
+     */
     public static class FileExtFactory extends TreeChildFactory<FileTypeExtensionsSearchParams> {
 
         private final Long dataSourceId;
         private final Collection<FileExtSearchFilter> childFilters;
 
+        /**
+         * Main constructor using root filters.
+         *
+         * @param dataSourceId The data source to filter files to or null.
+         */
         public FileExtFactory(Long dataSourceId) {
             this(dataSourceId, Stream.of(FileExtRootFilter.values()).collect(Collectors.toList()));
         }
-        
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceId The data source to filter files to or null.
+         * @param childFilters The file extension filters that will each be a
+         *                     child tree node of this factory.
+         */
         private FileExtFactory(Long dataSourceId, Collection<FileExtSearchFilter> childFilters) {
             this.childFilters = childFilters;
             this.dataSourceId = dataSourceId;
@@ -237,13 +313,24 @@ public class ViewsTypeFactory {
             AbstractFile file = getFileInDataSourceFromEvt(evt, this.dataSourceId);
             return file != null && this.childFilters.stream()
                     .anyMatch((filter) -> MainDAO.getInstance().getViewsDAO().isFilesByExtInvalidating(
-                            new FileTypeExtensionsSearchParams(filter, this.dataSourceId), file));
+                    new FileTypeExtensionsSearchParams(filter, this.dataSourceId), file));
         }
 
+        /**
+         * Represents a file extension tree node that may or may not have child
+         * filters.
+         */
         static class FileExtNode extends TreeNode<FileTypeExtensionsSearchParams> {
 
             private final Collection<FileExtSearchFilter> childFilters;
 
+            /**
+             * Main constructor.
+             *
+             * @param itemData     The data for the node.
+             * @param childFilters The file filters that will be used to make
+             *                     children of this node.
+             */
             public FileExtNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> itemData, Collection<FileExtSearchFilter> childFilters) {
                 super("FILE_EXT_" + itemData.getTypeData().getFilter().getName(),
                         childFilters == null ? "org/sleuthkit/autopsy/images/file-filter-icon.png" : "org/sleuthkit/autopsy/images/file_types.png",
