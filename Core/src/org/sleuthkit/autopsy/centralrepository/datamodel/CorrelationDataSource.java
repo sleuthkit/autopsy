@@ -106,7 +106,7 @@ public class CorrelationDataSource implements Serializable {
      *                        data aosurce.
      * @param dataSource      The case database data source.
      *
-     * @return The cnetral repository data source.
+     * @return The central repository data source.
      *
      * @throws CentralRepoException This exception is thrown if there is an
      *                              error creating the central repository data
@@ -114,7 +114,7 @@ public class CorrelationDataSource implements Serializable {
      */
     public static CorrelationDataSource fromTSKDataSource(CorrelationCase correlationCase, Content dataSource) throws CentralRepoException {
         if (!CentralRepository.isEnabled()) {
-            throw new CentralRepoException("Central repository is not enabled, cannot create central repository data source, ");
+            throw new CentralRepoException(String.format("Central repository is not enabled, cannot create central repository data source for '%s'", dataSource));
         }
 
         Case curCase;
@@ -142,11 +142,10 @@ public class CorrelationDataSource implements Serializable {
             } catch (TskDataException | TskCoreException ex) {
                 throw new CentralRepoException("Error getting data source info from case database", ex);
             }
-
             correlationDataSource = new CorrelationDataSource(correlationCase, deviceId, dataSource.getName(), dataSource.getId(), md5, sha1, sha256);
             correlationDataSource = CentralRepository.getInstance().newDataSource(correlationDataSource);
         }
-        
+
         return correlationDataSource;
     }
 

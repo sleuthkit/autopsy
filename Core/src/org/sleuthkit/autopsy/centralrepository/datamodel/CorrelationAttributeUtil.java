@@ -115,19 +115,20 @@ public class CorrelationAttributeUtil {
     }
 
     /**
-     * Gets the correlation attributes for an OS account.
+     * Gets the correlation attributes for an OS account instance represented as
+     * an OS account plus a data source.
      *
-     * @param account The OS account.
+     * @param account    The OS account.
+     * @param dataSource The data source.
      *
      * @return The correlation attributes.
      */
-    public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(OsAccount account) {
+    public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(OsAccount account, Content dataSource) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
         if (CentralRepository.isEnabled()) {
             Optional<String> accountAddr = account.getAddr();
             if (accountAddr.isPresent() && !isSystemOsAccount(accountAddr.get())) {
                 try {
-                    Content dataSource = account.getDataSource();
                     CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
                     CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
                             CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
@@ -139,8 +140,6 @@ public class CorrelationAttributeUtil {
                             TskData.FileKnown.KNOWN,
                             account.getId());
                     correlationAttrs.add(correlationAttributeInstance);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error getting data source for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
                 } catch (CentralRepoException ex) {
                     logger.log(Level.SEVERE, String.format("Error querying central repository for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
                 } catch (NoCurrentCaseException ex) {
@@ -832,8 +831,7 @@ public class CorrelationAttributeUtil {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
         if (CentralRepository.isEnabled() && osAccountInst != null) {
             try {
-                OsAccount osAccount = osAccountInst.getOsAccount();
-                correlationAttrs.addAll(makeCorrAttrsToSave(osAccount));
+                correlationAttrs.addAll(makeCorrAttrsToSave(osAccountInst.getOsAccount(), osAccountInst.getDataSource()));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Error getting OS account from OS account instance '%s'", osAccountInst), ex);
             }

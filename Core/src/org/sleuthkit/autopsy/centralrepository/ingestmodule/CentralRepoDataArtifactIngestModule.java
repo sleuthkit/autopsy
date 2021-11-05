@@ -209,7 +209,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         try {
             List<OsAccount> osAccounts = osAccountMgr.getOsAccountsByDataSourceObjId(dataSource.getId());
             for (OsAccount osAccount : osAccounts) {
-                process(osAccount);
+                process(osAccount, dataSource);
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, String.format("Error getting OS accounts for data source %s (job ID=%d)", dataSource, ingestJobId), ex);
@@ -217,15 +217,16 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
     }
 
     /**
-     * Translates the attributes of a OS account into central repository
-     * correlation attributes and uses them to create analysis results and new
-     * central repository correlation attribute instances, depending on ingest
-     * job settings.
+     * Translates the attributes of a OS account and its data source (an OS
+     * account instance) into central repository correlation attributes and uses
+     * them to create analysis results and new central repository correlation
+     * attribute instances, depending on ingest job settings.
      *
-     * @param osAccount The OS account.
+     * @param osAccount  The OS account.
+     * @param dataSource The data source.
      */
-    private void process(OsAccount osAccount) {
-        List<CorrelationAttributeInstance> corrAttrs = CorrelationAttributeUtil.makeCorrAttrsToSave(osAccount);
+    private void process(OsAccount osAccount, Content dataSource) {
+        List<CorrelationAttributeInstance> corrAttrs = CorrelationAttributeUtil.makeCorrAttrsToSave(osAccount, dataSource);
         for (CorrelationAttributeInstance corrAttr : corrAttrs) {
             if (!corrAttrsAlreadyCreated.add(corrAttr.toString())) {
                 /*
