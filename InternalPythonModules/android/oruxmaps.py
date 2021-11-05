@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-2018 Basis Technology Corp.
+Copyright 2016-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,7 +72,7 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                 current_case = Case.getCurrentCaseThrows()
                 
                 skCase = Case.getCurrentCase().getSleuthkitCase()
-                geoArtifactHelper = GeoArtifactsHelper(skCase, self._MODULE_NAME, self._PROGRAM_NAME, oruxMapsTrackpointsDb.getDBFile()) 
+                geoArtifactHelper = GeoArtifactsHelper(skCase, self._MODULE_NAME, self._PROGRAM_NAME, oruxMapsTrackpointsDb.getDBFile(), context.getJobId()) 
 
                 poiQueryString = "SELECT poilat, poilon, poialt, poitime, poiname FROM pois"
                 poisResultSet = oruxMapsTrackpointsDb.runQuery(poiQueryString)
@@ -96,9 +96,8 @@ class OruxMapsAnalyzer(general.AndroidComponentAnalyzer):
                         artifact = abstractFile.newDataArtifact(BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK), attributes)
                         
                         try:
-                            # index the artifact for keyword search
                             blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                            blackboard.postArtifact(artifact, self._MODULE_NAME)
+                            blackboard.postArtifact(artifact, self._MODULE_NAME, context.getJobId())
                         except Blackboard.BlackboardException as ex:
                             self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactID()), ex)
                             self._logger.log(Level.SEVERE, traceback.format_exc())

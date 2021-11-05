@@ -1084,13 +1084,13 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
                 SleuthkitCase caseDb = currentCase.getSleuthkitCase();
                 BlackboardArtifact.Type artifactType;
                 try {
-                    artifactType = caseDb.getArtifactType(artifactTypeName);
+                    artifactType = caseDb.getBlackboard().getArtifactType(artifactTypeName);
                 } catch (TskCoreException ex) {
                     throw new ExportRulesException(String.format("The specified %s artifact type does not exist in case database for %s", artifactTypeName, currentCase.getCaseDirectory()), ex);
                 }
                 BlackboardAttribute.Type attributeType;
                 try {
-                    attributeType = caseDb.getAttributeType(attributeTypeName);
+                    attributeType = caseDb.getBlackboard().getAttributeType(attributeTypeName);
                 } catch (TskCoreException ex) {
                     throw new ExportRulesException(String.format("The specified %s attribute type does not exist in case database for %s", attributeTypeName, currentCase.getCaseDirectory()), ex);
                 }

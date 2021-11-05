@@ -137,7 +137,7 @@ class FileSystemColumnUtils {
         getColumnKey(Bundle.FileSystemColumnUtils_imageColumns_devID())
     );
     
-    // Not used yet - Note that Hosts aren't content and will not be combined with other types, so we include the name here
+    // Note that Hosts aren't content and will not be combined with other types, so we include the name here
     private static final List<ColumnKey> HOST_COLUMNS = Arrays.asList(
         NAME_COLUMN
     );
@@ -228,6 +228,15 @@ class FileSystemColumnUtils {
             colKeys.addAll(ABSTRACT_FILE_COLUMNS);
         }
         return colKeys;
+    }
+    
+    /**
+     * Get the column keys for a Host.
+     * 
+     * @return The column keys.
+     */
+    static List<ColumnKey> getColumnKeysForHost() {
+        return Arrays.asList(NAME_COLUMN);
     }
     
     /**

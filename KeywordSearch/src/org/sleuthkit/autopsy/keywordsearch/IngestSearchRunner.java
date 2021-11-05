@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 - 2017 Basis Technology Corp.
+ * Copyright 2014 - 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -564,7 +564,7 @@ final class IngestSearchRunner {
                         subProgresses[keywordsSearched].progress(keywordList.getName() + ": " + queryDisplayStr, unitProgress);
 
                         // Create blackboard artifacts                
-                        newResults.process(null, subProgresses[keywordsSearched], this, keywordList.getIngestMessages(), true);
+                        newResults.process(null, subProgresses[keywordsSearched], this, keywordList.getIngestMessages(), true, job.getJobId());
 
                     } //if has results
 

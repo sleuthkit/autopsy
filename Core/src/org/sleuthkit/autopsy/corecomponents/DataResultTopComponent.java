@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -437,6 +438,16 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      */
     public void displayKeywordHits(KeywordHitSearchParam keywordParams) {
         dataResultPanel.displayKeywordHits(keywordParams);
+    }
+    
+    /**
+     * Displays results for querying the DAO for tags matching the search
+     * parameters query.
+     *
+     * @param tagParams The search parameter query.
+     */
+    public void displayTags(TagsSearchParams tagParams) {
+        dataResultPanel.displayTags(tagParams);
     }
 
     @Override

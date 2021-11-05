@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,7 +87,7 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
             for sbrowserDb in sbrowserDbs:
                 try:
                     sbrowserDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self._MODULE_NAME, sbrowserDb.getDBFile())
+                                            self._MODULE_NAME, sbrowserDb.getDBFile(), context.getJobId())
                     bookmarkResultSet = sbrowserDb.runQuery("SELECT url, title, created FROM bookmarks WHERE url IS NOT NULL")
                     if bookmarkResultSet is not None:
                         while bookmarkResultSet.next():
@@ -115,7 +115,7 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
             for cookiesDb in cookiesDbs:
                 try:
                     cookiesDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self._MODULE_NAME, cookiesDb.getDBFile())
+                                            self._MODULE_NAME, cookiesDb.getDBFile(), context.getJobId())
                     cookiesResultSet = cookiesDb.runQuery("SELECT host_key, name, value, creation_utc FROM cookies")
                     if cookiesResultSet is not None:
                         while cookiesResultSet.next():
@@ -145,7 +145,7 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
             for historyDb in historyDbs:
                 try:
                     historyDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self._MODULE_NAME, historyDb.getDBFile())
+                                            self._MODULE_NAME, historyDb.getDBFile(), context.getJobId())
                     historyResultSet = historyDb.runQuery("SELECT url, title, last_visit_time FROM urls")
                     if historyResultSet is not None:
                         while historyResultSet.next():
@@ -174,7 +174,7 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
             for downloadsDb in downloadsDbs:
                 try:
                     downloadsDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self._MODULE_NAME, downloadsDb.getDBFile())
+                                            self._MODULE_NAME, downloadsDb.getDBFile(), context.getJobId())
                     queryString = "SELECT target_path, start_time, url FROM downloads"\
                                   " INNER JOIN downloads_url_chains ON downloads.id = downloads_url_chains.id"
                     downloadsResultSet = downloadsDb.runQuery(queryString)
@@ -203,7 +203,7 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
             for autofillDb in autofillDbs:
                 try:
                     autofillDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                            self._MODULE_NAME, autofillDb.getDBFile())
+                                            self._MODULE_NAME, autofillDb.getDBFile(), context.getJobId())
                     queryString = """
                                 SELECT name, value, count, date_created
                                 FROM autofill
@@ -236,7 +236,7 @@ class SBrowserAnalyzer(general.AndroidComponentAnalyzer):
             for webFormAddressDb in webFormAddressDbs:
                 try:                    
                     webFormAddressDbHelper = WebBrowserArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                                self._MODULE_NAME, webFormAddressDb.getDBFile())
+                                                self._MODULE_NAME, webFormAddressDb.getDBFile(), context.getJobId())
                     """
                         Autofill form data is split across multiple tables. The quqery below joins the various tables.
                     """
