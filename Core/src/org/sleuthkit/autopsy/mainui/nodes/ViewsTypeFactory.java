@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.beans.PropertyChangeEvent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
@@ -30,28 +32,41 @@ import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
  */
 public class ViewsTypeFactory {
 
-    public static class FileSizeTypeFactory extends TreeNode<FileTypeSizeSearchParams> {
+    public static class FileSizeTypeFactory extends TreeChildFactory<FileTypeSizeSearchParams> {
 
-        /**
-         * Main constructor.
-         *
-         * @param itemData The data to display.
-         */
-        public FileSizeTypeFactory(TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> itemData) {
-            super(itemData.getTypeId(),
-                    ICON_TBD,
-                    itemData);
-        }
-
-        @Override
-        public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayFileSizes(this.getItemData().getTypeData());
-        }
-
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            MainDAO.getInstance().getViewsDAO().isFilesBySizeInvalidating(this.getItemData().getTypeData(), evt);
-        }
+//        /**
+//         * Main constructor.
+//         *
+//         * @param itemData The data to display.
+//         */
+//        public FileSizeTypeFactory(TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> itemData) {
+//            super(itemData.getTypeId(),
+//                    ICON_TBD,
+//                    itemData);
+//        }
+//
+//        @Override
+//        public void respondSelection(DataResultTopComponent dataResultPanel) {
+//            dataResultPanel.displayFileSizes(this.getItemData().getTypeData());
+//        }
+//
+//        @Override
+//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//            MainDAO.getInstance().getViewsDAO().isFilesBySizeInvalidating(this.getItemData().getTypeData(), evt);
+//        }
     }
 
+    public static class FileMimePrefixFactory extends TreeChildFactory<FileTypeMimeSearchParams> {
+        
+    }
+    
+    public static class FileMimeSuffixFactory extends TreeChildFactory<FileTypeMimeSearchParams> {
+        
+    }
+    
+    public static class FileExtFactory extends TreeChildFactory<FileTypeExtensionsSearchParams> {
+        
+    }
+    
+    
 }
