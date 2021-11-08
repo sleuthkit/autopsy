@@ -94,11 +94,15 @@ class SampleJythonFileIngestModule(FileIngestModule):
     def log(self, level, msg):
         self._logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
 
+    def __init__(self):
+        self.context = None
+
     # Where any setup and configuration is done
     # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
     # See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
+        self.context = context
         self.filesFound = 0
 
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
@@ -134,8 +138,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
                                          None, "Text Files", None, attrs).getAnalysisResult()
 
             try:
-                # post the artifact for listeners of artifact events
-                blackboard.postArtifact(art, SampleJythonFileIngestModuleFactory.moduleName)
+                blackboard.postArtifact(art, SampleJythonFileIngestModuleFactory.moduleName, context.getJobId())
             except Blackboard.BlackboardException as e:
                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 

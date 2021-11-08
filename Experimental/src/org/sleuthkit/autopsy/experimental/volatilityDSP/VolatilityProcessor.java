@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -390,7 +390,7 @@ class VolatilityProcessor {
 
                             try {
                                 // index the artifact for keyword search
-                                blackboard.postArtifact(volArtifact, VOLATILITY);
+                                blackboard.postArtifact(volArtifact, VOLATILITY, null);
                             } catch (Blackboard.BlackboardException ex) {
                                 errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
                                 /*

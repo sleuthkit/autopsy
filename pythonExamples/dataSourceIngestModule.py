@@ -146,8 +146,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
                                          None, "Test file", None, attrs).getAnalysisResult()
 
             try:
-                # post the artifact for listeners of artifact events.
-                blackboard.postArtifact(art, SampleJythonDataSourceIngestModuleFactory.moduleName)
+                blackboard.postArtifact(art, SampleJythonDataSourceIngestModuleFactory.moduleName, context.getJobId())
             except Blackboard.BlackboardException as e:
                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 

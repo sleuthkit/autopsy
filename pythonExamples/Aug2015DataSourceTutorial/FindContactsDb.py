@@ -172,8 +172,7 @@ class ContactsDbIngestModule(DataSourceIngestModule):
                 ))
 
                 try:
-                    # index the artifact for keyword search
-                    blackboard.postArtifact(art, ContactsDbIngestModuleFactory.moduleName)
+                    blackboard.postArtifact(art, ContactsDbIngestModuleFactory.moduleName, context.getJobId())
                 except Blackboard.BlackboardException as e:
                     self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 

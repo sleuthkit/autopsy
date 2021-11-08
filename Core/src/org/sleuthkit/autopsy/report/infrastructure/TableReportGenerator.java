@@ -45,7 +45,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import static org.sleuthkit.autopsy.casemodule.services.TagsManager.getNotableTagLabel;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
@@ -1226,7 +1225,7 @@ class TableReportGenerator {
     private List<ArtifactData> getFilteredArtifacts(BlackboardArtifact.Type type, HashSet<String> tagNamesFilter) {
         List<ArtifactData> artifacts = new ArrayList<>();
         try {
-            for (BlackboardArtifact artifact : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifacts(type.getTypeID())) {
+            for (BlackboardArtifact artifact : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(Collections.singletonList(type), settings.getSelectedDataSources())) {
                 if (shouldFilterFromReport(artifact)) {
                     continue;
                 }

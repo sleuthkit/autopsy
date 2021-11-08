@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1462,7 +1462,7 @@ public class PortableCaseReportModule implements ReportModule {
 
                 // Add the attachment. The account type specified in the constructor will not be used.
                 CommunicationArtifactsHelper communicationArtifactsHelper = new CommunicationArtifactsHelper(currentCase.getSleuthkitCase(),
-                        newSourceStr, newFile, Account.Type.EMAIL);
+                        newSourceStr, newFile, Account.Type.EMAIL, null);
                 communicationArtifactsHelper.addAttachments(newArtifact, new MessageAttachments(newFileAttachments, msgAttachments.getUrlAttachments()));
             } catch (BlackboardJsonAttrUtil.InvalidJsonException ex) {
                 throw new TskCoreException(String.format("Unable to parse json for MessageAttachments object in artifact: %s", oldArtifact.getName()), ex);

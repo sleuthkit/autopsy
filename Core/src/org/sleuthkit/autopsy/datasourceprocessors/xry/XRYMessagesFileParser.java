@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -318,7 +318,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         } else {
                             try {
                                 currentCase.getCommunicationsManager().createAccountFileInstance(
-                                        Account.Type.PHONE, pair.getValue(), PARSER_NAME, parent);
+                                        Account.Type.PHONE, pair.getValue(), PARSER_NAME, parent, null);
                             } catch (InvalidAccountIDException ex) {
                                 logger.log(Level.WARNING, String.format("Invalid account identifier %s", pair.getValue()), ex);
                             }
@@ -437,7 +437,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
             }
 
             CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
-                    currentCase, PARSER_NAME, parent, Account.Type.PHONE);
+                    currentCase, PARSER_NAME, parent, Account.Type.PHONE, null);
 
             helper.addMessage(messageType, direction, senderId, recipientIdsList,
                     dateTime, readStatus, subject, text, threadId, otherAttributes);

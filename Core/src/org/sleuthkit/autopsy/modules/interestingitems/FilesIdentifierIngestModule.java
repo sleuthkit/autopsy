@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2018 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -151,7 +151,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                         try {
 
                             // Post thet artifact to the blackboard.
-                            blackboard.postArtifact(artifact, MODULE_NAME);
+                            blackboard.postArtifact(artifact, MODULE_NAME, context.getJobId());
                         } catch (Blackboard.BlackboardException ex) {
                             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                             MessageNotifyUtil.Notify.error(Bundle.FilesIdentifierIngestModule_indexError_message(), artifact.getDisplayName());
