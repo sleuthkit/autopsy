@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.ExecutionException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import junit.framework.Assert;
@@ -37,7 +38,6 @@ import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.Attribute;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -47,9 +47,14 @@ import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.HostManager;
 import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.OsAccountInstance;
+import org.sleuthkit.datamodel.OsAccountManager;
+import org.sleuthkit.datamodel.OsAccountRealm;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
@@ -119,6 +124,9 @@ public class TableSearchTest extends NbTestCase {
     private static final String PERSON_HOST_NAME1 = "Host for Person A";
     private static final String PERSON_HOST_NAME2 = "Host for Person B";
     
+    // OS Accounts test
+    private static final String REALM_NAME_COLUMN = "Realm Name";
+    private static final String HOST_COLUMN = "Host";    
     
     /////////////////////////////////////////////////
     // Data to be used across the test methods.
@@ -128,6 +136,7 @@ public class TableSearchTest extends NbTestCase {
     SleuthkitCase db = null;       // The case database
     Blackboard blackboard = null;  // The blackboard
     TagsManager tagsManager = null;// Tags manager
+    OsAccountManager accountMgr = null;
 
     DataSource dataSource1 = null; // A local files data source
     DataSource dataSource2 = null; // A local files data source
@@ -172,6 +181,9 @@ public class TableSearchTest extends NbTestCase {
     // Tags test
     TagName knownTag1 = null;
     TagName tag2 = null;
+    
+    // OS Accounts test
+    OsAccount osAccount1 = null;
 
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(TableSearchTest.class).
@@ -199,6 +211,7 @@ public class TableSearchTest extends NbTestCase {
         sizeSearchTest();
         fileSystemTest();
         tagsTest();
+        OsAccountsTest();
     }
 
     /**
@@ -212,6 +225,7 @@ public class TableSearchTest extends NbTestCase {
             db = openCase.getSleuthkitCase();
             blackboard = db.getBlackboard();
             tagsManager = openCase.getServices().getTagsManager();
+            accountMgr = openCase.getSleuthkitCase().getOsAccountManager();
 
             // Add two logical files data sources
             trans = db.beginTransaction();
@@ -467,8 +481,20 @@ public class TableSearchTest extends NbTestCase {
             
             // Tag the custom file in data source 2
             openCase.getServices().getTagsManager().addContentTag(customFile, knownTag1);
-
-        } catch (TestUtilsException | TskCoreException | BlackboardException | TagsManager.TagNameAlreadyExistsException ex) {
+            
+            // Add OS Accounts ---------------------            
+            HostManager hostMrg = openCase.getSleuthkitCase().getHostManager();                        
+            Host host1 = hostMrg.getHostByDataSource(dataSource1);            
+            OsAccount osAccount2 = accountMgr.newWindowsOsAccount("S-1-5-21-647283-46237-200", null, null, host1, OsAccountRealm.RealmScope.LOCAL);
+            accountMgr.newOsAccountInstance(osAccount2, dataSource1, OsAccountInstance.OsAccountInstanceType.ACCESSED);
+            OsAccount osAccount3 = accountMgr.newWindowsOsAccount("S-1-5-21-647283-46237-300", null, null, host1, OsAccountRealm.RealmScope.UNKNOWN);
+            accountMgr.newOsAccountInstance(osAccount3, dataSource1, OsAccountInstance.OsAccountInstanceType.REFERENCED);
+            
+            Host host2 = hostMrg.getHostByDataSource(dataSource2);
+            osAccount1 = accountMgr.newWindowsOsAccount("S-1-5-21-647283-46237-100", null, null, host2, OsAccountRealm.RealmScope.DOMAIN);
+            accountMgr.newOsAccountInstance(osAccount1, dataSource2, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
+            
+        } catch (TestUtilsException | TskCoreException | BlackboardException | TagsManager.TagNameAlreadyExistsException | OsAccountManager.NotUserSIDException ex) {
             if (trans != null) {
                 try {
                     trans.rollback();
@@ -759,7 +785,52 @@ public class TableSearchTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-    }    
+    }
+    
+    public void OsAccountsTest() {
+        // Quick test that everything is initialized
+        assertTrue(db != null);
+
+        try {
+            OsAccountsDAO accountsDAO = MainDAO.getInstance().getOsAccountsDAO();
+
+            // Get OS Accounts from data source 1
+            OsAccountsSearchParams param = new OsAccountsSearchParams(dataSource1.getId());
+            SearchResultsDTO results = accountsDAO.getAccounts(param, 0, null, false);
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
+
+            // Get OS Accounts from all data sources
+            param = new OsAccountsSearchParams(null);
+            results = accountsDAO.getAccounts(param, 0, null, false);
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
+            
+            // Get OS Accounts from data source 1
+            param = new OsAccountsSearchParams(dataSource2.getId());
+            results = accountsDAO.getAccounts(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+            
+            // Get the row
+            RowDTO rowDTO = results.getItems().get(0);
+            assertTrue(rowDTO instanceof BaseRowDTO);
+            BaseRowDTO osAccountRowDTO = (BaseRowDTO) rowDTO;
+
+            // Check that the result is for the custom OS Account
+            Optional<String> addr = osAccount1.getAddr();
+            assertTrue(osAccountRowDTO.getCellValues().contains(addr.get()));            
+            
+            // Check that a few of the expected OS Account column names are present
+            List<String> columnDisplayNames = results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
+            assertTrue(columnDisplayNames.contains(REALM_NAME_COLUMN));
+            assertTrue(columnDisplayNames.contains(HOST_COLUMN));
+
+        } catch (ExecutionException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }     
     
     public void analysisResultSearchTest() {
         // Quick test that everything is initialized
@@ -1131,5 +1202,6 @@ public class TableSearchTest extends NbTestCase {
         db = null;
         blackboard = null;
         tagsManager = null;
+        accountMgr = null;
     }
 }
