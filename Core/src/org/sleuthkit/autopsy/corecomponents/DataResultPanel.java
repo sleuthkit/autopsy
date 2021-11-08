@@ -40,6 +40,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.explorer.ExplorerManager;
+import org.openide.nodes.Children;
+import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeMemberEvent;
@@ -504,7 +506,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             listeningToTabbedPane = true;
         }
 
-        this.currentRootNode = rootNode;
+        // if search result root node, it's fine; otherwise, wrap in result 
+        // viewer filter node to make sure there are no grandchildren
+        this.currentRootNode = (rootNode instanceof SearchResultRootNode) 
+                ? rootNode
+                : new ResultViewerFilterParentNode(rootNode);
 
         // if search result node clear out base child factory paging
         if (this.currentRootNode instanceof SearchResultRootNode) {
@@ -1291,7 +1297,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ex);
         }
     }
-    
+
     /**
      * Displays results of querying the DAO for the given search parameters
      * query.
@@ -1412,6 +1418,42 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.pageNumLabel.setText("");
             this.gotoPageTextField.setText("");
 
+        }
+    }
+
+    /**
+     * Children for a parent node in the result viewer that creates filter nodes
+     * with no children.
+     */
+    private class ResultViewerFilterChildren extends FilterNode.Children {
+
+        /**
+         * Main constructor.
+         *
+         * @param baseNode The parent node to wrap.
+         */
+        ResultViewerFilterChildren(Node baseNode) {
+            super(baseNode);
+        }
+
+        @Override
+        protected Node[] createNodes(Node key) {
+            return new Node[]{new FilterNode(key, Children.LEAF)};
+        }
+    }
+
+    /**
+     * A parent node of items to display in the result viewer that shows no
+     * grandchildren.
+     */
+    private class ResultViewerFilterParentNode extends FilterNode {
+
+        /**
+         * Main constructor.
+         * @param original The original node to wrap.
+         */
+        ResultViewerFilterParentNode(Node original) {
+            super(original, new ResultViewerFilterChildren(original));
         }
     }
 
