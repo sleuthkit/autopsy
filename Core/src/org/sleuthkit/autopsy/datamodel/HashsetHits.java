@@ -337,7 +337,7 @@ public class HashsetHits implements AutopsyVisitableItem {
         
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayAnalysisResultSet(new HashHitSearchParam(
+            dataResultPanel.displayHashHits(new HashHitSearchParam(
                     filteringDSObjId > 0 ? filteringDSObjId : null,
                     hashSetName));
         }
