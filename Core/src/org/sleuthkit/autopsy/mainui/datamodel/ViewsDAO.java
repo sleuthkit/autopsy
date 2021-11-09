@@ -250,6 +250,7 @@ public class ViewsDAO {
      */
     private String getBaseFileMimeFilter() {
         return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
                 + " AND (type IN ("
                 + TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal() + ","
                 + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal() + ","
@@ -273,9 +274,7 @@ public class ViewsDAO {
     private String getFileMimeWhereStatement(String mimeType, Long dataSourceId) {
         String whereClause = getBaseFileMimeFilter()
                 + getDataSourceAndClause(dataSourceId)
-                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
                 + " AND mime_type = '" + mimeType + "'";
-
         return whereClause;
     }
 
