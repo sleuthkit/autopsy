@@ -1433,7 +1433,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          * @param baseNode The parent node to wrap.
          */
         ResultViewerFilterChildren(Node baseNode) {
-            super(baseNode);
+            super(baseNode == null ? Node.EMPTY : baseNode);
         }
 
         @Override
@@ -1453,7 +1453,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
          * @param original The original node to wrap.
          */
         ResultViewerFilterParentNode(Node original) {
-            super(original, new ResultViewerFilterChildren(original));
+            super(original == null ? Node.EMPTY : original, new ResultViewerFilterChildren(original));
         }
     }
 
