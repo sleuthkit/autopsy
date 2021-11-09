@@ -14,7 +14,7 @@
         
         <!-- for viewers -->
         <dependency conf="autopsy_core->*" org="org.freedesktop.gstreamer" name="gst1-java-core" rev="1.0.0"/>
-        <dependency conf="autopsy_core->*" org="net.java.dev.jna" name="jna-platform" rev="5.9.0"/>
+        <dependency conf="autopsy_core->*" org="net.java.dev.jna" name="jna-platform" rev="5.10.0"/>
         
         <!-- for file search -->
         <dependency conf="autopsy_core->*" org="com.github.lgooddatepicker" name="LGoodDatePicker" rev="10.3.1"/>
