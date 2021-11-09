@@ -25,7 +25,6 @@ import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
 import org.sleuthkit.autopsy.datamodel.AnalysisResults;
@@ -36,7 +35,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSize;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesByExtension;
+import org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
@@ -44,7 +43,6 @@ import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
-import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -96,8 +94,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         } else if (origNode instanceof AnalysisResults.RootNode) {
             Node cloned = ((AnalysisResults.RootNode) origNode).clone();
             return new Node[]{cloned};
-        } else if (origNode instanceof FileTypesByExtension.FileTypesByExtNode) {
-            Node cloned = ((FileTypesByExtension.FileTypesByExtNode) origNode).clone();
+        } else if (origNode instanceof FileTypesByExtNode) {
+            Node cloned = ((FileTypesByExtNode) origNode).clone();
             return new Node[]{cloned};
         } else if (origNode instanceof FileTypesByMimeType.ByMimeTypeNode) {
             Node cloned = ((FileTypesByMimeType.ByMimeTypeNode) origNode).clone();

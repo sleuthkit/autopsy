@@ -24,6 +24,8 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode;
+import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType.ByMimeTypeNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
@@ -85,7 +87,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(FileTypesByExtension sf) {
-            return sf.new FileTypesByExtNode();
+            return new FileTypesByExtNode(sf.filteringDataSourceObjId());
         }
 
         @Override
@@ -172,7 +174,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
-            return ftByMimeTypeItem.new ByMimeTypeNode();
+            return new ByMimeTypeNode(ftByMimeTypeItem.filteringDataSourceObjId());
         }
 
         @Override
