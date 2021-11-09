@@ -24,6 +24,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 
@@ -129,4 +130,11 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
         this.itemData = updatedData;
         updateDisplayName(prevData, updatedData);
     }
+
+    @Override
+    public void respondSelection(DataResultTopComponent dataResultPanel) {
+        dataResultPanel.setNode(this);
+    }
+    
+    
 }

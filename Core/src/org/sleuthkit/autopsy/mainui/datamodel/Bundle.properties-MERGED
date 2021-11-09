@@ -13,6 +13,12 @@ AnalysisResultDAO.columnKeys.score.name=Score
 AnalysisResultDAO.columnKeys.sourceType.description=Source Type
 AnalysisResultDAO.columnKeys.sourceType.displayName=Source Type
 AnalysisResultDAO.columnKeys.sourceType.name=SourceType
+# {0} - searchTerm
+AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch={0} (Exact)
+# {0} - searchTerm
+AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch={0} (Regex)
+# {0} - searchTerm
+AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch={0} (Substring)
 BlackboardArtifactDAO.columnKeys.comment.description=Comment
 BlackboardArtifactDAO.columnKeys.comment.displayName=C
 BlackboardArtifactDAO.columnKeys.comment.name=Comment
