@@ -23,12 +23,18 @@ import java.beans.PropertyChangeEvent;
 /**
  * Internal methods that DAOs implement.
  */
-abstract class AbstractDao {
+abstract class AbstractDAO {
     
     /**
      * Clear any cached data (Due to change in view
      */
     abstract void clearCaches();
     
+    /**
+     * Handles an autopsy event (i.e. ingest, case, etc.).
+     * @param evt The autopsy event.
+     */
     abstract void handleAutopsyEvent(PropertyChangeEvent evt);
+    
+    
 }

@@ -71,7 +71,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "BlackboardArtifactDAO.columnKeys.dataSource.displayName=Data Source",
     "BlackboardArtifactDAO.columnKeys.dataSource.description=Data Source"
 })
-abstract class BlackboardArtifactDAO {
+abstract class BlackboardArtifactDAO extends AbstractDAO {
 
     private static Logger logger = Logger.getLogger(BlackboardArtifactDAO.class.getName());
 
