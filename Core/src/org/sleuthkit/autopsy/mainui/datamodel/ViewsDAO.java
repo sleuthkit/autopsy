@@ -663,7 +663,7 @@ public class ViewsDAO {
 
         @Override
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            Content content = this.getContentFromEvt(evt);
+            Content content = DAOEventUtils.getContentFromEvt(evt);
             if (content == null) {
                 return false;
             }
@@ -693,7 +693,7 @@ public class ViewsDAO {
 
         @Override
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            Content content = this.getContentFromEvt(evt);
+            Content content = DAOEventUtils.getContentFromEvt(evt);
             if (content == null) {
                 return false;
             }
@@ -723,7 +723,7 @@ public class ViewsDAO {
 
         @Override
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            Content content = this.getContentFromEvt(evt);
+            Content content = DAOEventUtils.getContentFromEvt(evt);
             if (content == null) {
                 return false;
             }

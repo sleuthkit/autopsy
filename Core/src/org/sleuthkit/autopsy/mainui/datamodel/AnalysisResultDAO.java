@@ -682,6 +682,18 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
     }
 
+    @Override
+    void clearCaches() {
+        this.analysisResultCache.invalidateAll();
+        this.keywordHitCache.invalidateAll();
+        this.setHitCache.invalidateAll();
+    }
+
+    @Override
+    List<Object> handleAutopsyEvent(PropertyChangeEvent evt) {
+        throw new UnsupportedOperationException("Not supported yet."); 
+    }
+
     /**
      * Handles basic functionality of fetching and paging of analysis results.
      */
@@ -698,7 +710,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         @Override
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
+            ModuleDataEvent dataEvent = DAOEventUtils.getModuleDataFromEvt(evt);
             if (dataEvent == null) {
                 return false;
             }

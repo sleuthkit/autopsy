@@ -18,11 +18,27 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import com.google.common.collect.ImmutableList;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.prefs.PreferenceChangeListener;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.commons.collections.CollectionUtils;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+
 /**
  * Main entry point for DAO for providing data to populate the data results
  * viewer.
  */
-public class MainDAO {
+public class MainDAO extends AbstractDAO {
 
     private static MainDAO instance = null;
 
@@ -41,10 +57,13 @@ public class MainDAO {
     private final TagsDAO tagsDAO = TagsDAO.getInstance();
     private final OsAccountsDAO accountsDAO = OsAccountsDAO.getInstance();
 
+    // GVDTODO when events are completely integrated, this list should contain all sub-DAO's
+    private final List<AbstractDAO> allDAOs = ImmutableList.of(dataArtifactDAO);
+
     public DataArtifactDAO getDataArtifactsDAO() {
         return dataArtifactDAO;
     }
-    
+
     public AnalysisResultDAO getAnalysisResultDAO() {
         return analysisResultDAO;
     }
@@ -52,16 +71,99 @@ public class MainDAO {
     public ViewsDAO getViewsDAO() {
         return viewsDAO;
     }
-    
+
     public FileSystemDAO getFileSystemDAO() {
         return fileSystemDAO;
     }
-    
+
     public TagsDAO getTagsDAO() {
         return tagsDAO;
     }
-    
+
     public OsAccountsDAO getOsAccountsDAO() {
         return accountsDAO;
+    }
+
+    @Override
+    void clearCaches() {
+        allDAOs.forEach((subDAO) -> subDAO.clearCaches());
+    }
+
+    @Override
+    List<Object> handleAutopsyEvent(PropertyChangeEvent evt) {
+        return Stream.of(allDAOs)
+                .map(subDAO -> handleAutopsyEvent(evt))
+                .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * The relevant ingest module events.
+     */
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED, IngestManager.IngestModuleEvent.DATA_ADDED);
+
+    /**
+     * The relevant case events.
+     */
+    private static final Set<Case.Events> CASE_EVENTS = EnumSet.of(Case.Events.CURRENT_CASE);
+
+    /**
+     * The ingest module event listener.
+     */
+    private final PropertyChangeListener ingestModuleEventListener = (evt) -> {
+        processAndFireDAOEvent(evt);
+    };
+
+    /**
+     * The case event listener.
+     */
+    private final PropertyChangeListener caseEventListener = (evt) -> {
+        if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+            this.clearCaches();
+        } else {
+            processAndFireDAOEvent(evt);
+        }
+    };
+
+    /**
+     * The user preference listener.
+     */
+    private final PreferenceChangeListener userPreferenceListener = (evt) -> {
+        this.clearCaches();
+    };
+
+    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        support.addPropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        support.removePropertyChangeListener(listener);
+    }
+
+    /**
+     * Registers listeners with autopsy event publishers.
+     */
+    void register() {
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
+        Case.addEventTypeSubscriber(CASE_EVENTS, caseEventListener);
+        UserPreferences.addChangeListener(userPreferenceListener);
+    }
+
+    /**
+     * Unregisters listeners from autopsy event publishers.
+     */
+    void unregister() {
+        IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
+        Case.removeEventTypeSubscriber(CASE_EVENTS, caseEventListener);
+        UserPreferences.removeChangeListener(userPreferenceListener);
+    }
+
+    void processAndFireDAOEvent(PropertyChangeEvent autopsyEvent) {
+        List<Object> events = this.handleAutopsyEvent(autopsyEvent);
+        if (CollectionUtils.isNotEmpty(events)) {
+            support.firePropertyChange(new PropertyChangeEvent(this, "DATA_CHANGE", null, new DAOAggregateEvent(new HashSet<>(events))));
+        }
     }
 }

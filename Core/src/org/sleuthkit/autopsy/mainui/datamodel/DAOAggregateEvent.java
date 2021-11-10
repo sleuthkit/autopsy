@@ -18,26 +18,20 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import java.beans.PropertyChangeEvent;
-import java.util.List;
+import java.util.Set;
 
 /**
- * Internal methods that DAOs implement.
+ * A single event containing an aggregate of all affected data.
  */
-abstract class AbstractDAO {
+public class DAOAggregateEvent {
 
-    /**
-     * Clear any cached data (Due to change in view
-     */
-    abstract void clearCaches();
+    private final Set<Object> objects;
 
-    /**
-     * Handles an autopsy event (i.e. ingest, case, etc.).
-     *
-     * @param evt The autopsy event.
-     *
-     * @return The list of dao events emitted due to this autopsy event.
-     */
-    abstract List<Object> handleAutopsyEvent(PropertyChangeEvent evt);
+    public DAOAggregateEvent(Set<Object> objects) {
+        this.objects = objects;
+    }
 
+    public Set<Object> getEvents() {
+        return objects;
+    }
 }
