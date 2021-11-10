@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.DirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.ImageRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.LocalDirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.LocalFileDataSourceRowDTO;
@@ -45,6 +46,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VolumeRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.FileNode.LayoutFileNode;
+import org.sleuthkit.autopsy.mainui.nodes.FileNode.SlackFileNode;
 import org.sleuthkit.autopsy.mainui.nodes.SpecialDirectoryNode.LocalDirectoryNode;
 import org.sleuthkit.autopsy.mainui.nodes.SpecialDirectoryNode.LocalFileDataSourceNode;
 import org.sleuthkit.autopsy.mainui.nodes.SpecialDirectoryNode.VirtualDirectoryNode;
@@ -106,6 +108,8 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
                 return new LayoutFileNode(key.getSearchResults(), (LayoutFileRowDTO) key.getRow());
             } else if (PoolRowDTO.getTypeIdForClass().equals(typeId)) {
                 return new PoolNode(key.getSearchResults(), (PoolRowDTO) key.getRow());
+            } else if (SlackFileRowDTO.getTypeIdForClass().equals(typeId)) {
+                return new SlackFileNode(key.getSearchResults(), (SlackFileRowDTO) key.getRow());
             } else {
                 logger.log(Level.WARNING, MessageFormat.format("No known node for type id: {0} provided by row result: {1}", typeId, key.getRow()));
             }
