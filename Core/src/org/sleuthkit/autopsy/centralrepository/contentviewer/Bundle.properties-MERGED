@@ -24,6 +24,9 @@ OtherOccurrencesPanel.caseDetailsDialog.noCaseNameError=Error
 OtherOccurrencesPanel.caseDetailsDialog.noDetails=No details for this case.
 OtherOccurrencesPanel.caseDetailsDialog.noDetailsReference=No case details for Global reference properties.
 OtherOccurrencesPanel.caseDetailsDialog.notSelected=No Row Selected
+# {0} - commonality percentage
+# {1} - correlation type
+# {2} - correlation value
 OtherOccurrencesPanel.correlatedArtifacts.byType={0}% of data sources have {2} (type: {1})\n
 OtherOccurrencesPanel.correlatedArtifacts.failed=Failed to get frequency details.
 OtherOccurrencesPanel.correlatedArtifacts.isEmpty=There are no files or artifacts to correlate.

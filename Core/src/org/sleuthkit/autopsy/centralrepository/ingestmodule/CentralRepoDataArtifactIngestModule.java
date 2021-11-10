@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -66,7 +65,6 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
     private final boolean flagPrevSeenDevices;
     private final boolean flagUniqueArtifacts;
     private final boolean saveCorrAttrInstances;
-    private final Set<String> corrAttrsAnalyzed;
     private CentralRepository centralRepo;
     private IngestJobContext context;
 
@@ -84,7 +82,6 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         flagPrevSeenDevices = settings.isFlagPreviousDevices();
         flagUniqueArtifacts = settings.isFlagUniqueArtifacts();
         saveCorrAttrInstances = settings.shouldCreateCorrelationProperties();
-        corrAttrsAnalyzed = new LinkedHashSet<>();
     }
 
     @NbBundle.Messages({
@@ -201,10 +198,6 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         }
 
         for (CorrelationAttributeInstance corrAttr : corrAttrs) {
-            if (!corrAttrsAnalyzed.add(corrAttr.toString())) {
-                continue;
-            }
-
             if (artifact != null) {
                 makeAnalysisResults(artifact, corrAttr);
             } else {

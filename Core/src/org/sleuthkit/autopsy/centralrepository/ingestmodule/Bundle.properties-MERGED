@@ -1,21 +1,20 @@
-CentralRepoIngestModel_name_header=Name:<br>
-CentralRepoIngestModel_previous_case_header=<br>Previous Cases:<br>
-CentralRepoIngestModule.prevCaseComment.text=Previous Case: 
-CentralRepoIngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)
+CentralRepoIngestModule_artifact_type_inbox_msg_header=Artifact Type
 CentralRepoIngestModule_cannotGetCrCaseErrMsg=Case not present in the central repository
 CentralRepoIngestModule_cannotGetCrDataSourceErrMsg=Data source not present in the central repository
 CentralRepoIngestModule_crDatabaseTypeMismatch=Mulit-user cases require a PostgreSQL central repository
 CentralRepoIngestModule_crInaccessibleErrMsg=Error accessing central repository
 CentralRepoIngestModule_crNotEnabledErrMsg=Central repository required, but not enabled
+CentralRepoIngestModule_filename_inbox_msg_header=File Name
+CentralRepoIngestModule_md5Hash_inbox_msg_header=MD5 Hash
 CentralRepoIngestModule_missingFileCorrAttrTypeErrMsg=Correlation attribute type for files not found in the central repository
 CentralRepoIngestModule_noCurrentCaseErrMsg=Error getting current case
-CentralRepoIngestModule_notable_message_header=<html>A file in this data source was previously seen and tagged as Notable.<br>
+CentralRepoIngestModule_notable_attr_inbox_msg_header=Notable Attribute
+# {0} - Name of item that is Notable
+CentralRepoIngestModule_notable_inbox_msg_subject=Notable: {0}
 # {0} - list of cases
 CentralRepoIngestModule_notableJustification=Previously marked as notable in cases {0}
 CentralRepoIngestModule_notableSetName=Previously Tagged As Notable (Central Repository)
-CentralRepoIngestModule_osAcctMgrInaccessibleErrMsg=Error getting OS accounts manager
-# {0} - Name of file that is Notable
-CentralRepoIngestModule_postToBB_knownBadMsg=Notable: {0}
+CentralRepoIngestModule_prev_cases_inbox_msg_header=Previous Cases
 # {0} - list of cases
 CentralRepoIngestModule_prevSeenJustification=Previously seen in cases {0}
 CentralRepoIngestModule_prevSeenOsAcctConfig=Previously Seen Users (Central Repository)
