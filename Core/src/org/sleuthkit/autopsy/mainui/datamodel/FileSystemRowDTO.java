@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.Volume;
 /*
  * A base class for FileSystem table row DTOs.
  */
-abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
+public abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
 
     private final T content;
 
