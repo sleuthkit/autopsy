@@ -33,6 +33,12 @@ import org.sleuthkit.datamodel.Content;
  */
 public class ImageNode extends BaseNode<SearchResultsDTO, ImageRowDTO> {
 
+    /**
+     * Simple node constructor.
+     *
+     * @param results The search result DTO.
+     * @param row     The table row DTO.
+     */
     public ImageNode(SearchResultsDTO results, ImageRowDTO row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
         setDisplayName(row.getContent().getName());

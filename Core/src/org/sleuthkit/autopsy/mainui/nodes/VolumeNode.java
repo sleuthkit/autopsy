@@ -29,8 +29,17 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
 
+/**
+ * A node representing a Volume.
+ */
 public class VolumeNode extends BaseNode<SearchResultsDTO, VolumeRowDTO> {
 
+    /**
+     * Simple node constructor.
+     *
+     * @param results The search result DTO.
+     * @param row     The table row DTO.
+     */
     public VolumeNode(SearchResultsDTO results, VolumeRowDTO row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
         setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png"); //NON-NLS

@@ -34,7 +34,14 @@ import org.sleuthkit.datamodel.SpecialDirectory;
  */
 abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, FileSystemRowDTO<? extends SpecialDirectory>> {
 
-    SpecialDirectoryNode(SearchResultsDTO results, FileSystemRowDTO<? extends SpecialDirectory> row) {
+    /**
+     * An abstract base class for FileSystem objects that are subclasses of
+     * SpecialDirectory.
+     *
+     * @param results The search result DTO.
+     * @param row     The table row DTO.
+     */
+    private SpecialDirectoryNode(SearchResultsDTO results, FileSystemRowDTO<? extends SpecialDirectory> row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
         setDisplayName(row.getContent().getName());
         setShortDescription(row.getContent().getName());
@@ -77,6 +84,12 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, FileSyste
      */
     public static class LocalDirectoryNode extends SpecialDirectoryNode {
 
+        /**
+         * Simple node constructor.
+         *
+         * @param results The search result DTO.
+         * @param row     The table row DTO.
+         */
         public LocalDirectoryNode(SearchResultsDTO results, LocalDirectoryRowDTO row) {
             super(results, row);
             setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
@@ -88,6 +101,12 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, FileSyste
      */
     public static class VirtualDirectoryNode extends SpecialDirectoryNode {
 
+        /**
+         * Simple node constructor.
+         *
+         * @param results The search result DTO.
+         * @param row     The table row DTO.
+         */
         public VirtualDirectoryNode(SearchResultsDTO results, VirtualDirectoryRowDTO row) {
             super(results, row);
             setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-virtual.png");
@@ -101,6 +120,12 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, FileSyste
      */
     public static class LocalFileDataSourceNode extends VirtualDirectoryNode {
 
+        /**
+         * Simple node constructor.
+         *
+         * @param results The search result DTO.
+         * @param row     The table row DTO.
+         */
         public LocalFileDataSourceNode(SearchResultsDTO results, LocalFileDataSourceRowDTO row) {
             super(results, row);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS

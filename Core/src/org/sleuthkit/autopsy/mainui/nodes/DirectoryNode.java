@@ -30,18 +30,24 @@ import org.sleuthkit.datamodel.TskData;
  * A node representing a row for a Directory in the results table.
  */
 public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
-    
+
+    /**
+     * Simple node constructor.
+     *
+     * @param results The search result DTO.
+     * @param row     The table row DTO.
+     */
     public DirectoryNode(SearchResultsDTO results, DirectoryRowDTO row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
         setDisplayName(row.getContent().getName());
         setShortDescription(row.getContent().getName());
         setIcon();
-    }   
-    
+    }
+
     /**
      * Sets the Icon that appears for the directory based on the FLAG state.
-     * 
-     * @param dir 
+     *
+     * @param dir
      */
     private void setIcon() {
         // set name, display name, and icon
@@ -51,27 +57,27 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
         }
     }
-    
+
     @Override
     public boolean supportsViewInTimeline() {
         return true;
     }
-    
+
     @Override
     public Optional<AbstractFile> getFileForViewInTimelineAction() {
         return Optional.of(getRowDTO().getContent());
     }
-    
+
     @Override
     public boolean supportsExtractActions() {
         return true;
     }
-    
+
     @Override
     public Optional<Content> getContentForRunIngestionModuleAction() {
         return Optional.of(getRowDTO().getContent());
     }
-    
+
     @Override
     public boolean supportsContentTagAction() {
         return true;

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalDirectory;
@@ -28,27 +29,48 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
 /*
- *
+ * A base class for FileSystem table row DTOs.
  */
-public abstract class FileSystemRowDTO<T> extends BaseRowDTO {
+abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
 
     private final T content;
 
-    private FileSystemRowDTO(T content, List<Object> cellValues, String typeId, long id) {
-        super(cellValues, typeId, id);
+    /**
+     * Constructs a new FileSystemRowDTO.
+     *
+     * @param content    The content represented by this object.
+     * @param cellValues The table cell values.
+     * @param typeId     The string type id for this DTO.
+     */
+    private FileSystemRowDTO(T content, List<Object> cellValues, String typeId) {
+        super(cellValues, typeId, content.getId());
         this.content = content;
     }
 
+    /**
+     * Returns the content object for this row.
+     *
+     * @return The content.
+     */
     public T getContent() {
         return content;
     }
 
+    /**
+     * DTO Representing an Volume in the results view.
+     */
     public static class VolumeRowDTO extends FileSystemRowDTO<Volume> {
 
         private static final String TYPE_ID = "VOLUME";
 
-        public VolumeRowDTO(Volume volume, List<Object> cellValues, long id) {
-            super(volume, cellValues, TYPE_ID, id);
+        /**
+         * Constructs a new VolumeRowDTO.
+         *
+         * @param volume     The volume represented by this DTO.
+         * @param cellValues The table cell values.
+         */
+        public VolumeRowDTO(Volume volume, List<Object> cellValues) {
+            super(volume, cellValues, TYPE_ID);
         }
 
         public static String getTypeIdForClass() {
@@ -63,8 +85,14 @@ public abstract class FileSystemRowDTO<T> extends BaseRowDTO {
 
         private static final String TYPE_ID = "IMAGE";
 
-        public ImageRowDTO(Image image, List<Object> cellValues, long id) {
-            super(image, cellValues, TYPE_ID, id);
+        /**
+         * Constructs a new ImageRowDTO.
+         *
+         * @param image      The image represented by this DTO.
+         * @param cellValues The table cell values.
+         */
+        public ImageRowDTO(Image image, List<Object> cellValues) {
+            super(image, cellValues, TYPE_ID);
         }
 
         public static String getTypeIdForClass() {
@@ -79,8 +107,14 @@ public abstract class FileSystemRowDTO<T> extends BaseRowDTO {
 
         private static final String TYPE_ID = "LOCAL_DIRECTORY";
 
-        public LocalDirectoryRowDTO(LocalDirectory localDir, List<Object> cellValues, long id) {
-            super(localDir, cellValues, TYPE_ID, id);
+        /**
+         * Constructs a new LocalDirectoryRowDTO.
+         *
+         * @param localDir   The LocalDirectory represented by this DTO.
+         * @param cellValues The table cell values.
+         */
+        public LocalDirectoryRowDTO(LocalDirectory localDir, List<Object> cellValues) {
+            super(localDir, cellValues, TYPE_ID);
         }
 
         public static String getTypeIdForClass() {
@@ -95,12 +129,25 @@ public abstract class FileSystemRowDTO<T> extends BaseRowDTO {
 
         private static final String TYPE_ID = "VIRTUAL_DIRECTORY";
 
-        public VirtualDirectoryRowDTO(VirtualDirectory localDir, List<Object> cellValues, long id) {
-            this(localDir, cellValues, TYPE_ID, id);
+        /**
+         * Constructs a new VirtualDirectoryRowDTO.
+         *
+         * @param virtualDir The VirtualDirectory represented by this DTO.
+         * @param cellValues The table cell values.
+         */
+        public VirtualDirectoryRowDTO(VirtualDirectory virtualDir, List<Object> cellValues) {
+            this(virtualDir, cellValues, TYPE_ID);
         }
 
-        VirtualDirectoryRowDTO(VirtualDirectory localDir, List<Object> cellValues, String typeId, long id) {
-            super(localDir, cellValues, typeId, id);
+        /**
+         * Constructs a new VirtualDirectoryRowDTO.
+         *
+         * @param virtualDir The VirtualDirectory represented by this DTO.
+         * @param cellValues The table cell values.
+         * @param typeId     The type id for this object.
+         */
+        private VirtualDirectoryRowDTO(VirtualDirectory localDir, List<Object> cellValues, String typeId) {
+            super(localDir, cellValues, typeId);
         }
 
         public static String getTypeIdForClass() {
@@ -115,8 +162,15 @@ public abstract class FileSystemRowDTO<T> extends BaseRowDTO {
 
         private static final String TYPE_ID = "LOCAL_FILE_DATA_SOURCE";
 
-        public LocalFileDataSourceRowDTO(LocalFilesDataSource localFilesDataSource, List<Object> cellValues, long id) {
-            super(localFilesDataSource, cellValues, TYPE_ID, id);
+        /**
+         * Constructs a new LocalFileDataSourceRowDTO.
+         *
+         * @param localFilesDataSource The LocalFilesDataSource represented by
+         *                             this DTO.
+         * @param cellValues           The table cell values.
+         */
+        public LocalFileDataSourceRowDTO(LocalFilesDataSource localFilesDataSource, List<Object> cellValues) {
+            super(localFilesDataSource, cellValues, TYPE_ID);
         }
 
         public static String getTypeIdForClass() {
@@ -131,25 +185,38 @@ public abstract class FileSystemRowDTO<T> extends BaseRowDTO {
 
         private static final String TYPE_ID = "DIRECTORY";
 
-        public DirectoryRowDTO(Directory localDir, List<Object> cellValues, long id) {
-            super(localDir, cellValues, TYPE_ID, id);
+        /**
+         * Constructs a new DirectoryRowDTO.
+         *
+         * @param dir        The directory represented by this DTO.
+         * @param cellValues The table cell values.
+         */
+        public DirectoryRowDTO(Directory dir, List<Object> cellValues) {
+            super(dir, cellValues, TYPE_ID);
         }
 
         public static String getTypeIdForClass() {
             return TYPE_ID;
         }
     }
-    
+
     /**
      * DTO representing a pool in the results view.
      */
     public static class PoolRowDTO extends FileSystemRowDTO<Pool> {
+
         private static final String TYPE_ID = "POOL";
-        
-        public PoolRowDTO(Pool pool, List<Object> cellValues, long id) {
-            super(pool, cellValues, TYPE_ID, id);
+
+        /**
+         * Constructs a new PoolRowDTO.
+         *
+         * @param pool       The pool represented by this DTO.
+         * @param cellValues The table cell values.
+         */
+        public PoolRowDTO(Pool pool, List<Object> cellValues) {
+            super(pool, cellValues, TYPE_ID);
         }
-        
+
         public static String getTypeIdForClass() {
             return TYPE_ID;
         }

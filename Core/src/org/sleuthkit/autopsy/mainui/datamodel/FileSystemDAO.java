@@ -63,13 +63,14 @@ import org.sleuthkit.datamodel.Volume;
  *
  */
 public class FileSystemDAO {
+
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
     private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
     private static final String FILE_SYSTEM_TYPE_ID = "FILE_SYSTEM";
-    
+
     private static FileSystemDAO instance = null;
 
     synchronized static FileSystemDAO getInstance() {
@@ -78,7 +79,7 @@ public class FileSystemDAO {
         }
         return instance;
     }
-    
+
     private BaseSearchResultsDTO fetchContentForTableFromContent(SearchParams<FileSystemContentSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -90,15 +91,15 @@ public class FileSystemDAO {
         if (parentContent == null) {
             throw new TskCoreException("Error loading children of object with ID " + objectId);
         }
-        
+
         parentName = parentContent.getName();
         for (Content content : parentContent.getChildren()) {
             contentForTable.addAll(FileSystemColumnUtils.getNextDisplayableContent(content));
-        } 
+        }
 
         return fetchContentForTable(cacheKey, contentForTable, parentName);
     }
-    
+
     private BaseSearchResultsDTO fetchContentForTableFromHost(SearchParams<FileSystemHostSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -114,8 +115,8 @@ public class FileSystemDAO {
             throw new TskCoreException("Error loading host with ID " + objectId);
         }
         return fetchContentForTable(cacheKey, contentForTable, parentName);
-    }    
-    
+    }
+
     private BaseSearchResultsDTO fetchHostsForTable(SearchParams<FileSystemPersonSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -123,7 +124,7 @@ public class FileSystemDAO {
         Long objectId = cacheKey.getParamData().getPersonObjectId();
         List<Host> hostsForTable = new ArrayList<>();
         String parentName = "";
-        
+
         if (objectId != null) {
             Optional<Person> person = skCase.getPersonManager().getPerson(objectId);
             if (person.isPresent()) {
@@ -135,10 +136,10 @@ public class FileSystemDAO {
         } else {
             hostsForTable.addAll(skCase.getPersonManager().getHostsWithoutPersons());
         }
-        
+
         Stream<Host> pagedHostsStream = hostsForTable.stream()
-            .sorted(Comparator.comparing((host) -> host.getHostId()))
-            .skip(cacheKey.getStartItem());
+                .sorted(Comparator.comparing((host) -> host.getHostId()))
+                .skip(cacheKey.getStartItem());
 
         if (cacheKey.getMaxResultsCount() != null) {
             pagedHostsStream = pagedHostsStream.limit(cacheKey.getMaxResultsCount());
@@ -146,84 +147,83 @@ public class FileSystemDAO {
 
         List<Host> pagedHosts = pagedHostsStream.collect(Collectors.toList());
         List<ColumnKey> columnKeys = FileSystemColumnUtils.getColumnKeysForHost();
-        
+
         List<RowDTO> rows = new ArrayList<>();
         for (Host host : pagedHosts) {
             List<Object> cellValues = FileSystemColumnUtils.getCellValuesForHost(host);
             rows.add(new BaseRowDTO(cellValues, FILE_SYSTEM_TYPE_ID, host.getHostId()));
         }
         return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, cacheKey.getStartItem(), hostsForTable.size());
-    }    
-    
-    
+    }
+
     private BaseSearchResultsDTO fetchContentForTable(SearchParams<?> cacheKey, List<Content> contentForTable,
             String parentName) throws NoCurrentCaseException, TskCoreException {
         // Ensure consistent columns for each page by doing this before paging
         List<FileSystemColumnUtils.ContentType> displayableTypes = FileSystemColumnUtils.getDisplayableTypesForContentList(contentForTable);
-        
+
         List<Content> pagedContent = getPaged(contentForTable, cacheKey);
         List<ColumnKey> columnKeys = FileSystemColumnUtils.getColumnKeysForContent(displayableTypes);
-        
+
         List<RowDTO> rows = new ArrayList<>();
         for (Content content : pagedContent) {
             List<Object> cellValues = FileSystemColumnUtils.getCellValuesForContent(content, displayableTypes);
-            if(content instanceof Image) {
-                rows.add(new ImageRowDTO((Image)content, cellValues, content.getId()));
+            if (content instanceof Image) {
+                rows.add(new ImageRowDTO((Image) content, cellValues));
             } else if (content instanceof LocalFilesDataSource) {
-                rows.add(new LocalFileDataSourceRowDTO((LocalFilesDataSource)content, cellValues, content.getId()));
-            } else if(content instanceof LocalDirectory) {
-                rows.add(new LocalDirectoryRowDTO((LocalDirectory)content, cellValues, content.getId()));
-            }else if(content instanceof VirtualDirectory) {
-                rows.add(new VirtualDirectoryRowDTO((VirtualDirectory)content, cellValues, content.getId()));
-            }else if(content instanceof Volume) {
-                rows.add(new VolumeRowDTO((Volume)content, cellValues, content.getId()));
-            } else if(content instanceof Directory) {
-                rows.add(new DirectoryRowDTO((Directory)content, cellValues, content.getId()));
-            } else if(content instanceof Pool) {
-                rows.add(new PoolRowDTO((Pool)content, cellValues, content.getId()));
+                rows.add(new LocalFileDataSourceRowDTO((LocalFilesDataSource) content, cellValues));
+            } else if (content instanceof LocalDirectory) {
+                rows.add(new LocalDirectoryRowDTO((LocalDirectory) content, cellValues));
+            } else if (content instanceof VirtualDirectory) {
+                rows.add(new VirtualDirectoryRowDTO((VirtualDirectory) content, cellValues));
+            } else if (content instanceof Volume) {
+                rows.add(new VolumeRowDTO((Volume) content, cellValues));
+            } else if (content instanceof Directory) {
+                rows.add(new DirectoryRowDTO((Directory) content, cellValues));
+            } else if (content instanceof Pool) {
+                rows.add(new PoolRowDTO((Pool) content, cellValues));
             } else if (content instanceof SlackFile) {
-                AbstractFile file = (AbstractFile)content;
+                AbstractFile file = (AbstractFile) content;
                 rows.add(new SlackFileRowDTO(
-                    (SlackFile)file,
-                    file.getId(),
-                    file.getName(),
-                    file.getNameExtension(),
-                    getExtensionMediaType(file.getNameExtension()),
-                    file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
-                    file.getType(),
-                    cellValues));
+                        (SlackFile) file,
+                        file.getId(),
+                        file.getName(),
+                        file.getNameExtension(),
+                        getExtensionMediaType(file.getNameExtension()),
+                        file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
+                        file.getType(),
+                        cellValues));
             } else if (content instanceof LayoutFile) {
-                AbstractFile file = (AbstractFile)content;
+                AbstractFile file = (AbstractFile) content;
                 rows.add(new LayoutFileRowDTO(
-                    (LayoutFile)file,
-                    file.getId(),
-                    file.getName(),
-                    file.getNameExtension(),
-                    getExtensionMediaType(file.getNameExtension()),
-                    file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
-                    file.getType(),
-                    cellValues));
+                        (LayoutFile) file,
+                        file.getId(),
+                        file.getName(),
+                        file.getNameExtension(),
+                        getExtensionMediaType(file.getNameExtension()),
+                        file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
+                        file.getType(),
+                        cellValues));
             } else if (content instanceof AbstractFile) {
-                AbstractFile file = (AbstractFile)content;
+                AbstractFile file = (AbstractFile) content;
                 rows.add(new FileRowDTO(
-                    file,
-                    file.getId(),
-                    file.getName(),
-                    file.getNameExtension(),
-                    getExtensionMediaType(file.getNameExtension()),
-                    file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
-                    file.getType(),
-                    cellValues));
+                        file,
+                        file.getId(),
+                        file.getName(),
+                        file.getNameExtension(),
+                        getExtensionMediaType(file.getNameExtension()),
+                        file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
+                        file.getType(),
+                        cellValues));
             }
         }
         return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, cacheKey.getStartItem(), contentForTable.size());
-    } 
-    
+    }
+
     /**
      * Returns a list of paged content.
      *
-     * @param contentObjects  The content objects.
-     * @param searchParams    The search parameters including the paging.
+     * @param contentObjects The content objects.
+     * @param searchParams   The search parameters including the paging.
      *
      * @return The list of paged content.
      */
@@ -237,8 +237,8 @@ public class FileSystemDAO {
         }
 
         return pagedArtsStream.collect(Collectors.toList());
-    }    
-    
+    }
+
     public BaseSearchResultsDTO getContentForTable(FileSystemContentSearchParam objectKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
 
         SearchParams<FileSystemContentSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
@@ -248,7 +248,7 @@ public class FileSystemDAO {
 
         return searchParamsCache.get(searchParams, () -> fetchContentForTableFromContent(searchParams));
     }
-    
+
     public BaseSearchResultsDTO getContentForTable(FileSystemHostSearchParam objectKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
 
         SearchParams<FileSystemHostSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
@@ -258,7 +258,7 @@ public class FileSystemDAO {
 
         return searchParamsCache.get(searchParams, () -> fetchContentForTableFromHost(searchParams));
     }
-    
+
     public BaseSearchResultsDTO getHostsForTable(FileSystemPersonSearchParam objectKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
 
         SearchParams<FileSystemPersonSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
@@ -268,7 +268,8 @@ public class FileSystemDAO {
 
         return searchParamsCache.get(searchParams, () -> fetchHostsForTable(searchParams));
     }
-        /**
+
+    /**
      * Handles fetching and paging of data for file types by mime type.
      */
     public static class FileSystemFetcher extends DAOFetcher<FileSystemContentSearchParam> {
@@ -298,7 +299,7 @@ public class FileSystemDAO {
             return false;
         }
     }
-    
+
     public static class FileSystemHostFetcher extends DAOFetcher<FileSystemHostSearchParam> {
 
         /**
