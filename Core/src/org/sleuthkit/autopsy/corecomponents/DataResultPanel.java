@@ -60,7 +60,6 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.HashsetResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
@@ -69,6 +68,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetche
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemHostFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
@@ -78,7 +79,6 @@ import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsDAO.TagFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeExtFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeMimeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeSizeFetcher;
@@ -1321,6 +1321,19 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for file system filter: {0}.",
                     fileSystemKey.getContentObjectId()),
+                    ex);
+        }
+    }
+
+    void displayFileSystemForHost(FileSystemHostSearchParam hostSystemKey) {
+        try {
+            this.searchResultManager = new SearchManager(new FileSystemHostFetcher(hostSystemKey), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for host filter: {0}.",
+                    hostSystemKey.getHostObjectId()),
                     ex);
         }
     }

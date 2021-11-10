@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
@@ -453,6 +454,10 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     
     public void displayFileSystemContent(FileSystemContentSearchParam fileSystemParams) {
         dataResultPanel.displayFileSystemContent(fileSystemParams);
+    }
+    
+    public void displayFileSystemForHost(FileSystemHostSearchParam hostSystempParams) {
+        dataResultPanel.displayFileSystemForHost(hostSystempParams);
     }
 
     @Override

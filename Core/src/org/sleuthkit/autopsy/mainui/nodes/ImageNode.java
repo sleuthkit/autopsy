@@ -18,16 +18,52 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import org.openide.nodes.AbstractNode;
+import java.util.Optional;
 import org.openide.nodes.Children;
-import org.sleuthkit.autopsy.mainui.datamodel.BaseRowDTO;
+import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.ImageRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
+import org.sleuthkit.datamodel.Content;
 
 /**
- *
+ * A node representing an Image.
  */
-public class ImageNode  extends AbstractNode {
-    public ImageNode(SearchResultsDTO results, BaseRowDTO row) {
-        super(Children.LEAF, ContentNodeUtil.getLookup(null));
+public class ImageNode extends BaseNode<SearchResultsDTO, ImageRowDTO> {
+
+    public ImageNode(SearchResultsDTO results, ImageRowDTO row) {
+        super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
+        setDisplayName(row.getContent().getName());
+        setShortDescription(row.getContent().getName());
+        setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg"); //NON-NLS
+    }
+
+    @NbBundle.Messages({
+        "ImageNode_ExtractUnallocAction_text=Extract Unallocated Space to Single Files"
+    })
+
+    @Override
+    public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
+        ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
+        group.add(new ExtractUnallocAction(
+                Bundle.ImageNode_ExtractUnallocAction_text(), getRowDTO().getContent()));
+        return Optional.of(group);
+    }
+
+    @Override
+    public Optional<Content> getDataSourceForActions() {
+        return Optional.of(getRowDTO().getContent());
+    }
+
+    @Override
+    public Optional<Node> getNewWindowActionNode() {
+        return Optional.of(this);
+    }
+
+    @Override
+    public boolean supportsSourceContentViewerActions() {
+        return true;
     }
 }

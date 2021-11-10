@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -32,12 +31,33 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.DirectoryRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.ImageRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VolumeRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.LocalDirectoryRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.LocalFileDataSourceRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VirtualDirectoryRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.PoolRowDTO;
+import static org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.getExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalDirectory;
+import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.Pool;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.VirtualDirectory;
+import org.sleuthkit.datamodel.Volume;
 
 /**
  *
@@ -147,7 +167,54 @@ public class FileSystemDAO {
         List<RowDTO> rows = new ArrayList<>();
         for (Content content : pagedContent) {
             List<Object> cellValues = FileSystemColumnUtils.getCellValuesForContent(content, displayableTypes);
-            rows.add(new BaseRowDTO(cellValues, FILE_SYSTEM_TYPE_ID, content.getId()));
+            if(content instanceof Image) {
+                rows.add(new ImageRowDTO((Image)content, cellValues, content.getId()));
+            } else if (content instanceof LocalFilesDataSource) {
+                rows.add(new LocalFileDataSourceRowDTO((LocalFilesDataSource)content, cellValues, content.getId()));
+            } else if(content instanceof LocalDirectory) {
+                rows.add(new LocalDirectoryRowDTO((LocalDirectory)content, cellValues, content.getId()));
+            }else if(content instanceof VirtualDirectory) {
+                rows.add(new VirtualDirectoryRowDTO((VirtualDirectory)content, cellValues, content.getId()));
+            }else if(content instanceof Volume) {
+                rows.add(new VolumeRowDTO((Volume)content, cellValues, content.getId()));
+            } else if(content instanceof Directory) {
+                rows.add(new DirectoryRowDTO((Directory)content, cellValues, content.getId()));
+            } else if(content instanceof Pool) {
+                rows.add(new PoolRowDTO((Pool)content, cellValues, content.getId()));
+            } else if (content instanceof SlackFile) {
+                AbstractFile file = (AbstractFile)content;
+                rows.add(new SlackFileRowDTO(
+                    (SlackFile)file,
+                    file.getId(),
+                    file.getName(),
+                    file.getNameExtension(),
+                    getExtensionMediaType(file.getNameExtension()),
+                    file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
+                    file.getType(),
+                    cellValues));
+            } else if (content instanceof LayoutFile) {
+                AbstractFile file = (AbstractFile)content;
+                rows.add(new LayoutFileRowDTO(
+                    (LayoutFile)file,
+                    file.getId(),
+                    file.getName(),
+                    file.getNameExtension(),
+                    getExtensionMediaType(file.getNameExtension()),
+                    file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
+                    file.getType(),
+                    cellValues));
+            } else if (content instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile)content;
+                rows.add(new FileRowDTO(
+                    file,
+                    file.getId(),
+                    file.getName(),
+                    file.getNameExtension(),
+                    getExtensionMediaType(file.getNameExtension()),
+                    file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
+                    file.getType(),
+                    cellValues));
+            }
         }
         return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, cacheKey.getStartItem(), contentForTable.size());
     } 
@@ -212,6 +279,34 @@ public class FileSystemDAO {
          * @param params Parameters to handle fetching of data.
          */
         public FileSystemFetcher(FileSystemContentSearchParam params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getFileSystemDAO().getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            Content content = this.getContentFromEvt(evt);
+            if (content == null) {
+                return false;
+            }
+
+            // I am not sure what to do here.
+            return false;
+        }
+    }
+    
+    public static class FileSystemHostFetcher extends DAOFetcher<FileSystemHostSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public FileSystemHostFetcher(FileSystemHostSearchParam params) {
             super(params);
         }
 

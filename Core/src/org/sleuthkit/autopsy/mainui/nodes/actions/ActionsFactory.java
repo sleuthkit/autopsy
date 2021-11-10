@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes.actions;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -38,15 +39,19 @@ import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
+import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
+import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
@@ -85,11 +90,19 @@ public final class ActionsFactory {
             actionGroups.add(nodeSpecificGroup.get());
         }
 
-        if (actionContext.supportsViewInTimeline()) {
-            actionGroups.add(new ActionGroup(getViewInTimelineAction(actionContext)));
-        }
-
         ActionGroup group = new ActionGroup();
+        Optional<Action> opAction = getBrowseModeAction(actionContext);
+        if(opAction.isPresent()) {
+            group.add(opAction.get());
+        }
+        
+        if (actionContext.supportsViewInTimeline()) {
+            group.add(getViewInTimelineAction(actionContext));
+        } 
+        
+        actionGroups.add(group);
+
+        group = new ActionGroup();
         if (actionContext.supportsAssociatedFileActions()) {
             group.addAll(getAssociatedFileActions(actionContext).get());
         }
@@ -118,8 +131,17 @@ public final class ActionsFactory {
         if (actionContext.supportsExtractActions()) {
             actionGroups.add(getExtractActions());
         }
+        
+        group = new ActionGroup();
+        Optional<ActionGroup> ingestGroup = getRunIngestAction(actionContext);
+        if(ingestGroup.isPresent()) {
+            group.addAll(ingestGroup.get());
+        }
+        group.addAll(ContextMenuExtensionPoint.getActions());
+        actionGroups.add(group);
+        
         actionGroups.add(getTagActions(actionContext));
-        actionGroups.add(new ActionGroup(ContextMenuExtensionPoint.getActions()));
+        
 
         Optional<AbstractFile> optionalFile = actionContext.getExtractArchiveWithPasswordActionFile();
         if (optionalFile.isPresent()) {
@@ -374,6 +396,51 @@ public final class ActionsFactory {
         }
         return null;
     }
+    
+    /**
+     * 
+     * @param context
+     * @return 
+     */
+    @Messages({
+        "ActionFactory_openFileSearchByAttr_text=Open File Search by Attributes"
+    })
+    private static Optional<ActionGroup> getRunIngestAction(ActionContext context) {
+        ActionGroup group = new ActionGroup();
+        Optional<Content> optional = context.getContentForFileSearchAction();
+        
+        if(optional.isPresent()) {
+            group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
+        }
+        
+        optional = context.getDataSourceForActions();
+        if(optional.isPresent()) {
+            group.add(new ViewSummaryInformationAction(optional.get().getId()));
+            group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
+            group.add(new DeleteDataSourceAction(optional.get().getId()));
+        }
+        else {
+            optional = context.getContentForRunIngestionModuleAction();
+
+            if(optional.isPresent()) {
+                group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
+            }
+        }
+        
+        return group.isEmpty() ? Optional.empty() : Optional.of(group);
+    }
+    
+    @Messages({
+        "ActionsFactory_viewFileInDir_text=View File in Directory"
+    })
+    private static Optional<Action> getBrowseModeAction(ActionContext actionContext) {
+        Optional<AbstractFile> optional = actionContext.getFileForDirectoryBrowseMode();
+        if(optional.isPresent()) {
+            return Optional.of(new ViewContextAction(Bundle.ActionsFactory_viewFileInDir_text(), optional.get()));
+        }
+        
+        return Optional.empty();
+    }
 
     /**
      * Returns the name of the artifact based on the artifact type to be used
@@ -407,7 +474,7 @@ public final class ActionsFactory {
         /**
          * Construct a new ActionGroup instance with an empty list.
          */
-        ActionGroup() {
+        public ActionGroup() {
             this.actionList = new ArrayList<>();
         }
 
@@ -416,12 +483,12 @@ public final class ActionsFactory {
          *
          * @param actionList List of actions to add to the group.
          */
-        ActionGroup(List<Action> actionList) {
+        public ActionGroup(List<Action> actionList) {
             this();
             this.actionList.addAll(actionList);
         }
 
-        ActionGroup(Action action) {
+        public ActionGroup(Action action) {
             this();
             actionList.add(action);
         }
