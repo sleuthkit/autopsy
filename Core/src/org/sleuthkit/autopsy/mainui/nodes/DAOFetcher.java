@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.beans.PropertyChangeEvent;
 import java.util.concurrent.ExecutionException;
+import org.sleuthkit.autopsy.mainui.datamodel.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
@@ -70,5 +71,5 @@ public abstract class DAOFetcher<P> {
      *
      * @return True if the
      */
-    public abstract boolean isRefreshRequired(PropertyChangeEvent evt);
+    public abstract boolean isRefreshRequired(DAOEvent evt);
 }

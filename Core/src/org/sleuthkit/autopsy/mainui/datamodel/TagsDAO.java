@@ -297,72 +297,76 @@ public class TagsDAO {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            TagsSearchParams params = this.getParameters();
-            String eventType = evt.getPropertyName();
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return true;
             
-            // handle artifact/result tag changes
-            if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())) {
-                
-                // ignore non-artifact/result tag changes
-                if (params.getTagType() != TagsSearchParams.TagType.RESULT) {
-                    return false;
-                }
-                
-                if (evt instanceof AutopsyEvent) {
-                    if (evt instanceof BlackBoardArtifactTagAddedEvent) {
-                        // An artifact associated with the current case has been tagged.
-                        BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
-                        // ensure tag added event has a valid content id
-                        if (event.getAddedTag() == null || event.getAddedTag().getContent() == null || event.getAddedTag().getArtifact() == null) {
-                            return false;
-                        }
-                        return params.getTagName().getId() == event.getAddedTag().getId();
-                    } else if (evt instanceof BlackBoardArtifactTagDeletedEvent) {
-                        // A tag has been removed from an artifact associated with the current case.
-                        BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
-                        // ensure tag deleted event has a valid content id
-                        BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo deletedTagInfo = event.getDeletedTagInfo();
-                        if (deletedTagInfo == null) {
-                            return false;
-                        }
-                        return params.getTagName().getId() == deletedTagInfo.getTagID();
-                    }
-                }
-            }
-            
-            // handle file/content tag changes
-            if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                    || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-                
-                // ignore non-file/content tag changes
-                if (params.getTagType() != TagsSearchParams.TagType.FILE) {
-                    return false;
-                }
+            // GVDTODO
 
-                if (evt instanceof AutopsyEvent) {
-                    if (evt instanceof ContentTagAddedEvent) {
-                        // Content associated with the current case has been tagged.
-                        ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
-                        // ensure tag added event has a valid content id
-                        if (event.getAddedTag() == null || event.getAddedTag().getContent() == null) {
-                            return false;
-                        }
-                        return params.getTagName().getId() == event.getAddedTag().getId();
-                    } else if (evt instanceof ContentTagDeletedEvent) {
-                        // A tag has been removed from content associated with the current case.
-                        ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
-                        // ensure tag deleted event has a valid content id
-                        ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
-                        if (deletedTagInfo == null) {
-                            return false;
-                        }                        
-                        return params.getTagName().getId() == deletedTagInfo.getTagID();
-                    }
-                }
-            }
-            return false;
+//            TagsSearchParams params = this.getParameters();
+//            String eventType = evt.getPropertyName();
+//            
+//            // handle artifact/result tag changes
+//            if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
+//                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())) {
+//                
+//                // ignore non-artifact/result tag changes
+//                if (params.getTagType() != TagsSearchParams.TagType.RESULT) {
+//                    return false;
+//                }
+//                
+//                if (evt instanceof AutopsyEvent) {
+//                    if (evt instanceof BlackBoardArtifactTagAddedEvent) {
+//                        // An artifact associated with the current case has been tagged.
+//                        BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
+//                        // ensure tag added event has a valid content id
+//                        if (event.getAddedTag() == null || event.getAddedTag().getContent() == null || event.getAddedTag().getArtifact() == null) {
+//                            return false;
+//                        }
+//                        return params.getTagName().getId() == event.getAddedTag().getId();
+//                    } else if (evt instanceof BlackBoardArtifactTagDeletedEvent) {
+//                        // A tag has been removed from an artifact associated with the current case.
+//                        BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
+//                        // ensure tag deleted event has a valid content id
+//                        BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo deletedTagInfo = event.getDeletedTagInfo();
+//                        if (deletedTagInfo == null) {
+//                            return false;
+//                        }
+//                        return params.getTagName().getId() == deletedTagInfo.getTagID();
+//                    }
+//                }
+//            }
+//            
+//            // handle file/content tag changes
+//            if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
+//                    || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
+//                
+//                // ignore non-file/content tag changes
+//                if (params.getTagType() != TagsSearchParams.TagType.FILE) {
+//                    return false;
+//                }
+//
+//                if (evt instanceof AutopsyEvent) {
+//                    if (evt instanceof ContentTagAddedEvent) {
+//                        // Content associated with the current case has been tagged.
+//                        ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
+//                        // ensure tag added event has a valid content id
+//                        if (event.getAddedTag() == null || event.getAddedTag().getContent() == null) {
+//                            return false;
+//                        }
+//                        return params.getTagName().getId() == event.getAddedTag().getId();
+//                    } else if (evt instanceof ContentTagDeletedEvent) {
+//                        // A tag has been removed from content associated with the current case.
+//                        ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
+//                        // ensure tag deleted event has a valid content id
+//                        ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
+//                        if (deletedTagInfo == null) {
+//                            return false;
+//                        }                        
+//                        return params.getTagName().getId() == deletedTagInfo.getTagID();
+//                    }
+//                }
+//            }
+//            return false;
         }
     }
 }

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.beans.PropertyChangeEvent;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -34,10 +35,10 @@ abstract class AbstractDAO {
     /**
      * Handles an autopsy event (i.e. ingest, case, etc.).
      *
-     * @param evt The autopsy event.
+     * @param evt The autopsy events.
      *
      * @return The list of dao events emitted due to this autopsy event.
      */
-    abstract List<Object> handleAutopsyEvent(PropertyChangeEvent evt);
+    abstract List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evt);
 
 }

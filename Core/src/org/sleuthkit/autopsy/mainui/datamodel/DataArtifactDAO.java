@@ -23,9 +23,14 @@ import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -67,19 +72,19 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
-        
+
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
         String pagedWhereClause = getWhereClause(cacheKey);
-        
+
         List<BlackboardArtifact> arts = new ArrayList<>();
         arts.addAll(blackboard.getDataArtifactsWhere(pagedWhereClause));
         blackboard.loadBlackboardAttributes(arts);
-           
-        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());    
-        
+
+        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());
+
         TableData tableData = createTableData(artType, arts);
         return new DataArtifactTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
@@ -110,8 +115,14 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return dataArtifactCache.get(searchParams, () -> fetchDataArtifactsForTable(searchParams));
     }
 
-    public boolean isDataArtifactInvalidating(DataArtifactSearchParam key, ModuleDataEvent eventData) {
-        return key.getArtifactType().equals(eventData.getBlackboardArtifactType());
+    public boolean isDataArtifactInvalidating(DataArtifactSearchParam key, DAOEvent eventData) {
+        if (!(eventData instanceof DataArtifactEvent)) {
+            return false;
+        } else {
+            DataArtifactEvent dataArtEvt = (DataArtifactEvent) eventData;
+            return key.getArtifactType().getTypeID() == dataArtEvt.getArtifactTypeId()
+                    && (key.getDataSourceId() == null || (key.getDataSourceId() == dataArtEvt.getDataSourceId()));
+        }
     }
 
     public void dropDataArtifactCache() {
@@ -160,14 +171,49 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     }
 
     @Override
-    List<Object> handleAutopsyEvent(PropertyChangeEvent evt) {
-        ModuleDataEvent dataEvt = DAOEventUtils.getModuleDataFromEvt(evt);
+    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
+        // get a grouping of artifacts mapping the artifact type id to data source id.
+        Map<Integer, Set<Long>> artifactTypeDataSourceMap = new HashMap<>();
+        evts.stream()
+                .map(evt -> DAOEventUtils.getModuleDataFromEvt(evt))
+                .filter(dataEvt -> dataEvt != null)
+                .flatMap(dataEvt -> dataEvt.getArtifacts().stream())
+                .forEach((art) -> {
+                    artifactTypeDataSourceMap
+                            .computeIfAbsent(art.getArtifactTypeID(), (k) -> new HashSet<>())
+                            .add(art.getDataSourceObjId());
+                });
+        
+        // invalidate cache entries that are affected by events
+        // GVDTODO handle concurrency issues that may arise
+        List<SearchParams<BlackboardArtifactSearchParam>> invalidatedKeys = new ArrayList<>();
+        for (SearchParams<BlackboardArtifactSearchParam> searchParams : this.dataArtifactCache.asMap().keySet()) {
+            Set<Long> dsIds = artifactTypeDataSourceMap.get(searchParams.getParamData().getArtifactType().getTypeID());
+            if (dsIds != null) {
+                Long searchDsId = searchParams.getParamData().getDataSourceId();
+                if (searchDsId == null || dsIds.contains(searchDsId)) {
+                    invalidatedKeys.add(searchParams);
+                }
+            }
+        }
+        this.dataArtifactCache.invalidateAll(invalidatedKeys);
+        
+        // gather dao events based on artifacts
+        List<DAOEvent> toRet = new ArrayList<>();
+        for (Entry<Integer, Set<Long>> entry : artifactTypeDataSourceMap.entrySet()) {
+            int artTypeId = entry.getKey();
+            for (Long dsObjId : entry.getValue()) {
+                toRet.add(new DataArtifactEvent(artTypeId, dsObjId));
+            }
+        }
+        
+        return toRet;
     }
 
     /*
      * Handles fetching and paging of data artifacts.
      */
-    public static class DataArtifactFetcher extends DAOFetcher<DataArtifactSearchParam> {
+    public class DataArtifactFetcher extends DAOFetcher<DataArtifactSearchParam> {
 
         /**
          * Main constructor.
@@ -184,13 +230,8 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            ModuleDataEvent dataEvent = DAOEventUtils.getModuleDataFromEvt(evt);
-            if (dataEvent == null) {
-                return false;
-            }
-
-            return MainDAO.getInstance().getDataArtifactsDAO().isDataArtifactInvalidating(this.getParameters(), dataEvent);
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return DataArtifactDAO.this.isDataArtifactInvalidating(this.getParameters(), evt);
         }
     }
 }

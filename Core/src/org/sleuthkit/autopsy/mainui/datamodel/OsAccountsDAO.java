@@ -186,13 +186,16 @@ public class OsAccountsDAO {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            String eventType = evt.getPropertyName();
-            if (eventType.equals(Case.Events.OS_ACCOUNTS_ADDED.toString())
-                    || eventType.equals(Case.Events.OS_ACCOUNTS_DELETED.toString())) {
-                return true;
-            }
-            return false;
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return true;
+            
+            //GVDTODO
+//            String eventType = evt.getPropertyName();
+//            if (eventType.equals(Case.Events.OS_ACCOUNTS_ADDED.toString())
+//                    || eventType.equals(Case.Events.OS_ACCOUNTS_DELETED.toString())) {
+//                return true;
+//            }
+//            return false;
         }
     }
 }

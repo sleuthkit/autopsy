@@ -68,6 +68,9 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultSe
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.DAOAggregateEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
@@ -75,6 +78,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsDAO.TagFetcher;
@@ -172,13 +176,19 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             IngestManager.IngestModuleEvent.CONTENT_CHANGED,
             IngestManager.IngestModuleEvent.DATA_ADDED);
 
-    private final PropertyChangeListener ingestModuleListener = evt -> {
-        if (this.searchResultManager != null && this.searchResultManager.isRefreshRequired(evt)) {
-            refreshSearchResultChildren();
+    private final MainDAO mainDAO = MainDAO.getInstance();
+    
+    private final PropertyChangeListener DAOListener = evt -> {
+        SearchManager manager = this.searchResultManager;
+        if (manager != null && evt != null && evt.getNewValue() instanceof DAOAggregateEvent) {
+            DAOAggregateEvent daoAggrEvt = (DAOAggregateEvent) evt.getNewValue();
+            if (daoAggrEvt.getEvents().stream().anyMatch((daoEvt) -> manager.isRefreshRequired(daoEvt))) {
+                refreshSearchResultChildren();
+            }
         }
     };
 
-    private final PropertyChangeListener weakIngestModuleListener = WeakListeners.propertyChange(ingestModuleListener, null);
+    private final PropertyChangeListener weakDAOListener = WeakListeners.propertyChange(DAOListener, mainDAO);
 
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = EnumSet.of(
             IngestManager.IngestJobEvent.COMPLETED,
@@ -457,7 +467,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private void initListeners() {
         UserPreferences.addChangeListener(this.pageSizeListener);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.weakCaseEventListener);
-        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
+        this.mainDAO.addPropertyChangeListener(this.weakDAOListener);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakDAOListener);
         IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS, weakIngestJobListener);
     }
 
@@ -467,7 +478,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private void closeListeners() {
         UserPreferences.removeChangeListener(this.pageSizeListener);
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseEventListener);
-        IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
+        this.mainDAO.removePropertyChangeListener(this.weakDAOListener);
         IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS, weakIngestJobListener);
     }
 
@@ -1171,7 +1182,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
         try {
-            this.searchResultManager = new SearchManager(new DataArtifactFetcher(dataArtifactParams), getPageSize());
+            DataArtifactDAO dataArtDAO = MainDAO.getInstance().getDataArtifactsDAO();
+            this.searchResultManager = new SearchManager(dataArtDAO.new DataArtifactFetcher(dataArtifactParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {

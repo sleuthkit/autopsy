@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.concurrent.ExecutionException;
+import org.sleuthkit.autopsy.mainui.datamodel.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
@@ -171,11 +171,11 @@ public class SearchManager {
     /**
      * Determines if a refresh is required for the currently selected item.
      *
-     * @param evt The ingest module event.
+     * @param evt The event.
      *
      * @return True if an update is required.
      */
-    public synchronized boolean isRefreshRequired(PropertyChangeEvent evt) {
+    public synchronized boolean isRefreshRequired(DAOEvent evt) {
         return isRefreshRequired(this.daoFetcher, evt);
     }
 
@@ -183,11 +183,11 @@ public class SearchManager {
      * Determines if a refresh is required for the currently selected item.
      *
      * @param dataFetcher The data fetcher.
-     * @param evt         The ingest module event.
+     * @param evt         The event.
      *
      * @return True if an update is required.
      */
-    private synchronized <P> boolean isRefreshRequired(DAOFetcher<P> dataFetcher, PropertyChangeEvent evt) {
+    private synchronized <P> boolean isRefreshRequired(DAOFetcher<P> dataFetcher, DAOEvent evt) {
         if (dataFetcher == null) {
             return false;
         }

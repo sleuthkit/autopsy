@@ -662,13 +662,15 @@ public class ViewsDAO {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            Content content = DAOEventUtils.getContentFromEvt(evt);
-            if (content == null) {
-                return false;
-            }
-
-            return MainDAO.getInstance().getViewsDAO().isFilesByExtInvalidating(this.getParameters(), content);
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return true;
+            // GVDTODO
+//            Content content = DAOEventUtils.getContentFromEvt(evt);
+//            if (content == null) {
+//                return false;
+//            }
+//
+//            return MainDAO.getInstance().getViewsDAO().isFilesByExtInvalidating(this.getParameters(), content);
         }
     }
 
@@ -692,13 +694,15 @@ public class ViewsDAO {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            Content content = DAOEventUtils.getContentFromEvt(evt);
-            if (content == null) {
-                return false;
-            }
-
-            return MainDAO.getInstance().getViewsDAO().isFilesByMimeInvalidating(this.getParameters(), content);
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return true;
+            // GVDTODO
+//            Content content = DAOEventUtils.getContentFromEvt(evt);
+//            if (content == null) {
+//                return false;
+//            }
+//
+//            return MainDAO.getInstance().getViewsDAO().isFilesByMimeInvalidating(this.getParameters(), content);
         }
     }
 
@@ -722,13 +726,16 @@ public class ViewsDAO {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            Content content = DAOEventUtils.getContentFromEvt(evt);
-            if (content == null) {
-                return false;
-            }
-
-            return MainDAO.getInstance().getViewsDAO().isFilesBySizeInvalidating(this.getParameters(), content);
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return true;
+            
+            // GVDTODO
+//            Content content = DAOEventUtils.getContentFromEvt(evt);
+//            if (content == null) {
+//                return false;
+//            }
+//
+//            return MainDAO.getInstance().getViewsDAO().isFilesBySizeInvalidating(this.getParameters(), content);
         }
     }
 }

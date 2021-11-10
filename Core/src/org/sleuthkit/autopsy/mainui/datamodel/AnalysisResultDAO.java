@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -690,7 +691,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     @Override
-    List<Object> handleAutopsyEvent(PropertyChangeEvent evt) {
+    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evt) {
         throw new UnsupportedOperationException("Not supported yet."); 
     }
 
@@ -709,13 +710,15 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            ModuleDataEvent dataEvent = DAOEventUtils.getModuleDataFromEvt(evt);
-            if (dataEvent == null) {
-                return false;
-            }
-
-            return MainDAO.getInstance().getAnalysisResultDAO().isAnalysisResultsInvalidating(this.getParameters(), dataEvent);
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return true;
+            // GVDTODO
+//            ModuleDataEvent dataEvent = DAOEventUtils.getModuleDataFromEvt(evt);
+//            if (dataEvent == null) {
+//                return false;
+//            }
+//
+//            return MainDAO.getInstance().getAnalysisResultDAO().isAnalysisResultsInvalidating(this.getParameters(), dataEvent);
         }
     }
 
