@@ -40,6 +40,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.explorer.ExplorerManager;
+import org.openide.nodes.Children;
+import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeMemberEvent;
@@ -61,9 +63,10 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFetcher;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.HashsetResultFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultSetFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
@@ -505,7 +508,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             listeningToTabbedPane = true;
         }
 
-        this.currentRootNode = rootNode;
+        // if search result root node, it's fine; otherwise, wrap in result 
+        // viewer filter node to make sure there are no grandchildren
+        this.currentRootNode = (rootNode instanceof SearchResultRootNode) 
+                ? rootNode
+                : new ResultViewerFilterParentNode(rootNode);
 
         // if search result node clear out base child factory paging
         if (this.currentRootNode instanceof SearchResultRootNode) {
@@ -1274,24 +1281,25 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
-     * Displays results of querying the DAO for given search parameters query.
+     * Displays results of querying the DAO for given search parameters (set and
+     * artifact type) query.
      *
-     * @param hashHitKey The search parameter query.
+     * @param setKey The search parameter query.
      */
-    void displayHashHits(HashHitSearchParam hashHitKey) {
+    void displayAnalysisResultSet(AnalysisResultSetSearchParam setKey) {
         try {
-            this.searchResultManager = new SearchManager(new HashsetResultFetcher(hashHitKey), getPageSize());
+            this.searchResultManager = new SearchManager(new AnalysisResultSetFetcher(setKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for hash set filter: {0} and data source id: {1}.",
-                    hashHitKey.getSetName(),
-                    hashHitKey.getDataSourceId() == null ? "<null>" : hashHitKey.getDataSourceId()),
+                    setKey.getSetName(),
+                    setKey.getDataSourceId() == null ? "<null>" : setKey.getDataSourceId()),
                     ex);
         }
     }
-    
+
     /**
      * Displays results of querying the DAO for the given search parameters
      * query.
@@ -1438,6 +1446,42 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.pageNumLabel.setText("");
             this.gotoPageTextField.setText("");
 
+        }
+    }
+
+    /**
+     * Children for a parent node in the result viewer that creates filter nodes
+     * with no children.
+     */
+    private class ResultViewerFilterChildren extends FilterNode.Children {
+
+        /**
+         * Main constructor.
+         *
+         * @param baseNode The parent node to wrap.
+         */
+        ResultViewerFilterChildren(Node baseNode) {
+            super(baseNode == null ? Node.EMPTY : baseNode);
+        }
+
+        @Override
+        protected Node[] createNodes(Node key) {
+            return new Node[]{new FilterNode(key, Children.LEAF)};
+        }
+    }
+
+    /**
+     * A parent node of items to display in the result viewer that shows no
+     * grandchildren.
+     */
+    private class ResultViewerFilterParentNode extends FilterNode {
+
+        /**
+         * Main constructor.
+         * @param original The original node to wrap.
+         */
+        ResultViewerFilterParentNode(Node original) {
+            super(original == null ? Node.EMPTY : original, new ResultViewerFilterChildren(original));
         }
     }
 
