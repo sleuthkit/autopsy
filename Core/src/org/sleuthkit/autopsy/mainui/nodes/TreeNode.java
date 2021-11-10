@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import java.text.MessageFormat;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
