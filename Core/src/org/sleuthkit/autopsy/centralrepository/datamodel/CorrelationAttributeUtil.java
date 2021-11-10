@@ -40,7 +40,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
-import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.OsAccount;

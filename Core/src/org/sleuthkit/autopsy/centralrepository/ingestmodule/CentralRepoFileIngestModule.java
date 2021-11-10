@@ -18,11 +18,10 @@
  */
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -37,133 +36,38 @@ import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
 import org.sleuthkit.datamodel.HashUtility;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.datamodel.Score;
+import static org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleUtils.makePrevNotableAnalysisResult;
 
 /**
  * A file ingest module that adds correlation attributes for files to the
- * central repository and makes previously notable analysis results based on
- * previous occurences.
+ * central repository, and makes previously notable analysis results for files
+ * marked as notable in other cases.
  */
-@Messages({"CentralRepoIngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
-    "CentralRepoIngestModule.prevCaseComment.text=Previous Case: "})
 final class CentralRepoFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(CentralRepoFileIngestModule.class.getName());
-    private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
-    private final IngestServices services = IngestServices.getInstance();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private long jobId;
-    private CorrelationCase centralRepoCase;
-    private CorrelationDataSource centralRepoDataSource;
+    private final boolean flagNotableItems;
+    private final boolean saveCorrAttrInstances;
+    private IngestJobContext context;
+    private CentralRepository centralRepo;
     private CorrelationAttributeInstance.Type filesType;
-    private final boolean flagTaggedNotableItems;
-    private Blackboard blackboard;
-    private final boolean createCorrelationProperties;
-    private CentralRepository centralRepoDb;
 
     /**
      * Constructs a file ingest module that adds correlation attributes for
-     * files to the central repository and makes previously notable analysis
-     * results based on previous occurences.
+     * files to the central repository, and makes previously notable analysis
+     * results for files marked as notable in other cases.
      *
      * @param settings The ingest job settings.
      */
     CentralRepoFileIngestModule(IngestSettings settings) {
-        flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
-        createCorrelationProperties = settings.shouldCreateCorrelationProperties();
-    }
-
-    @Override
-    public ProcessResult process(AbstractFile abstractFile) {
-
-        if (!CorrelationAttributeUtil.isSupportedAbstractFileType(abstractFile)) {
-            return ProcessResult.OK;
-        }
-
-        if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
-            return ProcessResult.OK;
-        }
-
-        if (!filesType.isEnabled()) {
-            return ProcessResult.OK;
-        }
-
-        // get the hash because we're going to correlate it
-        String md5 = abstractFile.getMd5Hash();
-        if ((md5 == null) || (HashUtility.isNoDataMd5(md5))) {
-            return ProcessResult.OK;
-        }
-
-        /*
-         * Search the central repo to see if this file was previously marked as
-         * being bad. Create artifact if it was.
-         */
-        if (abstractFile.getKnown() != TskData.FileKnown.KNOWN && flagTaggedNotableItems) {
-            try {
-                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Central Repository: Notable artifact query");
-                List<String> caseDisplayNamesList = centralRepoDb.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
-                HealthMonitor.submitTimingMetric(timingMetric);
-                if (!caseDisplayNamesList.isEmpty()) {
-                    postCorrelatedBadFileToBlackboard(abstractFile, caseDisplayNamesList, filesType, md5);
-                }
-            } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
-                return ProcessResult.ERROR;
-            } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
-                return ProcessResult.ERROR;
-            }
-        }
-
-        // insert this file into the central repository 
-        if (createCorrelationProperties) {
-            try {
-                CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
-                        filesType,
-                        md5,
-                        centralRepoCase,
-                        centralRepoDataSource,
-                        abstractFile.getParentPath() + abstractFile.getName(),
-                        null,
-                        TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
-                        ,
-                         abstractFile.getId());
-                centralRepoDb.addAttributeInstanceBulk(cefi);
-            } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
-                return ProcessResult.ERROR;
-            } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
-                return ProcessResult.ERROR;
-            }
-        }
-        return ProcessResult.OK;
-    }
-
-    @Override
-    public void shutDown() {
-        if (refCounter.decrementAndGet(jobId) == 0) {
-            try {
-                centralRepoDb.commitAttributeInstancesBulk();
-            } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Error committing bulk insert of correlation attributes", ex); // NON-NLS
-            }
-        }
+        flagNotableItems = settings.isFlagTaggedNotableItems();
+        saveCorrAttrInstances = settings.shouldCreateCorrelationProperties();
     }
 
     @Messages({
@@ -173,127 +77,126 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        jobId = context.getJobId();
+        this.context = context;
 
-        /*
-         * IMPORTANT: Start up IngestModuleException messages are displayed to
-         * the user, if a user is present. Therefore, an exception to the policy
-         * that exception messages are not localized is appropriate here. Also,
-         * the exception messages should be user-friendly.
-         */
         if (!CentralRepository.isEnabled()) {
-            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_crNotEnabledErrMsg());
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_crNotEnabledErrMsg());
         }
 
-        Case autopsyCase;
         try {
-            autopsyCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) {
-            throw new IngestModuleException(Bundle.CrDataArtifactIngestModule_noCurrentCaseErrMsg(), ex);
-        }
-
-        blackboard = autopsyCase.getSleuthkitCase().getBlackboard();
-
-        try {
-            centralRepoDb = CentralRepository.getInstance();
+            centralRepo = CentralRepository.getInstance();
         } catch (CentralRepoException ex) {
             throw new IngestModuleException(Bundle.CentralRepoIngestModule_crInaccessibleErrMsg(), ex);
         }
 
+        /*
+         * Make sure the correlation attribute type definition is in the central
+         * repository. Currently (11/8/21) it is cached, but there is no harm in
+         * saving it here for use in process().
+         */
         try {
-            filesType = centralRepoDb.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
+            filesType = centralRepo.getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
         } catch (CentralRepoException ex) {
             throw new IngestModuleException(Bundle.CentralRepoIngestModule_missingFileCorrAttrTypeErrMsg(), ex);
         }
 
-        try {
-            centralRepoCase = centralRepoDb.getCase(autopsyCase);
-        } catch (CentralRepoException ex) {
-            throw new IngestModuleException(Bundle.CentralRepoIngestModule_cannotGetCrCaseErrMsg(), ex);
-        }
-
-        try {
-            centralRepoDataSource = CorrelationDataSource.fromTSKDataSource(centralRepoCase, context.getDataSource());
-        } catch (CentralRepoException ex) {
-            throw new IngestModuleException(Bundle.CentralRepoIngestModule_cannotGetCrDataSourceErrMsg(), ex);
-        }
-
-        refCounter.incrementAndGet(jobId);
-    }
-
-    /**
-     * Post a new "previously seen" artifact for the file marked bad.
-     *
-     * @param abstractFile     The file from which to create an artifact.
-     * @param caseDisplayNames Case names to be added to a TSK_COMMON attribute.
-     */
-    private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames, CorrelationAttributeInstance.Type corrAtrrType, String corrAttrValue) {
-        String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
-        String justification = "Previously marked as notable in cases " + prevCases;
-        Collection<BlackboardAttribute> attributes = Arrays.asList(new BlackboardAttribute(
-                TSK_SET_NAME, MODULE_NAME,
-                Bundle.CentralRepoIngestModule_prevTaggedSet_text()),
-                new BlackboardAttribute(
-                        TSK_CORRELATION_TYPE, MODULE_NAME,
-                        corrAtrrType.getDisplayName()),
-                new BlackboardAttribute(
-                        TSK_CORRELATION_VALUE, MODULE_NAME,
-                        corrAttrValue),
-                new BlackboardAttribute(
-                        TSK_OTHER_CASES, MODULE_NAME,
-                        prevCases));
-        try {
-            // Create artifact if it doesn't already exist.
-            if (!blackboard.artifactExists(abstractFile, BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, attributes)) {
-                BlackboardArtifact tifArtifact = abstractFile.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, Score.SCORE_NOTABLE,
-                        null, Bundle.CentralRepoIngestModule_prevTaggedSet_text(), justification, attributes)
-                        .getAnalysisResult();
-                try {
-                    blackboard.postArtifact(tifArtifact, MODULE_NAME, jobId);
-                } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
-                }
-                // send inbox message
-                sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash(), caseDisplayNames);
+        /*
+         * The first module instance started for this job makes sure the current
+         * case and data source are in the central repository. Currently
+         * (11/8/21), these are cached upon creation / first retreival.
+         */
+        if (refCounter.incrementAndGet(context.getJobId()) == 1) {
+            Case currentCase;
+            try {
+                currentCase = Case.getCurrentCaseThrows();
+            } catch (NoCurrentCaseException ex) {
+                throw new IngestModuleException(Bundle.CentralRepoIngestModule_noCurrentCaseErrMsg(), ex);
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
-        } catch (IllegalStateException ex) {
-            logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+
+            CorrelationCase centralRepoCase;
+            try {
+                centralRepoCase = centralRepo.getCase(currentCase);
+            } catch (CentralRepoException ex) {
+                throw new IngestModuleException(Bundle.CentralRepoIngestModule_cannotGetCrCaseErrMsg(), ex);
+            }
+
+            try {
+                CorrelationDataSource.fromTSKDataSource(centralRepoCase, context.getDataSource());
+            } catch (CentralRepoException ex) {
+                throw new IngestModuleException(Bundle.CentralRepoIngestModule_cannotGetCrDataSourceErrMsg(), ex);
+            }
         }
     }
 
-    /**
-     * Post a message to the ingest inbox alerting the user that a bad file was
-     * found.
-     *
-     * @param artifact         badFile Blackboard Artifact
-     * @param name             badFile's name
-     * @param md5Hash          badFile's md5 hash
-     * @param caseDisplayNames List of cases that the artifact appears in.
-     */
-    @Messages({
-        "CentralRepoIngestModule_notable_message_header=<html>A file in this data source was previously seen and tagged as Notable.<br>",
-        "CentralRepoIngestModel_name_header=Name:<br>",
-        "CentralRepoIngestModel_previous_case_header=<br>Previous Cases:<br>",
-        "# {0} - Name of file that is Notable",
-        "CentralRepoIngestModule_postToBB_knownBadMsg=Notable: {0}"
-    })
-    private void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash, List<String> caseDisplayNames) {
-        StringBuilder detailsSb = new StringBuilder(1024);
-
-        detailsSb.append(Bundle.CentralRepoIngestModule_notable_message_header()).append(Bundle.CentralRepoIngestModel_name_header());
-        detailsSb.append(name).append(Bundle.CentralRepoIngestModel_previous_case_header());
-        for (String str : caseDisplayNames) {
-            detailsSb.append(str).append("<br>");
+    @Override
+    public ProcessResult process(AbstractFile abstractFile) {
+        if (!flagNotableItems && !saveCorrAttrInstances) {
+            return ProcessResult.OK;
         }
-        detailsSb.append("</html>");
-        services.postMessage(IngestMessage.createDataMessage(MODULE_NAME,
-                Bundle.CentralRepoIngestModule_postToBB_knownBadMsg(name),
-                detailsSb.toString(),
-                name + md5Hash,
-                artifact));
+
+        if (!filesType.isEnabled()) {
+            return ProcessResult.OK;
+        }
+
+        if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
+            return ProcessResult.OK;
+        }
+
+        if (!CorrelationAttributeUtil.isSupportedAbstractFileType(abstractFile)) {
+            return ProcessResult.OK;
+        }
+ 
+        /*
+         * The correlation attribute value for a file is its MD5 hash. This
+         * module cannot do anything with a file if the hash calculation has not
+         * been done, but the decision has been made to not do a hash
+         * calculation here if the file hashing and lookup module is not in this
+         * pipeline ahead of this module (affirmed per BC, 11/8/21).
+         */
+        String md5 = abstractFile.getMd5Hash();
+        if ((md5 == null) || (HashUtility.isNoDataMd5(md5))) {
+            return ProcessResult.OK;
+        }
+
+        if (flagNotableItems) {
+            try {
+                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Central Repository: Notable artifact query");
+                Set<String> otherCases = new HashSet<>();
+                otherCases.addAll(centralRepo.getListCasesHavingArtifactInstancesKnownBad(filesType, md5));
+                HealthMonitor.submitTimingMetric(timingMetric);
+                if (!otherCases.isEmpty()) {
+                    makePrevNotableAnalysisResult(abstractFile, otherCases, filesType, md5, context.getDataSource().getId(), context.getJobId());
+                }
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
+            }
+        }
+
+        if (saveCorrAttrInstances) {
+            List<CorrelationAttributeInstance> corrAttrs = CorrelationAttributeUtil.makeCorrAttrsToSave(abstractFile);
+            for (CorrelationAttributeInstance corrAttr : corrAttrs) {
+                try {
+                    centralRepo.addAttributeInstanceBulk(corrAttr);
+                } catch (CentralRepoException ex) {
+                    logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+                }
+            }
+        }
+
+        return ProcessResult.OK;
+    }
+
+    @Override
+    public void shutDown() {
+        if (refCounter.decrementAndGet(context.getJobId()) == 0) {
+            try {
+                centralRepo.commitAttributeInstancesBulk();
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, String.format("Error committing bulk insert of correlation attributes (job ID=%d)", context.getJobId()), ex); // NON-NLS
+            }
+        }
     }
 
 }

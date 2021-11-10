@@ -19,16 +19,11 @@
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -38,27 +33,21 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoPlatforms;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
+import static org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleUtils.getOccurrencesInOtherCases;
+import static org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleUtils.makePrevNotableAnalysisResult;
+import static org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleUtils.makePrevSeenAnalysisResult;
+import static org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleUtils.makePrevUnseenAnalysisResult;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataArtifactIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.Blackboard;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountManager;
-import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -73,19 +62,13 @@ import org.sleuthkit.datamodel.TskData;
 public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestModule {
 
     private static final Logger LOGGER = Logger.getLogger(CentralRepoDataArtifactIngestModule.class.getName());
-    private static final int MAX_PREV_CASES_FOR_NOTABLE_SCORE = 10;
-    private static final int MAX_PREV_CASES_FOR_PREV_SEEN = 20;
-    private final Set<String> corrAttrsAlreadyCreated;
-    private final boolean saveCorrAttrs;
     private final boolean flagNotableItems;
     private final boolean flagPrevSeenDevices;
     private final boolean flagUniqueArtifacts;
-    private Case currentCase;
-    private Blackboard blackboard;
-    private OsAccountManager osAccountMgr;
+    private final boolean saveCorrAttrInstances;
+    private final Set<String> corrAttrsAnalyzed;
     private CentralRepository centralRepo;
-    private Content dataSource;
-    private long ingestJobId;
+    private IngestJobContext context;
 
     /**
      * Constructs a data artifact ingest module that adds correlation attributes
@@ -97,51 +80,45 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
      * @param settings The ingest job settings for this module.
      */
     CentralRepoDataArtifactIngestModule(IngestSettings settings) {
-        corrAttrsAlreadyCreated = new LinkedHashSet<>();
-        saveCorrAttrs = settings.shouldCreateCorrelationProperties();
         flagNotableItems = settings.isFlagTaggedNotableItems();
         flagPrevSeenDevices = settings.isFlagPreviousDevices();
         flagUniqueArtifacts = settings.isFlagUniqueArtifacts();
+        saveCorrAttrInstances = settings.shouldCreateCorrelationProperties();
+        corrAttrsAnalyzed = new LinkedHashSet<>();
     }
 
     @NbBundle.Messages({
         "CentralRepoIngestModule_crNotEnabledErrMsg=Central repository required, but not enabled",
-        "CentralRepoIngestModule_noCurrentCaseErrMsg=Error getting current case",
-        "CentralRepoIngestModule_osAcctMgrInaccessibleErrMsg=Error getting OS accounts manager",
         "CentralRepoIngestModule_crInaccessibleErrMsg=Error accessing central repository",
+        "CentralRepoIngestModule_noCurrentCaseErrMsg=Error getting current case",
         "CentralRepoIngestModule_crDatabaseTypeMismatch=Mulit-user cases require a PostgreSQL central repository"
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        /*
-         * IMPORTANT: Start up IngestModuleException messages are displayed to
-         * the user, if a user is present. Therefore, an exception to the policy
-         * that exception messages are not localized is appropriate here. Also,
-         * the exception messages should be user-friendly.
-         */
-        dataSource = context.getDataSource();
-        ingestJobId = context.getJobId();
+        this.context = context;
+
         if (!CentralRepository.isEnabled()) {
             throw new IngestModuleException(Bundle.CentralRepoIngestModule_crNotEnabledErrMsg()); // May be displayed to user.
         }
+
         try {
-            currentCase = Case.getCurrentCaseThrows();
-            SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-            blackboard = tskCase.getBlackboard();
-            osAccountMgr = tskCase.getOsAccountManager();
             centralRepo = CentralRepository.getInstance();
-        } catch (NoCurrentCaseException ex) {
-            throw new IngestModuleException(Bundle.CentralRepoIngestModule_noCurrentCaseErrMsg(), ex);
-        } catch (TskCoreException ex) {
-            throw new IngestModuleException(Bundle.CentralRepoIngestModule_osAcctMgrInaccessibleErrMsg(), ex);
         } catch (CentralRepoException ex) {
             throw new IngestModuleException(Bundle.CentralRepoIngestModule_crInaccessibleErrMsg(), ex);
         }
-        // Don't allow sqlite central repo databases to be used for multi user cases
-        if ((currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) && (CentralRepoDbManager.getSavedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE)) {
-            throw new IngestModuleException(Bundle.CentralRepoIngestModule_crDatabaseTypeMismatch());
-        }
 
+        /*
+         * Don't allow a SQLite central repository to be used for a multi-user
+         * case.
+         */
+        try {
+            Case currentCase = Case.getCurrentCaseThrows();
+            if ((currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) && (CentralRepoDbManager.getSavedDbChoice().getDbPlatform() == CentralRepoPlatforms.SQLITE)) {
+                throw new IngestModuleException(Bundle.CentralRepoIngestModule_crDatabaseTypeMismatch());
+            }
+        } catch (NoCurrentCaseException ex) {
+            throw new IngestModuleException(Bundle.CentralRepoIngestModule_noCurrentCaseErrMsg(), ex);
+        }
     }
 
     /**
@@ -156,95 +133,89 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
      */
     @Override
     public ProcessResult process(DataArtifact artifact) {
-        List<CorrelationAttributeInstance> corrAttrs = CorrelationAttributeUtil.makeCorrAttrsToSave(artifact);
-        for (CorrelationAttributeInstance corrAttr : corrAttrs) {
-            if (!corrAttrsAlreadyCreated.add(corrAttr.toString())) {
-                /*
-                 * This is a bit of a time saver. Uniqueness constraints in the
-                 * central repository prevent creation of duplicate correlation
-                 * attributes, so this saves no-op central repository insert
-                 * attempts.
-                 */
-                continue;
-            }
-
-            makeAnalysisResults(artifact, corrAttr);
-
-            if (saveCorrAttrs) {
-                try {
-                    centralRepo.addAttributeInstanceBulk(corrAttr);
-                } catch (CentralRepoException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Error adding correlation attribute '%s' to central repository for data artifact '%s' (job ID=%d)", corrAttr, artifact, ingestJobId), ex); //NON-NLS
-                }
-            }
-        }
+        analyze(artifact);
         return ProcessResult.OK;
     }
 
     @Override
     public void shutDown() {
-        if (saveCorrAttrs || flagPrevSeenDevices) {
-            analyzeOsAccounts();
-        }
-        if (saveCorrAttrs) {
+        analyzeOsAccounts();
+        if (saveCorrAttrInstances) {
             try {
                 centralRepo.commitAttributeInstancesBulk();
             } catch (CentralRepoException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Error doing final bulk commit of correlation attributes (job ID=%d)", ingestJobId), ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, String.format("Error doing final bulk commit of correlation attributes (job ID=%d)", context.getJobId()), ex); // NON-NLS
             }
         }
         syncDataSourceHashes();
     }
 
     /**
-     * Adds correlation attributes to the central repository for the OS accounts
-     * in the data source and creates previously seen analysis results for the
-     * accounts if they have been seen in other cases.
+     * Translates the attributes of an OS account into central repository
+     * correlation attributes and uses them to create analysis results and new
+     * central repository correlation attribute instances, depending on ingest
+     * job settings.
      */
     @NbBundle.Messages({
         "CentralRepoIngestModule_prevSeenOsAcctSetName=Users seen in previous cases",
         "CentralRepoIngestModule_prevSeenOsAcctConfig=Previously Seen Users (Central Repository)"
     })
     private void analyzeOsAccounts() {
-        try {
-            List<OsAccount> osAccounts = osAccountMgr.getOsAccountsByDataSourceObjId(dataSource.getId());
-            for (OsAccount osAccount : osAccounts) {
-                process(osAccount, dataSource);
+        if (saveCorrAttrInstances || flagPrevSeenDevices) {
+            try {
+                Case currentCase = Case.getCurrentCaseThrows();
+                SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+                OsAccountManager osAccountMgr = tskCase.getOsAccountManager();
+                List<OsAccount> osAccounts = osAccountMgr.getOsAccountsByDataSourceObjId(context.getDataSource().getId());
+                for (OsAccount osAccount : osAccounts) {
+                    analyze(osAccount);
+                }
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, String.format("Error getting OS accounts for data source %s (job ID=%d)", context.getDataSource(), context.getJobId()), ex);
             }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Error getting OS accounts for data source %s (job ID=%d)", dataSource, ingestJobId), ex);
         }
     }
 
     /**
-     * Translates the attributes of a OS account and its data source (an OS
-     * account instance) into central repository correlation attributes and uses
-     * them to create analysis results and new central repository correlation
-     * attribute instances, depending on ingest job settings.
+     * Translates the attributes of a data artifact or an OS account into
+     * central repository correlation attributes and uses them to create
+     * analysis results and new central repository correlation attribute
+     * instances, depending on ingest job settings.
      *
-     * @param osAccount  The OS account.
-     * @param dataSource The data source.
+     * @param content The artifact or account.
      */
-    private void process(OsAccount osAccount, Content dataSource) {
-        List<CorrelationAttributeInstance> corrAttrs = CorrelationAttributeUtil.makeCorrAttrsToSave(osAccount, dataSource);
+    private void analyze(Content content) {
+        if (content == null || (!flagNotableItems && !flagPrevSeenDevices && !flagUniqueArtifacts && !saveCorrAttrInstances)) {
+            return;
+        }
+
+        DataArtifact artifact = null;
+        OsAccount osAccount = null;
+        List<CorrelationAttributeInstance> corrAttrs = new ArrayList<>();
+        if (content instanceof DataArtifact) {
+            artifact = (DataArtifact) content;
+            corrAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsToSave(artifact));
+        } else {
+            osAccount = (OsAccount) content;
+            corrAttrs.addAll(CorrelationAttributeUtil.makeCorrAttrsToSave(osAccount, context.getDataSource()));
+        }
+
         for (CorrelationAttributeInstance corrAttr : corrAttrs) {
-            if (!corrAttrsAlreadyCreated.add(corrAttr.toString())) {
-                /*
-                 * This is a bit of a time saver. Uniqueness constraints in the
-                 * central repository prevent creation of duplicate correlation
-                 * attributes, so this saves no-op central repository insert
-                 * attempts.
-                 */
+            if (!corrAttrsAnalyzed.add(corrAttr.toString())) {
                 continue;
             }
 
-            makeAnalysisResults(osAccount, corrAttr);
+            if (artifact != null) {
+                makeAnalysisResults(artifact, corrAttr);
+            } else {
+                makeAnalysisResults(osAccount, corrAttr);
+            }
 
-            if (saveCorrAttrs) {
+            if (saveCorrAttrInstances) {
                 try {
                     centralRepo.addAttributeInstanceBulk(corrAttr);
                 } catch (CentralRepoException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Error adding correlation attribute '%s' to central repository for OS account '%s' (job ID=%d)", corrAttr, osAccount, ingestJobId), ex);
+                    LOGGER.log(Level.SEVERE, String.format("Error adding correlation attribute '%s' to central repository for (object ID=%d, job ID=%d)", corrAttr, content.getId(), context.getJobId()), ex); //NON-NLS
                 }
             }
         }
@@ -260,7 +231,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
     private void makeAnalysisResults(DataArtifact artifact, CorrelationAttributeInstance corrAttr) {
         List<CorrelationAttributeInstance> previousOccurrences = null;
         if (flagNotableItems) {
-            previousOccurrences = getOccurrencesInOtherCases(corrAttr);
+            previousOccurrences = getOccurrencesInOtherCases(corrAttr, context.getJobId());
             if (!previousOccurrences.isEmpty()) {
                 Set<String> previousCases = new HashSet<>();
                 for (CorrelationAttributeInstance occurrence : previousOccurrences) {
@@ -269,7 +240,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
                     }
                 }
                 if (!previousCases.isEmpty()) {
-                    makePrevNotableAnalysisResult(artifact, previousCases, corrAttr.getCorrelationType(), corrAttr.getCorrelationValue());
+                    makePrevNotableAnalysisResult(artifact, previousCases, corrAttr.getCorrelationType(), corrAttr.getCorrelationValue(), context.getDataSource().getId(), context.getJobId());
                 }
             }
         }
@@ -283,12 +254,12 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
                 || corrAttr.getCorrelationType().getId() == CorrelationAttributeInstance.EMAIL_TYPE_ID
                 || corrAttr.getCorrelationType().getId() == CorrelationAttributeInstance.PHONE_TYPE_ID)) {
             if (previousOccurrences == null) {
-                previousOccurrences = getOccurrencesInOtherCases(corrAttr);
+                previousOccurrences = getOccurrencesInOtherCases(corrAttr, context.getJobId());
             }
             if (!previousOccurrences.isEmpty()) {
                 Set<String> previousCases = getPreviousCases(previousOccurrences);
                 if (!previousCases.isEmpty()) {
-                    makePrevSeenAnalysisResult(artifact, previousCases, corrAttr.getCorrelationType(), corrAttr.getCorrelationValue());
+                    makePrevSeenAnalysisResult(artifact, previousCases, corrAttr.getCorrelationType(), corrAttr.getCorrelationValue(), context.getDataSource().getId(), context.getJobId());
                 }
             }
         }
@@ -297,10 +268,10 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
                 && (corrAttr.getCorrelationType().getId() == CorrelationAttributeInstance.INSTALLED_PROGS_TYPE_ID
                 || corrAttr.getCorrelationType().getId() == CorrelationAttributeInstance.DOMAIN_TYPE_ID)) {
             if (previousOccurrences == null) {
-                previousOccurrences = getOccurrencesInOtherCases(corrAttr);
+                previousOccurrences = getOccurrencesInOtherCases(corrAttr, context.getJobId());
             }
             if (previousOccurrences.isEmpty()) {
-                makePrevUnseenAnalysisResult(artifact, corrAttr.getCorrelationType(), corrAttr.getCorrelationValue());
+                makePrevUnseenAnalysisResult(artifact, corrAttr.getCorrelationType(), corrAttr.getCorrelationValue(), context.getDataSource().getId(), context.getJobId());
             }
         }
     }
@@ -314,40 +285,14 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
      */
     private void makeAnalysisResults(OsAccount osAccount, CorrelationAttributeInstance corrAttr) {
         if (flagPrevSeenDevices) {
-            List<CorrelationAttributeInstance> previousOccurrences = getOccurrencesInOtherCases(corrAttr);
+            List<CorrelationAttributeInstance> previousOccurrences = getOccurrencesInOtherCases(corrAttr, context.getJobId());
             if (!previousOccurrences.isEmpty()) {
                 Set<String> previousCases = getPreviousCases(previousOccurrences);
                 if (!previousCases.isEmpty()) {
-                    makePrevSeenAnalysisResult(osAccount, previousCases, corrAttr.getCorrelationType(), corrAttr.getCorrelationValue());
+                    makePrevSeenAnalysisResult(osAccount, previousCases, corrAttr.getCorrelationType(), corrAttr.getCorrelationValue(), context.getDataSource().getId(), context.getJobId());
                 }
             }
         }
-    }
-
-    /**
-     * Gets any previous occurrences of a given correlation attribute in cases
-     * other than the current case.
-     *
-     * @param corrAttr The correlation attribute.
-     *
-     * @return The other occurrences of the correlation attribute.
-     */
-    private List<CorrelationAttributeInstance> getOccurrencesInOtherCases(CorrelationAttributeInstance corrAttr) {
-        List<CorrelationAttributeInstance> previousOccurrences = new ArrayList<>();
-        try {
-            previousOccurrences = centralRepo.getArtifactInstancesByTypeValue(corrAttr.getCorrelationType(), corrAttr.getCorrelationValue());
-            for (Iterator<CorrelationAttributeInstance> iterator = previousOccurrences.iterator(); iterator.hasNext();) {
-                CorrelationAttributeInstance prevOccurrence = iterator.next();
-                if (prevOccurrence.getCorrelationCase().getCaseUUID().equals(corrAttr.getCorrelationCase().getCaseUUID())) {
-                    iterator.remove();
-                }
-            }
-        } catch (CorrelationAttributeNormalizationException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Error normalizing correlation attribute value for 's' (job ID=%d)", corrAttr, ingestJobId), ex); // NON-NLS
-        } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Error getting previous occurences of correlation attribute 's' (job ID=%d)", corrAttr, ingestJobId), ex); // NON-NLS
-        }
-        return previousOccurrences;
     }
 
     /**
@@ -367,141 +312,27 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
     }
 
     /**
-     * Makes a previously notable analysis result for a content.
-     *
-     * @param content       The content.
-     * @param previousCases The names of the cases in which the artifact was
-     *                      deemed notable.
-     * @param corrAttrType  The type of the matched correlation attribute.
-     * @param corrAttrValue The value of the matched correlation attribute.
-     */
-    @NbBundle.Messages({
-        "CentralRepoIngestModule_notableSetName=Previously Tagged As Notable (Central Repository)",
-        "# {0} - list of cases",
-        "CentralRepoIngestModule_notableJustification=Previously marked as notable in cases {0}"
-    })
-    private void makePrevNotableAnalysisResult(Content content, Set<String> previousCases, CorrelationAttributeInstance.Type corrAttrType, String corrAttrValue) {
-        String prevCases = previousCases.stream().collect(Collectors.joining(","));
-        String justification = Bundle.CentralRepoIngestModule_notableJustification(prevCases);
-        Collection<BlackboardAttribute> attributes = Arrays.asList(new BlackboardAttribute(TSK_SET_NAME, CentralRepoIngestModuleFactory.getModuleName(), Bundle.CentralRepoIngestModule_notableSetName()),
-                new BlackboardAttribute(TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrType.getDisplayName()),
-                new BlackboardAttribute(TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrValue),
-                new BlackboardAttribute(TSK_OTHER_CASES, CentralRepoIngestModuleFactory.getModuleName(), prevCases));
-        makeAndPostAnalysisResult(content, BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE, attributes, "", Score.SCORE_NOTABLE, justification);
-    }
-
-    /**
-     * Makes a previously seen analysis result for a content, unless the content
-     * is too common.
-     *
-     * @param content       The content.
-     * @param previousCases The names of the cases in which the artifact was
-     *                      previously seen.
-     * @param corrAttrType  The type of the matched correlation attribute.
-     * @param corrAttrValue The value of the matched correlation attribute.
-     */
-    @NbBundle.Messages({
-        "CentralRepoIngestModule_prevSeenSetName=Previously Seen (Central Repository)",
-        "# {0} - list of cases",
-        "CentralRepoIngestModule_prevSeenJustification=Previously seen in cases {0}"
-    })
-    private void makePrevSeenAnalysisResult(Content content, Set<String> previousCases, CorrelationAttributeInstance.Type corrAttrType, String corrAttrValue) {
-        Optional<Score> score = calculateScore(previousCases.size());
-        if (score.isPresent()) {
-            String prevCases = previousCases.stream().collect(Collectors.joining(","));
-            String justification = Bundle.CentralRepoIngestModule_prevSeenJustification(prevCases);
-            Collection<BlackboardAttribute> analysisResultAttributes = Arrays.asList(
-                    new BlackboardAttribute(TSK_SET_NAME, CentralRepoIngestModuleFactory.getModuleName(), Bundle.CentralRepoIngestModule_prevSeenSetName()),
-                    new BlackboardAttribute(TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrType.getDisplayName()),
-                    new BlackboardAttribute(TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrValue),
-                    new BlackboardAttribute(TSK_OTHER_CASES, CentralRepoIngestModuleFactory.getModuleName(), prevCases));
-            makeAndPostAnalysisResult(content, BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, analysisResultAttributes, "", score.get(), justification);
-        }
-    }
-
-    /**
-     * Makes a previously unseen analysis result for a content.
-     *
-     * @param content       The content.
-     * @param corrAttrType  The type of the new correlation attribute.
-     * @param corrAttrValue The value of the new correlation attribute.
-     */
-    @NbBundle.Messages({
-        "CentralRepoIngestModule_prevUnseenJustification=Previously seen in zero cases"
-    })
-    private void makePrevUnseenAnalysisResult(Content content, CorrelationAttributeInstance.Type corrAttrType, String corrAttrValue) {
-        Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
-                new BlackboardAttribute(TSK_CORRELATION_TYPE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrType.getDisplayName()),
-                new BlackboardAttribute(TSK_CORRELATION_VALUE, CentralRepoIngestModuleFactory.getModuleName(), corrAttrValue));
-        makeAndPostAnalysisResult(content, BlackboardArtifact.Type.TSK_PREVIOUSLY_UNSEEN, attributesForNewArtifact, "", Score.SCORE_LIKELY_NOTABLE, Bundle.CentralRepoIngestModule_prevUnseenJustification());
-    }
-
-    /**
-     * Calculates a score based in a number of previous cases.
-     *
-     * @param numPreviousCases The number of previous cases.
-     *
-     * @return An Optional of a score, will be empty if there is no score
-     *         because the number of previous cases is too high, indicating a
-     *         common and therefore uninteresting item.
-     */
-    private Optional<Score> calculateScore(int numPreviousCases) {
-        Score score = null;
-        if (numPreviousCases <= MAX_PREV_CASES_FOR_NOTABLE_SCORE) {
-            score = Score.SCORE_LIKELY_NOTABLE;
-        } else if (numPreviousCases > MAX_PREV_CASES_FOR_NOTABLE_SCORE && numPreviousCases <= MAX_PREV_CASES_FOR_PREV_SEEN) {
-            score = Score.SCORE_NONE;
-        }
-        return Optional.ofNullable(score);
-    }
-
-    /**
-     * Makes a new analysis result of a given type for a content and posts it to
-     * the blackboard.
-     *
-     * @param content             The content.
-     * @param analysisResultType  The type of analysis result to make.
-     * @param analysisResultAttrs The attributes of the new analysis result.
-     * @param configuration       The configuration for the new analysis result.
-     * @param score               The score for the new analysis result.
-     * @param justification       The justification for the new analysis result.
-     */
-    private void makeAndPostAnalysisResult(Content content, BlackboardArtifact.Type analysisResultType, Collection<BlackboardAttribute> analysisResultAttrs, String configuration, Score score, String justification) {
-        try {
-            if (!blackboard.artifactExists(content, analysisResultType, analysisResultAttrs)) {
-                AnalysisResult analysisResult = content.newAnalysisResult(analysisResultType, score, null, configuration, justification, analysisResultAttrs).getAnalysisResult();
-                try {
-                    blackboard.postArtifact(analysisResult, CentralRepoIngestModuleFactory.getModuleName(), ingestJobId);
-                } catch (Blackboard.BlackboardException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Error posting analysis result '%s' to blackboard for content 's' (job ID=%d)", analysisResult, content, ingestJobId), ex); //NON-NLS
-                }
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Error creating %s analysis result for content '%s' (job ID=%d)", analysisResultType, content, ingestJobId), ex); // NON-NLS
-        }
-    }
-
-    /**
      * Ensures the data source in the central repository has hash values that
      * match those in the case database.
      */
     private void syncDataSourceHashes() {
-        if (!(dataSource instanceof Image)) {
+        if (!(context.getDataSource() instanceof Image)) {
             return;
         }
 
         try {
+            Case currentCase = Case.getCurrentCaseThrows();
             CorrelationCase correlationCase = centralRepo.getCase(currentCase);
             if (correlationCase == null) {
                 correlationCase = centralRepo.newCase(currentCase);
             }
 
-            CorrelationDataSource correlationDataSource = centralRepo.getDataSource(correlationCase, dataSource.getId());
+            CorrelationDataSource correlationDataSource = centralRepo.getDataSource(correlationCase, context.getDataSource().getId());
             if (correlationDataSource == null) {
-                correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource);
+                correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, context.getDataSource());
             }
 
-            Image image = (Image) dataSource;
+            Image image = (Image) context.getDataSource();
             String imageMd5Hash = image.getMd5();
             if (imageMd5Hash == null) {
                 imageMd5Hash = "";
@@ -530,9 +361,9 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
             }
 
         } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Error fetching data from the central repository for data source '%s' (job ID=%d)", dataSource.getName(), ingestJobId), ex);
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Error fetching data from the case database for data source '%s' (job ID=%d)", dataSource.getName(), ingestJobId), ex);
+            LOGGER.log(Level.SEVERE, String.format("Error fetching data from the central repository for data source '%s' (job ID=%d)", context.getDataSource().getName(), context.getJobId()), ex);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, String.format("Error fetching data from the case database for data source '%s' (job ID=%d)", context.getDataSource().getName(), context.getJobId()), ex);
         }
     }
 
