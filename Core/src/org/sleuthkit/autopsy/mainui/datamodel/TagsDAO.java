@@ -72,7 +72,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "TagsDAO.tagColumns.typeColLbl=Result Type",
     "TagsDAO.tagColumns.commentColLbl=Comment",
     "TagsDAO.tagColumns.userNameColLbl=User Name"})
-public class TagsDAO {
+public class TagsDAO extends AbstractDAO {
 
     private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;

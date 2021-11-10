@@ -91,8 +91,14 @@ public class MainDAO extends AbstractDAO {
     private final TagsDAO tagsDAO = TagsDAO.getInstance();
     private final OsAccountsDAO accountsDAO = OsAccountsDAO.getInstance();
 
-    // GVDTODO when events are completely integrated, this list should contain all sub-DAO's
-    private final List<AbstractDAO> allDAOs = ImmutableList.of(dataArtifactDAO);
+    // NOTE: whenever adding a new sub-dao, it should be added to this list for event updates.
+    private final List<AbstractDAO> allDAOs = ImmutableList.of(
+            dataArtifactDAO,
+            analysisResultDAO,
+            viewsDAO,
+            fileSystemDAO,
+            tagsDAO,
+            accountsDAO);
 
     public DataArtifactDAO getDataArtifactsDAO() {
         return dataArtifactDAO;

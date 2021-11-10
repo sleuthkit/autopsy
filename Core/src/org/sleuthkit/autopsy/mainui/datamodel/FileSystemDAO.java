@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class FileSystemDAO {
+public class FileSystemDAO extends AbstractDAO {
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;

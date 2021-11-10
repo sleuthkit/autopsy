@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "OsAccountsDAO.createSheet.comment.displayName=C",
     "OsAccountsDAO.createSheet.count.displayName=O",
     "OsAccountsDAO.fileColumns.noDescription=No Description",})
-public class OsAccountsDAO {
+public class OsAccountsDAO extends AbstractDAO {
 
     private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;

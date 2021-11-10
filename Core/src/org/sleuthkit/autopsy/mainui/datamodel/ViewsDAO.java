@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,7 +54,7 @@ import org.sleuthkit.datamodel.TskData;
  * Provides information to populate the results viewer for data in the views
  * section.
  */
-public class ViewsDAO {
+public class ViewsDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(ViewsDAO.class.getName());
 
