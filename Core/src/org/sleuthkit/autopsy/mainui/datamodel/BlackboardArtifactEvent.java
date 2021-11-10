@@ -25,7 +25,7 @@ public class BlackboardArtifactEvent implements DAOEvent {
     private final long artifactTypeId;
     private final long dataSourceId;
 
-    public BlackboardArtifactEvent(long artifactTypeId, long dataSourceId) {
+    BlackboardArtifactEvent(long artifactTypeId, long dataSourceId) {
         this.artifactTypeId = artifactTypeId;
         this.dataSourceId = dataSourceId;
     }
