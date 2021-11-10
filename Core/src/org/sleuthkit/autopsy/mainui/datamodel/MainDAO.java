@@ -24,7 +24,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.prefs.PreferenceChangeListener;
@@ -44,12 +43,13 @@ public class MainDAO extends AbstractDAO {
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED, IngestManager.IngestModuleEvent.DATA_ADDED);
     private static final Set<Case.Events> CASE_EVENTS = EnumSet.of(Case.Events.CURRENT_CASE);
     private static final long MILLIS_BATCH = 5000;
-    
+
     private static MainDAO instance = null;
 
     public synchronized static MainDAO getInstance() {
         if (instance == null) {
             instance = new MainDAO();
+            instance.register();
         }
 
         return instance;
@@ -62,7 +62,7 @@ public class MainDAO extends AbstractDAO {
         if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
             this.clearCaches();
         } else {
-            processAndFireDAOEvent(evt);
+            handleAutopsyEvent(evt);
         }
     };
 
@@ -77,21 +77,19 @@ public class MainDAO extends AbstractDAO {
      * The ingest module event listener.
      */
     private final PropertyChangeListener ingestModuleEventListener = (evt) -> {
-        processAndFireDAOEvent(evt);
+        handleAutopsyEvent(evt);
     };
 
     private final PropertyChangeSupport support = new PropertyChangeSupport(this);
 
-    private final DAOEventBatcher<PropertyChangeEvent> eventBatcher = new DAOEventBatcher<>((evt) -> this.handleAutopsyEvent(evt), MILLIS_BATCH);
-    
-    
+    private final DAOEventBatcher<PropertyChangeEvent> eventBatcher = new DAOEventBatcher<>((evts) -> this.getDAOEventsAndFire(evts), MILLIS_BATCH);
+
     private final DataArtifactDAO dataArtifactDAO = DataArtifactDAO.getInstance();
     private final AnalysisResultDAO analysisResultDAO = AnalysisResultDAO.getInstance();
     private final ViewsDAO viewsDAO = ViewsDAO.getInstance();
     private final FileSystemDAO fileSystemDAO = FileSystemDAO.getInstance();
     private final TagsDAO tagsDAO = TagsDAO.getInstance();
     private final OsAccountsDAO accountsDAO = OsAccountsDAO.getInstance();
-    
 
     // GVDTODO when events are completely integrated, this list should contain all sub-DAO's
     private final List<AbstractDAO> allDAOs = ImmutableList.of(dataArtifactDAO);
@@ -127,10 +125,23 @@ public class MainDAO extends AbstractDAO {
 
     @Override
     List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evt) {
-        return Stream.of(allDAOs)
-                .map(subDAO -> handleAutopsyEvent(evt))
+        return allDAOs.stream()
+                .map(subDAO -> subDAO.handleAutopsyEvent(evt))
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Determines DAO events from autopsy events and fires DAO aggregate event
+     * if there are any created DAO events.
+     *
+     * @param evts The autopsy events.
+     */
+    private void getDAOEventsAndFire(Collection<PropertyChangeEvent> evts) {
+        List<DAOEvent> daoEvents = handleAutopsyEvent(evts);
+        if (!CollectionUtils.isEmpty(daoEvents)) {
+            support.firePropertyChange(new PropertyChangeEvent(this, "DATA_CHANGE", null, new DAOAggregateEvent(daoEvents)));
+        }
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -150,6 +161,11 @@ public class MainDAO extends AbstractDAO {
         UserPreferences.addChangeListener(userPreferenceListener);
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        unregister();
+    }
+
     /**
      * Unregisters listeners from autopsy event publishers.
      */
@@ -159,7 +175,12 @@ public class MainDAO extends AbstractDAO {
         UserPreferences.removeChangeListener(userPreferenceListener);
     }
 
-    private void processAndFireDAOEvent(PropertyChangeEvent autopsyEvent) {
+    /**
+     * Handle incoming autopsy event by queueing in batch and firing events.
+     *
+     * @param autopsyEvent The autopsy event.
+     */
+    private void handleAutopsyEvent(PropertyChangeEvent autopsyEvent) {
         this.eventBatcher.queueEvent(autopsyEvent);
     }
 }

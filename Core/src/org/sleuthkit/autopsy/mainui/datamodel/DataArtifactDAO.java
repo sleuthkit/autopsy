@@ -181,7 +181,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                 .forEach((art) -> {
                     artifactTypeDataSourceMap
                             .computeIfAbsent(art.getArtifactTypeID(), (k) -> new HashSet<>())
-                            .add(art.getDataSourceObjId());
+                            .add(art.getDataSourceObjectID());
                 });
         
         // invalidate cache entries that are affected by events

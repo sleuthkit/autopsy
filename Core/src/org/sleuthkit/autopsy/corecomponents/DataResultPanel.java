@@ -146,15 +146,15 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 ps.postPageSizeChangeEvent();
             });
 
-            try {
-                if (this.searchResultManager != null) {
-                    DAOFetcher<?> previousFetcher = this.searchResultManager.getDaoFetcher();
-                    this.searchResultManager = new SearchManager(previousFetcher, newPageSize);
-                    displaySearchResults(this.searchResultManager.getResults(), false);
-                }
-            } catch (IllegalArgumentException | ExecutionException ex) {
-                logger.log(Level.WARNING, "There was an error while updating page size", ex);
-            }
+//            try {
+//                if (this.searchResultManager != null) {
+//                    DAOFetcher<?> previousFetcher = this.searchResultManager.getDaoFetcher();
+//                    this.searchResultManager = new SearchManager(previousFetcher, newPageSize);
+//                    displaySearchResults(this.searchResultManager.getResults(), false);
+//                }
+//            } catch (IllegalArgumentException | ExecutionException ex) {
+//                logger.log(Level.WARNING, "There was an error while updating page size", ex);
+//            }
         }
     };
 
@@ -163,7 +163,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private final PropertyChangeListener caseEventListener = evt -> {
         String evtName = evt.getPropertyName();
         if (Case.Events.DATA_SOURCE_ADDED.toString().equals(evtName)) {
-            refreshSearchResultChildren();
+            // GVDTODO could potentially be removed
+//            refreshSearchResultChildren();
         } else if (Case.Events.CURRENT_CASE.toString().equals(evtName) && evt.getNewValue() == null) {
             nodeNameToPageCountListenerMap.clear();
         }
@@ -195,11 +196,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             IngestManager.IngestJobEvent.CANCELLED);
 
     private final PropertyChangeListener ingestJobListener = (PropertyChangeEvent evt) -> {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-            refreshSearchResultChildren();
-        }
+        // GVDTODO could potentially be removed
+//        String eventType = evt.getPropertyName();
+//        if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+//                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+//            refreshSearchResultChildren();
+//        }
     };
 
     private final PropertyChangeListener weakIngestJobListener = WeakListeners.propertyChange(ingestJobListener, null);
