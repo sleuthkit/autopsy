@@ -24,7 +24,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
  */
 public class DataArtifactEvent extends BlackboardArtifactEvent {
 
-    public DataArtifactEvent(long artifactTypeId, long dataSourceId) {
+    DataArtifactEvent(long artifactTypeId, long dataSourceId) {
         super(artifactTypeId, dataSourceId);
     }
 }
