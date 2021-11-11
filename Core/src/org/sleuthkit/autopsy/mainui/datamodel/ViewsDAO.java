@@ -163,34 +163,35 @@ public class ViewsDAO extends AbstractDAO {
         return searchParamsCache.get(searchParams, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId(), startItem, maxCount));
     }
 
-    public boolean isFilesByExtInvalidating(FileTypeExtensionsSearchParams key, Content eventData) {
-        if (!(eventData instanceof AbstractFile)) {
+    public boolean isFilesByExtInvalidating(FileTypeExtensionsSearchParams key, DAOEvent eventData) {
+        if (!(eventData instanceof FileTypeExtensionsEvent)) {
             return false;
         }
 
-        AbstractFile file = (AbstractFile) eventData;
-        String extension = "." + file.getNameExtension().toLowerCase();
-        return key.getFilter().getFilter().contains(extension);
+        FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) eventData;
+        String extension = "." + extEvt.getExtension().toLowerCase();
+        return key.getFilter().getFilter().contains(extension)
+                && (key.getDataSourceId() == null || key.getDataSourceId() == extEvt.getDataSourceId());
     }
 
-    public boolean isFilesByMimeInvalidating(FileTypeMimeSearchParams key, Content eventData) {
-        if (!(eventData instanceof AbstractFile)) {
+    public boolean isFilesByMimeInvalidating(FileTypeMimeSearchParams key, DAOEvent eventData) {
+        if (!(eventData instanceof FileTypeMimeEvent)) {
             return false;
         }
 
-        AbstractFile file = (AbstractFile) eventData;
-        String mimeType = file.getMIMEType();
-        return key.getMimeType().equalsIgnoreCase(mimeType);
+        FileTypeMimeEvent mimeEvt = (FileTypeMimeEvent) eventData;
+        return mimeEvt.getMimeType().startsWith(key.getMimeType())
+                && (key.getDataSourceId() == null || key.getDataSourceId() == mimeEvt.getDataSourceId());
     }
 
-    public boolean isFilesBySizeInvalidating(FileTypeSizeSearchParams key, Content eventData) {
-        if (!(eventData instanceof AbstractFile)) {
+    public boolean isFilesBySizeInvalidating(FileTypeSizeSearchParams key, DAOEvent eventData) {
+        if (!(eventData instanceof FileTypeSizeEvent)) {
             return false;
         }
 
-        long size = eventData.getSize();
-
-        return size >= key.getSizeFilter().getMinBound() && (key.getSizeFilter().getMaxBound() == null || size < key.getSizeFilter().getMaxBound());
+        FileTypeSizeEvent sizeEvt = (FileTypeSizeEvent) eventData;
+        return sizeEvt.getSizeFilter().equals(key.getSizeFilter())
+                && (key.getDataSourceId() == null || key.getDataSourceId() == sizeEvt.getDataSourceId());
     }
 
     /**
@@ -746,7 +747,7 @@ public class ViewsDAO extends AbstractDAO {
 
         Stream<DAOEvent> fileExtStream = fileExtensionDsMap.entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new FileTypeExtensionsEvent(entry.getKey(), dsId)));
-        
+
         List<DAOEvent> fileMimeList = new ArrayList<>();
         for (Entry<String, Map<String, Set<Long>>> prefixEntry : mimeTypeDsMap.entrySet()) {
             String mimePrefix = prefixEntry.getKey();
@@ -758,10 +759,10 @@ public class ViewsDAO extends AbstractDAO {
                 }
             }
         }
-        
+
         Stream<DAOEvent> fileSizeStream = fileSizeDsMap.entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new FileTypeSizeEvent(entry.getKey(), dsId)));
-        
+
         return Stream.of(fileExtStream, fileMimeList.stream(), fileSizeStream)
                 .flatMap(stream -> stream)
                 .collect(Collectors.toList());
@@ -770,7 +771,7 @@ public class ViewsDAO extends AbstractDAO {
     /**
      * Handles fetching and paging of data for file types by extension.
      */
-    public static class FileTypeExtFetcher extends DAOFetcher<FileTypeExtensionsSearchParams> {
+    public class FileTypeExtFetcher extends DAOFetcher<FileTypeExtensionsSearchParams> {
 
         /**
          * Main constructor.
@@ -788,21 +789,14 @@ public class ViewsDAO extends AbstractDAO {
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return true;
-            // GVDTODO
-//            Content content = DAOEventUtils.getContentFromEvt(evt);
-//            if (content == null) {
-//                return false;
-//            }
-//
-//            return MainDAO.getInstance().getViewsDAO().isFilesByExtInvalidating(this.getParameters(), content);
+            return isFilesByExtInvalidating(this.getParameters(), evt);
         }
     }
 
     /**
      * Handles fetching and paging of data for file types by mime type.
      */
-    public static class FileTypeMimeFetcher extends DAOFetcher<FileTypeMimeSearchParams> {
+    public class FileTypeMimeFetcher extends DAOFetcher<FileTypeMimeSearchParams> {
 
         /**
          * Main constructor.
@@ -820,21 +814,14 @@ public class ViewsDAO extends AbstractDAO {
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return true;
-            // GVDTODO
-//            Content content = DAOEventUtils.getContentFromEvt(evt);
-//            if (content == null) {
-//                return false;
-//            }
-//
-//            return MainDAO.getInstance().getViewsDAO().isFilesByMimeInvalidating(this.getParameters(), content);
+            return isFilesByMimeInvalidating(this.getParameters(), evt);
         }
     }
 
     /**
      * Handles fetching and paging of data for file types by size.
      */
-    public static class FileTypeSizeFetcher extends DAOFetcher<FileTypeSizeSearchParams> {
+    public class FileTypeSizeFetcher extends DAOFetcher<FileTypeSizeSearchParams> {
 
         /**
          * Main constructor.
@@ -852,15 +839,7 @@ public class ViewsDAO extends AbstractDAO {
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return true;
-
-            // GVDTODO
-//            Content content = DAOEventUtils.getContentFromEvt(evt);
-//            if (content == null) {
-//                return false;
-//            }
-//
-//            return MainDAO.getInstance().getViewsDAO().isFilesBySizeInvalidating(this.getParameters(), content);
+            return isFilesBySizeInvalidating(this.getParameters(), evt);
         }
     }
 }

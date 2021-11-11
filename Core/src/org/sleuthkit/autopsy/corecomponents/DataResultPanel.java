@@ -1188,7 +1188,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
         try {
 
-            this.searchResultManager = new SearchManager(new FileTypeExtFetcher(fileExtensionsParams), getPageSize());
+            this.searchResultManager = new SearchManager(MainDAO.getInstance().getViewsDAO().new FileTypeExtFetcher(fileExtensionsParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1209,7 +1209,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         try {
 
-            this.searchResultManager = new SearchManager(new FileTypeMimeFetcher(fileMimeKey), getPageSize());
+            this.searchResultManager = new SearchManager(MainDAO.getInstance().getViewsDAO().new FileTypeMimeFetcher(fileMimeKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {
@@ -1248,7 +1248,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayFileSizes(FileTypeSizeSearchParams fileSizeKey) {
         try {
-            this.searchResultManager = new SearchManager(new FileTypeSizeFetcher(fileSizeKey), getPageSize());
+            this.searchResultManager = new SearchManager(MainDAO.getInstance().getViewsDAO().new FileTypeSizeFetcher(fileSizeKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {

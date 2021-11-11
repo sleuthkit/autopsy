@@ -305,9 +305,8 @@ public class ViewsTypeFactory {
         @Override
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
             AbstractFile file = getFileInDataSourceFromEvt(evt, this.dataSourceId);
-            return file != null && this.childFilters.stream()
-                    .anyMatch((filter) -> MainDAO.getInstance().getViewsDAO().isFilesByExtInvalidating(
-                    new FileTypeExtensionsSearchParams(filter, this.dataSourceId), file));
+            return file != null && file.getNameExtension() != null && 
+                    this.childFilters.stream().anyMatch((filter) -> filter.getFilter().contains("." + file.getNameExtension().toLowerCase()));
         }
 
         /**

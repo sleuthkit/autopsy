@@ -24,18 +24,22 @@ import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.events.OsAccountEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -75,6 +79,13 @@ public class OsAccountsDAO extends AbstractDAO {
             getFileColumnKey(Bundle.OsAccountsDAO_accountRealmNameProperty_displayName()),
             getFileColumnKey(Bundle.OsAccountsDAO_createdTimeProperty_displayName()));
 
+    private static final Set<String> OS_EVENTS = ImmutableSet.of(
+            Case.Events.OS_ACCOUNTS_ADDED.toString(),
+            Case.Events.OS_ACCOUNTS_DELETED.toString(),
+            Case.Events.OS_ACCOUNTS_UPDATED.toString(),
+            Case.Events.OS_ACCT_INSTANCES_ADDED.toString()
+    );
+        
     private static OsAccountsDAO instance = null;
 
     synchronized static OsAccountsDAO getInstance() {
@@ -102,6 +113,10 @@ public class OsAccountsDAO extends AbstractDAO {
         }
 
         return searchParamsCache.get(searchParams, () -> fetchAccountsDTOs(searchParams));
+    }
+    
+    public boolean isOSAccountInvalidatingEvt(OsAccountsSearchParams searchParams, DAOEvent evt) {
+        return DAOEvent instanceof OsAccountEvent;
     }
 
     /**
@@ -167,10 +182,28 @@ public class OsAccountsDAO extends AbstractDAO {
         return new BaseSearchResultsDTO(OS_ACCOUNTS_TYPE_ID, Bundle.OsAccounts_name_text(), OS_ACCOUNTS_WITH_SCO_COLUMNS, fileRows, 0, allAccounts.size());
     }
 
+    @Override
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+    }
+
+    @Override
+    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
+        List<DAOEvent> daoEvts = evts.stream().filter(evt -> OS_EVENTS.contains(evt.getPropertyName()))
+                .map(evt -> new OsAccountEvent())
+                .collect(Collectors.toList());
+        
+        if (!daoEvts.isEmpty()) {
+            this.searchParamsCache.invalidateAll();
+        }
+        
+        return daoEvts;
+    }
+
     /**
      * Handles fetching and paging of data for accounts.
      */
-    public static class AccountFetcher extends DAOFetcher<OsAccountsSearchParams> {
+    public class AccountFetcher extends DAOFetcher<OsAccountsSearchParams> {
 
         /**
          * Main constructor.
@@ -188,15 +221,7 @@ public class OsAccountsDAO extends AbstractDAO {
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return true;
-            
-            //GVDTODO
-//            String eventType = evt.getPropertyName();
-//            if (eventType.equals(Case.Events.OS_ACCOUNTS_ADDED.toString())
-//                    || eventType.equals(Case.Events.OS_ACCOUNTS_DELETED.toString())) {
-//                return true;
-//            }
-//            return false;
+            return isOSAccountInvalidatingEvt(this.getParameters(), evt);
         }
     }
 }
