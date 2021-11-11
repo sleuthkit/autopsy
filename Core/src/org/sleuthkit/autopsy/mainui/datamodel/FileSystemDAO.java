@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.DirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.ImageRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VolumeRowDTO;
@@ -78,6 +79,27 @@ public class FileSystemDAO {
             instance = new FileSystemDAO();
         }
         return instance;
+    }
+    
+    public boolean isSystemContentInvalidating(FileSystemContentSearchParam key, Content eventContent) {
+        if(!(eventContent instanceof Content)) {
+            return false;
+        }
+        
+        try {
+            return key.getContentObjectId() != eventContent.getParent().getId();
+        } catch (TskCoreException ex) {
+            // There is nothing we can do with the exception.
+            return false;
+        }
+    }
+    
+    public boolean isSystemHostInvalidating(FileSystemHostSearchParam key, Host eventHost) {
+        if(!(eventHost instanceof Host)) {
+            return false;
+        }
+        
+        return key.getHostObjectId() != eventHost.getHostId();
     }
 
     private BaseSearchResultsDTO fetchContentForTableFromContent(SearchParams<FileSystemContentSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -290,13 +312,12 @@ public class FileSystemDAO {
 
         @Override
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            Content content = this.getContentFromEvt(evt);
+            Content content = getContentFromEvt(evt);
             if (content == null) {
                 return false;
             }
 
-            // I am not sure what to do here.
-            return false;
+            return MainDAO.getInstance().getFileSystemDAO().isSystemContentInvalidating(getParameters(), content);
         }
     }
 
@@ -318,12 +339,8 @@ public class FileSystemDAO {
 
         @Override
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            Content content = this.getContentFromEvt(evt);
-            if (content == null) {
-                return false;
-            }
-
-            // I am not sure what to do here.
+            // TODO implement the method for determining if 
+            // a refresh is needed.
             return false;
         }
     }
