@@ -24,7 +24,6 @@ import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,7 +35,6 @@ import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -179,6 +177,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                 .filter(dataEvt -> dataEvt != null)
                 .flatMap(dataEvt -> dataEvt.getArtifacts().stream())
                 .forEach((art) -> {
+                    // GVDTODO scope to data artifacts
                     artifactTypeDataSourceMap
                             .computeIfAbsent(art.getArtifactTypeID(), (k) -> new HashSet<>())
                             .add(art.getDataSourceObjectID());

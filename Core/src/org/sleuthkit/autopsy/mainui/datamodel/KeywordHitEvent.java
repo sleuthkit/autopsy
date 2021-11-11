@@ -22,10 +22,21 @@ package org.sleuthkit.autopsy.mainui.datamodel;
  * An event for an artifact added or changed of a particular type possibly for a
  * particular data source.
  */
-public class AnalysisResultEvent extends BlackboardArtifactEvent {
+public class KeywordHitEvent extends AnalysisResultSetEvent {
+    private final String regex;
+    private final String match;
 
-    AnalysisResultEvent(long artifactTypeId, long dataSourceId) {
-        super(artifactTypeId, dataSourceId);
+    KeywordHitEvent(String regex, String match, String setName, long artifactTypeId, long dataSourceId) {
+        super(setName, artifactTypeId, dataSourceId);
+        this.regex = regex;
+        this.match = match;
     }
 
+    public String getRegex() {
+        return regex;
+    }
+
+    public String getMatch() {
+        return match;
+    }
 }
