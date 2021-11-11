@@ -40,10 +40,13 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.MergeHostMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.RemoveParentPersonAction;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
+import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
@@ -55,7 +58,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * this host.
  */
 @NbBundle.Messages(value = {"HostGroupingNode_unknownHostNode_title=Unknown Host"})
-public class HostNode extends DisplayableItemNode {
+public class HostNode extends DisplayableItemNode implements SelectionResponder{
 
     /**
      * Provides the data source children for this host.
@@ -258,6 +261,11 @@ public class HostNode extends DisplayableItemNode {
         super.setDisplayName(displayName);
         this.setIconBaseWithExtension(ICON_PATH);
         this.host = host;
+    }
+    
+    @Override
+    public void respondSelection(DataResultTopComponent dataResultPanel) {
+        dataResultPanel.displayFileSystemForHost(new FileSystemHostSearchParam(host.getHostId()));
     }
 
     @Override

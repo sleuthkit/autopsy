@@ -60,7 +60,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
 import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
-import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
+import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.datamodel.AnalysisResult;
 
 /**

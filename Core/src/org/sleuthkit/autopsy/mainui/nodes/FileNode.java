@@ -30,12 +30,17 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
+import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
+import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  * A node for representing an AbstractFile.
@@ -94,6 +99,7 @@ public class FileNode extends AbstractNode implements ActionContext {
         setIcon(file);
         setDisplayName(ContentNodeUtil.getContentDisplayName(file.getFileName()));
         setName(ContentNodeUtil.getContentName(file.getId()));
+        setShortDescription(ContentNodeUtil.getContentDisplayName(file.getFileName()));
         this.directoryBrowseMode = directoryBrowseMode;
         this.fileData = file;
         this.columns = results.getColumns();
@@ -102,15 +108,15 @@ public class FileNode extends AbstractNode implements ActionContext {
     /*
      * Sets the icon for the node, based on properties of the AbstractFile.
      */
-    private void setIcon(FileRowDTO file) {
-        if (!file.getAllocated()) {
-            if (TSK_DB_FILES_TYPE_ENUM.CARVED.equals(file.getFileType())) {
+    void setIcon(FileRowDTO fileData) {
+        if (!fileData.getAllocated()) {
+            if (TSK_DB_FILES_TYPE_ENUM.CARVED.equals(fileData.getFileType())) {
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
             } else {
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
             }
         } else {
-            this.setIconBaseWithExtension(getIconForFileType(file.getExtensionMediaType()));
+            this.setIconBaseWithExtension(getIconForFileType(fileData.getExtensionMediaType()));
         }
     }
 
@@ -150,6 +156,15 @@ public class FileNode extends AbstractNode implements ActionContext {
     }
 
     @Override
+    public Optional<AbstractFile> getFileForDirectoryBrowseMode() {
+        if (directoryBrowseMode) {
+            return Optional.of(fileData.getAbstractFile());
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
         // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
         // See JIRA-8099
@@ -173,5 +188,61 @@ public class FileNode extends AbstractNode implements ActionContext {
     @Override
     protected Sheet createSheet() {
         return ContentNodeUtil.setSheet(super.createSheet(), this.columns, this.fileData.getCellValues());
+    }
+
+    /**
+     * A node for representing a LayoutFile.
+     */
+    public static class LayoutFileNode extends FileNode {
+
+        private final LayoutFileRowDTO layoutFileRow;
+
+        public LayoutFileNode(SearchResultsDTO results, LayoutFileRowDTO file) {
+            super(results, file, true);
+            layoutFileRow = file;
+        }
+
+        @Override
+        void setIcon(FileRowDTO fileData) {
+            LayoutFile lf = ((LayoutFileRowDTO) fileData).getLayoutFile();
+            switch (lf.getType()) {
+                case CARVED:
+                    setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png");
+                    break;
+                case LAYOUT_FILE:
+                    if (lf.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+                        setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+                    } else {
+                        setIconBaseWithExtension(getIconForFileType(layoutFileRow.getExtensionMediaType()));
+                    }
+                    break;
+                default:
+                    setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+            }
+        }
+    }
+
+    /**
+     * A node for representing a SlackFile.
+     */
+    public static class SlackFileNode extends FileNode {
+
+        public SlackFileNode(SearchResultsDTO results, SlackFileRowDTO file) {
+            super(results, file);
+        }
+
+        @Override
+        void setIcon(FileRowDTO fileData) {
+            AbstractFile file = fileData.getAbstractFile();
+            if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+                if (file.getType().equals(TSK_DB_FILES_TYPE_ENUM.CARVED)) {
+                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
+                } else {
+                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+                }
+            } else {
+                this.setIconBaseWithExtension(getIconForFileType(fileData.getExtensionMediaType()));
+            }
+        }
     }
 }
