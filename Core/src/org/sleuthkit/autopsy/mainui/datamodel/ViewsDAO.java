@@ -20,13 +20,16 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -285,7 +288,7 @@ public class ViewsDAO extends AbstractDAO {
      *
      * @return The clause to be proceeded with 'where' or 'and'.
      */
-    private static String getFileSizeClause(FileTypeSizeSearchParams.FileSizeFilter filter) {
+    private static String getFileSizeClause(FileSizeFilter filter) {
         return filter.getMaxBound() == null
                 ? "(size >= " + filter.getMinBound() + ")"
                 : "(size >= " + filter.getMinBound() + " AND size < " + filter.getMaxBound() + ")";
@@ -313,7 +316,7 @@ public class ViewsDAO extends AbstractDAO {
      *
      * @return The clause to be proceeded with 'where' or 'and'.
      */
-    private String getFileSizesWhereStatement(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId) {
+    private String getFileSizesWhereStatement(FileSizeFilter filter, Long dataSourceId) {
         String query = getBaseFileSizeFilter()
                 + " AND " + getFileSizeClause(filter)
                 + getDataSourceAndClause(dataSourceId);
@@ -369,12 +372,12 @@ public class ViewsDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<FileTypeSizeSearchParams> getFileSizeCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        Map<FileTypeSizeSearchParams.FileSizeFilter, String> whereClauses = Stream.of(FileTypeSizeSearchParams.FileSizeFilter.values())
+        Map<FileSizeFilter, String> whereClauses = Stream.of(FileSizeFilter.values())
                 .collect(Collectors.toMap(
                         filter -> filter,
                         filter -> getFileSizeClause(filter)));
 
-        Map<FileTypeSizeSearchParams.FileSizeFilter, Long> countsByFilter = getFilesCounts(whereClauses, getBaseFileSizeFilter(), dataSourceId, true);
+        Map<FileSizeFilter, Long> countsByFilter = getFilesCounts(whereClauses, getBaseFileSizeFilter(), dataSourceId, true);
 
         List<TreeItemDTO<FileTypeSizeSearchParams>> treeList = countsByFilter.entrySet().stream()
                 .map(entry -> {
@@ -596,7 +599,7 @@ public class ViewsDAO extends AbstractDAO {
         return fetchFileViewFiles(whereStatement, MIME_TYPE_DISPLAY_NAME, startItem, maxResultCount);
     }
 
-    private SearchResultsDTO fetchSizeSearchResultsDTOs(FileTypeSizeSearchParams.FileSizeFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+    private SearchResultsDTO fetchSizeSearchResultsDTOs(FileSizeFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
         String whereStatement = getFileSizesWhereStatement(filter, dataSourceId);
         return fetchFileViewFiles(whereStatement, filter.getDisplayName(), startItem, maxResultCount);
     }
@@ -639,6 +642,51 @@ public class ViewsDAO extends AbstractDAO {
         }
 
         return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, startItem, totalResultsCount);
+    }
+
+    @Override
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+    }
+
+
+    @Override
+    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> autopsyEvts) {
+        Map<String, Set<Long>> fileExtensionDsMap = new HashMap<>();
+        Map<String, Set<Long>> mimeTypeDsMap = new HashMap<>();
+        Map<FileSizeFilter, Set<Long>> fileSizeDsMap = new HashMap<>();
+
+        for (PropertyChangeEvent evt : autopsyEvts) {
+            AbstractFile af = DAOEventUtils.getFileFromEvt(evt);
+            if (af == null) {
+                continue;
+            }
+
+            if (!StringUtils.isBlank(af.getNameExtension())) {
+                fileExtensionDsMap
+                        .computeIfAbsent(af.getNameExtension(), (k) -> new HashSet<>())
+                        .add(af.getDataSourceObjectId());
+            }
+
+            if (!StringUtils.isBlank(af.getMIMEType())) {
+                mimeTypeDsMap
+                        .computeIfAbsent(af.getMIMEType(), (k) -> new HashSet<>())
+                        .add(af.getDataSourceObjectId());
+            }
+
+            FileSizeFilter sizeFilter = Stream.of(FileSizeFilter.values())
+                    .filter(filter -> af.getSize() >= filter.getMinBound() && af.getSize() < filter.getMaxBound())
+                    .findFirst()
+                    .orElse(null);
+            
+            if (sizeFilter != null) {
+                fileSizeDsMap
+                        .computeIfAbsent(sizeFilter, (k) -> new HashSet<>())
+                        .add(af.getDataSourceObjectId());
+            }
+        }
+        
+        
     }
 
     /**
@@ -727,7 +775,7 @@ public class ViewsDAO extends AbstractDAO {
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
             return true;
-            
+
             // GVDTODO
 //            Content content = DAOEventUtils.getContentFromEvt(evt);
 //            if (content == null) {

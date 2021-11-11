@@ -722,20 +722,24 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             ModuleDataEvent dataEvt = DAOEventUtils.getModuleDataFromEvt(evt);
             if (dataEvt != null) {
                 for (BlackboardArtifact art : dataEvt.getArtifacts()) {
-                    if (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
-                        // GVDTODO
-                    } else if (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
-                            || art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-                            || art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID()) {
+                    try {
+                        if (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
+                            // GVDTODO
+                        } else if (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
+                                || art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
+                                || art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID()) {
 
-                        BlackboardAttribute setAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
-                        String setName = setAttr == null ? null : setAttr.getValueString();
-                        setMap.computeIfAbsent(Pair.of(art.getArtifactTypeID(), setName), (k) -> new HashSet<>())
-                                .add(art.getDataSourceObjectID());
+                            BlackboardAttribute setAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
+                            String setName = setAttr == null ? null : setAttr.getValueString();
+                            setMap.computeIfAbsent(Pair.of(art.getArtifactTypeID(), setName), (k) -> new HashSet<>())
+                                    .add(art.getDataSourceObjectID());
 
-                    } else if (BlackboardArtifact.Category.DATA_ARTIFACT.equals(art.getType().getCategory())) {
-                        analysisResultMap.computeIfAbsent(art.getArtifactTypeID(), (k) -> new HashSet<>())
-                                .add(art.getDataSourceObjectID());
+                        } else if (BlackboardArtifact.Category.DATA_ARTIFACT.equals(art.getType().getCategory())) {
+                            analysisResultMap.computeIfAbsent(art.getArtifactTypeID(), (k) -> new HashSet<>())
+                                    .add(art.getDataSourceObjectID());
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Unable to fetch necessary information for artifact id: " + art.getId(), ex);
                     }
                 }
             }

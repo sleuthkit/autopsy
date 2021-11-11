@@ -21,32 +21,33 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import java.util.Objects;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * An event where file type extensions could be affected.
  */
-public class FileTypeSizeSearchParams {
+public class FileTypeExtensionsEvent {
 
+    private final FileExtSearchFilter filter;
+    private final long dataSourceId;
 
-    private final FileSizeFilter sizeFilter;
-    private final Long dataSourceId;
-
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
+    // TODO: This should ideally take in some kind of ENUM once we redo the tree.
+    // this assumes that filters implicitly or explicitly implement hashCode and equals to work
+    FileTypeExtensionsEvent(FileExtSearchFilter filter, long dataSourceId) {
+        this.filter = filter;
         this.dataSourceId = dataSourceId;
     }
 
-    public FileSizeFilter getSizeFilter() {
-        return sizeFilter;
+    public FileExtSearchFilter getFilter() {
+        return filter;
     }
 
-    public Long getDataSourceId() {
+    public long getDataSourceId() {
         return dataSourceId;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 31 * hash + Objects.hashCode(this.filter);
+        hash = 31 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -61,8 +62,8 @@ public class FileTypeSizeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (this.sizeFilter != other.sizeFilter) {
+        final FileTypeExtensionsEvent other = (FileTypeExtensionsEvent) obj;
+        if (!Objects.equals(this.filter, other.filter)) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
@@ -70,5 +71,4 @@ public class FileTypeSizeSearchParams {
         }
         return true;
     }
-
 }

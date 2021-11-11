@@ -23,13 +23,12 @@ import java.util.Objects;
 /**
  * Key for accessing data about file sizeFilter from the DAO.
  */
-public class FileTypeSizeSearchParams {
-
+public class FileTypeSizeEvent {
 
     private final FileSizeFilter sizeFilter;
     private final Long dataSourceId;
 
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
+    FileTypeSizeEvent(FileSizeFilter sizeFilter, Long dataSourceId) {
         this.sizeFilter = sizeFilter;
         this.dataSourceId = dataSourceId;
     }
@@ -61,7 +60,7 @@ public class FileTypeSizeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
+        final FileTypeSizeEvent other = (FileTypeSizeEvent) obj;
         if (this.sizeFilter != other.sizeFilter) {
             return false;
         }

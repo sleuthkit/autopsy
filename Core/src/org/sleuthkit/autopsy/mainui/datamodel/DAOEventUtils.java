@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -53,6 +54,13 @@ public class DAOEventUtils {
         } else {
             return null;
         }
+    }
+
+    static AbstractFile getFileFromEvt(PropertyChangeEvent evt) {
+        Content content = getContentFromEvt(evt);
+        return (content instanceof AbstractFile)
+                ? ((AbstractFile) content)
+                : null;
     }
 
     /**

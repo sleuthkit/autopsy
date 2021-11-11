@@ -1167,7 +1167,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
         try {
-            this.searchResultManager = new SearchManager(new AnalysisResultFetcher(analysisResultParams), getPageSize());
+            this.searchResultManager = new SearchManager(MainDAO.getInstance().getAnalysisResultDAO().new AnalysisResultFetcher(analysisResultParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1268,7 +1268,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayAnalysisResultSet(AnalysisResultSetSearchParam setKey) {
         try {
-            this.searchResultManager = new SearchManager(new AnalysisResultSetFetcher(setKey), getPageSize());
+            this.searchResultManager = new SearchManager(MainDAO.getInstance().getAnalysisResultDAO().new AnalysisResultSetFetcher(setKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {

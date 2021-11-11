@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileExtSearchFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams.FileSizeFilter;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSizeFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.datamodel.AbstractFile;
