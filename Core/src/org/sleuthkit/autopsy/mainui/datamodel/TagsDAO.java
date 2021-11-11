@@ -21,21 +21,37 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TagsEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -47,7 +63,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Provides information to populate the results viewer for data in the allTags
- section.
+ * section.
  */
 @Messages({"TagsDAO.fileColumns.nameColLbl=Name",
     "TagsDAO.fileColumns.originalName=Original Name",
@@ -71,11 +87,11 @@ public class TagsDAO extends AbstractDAO {
 
     private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;    
-    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-    
+    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
+    private final Cache<SearchParams<TagsSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
-    
+
     private static final List<ColumnKey> FILE_TAG_COLUMNS = Arrays.asList(
             getFileColumnKey(Bundle.TagsDAO_fileColumns_nameColLbl()),
             getFileColumnKey(Bundle.TagsDAO_fileColumns_originalName()), // GVDTODO handle translation
@@ -110,7 +126,7 @@ public class TagsDAO extends AbstractDAO {
     private static ColumnKey getFileColumnKey(String name) {
         return new ColumnKey(name, name, Bundle.TagsDAO_fileColumns_noDescription());
     }
-    
+
     public SearchResultsDTO getTags(TagsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (key.getTagName() == null) {
             throw new IllegalArgumentException("Must have non-null tag name");
@@ -119,17 +135,17 @@ public class TagsDAO extends AbstractDAO {
         } else if (key.getTagType() == null) {
             throw new IllegalArgumentException("Must have non-null tag type");
         }
-        
+
         SearchParams<TagsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
         if (hardRefresh) {
             this.searchParamsCache.invalidate(searchParams);
         }
 
         return searchParamsCache.get(searchParams, () -> fetchTagsDTOs(searchParams));
-    }   
+    }
 
     @NbBundle.Messages({"FileTag.name.text=File Tag",
-            "ResultTag.name.text=Result Tag"})
+        "ResultTag.name.text=Result Tag"})
     private SearchResultsDTO fetchTagsDTOs(SearchParams<TagsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
         switch (cacheKey.getParamData().getTagType()) {
             case FILE:
@@ -140,7 +156,7 @@ public class TagsDAO extends AbstractDAO {
                 throw new IllegalArgumentException("Unsupported tag type");
         }
     }
-    
+
     /**
      * Returns a list of paged tag results.
      *
@@ -165,7 +181,7 @@ public class TagsDAO extends AbstractDAO {
 
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         TagName tagName = cacheKey.getParamData().getTagName();
-        
+
         // get all tag results
         List<BlackboardArtifactTag> allTags = new ArrayList<>();
         List<BlackboardArtifactTag> artifactTags = (dataSourceId != null && dataSourceId > 0)
@@ -181,21 +197,21 @@ public class TagsDAO extends AbstractDAO {
         } else {
             allTags.addAll(artifactTags);
         }
-        
+
         // get current page of tag results
         List<? extends Tag> pagedTags = getPaged(allTags, cacheKey);
 
         List<RowDTO> fileRows = new ArrayList<>();
         for (Tag tag : pagedTags) {
             BlackboardArtifactTag blackboardTag = (BlackboardArtifactTag) tag;
-            
+
             String name = blackboardTag.getContent().getName();  // As a backup.
             try {
                 name = blackboardTag.getArtifact().getShortDescription();
             } catch (TskCoreException ignore) {
                 // it's a WARNING, skip
             }
-            
+
             String contentPath;
             try {
                 contentPath = blackboardTag.getContent().getUniquePath();
@@ -218,12 +234,12 @@ public class TagsDAO extends AbstractDAO {
 
         return new BaseSearchResultsDTO(BlackboardArtifactTagsRowDTO.getTypeIdForClass(), Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allTags.size());
     }
-    
+
     private SearchResultsDTO fetchFileTags(SearchParams<TagsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         TagName tagName = cacheKey.getParamData().getTagName();
-        
+
         // get all tag results
         List<ContentTag> allTags = new ArrayList<>();
         List<ContentTag> contentTags = (dataSourceId != null && dataSourceId > 0)
@@ -239,10 +255,10 @@ public class TagsDAO extends AbstractDAO {
         } else {
             allTags.addAll(contentTags);
         }
-        
+
         // get current page of tag results
         List<? extends Tag> pagedTags = getPaged(allTags, cacheKey);
-        
+
         List<RowDTO> fileRows = new ArrayList<>();
         for (Tag tag : pagedTags) {
             ContentTag contentTag = (ContentTag) tag;
@@ -271,11 +287,129 @@ public class TagsDAO extends AbstractDAO {
 
         return new BaseSearchResultsDTO(ContentTagsRowDTO.getTypeIdForClass(), Bundle.FileTag_name_text(), FILE_TAG_COLUMNS, fileRows, 0, allTags.size());
     }
-    
+
+    /**
+     * Returns true if the DAO event could have an impact on the given search
+     * params.
+     *
+     * @param tagParams The tag params.
+     * @param daoEvt    The DAO event.
+     *
+     * @return True if the event could affect the results of the search params.
+     */
+    public boolean isTagsInvalidatingEvent(TagsSearchParams tagParams, DAOEvent daoEvt) {
+        if (!(daoEvt instanceof TagsEvent)) {
+            return false;
+        }
+
+        TagsEvent tagEvt = (TagsEvent) daoEvt;
+        return (tagParams.getTagName().getId() == tagEvt.getTagNameId()
+                && tagParams.getTagType().equals(tagEvt.getTagType())
+                && (tagParams.getDataSourceId() == null
+                || tagEvt.getDataSourceId() == null
+                || tagParams.getDataSourceId() == tagEvt.getDataSourceId()));
+    }
+
+    @Override
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+    }
+
+    @Override
+    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
+        Map<Pair<TagType, Long>, Set<Optional<Long>>> mapping = new HashMap<>();
+        for (PropertyChangeEvent evt : evts) {
+            // tag type, tag name id, data source id (or null if unknown)
+            Triple<TagType, Long, Long> data = getTagData(evt);
+            if (data != null) {
+                mapping.computeIfAbsent(Pair.of(data.getLeft(), data.getMiddle()), k -> new HashSet<>())
+                        .add(Optional.ofNullable(data.getRight()));
+            }
+        }
+
+        ConcurrentMap<SearchParams<TagsSearchParams>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
+        concurrentMap.forEach((k, v) -> {
+            TagsSearchParams paramData = k.getParamData();
+            Set<Optional<Long>> affectedDataSources = mapping.get(Pair.of(paramData.getTagType(), paramData.getTagName().getId()));
+            // we only clear key if the tag name / type line up and either the parameters data source wasn't specified,
+            // there is a wild card data source for the event, or the data source is contained in the list of data sources
+            // affected by the event
+            if (affectedDataSources != null
+                    && (paramData.getDataSourceId() == null
+                    || affectedDataSources.contains(Optional.empty())
+                    || affectedDataSources.contains(Optional.of(paramData.getDataSourceId())))) {
+                concurrentMap.remove(k);
+            }
+        });
+
+        return mapping.entrySet().stream()
+                .flatMap(entry -> {
+                    TagType tagType = entry.getKey().getLeft();
+                    Long tagNameId = entry.getKey().getRight();
+
+                    return entry.getValue().stream()
+                            .map((dsIdOpt) -> new TagsEvent(tagType, tagNameId, dsIdOpt.orElse(null)));
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns tag information from an event or null if no tag information
+     * found.
+     *
+     * @param evt The autopsy event.
+     *
+     * @return tag type, tag name id, data source id (or null if none determined
+     *         from event).
+     */
+    private Triple<TagType, Long, Long> getTagData(PropertyChangeEvent evt) {
+
+        String eventType = evt.getPropertyName();
+
+        if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
+                || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
+                || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
+                || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
+
+            if (evt instanceof BlackBoardArtifactTagAddedEvent) {
+                BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
+                // ensure tag added event has a valid content id
+                if (event.getAddedTag() != null
+                        && event.getAddedTag().getContent() != null
+                        && event.getAddedTag().getArtifact() != null) {
+                    return Triple.of(TagType.RESULT, event.getAddedTag().getName().getId(), event.getAddedTag().getArtifact().getDataSourceObjectID());
+                }
+
+            } else if (evt instanceof BlackBoardArtifactTagDeletedEvent) {
+                BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
+                BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo deletedTagInfo = event.getDeletedTagInfo();
+                if (deletedTagInfo != null) {
+                    return Triple.of(TagType.RESULT, deletedTagInfo.getName().getId(), null);
+                }
+            } else if (evt instanceof ContentTagAddedEvent) {
+                ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
+                // ensure tag added event has a valid content id
+                if (event.getAddedTag() != null && event.getAddedTag().getContent() != null) {
+                    Content content = event.getAddedTag().getContent();
+                    Long dsId = content instanceof AbstractFile ? ((AbstractFile) content).getDataSourceObjectId() : null;
+                    return Triple.of(TagType.FILE, event.getAddedTag().getName().getId(), dsId);
+                }
+            } else if (evt instanceof ContentTagDeletedEvent) {
+                ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
+                // ensure tag deleted event has a valid content id
+                ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
+                if (deletedTagInfo != null) {
+                    return Triple.of(TagType.FILE, deletedTagInfo.getName().getId(), null);
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * Handles fetching and paging of data for allTags.
      */
-    public static class TagFetcher extends DAOFetcher<TagsSearchParams> {
+    public class TagFetcher extends DAOFetcher<TagsSearchParams> {
 
         /**
          * Main constructor.
@@ -293,75 +427,7 @@ public class TagsDAO extends AbstractDAO {
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return true;
-            
-            // GVDTODO
-
-//            TagsSearchParams params = this.getParameters();
-//            String eventType = evt.getPropertyName();
-//            
-//            // handle artifact/result tag changes
-//            if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-//                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())) {
-//                
-//                // ignore non-artifact/result tag changes
-//                if (params.getTagType() != TagsSearchParams.TagType.RESULT) {
-//                    return false;
-//                }
-//                
-//                if (evt instanceof AutopsyEvent) {
-//                    if (evt instanceof BlackBoardArtifactTagAddedEvent) {
-//                        // An artifact associated with the current case has been tagged.
-//                        BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
-//                        // ensure tag added event has a valid content id
-//                        if (event.getAddedTag() == null || event.getAddedTag().getContent() == null || event.getAddedTag().getArtifact() == null) {
-//                            return false;
-//                        }
-//                        return params.getTagName().getId() == event.getAddedTag().getId();
-//                    } else if (evt instanceof BlackBoardArtifactTagDeletedEvent) {
-//                        // A tag has been removed from an artifact associated with the current case.
-//                        BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
-//                        // ensure tag deleted event has a valid content id
-//                        BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo deletedTagInfo = event.getDeletedTagInfo();
-//                        if (deletedTagInfo == null) {
-//                            return false;
-//                        }
-//                        return params.getTagName().getId() == deletedTagInfo.getTagID();
-//                    }
-//                }
-//            }
-//            
-//            // handle file/content tag changes
-//            if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-//                    || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-//                
-//                // ignore non-file/content tag changes
-//                if (params.getTagType() != TagsSearchParams.TagType.FILE) {
-//                    return false;
-//                }
-//
-//                if (evt instanceof AutopsyEvent) {
-//                    if (evt instanceof ContentTagAddedEvent) {
-//                        // Content associated with the current case has been tagged.
-//                        ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
-//                        // ensure tag added event has a valid content id
-//                        if (event.getAddedTag() == null || event.getAddedTag().getContent() == null) {
-//                            return false;
-//                        }
-//                        return params.getTagName().getId() == event.getAddedTag().getId();
-//                    } else if (evt instanceof ContentTagDeletedEvent) {
-//                        // A tag has been removed from content associated with the current case.
-//                        ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
-//                        // ensure tag deleted event has a valid content id
-//                        ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
-//                        if (deletedTagInfo == null) {
-//                            return false;
-//                        }                        
-//                        return params.getTagName().getId() == deletedTagInfo.getTagID();
-//                    }
-//                }
-//            }
-//            return false;
+            return isTagsInvalidatingEvent(this.getParameters(), evt);
         }
     }
 }
