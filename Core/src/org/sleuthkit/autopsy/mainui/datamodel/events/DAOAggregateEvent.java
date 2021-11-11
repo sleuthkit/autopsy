@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.List;
 import org.apache.commons.collections4.list.UnmodifiableList;
@@ -33,7 +33,7 @@ public class DAOAggregateEvent {
      *
      * @param objects The list of events in this aggregate event.
      */
-    DAOAggregateEvent(List<DAOEvent> objects) {
+    public DAOAggregateEvent(List<DAOEvent> objects) {
         this.objects = UnmodifiableList.unmodifiableList(objects);
     }
 

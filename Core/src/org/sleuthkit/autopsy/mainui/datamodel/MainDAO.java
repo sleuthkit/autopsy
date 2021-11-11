@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventBatcher;
 import com.google.common.collect.ImmutableList;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
