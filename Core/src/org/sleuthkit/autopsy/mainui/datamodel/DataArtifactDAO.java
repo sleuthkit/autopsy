@@ -24,7 +24,6 @@ import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,11 +31,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -49,16 +49,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  * DAO for providing data about data artifacts to populate the results viewer.
  */
 public class DataArtifactDAO extends BlackboardArtifactDAO {
-
+    
     private static Logger logger = Logger.getLogger(DataArtifactDAO.class.getName());
-
+    
     private static DataArtifactDAO instance = null;
-
+    
     synchronized static DataArtifactDAO getInstance() {
         if (instance == null) {
             instance = new DataArtifactDAO();
         }
-
+        
         return instance;
     }
 
@@ -68,27 +68,27 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     public static Set<BlackboardArtifact.Type> getIgnoredTreeTypes() {
         return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
-
+    
     private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-
+    
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
-
+        
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
-
+        
         String pagedWhereClause = getWhereClause(cacheKey);
-
+        
         List<BlackboardArtifact> arts = new ArrayList<>();
         arts.addAll(blackboard.getDataArtifactsWhere(pagedWhereClause));
         blackboard.loadBlackboardAttributes(arts);
-
+        
         long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());
-
+        
         TableData tableData = createTableData(artType, arts);
         return new DataArtifactTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
-
+    
     @Override
     RowDTO createRow(BlackboardArtifact artifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) throws IllegalArgumentException {
         if (!(artifact instanceof DataArtifact)) {
@@ -96,25 +96,25 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
         return new DataArtifactRowDTO((DataArtifact) artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id);
     }
-
+    
     public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
-
+        
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT
                 || (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0)) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Artifact type must be non-null and data artifact.  Data source id must be null or > 0.  "
                     + "Received artifact type: {0}; data source id: {1}", artType, artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
-
+        
         SearchParams<BlackboardArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         if (hardRefresh) {
             this.dataArtifactCache.invalidate(searchParams);
         }
-
+        
         return dataArtifactCache.get(searchParams, () -> fetchDataArtifactsForTable(searchParams));
     }
-
+    
     public boolean isDataArtifactInvalidating(DataArtifactSearchParam key, DAOEvent eventData) {
         if (!(eventData instanceof DataArtifactEvent)) {
             return false;
@@ -124,7 +124,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                     && (key.getDataSourceId() == null || (key.getDataSourceId() == dataArtEvt.getDataSourceId()));
         }
     }
-
+    
     public void dropDataArtifactCache() {
         dataArtifactCache.invalidateAll();
     }
@@ -159,17 +159,17 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
             // return results
             return new TreeResultsDTO<>(treeItemRows);
-
+            
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
         }
     }
-
+    
     @Override
     void clearCaches() {
         this.dataArtifactCache.invalidateAll();
     }
-
+    
     @Override
     List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
         // get a grouping of artifacts mapping the artifact type id to data source id.
@@ -179,25 +179,29 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                 .filter(dataEvt -> dataEvt != null)
                 .flatMap(dataEvt -> dataEvt.getArtifacts().stream())
                 .forEach((art) -> {
-                    artifactTypeDataSourceMap
-                            .computeIfAbsent(art.getArtifactTypeID(), (k) -> new HashSet<>())
-                            .add(art.getDataSourceObjectID());
+                    try {
+                        if (BlackboardArtifact.Category.DATA_ARTIFACT.equals(art.getType().getCategory())) {
+                            artifactTypeDataSourceMap
+                                    .computeIfAbsent(art.getArtifactTypeID(), (k) -> new HashSet<>())
+                                    .add(art.getDataSourceObjectID());
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Unable to fetch artifact category for artifact with id: " + art.getId(), ex);
+                    }
                 });
-        
+
         // invalidate cache entries that are affected by events
-        // GVDTODO handle concurrency issues that may arise
-        List<SearchParams<BlackboardArtifactSearchParam>> invalidatedKeys = new ArrayList<>();
-        for (SearchParams<BlackboardArtifactSearchParam> searchParams : this.dataArtifactCache.asMap().keySet()) {
-            Set<Long> dsIds = artifactTypeDataSourceMap.get(searchParams.getParamData().getArtifactType().getTypeID());
+        ConcurrentMap<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> concurrentMap = this.dataArtifactCache.asMap();
+        concurrentMap.forEach((k, v) -> {
+            Set<Long> dsIds = artifactTypeDataSourceMap.get(k.getParamData().getArtifactType().getTypeID());
             if (dsIds != null) {
-                Long searchDsId = searchParams.getParamData().getDataSourceId();
+                Long searchDsId = k.getParamData().getDataSourceId();
                 if (searchDsId == null || dsIds.contains(searchDsId)) {
-                    invalidatedKeys.add(searchParams);
+                    concurrentMap.remove(k);
                 }
             }
-        }
-        this.dataArtifactCache.invalidateAll(invalidatedKeys);
-        
+        });
+
         // gather dao events based on artifacts
         List<DAOEvent> toRet = new ArrayList<>();
         for (Entry<Integer, Set<Long>> entry : artifactTypeDataSourceMap.entrySet()) {
@@ -223,12 +227,12 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         public DataArtifactFetcher(DataArtifactSearchParam params) {
             super(params);
         }
-
+        
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
             return MainDAO.getInstance().getDataArtifactsDAO().getDataArtifactsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
-
+        
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
             return DataArtifactDAO.this.isDataArtifactInvalidating(this.getParameters(), evt);
