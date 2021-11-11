@@ -140,21 +140,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private final PreferenceChangeListener pageSizeListener = (PreferenceChangeEvent evt) -> {
         if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
-            int newPageSize = UserPreferences.getResultsTablePageSize();
-
             nodeNameToPageCountListenerMap.values().forEach((ps) -> {
                 ps.postPageSizeChangeEvent();
             });
-
-//            try {
-//                if (this.searchResultManager != null) {
-//                    DAOFetcher<?> previousFetcher = this.searchResultManager.getDaoFetcher();
-//                    this.searchResultManager = new SearchManager(previousFetcher, newPageSize);
-//                    displaySearchResults(this.searchResultManager.getResults(), false);
-//                }
-//            } catch (IllegalArgumentException | ExecutionException ex) {
-//                logger.log(Level.WARNING, "There was an error while updating page size", ex);
-//            }
         }
     };
 
@@ -162,10 +150,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private final PropertyChangeListener caseEventListener = evt -> {
         String evtName = evt.getPropertyName();
-        if (Case.Events.DATA_SOURCE_ADDED.toString().equals(evtName)) {
-            // GVDTODO could potentially be removed
-//            refreshSearchResultChildren();
-        } else if (Case.Events.CURRENT_CASE.toString().equals(evtName) && evt.getNewValue() == null) {
+        if (Case.Events.CURRENT_CASE.toString().equals(evtName) && evt.getNewValue() == null) {
             nodeNameToPageCountListenerMap.clear();
         }
     };
@@ -190,21 +175,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     };
 
     private final PropertyChangeListener weakDAOListener = WeakListeners.propertyChange(DAOListener, mainDAO);
-
-    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = EnumSet.of(
-            IngestManager.IngestJobEvent.COMPLETED,
-            IngestManager.IngestJobEvent.CANCELLED);
-
-    private final PropertyChangeListener ingestJobListener = (PropertyChangeEvent evt) -> {
-        // GVDTODO could potentially be removed
-//        String eventType = evt.getPropertyName();
-//        if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-//                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-//            refreshSearchResultChildren();
-//        }
-    };
-
-    private final PropertyChangeListener weakIngestJobListener = WeakListeners.propertyChange(ingestJobListener, null);
 
     /**
      * Creates and opens a Swing JPanel with a JTabbedPane child component that
@@ -471,7 +441,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.weakCaseEventListener);
         this.mainDAO.addPropertyChangeListener(this.weakDAOListener);
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakDAOListener);
-        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS, weakIngestJobListener);
     }
 
     /**
@@ -481,7 +450,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         UserPreferences.removeChangeListener(this.pageSizeListener);
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseEventListener);
         this.mainDAO.removePropertyChangeListener(this.weakDAOListener);
-        IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS, weakIngestJobListener);
     }
 
     /**
