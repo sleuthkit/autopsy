@@ -21,18 +21,18 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.util.Optional;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.LocalFileDataSourceRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.LocalFileDataSourceRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.LocalDirectoryRowDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VirtualDirectoryRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.LocalDirectoryRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VirtualDirectoryRowDTO;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SpecialDirectory;
 
 /**
  * Abstract Node class for SpecialDirectory row results.
  */
-abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, FileSystemRowDTO<? extends SpecialDirectory>> {
+abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRowDTO<? extends SpecialDirectory>> {
 
     /**
      * An abstract base class for FileSystem objects that are subclasses of
@@ -41,7 +41,7 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, FileSyste
      * @param results The search result DTO.
      * @param row     The table row DTO.
      */
-    private SpecialDirectoryNode(SearchResultsDTO results, FileSystemRowDTO<? extends SpecialDirectory> row) {
+    private SpecialDirectoryNode(SearchResultsDTO results, ContentRowDTO<? extends SpecialDirectory> row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
         setDisplayName(row.getContent().getName());
         setShortDescription(row.getContent().getName());

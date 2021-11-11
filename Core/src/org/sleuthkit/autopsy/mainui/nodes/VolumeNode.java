@@ -24,7 +24,7 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
 import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VolumeRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VolumeRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
