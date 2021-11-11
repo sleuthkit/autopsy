@@ -22,5 +22,7 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
  * An event emitted by the DAO.
  */
 public interface DAOEvent {
+    public enum Type { TREE, RESULT }
     
+    DAOEvent.Type getType();
 }

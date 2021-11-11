@@ -29,7 +29,7 @@ import java.util.List;
 abstract class AbstractDAO {
 
     /**
-     * Clear any cached data (Due to change in view
+     * Clear any cached data (Due to change in view).
      */
     abstract void clearCaches();
 
