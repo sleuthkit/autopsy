@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -133,7 +134,7 @@ public class CommAccountsDAO {
      *         based on the state of showRejected.
      */
     private String getRejectedArtifactFilterClause(boolean showRejected) {
-        return showRejected ? " " : " AND blackboard_artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + " "; //NON-NLS
+        return showRejected ? " " : " AND artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + " "; // 
     }
 
     /**
@@ -144,19 +145,38 @@ public class CommAccountsDAO {
      */
     private String getFilterByDataSourceClause(Long dataSourceId) {
         if (dataSourceId != null && dataSourceId > 0) {
-            return "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId + " ";
+            return "  AND artifacts.data_source_obj_id = " + dataSourceId + " ";
         }
         return " ";
-    }    
-    
+    }
+
+    private final static String COMMUNICATION_ACCOUNTS_QUERY_STRING = "SELECT DISTINCT artifacts.artifact_id AS artifact_id, " //NON-NLS
+            + "artifacts.obj_id AS obj_id, artifacts.artifact_obj_id AS artifact_obj_id, artifacts.data_source_obj_id AS data_source_obj_id, artifacts.artifact_type_id AS artifact_type_id, " //NON-NLS
+            + " types.type_name AS type_name, types.display_name AS display_name, types.category_type as category_type,"//NON-NLS
+            + " artifacts.review_status_id AS review_status_id, " //NON-NLS
+            + " data_artifacts.os_account_obj_id as os_account_obj_id " //NON-NLS
+            + " FROM blackboard_artifacts AS artifacts "
+            + " JOIN blackboard_artifact_types AS types " //NON-NLS
+            + "		ON artifacts.artifact_type_id = types.artifact_type_id" //NON-NLS
+            + " LEFT JOIN tsk_data_artifacts AS data_artifacts "
+            + "		ON artifacts.artifact_obj_id = data_artifacts.artifact_obj_id " //NON-NLS
+            + " JOIN blackboard_attributes ON artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS 
+            + " WHERE artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
+            + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID(); //NON-NLS
+
+    /**
+     * Get all artifacts and their attributes for all communication accounts of the type of interest.
+     * 
+     * @param cacheKey
+     * @return 
+     */
     String getWhereClause(SearchParams<CommAccountsSearchParams> cacheKey) {
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         Account.Type type = cacheKey.getParamData().getType();
         
         String originalWhereClause
-                = " blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
-                + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
-                + "     AND blackboard_attributes.value_text = '" + type + "'" //NON-NLS
+                = COMMUNICATION_ACCOUNTS_QUERY_STRING
+                + "     AND blackboard_attributes.value_text = '" + type.getTypeName() + "'" //NON-NLS
                 + getFilterByDataSourceClause(dataSourceId)
                 + getRejectedArtifactFilterClause(false); // ELTODO
 
@@ -186,23 +206,29 @@ public class CommAccountsDAO {
     }    
     
     @NbBundle.Messages({"CommAccounts.name.text=Communication Accounts"})
-    private SearchResultsDTO fetchCommAccountsDTOs(SearchParams<CommAccountsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private SearchResultsDTO fetchCommAccountsDTOs(SearchParams<CommAccountsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException, SQLException {
 
         // get current page of communication accounts results
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         Blackboard blackboard = skCase.getBlackboard();
+        String pagedWhereClause = getWhereClause(cacheKey);        
+        
+        List<DataArtifact> list = new ArrayList<>();
+        try (SleuthkitCase.CaseDbQuery results = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(pagedWhereClause);
+                ResultSet rs = results.getResultSet();) {
+            List<Long> tempList = new ArrayList<>();
+            while (rs.next()) {
+                tempList.add(rs.getLong("artifact_obj_id")); // NON-NLS
+            }
+            for (Long artID : tempList) {
+                list.add(Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getDataArtifactById(artID));
+            }
+        }
 
-        String pagedWhereClause = getWhereClause(cacheKey);
-        
-        List<BlackboardArtifact> arts = new ArrayList<>();
-        arts.addAll(blackboard.getDataArtifactsWhere(pagedWhereClause));
-        blackboard.loadBlackboardAttributes(arts);
-        
+        /*
         long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());
-        BlackboardArtifactDAO.TableData tableData = DataArtifactDAO.getInstance().createTableData(BlackboardArtifact.Type.TSK_ACCOUNT, arts);
-        return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_ACCOUNT, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
 
-        /*List<RowDTO> fileRows = new ArrayList<>();
+        List<RowDTO> fileRows = new ArrayList<>();
         for (DataArtifact account : arts) {
             Account blackboardTag = (Account) account;
             
@@ -233,7 +259,7 @@ public class CommAccountsDAO {
                     blackboardTag.getId()));
         }
 
-        return new BaseSearchResultsDTO(BlackboardArtifactTagsRowDTO.getTypeIdForClass(), Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allAccounts.size());*/
+        return new BaseSearchResultsDTO(BlackboardArtifactTagsRowDTO.getTypeIdForClass(), Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allAccounts.size());*
     }
     
     /**
