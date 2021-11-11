@@ -27,7 +27,7 @@ public class FileTypeMimeEvent implements DAOEvent {
 
     private final String mimeType;
     private final long dataSourceId;
- 
+
     public FileTypeMimeEvent(String mimeType, long dataSourceId) {
         this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
@@ -70,5 +70,8 @@ public class FileTypeMimeEvent implements DAOEvent {
         return true;
     }
 
-    
+    @Override
+    public Type getType() {
+        return Type.RESULT;
+    }
 }

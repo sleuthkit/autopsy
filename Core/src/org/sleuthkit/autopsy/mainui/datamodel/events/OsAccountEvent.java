@@ -22,5 +22,9 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
  * An event that OS Accounts were changed.
  */
 public class OsAccountEvent implements DAOEvent {
-    
+
+    @Override
+    public Type getType() {
+        return Type.RESULT;
+    }
 }

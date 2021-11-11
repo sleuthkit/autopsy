@@ -116,7 +116,7 @@ public class OsAccountsDAO extends AbstractDAO {
     }
     
     public boolean isOSAccountInvalidatingEvt(OsAccountsSearchParams searchParams, DAOEvent evt) {
-        return DAOEvent instanceof OsAccountEvent;
+        return evt instanceof OsAccountEvent;
     }
 
     /**
