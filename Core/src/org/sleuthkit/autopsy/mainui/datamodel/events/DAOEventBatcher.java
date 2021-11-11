@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  *
  * Handles refreshes in DAOs based on incoming events handling throttles
  */
-class DAOEventBatcher<T> {
+public class DAOEventBatcher<T> {
 
     /**
      * The Refresher interface needs to be implemented by ChildFactory instances
@@ -65,7 +65,7 @@ class DAOEventBatcher<T> {
      * Queues an event to be fired as a part of a time-windowed batch.
      * @param event The event.
      */
-    void queueEvent(T event) {
+    public void queueEvent(T event) {
         synchronized (this.eventListLock) {
             this.aggregateEvents.add(event);
             if (!this.isRunning) {

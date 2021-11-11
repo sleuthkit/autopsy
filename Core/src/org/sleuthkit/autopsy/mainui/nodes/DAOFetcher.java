@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.beans.PropertyChangeEvent;
 import java.util.concurrent.ExecutionException;
-import org.sleuthkit.autopsy.mainui.datamodel.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**

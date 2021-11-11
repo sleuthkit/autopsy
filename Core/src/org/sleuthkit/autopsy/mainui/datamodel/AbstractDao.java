@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.Collection;
 import java.util.List;

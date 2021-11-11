@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.beans.PropertyChangeEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -39,7 +39,7 @@ public class DAOEventUtils {
      *
      * @return The inner content or null if no content.
      */
-    static Content getContentFromEvt(PropertyChangeEvent evt) {
+    public static Content getContentFromEvt(PropertyChangeEvent evt) {
         String eventName = evt.getPropertyName();
         if (IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventName)
                 && (evt.getOldValue() instanceof ModuleContentEvent)
@@ -63,7 +63,7 @@ public class DAOEventUtils {
      *
      * @return The inner ModuleDataEvent or null.
      */
-    static ModuleDataEvent getModuleDataFromEvt(PropertyChangeEvent evt) {
+    public static ModuleDataEvent getModuleDataFromEvt(PropertyChangeEvent evt) {
         String eventName = evt.getPropertyName();
         if (IngestManager.IngestModuleEvent.DATA_ADDED.toString().equals(eventName)
                 && (evt.getOldValue() instanceof ModuleDataEvent)) {
