@@ -67,5 +67,8 @@ public class BlackboardArtifactEvent implements DAOEvent {
         return true;
     }
 
-    
+    @Override
+    public Type getType() {
+        return Type.RESULT;
+    }
 }
