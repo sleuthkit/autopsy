@@ -16,25 +16,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
 
 /**
- * An event pertaining to MIME types view from the DAO.
+ * An event where file type extensions could be affected.
  */
-public class FileTypeMimeEvent {
+public class FileTypeExtensionsEvent implements DAOEvent {
 
-    private final String mimeType;
+    private final String extension;
     private final long dataSourceId;
- 
-    FileTypeMimeEvent(String mimeType, long dataSourceId) {
-        this.mimeType = mimeType;
+
+    public FileTypeExtensionsEvent(String extension, long dataSourceId) {
+        this.extension = extension;
         this.dataSourceId = dataSourceId;
     }
 
-    public String getMimeType() {
-        return mimeType;
+    public String getExtension() {
+        return extension;
     }
 
     public long getDataSourceId() {
@@ -44,8 +44,8 @@ public class FileTypeMimeEvent {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 29 * hash + Objects.hashCode(this.mimeType);
-        hash = 29 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 59 * hash + Objects.hashCode(this.extension);
+        hash = 59 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
         return hash;
     }
 
@@ -60,15 +60,15 @@ public class FileTypeMimeEvent {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeMimeEvent other = (FileTypeMimeEvent) obj;
-        if (!Objects.equals(this.mimeType, other.mimeType)) {
+        final FileTypeExtensionsEvent other = (FileTypeExtensionsEvent) obj;
+        if (this.dataSourceId != other.dataSourceId) {
             return false;
         }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        if (!Objects.equals(this.extension, other.extension)) {
             return false;
         }
         return true;
     }
-
+    
     
 }

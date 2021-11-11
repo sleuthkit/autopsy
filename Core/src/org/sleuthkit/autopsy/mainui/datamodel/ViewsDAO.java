@@ -39,6 +39,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -47,6 +48,10 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTr
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeExtensionsEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeMimeEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeSizeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
@@ -651,11 +656,17 @@ public class ViewsDAO extends AbstractDAO {
         this.searchParamsCache.invalidateAll();
     }
 
+    private Pair<String, String> getMimePieces(String mimeType) {
+        int idx = mimeType.indexOf("/");
+        String mimePrefix = idx > 0 ? mimeType.substring(0, idx) : mimeType;
+        String mimeSuffix = idx > 0 ? mimeType.substring(idx + 1) : null;
+        return Pair.of(mimePrefix, mimeSuffix);
+    }
 
     @Override
     List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> autopsyEvts) {
         Map<String, Set<Long>> fileExtensionDsMap = new HashMap<>();
-        Map<String, Set<Long>> mimeTypeDsMap = new HashMap<>();
+        Map<String, Map<String, Set<Long>>> mimeTypeDsMap = new HashMap<>();
         Map<FileSizeFilter, Set<Long>> fileSizeDsMap = new HashMap<>();
 
         for (PropertyChangeEvent evt : autopsyEvts) {
@@ -671,8 +682,10 @@ public class ViewsDAO extends AbstractDAO {
             }
 
             if (!StringUtils.isBlank(af.getMIMEType())) {
+                Pair<String, String> mimePieces = getMimePieces(af.getMIMEType());
                 mimeTypeDsMap
-                        .computeIfAbsent(af.getMIMEType(), (k) -> new HashSet<>())
+                        .computeIfAbsent(mimePieces.getKey(), (k) -> new HashMap<>())
+                        .computeIfAbsent(mimePieces.getValue(), (k) -> new HashSet<>())
                         .add(af.getDataSourceObjectId());
             }
 
@@ -680,43 +693,78 @@ public class ViewsDAO extends AbstractDAO {
                     .filter(filter -> af.getSize() >= filter.getMinBound() && af.getSize() < filter.getMaxBound())
                     .findFirst()
                     .orElse(null);
-            
+
             if (sizeFilter != null) {
                 fileSizeDsMap
                         .computeIfAbsent(sizeFilter, (k) -> new HashSet<>())
                         .add(af.getDataSourceObjectId());
             }
         }
-        
+
         // invalidate cache entries that are affected by events
         ConcurrentMap<SearchParams<?>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
         concurrentMap.forEach((k, v) -> {
             Object baseParams = k.getParamData();
             if (baseParams instanceof FileTypeExtensionsSearchParams) {
                 FileTypeExtensionsSearchParams extParams = (FileTypeExtensionsSearchParams) baseParams;
-                
-                
+                boolean isMatch = extParams.getFilter().getFilter().stream().anyMatch((ext) -> {
+                    Set<Long> dsIds = fileExtensionDsMap.get(ext);
+                    return (dsIds != null && (extParams.getDataSourceId() == null || dsIds.contains(extParams.getDataSourceId())));
+                });
+
+                if (isMatch) {
+                    concurrentMap.remove(k);
+                }
             } else if (baseParams instanceof FileTypeMimeSearchParams) {
                 FileTypeMimeSearchParams mimeParams = (FileTypeMimeSearchParams) baseParams;
-                
-                
+                Pair<String, String> mimePieces = getMimePieces(mimeParams.getMimeType());
+                Map<String, Set<Long>> suffixes = mimeTypeDsMap.get(mimePieces.getKey());
+                if (suffixes == null) {
+                    return;
+                }
+
+                if (mimePieces.getValue() == null
+                        && (mimeParams.getDataSourceId() == null
+                        || suffixes.values().stream().flatMap(set -> set.stream()).anyMatch(ds -> ds == mimeParams.getDataSourceId()))) {
+
+                    concurrentMap.remove(k);
+                } else {
+                    Set<Long> dataSources = suffixes.get(mimePieces.getValue());
+                    if (dataSources != null && (mimeParams.getDataSourceId() == null || dataSources.contains(mimeParams.getDataSourceId()))) {
+                        concurrentMap.remove(k);
+                    }
+                }
+
             } else if (baseParams instanceof FileTypeSizeSearchParams) {
                 FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) baseParams;
-                
-                
-            }
-            
-            
-            
-            
-            Set<Long> dsIds = artifactTypeDataSourceMap.get(k.getParamData().getArtifactType().getTypeID());
-            if (dsIds != null) {
-                Long searchDsId = k.getParamData().getDataSourceId();
-                if (searchDsId == null || dsIds.contains(searchDsId)) {
+                Set<Long> dataSources = fileSizeDsMap.get(sizeParams.getSizeFilter());
+                if (dataSources != null && (sizeParams.getDataSourceId() == null || dataSources.contains(sizeParams.getDataSourceId()))) {
                     concurrentMap.remove(k);
                 }
             }
         });
+
+        Stream<DAOEvent> fileExtStream = fileExtensionDsMap.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream().map(dsId -> new FileTypeExtensionsEvent(entry.getKey(), dsId)));
+        
+        List<DAOEvent> fileMimeList = new ArrayList<>();
+        for (Entry<String, Map<String, Set<Long>>> prefixEntry : mimeTypeDsMap.entrySet()) {
+            String mimePrefix = prefixEntry.getKey();
+            for (Entry<String, Set<Long>> suffixEntry : prefixEntry.getValue().entrySet()) {
+                String mimeSuffix = suffixEntry.getKey();
+                for (long dsId : suffixEntry.getValue()) {
+                    String mimeType = mimePrefix + (mimeSuffix == null ? "" : ("/" + mimeSuffix));
+                    fileMimeList.add(new FileTypeMimeEvent(mimeType, dsId));
+                }
+            }
+        }
+        
+        Stream<DAOEvent> fileSizeStream = fileSizeDsMap.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream().map(dsId -> new FileTypeSizeEvent(entry.getKey(), dsId)));
+        
+        return Stream.of(fileExtStream, fileMimeList.stream(), fileSizeStream)
+                .flatMap(stream -> stream)
+                .collect(Collectors.toList());
     }
 
     /**

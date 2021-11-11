@@ -56,7 +56,7 @@ public class DAOEventUtils {
         }
     }
 
-    static AbstractFile getFileFromEvt(PropertyChangeEvent evt) {
+    public static AbstractFile getFileFromEvt(PropertyChangeEvent evt) {
         Content content = getContentFromEvt(evt);
         return (content instanceof AbstractFile)
                 ? ((AbstractFile) content)

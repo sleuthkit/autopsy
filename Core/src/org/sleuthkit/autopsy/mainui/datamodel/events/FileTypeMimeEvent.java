@@ -16,36 +16,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * An event pertaining to MIME types view from the DAO.
  */
-public class FileTypeSizeEvent {
+public class FileTypeMimeEvent implements DAOEvent {
 
-    private final FileSizeFilter sizeFilter;
-    private final Long dataSourceId;
-
-    FileTypeSizeEvent(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
+    private final String mimeType;
+    private final long dataSourceId;
+ 
+    public FileTypeMimeEvent(String mimeType, long dataSourceId) {
+        this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
     }
 
-    public FileSizeFilter getSizeFilter() {
-        return sizeFilter;
+    public String getMimeType() {
+        return mimeType;
     }
 
-    public Long getDataSourceId() {
+    public long getDataSourceId() {
         return dataSourceId;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 29 * hash + Objects.hashCode(this.mimeType);
+        hash = 29 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -60,8 +60,8 @@ public class FileTypeSizeEvent {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeEvent other = (FileTypeSizeEvent) obj;
-        if (this.sizeFilter != other.sizeFilter) {
+        final FileTypeMimeEvent other = (FileTypeMimeEvent) obj;
+        if (!Objects.equals(this.mimeType, other.mimeType)) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
@@ -70,4 +70,5 @@ public class FileTypeSizeEvent {
         return true;
     }
 
+    
 }

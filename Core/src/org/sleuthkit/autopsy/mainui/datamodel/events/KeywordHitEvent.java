@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 /**
  * An event for an artifact added or changed of a particular type possibly for a
@@ -26,7 +26,7 @@ public class KeywordHitEvent extends AnalysisResultSetEvent {
     private final String regex;
     private final String match;
 
-    KeywordHitEvent(String regex, String match, String setName, long artifactTypeId, long dataSourceId) {
+    public KeywordHitEvent(String regex, String match, String setName, long artifactTypeId, long dataSourceId) {
         super(setName, artifactTypeId, dataSourceId);
         this.regex = regex;
         this.match = match;

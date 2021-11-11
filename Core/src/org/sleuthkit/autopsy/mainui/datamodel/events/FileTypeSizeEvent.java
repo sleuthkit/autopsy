@@ -16,38 +16,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSizeFilter;
 
 /**
- * An event where file type extensions could be affected.
+ * Key for accessing data about file sizeFilter from the DAO.
  */
-public class FileTypeExtensionsEvent {
+public class FileTypeSizeEvent implements DAOEvent {
 
-    private final FileExtSearchFilter filter;
-    private final long dataSourceId;
+    private final FileSizeFilter sizeFilter;
+    private final Long dataSourceId;
 
-    // TODO: This should ideally take in some kind of ENUM once we redo the tree.
-    // this assumes that filters implicitly or explicitly implement hashCode and equals to work
-    FileTypeExtensionsEvent(FileExtSearchFilter filter, long dataSourceId) {
-        this.filter = filter;
+    public FileTypeSizeEvent(FileSizeFilter sizeFilter, Long dataSourceId) {
+        this.sizeFilter = sizeFilter;
         this.dataSourceId = dataSourceId;
     }
 
-    public FileExtSearchFilter getFilter() {
-        return filter;
+    public FileSizeFilter getSizeFilter() {
+        return sizeFilter;
     }
 
-    public long getDataSourceId() {
+    public Long getDataSourceId() {
         return dataSourceId;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 31 * hash + Objects.hashCode(this.filter);
-        hash = 31 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
+        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -62,8 +61,8 @@ public class FileTypeExtensionsEvent {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeExtensionsEvent other = (FileTypeExtensionsEvent) obj;
-        if (!Objects.equals(this.filter, other.filter)) {
+        final FileTypeSizeEvent other = (FileTypeSizeEvent) obj;
+        if (this.sizeFilter != other.sizeFilter) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
@@ -71,4 +70,5 @@ public class FileTypeExtensionsEvent {
         }
         return true;
     }
+
 }
