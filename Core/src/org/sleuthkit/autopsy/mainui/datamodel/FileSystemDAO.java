@@ -20,16 +20,24 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableSet;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
@@ -40,13 +48,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 public class FileSystemDAO extends AbstractDAO {
+
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
     private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
     private static final String FILE_SYSTEM_TYPE_ID = "FILE_SYSTEM";
-    
+
     private static FileSystemDAO instance = null;
 
     synchronized static FileSystemDAO getInstance() {
@@ -55,7 +64,7 @@ public class FileSystemDAO extends AbstractDAO {
         }
         return instance;
     }
-    
+
     private BaseSearchResultsDTO fetchContentForTableFromContent(SearchParams<FileSystemContentSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -67,15 +76,15 @@ public class FileSystemDAO extends AbstractDAO {
         if (parentContent == null) {
             throw new TskCoreException("Error loading children of object with ID " + objectId);
         }
-        
+
         parentName = parentContent.getName();
         for (Content content : parentContent.getChildren()) {
             contentForTable.addAll(FileSystemColumnUtils.getNextDisplayableContent(content));
-        } 
+        }
 
         return fetchContentForTable(cacheKey, contentForTable, parentName);
     }
-    
+
     private BaseSearchResultsDTO fetchContentForTableFromHost(SearchParams<FileSystemHostSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -91,8 +100,8 @@ public class FileSystemDAO extends AbstractDAO {
             throw new TskCoreException("Error loading host with ID " + objectId);
         }
         return fetchContentForTable(cacheKey, contentForTable, parentName);
-    }    
-    
+    }
+
     private BaseSearchResultsDTO fetchHostsForTable(SearchParams<FileSystemPersonSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -100,7 +109,7 @@ public class FileSystemDAO extends AbstractDAO {
         Long objectId = cacheKey.getParamData().getPersonObjectId();
         List<Host> hostsForTable = new ArrayList<>();
         String parentName = "";
-        
+
         if (objectId != null) {
             Optional<Person> person = skCase.getPersonManager().getPerson(objectId);
             if (person.isPresent()) {
@@ -112,10 +121,10 @@ public class FileSystemDAO extends AbstractDAO {
         } else {
             hostsForTable.addAll(skCase.getPersonManager().getHostsWithoutPersons());
         }
-        
+
         Stream<Host> pagedHostsStream = hostsForTable.stream()
-            .sorted(Comparator.comparing((host) -> host.getHostId()))
-            .skip(cacheKey.getStartItem());
+                .sorted(Comparator.comparing((host) -> host.getHostId()))
+                .skip(cacheKey.getStartItem());
 
         if (cacheKey.getMaxResultsCount() != null) {
             pagedHostsStream = pagedHostsStream.limit(cacheKey.getMaxResultsCount());
@@ -123,37 +132,36 @@ public class FileSystemDAO extends AbstractDAO {
 
         List<Host> pagedHosts = pagedHostsStream.collect(Collectors.toList());
         List<ColumnKey> columnKeys = FileSystemColumnUtils.getColumnKeysForHost();
-        
+
         List<RowDTO> rows = new ArrayList<>();
         for (Host host : pagedHosts) {
             List<Object> cellValues = FileSystemColumnUtils.getCellValuesForHost(host);
             rows.add(new BaseRowDTO(cellValues, FILE_SYSTEM_TYPE_ID, host.getHostId()));
         }
         return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, cacheKey.getStartItem(), hostsForTable.size());
-    }    
-    
-    
+    }
+
     private BaseSearchResultsDTO fetchContentForTable(SearchParams<?> cacheKey, List<Content> contentForTable,
             String parentName) throws NoCurrentCaseException, TskCoreException {
         // Ensure consistent columns for each page by doing this before paging
         List<FileSystemColumnUtils.ContentType> displayableTypes = FileSystemColumnUtils.getDisplayableTypesForContentList(contentForTable);
-        
+
         List<Content> pagedContent = getPaged(contentForTable, cacheKey);
         List<ColumnKey> columnKeys = FileSystemColumnUtils.getColumnKeysForContent(displayableTypes);
-        
+
         List<RowDTO> rows = new ArrayList<>();
         for (Content content : pagedContent) {
             List<Object> cellValues = FileSystemColumnUtils.getCellValuesForContent(content, displayableTypes);
             rows.add(new BaseRowDTO(cellValues, FILE_SYSTEM_TYPE_ID, content.getId()));
         }
         return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, cacheKey.getStartItem(), contentForTable.size());
-    } 
-    
+    }
+
     /**
      * Returns a list of paged content.
      *
-     * @param contentObjects  The content objects.
-     * @param searchParams    The search parameters including the paging.
+     * @param contentObjects The content objects.
+     * @param searchParams   The search parameters including the paging.
      *
      * @return The list of paged content.
      */
@@ -167,8 +175,8 @@ public class FileSystemDAO extends AbstractDAO {
         }
 
         return pagedArtsStream.collect(Collectors.toList());
-    }    
-    
+    }
+
     public BaseSearchResultsDTO getContentForTable(FileSystemContentSearchParam objectKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
 
         SearchParams<FileSystemContentSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
@@ -178,7 +186,7 @@ public class FileSystemDAO extends AbstractDAO {
 
         return searchParamsCache.get(searchParams, () -> fetchContentForTableFromContent(searchParams));
     }
-    
+
     public BaseSearchResultsDTO getContentForTable(FileSystemHostSearchParam objectKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
 
         SearchParams<FileSystemHostSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
@@ -188,7 +196,7 @@ public class FileSystemDAO extends AbstractDAO {
 
         return searchParamsCache.get(searchParams, () -> fetchContentForTableFromHost(searchParams));
     }
-    
+
     public BaseSearchResultsDTO getHostsForTable(FileSystemPersonSearchParam objectKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
 
         SearchParams<FileSystemPersonSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
@@ -197,5 +205,50 @@ public class FileSystemDAO extends AbstractDAO {
         }
 
         return searchParamsCache.get(searchParams, () -> fetchHostsForTable(searchParams));
+    }
+
+    @Override
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+    }
+
+    private static final Set<String> DATA_SOURCE_EVTS = ImmutableSet.of(
+            Case.Events.DATA_SOURCE_ADDED.toString(),
+            Case.Events.DATA_SOURCE_DELETED.toString(),
+            Case.Events.DATA_SOURCE_NAME_CHANGED.toString()
+    );
+
+    private static final Set<String> HOST_EVTS = ImmutableSet.of(
+            Case.Events.HOSTS_ADDED.toString(), 
+            Case.Events.HOSTS_ADDED_TO_PERSON.toString(), 
+            Case.Events.HOSTS_DELETED.toString(), 
+            Case.Events.HOSTS_REMOVED_FROM_PERSON.toString(), 
+            Case.Events.HOSTS_UPDATED.toString()
+    );
+
+    @Override
+    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
+//        Set<Long> affectedPersons = new HashSet<>();
+//        Set<Long> affectedHosts = new HashSet<>();
+//        Set<Long> affectedParentContent = new HashSet<>();
+//
+//        for (PropertyChangeEvent evt : evts) {
+//            Content content = DAOEventUtils.getContentFromEvt(evt);
+//            if (content != null) {
+//                affectedParentContent.add(content.getParentId());
+//                continue;
+//            }
+//
+//            String propName = evt.getPropertyName();
+//            if (DATA_SOURCE_EVTS.contains(propName)) {
+//                affectedHosts.add(evt.getHostId());
+//            } else if (HOST_EVTS.contains(propName)) {
+//                affectedPersons.add(evt.getPersonId());
+//            }
+//        }
+        
+        // GVDTODO clear affected cache entries
+        // GVDTODO generate events
+        return Collections.emptyList();
     }
 }
