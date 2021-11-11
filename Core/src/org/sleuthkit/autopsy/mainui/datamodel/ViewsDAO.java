@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -686,7 +687,35 @@ public class ViewsDAO extends AbstractDAO {
             }
         }
         
-        
+        // invalidate cache entries that are affected by events
+        ConcurrentMap<SearchParams<?>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
+        concurrentMap.forEach((k, v) -> {
+            Object baseParams = k.getParamData();
+            if (baseParams instanceof FileTypeExtensionsSearchParams) {
+                FileTypeExtensionsSearchParams extParams = (FileTypeExtensionsSearchParams) baseParams;
+                
+                
+            } else if (baseParams instanceof FileTypeMimeSearchParams) {
+                FileTypeMimeSearchParams mimeParams = (FileTypeMimeSearchParams) baseParams;
+                
+                
+            } else if (baseParams instanceof FileTypeSizeSearchParams) {
+                FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) baseParams;
+                
+                
+            }
+            
+            
+            
+            
+            Set<Long> dsIds = artifactTypeDataSourceMap.get(k.getParamData().getArtifactType().getTypeID());
+            if (dsIds != null) {
+                Long searchDsId = k.getParamData().getDataSourceId();
+                if (searchDsId == null || dsIds.contains(searchDsId)) {
+                    concurrentMap.remove(k);
+                }
+            }
+        });
     }
 
     /**
