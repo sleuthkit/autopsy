@@ -37,6 +37,8 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountFileInstance;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
@@ -126,8 +128,16 @@ public class TableSearchTest extends NbTestCase {
     
     // OS Accounts test
     private static final String REALM_NAME_COLUMN = "Realm Name";
-    private static final String HOST_COLUMN = "Host";    
+    private static final String HOST_COLUMN = "Host";
     
+    // Communications accounts test
+    private static final String EMAIL_A = "AAA@yahoo.com";
+    private static final String EMAIL_B = "BBB@gmail.com";
+    private static final String EMAIL_C = "CCCCC@funmail.com";
+
+    private static final String PHONENUM_1 = "111 777 1111";
+    private static final String PHONENUM_2 = "222 333 7777";
+
     /////////////////////////////////////////////////
     // Data to be used across the test methods.
     // These are initialized in setUpCaseDatabase().
@@ -212,6 +222,7 @@ public class TableSearchTest extends NbTestCase {
         fileSystemTest();
         tagsTest();
         OsAccountsTest();
+        commAccountsSearchTest();
     }
 
     /**
@@ -494,6 +505,13 @@ public class TableSearchTest extends NbTestCase {
             osAccount1 = accountMgr.newWindowsOsAccount("S-1-5-21-647283-46237-100", null, null, host2, OsAccountRealm.RealmScope.DOMAIN);
             accountMgr.newOsAccountInstance(osAccount1, dataSource2, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
             
+            // Add communication accounts
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_A, "Test Module", fileA1);
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_B, "Test Module", fileA2);
+            AccountFileInstance deviceAccount_2 = openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, "devId1", "Test Module", fileA2);
+            
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_C, "Test Module", customFile);            
+
         } catch (TestUtilsException | TskCoreException | BlackboardException | TagsManager.TagNameAlreadyExistsException | OsAccountManager.NotUserSIDException ex) {
             if (trans != null) {
                 try {
@@ -608,6 +626,39 @@ public class TableSearchTest extends NbTestCase {
             Assert.fail(ex.getMessage());
         }
     }
+    
+    public void commAccountsSearchTest() {
+        // Quick test that everything is initialized
+        assertTrue(db != null);
+
+        try {
+            // Get all contacts
+            CommAccountsDAO commAccountsDAO = MainDAO.getInstance().getCommAccountsDAO();
+
+            CommAccountsSearchParams param = new CommAccountsSearchParams(0, Account.Type.EMAIL, null);
+            SearchResultsDTO results = commAccountsDAO.getCommAcounts(param, 0, null, false);
+            //assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
+            assertEquals(3, results.getTotalResultsCount());
+            assertEquals(3, results.getItems().size());
+            
+            // Get contacts from data source 2
+            param = new CommAccountsSearchParams(0, Account.Type.DEVICE, dataSource1.getId());
+            results = commAccountsDAO.getCommAcounts(param, 0, null, false);
+            //assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+
+            // Get bookmarks from data source 2
+            param = new CommAccountsSearchParams(0, Account.Type.EMAIL, dataSource2.getId());
+            results = commAccountsDAO.getCommAcounts(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+            
+        } catch (ExecutionException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+    }    
 
     public void mimeSearchTest() {
         // Quick test that everything is initialized
