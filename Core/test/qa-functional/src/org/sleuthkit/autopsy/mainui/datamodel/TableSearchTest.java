@@ -131,10 +131,11 @@ public class TableSearchTest extends NbTestCase {
     private static final String HOST_COLUMN = "Host";
     
     // Communications accounts test
+    private static final String ACCOUNT_TYPE_COLUMN = "Account Type";
+    private static final String ID_COLUMN = "ID";
     private static final String EMAIL_A = "AAA@yahoo.com";
     private static final String EMAIL_B = "BBB@gmail.com";
     private static final String EMAIL_C = "CCCCC@funmail.com";
-
     private static final String PHONENUM_1 = "111 777 1111";
     private static final String PHONENUM_2 = "222 333 7777";
 
@@ -653,6 +654,20 @@ public class TableSearchTest extends NbTestCase {
             results = commAccountsDAO.getCommAcounts(param, 0, null, false);
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
+            
+            // Check that a few of the expected column names are present
+            List<String> columnDisplayNames = results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList());
+            assertTrue(columnDisplayNames.contains(ACCOUNT_TYPE_COLUMN));
+            assertTrue(columnDisplayNames.contains(ID_COLUMN));
+            
+            // Get the row
+            RowDTO rowDTO = results.getItems().get(0);
+            assertTrue(rowDTO instanceof DataArtifactRowDTO);
+            DataArtifactRowDTO accountResultRowDTO = (DataArtifactRowDTO) rowDTO;
+
+            // Check that some of the expected result tag column values are present
+            assertTrue(accountResultRowDTO.getCellValues().contains(EMAIL_C));            
+            assertTrue(accountResultRowDTO.getCellValues().contains(customFile.getName()));            
             
         } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);
