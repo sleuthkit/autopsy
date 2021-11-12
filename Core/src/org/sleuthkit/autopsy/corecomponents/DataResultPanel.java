@@ -1152,8 +1152,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
         try {
-            DataArtifactDAO dataArtDAO = MainDAO.getInstance().getDataArtifactsDAO();
-            this.searchResultManager = new SearchManager(dataArtDAO.new DataArtifactFetcher(dataArtifactParams), getPageSize());
+            this.searchResultManager = new SearchManager(new DataArtifactFetcher(dataArtifactParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
