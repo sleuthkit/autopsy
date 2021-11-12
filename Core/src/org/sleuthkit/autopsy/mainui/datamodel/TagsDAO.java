@@ -327,7 +327,7 @@ public class TagsDAO extends AbstractDAO {
                         .add(Optional.ofNullable(data.getRight()));
             }
         }
-        
+
         // don't continue if no mapping entries
         if (mapping.isEmpty()) {
             return Collections.emptyList();
@@ -369,44 +369,35 @@ public class TagsDAO extends AbstractDAO {
      *         from event).
      */
     private Triple<TagType, Long, Long> getTagData(PropertyChangeEvent evt) {
+        if (evt instanceof BlackBoardArtifactTagAddedEvent) {
+            BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
+            // ensure tag added event has a valid content id
+            if (event.getAddedTag() != null
+                    && event.getAddedTag().getContent() != null
+                    && event.getAddedTag().getArtifact() != null) {
+                return Triple.of(TagType.RESULT, event.getAddedTag().getName().getId(), event.getAddedTag().getArtifact().getDataSourceObjectID());
+            }
 
-        String eventType = evt.getPropertyName();
-
-        if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-                || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
-                || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-
-            if (evt instanceof BlackBoardArtifactTagAddedEvent) {
-                BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
-                // ensure tag added event has a valid content id
-                if (event.getAddedTag() != null
-                        && event.getAddedTag().getContent() != null
-                        && event.getAddedTag().getArtifact() != null) {
-                    return Triple.of(TagType.RESULT, event.getAddedTag().getName().getId(), event.getAddedTag().getArtifact().getDataSourceObjectID());
-                }
-
-            } else if (evt instanceof BlackBoardArtifactTagDeletedEvent) {
-                BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
-                BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo deletedTagInfo = event.getDeletedTagInfo();
-                if (deletedTagInfo != null) {
-                    return Triple.of(TagType.RESULT, deletedTagInfo.getName().getId(), null);
-                }
-            } else if (evt instanceof ContentTagAddedEvent) {
-                ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
-                // ensure tag added event has a valid content id
-                if (event.getAddedTag() != null && event.getAddedTag().getContent() != null) {
-                    Content content = event.getAddedTag().getContent();
-                    Long dsId = content instanceof AbstractFile ? ((AbstractFile) content).getDataSourceObjectId() : null;
-                    return Triple.of(TagType.FILE, event.getAddedTag().getName().getId(), dsId);
-                }
-            } else if (evt instanceof ContentTagDeletedEvent) {
-                ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
-                // ensure tag deleted event has a valid content id
-                ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
-                if (deletedTagInfo != null) {
-                    return Triple.of(TagType.FILE, deletedTagInfo.getName().getId(), null);
-                }
+        } else if (evt instanceof BlackBoardArtifactTagDeletedEvent) {
+            BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
+            BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo deletedTagInfo = event.getDeletedTagInfo();
+            if (deletedTagInfo != null) {
+                return Triple.of(TagType.RESULT, deletedTagInfo.getName().getId(), null);
+            }
+        } else if (evt instanceof ContentTagAddedEvent) {
+            ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
+            // ensure tag added event has a valid content id
+            if (event.getAddedTag() != null && event.getAddedTag().getContent() != null) {
+                Content content = event.getAddedTag().getContent();
+                Long dsId = content instanceof AbstractFile ? ((AbstractFile) content).getDataSourceObjectId() : null;
+                return Triple.of(TagType.FILE, event.getAddedTag().getName().getId(), dsId);
+            }
+        } else if (evt instanceof ContentTagDeletedEvent) {
+            ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
+            // ensure tag deleted event has a valid content id
+            ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
+            if (deletedTagInfo != null) {
+                return Triple.of(TagType.FILE, deletedTagInfo.getName().getId(), null);
             }
         }
         return null;
@@ -418,7 +409,7 @@ public class TagsDAO extends AbstractDAO {
     public static class TagFetcher extends DAOFetcher<TagsSearchParams> {
 
         private final TagsDAO dao;
-        
+
         /**
          * Main constructor.
          *

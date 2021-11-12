@@ -740,7 +740,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                             setMap.computeIfAbsent(Pair.of(art.getArtifactTypeID(), setName), (k) -> new HashSet<>())
                                     .add(art.getDataSourceObjectID());
 
-                        } else if (BlackboardArtifact.Category.DATA_ARTIFACT.equals(art.getType().getCategory())) {
+                        } else if (BlackboardArtifact.Category.ANALYSIS_RESULT.equals(art.getType().getCategory())) {
                             analysisResultMap.computeIfAbsent(art.getArtifactTypeID(), (k) -> new HashSet<>())
                                     .add(art.getDataSourceObjectID());
                         }

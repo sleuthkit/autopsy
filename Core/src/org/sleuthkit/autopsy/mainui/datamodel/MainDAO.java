@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections.CollectionUtils;
+import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -43,8 +45,18 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  */
 public class MainDAO extends AbstractDAO {
 
-    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(IngestManager.IngestModuleEvent.CONTENT_CHANGED, IngestManager.IngestModuleEvent.DATA_ADDED);
-    private static final Set<Case.Events> CASE_EVENTS = EnumSet.of(Case.Events.CURRENT_CASE);
+    private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(
+            IngestManager.IngestModuleEvent.CONTENT_CHANGED,
+            IngestManager.IngestModuleEvent.DATA_ADDED
+    );
+
+    private static final Set<String> QUEUED_CASE_EVENTS = ImmutableSet.of(
+            Case.Events.OS_ACCOUNTS_ADDED.toString(),
+            Case.Events.OS_ACCOUNTS_UPDATED.toString(),
+            Case.Events.OS_ACCOUNTS_DELETED.toString(),
+            Case.Events.OS_ACCT_INSTANCES_ADDED.toString()
+    );
+
     private static final long MILLIS_BATCH = 5000;
 
     private static MainDAO instance = null;
@@ -64,8 +76,11 @@ public class MainDAO extends AbstractDAO {
     private final PropertyChangeListener caseEventListener = (evt) -> {
         if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
             this.clearCaches();
+        } else if (QUEUED_CASE_EVENTS.contains(evt.getPropertyName())) {
+            queueAutopsyEvent(evt);
         } else {
-            handleAutopsyEvent(evt);
+            // handle case events immediately
+            handleAutopsyEvent(Arrays.asList(evt));
         }
     };
 
@@ -80,7 +95,7 @@ public class MainDAO extends AbstractDAO {
      * The ingest module event listener.
      */
     private final PropertyChangeListener ingestModuleEventListener = (evt) -> {
-        handleAutopsyEvent(evt);
+        queueAutopsyEvent(evt);
     };
 
     private final PropertyChangeSupport support = new PropertyChangeSupport(this);
@@ -166,7 +181,7 @@ public class MainDAO extends AbstractDAO {
      */
     void register() {
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
-        Case.addEventTypeSubscriber(CASE_EVENTS, caseEventListener);
+        Case.addPropertyChangeListener(caseEventListener);
         UserPreferences.addChangeListener(userPreferenceListener);
     }
 
@@ -180,7 +195,7 @@ public class MainDAO extends AbstractDAO {
      */
     void unregister() {
         IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
-        Case.removeEventTypeSubscriber(CASE_EVENTS, caseEventListener);
+        Case.removePropertyChangeListener(caseEventListener);
         UserPreferences.removeChangeListener(userPreferenceListener);
     }
 
@@ -189,7 +204,7 @@ public class MainDAO extends AbstractDAO {
      *
      * @param autopsyEvent The autopsy event.
      */
-    private void handleAutopsyEvent(PropertyChangeEvent autopsyEvent) {
+    private void queueAutopsyEvent(PropertyChangeEvent autopsyEvent) {
         this.eventBatcher.queueEvent(autopsyEvent);
     }
 }
