@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -45,6 +46,8 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
@@ -154,15 +157,17 @@ public class CommAccountsDAO {
             + "artifacts.obj_id AS obj_id, artifacts.artifact_obj_id AS artifact_obj_id, artifacts.data_source_obj_id AS data_source_obj_id, artifacts.artifact_type_id AS artifact_type_id, " //NON-NLS
             + " types.type_name AS type_name, types.display_name AS display_name, types.category_type as category_type,"//NON-NLS
             + " artifacts.review_status_id AS review_status_id, " //NON-NLS
-            + " data_artifacts.os_account_obj_id as os_account_obj_id " //NON-NLS
+            + " data_artifacts.os_account_obj_id as os_account_obj_id, " //NON-NLS
+            + " attrs.source AS source "
             + " FROM blackboard_artifacts AS artifacts "
             + " JOIN blackboard_artifact_types AS types " //NON-NLS
             + "		ON artifacts.artifact_type_id = types.artifact_type_id" //NON-NLS
             + " LEFT JOIN tsk_data_artifacts AS data_artifacts "
             + "		ON artifacts.artifact_obj_id = data_artifacts.artifact_obj_id " //NON-NLS
-            + " JOIN blackboard_attributes ON artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS 
+            + " JOIN blackboard_attributes AS attrs "
+            + " ON artifacts.artifact_id = attrs.artifact_id " //NON-NLS 
             + " WHERE artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
-            + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID(); //NON-NLS
+            + "     AND attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID(); //NON-NLS
 
     /**
      * Get all artifacts and their attributes for all communication accounts of the type of interest.
@@ -176,7 +181,7 @@ public class CommAccountsDAO {
         
         String originalWhereClause
                 = COMMUNICATION_ACCOUNTS_QUERY_STRING
-                + "     AND blackboard_attributes.value_text = '" + type.getTypeName() + "'" //NON-NLS
+                + "     AND attrs.value_text = '" + type.getTypeName() + "'" //NON-NLS
                 + getFilterByDataSourceClause(dataSourceId)
                 + getRejectedArtifactFilterClause(false); // ELTODO
 
@@ -213,22 +218,17 @@ public class CommAccountsDAO {
         Blackboard blackboard = skCase.getBlackboard();
         String pagedWhereClause = getWhereClause(cacheKey);        
         
-        List<DataArtifact> list = new ArrayList<>();
-        try (SleuthkitCase.CaseDbQuery results = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(pagedWhereClause);
-                ResultSet rs = results.getResultSet();) {
-            List<Long> tempList = new ArrayList<>();
-            while (rs.next()) {
-                tempList.add(rs.getLong("artifact_obj_id")); // NON-NLS
-            }
-            for (Long artID : tempList) {
-                list.add(Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getDataArtifactById(artID));
-            }
+        SleuthkitCase.CaseDbQuery results = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(pagedWhereClause);
+        ResultSet rs = results.getResultSet();
+        List<RowDTO> fileRows = new ArrayList<>();
+        /*
+        while (rs.next()) {
+            tempList.add(rs.getLong("artifact_obj_id")); // NON-NLS
         }
 
-        /*
-        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());
+        long totalResultsCount = getTotalResultsCount(cacheKey, numResults);
 
-        List<RowDTO> fileRows = new ArrayList<>();
+
         for (DataArtifact account : arts) {
             Account blackboardTag = (Account) account;
             
@@ -259,7 +259,8 @@ public class CommAccountsDAO {
                     blackboardTag.getId()));
         }
 
-        return new BaseSearchResultsDTO(BlackboardArtifactTagsRowDTO.getTypeIdForClass(), Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allAccounts.size());*
+        return new BaseSearchResultsDTO(BlackboardArtifactTagsRowDTO.getTypeIdForClass(), Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allAccounts.size());*/
+        return null;
     }
     
     /**
@@ -285,68 +286,31 @@ public class CommAccountsDAO {
         public boolean isRefreshRequired(PropertyChangeEvent evt) {
             CommAccountsSearchParams params = this.getParameters();
             String eventType = evt.getPropertyName();
-            /*
-            // handle artifact/result account changes
-            if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())) {
-                
-                // ignore non-artifact/result account changes
-                if (params.getTagType() != TagsSearchParams.TagType.RESULT) {
-                    return false;
-                }
-                
-                if (evt instanceof AutopsyEvent) {
-                    if (evt instanceof BlackBoardArtifactTagAddedEvent) {
-                        // An artifact associated with the current case has been tagged.
-                        BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
-                        // ensure account added event has a valid content id
-                        if (event.getAddedTag() == null || event.getAddedTag().getContent() == null || event.getAddedTag().getArtifact() == null) {
-                            return false;
-                        }
-                        return params.getTagName().getId() == event.getAddedTag().getId();
-                    } else if (evt instanceof BlackBoardArtifactTagDeletedEvent) {
-                        // A account has been removed from an artifact associated with the current case.
-                        BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
-                        // ensure account deleted event has a valid content id
-                        BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo deletedTagInfo = event.getDeletedTagInfo();
-                        if (deletedTagInfo == null) {
-                            return false;
-                        }
-                        return params.getTagName().getId() == deletedTagInfo.getTagID();
+
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCaseThrows();
+                    /**
+                     * Even with the check above, it is still possible that the
+                     * case will be closed in a different thread before this
+                     * code executes. If that happens, it is possible for the
+                     * event to have a null oldValue.
+                     */
+                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                    if (null != eventData
+                            && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
+                        return true;
                     }
+                } catch (NoCurrentCaseException notUsed) {
+                    // Case is closed, do nothing.
                 }
             }
-            
-            // handle file/content account changes
-            if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                    || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-                
-                // ignore non-file/content account changes
-                if (params.getTagType() != TagsSearchParams.TagType.FILE) {
-                    return false;
-                }
-
-                if (evt instanceof AutopsyEvent) {
-                    if (evt instanceof ContentTagAddedEvent) {
-                        // Content associated with the current case has been tagged.
-                        ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
-                        // ensure account added event has a valid content id
-                        if (event.getAddedTag() == null || event.getAddedTag().getContent() == null) {
-                            return false;
-                        }
-                        return params.getTagName().getId() == event.getAddedTag().getId();
-                    } else if (evt instanceof ContentTagDeletedEvent) {
-                        // A account has been removed from content associated with the current case.
-                        ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
-                        // ensure account deleted event has a valid content id
-                        ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
-                        if (deletedTagInfo == null) {
-                            return false;
-                        }                        
-                        return params.getTagName().getId() == deletedTagInfo.getTagID();
-                    }
-                }
-            }*/
             return false;
         }
     }
