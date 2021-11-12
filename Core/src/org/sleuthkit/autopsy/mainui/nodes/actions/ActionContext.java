@@ -192,4 +192,26 @@ public interface ActionContext {
     default Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
         return Optional.empty();
     }
+    
+    /**
+     * Returns the content object to be passed into the
+     * RunIngestModelAction constructor.
+     * 
+     * @return The content object for ingest.
+     */
+    default Optional<Content> getContentForRunIngestionModuleAction() {
+        return Optional.empty();
+    }
+    
+    default Optional<Content> getContentForFileSearchAction() {
+        return Optional.empty();
+    }
+    
+    default Optional<Content> getDataSourceForActions() {
+        return Optional.empty();
+    }
+    
+    default Optional<AbstractFile> getFileForDirectoryBrowseMode() {
+        return Optional.empty();
+    }
 }

@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
 import static org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType.FILE;
 import static org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType.RESULT;
-import org.sleuthkit.autopsy.mainui.nodes.SelectionResponder;
+import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.ContentTag;
