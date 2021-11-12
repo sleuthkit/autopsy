@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -728,7 +730,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 for (BlackboardArtifact art : dataEvt.getArtifacts()) {
                     try {
                         if (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
-                            // GVDTODO
+                            // GVDTODO handle keyword hits
                         } else if (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
                                 || art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
                                 || art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID()) {
@@ -749,6 +751,27 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             }
         }
 
+        // don't continue if no relevant items found
+        if (analysisResultMap.isEmpty() && setMap.isEmpty() && keywordHitsMap.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        clearRelevantCacheEntries(analysisResultMap, setMap);
+
+        return getDAOEvents(analysisResultMap, setMap);
+    }
+
+    /**
+     * Generate DAO events from digest of autopsy events.
+     *
+     * @param analysisResultMap A mapping of analysis result type ids to data
+     *                          sources where artifacts were created.
+     * @param setMap            A mapping of (artifact type id, set name) to
+     *                          data sources where artifacts were created.
+     *
+     * @return The list of dao events.
+     */
+    private List<DAOEvent> getDAOEvents(Map<Integer, Set<Long>> analysisResultMap, Map<Pair<Integer, String>, Set<Long>> setMap) {
         // invalidate cache entries that are affected by events
         // GVDTODO handle concurrency issues that may arise
         Stream<DAOEvent> analysisResultEvts = analysisResultMap.entrySet().stream()
@@ -764,11 +787,43 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     /**
+     * Clears cache entries given the provided digests of autopsy events.
+     *
+     * @param analysisResultMap A mapping of analysis result type ids to data
+     *                          sources where artifacts were created.
+     * @param setMap            A mapping of (artifact type id, set name) to
+     *                          data sources where artifacts were created.
+     */
+    private void clearRelevantCacheEntries(Map<Integer, Set<Long>> analysisResultMap, Map<Pair<Integer, String>, Set<Long>> setMap) {
+        ConcurrentMap<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> arConcurrentMap = this.analysisResultCache.asMap();
+        arConcurrentMap.forEach((k, v) -> {
+            BlackboardArtifactSearchParam searchParam = k.getParamData();
+            Set<Long> dsIds = analysisResultMap.get(searchParam.getArtifactType().getTypeID());
+            if (dsIds != null && (searchParam.getDataSourceId() == null || dsIds.contains(searchParam.getDataSourceId()))) {
+                arConcurrentMap.remove(k);
+            }
+        });
+
+        ConcurrentMap<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setConcurrentMap = this.setHitCache.asMap();
+        setConcurrentMap.forEach((k, v) -> {
+            AnalysisResultSetSearchParam searchParam = k.getParamData();
+            Set<Long> dsIds = setMap.get(Pair.of(searchParam.getArtifactType().getTypeID(), searchParam.getSetName()));
+            if (dsIds != null && (searchParam.getDataSourceId() == null || dsIds.contains(searchParam.getDataSourceId()))) {
+                arConcurrentMap.remove(k);
+            }
+        });
+
+        // GVDTODO handle clearing cache for keyword search hits
+        // private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    }
+
+    /**
      * Handles fetching and paging of analysis results.
      */
     public static class AnalysisResultFetcher extends DAOFetcher<AnalysisResultSearchParam> {
+
         private final AnalysisResultDAO dao;
-        
+
         /**
          * Main constructor.
          *
@@ -794,6 +849,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * Handles fetching and paging of hashset hits.
      */
     public static class AnalysisResultSetFetcher extends DAOFetcher<AnalysisResultSetSearchParam> {
+
         private final AnalysisResultDAO dao;
 
         /**
@@ -823,7 +879,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     public static class KeywordHitResultFetcher extends DAOFetcher<KeywordHitSearchParam> {
 
         private final AnalysisResultDAO dao;
-        
+
         /**
          * Main constructor.
          *

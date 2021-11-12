@@ -25,6 +25,7 @@ import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,7 +56,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeSizeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -676,12 +676,14 @@ public class ViewsDAO extends AbstractDAO {
                 continue;
             }
 
+            // create an extension mapping if extension present
             if (!StringUtils.isBlank(af.getNameExtension())) {
                 fileExtensionDsMap
                         .computeIfAbsent(af.getNameExtension(), (k) -> new HashSet<>())
                         .add(af.getDataSourceObjectId());
             }
 
+            // create a mime type mapping if mime type present
             if (!StringUtils.isBlank(af.getMIMEType())) {
                 Pair<String, String> mimePieces = getMimePieces(af.getMIMEType());
                 mimeTypeDsMap
@@ -690,6 +692,7 @@ public class ViewsDAO extends AbstractDAO {
                         .add(af.getDataSourceObjectId());
             }
 
+            // create a size mapping if size present
             FileSizeFilter sizeFilter = Stream.of(FileSizeFilter.values())
                     .filter(filter -> af.getSize() >= filter.getMinBound() && af.getSize() < filter.getMaxBound())
                     .findFirst()
@@ -702,48 +705,31 @@ public class ViewsDAO extends AbstractDAO {
             }
         }
 
-        // invalidate cache entries that are affected by events
-        ConcurrentMap<SearchParams<?>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
-        concurrentMap.forEach((k, v) -> {
-            Object baseParams = k.getParamData();
-            if (baseParams instanceof FileTypeExtensionsSearchParams) {
-                FileTypeExtensionsSearchParams extParams = (FileTypeExtensionsSearchParams) baseParams;
-                boolean isMatch = extParams.getFilter().getFilter().stream().anyMatch((ext) -> {
-                    Set<Long> dsIds = fileExtensionDsMap.get(ext);
-                    return (dsIds != null && (extParams.getDataSourceId() == null || dsIds.contains(extParams.getDataSourceId())));
-                });
+        if (fileExtensionDsMap.isEmpty() || mimeTypeDsMap.isEmpty() || fileSizeDsMap.isEmpty()) {
+            return Collections.emptyList();
+        }
 
-                if (isMatch) {
-                    concurrentMap.remove(k);
-                }
-            } else if (baseParams instanceof FileTypeMimeSearchParams) {
-                FileTypeMimeSearchParams mimeParams = (FileTypeMimeSearchParams) baseParams;
-                Pair<String, String> mimePieces = getMimePieces(mimeParams.getMimeType());
-                Map<String, Set<Long>> suffixes = mimeTypeDsMap.get(mimePieces.getKey());
-                if (suffixes == null) {
-                    return;
-                }
+        clearRelevantCacheEntries(fileExtensionDsMap, mimeTypeDsMap, fileSizeDsMap);
 
-                if (mimePieces.getValue() == null
-                        && (mimeParams.getDataSourceId() == null
-                        || suffixes.values().stream().flatMap(set -> set.stream()).anyMatch(ds -> ds == mimeParams.getDataSourceId()))) {
+        return getDAOEvents(fileExtensionDsMap, mimeTypeDsMap, fileSizeDsMap);
+    }
 
-                    concurrentMap.remove(k);
-                } else {
-                    Set<Long> dataSources = suffixes.get(mimePieces.getValue());
-                    if (dataSources != null && (mimeParams.getDataSourceId() == null || dataSources.contains(mimeParams.getDataSourceId()))) {
-                        concurrentMap.remove(k);
-                    }
-                }
-
-            } else if (baseParams instanceof FileTypeSizeSearchParams) {
-                FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) baseParams;
-                Set<Long> dataSources = fileSizeDsMap.get(sizeParams.getSizeFilter());
-                if (dataSources != null && (sizeParams.getDataSourceId() == null || dataSources.contains(sizeParams.getDataSourceId()))) {
-                    concurrentMap.remove(k);
-                }
-            }
-        });
+    /**
+     *
+     * Clears relevant cache entries from cache based on digest of autopsy
+     * events.
+     *
+     * @param fileExtensionDsMap Maps the file extension to the data sources
+     *                           where files were found with that extension.
+     * @param mimeTypeDsMap      Maps the mime type to the data sources where
+     *                           files were found with that mime type.
+     * @param fileSizeDsMap      Maps the size to the data sources where files
+     *
+     * @return The list of affected dao events.
+     */
+    private List<DAOEvent> getDAOEvents(Map<String, Set<Long>> fileExtensionDsMap,
+            Map<String, Map<String, Set<Long>>> mimeTypeDsMap,
+            Map<FileSizeFilter, Set<Long>> fileSizeDsMap) {
 
         Stream<DAOEvent> fileExtStream = fileExtensionDsMap.entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new FileTypeExtensionsEvent(entry.getKey(), dsId)));
@@ -766,6 +752,68 @@ public class ViewsDAO extends AbstractDAO {
         return Stream.of(fileExtStream, fileMimeList.stream(), fileSizeStream)
                 .flatMap(stream -> stream)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Clears relevant cache entries from cache based on digest of autopsy
+     * events.
+     *
+     * @param fileExtensionDsMap Maps the file extension to the data sources
+     *                           where files were found with that extension.
+     * @param mimeTypeDsMap      Maps the mime type to the data sources where
+     *                           files were found with that mime type.
+     * @param fileSizeDsMap      Maps the size to the data sources where files
+     *                           were found within that size filter.
+     */
+    private void clearRelevantCacheEntries(Map<String, Set<Long>> fileExtensionDsMap,
+            Map<String, Map<String, Set<Long>>> mimeTypeDsMap,
+            Map<FileSizeFilter, Set<Long>> fileSizeDsMap) {
+
+        // invalidate cache entries that are affected by events
+        ConcurrentMap<SearchParams<?>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
+        concurrentMap.forEach((k, v) -> {
+            Object baseParams = k.getParamData();
+            if (baseParams instanceof FileTypeExtensionsSearchParams) {
+                FileTypeExtensionsSearchParams extParams = (FileTypeExtensionsSearchParams) baseParams;
+                // if search params have a filter where extension is present and the data source id is null or ==
+                boolean isMatch = extParams.getFilter().getFilter().stream().anyMatch((ext) -> {
+                    Set<Long> dsIds = fileExtensionDsMap.get(ext);
+                    return (dsIds != null && (extParams.getDataSourceId() == null || dsIds.contains(extParams.getDataSourceId())));
+                });
+
+                if (isMatch) {
+                    concurrentMap.remove(k);
+                }
+            } else if (baseParams instanceof FileTypeMimeSearchParams) {
+                FileTypeMimeSearchParams mimeParams = (FileTypeMimeSearchParams) baseParams;
+                Pair<String, String> mimePieces = getMimePieces(mimeParams.getMimeType());
+                Map<String, Set<Long>> suffixes = mimeTypeDsMap.get(mimePieces.getKey());
+                if (suffixes == null) {
+                    return;
+                }
+
+                // if search params is top level mime prefix (without suffix) and data source is null or ==.
+                if (mimePieces.getValue() == null
+                        && (mimeParams.getDataSourceId() == null
+                        || suffixes.values().stream().flatMap(set -> set.stream()).anyMatch(ds -> ds == mimeParams.getDataSourceId()))) {
+
+                    concurrentMap.remove(k);
+                // otherwise, see if suffix is present
+                } else {
+                    Set<Long> dataSources = suffixes.get(mimePieces.getValue());
+                    if (dataSources != null && (mimeParams.getDataSourceId() == null || dataSources.contains(mimeParams.getDataSourceId()))) {
+                        concurrentMap.remove(k);
+                    }
+                }
+
+            } else if (baseParams instanceof FileTypeSizeSearchParams) {
+                FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) baseParams;
+                Set<Long> dataSources = fileSizeDsMap.get(sizeParams.getSizeFilter());
+                if (dataSources != null && (sizeParams.getDataSourceId() == null || dataSources.contains(sizeParams.getDataSourceId()))) {
+                    concurrentMap.remove(k);
+                }
+            }
+        });
     }
 
     /**

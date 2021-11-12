@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -192,6 +193,11 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                         logger.log(Level.WARNING, "Unable to fetch artifact category for artifact with id: " + art.getId(), ex);
                     }
                 });
+        
+        // don't do anything else if no relevant events
+        if (artifactTypeDataSourceMap.isEmpty()) {
+            return Collections.emptyList();
+        }
 
         // invalidate cache entries that are affected by events
         ConcurrentMap<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> concurrentMap = this.dataArtifactCache.asMap();

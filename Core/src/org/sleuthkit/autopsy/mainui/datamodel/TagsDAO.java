@@ -25,6 +25,7 @@ import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -325,6 +326,11 @@ public class TagsDAO extends AbstractDAO {
                 mapping.computeIfAbsent(Pair.of(data.getLeft(), data.getMiddle()), k -> new HashSet<>())
                         .add(Optional.ofNullable(data.getRight()));
             }
+        }
+        
+        // don't continue if no mapping entries
+        if (mapping.isEmpty()) {
+            return Collections.emptyList();
         }
 
         ConcurrentMap<SearchParams<TagsSearchParams>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -191,6 +192,7 @@ public class OsAccountsDAO extends AbstractDAO {
     List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
         List<DAOEvent> daoEvts = evts.stream().filter(evt -> OS_EVENTS.contains(evt.getPropertyName()))
                 .map(evt -> new OsAccountEvent())
+                .limit(1)
                 .collect(Collectors.toList());
         
         if (!daoEvts.isEmpty()) {

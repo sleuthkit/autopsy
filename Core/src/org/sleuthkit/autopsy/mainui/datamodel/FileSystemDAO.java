@@ -30,15 +30,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.collections.CollectionUtils;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsAddedToPersonEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsRemovedFromPersonEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.DirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.ImageRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VolumeRowDTO;
@@ -49,9 +61,13 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.PoolRowDTO;
 import static org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.getExtensionMediaType;
+import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemContentEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemHostEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemPersonEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
@@ -72,10 +88,26 @@ import org.sleuthkit.datamodel.Volume;
  */
 public class FileSystemDAO extends AbstractDAO {
 
+    private static final Logger logger = Logger.getLogger(FileSystemDAO.class.getName());
+
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+
+    private static final Set<String> HOST_LEVEL_EVTS = ImmutableSet.of(
+            Case.Events.DATA_SOURCE_ADDED.toString(),
+            // this should trigger the case to be reopened
+            // Case.Events.DATA_SOURCE_DELETED.toString(),
+            Case.Events.DATA_SOURCE_NAME_CHANGED.toString(),
+            Case.Events.HOSTS_ADDED.toString(),
+            Case.Events.HOSTS_DELETED.toString(),
+            Case.Events.HOSTS_UPDATED.toString()
+    );
+
+    private static final Set<String> PERSON_LEVEL_EVTS = ImmutableSet.of(
+            Case.Events.HOSTS_ADDED_TO_PERSON.toString(),
+            Case.Events.HOSTS_REMOVED_FROM_PERSON.toString()
+    );
 
     private static final String FILE_SYSTEM_TYPE_ID = "FILE_SYSTEM";
 
@@ -88,23 +120,22 @@ public class FileSystemDAO extends AbstractDAO {
         return instance;
     }
 
-    public boolean isSystemContentInvalidating(FileSystemContentSearchParam key, Content eventContent) {
-        if (!(eventContent instanceof Content)) {
+    private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+
+    public boolean isSystemContentInvalidating(FileSystemContentSearchParam key, DAOEvent daoEvent) {
+        if (!(daoEvent instanceof FileSystemContentEvent)) {
             return false;
         }
-        try {
-            return key.getContentObjectId() != eventContent.getParent().getId();
-        } catch (TskCoreException ex) {
-            // There is nothing we can do with the exception.
-            return false;
-        }
+
+        return key.getContentObjectId() == ((FileSystemContentEvent) daoEvent).getContentObjectId();
     }
 
-    public boolean isSystemHostInvalidating(FileSystemHostSearchParam key, Host eventHost) {
-        if (!(eventHost instanceof Host)) {
+    public boolean isSystemHostInvalidating(FileSystemHostSearchParam key, DAOEvent daoEvent) {
+        if (!(daoEvent instanceof FileSystemHostEvent)) {
             return false;
         }
-        return key.getHostObjectId() != eventHost.getHostId();
+
+        return key.getHostObjectId() == ((FileSystemHostEvent) daoEvent).getHostObjectId();
     }
 
     private BaseSearchResultsDTO fetchContentForTableFromContent(SearchParams<FileSystemContentSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -301,44 +332,82 @@ public class FileSystemDAO extends AbstractDAO {
         this.searchParamsCache.invalidateAll();
     }
 
-    private static final Set<String> DATA_SOURCE_EVTS = ImmutableSet.of(
-            Case.Events.DATA_SOURCE_ADDED.toString(),
-            Case.Events.DATA_SOURCE_DELETED.toString(),
-            Case.Events.DATA_SOURCE_NAME_CHANGED.toString()
-    );
+    private Long getHostFromDs(Content dataSource) {
+        if (!(dataSource instanceof DataSource)) {
+            return null;
+        }
 
-    private static final Set<String> HOST_EVTS = ImmutableSet.of(
-            Case.Events.HOSTS_ADDED.toString(),
-            Case.Events.HOSTS_ADDED_TO_PERSON.toString(),
-            Case.Events.HOSTS_DELETED.toString(),
-            Case.Events.HOSTS_REMOVED_FROM_PERSON.toString(),
-            Case.Events.HOSTS_UPDATED.toString()
-    );
+        try {
+            Host host = ((DataSource) dataSource).getHost();
+            return host == null ? null : host.getHostId();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "There was an error getting the host for data source with id: " + dataSource.getId(), ex);
+            return null;
+        }
+    }
 
     @Override
     List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
-//        Set<Long> affectedPersons = new HashSet<>();
-//        Set<Long> affectedHosts = new HashSet<>();
-//        Set<Long> affectedParentContent = new HashSet<>();
-//
-//        for (PropertyChangeEvent evt : evts) {
-//            Content content = DAOEventUtils.getContentFromEvt(evt);
-//            if (content != null) {
-//                affectedParentContent.add(content.getParentId());
-//                continue;
-//            }
-//
-//            String propName = evt.getPropertyName();
-//            if (DATA_SOURCE_EVTS.contains(propName)) {
-//                affectedHosts.add(evt.getHostId());
-//            } else if (HOST_EVTS.contains(propName)) {
-//                affectedPersons.add(evt.getPersonId());
-//            }
-//        }
+        Set<Long> affectedPersons = new HashSet<>();
+        Set<Long> affectedHosts = new HashSet<>();
+        Set<Long> affectedParentContent = new HashSet<>();
 
-        // GVDTODO clear affected cache entries
-        // GVDTODO generate events
-        return Collections.emptyList();
+        for (PropertyChangeEvent evt : evts) {
+            Content content = DAOEventUtils.getContentFromEvt(evt);
+            if (content != null && content.getParentId().isPresent()) {
+                affectedParentContent.add(content.getParentId().get());
+            } else if (evt instanceof DataSourceAddedEvent) {
+                Long hostId = getHostFromDs(((DataSourceAddedEvent) evt).getDataSource());
+                if (hostId != null) {
+                    affectedHosts.add(hostId);
+                }
+            } else if (evt instanceof DataSourceNameChangedEvent) {
+                Long hostId = getHostFromDs(((DataSourceNameChangedEvent) evt).getDataSource());
+                if (hostId != null) {
+                    affectedHosts.add(hostId);
+                }
+            } else if (evt instanceof HostsAddedEvent) {
+                // GVDTODO how best to handle host added?
+            } else if (evt instanceof HostsUpdatedEvent) {
+                // GVDTODO how best to handle host updated?
+            } else if (evt instanceof HostsAddedToPersonEvent) {
+                Person person = ((HostsAddedToPersonEvent) evt).getPerson();
+                affectedPersons.add(person == null ? null : person.getPersonId());
+            } else if (evt instanceof HostsRemovedFromPersonEvent) {
+                Person person = ((HostsRemovedFromPersonEvent) evt).getPerson();
+                affectedPersons.add(person == null ? null : person.getPersonId());
+            }
+        }
+
+        // GVDTODO handling null ids versus the 'No Persons' option
+        ConcurrentMap<SearchParams<?>, BaseSearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
+        concurrentMap.forEach((k, v) -> {
+            Object searchParams = k.getParamData();
+            if (searchParams instanceof FileSystemPersonSearchParam) {
+                FileSystemPersonSearchParam personParam = (FileSystemPersonSearchParam) searchParams;
+                if (affectedPersons.contains(personParam.getPersonObjectId())) {
+                    concurrentMap.remove(k);
+                }
+            } else if (searchParams instanceof FileSystemHostSearchParam) {
+                FileSystemHostSearchParam hostParams = (FileSystemHostSearchParam) searchParams;
+                if (affectedHosts.contains(hostParams.getHostObjectId())) {
+                    concurrentMap.remove(k);
+                }
+            } else if (searchParams instanceof FileSystemContentSearchParam) {
+                FileSystemContentSearchParam contentParams = (FileSystemContentSearchParam) searchParams;
+                if (affectedParentContent.contains(contentParams)) {
+                    concurrentMap.remove(k);
+                }
+            }
+        });
+
+        return Stream.of(
+                affectedPersons.stream().map(id -> new FileSystemPersonEvent(id)),
+                affectedHosts.stream().map(id -> new FileSystemHostEvent(id)),
+                affectedParentContent.stream().map(id -> new FileSystemContentEvent(id))
+        )
+                .flatMap(s -> s)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -365,16 +434,13 @@ public class FileSystemDAO extends AbstractDAO {
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return this.dao.Content content = getContentFromEvt(evt);
-            if (content == null) {
-                return false;
-            }
-
-            return MainDAO.getInstance().getFileSystemDAO().isSystemContentInvalidating(getParameters(), content);
+            return this.dao.isSystemContentInvalidating(this.getParameters(), evt);
         }
     }
 
     public static class FileSystemHostFetcher extends DAOFetcher<FileSystemHostSearchParam> {
+
+        private final FileSystemDAO dao;
 
         /**
          * Main constructor.
@@ -383,18 +449,17 @@ public class FileSystemDAO extends AbstractDAO {
          */
         public FileSystemHostFetcher(FileSystemHostSearchParam params) {
             super(params);
+            this.dao = MainDAO.getInstance().getFileSystemDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getFileSystemDAO().getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return this.dao.getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            // TODO implement the method for determining if 
-            // a refresh is needed.
-            return false;
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return this.dao.isSystemHostInvalidating(this.getParameters(), evt);
         }
     }
 }
