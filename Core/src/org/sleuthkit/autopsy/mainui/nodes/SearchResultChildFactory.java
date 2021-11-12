@@ -32,19 +32,20 @@ import org.sleuthkit.autopsy.mainui.datamodel.BlackboardArtifactTagsRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentTagsRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.DirectoryRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.DirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.ImageRowDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.LocalDirectoryRowDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.LocalFileDataSourceRowDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.PoolRowDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VirtualDirectoryRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.ImageRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.LocalDirectoryRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.LocalFileDataSourceRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.OsAccountRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.PoolRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VirtualDirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultChildFactory.ChildKey;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VolumeRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VolumeRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.FileNode.LayoutFileNode;
 import org.sleuthkit.autopsy.mainui.nodes.FileNode.SlackFileNode;
 import org.sleuthkit.autopsy.mainui.nodes.SpecialDirectoryNode.LocalDirectoryNode;
@@ -110,7 +111,9 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
                 return new PoolNode(key.getSearchResults(), (PoolRowDTO) key.getRow());
             } else if (SlackFileRowDTO.getTypeIdForClass().equals(typeId)) {
                 return new SlackFileNode(key.getSearchResults(), (SlackFileRowDTO) key.getRow());
-            } else {
+            } else if (OsAccountRowDTO.getTypeIdForClass().equals(typeId)) {
+                return new OsAccountNode(key.getSearchResults(), (OsAccountRowDTO) key.getRow());
+            }else {
                 logger.log(Level.WARNING, MessageFormat.format("No known node for type id: {0} provided by row result: {1}", typeId, key.getRow()));
             }
         } catch (ClassCastException ex) {
