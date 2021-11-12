@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -41,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.events.OsAccountEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.OsAccountRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -174,10 +174,9 @@ public class OsAccountsDAO extends AbstractDAO {
                     "", // GVDTODO this is filled by a background GetOsAccountRealmTask task 
                     timeDisplayStr);
 
-            fileRows.add(new BaseRowDTO(
-                    cellValues,
-                    OS_ACCOUNTS_TYPE_ID,
-                    account.getId()));
+            fileRows.add(new OsAccountRowDTO(
+                    account,
+                    cellValues));
         };
 
         return new BaseSearchResultsDTO(OS_ACCOUNTS_TYPE_ID, Bundle.OsAccounts_name_text(), OS_ACCOUNTS_WITH_SCO_COLUMNS, fileRows, 0, allAccounts.size());

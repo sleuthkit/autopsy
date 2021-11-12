@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes.actions;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.stream.Stream;
 import javax.swing.Action;
 import org.openide.actions.PropertiesAction;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.openide.util.actions.SystemAction;
@@ -172,7 +174,12 @@ public final class ActionsFactory {
      */
     static ActionGroup getExtractActions() {
         ActionGroup actionsGroup = new ActionGroup();
-        actionsGroup.add(ExtractAction.getInstance());
+        
+        Lookup lookup = Utilities.actionsGlobalContext();
+        Collection<? extends AbstractFile> selectedFiles =lookup.lookupAll(AbstractFile.class);
+        if(selectedFiles.size() > 0) {
+            actionsGroup.add(ExtractAction.getInstance());
+        }
         actionsGroup.add(ExportCSVAction.getInstance());
 
         return actionsGroup;

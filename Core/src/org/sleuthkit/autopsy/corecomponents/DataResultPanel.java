@@ -68,8 +68,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResult
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
-import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
-import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
@@ -79,9 +77,10 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsDAO.AccountFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsDAO.TagFetcher;
@@ -89,7 +88,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeExtFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeMimeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeSizeFetcher;
-import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
 
 /**
@@ -1301,6 +1299,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
     }
     
+    /**
+     * Displays results of querying the DAO for the given search parameters
+     * query.
+     *
+     * @param fileSystemKey The search parameters.
+     *
+     */
     void displayFileSystemContent(FileSystemContentSearchParam fileSystemKey) {
         try {
             this.searchResultManager = new SearchManager(new FileSystemFetcher(fileSystemKey), getPageSize());
@@ -1314,6 +1319,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
     }
 
+    /**
+     * Displays results of querying the DAO for the given search parameters
+     * query.
+     *
+     * @param hostSystemKey The search parameters.
+     *
+     */
     void displayFileSystemForHost(FileSystemHostSearchParam hostSystemKey) {
         try {
             this.searchResultManager = new SearchManager(new FileSystemHostFetcher(hostSystemKey), getPageSize());
@@ -1323,6 +1335,25 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for host filter: {0}.",
                     hostSystemKey.getHostObjectId()),
+                    ex);
+        }
+    }
+    
+    /**
+     * Displays results of querying the DAO for the given search parameters
+     * query.
+     *
+     * @param osAccountKey The search parameters.
+     */
+    void displayOsAccount(OsAccountsSearchParams osAccountKey) {
+        try {
+            this.searchResultManager = new SearchManager(new AccountFetcher(osAccountKey), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for Os Account filter: {0}.",
+                    osAccountKey.getDataSourceId()),
                     ex);
         }
     }
