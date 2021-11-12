@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
@@ -142,9 +142,9 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     );
 
                     // Create artifact if it doesn't already exist.
-                    if (!blackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
+                    if (!blackboard.artifactExists(file, TSK_INTERESTING_ITEM, attributes)) {
                         BlackboardArtifact artifact = file.newAnalysisResult(
-                                BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                                BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE, 
                                 null, filesSet.getName(), null, 
                                 attributes)
                                 .getAnalysisResult();

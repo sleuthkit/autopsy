@@ -443,7 +443,7 @@ final class AddLogicalImageTask implements Runnable {
         BlackboardArtifact artifact;
         try {
             artifact = this.blackboard.newAnalysisResult(
-                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, fileId, dataSourceId,
+                    BlackboardArtifact.Type.TSK_INTERESTING_ITEM, fileId, dataSourceId,
                     Score.SCORE_LIKELY_NOTABLE,
                     null, ruleSetName, null,
                     Arrays.asList(

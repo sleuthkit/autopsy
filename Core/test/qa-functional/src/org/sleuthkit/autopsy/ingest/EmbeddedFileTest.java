@@ -134,7 +134,7 @@ public class EmbeddedFileTest extends NbTestCase {
                     ArrayList<BlackboardArtifact> artifacts = file.getAllArtifacts();
                     assertEquals("Zip bomb " + file.getName() + " has incorrect number of artifacts", 1, artifacts.size());
                     for (BlackboardArtifact artifact : artifacts) {
-                        assertEquals("Artifact for Zip bomb " + file.getName() + " has incorrect type ID", artifact.getArtifactTypeID(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID());
+                        assertEquals("Artifact for Zip bomb " + file.getName() + " has incorrect type ID", artifact.getArtifactTypeID(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID());
                         BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
                         assertNotNull("No attribute found for artifact on zip bomb " + file.getName(), attribute);
                         assertEquals("Interesting artifact on file, " + file.getName() + ", does not reflect it being a zip bomb", zipBombSetName, attribute.getDisplayString());
