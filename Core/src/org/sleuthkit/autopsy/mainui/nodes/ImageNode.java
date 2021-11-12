@@ -21,18 +21,17 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.util.Optional;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.NbBundle.Messages;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
-import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
-import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VolumeRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.ImageRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
-import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
+import org.sleuthkit.datamodel.Content;
 
 /**
- * A node representing a Volume.
+ * A node representing an Image.
  */
-public class VolumeNode extends BaseNode<SearchResultsDTO, VolumeRowDTO> {
+public class ImageNode extends BaseNode<SearchResultsDTO, ImageRowDTO> {
 
     /**
      * Simple node constructor.
@@ -40,30 +39,28 @@ public class VolumeNode extends BaseNode<SearchResultsDTO, VolumeRowDTO> {
      * @param results The search result DTO.
      * @param row     The table row DTO.
      */
-    public VolumeNode(SearchResultsDTO results, VolumeRowDTO row) {
+    public ImageNode(SearchResultsDTO results, ImageRowDTO row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
-        setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png"); //NON-NLS
-
-        // use first cell value for display name
-        String displayName = row.getCellValues().size() > 0
-                ? row.getCellValues().get(0).toString()
-                : "";
-
-        setDisplayName(displayName);
-        setShortDescription(displayName);
+        setDisplayName(row.getContent().getName());
+        setShortDescription(row.getContent().getName());
+        setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg"); //NON-NLS
     }
 
-    @Messages({
-        "VolumnNode_ExtractUnallocAction_text=Extract Unallocated Space to Single Files"
+    @NbBundle.Messages({
+        "ImageNode_ExtractUnallocAction_text=Extract Unallocated Space to Single Files"
     })
 
     @Override
     public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
-        ActionGroup group = new ActionGroup();
+        ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
         group.add(new ExtractUnallocAction(
-                Bundle.VolumnNode_ExtractUnallocAction_text(), getRowDTO().getContent()));
-        group.add(new FileSystemDetailsAction(getRowDTO().getContent()));
+                Bundle.ImageNode_ExtractUnallocAction_text(), getRowDTO().getContent()));
         return Optional.of(group);
+    }
+
+    @Override
+    public Optional<Content> getDataSourceForActions() {
+        return Optional.of(getRowDTO().getContent());
     }
 
     @Override

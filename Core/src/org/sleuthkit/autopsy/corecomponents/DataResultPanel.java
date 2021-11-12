@@ -62,7 +62,6 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultSetFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
@@ -70,16 +69,21 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemHostFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsDAO.AccountFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsDAO.TagFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeExtFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeMimeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeSizeFetcher;
@@ -1314,6 +1318,65 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     "There was an error fetching data for Tags filter: {0} and data source id: {1}.",
                     tagParams.getTagName(),
                     tagParams.getDataSourceId() == null ? "<null>" : tagParams.getDataSourceId()),
+                    ex);
+        }
+    }
+    
+    /**
+     * Displays results of querying the DAO for the given search parameters
+     * query.
+     *
+     * @param fileSystemKey The search parameters.
+     *
+     */
+    void displayFileSystemContent(FileSystemContentSearchParam fileSystemKey) {
+        try {
+            this.searchResultManager = new SearchManager(new FileSystemFetcher(fileSystemKey), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for file system filter: {0}.",
+                    fileSystemKey.getContentObjectId()),
+                    ex);
+        }
+    }
+
+    /**
+     * Displays results of querying the DAO for the given search parameters
+     * query.
+     *
+     * @param hostSystemKey The search parameters.
+     *
+     */
+    void displayFileSystemForHost(FileSystemHostSearchParam hostSystemKey) {
+        try {
+            this.searchResultManager = new SearchManager(new FileSystemHostFetcher(hostSystemKey), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for host filter: {0}.",
+                    hostSystemKey.getHostObjectId()),
+                    ex);
+        }
+    }
+    
+    /**
+     * Displays results of querying the DAO for the given search parameters
+     * query.
+     *
+     * @param osAccountKey The search parameters.
+     */
+    void displayOsAccount(OsAccountsSearchParams osAccountKey) {
+        try {
+            this.searchResultManager = new SearchManager(new AccountFetcher(osAccountKey), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching data for Os Account filter: {0}.",
+                    osAccountKey.getDataSourceId()),
                     ex);
         }
     }

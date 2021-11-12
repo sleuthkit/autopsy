@@ -43,11 +43,13 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
 
 /**
@@ -448,6 +450,36 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      */
     public void displayTags(TagsSearchParams tagParams) {
         dataResultPanel.displayTags(tagParams);
+    }
+    
+    /**
+     * Displays results for querying the DAO for tags matching the search
+     * parameters query.
+     *
+     * @param fileSystemParams The search parameter query.
+     */
+    public void displayFileSystemContent(FileSystemContentSearchParam fileSystemParams) {
+        dataResultPanel.displayFileSystemContent(fileSystemParams);
+    }
+
+    /**
+     * Displays results for querying the DAO for tags matching the search
+     * parameters query.
+     *
+     * @param hostSystempParams The search parameter query.
+     */
+    public void displayFileSystemForHost(FileSystemHostSearchParam hostSystempParams) {
+        dataResultPanel.displayFileSystemForHost(hostSystempParams);
+    }
+
+    /**
+     * Displays results for querying the DAO for tags matching the search
+     * parameters query.
+     *
+     * @param osAccountParams The search parameter query.
+     */
+    public void displayOsAccounts(OsAccountsSearchParams osAccountParams) {
+        dataResultPanel.displayOsAccount(osAccountParams);
     }
 
     @Override

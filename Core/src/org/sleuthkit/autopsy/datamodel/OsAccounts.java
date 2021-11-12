@@ -48,13 +48,16 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.VALUE_LOADING;
 import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.backgroundTasksPool;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.OsAccountRealm;
@@ -105,7 +108,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
     /**
      * The root node of the OS Accounts subtree.
      */
-    public final class OsAccountListNode extends DisplayableItemNode {
+    public final class OsAccountListNode extends DisplayableItemNode implements SelectionResponder{
 
         /**
          * Construct a new OsAccountListNode.
@@ -130,6 +133,11 @@ public final class OsAccounts implements AutopsyVisitableItem {
         @Override
         public String getItemType() {
             return getClass().getName();
+        }
+
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            dataResultPanel.displayOsAccounts(new OsAccountsSearchParams(filteringDSObjId == 0 ? null : filteringDSObjId));
         }
     }
 
