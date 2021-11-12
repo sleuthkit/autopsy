@@ -26,6 +26,9 @@ import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.OsAccountRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
+/**
+ * A node representing a row for an OsAccount in the results table.
+ */
 public class OsAccountNode extends BaseNode<SearchResultsDTO, OsAccountRowDTO>{
     
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/os-account.png";
