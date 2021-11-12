@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemHostEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemPersonEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
@@ -349,8 +350,15 @@ public class FileSystemDAO extends AbstractDAO {
 
         for (PropertyChangeEvent evt : evts) {
             Content content = DAOEventUtils.getContentFromEvt(evt);
-            if (content != null && content.getParentId().isPresent()) {
-                affectedParentContent.add(content.getParentId().get());
+            if (content instanceof AbstractContent) {
+                try {
+                    Optional<Long> parentId = ((AbstractContent) content).getParentId();
+                    if (parentId.isPresent()) {
+                        affectedParentContent.add(parentId.get());
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "An exception occurred getting the parent id of content: " + content.getId(), ex);
+                }
             } else if (evt instanceof DataSourceAddedEvent) {
                 Long hostId = getHostFromDs(((DataSourceAddedEvent) evt).getDataSource());
                 if (hostId != null) {
