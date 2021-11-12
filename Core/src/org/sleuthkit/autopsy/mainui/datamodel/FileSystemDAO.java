@@ -87,27 +87,25 @@ public class FileSystemDAO extends AbstractDAO {
         }
         return instance;
     }
-    
-    // public boolean isSystemContentInvalidating(FileSystemContentSearchParam key, Content eventContent) {
-    //     if(!(eventContent instanceof Content)) {
-    //         return false;
-    //     }
-        
-    //     try {
-    //         return key.getContentObjectId() != eventContent.getParent().getId();
-    //     } catch (TskCoreException ex) {
-    //         // There is nothing we can do with the exception.
-    //         return false;
-    //     }
-    // }
-    
-    // public boolean isSystemHostInvalidating(FileSystemHostSearchParam key, Host eventHost) {
-    //     if(!(eventHost instanceof Host)) {
-    //         return false;
-    //     }
-        
-    //     return key.getHostObjectId() != eventHost.getHostId();
-    // }
+
+    public boolean isSystemContentInvalidating(FileSystemContentSearchParam key, Content eventContent) {
+        if (!(eventContent instanceof Content)) {
+            return false;
+        }
+        try {
+            return key.getContentObjectId() != eventContent.getParent().getId();
+        } catch (TskCoreException ex) {
+            // There is nothing we can do with the exception.
+            return false;
+        }
+    }
+
+    public boolean isSystemHostInvalidating(FileSystemHostSearchParam key, Host eventHost) {
+        if (!(eventHost instanceof Host)) {
+            return false;
+        }
+        return key.getHostObjectId() != eventHost.getHostId();
+    }
 
     private BaseSearchResultsDTO fetchContentForTableFromContent(SearchParams<FileSystemContentSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
@@ -310,10 +308,10 @@ public class FileSystemDAO extends AbstractDAO {
     );
 
     private static final Set<String> HOST_EVTS = ImmutableSet.of(
-            Case.Events.HOSTS_ADDED.toString(), 
-            Case.Events.HOSTS_ADDED_TO_PERSON.toString(), 
-            Case.Events.HOSTS_DELETED.toString(), 
-            Case.Events.HOSTS_REMOVED_FROM_PERSON.toString(), 
+            Case.Events.HOSTS_ADDED.toString(),
+            Case.Events.HOSTS_ADDED_TO_PERSON.toString(),
+            Case.Events.HOSTS_DELETED.toString(),
+            Case.Events.HOSTS_REMOVED_FROM_PERSON.toString(),
             Case.Events.HOSTS_UPDATED.toString()
     );
 
@@ -337,14 +335,18 @@ public class FileSystemDAO extends AbstractDAO {
 //                affectedPersons.add(evt.getPersonId());
 //            }
 //        }
-        
+
         // GVDTODO clear affected cache entries
         // GVDTODO generate events
         return Collections.emptyList();
+    }
+
     /**
      * Handles fetching and paging of data for file types by mime type.
      */
     public static class FileSystemFetcher extends DAOFetcher<FileSystemContentSearchParam> {
+
+        private final FileSystemDAO dao;
 
         /**
          * Main constructor.
@@ -353,16 +355,17 @@ public class FileSystemDAO extends AbstractDAO {
          */
         public FileSystemFetcher(FileSystemContentSearchParam params) {
             super(params);
+            this.dao = MainDAO.getInstance().getFileSystemDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getFileSystemDAO().getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return this.dao.getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            Content content = getContentFromEvt(evt);
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return this.dao.Content content = getContentFromEvt(evt);
             if (content == null) {
                 return false;
             }

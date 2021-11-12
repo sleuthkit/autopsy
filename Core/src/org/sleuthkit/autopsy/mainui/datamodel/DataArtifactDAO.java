@@ -220,8 +220,9 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     /*
      * Handles fetching and paging of data artifacts.
      */
-    public class DataArtifactFetcher extends DAOFetcher<DataArtifactSearchParam> {
-
+    public static class DataArtifactFetcher extends DAOFetcher<DataArtifactSearchParam> {
+        private final DataArtifactDAO dao;
+        
         /**
          * Main constructor.
          *
@@ -229,16 +230,17 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
          */
         public DataArtifactFetcher(DataArtifactSearchParam params) {
             super(params);
+            this.dao = MainDAO.getInstance().getDataArtifactsDAO();
         }
         
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getDataArtifactsDAO().getDataArtifactsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return dao.getDataArtifactsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
         
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return DataArtifactDAO.this.isDataArtifactInvalidating(this.getParameters(), evt);
+            return dao.isDataArtifactInvalidating(this.getParameters(), evt);
         }
     }
 }

@@ -203,7 +203,9 @@ public class OsAccountsDAO extends AbstractDAO {
     /**
      * Handles fetching and paging of data for accounts.
      */
-    public class AccountFetcher extends DAOFetcher<OsAccountsSearchParams> {
+    public static class AccountFetcher extends DAOFetcher<OsAccountsSearchParams> {
+
+        private final OsAccountsDAO dao;
 
         /**
          * Main constructor.
@@ -212,16 +214,17 @@ public class OsAccountsDAO extends AbstractDAO {
          */
         public AccountFetcher(OsAccountsSearchParams params) {
             super(params);
+            this.dao = MainDAO.getInstance().getOsAccountsDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getOsAccountsDAO().getAccounts(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return dao.getAccounts(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return isOSAccountInvalidatingEvt(this.getParameters(), evt);
+            return dao.isOSAccountInvalidatingEvt(this.getParameters(), evt);
         }
     }
 }

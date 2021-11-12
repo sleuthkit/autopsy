@@ -766,8 +766,9 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     /**
      * Handles fetching and paging of analysis results.
      */
-    public class AnalysisResultFetcher extends DAOFetcher<AnalysisResultSearchParam> {
-
+    public static class AnalysisResultFetcher extends DAOFetcher<AnalysisResultSearchParam> {
+        private final AnalysisResultDAO dao;
+        
         /**
          * Main constructor.
          *
@@ -775,23 +776,25 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
          */
         public AnalysisResultFetcher(AnalysisResultSearchParam params) {
             super(params);
+            this.dao = MainDAO.getInstance().getAnalysisResultDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return dao.getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return AnalysisResultDAO.this.isAnalysisResultsInvalidating(this.getParameters(), evt);
+            return dao.isAnalysisResultsInvalidating(this.getParameters(), evt);
         }
     }
 
     /**
      * Handles fetching and paging of hashset hits.
      */
-    public class AnalysisResultSetFetcher extends DAOFetcher<AnalysisResultSetSearchParam> {
+    public static class AnalysisResultSetFetcher extends DAOFetcher<AnalysisResultSetSearchParam> {
+        private final AnalysisResultDAO dao;
 
         /**
          * Main constructor.
@@ -800,16 +803,17 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
          */
         public AnalysisResultSetFetcher(AnalysisResultSetSearchParam params) {
             super(params);
+            this.dao = MainDAO.getInstance().getAnalysisResultDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultSetHits(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return dao.getAnalysisResultSetHits(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return AnalysisResultDAO.this.isAnalysisResultsSetInvalidating(this.getParameters(), evt);
+            return dao.isAnalysisResultsSetInvalidating(this.getParameters(), evt);
         }
     }
 
@@ -818,6 +822,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      */
     public static class KeywordHitResultFetcher extends DAOFetcher<KeywordHitSearchParam> {
 
+        private final AnalysisResultDAO dao;
+        
         /**
          * Main constructor.
          *
@@ -825,11 +831,12 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
          */
         public KeywordHitResultFetcher(KeywordHitSearchParam params) {
             super(params);
+            this.dao = MainDAO.getInstance().getAnalysisResultDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getKeywordHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return dao.getKeywordHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override

@@ -1154,8 +1154,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
         try {
-            DataArtifactDAO dataArtDAO = MainDAO.getInstance().getDataArtifactsDAO();
-            this.searchResultManager = new SearchManager(dataArtDAO.new DataArtifactFetcher(dataArtifactParams), getPageSize());
+            this.searchResultManager = new SearchManager(new DataArtifactFetcher(dataArtifactParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1169,7 +1168,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
         try {
-            this.searchResultManager = new SearchManager(MainDAO.getInstance().getAnalysisResultDAO().new AnalysisResultFetcher(analysisResultParams), getPageSize());
+            this.searchResultManager = new SearchManager(new AnalysisResultFetcher(analysisResultParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1190,7 +1189,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     void displayFileExtensions(FileTypeExtensionsSearchParams fileExtensionsParams) {
         try {
 
-            this.searchResultManager = new SearchManager(MainDAO.getInstance().getViewsDAO().new FileTypeExtFetcher(fileExtensionsParams), getPageSize());
+            this.searchResultManager = new SearchManager(new FileTypeExtFetcher(fileExtensionsParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
@@ -1211,7 +1210,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     void displayFileMimes(FileTypeMimeSearchParams fileMimeKey) {
         try {
 
-            this.searchResultManager = new SearchManager(MainDAO.getInstance().getViewsDAO().new FileTypeMimeFetcher(fileMimeKey), getPageSize());
+            this.searchResultManager = new SearchManager(new FileTypeMimeFetcher(fileMimeKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {
@@ -1270,7 +1269,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayAnalysisResultSet(AnalysisResultSetSearchParam setKey) {
         try {
-            this.searchResultManager = new SearchManager(MainDAO.getInstance().getAnalysisResultDAO().new AnalysisResultSetFetcher(setKey), getPageSize());
+            this.searchResultManager = new SearchManager(new AnalysisResultSetFetcher(setKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {
