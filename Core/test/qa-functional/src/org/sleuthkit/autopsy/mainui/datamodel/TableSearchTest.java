@@ -636,21 +636,21 @@ public class TableSearchTest extends NbTestCase {
             // Get all contacts
             CommAccountsDAO commAccountsDAO = MainDAO.getInstance().getCommAccountsDAO();
 
-            CommAccountsSearchParams param = new CommAccountsSearchParams(0, Account.Type.EMAIL, null);
+            CommAccountsSearchParams param = new CommAccountsSearchParams(Account.Type.EMAIL, null);
             SearchResultsDTO results = commAccountsDAO.getCommAcounts(param, 0, null, false);
             //assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
             // Get contacts from data source 2
-            param = new CommAccountsSearchParams(0, Account.Type.DEVICE, dataSource1.getId());
+            param = new CommAccountsSearchParams(Account.Type.DEVICE, dataSource1.getId());
             results = commAccountsDAO.getCommAcounts(param, 0, null, false);
             //assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
 
             // Get bookmarks from data source 2
-            param = new CommAccountsSearchParams(0, Account.Type.EMAIL, dataSource2.getId());
+            param = new CommAccountsSearchParams(Account.Type.EMAIL, dataSource2.getId());
             results = commAccountsDAO.getCommAcounts(param, 0, null, false);
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());

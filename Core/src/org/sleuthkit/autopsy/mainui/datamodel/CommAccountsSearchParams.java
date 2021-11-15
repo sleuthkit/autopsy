@@ -27,17 +27,11 @@ import org.sleuthkit.datamodel.Account;
 public class CommAccountsSearchParams {
 
     private final Account.Type type;
-    private final long account_id; // ELTODO do we need this?
     private final Long dataSourceId;
  
-    public CommAccountsSearchParams(long account_id, Account.Type type, Long dataSourceId) {
-        this.account_id = account_id;
+    public CommAccountsSearchParams(Account.Type type, Long dataSourceId) {
         this.type = type;
         this.dataSourceId = dataSourceId;
-    }
-
-    public long getAccountId() {
-        return account_id;
     }
 
     public Account.Type getType() {
@@ -51,7 +45,6 @@ public class CommAccountsSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.account_id);
         hash = 23 * hash + Objects.hashCode(this.type);
         hash = 23 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
@@ -69,9 +62,6 @@ public class CommAccountsSearchParams {
             return false;
         }
         final CommAccountsSearchParams other = (CommAccountsSearchParams) obj;
-        if (this.account_id != other.account_id) {
-            return false;
-        }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }

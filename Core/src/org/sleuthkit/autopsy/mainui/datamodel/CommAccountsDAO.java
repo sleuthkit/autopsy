@@ -128,69 +128,6 @@ public class CommAccountsDAO {
 
         return pagedAcctsStream.collect(Collectors.toList());
     }
-    
-    /**
-     * Get the clause that should be used in order to (not) filter out rejected
-     * results from db queries.
-     *
-     * @return A clause that will or will not filter out rejected artifacts
-     *         based on the state of showRejected.
-     */
-    private String getRejectedArtifactFilterClause(boolean showRejected) {
-        return showRejected ? " " : " AND artifacts.review_status_id != " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + " "; // 
-    }
-
-    /**
-     * Returns the clause to filter artifacts by data source.
-     *
-     * @return A clause that will or will not filter artifacts by datasource
-     *         based on the CasePreferences groupItemsInTreeByDataSource setting
-     */
-    private String getFilterByDataSourceClause(Long dataSourceId) {
-        if (dataSourceId != null && dataSourceId > 0) {
-            return "  AND artifacts.data_source_obj_id = " + dataSourceId + " ";
-        }
-        return " ";
-    }
-
-    private final static String COMMUNICATION_ACCOUNTS_QUERY_STRING = "SELECT DISTINCT artifacts.artifact_id AS artifact_id, " //NON-NLS
-            + "artifacts.obj_id AS obj_id, artifacts.artifact_obj_id AS artifact_obj_id, artifacts.data_source_obj_id AS data_source_obj_id, artifacts.artifact_type_id AS artifact_type_id, " //NON-NLS
-            + " types.type_name AS type_name, types.display_name AS display_name, types.category_type as category_type,"//NON-NLS
-            + " artifacts.review_status_id AS review_status_id, " //NON-NLS
-            + " data_artifacts.os_account_obj_id as os_account_obj_id, " //NON-NLS
-            + " attrs.source AS source "
-            + " FROM blackboard_artifacts AS artifacts "
-            + " JOIN blackboard_artifact_types AS types " //NON-NLS
-            + "		ON artifacts.artifact_type_id = types.artifact_type_id" //NON-NLS
-            + " LEFT JOIN tsk_data_artifacts AS data_artifacts "
-            + "		ON artifacts.artifact_obj_id = data_artifacts.artifact_obj_id " //NON-NLS
-            + " JOIN blackboard_attributes AS attrs "
-            + " ON artifacts.artifact_id = attrs.artifact_id " //NON-NLS 
-            + " WHERE artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
-            + "     AND attrs.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID(); //NON-NLS
-
-    /**
-     * Get all artifacts and their attributes for all communication accounts of the type of interest.
-     * 
-     * @param cacheKey
-     * @return 
-     */
-    String getWhereClause(SearchParams<CommAccountsSearchParams> cacheKey) {
-        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
-        Account.Type type = cacheKey.getParamData().getType();
-        
-        String originalWhereClause
-                = COMMUNICATION_ACCOUNTS_QUERY_STRING
-                + "     AND attrs.value_text = '" + type.getTypeName() + "'" //NON-NLS
-                + getFilterByDataSourceClause(dataSourceId)
-                + getRejectedArtifactFilterClause(false); // ELTODO
-
-        String pagedWhereClause = originalWhereClause
-                + " ORDER BY artifacts.obj_id ASC"
-                + (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0 ? " LIMIT " + cacheKey.getMaxResultsCount() : "")
-                + (cacheKey.getStartItem() > 0 ? " OFFSET " + cacheKey.getStartItem() : "");
-        return pagedWhereClause;
-    }
 
     long getTotalResultsCount(SearchParams<CommAccountsSearchParams> cacheKey, long currentPageSize) throws TskCoreException, NoCurrentCaseException {
         Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
@@ -216,10 +153,11 @@ public class CommAccountsDAO {
         // get current page of communication accounts results
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         Blackboard blackboard = skCase.getBlackboard();
-        String pagedWhereClause = getWhereClause(cacheKey);        
-        
-        SleuthkitCase.CaseDbQuery results = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(pagedWhereClause);
-        ResultSet rs = results.getResultSet();
+        Account.Type type = cacheKey.getParamData().getType();
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        List<BlackboardArtifact> allArtifacts = blackboard.getArtifacts(BlackboardArtifact.Type.TSK_ACCOUNT, 
+                BlackboardAttribute.Type.TSK_ACCOUNT_TYPE, type.getTypeName(), dataSourceId,
+			false); // ELTODO
         List<RowDTO> fileRows = new ArrayList<>();
         /*
         while (rs.next()) {
