@@ -133,9 +133,9 @@ public class TableSearchTest extends NbTestCase {
     // Communications accounts test
     private static final String ACCOUNT_TYPE_COLUMN = "Account Type";
     private static final String ID_COLUMN = "ID";
-    private static final String EMAIL_A = "AAA@yahoo.com";
-    private static final String EMAIL_B = "BBB@gmail.com";
-    private static final String EMAIL_C = "CCCCC@funmail.com";
+    private static final String EMAIL_A = "aaa@yahoo.com";
+    private static final String EMAIL_B = "bbb@gmail.com";
+    private static final String EMAIL_C = "ccc@funmail.com";
     private static final String PHONENUM_1 = "111 777 1111";
     private static final String PHONENUM_2 = "222 333 7777";
 
