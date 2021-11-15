@@ -73,9 +73,15 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestModuleEvent.DATA_ADDED);
 
+    /**
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
+     */
+    @SuppressWarnings("deprecation")
     private static final Set<BlackboardArtifact.Type> ARTIFACT_TYPES_OF_INTEREST = ImmutableSet.of(
             BlackboardArtifact.Type.TSK_HASHSET_HIT,
-            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT
+            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT,
+            BlackboardArtifact.Type.TSK_INTERESTING_ITEM
     );
 
     private final PropertyChangeListener ingestEventListener = (evt) -> {

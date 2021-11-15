@@ -48,8 +48,8 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
     private static final String MODULE_NAME = InterestingArtifactCreatorIngestModuleFactory.getModuleName();
     private static final String[] ARTIFACT_TYPE_NAMES = {"TSK_WEB_BOOKMARK", "TSK_KEYWORD_HIT", "TSK_CALLLOG"};
     private static final String[] ARTIFACT_DISPLAY_NAMES = {"Web Bookmarks", "Keyword Hits", "Call Logs"};
-    private static final String INT_ARTIFACT_TYPE_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getLabel();
-    private static final String INT_ARTIFACT_DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName();
+    private static final String INT_ARTIFACT_TYPE_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getLabel();
+    private static final String INT_ARTIFACT_DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getDisplayName();
     private BlackboardArtifact.Type artifactType;
 
     @Override
