@@ -183,10 +183,22 @@ public class CommAccountsDAO {
                     ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                     if (null != eventData
                             && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
-                        return true;
+                        
+                        // check that the update is for the same account type
+                        for (BlackboardArtifact artifact : eventData.getArtifacts()) {
+                            for (BlackboardAttribute atribute : artifact.getAttributes()) {
+                                if (atribute.getAttributeType() == BlackboardAttribute.Type.TSK_ACCOUNT_TYPE) {
+                                    if (atribute.getValueString().equals(params.getType().toString())) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
                     }
                 } catch (NoCurrentCaseException notUsed) {
                     // Case is closed, do nothing.
+                } catch (TskCoreException ex) {
+                    // There is nothing we can do with the exception.
                 }
             }
             return false;
