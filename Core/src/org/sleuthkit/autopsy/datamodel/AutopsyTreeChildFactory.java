@@ -149,7 +149,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                         new Views(Case.getCurrentCaseThrows().getSleuthkitCase()),
                         new DataArtifacts(),
                         new AnalysisResults(),
-                        new OsAccounts(Case.getCurrentCaseThrows().getSleuthkitCase()),
+                        new OsAccounts(),
                         new Tags(),
                         new Reports()
                 );
