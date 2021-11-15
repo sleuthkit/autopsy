@@ -175,8 +175,6 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(AttachmentNode node);
 
-    T visit(OsAccounts.OsAccountNode node);
-
     T visit(OsAccounts.OsAccountListNode node);
 
     T visit(PersonNode node);
@@ -496,11 +494,6 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(AttachmentNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(OsAccounts.OsAccountNode node) {
             return defaultVisit(node);
         }
 
