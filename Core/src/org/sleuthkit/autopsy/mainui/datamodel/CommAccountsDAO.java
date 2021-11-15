@@ -110,23 +110,23 @@ public class CommAccountsDAO {
     }   
 
     /**
-     * Returns a list of paged communication accounts results.
+     * Returns a list of paged artifacts.
      *
-     * @param accts         The communication accounts results.
+     * @param arts         The artifacts.
      * @param searchParams The search parameters including the paging.
      *
-     * @return The list of paged communication accounts results.
+     * @return The list of paged artifacts.
      */
-    List<Account> getPaged(List<Account> accts, SearchParams<?> searchParams) {
-        Stream<Account> pagedAcctsStream = accts.stream()
-                .sorted(Comparator.comparing((acct) -> acct.getAccountID()))
+    List<BlackboardArtifact> getPaged(List<? extends BlackboardArtifact> arts, SearchParams<?> searchParams) {
+        Stream<? extends BlackboardArtifact> pagedArtsStream = arts.stream()
+                .sorted(Comparator.comparing((art) -> art.getId()))
                 .skip(searchParams.getStartItem());
 
         if (searchParams.getMaxResultsCount() != null) {
-            pagedAcctsStream = pagedAcctsStream.limit(searchParams.getMaxResultsCount());
+            pagedArtsStream = pagedArtsStream.limit(searchParams.getMaxResultsCount());
         }
 
-        return pagedAcctsStream.collect(Collectors.toList());
+        return pagedArtsStream.collect(Collectors.toList());
     }
 
     long getTotalResultsCount(SearchParams<CommAccountsSearchParams> cacheKey, long currentPageSize) throws TskCoreException, NoCurrentCaseException {
@@ -158,7 +158,19 @@ public class CommAccountsDAO {
         List<BlackboardArtifact> allArtifacts = blackboard.getArtifacts(BlackboardArtifact.Type.TSK_ACCOUNT, 
                 BlackboardAttribute.Type.TSK_ACCOUNT_TYPE, type.getTypeName(), dataSourceId,
 			false); // ELTODO
+        
+        // get current page of artifacts
+        List<BlackboardArtifact> pagedArtifacts = getPaged(allArtifacts, cacheKey);
+        
+        // Populate the attributes for paged artifacts in the list. This is done using one database call as an efficient way to
+	// load many artifacts/attributes at once.
+        blackboard.loadBlackboardAttributes(pagedArtifacts);
         List<RowDTO> fileRows = new ArrayList<>();
+        
+        DataArtifactDAO dataArtDAO = MainDAO.getInstance().getDataArtifactsDAO();
+        BlackboardArtifactDAO.TableData tableData = dataArtDAO.createTableData(BlackboardArtifact.Type.TSK_ACCOUNT, pagedArtifacts);
+        return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_ACCOUNT, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), allArtifacts.size());
+        
         /*
         while (rs.next()) {
             tempList.add(rs.getLong("artifact_obj_id")); // NON-NLS
@@ -198,7 +210,6 @@ public class CommAccountsDAO {
         }
 
         return new BaseSearchResultsDTO(BlackboardArtifactTagsRowDTO.getTypeIdForClass(), Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allAccounts.size());*/
-        return null;
     }
     
     /**
