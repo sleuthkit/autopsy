@@ -136,8 +136,8 @@ public class TableSearchTest extends NbTestCase {
     private static final String EMAIL_A = "aaa@yahoo.com";
     private static final String EMAIL_B = "bbb@gmail.com";
     private static final String EMAIL_C = "ccc@funmail.com";
-    private static final String PHONENUM_1 = "111 777 1111";
-    private static final String PHONENUM_2 = "222 333 7777";
+    private static final String PHONENUM_1 = "1117771111";
+    private static final String PHONENUM_2 = "2223337777";
 
     /////////////////////////////////////////////////
     // Data to be used across the test methods.
@@ -509,9 +509,11 @@ public class TableSearchTest extends NbTestCase {
             // Add communication accounts
             openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_A, "Test Module", fileA1);
             openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_B, "Test Module", fileA2);
-            AccountFileInstance deviceAccount_2 = openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, "devId1", "Test Module", fileA2);
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, "devId1", "Test Module", fileA2);
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, PHONENUM_1, "Test Module", fileA2);
             
-            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_C, "Test Module", customFile);            
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_C, "Test Module", customFile);
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, PHONENUM_2, "Test Module", customFile);
 
         } catch (TestUtilsException | TskCoreException | BlackboardException | TagsManager.TagNameAlreadyExistsException | OsAccountManager.NotUserSIDException ex) {
             if (trans != null) {
@@ -633,23 +635,21 @@ public class TableSearchTest extends NbTestCase {
         assertTrue(db != null);
 
         try {
-            // Get all contacts
             CommAccountsDAO commAccountsDAO = MainDAO.getInstance().getCommAccountsDAO();
 
+            // Get emails from all data sources
             CommAccountsSearchParams param = new CommAccountsSearchParams(Account.Type.EMAIL, null);
             SearchResultsDTO results = commAccountsDAO.getCommAcounts(param, 0, null, false);
-            //assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
-            // Get contacts from data source 2
+            // Get device accounts from data source 1
             param = new CommAccountsSearchParams(Account.Type.DEVICE, dataSource1.getId());
             results = commAccountsDAO.getCommAcounts(param, 0, null, false);
-            //assertEquals(BlackboardArtifact.Type.TSK_CONTACT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
 
-            // Get bookmarks from data source 2
+            // Get email accounts from data source 2
             param = new CommAccountsSearchParams(Account.Type.EMAIL, dataSource2.getId());
             results = commAccountsDAO.getCommAcounts(param, 0, null, false);
             assertEquals(1, results.getTotalResultsCount());
@@ -665,8 +665,29 @@ public class TableSearchTest extends NbTestCase {
             assertTrue(rowDTO instanceof DataArtifactRowDTO);
             DataArtifactRowDTO accountResultRowDTO = (DataArtifactRowDTO) rowDTO;
 
-            // Check that some of the expected result tag column values are present
+            // Check that some of the expected result column values are present
             assertTrue(accountResultRowDTO.getCellValues().contains(EMAIL_C));            
+            assertTrue(accountResultRowDTO.getCellValues().contains(customFile.getName()));
+            
+            // Get phone accounts from all data sources
+            param = new CommAccountsSearchParams(Account.Type.PHONE, null);
+            results = commAccountsDAO.getCommAcounts(param, 0, null, false);
+            assertEquals(2, results.getTotalResultsCount());
+            assertEquals(2, results.getItems().size());
+
+            // Get phone accounts from data source 2
+            param = new CommAccountsSearchParams(Account.Type.PHONE, dataSource2.getId());
+            results = commAccountsDAO.getCommAcounts(param, 0, null, false);
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+            
+            // Get the row
+            rowDTO = results.getItems().get(0);
+            assertTrue(rowDTO instanceof DataArtifactRowDTO);
+            accountResultRowDTO = (DataArtifactRowDTO) rowDTO;
+
+            // Check that some of the expected result column values are present
+            assertTrue(accountResultRowDTO.getCellValues().contains(PHONENUM_2));            
             assertTrue(accountResultRowDTO.getCellValues().contains(customFile.getName()));            
             
         } catch (ExecutionException ex) {

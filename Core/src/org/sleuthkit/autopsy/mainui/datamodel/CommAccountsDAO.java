@@ -21,64 +21,38 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
-import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
-import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.Tag;
-import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Provides information to populate the results viewer for data in the 
  * Communication Accounts section.
  */
-@Messages({"CommAccountsDAO.fileColumns.originalName=Source Name",
-            "CommAccountsDAO.fileColumns.noDescription=No Description"})
+@Messages({"CommAccountsDAO.fileColumns.noDescription=No Description"})
 public class CommAccountsDAO {
 
     private static final int CACHE_SIZE = Account.Type.PREDEFINED_ACCOUNT_TYPES.size(); // number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;    
     private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-    
-    private static final List<ColumnKey> FILE_TAG_COLUMNS = Arrays.asList(
-            getFileColumnKey(Bundle.CommAccountsDAO_fileColumns_originalName()) // GVDTODO handle translation
-            );
 
     private static CommAccountsDAO instance = null;
 
@@ -90,10 +64,6 @@ public class CommAccountsDAO {
         return instance;
     }
 
-    private static ColumnKey getFileColumnKey(String name) {
-        return new ColumnKey(name, name, Bundle.CommAccountsDAO_fileColumns_noDescription());
-    }
-    
     public SearchResultsDTO getCommAcounts(CommAccountsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (key.getType() == null) {
             throw new IllegalArgumentException("Must have non-null type");
@@ -165,51 +135,10 @@ public class CommAccountsDAO {
         // Populate the attributes for paged artifacts in the list. This is done using one database call as an efficient way to
 	// load many artifacts/attributes at once.
         blackboard.loadBlackboardAttributes(pagedArtifacts);
-        List<RowDTO> fileRows = new ArrayList<>();
         
         DataArtifactDAO dataArtDAO = MainDAO.getInstance().getDataArtifactsDAO();
         BlackboardArtifactDAO.TableData tableData = dataArtDAO.createTableData(BlackboardArtifact.Type.TSK_ACCOUNT, pagedArtifacts);
         return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_ACCOUNT, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), allArtifacts.size());
-        
-        /*
-        while (rs.next()) {
-            tempList.add(rs.getLong("artifact_obj_id")); // NON-NLS
-        }
-
-        long totalResultsCount = getTotalResultsCount(cacheKey, numResults);
-
-
-        for (DataArtifact account : arts) {
-            Account blackboardTag = (Account) account;
-            
-            String name = blackboardTag.getContent().getName();  // As a backup.
-            try {
-                name = blackboardTag.getArtifact().getShortDescription();
-            } catch (TskCoreException ignore) {
-                // it's a WARNING, skip
-            }
-            
-            String contentPath;
-            try {
-                contentPath = blackboardTag.getContent().getUniquePath();
-            } catch (TskCoreException ex) {
-                contentPath = NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.unavail.text");
-            }
-
-            List<Object> cellValues = Arrays.asList(name,
-                    null, // GVDTODO translation column
-                    contentPath,
-                    blackboardTag.getArtifact().getDisplayName(),
-                    blackboardTag.getComment(),
-                    blackboardTag.getUserName());
-
-            fileRows.add(new BlackboardArtifactTagsRowDTO(
-                    blackboardTag,
-                    cellValues,
-                    blackboardTag.getId()));
-        }
-
-        return new BaseSearchResultsDTO(BlackboardArtifactTagsRowDTO.getTypeIdForClass(), Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allAccounts.size());*/
     }
     
     /**
