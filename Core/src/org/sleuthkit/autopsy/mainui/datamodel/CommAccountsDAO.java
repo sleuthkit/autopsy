@@ -115,7 +115,7 @@ public class CommAccountsDAO {
                 return blackboard.getArtifactsCount(artType.getTypeID());
             }
         }  
-    }    
+    }
     
     @NbBundle.Messages({"CommAccounts.name.text=Communication Accounts"})
     private SearchResultsDTO fetchCommAccountsDTOs(SearchParams<CommAccountsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException, SQLException {
@@ -127,7 +127,7 @@ public class CommAccountsDAO {
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         List<BlackboardArtifact> allArtifacts = blackboard.getArtifacts(BlackboardArtifact.Type.TSK_ACCOUNT, 
                 BlackboardAttribute.Type.TSK_ACCOUNT_TYPE, type.getTypeName(), dataSourceId,
-			false); // ELTODO
+			false); // GVDTODO handle approved/rejected account actions
         
         // get current page of artifacts
         List<BlackboardArtifact> pagedArtifacts = getPaged(allArtifacts, cacheKey);
