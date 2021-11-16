@@ -720,8 +720,12 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      */
     private class ModuleChangeListener implements PropertyChangeListener {
 
+        /**
+         * @SuppressWarnings("deprecation") - we need to support already
+         * existing interesting file and artifact hits.
+         */
+        @SuppressWarnings("deprecation")
         @Override
-        @SuppressWarnings("fallthrough")
         public void propertyChange(PropertyChangeEvent evt) {
             if (!shouldUpdate) {
                 String eventType = evt.getPropertyName();
@@ -746,7 +750,8 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                                 shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID(), eventData, objectsDetected);
                             } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                                 shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), eventData, hashSets);
-                            } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
+                            } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID()
+                                    || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
                                     || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
                                 shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), eventData, interestingItems);
                             }

@@ -73,6 +73,7 @@ public class AnnotationUtils {
         "AnnotationUtils.fileHitEntry.artifactCommentTitle=Artifact Comment",
         "AnnotationUtils.fileHitEntry.hashSetHitTitle=Hash Set Hit Comments",
         "AnnotationUtils.fileHitEntry.interestingFileHitTitle=Interesting File Hit Comments",
+        "AnnotationUtils.fileHitEntry.interestingItemTitle=Interesting Item Comments",
         "AnnotationUtils.fileHitEntry.setName=Set Name:",
         "AnnotationUtils.fileHitEntry.comment=Comment:",
         "AnnotationUtils.sourceFile.title=Source File",
@@ -94,8 +95,8 @@ public class AnnotationUtils {
     private static final SectionConfig<Tag> TAG_CONFIG
             = new SectionConfig<>(Bundle.AnnotationUtils_tagEntry_title(), TAG_ENTRIES);
 
-    // file set attributes and table configurations
-    private static final List<ItemEntry<BlackboardArtifact>> FILESET_HIT_ENTRIES = Arrays.asList(
+    // Item set attributes and table configurations
+    private static final List<ItemEntry<BlackboardArtifact>> ITEMSET_HIT_ENTRIES = Arrays.asList(
             new ItemEntry<>(Bundle.AnnotationUtils_fileHitEntry_setName(),
                     (bba) -> tryGetAttribute(bba, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME)),
             new ItemEntry<>(Bundle.AnnotationUtils_fileHitEntry_comment(),
@@ -103,13 +104,16 @@ public class AnnotationUtils {
     );
 
     private static final SectionConfig<BlackboardArtifact> INTERESTING_FILE_CONFIG
-            = new SectionConfig<>(Bundle.AnnotationUtils_fileHitEntry_interestingFileHitTitle(), FILESET_HIT_ENTRIES);
+            = new SectionConfig<>(Bundle.AnnotationUtils_fileHitEntry_interestingFileHitTitle(), ITEMSET_HIT_ENTRIES);
+
+    private static final SectionConfig<BlackboardArtifact> INTERESTING_ITEM_CONFIG
+            = new SectionConfig<>(Bundle.AnnotationUtils_fileHitEntry_interestingItemTitle(), ITEMSET_HIT_ENTRIES);
 
     private static final SectionConfig<BlackboardArtifact> HASHSET_CONFIG
-            = new SectionConfig<>(Bundle.AnnotationUtils_fileHitEntry_hashSetHitTitle(), FILESET_HIT_ENTRIES);
+            = new SectionConfig<>(Bundle.AnnotationUtils_fileHitEntry_hashSetHitTitle(), ITEMSET_HIT_ENTRIES);
 
     private static final SectionConfig<BlackboardArtifact> ARTIFACT_COMMENT_CONFIG
-            = new SectionConfig<>(Bundle.AnnotationUtils_fileHitEntry_artifactCommentTitle(), FILESET_HIT_ENTRIES);
+            = new SectionConfig<>(Bundle.AnnotationUtils_fileHitEntry_artifactCommentTitle(), ITEMSET_HIT_ENTRIES);
 
     // central repository attributes and table configuration
     private static final List<ItemEntry<CorrelationAttributeInstance>> CR_COMMENTS_ENTRIES = Arrays.asList(
@@ -199,7 +203,11 @@ public class AnnotationUtils {
      *                      comes.
      *
      * @return If any content was actually rendered.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     private static boolean renderArtifact(Element parent, BlackboardArtifact bba, Content sourceContent) {
         boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(bba), false, true);
 
@@ -211,7 +219,7 @@ public class AnnotationUtils {
 
         // if artifact is a hashset hit or interesting file and has a non-blank comment
         if ((BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() == bba.getArtifactTypeID()
-                || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID())
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID() || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID() == bba.getArtifactTypeID())
                 && (hasTskComment(bba))) {
 
             boolean filesetRendered = appendEntries(parent, ARTIFACT_COMMENT_CONFIG, Arrays.asList(bba), false, !contentRendered);
@@ -242,7 +250,11 @@ public class AnnotationUtils {
      *                      subheader as opposed to a top-level header.
      *
      * @return If any content was actually rendered.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     private static boolean renderContent(Element parent, Content sourceContent, boolean isSubheader) {
         boolean contentRendered = appendEntries(parent, TAG_CONFIG, getTags(sourceContent), isSubheader, true);
 
@@ -266,7 +278,12 @@ public class AnnotationUtils {
                     isSubheader,
                     !contentRendered);
 
-            contentRendered = contentRendered || hashsetRendered || interestingFileRendered;
+            boolean interestingItemRendered = appendEntries(parent, INTERESTING_ITEM_CONFIG,
+                    getFileSetHits(sourceFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM),
+                    isSubheader,
+                    !contentRendered);
+
+            contentRendered = contentRendered || hashsetRendered || interestingFileRendered || interestingItemRendered;
         }
         return contentRendered;
     }

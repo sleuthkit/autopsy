@@ -1340,7 +1340,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * DirectoryTreeTopComponent.viewArtifact, ViewContextAction
      *
      * @param art The artifact.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     public void viewArtifact(final BlackboardArtifact art) {
         int typeID = art.getArtifactTypeID();
         String typeName = art.getArtifactTypeName();
@@ -1367,6 +1371,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ITEM, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
             treeNode = getEmailNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {

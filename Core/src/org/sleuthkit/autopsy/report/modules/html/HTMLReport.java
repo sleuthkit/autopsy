@@ -213,7 +213,7 @@ public class HTMLReport implements TableReportModule {
      * Copies a suitable icon for the given data type in the output directory
      * and returns the icon file name to use for the given data type.
      */
-    @SuppressWarnings( "deprecation" )
+    @SuppressWarnings("deprecation")
     private String useDataTypeIcon(String dataType) {
         String iconFilePath;
         String iconFileName;
@@ -326,9 +326,10 @@ public class HTMLReport implements TableReportModule {
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/mismatch-16.png"); //NON-NLS
                     break;
                 case TSK_INTERESTING_ARTIFACT_HIT:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
-                    break;
+                //fall through deprecated type to TSK_INTERESTING_ITEM
                 case TSK_INTERESTING_FILE_HIT:
+                //fall through deprecated type to TSK_INTERESTING_ITEM
+                case TSK_INTERESTING_ITEM:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
                     break;
                 case TSK_PROG_RUN:
@@ -339,25 +340,25 @@ public class HTMLReport implements TableReportModule {
                     break;
                 case TSK_OS_ACCOUNT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/os-account.png"); //NON-NLS
-                    break;    
+                    break;
                 case TSK_OBJECT_DETECTED:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/objects.png"); //NON-NLS
-                    break; 
+                    break;
                 case TSK_WEB_FORM_AUTOFILL:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/web-form.png"); //NON-NLS
-                    break; 
+                    break;
                 case TSK_WEB_CACHE:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/cache.png"); //NON-NLS
-                    break; 
+                    break;
                 case TSK_USER_CONTENT_SUSPECTED:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/user-content.png"); //NON-NLS
-                    break; 
+                    break;
                 case TSK_METADATA:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/metadata.png"); //NON-NLS
-                    break; 
+                    break;
                 case TSK_CLIPBOARD_CONTENT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/clipboard.png"); //NON-NLS
-                    break; 
+                    break;
                 case TSK_ACCOUNT:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
                     break;
@@ -506,7 +507,7 @@ public class HTMLReport implements TableReportModule {
      * to this page, and setup the web page header. Note: This method is a
      * temporary workaround to avoid modifying the TableReportModule interface.
      *
-     * @param name Name of the data type
+     * @param name        Name of the data type
      * @param description Comment on the data type, may be the empty string
      */
     @Override
@@ -738,9 +739,9 @@ public class HTMLReport implements TableReportModule {
     /**
      * Add a row to the current table.
      *
-     * @param row values for each cell in the row
+     * @param row        values for each cell in the row
      * @param escapeText whether or not the text of the row should be escaped,
-     * true for escaped, false for not escaped
+     *                   true for escaped, false for not escaped
      */
     private void addRow(List<String> row, boolean escapeText) {
         StringBuilder builder = new StringBuilder();
@@ -763,9 +764,9 @@ public class HTMLReport implements TableReportModule {
 
     /**
      * Saves a local copy of a tagged file and adds a row with a hyper link to
-     * the file. 
+     * the file.
      *
-     * @param row Values for each data cell in the row
+     * @param row        Values for each data cell in the row
      * @param contentTag The tag
      */
     public void addRowWithTaggedContentHyperlink(List<String> row, ContentTag contentTag) {
@@ -825,6 +826,7 @@ public class HTMLReport implements TableReportModule {
      * Finds all associated image tags.
      *
      * @param contentTags
+     *
      * @return
      */
     private List<ImageTagRegion> getTaggedRegions(List<ContentTag> contentTags) {
@@ -1029,9 +1031,9 @@ public class HTMLReport implements TableReportModule {
     /**
      * Save a local copy of the given file in the reports folder.
      *
-     * @param file File to save
+     * @param file    File to save
      * @param dirName Custom top-level folder to use to store the files in (tag
-     * name, etc.)
+     *                name, etc.)
      *
      * @return Path to where file was stored (relative to root of HTML folder)
      */
@@ -1574,7 +1576,7 @@ public class HTMLReport implements TableReportModule {
      * @param file The file from which to create the thumbnail.
      *
      * @return The path to the thumbnail file, or null if a thumbnail couldn't
-     * be created.
+     *         be created.
      */
     private String prepareThumbnail(AbstractFile file) {
         BufferedImage bufferedThumb = ImageUtils.getThumbnail(file, ImageUtils.ICON_SIZE_MEDIUM);

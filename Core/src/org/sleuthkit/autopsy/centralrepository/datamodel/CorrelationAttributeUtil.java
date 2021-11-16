@@ -135,14 +135,18 @@ public class CorrelationAttributeUtil {
      *
      * @return A list, possibly empty, of correlation attribute instances for
      *         the AnalysisResult.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(AnalysisResult analysisResult) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
 
         if (CentralRepository.isEnabled()) {
             try {
                 int artifactTypeID = analysisResult.getArtifactTypeID();
-                if (artifactTypeID == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+                if (artifactTypeID == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() || artifactTypeID == ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID()) {
                     //because this attribute retrieval is only occuring when the analysis result is an interesting artifact hit 
                     //and only one attribute is being retrieved the analysis result's own get attribute method can be used efficently
                     BlackboardAttribute assocArtifactAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT);
