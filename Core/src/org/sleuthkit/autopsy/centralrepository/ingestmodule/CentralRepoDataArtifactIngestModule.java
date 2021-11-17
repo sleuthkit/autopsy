@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -64,7 +63,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
     private final boolean flagPrevSeenDevices;
     private final boolean flagUniqueArtifacts;
     private final boolean saveCorrAttrInstances;
-    private final Set<String> corrAttrValuesProcessed;
+    private final Set<String> corrAttrValuesAlreadyProcessed;
     private CentralRepository centralRepo;
     private IngestJobContext context;
 
@@ -82,7 +81,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
         flagPrevSeenDevices = settings.isFlagPreviousDevices();
         flagUniqueArtifacts = settings.isFlagUniqueArtifacts();
         saveCorrAttrInstances = settings.shouldCreateCorrelationProperties();
-        corrAttrValuesProcessed = new LinkedHashSet<>();
+        corrAttrValuesAlreadyProcessed = new LinkedHashSet<>();
     }
 
     @NbBundle.Messages({
@@ -131,13 +130,9 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
      */
     @Override
     public ProcessResult process(DataArtifact artifact) {
-        if (!flagNotableItems && !flagPrevSeenDevices && !flagUniqueArtifacts && !saveCorrAttrInstances) {
+        if (flagNotableItems || flagPrevSeenDevices || flagUniqueArtifacts || saveCorrAttrInstances) {
             for (CorrelationAttributeInstance corrAttr : CorrelationAttributeUtil.makeCorrAttrsToSave(artifact)) {
-                if (corrAttrValuesProcessed.add(corrAttr.toString())) {
-                    /*
-                     * The correlation attribute is not in set yet, so it has
-                     * not been processed yet.
-                     */
+                if (corrAttrValuesAlreadyProcessed.add(corrAttr.toString())) {
                     makeAnalysisResults(artifact, corrAttr);
                     if (saveCorrAttrInstances) {
                         try {
@@ -267,7 +262,7 @@ public class CentralRepoDataArtifactIngestModule implements DataArtifactIngestMo
                     }
                 }
             } catch (NoCurrentCaseException | TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Error getting OS accounts for data source %s (job ID=%d)", context.getDataSource(), context.getJobId()), ex);
+                LOGGER.log(Level.SEVERE, String.format("Error getting OS accounts for data source '%s' (job ID=%d)", context.getDataSource(), context.getJobId()), ex);
             }
         }
     }
