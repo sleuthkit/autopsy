@@ -609,9 +609,9 @@ final class RegexQuery implements KeywordSearchQuery {
         );
 
         if (originalKeyword.searchTermIsLiteral()) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.SUBSTRING.ordinal()));
         } else {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.REGEX.ordinal()));
         }
 
         try {
@@ -714,7 +714,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
 
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.REGEX.ordinal()));
 
         /*
          * Create an account instance.
