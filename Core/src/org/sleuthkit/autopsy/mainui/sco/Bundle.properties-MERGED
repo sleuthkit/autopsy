@@ -1,5 +1,6 @@
 SCOFetcher_comment_display_name=C
 SCOFetcher_count_display_name=O
+SCOFetcher_nodescription_text=No description
 SCOFetcher_occurrences_defaultDescription=No correlation properties found
 SCOFetcher_occurrences_multipleProperties=Multiple different correlation properties exist for this result
 SCOFetcher_score_display_name=S
@@ -7,3 +8,7 @@ SCOSupporter.valueLoading=value loading
 # {0} - significanceDisplayName
 SCOSupporter_getScorePropertyAndDescription_description=Has an {0} analysis result score
 SCOSupporter_nodescription_text=no description
+# {0} - occurrenceCount
+# {1} - attributeType
+SCOUtils_createSheet_count_description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}
+SCOUtils_createSheet_count_noCorrelationValues_description=Unable to find other occurrences because no value exists for the available correlation property

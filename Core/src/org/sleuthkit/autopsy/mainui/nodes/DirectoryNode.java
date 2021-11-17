@@ -18,18 +18,26 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.List;
 import java.util.Optional;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.DirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
+import org.sleuthkit.autopsy.mainui.sco.SCOUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskData;
 
 /**
  * A node representing a row for a Directory in the results table.
  */
-public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
+public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> implements SCOSupporter {
 
     /**
      * Simple node constructor.
@@ -81,5 +89,25 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
     @Override
     public boolean supportsContentTagAction() {
         return true;
+    }
+
+    @Override
+    public void updateSheet(List<NodeProperty<?>> newProps) {
+        super.updateSheet(newProps);
+    }
+
+    @Override
+    public Optional<Content> getContent() {
+        return Optional.ofNullable(getRowDTO().getContent());
+    }
+
+    @Override
+    public Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
+        return SCOUtils.getCountPropertyAndDescription(attribute, defaultDescription);
+    }
+
+    @Override
+    public DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
+        return SCOUtils.getCommentProperty(tags, attributes);
     }
 }

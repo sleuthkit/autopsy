@@ -95,7 +95,7 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
         // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
         // See JIRA-8099
         boolean encryptionDetected = false;
-        if(optionalSourceContent.isPresent()) {
+        if (optionalSourceContent.isPresent()) {
             if (optionalSourceContent.get() instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile) optionalSourceContent.get();
                 boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
@@ -104,39 +104,34 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
                 } catch (TskCoreException ex) {
                     // TODO
                 }
-                if(encryptionDetected) {
+                if (encryptionDetected) {
                     return Optional.of(file);
                 }
             }
         }
         return Optional.empty();
     }
-    
+
     @Override
     public Optional<List<Tag>> getAllTagsFromDatabase() {
         List<Tag> tags = new ArrayList<>();
         try {
             List<BlackboardArtifactTag> artifactTags = ContentNodeUtil.getArtifactTagsFromDatabase(getRowDTO().getArtifact());
-            if(!artifactTags.isEmpty()) {
+            if (!artifactTags.isEmpty()) {
                 tags.addAll(artifactTags);
             }
-            
+
             List<ContentTag> contentTags = ContentNodeUtil.getContentTagsFromDatabase(getRowDTO().getSrcContent());
-            if(!contentTags.isEmpty()) {
+            if (!contentTags.isEmpty()) {
                 tags.addAll(contentTags);
             }
-            
+
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to get content tags from database for Artifact id=" + getRowDTO().getArtifact().getId(), ex);
         }
-        if(!tags.isEmpty()) {
+        if (!tags.isEmpty()) {
             return Optional.of(tags);
         }
         return Optional.empty();
-    }
-    
-    @Override
-    public Logger getLogger() {
-        return logger;
     }
 }

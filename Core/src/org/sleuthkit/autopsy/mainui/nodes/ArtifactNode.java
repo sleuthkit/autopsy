@@ -19,23 +19,15 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.lang.ref.WeakReference;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
 import javax.swing.Action;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
@@ -50,8 +42,9 @@ import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import static org.sleuthkit.autopsy.mainui.nodes.BaseNode.backgroundTasksPool;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
-import org.sleuthkit.autopsy.mainui.nodes.sco.SCOFetcher;
-import org.sleuthkit.autopsy.mainui.nodes.sco.SCOSupporter;
+import org.sleuthkit.autopsy.mainui.sco.SCOFetcher;
+import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
+import org.sleuthkit.autopsy.mainui.sco.SCOUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -190,66 +183,14 @@ public abstract class ArtifactNode<T extends BlackboardArtifact, R extends Artif
         super.updateSheet(newProps);
     }
 
-    @Messages({
-        "# {0} - occurrenceCount",
-        "# {1} - attributeType",
-        "ArtifactNode_createSheet_count_description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}",
-        "ArtifactNode_createSheet_count_noCorrelationValues_description=Unable to find other occurrences because no value exists for the available correlation property"
-    })
     @Override
     public Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
-        Long count = -1L;
-        String description = defaultDescription;
-        try {
-            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
-                count = CentralRepository.getInstance().getCountCasesWithOtherInstances(attribute);
-                description = Bundle.ArtifactNode_createSheet_count_description(count, attribute.getCorrelationType().getDisplayName());
-            } else if (attribute != null) {
-                description = Bundle.ArtifactNode_createSheet_count_noCorrelationValues_description();
-            }
-        } catch (CentralRepoException ex) {
-            getLogger().log(Level.SEVERE, MessageFormat.format("Error querying central repository for other occurences count (artifact objID={0}, corrAttrType={1}, corrAttrValue={2})",
-                    getRowDTO().getArtifact().getId(),
-                    attribute.getCorrelationType(),
-                    attribute.getCorrelationValue()), ex);
-        } catch (CorrelationAttributeNormalizationException ex) {
-            getLogger().log(Level.SEVERE, MessageFormat.format("Error normalizing correlation attribute for central repository query (artifact objID={0}, corrAttrType={2}, corrAttrValue={3})",
-                    getRowDTO().getArtifact().getId(),
-                    attribute.getCorrelationType(),
-                    attribute.getCorrelationValue()), ex);
-        }
-        return Pair.of(count, description);
+        return SCOUtils.getCountPropertyAndDescription(attribute, defaultDescription);
     }
-    
+
     @Override
     public DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
-        /*
-         * Has a tag with a comment been applied to the artifact or its source
-         * content?
-         */
-        DataResultViewerTable.HasCommentStatus status = tags.size() > 0 ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-        for (Tag tag : tags) {
-            if (!StringUtils.isBlank(tag.getComment())) {
-                status = DataResultViewerTable.HasCommentStatus.TAG_COMMENT;
-                break;
-            }
-        }
-        /*
-         * Is there a comment in the CR for anything that matches the value and
-         * type of the specified attributes.
-         */
-        try {
-            if (CentralRepoDbUtil.commentExistsOnAttributes(attributes)) {
-                if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
-                    status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
-                } else {
-                    status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
-                }
-            }
-        } catch (CentralRepoException ex) {
-            getLogger().log(Level.SEVERE, "Attempted to Query CR for presence of comments in a Blackboard Artifact node and was unable to perform query, comment column will only reflect caseDB", ex);
-        }
-        return status;
+        return SCOUtils.getCommentProperty(tags, attributes);
     }
 
     /**

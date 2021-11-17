@@ -16,24 +16,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.nodes.sco;
+package org.sleuthkit.autopsy.mainui.sco;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Logger;
-import java.util.logging.Level;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.mainui.nodes.sco.Bundle;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.Tag;
 
 /**
- *
+ * An interface to be implemented by nodes that support the SCO columns.
  */
 public interface SCOSupporter {
 
@@ -41,23 +40,30 @@ public interface SCOSupporter {
         "SCOSupporter.valueLoading=value loading"})
     static final String NO_DESCR = Bundle.SCOSupporter_nodescription_text();
 
+    /**
+     * Return the content object for this SCOSupporter.
+     *
+     * @return A content object.
+     */
     default Optional<Content> getContent() {
         return Optional.empty();
     }
-    
+
+    /**
+     * Returns a list of all Tags that are associated with the node content.
+     *
+     * @return A list of Tags.
+     */
     default Optional<List<Tag>> getAllTagsFromDatabase() {
         return Optional.empty();
     }
-    
-    default void updateSheet(List<NodeProperty<?>> newProps) {
-        
-    }
 
     /**
+     * Update the sheet with the updated SCO columns.
      *
-     * @return
+     * @param newProps
      */
-    Logger getLogger();
+    void updateSheet(List<NodeProperty<?>> newProps);
 
     /**
      * Returns Score property for the content.
@@ -68,16 +74,12 @@ public interface SCOSupporter {
         "# {0} - significanceDisplayName",
         "SCOSupporter_getScorePropertyAndDescription_description=Has an {0} analysis result score"
     })
-    default Pair<Score, String> getScorePropertyAndDescription() {
+    default Pair<Score, String> getScorePropertyAndDescription() throws TskCoreException {
         Score score = Score.SCORE_UNKNOWN;
         Optional<Content> optional = getContent();
         if (optional.isPresent()) {
             Content content = optional.get();
-            try {
-                score = content.getAggregateScore();
-            } catch (TskCoreException ex) {
-                getLogger().log(Level.WARNING, "Unable to get aggregate score for content with id: " + content.getId(), ex);
-            }
+            score = content.getAggregateScore();
         }
 
         String significanceDisplay = score.getSignificance().getDisplayName();

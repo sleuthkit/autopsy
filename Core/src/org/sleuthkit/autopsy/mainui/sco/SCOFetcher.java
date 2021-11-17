@@ -1,11 +1,23 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2021 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.nodes.sco;
+package org.sleuthkit.autopsy.mainui.sco;
 
-import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +27,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.tuple.Pair;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -24,7 +35,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUti
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.autopsy.mainui.nodes.sco.SCOFetcher.SCOData;
+import org.sleuthkit.autopsy.mainui.sco.SCOFetcher.SCOData;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Content;
@@ -36,20 +47,29 @@ import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
+ * A Swingworker for fetching the SCO data for the given supporter.
  *
- * @author kelly
+ * The SwingWorkers can be executed as a normal SwingWorkers or passed a
+ * separate ExecutorService. Nodes should use the ExecutorService in BaseNode to
+ * avoid interrupting other SwingWorkers.
  */
 public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
 
     private final WeakReference<SCOSupporter> weakSupporterRef;
     private static final Logger logger = Logger.getLogger(SCOFetcher.class.getName());
-    
+
+    /**
+     * Construct a new SCOFetcher.
+     *
+     * @param weakSupporterRef A weak reference to a SCOSupporter.
+     */
     public SCOFetcher(WeakReference<SCOSupporter> weakSupporterRef) {
         this.weakSupporterRef = weakSupporterRef;
     }
 
     @NbBundle.Messages({"SCOFetcher_occurrences_defaultDescription=No correlation properties found",
-        "SCOFetcher_occurrences_multipleProperties=Multiple different correlation properties exist for this result"})
+        "SCOFetcher_occurrences_multipleProperties=Multiple different correlation properties exist for this result"
+    })
     @Override
     protected SCOData doInBackground() throws Exception {
         SCOSupporter scoSupporter = weakSupporterRef.get();
@@ -128,15 +148,15 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
                 logger.log(Level.SEVERE, "Unable to get the DataSource or OsAccountInstances from an OsAccount with ID: " + content.getId(), ex);
             }
         }
-        
+
         Optional<List<Tag>> optionalList = scoSupporter.getAllTagsFromDatabase();
-        
+
         DataResultViewerTable.HasCommentStatus commentStatus = DataResultViewerTable.HasCommentStatus.NO_COMMENT;
 
-        if(optionalList.isPresent()) {
+        if (optionalList.isPresent()) {
             commentStatus = scoSupporter.getCommentProperty(optionalList.get(), listOfPossibleAttributes);
         }
-        
+
         CorrelationAttributeInstance corInstance = null;
         if (CentralRepository.isEnabled()) {
             if (listOfPossibleAttributes.size() > 1) {
@@ -151,72 +171,87 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
         if (isCancelled()) {
             return null;
         }
-       
+
         return new SCOData(scoreAndDescription, commentStatus, countAndDescription);
     }
-    
+
     @Messages({
-        "SCOFetcher_score_display_name=S",
-        "SCOFetcher_comment_display_name=C",
-        "SCOFetcher_count_display_name=O"
-    
+        "SCOFetcher_nodescription_text=No description"
     })
     @Override
     public void done() {
         if (isCancelled() || UserPreferences.getHideSCOColumns()) {
             return;
         }
-        
+
+        SCOSupporter scoSupporter = weakSupporterRef.get();
+        if (scoSupporter == null) {
+            return;
+        }
+
+        Optional<Content> optional = scoSupporter.getContent();
+        if (optional.isPresent()) {
+            return;
+        }
+
         try {
             SCOData data = get();
-            
-            if(data == null) {
+
+            if (data == null) {
                 return;
             }
-            
+
             List<NodeProperty<?>> props = new ArrayList<>();
-            
-            if(data.getScoreAndDescription() != null) {
+
+            if (data.getScoreAndDescription() != null) {
                 props.add(new NodeProperty<>(
-                                Bundle.SCOFetcher_score_display_name(),
-                                Bundle.SCOFetcher_score_display_name(),
-                                data.getScoreAndDescription().getRight(),
-                                data.getScoreAndDescription().getLeft()));
+                        SCOUtils.SCORE_COLUMN_NAME,
+                        SCOUtils.SCORE_COLUMN_NAME,
+                        data.getScoreAndDescription().getRight(),
+                        data.getScoreAndDescription().getLeft()));
             }
-            
-            if(data.getComment() != null) {
+
+            if (data.getComment() != null) {
                 props.add(new NodeProperty<>(
-                                Bundle.SCOFetcher_comment_display_name(),
-                                Bundle.SCOFetcher_comment_display_name(),
-                                "",
-                                data.getComment()));
+                        SCOUtils.COMMENT_COLUMN_NAME,
+                        SCOUtils.COMMENT_COLUMN_NAME,
+                        Bundle.SCOFetcher_nodescription_text(),
+                        data.getComment()));
             }
-            
-            if(data.getCountAndDescription() != null) {
+
+            if (data.getCountAndDescription() != null) {
                 props.add(new NodeProperty<>(
-                                Bundle.SCOFetcher_count_display_name(),
-                                Bundle.SCOFetcher_count_display_name(),
-                                data.getCountAndDescription().getRight(),
-                                data.getCountAndDescription().getLeft()));
+                        SCOUtils.OCCURANCES_COLUMN_NAME,
+                        SCOUtils.OCCURANCES_COLUMN_NAME,
+                        data.getCountAndDescription().getRight(),
+                        data.getCountAndDescription().getLeft()));
             }
-            
-             SCOSupporter scoSupporter = weakSupporterRef.get();
-             
-            if(!props.isEmpty() && scoSupporter != null) {
-               scoSupporter.updateSheet(props);
+
+            if (!props.isEmpty()) {
+                scoSupporter.updateSheet(props);
             }
-            
+
         } catch (InterruptedException | ExecutionException ex) {
-            Exceptions.printStackTrace(ex);
-        } 
+            logger.log(Level.SEVERE, "Failed to update the SCO columns for content id=" + optional.get().getId(), ex);
+        }
     }
 
+    /**
+     * Class for passing the SCO data.
+     */
     public static class SCOData {
 
         private final Pair<Score, String> scoreAndDescription;
         private final DataResultViewerTable.HasCommentStatus comment;
         private final Pair<Long, String> countAndDescription;
 
+        /**
+         * Construct a new SCOData object.
+         *
+         * @param scoreAndDescription
+         * @param comment
+         * @param countAndDescription
+         */
         SCOData(Pair<Score, String> scoreAndDescription, DataResultViewerTable.HasCommentStatus comment, Pair<Long, String> countAndDescription) {
             this.scoreAndDescription = scoreAndDescription;
             this.comment = comment;

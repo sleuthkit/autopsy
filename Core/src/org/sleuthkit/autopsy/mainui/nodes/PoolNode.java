@@ -18,16 +18,25 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.lang.ref.WeakReference;
+import java.util.List;
+import java.util.Optional;
 import org.openide.nodes.Children;
+import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.PoolRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import static org.sleuthkit.autopsy.mainui.nodes.BaseNode.backgroundTasksPool;
+import org.sleuthkit.autopsy.mainui.sco.SCOFetcher;
+import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * A node representing a Pool.
  */
-public class PoolNode extends BaseNode<SearchResultsDTO, PoolRowDTO> {
+public class PoolNode extends BaseNode<SearchResultsDTO, PoolRowDTO> implements SCOSupporter {
 
     /**
      * Pool node constructor.
@@ -44,5 +53,22 @@ public class PoolNode extends BaseNode<SearchResultsDTO, PoolRowDTO> {
         setDisplayName(name);
         setShortDescription(name);
         setIconBaseWithExtension("org/sleuthkit/autopsy/images/pool-icon.png");
+    }
+
+    @Override
+    protected Sheet createSheet() {
+        Sheet sheet = super.createSheet();
+        backgroundTasksPool.submit(new SCOFetcher<>(new WeakReference<>(this)));
+        return sheet;
+    }
+
+    @Override
+    public Optional<Content> getContent() {
+        return Optional.ofNullable(getRowDTO().getContent());
+    }
+
+    @Override
+    public void updateSheet(List<NodeProperty<?>> newProps) {
+        super.updateSheet(newProps);
     }
 }

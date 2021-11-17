@@ -31,7 +31,6 @@ import org.sleuthkit.autopsy.datamodel.DataArtifactItem;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -59,22 +58,17 @@ public class DataArtifactNode extends ArtifactNode<DataArtifact, DataArtifactRow
     public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow, String iconPath) {
         super(tableData, artifactRow, tableData.getColumns(), createLookup(artifactRow), iconPath);
     }
-    
-    @Override
-    public Logger getLogger() {
-        return logger;
-    }
-    
+
     @Override
     public Optional<List<Tag>> getAllTagsFromDatabase() {
         try {
             List<BlackboardArtifactTag> artifactTags = ContentNodeUtil.getArtifactTagsFromDatabase(getRowDTO().getArtifact());
-            if(!artifactTags.isEmpty()) {
+            if (!artifactTags.isEmpty()) {
                 List<Tag> tags = new ArrayList<>();
                 tags.addAll(artifactTags);
                 return Optional.of(tags);
             }
-            
+
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to get content tags from database for Artifact id=" + getRowDTO().getArtifact().getId(), ex);
         }

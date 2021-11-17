@@ -38,8 +38,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
-import org.sleuthkit.autopsy.mainui.nodes.sco.SCOFetcher;
-import org.sleuthkit.autopsy.mainui.nodes.sco.SCOSupporter;
+import org.sleuthkit.autopsy.mainui.sco.SCOFetcher;
+import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * A node for representing an AbstractFile.
  */
 public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements SCOSupporter {
-    
+
     private static final Logger logger = Logger.getLogger(FileNode.class.getName());
 
     /**
@@ -202,32 +202,27 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
         backgroundTasksPool.submit(new SCOFetcher<>(new WeakReference<>(this)));
         return sheet;
     }
-    
-    @Override
-    public Logger getLogger() {
-        return logger;
-    }
-    
+
     @Override
     public Optional<Content> getContent() {
         return Optional.ofNullable(fileData.getAbstractFile());
     }
-    
+
     @Override
     public void updateSheet(List<NodeProperty<?>> newProps) {
         super.updateSheet(newProps);
     }
-    
+
     @Override
     public Optional<List<Tag>> getAllTagsFromDatabase() {
         try {
             List<ContentTag> contentTags = ContentNodeUtil.getContentTagsFromDatabase(fileData.getAbstractFile());
-            if(!contentTags.isEmpty()) {
+            if (!contentTags.isEmpty()) {
                 List<Tag> tags = new ArrayList<>();
                 tags.addAll(contentTags);
                 return Optional.of(tags);
             }
-            
+
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to get content tags from database for AbstractFile id=" + fileData.getAbstractFile().getId(), ex);
         }
