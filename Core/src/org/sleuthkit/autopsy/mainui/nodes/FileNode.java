@@ -207,17 +207,17 @@ public class FileNode extends AbstractNode implements ActionContext {
             LayoutFile lf = ((LayoutFileRowDTO) fileData).getLayoutFile();
             switch (lf.getType()) {
                 case CARVED:
-                    setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png");
+                    setIconBaseWithExtension(NodeIconUtil.CARVED_FILE.getPath());
                     break;
                 case LAYOUT_FILE:
                     if (lf.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-                        setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+                        setIconBaseWithExtension(NodeIconUtil.DELETED_FILE.getPath());
                     } else {
                         setIconBaseWithExtension(getIconForFileType(layoutFileRow.getExtensionMediaType()));
                     }
                     break;
                 default:
-                    setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+                    setIconBaseWithExtension(NodeIconUtil.DELETED_FILE.getPath());
             }
         }
     }
@@ -236,9 +236,9 @@ public class FileNode extends AbstractNode implements ActionContext {
             AbstractFile file = fileData.getAbstractFile();
             if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
                 if (file.getType().equals(TSK_DB_FILES_TYPE_ENUM.CARVED)) {
-                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
+                    this.setIconBaseWithExtension(NodeIconUtil.CARVED_FILE.getPath()); //NON-NLS
                 } else {
-                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+                    this.setIconBaseWithExtension(NodeIconUtil.DELETED_FILE.getPath()); //NON-NLS
                 }
             } else {
                 this.setIconBaseWithExtension(getIconForFileType(fileData.getExtensionMediaType()));

@@ -34,6 +34,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.nodes.FileSystemFactory;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
@@ -69,7 +70,8 @@ public class DataSourceFilesNode extends DisplayableItemNode {
     }
 
     public DataSourceFilesNode(long dsObjId) {
-        super(Children.create(new DataSourcesNodeChildren(dsObjId), true), Lookups.singleton(NAME));
+        //super(Children.create(new DataSourcesNodeChildren(dsObjId), true), Lookups.singleton(NAME));
+        super(Children.create(new FileSystemFactory.DataSourceFactory(dsObjId), true), Lookups.singleton(NAME));
         displayName = (dsObjId > 0) ? NbBundle.getMessage(DataSourceFilesNode.class, "DataSourcesNode.group_by_datasource.name") : NAME;
         init();
     }

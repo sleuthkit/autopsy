@@ -21,16 +21,23 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.DirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.ImageRowDTO;
@@ -44,7 +51,9 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.PoolRowDTO;
 import static org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.getExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
@@ -56,6 +65,7 @@ import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
@@ -69,7 +79,7 @@ public class FileSystemDAO {
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
     private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-
+    
     private static final String FILE_SYSTEM_TYPE_ID = "FILE_SYSTEM";
 
     private static FileSystemDAO instance = null;
@@ -116,7 +126,7 @@ public class FileSystemDAO {
 
         parentName = parentContent.getName();
         for (Content content : parentContent.getChildren()) {
-            contentForTable.addAll(FileSystemColumnUtils.getNextDisplayableContent(content));
+            contentForTable.addAll(FileSystemColumnUtils.getDisplayableContentForTable(content));
         }
 
         return fetchContentForTable(cacheKey, contentForTable, parentName);
@@ -230,7 +240,7 @@ public class FileSystemDAO {
                 rows.add(new FileRowDTO(
                         file,
                         file.getId(),
-                        file.getName(),
+                        FileSystemColumnUtils.convertDotDirName(file),
                         file.getNameExtension(),
                         getExtensionMediaType(file.getNameExtension()),
                         file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
@@ -289,6 +299,101 @@ public class FileSystemDAO {
         }
 
         return searchParamsCache.get(searchParams, () -> fetchHostsForTable(searchParams));
+    }
+    
+    public TreeResultsDTO<FileSystemContentSearchParam> getDataSourcesForHost(Host host) throws ExecutionException {
+        try {
+            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
+            for (DataSource ds : Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getDataSourcesForHost(host)) {
+                treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
+                        ds.getClass().getSimpleName(),
+                        new FileSystemContentSearchParam(ds.getId()),
+                        ds,
+                        ds.getName(),
+                        null
+                ));
+                // TODO sort
+            }
+            
+            return new TreeResultsDTO<>(treeItemRows);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching images for host with ID " + host.getHostId(), ex);
+        }
+    }
+    
+    public TreeResultsDTO<FileSystemContentSearchParam> getSingleDataSource(long dataSourceObjId) throws ExecutionException {
+        try {
+            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
+            DataSource ds = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(dataSourceObjId);
+            treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
+                    ds.getClass().getSimpleName(),
+                    new FileSystemContentSearchParam(ds.getId()),
+                    ds,
+                    ds.getName(),
+                    null
+            ));
+            
+            return new TreeResultsDTO<>(treeItemRows);
+        } catch (NoCurrentCaseException | TskCoreException | TskDataException ex) {
+            throw new ExecutionException("An error occurred while fetching data source with ID " + dataSourceObjId, ex);
+        }
+    }
+    
+    /**
+     * TODO
+     *
+     * @param contentId Object ID of parent content.
+     *
+     * @return 
+     *
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<FileSystemContentSearchParam> getDisplayableContentChildren(Long contentId) throws ExecutionException {
+        try {
+            
+            List<Content> treeChildren = FileSystemColumnUtils.getVisibleTreeNodeChildren(contentId);
+            
+            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
+            for (Content child : treeChildren) {
+                Long countForNode = null;
+                if ((child instanceof AbstractFile)
+                        && ! (child instanceof LocalFilesDataSource)) {
+                    countForNode = new Long(child.getChildrenCount()); // TODO probably not correct
+                }
+                // public TreeItemDTO(String typeId, T typeData, Object id, String displayName, Long count) {
+                System.out.println("### Creating TreeItemDTO for " + child.getClass().getSimpleName() 
+                        + " child with name: " + child.getName()
+                        + " and ID: " + child.getId());
+                treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
+                        child.getClass().getSimpleName(),
+                        new FileSystemContentSearchParam(child.getId()),
+                        child,
+                        child.getName(),
+                        countForNode
+                ));
+                // TODO sort
+            }
+            
+            // get row dto's sorted by display name
+            //Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.DATA_ARTIFACT, dataSourceId);
+            //List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = typeCounts.entrySet().stream()
+            //        .map(entry -> {
+             //           return new TreeResultsDTO.TreeItemDTO<>(
+             //                   BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+             //                   new DataArtifactSearchParam(entry.getKey(), dataSourceId),
+             //                   entry.getKey().getTypeID(),
+             //                   entry.getKey().getDisplayName(),
+             //                   entry.getValue());
+             //       })
+             //       .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
+             //       .collect(Collectors.toList());
+
+            // return results
+            return new TreeResultsDTO<>(treeItemRows);
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
+        }
     }
 
     /**

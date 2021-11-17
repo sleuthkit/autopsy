@@ -36,6 +36,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.nodes.FileSystemFactory;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**

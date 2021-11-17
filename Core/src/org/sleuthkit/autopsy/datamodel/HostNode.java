@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.MergeHostMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.RemoveParentPersonAction;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
+import org.sleuthkit.autopsy.mainui.nodes.FileSystemFactory;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
@@ -221,7 +222,9 @@ public class HostNode extends DisplayableItemNode implements SelectionResponder{
      * @param hosts The HostDataSources key.
      */
     HostNode(HostDataSources hosts) {
-        this(Children.create(new HostGroupingChildren(HOST_DATA_SOURCES, hosts.getHost()), true), hosts.getHost());
+        //super(Children.create(new FileSystemFactory(dsObjId), true), Lookups.singleton(NAME));
+        this(Children.create(new FileSystemFactory(hosts.getHost()), true), hosts.getHost());
+        //this(Children.create(new HostGroupingChildren(HOST_DATA_SOURCES, hosts.getHost()), true), hosts.getHost());
     }
 
     /**

@@ -18,29 +18,41 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Pool;
+import org.sleuthkit.datamodel.SlackFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Utility class for creating consistent table data.
  */
-class FileSystemColumnUtils {
+public class FileSystemColumnUtils {
     
     private static final Logger logger = Logger.getLogger(FileSystemColumnUtils.class.getName());
     
@@ -288,10 +300,24 @@ class FileSystemColumnUtils {
             return pool.getType().getName(); // We currently use the type name for both the name and type fields
         } else if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile)content;
-            return file.getName(); // GVDTODO handle . and .. from getContentDisplayName()
+            return convertDotDirName(file);
         }
         return content.getName();
     }
+    
+    
+    @NbBundle.Messages({
+        "FileSystemColumnUtils.getContentName.dotDir=[current folder]",
+        "FileSystemColumnUtils.getContentName.dotDotDir=[parent folder]",
+    })
+    public static String convertDotDirName(AbstractFile file) {
+        if (file.getName().equals("..")) {
+            return Bundle.FileSystemColumnUtils_getContentName_dotDotDir();
+        } else if (file.getName().equals(".")) {
+            return Bundle.FileSystemColumnUtils_getContentName_dotDir();
+        }
+        return file.getName();
+    }    
     
     /**
      * Get the column keys for an abstract file object.
@@ -490,8 +516,27 @@ class FileSystemColumnUtils {
      * 
      * @return List of content to add to the table.
      */
-    static List<Content> getNextDisplayableContent(Content content) throws TskCoreException {
+    static List<Content> getDisplayableContentForTable(Content content) throws TskCoreException {
         
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            // Skip known files if requested
+            if (UserPreferences.hideKnownFilesInDataSourcesTree() 
+                    && file.getKnown().equals(TskData.FileKnown.KNOWN)) {
+                return new ArrayList<>();
+            }
+            
+            // Skip slack files if requested
+            if (UserPreferences.hideSlackFilesInDataSourcesTree()
+                    && file instanceof SlackFile) {
+                return new ArrayList<>();
+            }
+        }
+        
+        return getDisplayableContentForTableAndTree(content);
+    }
+    
+    static List<Content> getDisplayableContentForTableAndTree(Content content) throws TskCoreException {    
         // If the given content is displayable, return it
         if (FileSystemColumnUtils.isDisplayable(content)) {
             return Arrays.asList(content);
@@ -541,4 +586,70 @@ class FileSystemColumnUtils {
         return new ColumnKey(name, name, Bundle.FileSystemColumnUtils_noDescription());
     }
     
+    public static List<Content> getVisibleTreeNodeChildren(Long contentId) throws TskCoreException, NoCurrentCaseException {
+        SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        Content content = skCase.getContentById(contentId);
+        System.out.println("### getting displayable children for " + content.getClass().getSimpleName()
+            + " with ID " + contentId);
+        List<Content> originalChildren = content.getChildren();
+        // TODO so much filtering
+
+        // First, advance past anything we don't display (volume systems, file systems, root folders)
+        List<Content> treeChildren = new ArrayList<>();
+        for (Content child : originalChildren) {
+            treeChildren.addAll(FileSystemColumnUtils.getDisplayableContentForTableAndTree(child)); // TODO known, slack
+        }
+            
+        // Filter out the . and .. directories
+        for (Iterator<Content> iter = treeChildren.listIterator(); iter.hasNext(); ) {
+            Content c = iter.next();
+            if ((c instanceof AbstractFile) && ContentUtils.isDotDirectory((AbstractFile)c)) {
+                iter.remove();
+            }
+        }
+
+        // Filter out any files without children
+        for (Iterator<Content> iter = treeChildren.listIterator(); iter.hasNext(); ) {
+            Content c = iter.next();
+            if (c instanceof AbstractFile && (! hasDisplayableContentChildren((AbstractFile)c))) {
+                iter.remove();
+            }
+        }
+            
+        // sort? maybe sort earlier... 
+        return treeChildren;
+    }
+    
+   private static boolean hasDisplayableContentChildren(AbstractFile file) {
+        if (file != null) {
+            try {
+                if (!file.hasChildren()) {
+                    return false;
+                }
+            } catch (TskCoreException ex) {
+
+                //logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + c, ex); //NON-NLS
+                return false;
+            }
+
+            String query = "SELECT COUNT(obj_id) AS count FROM "
+                    + " ( SELECT obj_id FROM tsk_objects WHERE par_obj_id = " + file.getId() + " AND type = "
+                    + TskData.ObjectType.ARTIFACT.getObjectType()
+                    + "   INTERSECT SELECT artifact_obj_id FROM blackboard_artifacts WHERE obj_id = " + file.getId()
+                    + "     AND (artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
+                    + " OR artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() + ") "
+                    + "   UNION SELECT obj_id FROM tsk_objects WHERE par_obj_id = " + file.getId()
+                    + "     AND type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + ") AS OBJECT_IDS"; //NON-NLS;
+
+            try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                if (resultSet.next()) {
+                    return (0 < resultSet.getInt("count"));
+                }
+            } catch (TskCoreException | SQLException | NoCurrentCaseException ex) {
+                //logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + c, ex); //NON-NLS
+            }
+        }
+        return false;
+    }    
 }

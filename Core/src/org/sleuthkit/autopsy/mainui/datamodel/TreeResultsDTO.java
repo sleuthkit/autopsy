@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A list of items to display in the tree.
@@ -54,6 +55,7 @@ public class TreeResultsDTO<T> {
         private final Long count;
         private final T typeData;
         private final Object id;
+        //private final Optional<Long> contentId;
 
         /**
          * Main constructor.
@@ -76,6 +78,19 @@ public class TreeResultsDTO<T> {
             this.typeData = typeData;
         }
 
+        //public TreeItemDTO(String typeId, T typeData, Object id, String displayName, Long count, Long contentId) {
+        //    this.typeId = typeId;
+        //    this.id = id;
+        //    this.displayName = displayName;
+        //    this.count = count;
+        //    this.typeData = typeData;
+        //    this.contentId = Optional.ofNullable(contentId);
+        //}
+        
+        //public Optional<Long> getContentId() {
+         //   return contentId;
+        //}
+        
         /**
          * @return The display name of this row.
          */
@@ -114,7 +129,5 @@ public class TreeResultsDTO<T> {
         public String getTypeId() {
             return typeId;
         }
-        
-        
     }
 }
