@@ -363,7 +363,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                                 searchParams.getDataSourceId(),
                                 searchParams.getSetName(),
                                 null, // ELTODO this should be set for exact match (searchParams.searchtype == 0) instead of regex
-                                searchParams.getSearchTerm()));
+                                searchParams.getSearchTerm(),
+                                searchParams.getSearchType()));
             } else {
                 super.respondSelection(dataResultPanel);
             }
@@ -434,7 +435,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     searchParams.getDataSourceId(),
                     searchParams.getSetName(),
                     searchParams.getKeywordMatch(),
-                    searchParams.getSearchTerm()));
+                    searchParams.getSearchTerm(),
+                    searchParams.getSearchType()));
         }
 
     }

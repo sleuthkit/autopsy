@@ -252,9 +252,9 @@ class LuceneQuery implements KeywordSearchQuery {
             }
 
             if (originalKeyword.searchTermIsWholeWord()) {
-                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.LITERAL.ordinal()));
+                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.LITERAL.getType()));
             } else {
-                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.SUBSTRING.ordinal()));
+                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.SUBSTRING.getType()));
             }
         }
 

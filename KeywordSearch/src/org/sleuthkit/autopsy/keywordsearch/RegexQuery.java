@@ -714,7 +714,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
 
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.REGEX.ordinal()));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.REGEX.getType()));
 
         /*
          * Create an account instance.

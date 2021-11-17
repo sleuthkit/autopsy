@@ -367,6 +367,7 @@ public class TableSearchTest extends NbTestCase {
             attrs.clear();
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME, MODULE_NAME, KEYWORD_SET_1));
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_KEYWORD, MODULE_NAME, "keyword1"));
+            attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.LITERAL.getType()));
             fileA1.newAnalysisResult(
                     BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_NOTABLE, 
                     null, KEYWORD_SET_1, null, attrs);  
@@ -374,6 +375,7 @@ public class TableSearchTest extends NbTestCase {
             attrs.clear();
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME, MODULE_NAME, KEYWORD_SET_2));
             attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_KEYWORD, MODULE_NAME, "keyword2"));
+            attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.LITERAL.getType()));
             fileA3.newAnalysisResult(
                     BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_NOTABLE, 
                     null, KEYWORD_SET_2, null, attrs);
@@ -968,13 +970,13 @@ public class TableSearchTest extends NbTestCase {
         try {
             // Test keyword set hits
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
-            KeywordHitSearchParam kwParam = new KeywordHitSearchParam(null, KEYWORD_SET_1, "", "");
+            KeywordHitSearchParam kwParam = new KeywordHitSearchParam(null, KEYWORD_SET_1, "", "", TskData.KeywordSearchQueryType.LITERAL);
             AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getKeywordHitsForTable(kwParam, 0, null, false);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(2, results.getTotalResultsCount());
             assertEquals(2, results.getItems().size());
             
-            kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_1, "", "");
+            kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_1, "", "", TskData.KeywordSearchQueryType.LITERAL);
             results = analysisResultDAO.getKeywordHitsForTable(kwParam, 0, null, false);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());

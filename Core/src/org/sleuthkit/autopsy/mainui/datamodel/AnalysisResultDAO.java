@@ -576,7 +576,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
                         items.add(new TreeItemDTO<>(
                                 "KEYWORD_SEARCH_TERMS",
-                                new KeywordSearchTermParams(setName, searchTerm, searchType, hasChildren, dataSourceId),
+                                new KeywordSearchTermParams(setName, searchTerm,  TskData.KeywordSearchQueryType.valueOf(searchType), hasChildren, dataSourceId),
                                 searchTermModified,
                                 searchTermModified,
                                 count
@@ -608,7 +608,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * @throws IllegalArgumentException
      * @throws ExecutionException
      */
-    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, int searchType, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, TskData.KeywordSearchQueryType searchType, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         if (dataSourceId != null && dataSourceId <= 0) {
             throw new IllegalArgumentException("Expected data source id to be > 0");
         }
@@ -655,7 +655,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             }
 
             preparedStatement.setString(++paramIdx, regexStr);
-            preparedStatement.setInt(++paramIdx, searchType);
+            preparedStatement.setInt(++paramIdx, searchType.ordinal());
 
             List<TreeItemDTO<KeywordMatchParams>> items = new ArrayList<>();
             getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
