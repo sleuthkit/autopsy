@@ -10,6 +10,7 @@ AnnotationUtils.fileHitEntry.artifactCommentTitle=Artifact Comment
 AnnotationUtils.fileHitEntry.comment=Comment:
 AnnotationUtils.fileHitEntry.hashSetHitTitle=Hash Set Hit Comments
 AnnotationUtils.fileHitEntry.interestingFileHitTitle=Interesting File Hit Comments
+AnnotationUtils.fileHitEntry.interestingItemTitle=Interesting Item Comments
 AnnotationUtils.fileHitEntry.setName=Set Name:
 AnnotationUtils.onEmpty=No annotations were found for this particular item.
 AnnotationUtils.sourceFile.title=Source File
