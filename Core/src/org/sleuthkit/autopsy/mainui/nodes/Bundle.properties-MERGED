@@ -1,4 +1,8 @@
 AnalysisResultTypeFactory_adHocName=Adhoc Results
+# {0} - occurrenceCount
+# {1} - attributeType
+ArtifactNode_createSheet_count_description=There were {0} datasource(s) found with occurrences of the correlation value of type {1}
+ArtifactNode_createSheet_count_noCorrelationValues_description=Unable to find other occurrences because no value exists for the available correlation property
 ImageNode_ExtractUnallocAction_text=Extract Unallocated Space to Single Files
 SearchResultRootNode_createSheet_childCount_displayName=Child Count
 SearchResultRootNode_createSheet_childCount_name=Child Count

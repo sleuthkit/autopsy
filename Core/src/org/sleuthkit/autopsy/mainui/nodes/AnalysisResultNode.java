@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AnalysisResultItem;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
@@ -30,7 +34,10 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultTableSearchResultsDT
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -58,7 +65,7 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
      * @param iconPath  The path for the node icon.
      */
     AnalysisResultNode(AnalysisResultTableSearchResultsDTO tableData, AnalysisResultRowDTO resultRow, String iconPath) {
-        super(resultRow, tableData.getColumns(), tableData.getArtifactType(), createLookup(resultRow), iconPath);
+        super(tableData, resultRow, tableData.getColumns(), createLookup(resultRow), iconPath);
     }
 
     /**
@@ -103,5 +110,33 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
             }
         }
         return Optional.empty();
+    }
+    
+    @Override
+    public Optional<List<Tag>> getAllTagsFromDatabase() {
+        List<Tag> tags = new ArrayList<>();
+        try {
+            List<BlackboardArtifactTag> artifactTags = ContentNodeUtil.getArtifactTagsFromDatabase(getRowDTO().getArtifact());
+            if(!artifactTags.isEmpty()) {
+                tags.addAll(artifactTags);
+            }
+            
+            List<ContentTag> contentTags = ContentNodeUtil.getContentTagsFromDatabase(getRowDTO().getSrcContent());
+            if(!contentTags.isEmpty()) {
+                tags.addAll(contentTags);
+            }
+            
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to get content tags from database for Artifact id=" + getRowDTO().getArtifact().getId(), ex);
+        }
+        if(!tags.isEmpty()) {
+            return Optional.of(tags);
+        }
+        return Optional.empty();
+    }
+    
+    @Override
+    public Logger getLogger() {
+        return logger;
     }
 }
