@@ -126,7 +126,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
-    // TODO We can probably combine all the caches at some point
+    // ELTODO We can probably combine all the caches at some point
     private final Cache<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
@@ -149,21 +149,33 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
 
-    private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(SearchParams<? extends AnalysisResultSetSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(SearchParams<? extends AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
+        
+        KeywordHitSearchParam searchParams = (KeywordHitSearchParam) cacheKey.getParamData();
 
-        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
-        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
+        Long dataSourceId = searchParams.getDataSourceId();
+        BlackboardArtifact.Type artType = searchParams.getArtifactType();
 
         // We currently can't make a query on the set name field because need to use a prepared statement
-        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() + " ";
-        if (dataSourceId != null) {
-            originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
+        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID()
+                + (dataSourceId != null ? " AND artifacts.data_source_obj_id = " + dataSourceId : "")
+                + " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
+                + " AND blackboard_attributes.value_int32 = " + searchParams.getSearchType().getType(); //NON-NLS
+        
+        if (searchParams.getKeyword() != null && !searchParams.getKeyword().isEmpty()) {
+                originalWhereClause += " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()//NON-NLS
+                        + " AND blackboard_attributes.value_text = " + searchParams.getKeyword();
         }
-
-        String expectedSetName = cacheKey.getParamData().getSetName();
+        
+        if (searchParams.getRegex() != null && !searchParams.getRegex().isEmpty()) {
+                originalWhereClause += " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID() //NON-NLS
+                        + " AND blackboard_attributes.value_text = " + searchParams.getRegex();
+        }
+        
+        String expectedSetName = searchParams.getSetName();
 
         List<BlackboardArtifact> allHashHits = new ArrayList<>();
         allHashHits.addAll(blackboard.getAnalysisResultsWhere(originalWhereClause));
@@ -655,7 +667,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             }
 
             preparedStatement.setString(++paramIdx, regexStr);
-            preparedStatement.setInt(++paramIdx, searchType.ordinal());
+            preparedStatement.setInt(++paramIdx, searchType.getType());
 
             List<TreeItemDTO<KeywordMatchParams>> items = new ArrayList<>();
             getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {

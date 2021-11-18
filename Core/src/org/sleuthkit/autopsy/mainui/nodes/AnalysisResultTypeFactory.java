@@ -362,8 +362,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                         new KeywordHitSearchParam(
                                 searchParams.getDataSourceId(),
                                 searchParams.getSetName(),
-                                null, // ELTODO this should be set for exact match (searchParams.searchtype == 0) instead of regex
                                 searchParams.getSearchTerm(),
+                                null,
                                 searchParams.getSearchType()));
             } else {
                 super.respondSelection(dataResultPanel);
