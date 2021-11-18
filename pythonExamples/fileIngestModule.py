@@ -129,12 +129,12 @@ class SampleJythonFileIngestModule(FileIngestModule):
             self.log(Level.INFO, "Found a text file: " + file.getName())
             self.filesFound+=1
 
-            # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
+            # Make an artifact on the blackboard.  TSK_INTERESTING_ITEM is a generic type of
             # artifact.  Refer to the developer docs for other examples.
             attrs = Arrays.asList(BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
                   SampleJythonFileIngestModuleFactory.moduleName, "Text Files"))
 
-            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE,
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE,
                                          None, "Text Files", None, attrs).getAnalysisResult()
 
             try:
@@ -145,7 +145,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
             # For the example (this wouldn't be needed normally), we'll query the blackboard for data that was added
             # by other modules. We then iterate over its attributes.  We'll just print them, but you would probably
             # want to do something with them.
-            artifactList = file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
+            artifactList = file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM)
             for artifact in artifactList:
                 attributeList = artifact.getAttributes()
                 for attrib in attributeList:

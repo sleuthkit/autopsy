@@ -25,18 +25,12 @@ import java.util.List;
 import javax.swing.Action;
 
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
-import org.sleuthkit.autopsy.actions.DeleteBlackboardArtifactTagAction;
-import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.actions.ReplaceBlackboardArtifactTagAction;
-import org.sleuthkit.autopsy.actions.ReplaceContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.datamodel.OsAccounts.OsAccountNode;
 import org.sleuthkit.autopsy.datamodel.Reports.ReportNode;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -44,11 +38,10 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.mainui.nodes.OsAccountNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
@@ -372,18 +365,6 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        return actionsList;
-    }
-    
-    public static List<Action> getActions(OsAccount osAccount) {
-        List<Action> actionsList = new ArrayList<>();
-        
-        OsAccountNode node = new OsAccountNode(osAccount);
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, node));
-        actionsList.add(null);
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }

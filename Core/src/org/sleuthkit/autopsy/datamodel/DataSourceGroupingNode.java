@@ -79,7 +79,7 @@ class DataSourceGroupingNode extends DisplayableItemNode {
                     new Views(Case.getCurrentCaseThrows().getSleuthkitCase(), dsObjId),
                     new DataArtifacts(dsObjId),
                     new AnalysisResults(dsObjId),
-                    new OsAccounts(Case.getCurrentCaseThrows().getSleuthkitCase(), dsObjId),
+                    new OsAccounts(dsObjId),
                     new Tags(dsObjId)
             ));
 

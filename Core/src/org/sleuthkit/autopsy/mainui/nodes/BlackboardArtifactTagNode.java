@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.text.MessageFormat;
 import java.util.List;
-import org.openide.nodes.AbstractNode;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -30,23 +34,28 @@ import org.sleuthkit.autopsy.datamodel.DataArtifactItem;
 import org.sleuthkit.autopsy.mainui.datamodel.BlackboardArtifactTagsRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A node representing a BlackboardArtifactTag.
  */
-public final class BlackboardArtifactTagNode extends AbstractNode {
+public final class BlackboardArtifactTagNode extends BaseNode<SearchResultsDTO, BlackboardArtifactTagsRowDTO> {
 
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/green-tag-icon-16.png"; //NON-NLS
     private final BlackboardArtifactTagsRowDTO rowData;
     private final List<ColumnKey> columns;
 
+    private static final Logger logger = Logger.getLogger(BlackboardArtifactTagNode.class.getName());
+
     public BlackboardArtifactTagNode(SearchResultsDTO results, BlackboardArtifactTagsRowDTO rowData) {
-        super(Children.LEAF, createLookup(rowData.getTag()));
+        super(Children.LEAF, createLookup(rowData.getTag()), results, rowData);
         this.rowData = rowData;
         this.columns = results.getColumns();
         setDisplayName(rowData.getDisplayName());
@@ -89,77 +98,62 @@ public final class BlackboardArtifactTagNode extends AbstractNode {
         return Lookups.fixed(tag, artifactItem, artifact, sourceContent);
     }
 
-    // Actions are not a part of the first story, however I am deleting the original
-    // node which will make finding this info a little more difficult.
-//   public Action[] getActions(boolean context) {
-//        List<Action> actions = new ArrayList<>();
-//        BlackboardArtifact artifact = getLookup().lookup(BlackboardArtifact.class);
-//        //if this artifact has a time stamp add the action to view it in the timeline
-//        try {
-//            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
-//                actions.add(new ViewArtifactInTimelineAction(artifact));
-//            }
-//        } catch (TskCoreException ex) {
-//            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
-//        }
-//        
-//        actions.add(new ViewTaggedArtifactAction(Bundle.BlackboardArtifactTagNode_viewSourceArtifact_text(), artifact));
-//        actions.add(null);
-//        // if the artifact links to another file, add an action to go to that file
-//        try {
-//            AbstractFile c = findLinked(artifact);
-//            if (c != null) {
-//                actions.add(ViewFileInTimelineAction.createViewFileAction(c));
-//            }
-//        } catch (TskCoreException ex) {
-//            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
-//        }
-//        //if this artifact has associated content, add the action to view the content in the timeline
-//        AbstractFile file = getLookup().lookup(AbstractFile.class);
-//        if (null != file) {
-//            actions.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
-//        }
-//        actions.addAll(DataModelActionsFactory.getActions(tag, true));
-//        actions.add(null);
-//        actions.addAll(Arrays.asList(super.getActions(context)));
-//        return actions.toArray(new Action[0]);
-//    }
-//    
-    // From DataModelActionsFactory
-//    public static List<Action> getActions(BlackboardArtifactTag artifactTag, boolean isArtifactSource) {
-//        List<Action> actionsList = new ArrayList<>();
-//        actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), artifactTag.getContent()));        
-//        final BlackboardArtifactTagNode tagNode = new BlackboardArtifactTagNode(artifactTag);
-//        actionsList.add(null); // creates a menu separator
-//        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, tagNode));
-//        final Collection<AbstractFile> selectedFilesList
-//                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-//        if (selectedFilesList.size() == 1) {
-//            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, tagNode));
-//        } else {
-//            actionsList.add(ExternalViewerShortcutAction.getInstance());
-//        }
-//        actionsList.add(null); // creates a menu separator
-//        actionsList.add(ExtractAction.getInstance());
-//        actionsList.add(ExportCSVAction.getInstance());
-//        actionsList.add(null); // creates a menu separator
-//        actionsList.add(AddContentTagAction.getInstance());
-//        if (isArtifactSource) {
-//            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
-//        }
-//        if (selectedFilesList.size() == 1) {
-//            actionsList.add(DeleteFileContentTagAction.getInstance());
-//        }
-//        if (isArtifactSource) {
-//            final Collection<BlackboardArtifact> selectedArtifactsList
-//                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-//            if (selectedArtifactsList.size() == 1) {
-//                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
-//            }
-//        }
-//        actionsList.add(DeleteBlackboardArtifactTagAction.getInstance());
-//        actionsList.add(ReplaceBlackboardArtifactTagAction.getInstance());
-//        actionsList.addAll(ContextMenuExtensionPoint.getActions());
-//        return actionsList;
-//    }
+    @Override
+    public Optional<Content> getSourceContent() {
+        return Optional.ofNullable(rowData.getTag().getContent());
+    }
+
+    @Override
+    public Optional<BlackboardArtifact> getArtifact() {
+        return Optional.ofNullable(rowData.getTag().getArtifact());
+    }
+
+    @Override
+    public boolean supportsViewInTimeline() {
+        BlackboardArtifact artifact = rowData.getTag().getArtifact();
+        if (artifact != null) {
+            try {
+                return ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean supportsSourceContentViewerActions() {
+        return true;
+    }
+
+    @Override
+    public Optional<Node> getNewWindowActionNode() {
+        return Optional.of(this);
+    }
+
+    @Override
+    public Optional<Node> getExternalViewerActionNode() {
+        return Optional.of(this);
+    }
+
+    @Override
+    public boolean supportsExtractActions() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsArtifactTagAction() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsReplaceTagAction() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsContentTagAction() {
+        return rowData.getTag().getContent() instanceof AbstractFile;
+    }
 }

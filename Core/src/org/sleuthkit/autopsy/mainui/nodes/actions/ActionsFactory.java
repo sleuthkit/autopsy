@@ -37,8 +37,12 @@ import org.openide.util.Utilities;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
+import org.sleuthkit.autopsy.actions.ReplaceBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.ReplaceContentTagAction;
 import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
@@ -106,7 +110,10 @@ public final class ActionsFactory {
 
         group = new ActionGroup();
         if (actionContext.supportsAssociatedFileActions()) {
-            group.addAll(getAssociatedFileActions(actionContext).get());
+            Optional<ActionGroup> subGroup = getAssociatedFileActions(actionContext);
+            if(subGroup.isPresent()) {
+                group.addAll(subGroup.get());
+            }
         }
 
         if (actionContext.getSourceContent().isPresent()) {
@@ -315,7 +322,12 @@ public final class ActionsFactory {
         if (context.supportsArtifactTagAction() && selectedArtifactCount == 1) {
             actionGroup.add(DeleteFileBlackboardArtifactTagAction.getInstance());
         }
-
+        
+        if((context.supportsArtifactTagAction() || context.supportsContentTagAction()) && context.supportsReplaceTagAction()) {
+            actionGroup.add(DeleteContentTagAction.getInstance());
+            actionGroup.add(ReplaceContentTagAction.getInstance());
+        }
+        
         return actionGroup;
     }
 
