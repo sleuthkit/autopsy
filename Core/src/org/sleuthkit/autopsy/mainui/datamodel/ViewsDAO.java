@@ -705,7 +705,7 @@ public class ViewsDAO extends AbstractDAO {
             }
         }
 
-        if (fileExtensionDsMap.isEmpty() || mimeTypeDsMap.isEmpty() || fileSizeDsMap.isEmpty()) {
+        if (fileExtensionDsMap.isEmpty() && mimeTypeDsMap.isEmpty() && fileSizeDsMap.isEmpty()) {
             return Collections.emptyList();
         }
 

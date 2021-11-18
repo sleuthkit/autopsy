@@ -47,7 +47,8 @@ public class MainDAO extends AbstractDAO {
 
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(
             IngestManager.IngestModuleEvent.CONTENT_CHANGED,
-            IngestManager.IngestModuleEvent.DATA_ADDED
+            IngestManager.IngestModuleEvent.DATA_ADDED,
+            IngestManager.IngestModuleEvent.FILE_DONE
     );
 
     private static final Set<String> QUEUED_CASE_EVENTS = ImmutableSet.of(
