@@ -30,11 +30,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A data artifact ingest module that indexes text for keyword search. All
- * keyword searching of indexed text, from both data artifacts and files,
- * including the final keyword search of an ingest job, is done in the last
- * instance of the companion keyword search file ingest module.
+ * keyword searching of indexed text, whether from files, data artifacts, or
+ * analysis results, including the final keyword search of an ingest job, is
+ * done in the last instance of the companion keyword search file ingest module.
  */
-public class KeywordSearchArtifactIngestModule implements DataArtifactIngestModule {
+public class KwsDataArtifactIngestModule implements DataArtifactIngestModule {
 
     private static final Logger LOGGER = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     private static final int TSK_ASSOCIATED_OBJECT_TYPE_ID = BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT.getTypeID();

@@ -113,6 +113,11 @@ final class IngestJobExecutor {
     private DataArtifactIngestPipeline artifactIngestPipeline;
 
     /*
+     * There is at most one analysis result ingest module pipeline.
+     */
+    private AnalysisResultIngestPipeline resultIngestPipeline;
+
+    /*
      * The construction, start up, execution, and shut down of the ingest module
      * pipelines for an ingest job is done in stages.
      */
@@ -364,6 +369,7 @@ final class IngestJobExecutor {
         List<IngestModuleTemplate> secondStageDataSourcePipelineTemplate = createIngestPipelineTemplate(javaDataSourceModuleTemplates, jythonDataSourceModuleTemplates, pipelineConfig.getStageTwoDataSourceIngestPipelineConfig());
         List<IngestModuleTemplate> filePipelineTemplate = createIngestPipelineTemplate(javaFileModuleTemplates, jythonFileModuleTemplates, pipelineConfig.getFileIngestPipelineConfig());
         List<IngestModuleTemplate> artifactPipelineTemplate = new ArrayList<>();
+        List<IngestModuleTemplate> resultsPipelineTemplate = new ArrayList<>();
 
         /**
          * Add any ingest module templates remaining in the buckets to the
@@ -376,6 +382,7 @@ final class IngestJobExecutor {
         addToIngestPipelineTemplate(firstStageDataSourcePipelineTemplate, javaDataSourceModuleTemplates, jythonDataSourceModuleTemplates);
         addToIngestPipelineTemplate(filePipelineTemplate, javaFileModuleTemplates, jythonFileModuleTemplates);
         addToIngestPipelineTemplate(artifactPipelineTemplate, javaArtifactModuleTemplates, jythonArtifactModuleTemplates);
+        addToIngestPipelineTemplate(resultsPipelineTemplate, javaArtifactModuleTemplates, jythonArtifactModuleTemplates);
 
         /**
          * Construct the ingest module pipelines from the ingest module pipeline
@@ -390,6 +397,7 @@ final class IngestJobExecutor {
             fileIngestPipelines.add(pipeline);
         }
         artifactIngestPipeline = new DataArtifactIngestPipeline(this, artifactPipelineTemplate);
+        resultIngestPipeline = new AnalysisResultIngestPipeline(this, resultsPipelineTemplate);
     }
 
     /**
@@ -534,6 +542,16 @@ final class IngestJobExecutor {
     }
 
     /**
+     * Checks to see if there is at least one analysis result ingest module to
+     * run.
+     *
+     * @return True or false.
+     */
+    boolean hasAnalysisResultIngestModules() {
+        return (resultIngestPipeline.isEmpty() == false);
+    }
+
+    /**
      * Determnines which inges job stage to start in and starts up the ingest
      * module pipelines.
      *
@@ -583,6 +601,7 @@ final class IngestJobExecutor {
             }
         }
         errors.addAll(startUpIngestModulePipeline(artifactIngestPipeline));
+        errors.addAll(startUpIngestModulePipeline(resultIngestPipeline));
         return errors;
     }
 
@@ -1002,6 +1021,7 @@ final class IngestJobExecutor {
 
             shutDownIngestModulePipeline(currentDataSourceIngestPipeline);
             shutDownIngestModulePipeline(artifactIngestPipeline);
+            shutDownIngestModulePipeline(resultIngestPipeline);
 
             if (usingNetBeansGUI) {
                 synchronized (dataSourceIngestProgressLock) {
@@ -1070,7 +1090,8 @@ final class IngestJobExecutor {
      * Passes the data source for the ingest job through the currently active
      * data source level ingest module pipeline (high-priority or low-priority).
      *
-     * @param task A data source ingest task wrapping the data source.
+     * @param task A data source ingest task encapsulating the data source and
+     *             the data source ingest pipeline to use to execute the task.
      */
     void execute(DataSourceIngestTask task) {
         try {
@@ -1091,7 +1112,8 @@ final class IngestJobExecutor {
      * Passes a file from the data source for the ingest job through a file
      * ingest module pipeline.
      *
-     * @param task A file ingest task wrapping the file.
+     * @param task A file ingest task encapsulating the file and the file ingest
+     *             pipeline to use to execute the task.
      */
     void execute(FileIngestTask task) {
         try {
@@ -1165,13 +1187,38 @@ final class IngestJobExecutor {
      * Passes a data artifact from the data source for the ingest job through
      * the data artifact ingest module pipeline.
      *
-     * @param task A data artifact ingest task wrapping the data artifact.
+     * @param task A data artifact ingest task encapsulating the data artifact
+     *             and the data artifact ingest pipeline to use to execute the
+     *             task.
      */
     void execute(DataArtifactIngestTask task) {
         try {
             if (!isCancelled() && !artifactIngestPipeline.isEmpty()) {
                 List<IngestModuleError> errors = new ArrayList<>();
                 errors.addAll(artifactIngestPipeline.performTask(task));
+                if (!errors.isEmpty()) {
+                    logIngestModuleErrors(errors);
+                }
+            }
+        } finally {
+            taskScheduler.notifyTaskCompleted(task);
+            checkForStageCompleted();
+        }
+    }
+
+    /**
+     * Passes an analyisis result from the data source for the ingest job
+     * through the analysis result ingest module pipeline.
+     *
+     * @param task An analysis result ingest task encapsulating the analysis
+     *             result and the analysis result ingest pipeline to use to
+     *             execute the task.
+     */
+    void execute(AnalysisResultIngestTask task) {
+        try {
+            if (!isCancelled() && !resultIngestPipeline.isEmpty()) {
+                List<IngestModuleError> errors = new ArrayList<>();
+                errors.addAll(resultIngestPipeline.performTask(task));
                 if (!errors.isEmpty()) {
                     logIngestModuleErrors(errors);
                 }

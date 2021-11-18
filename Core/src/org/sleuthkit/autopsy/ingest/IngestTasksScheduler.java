@@ -67,6 +67,7 @@ final class IngestTasksScheduler {
     private final Queue<FileIngestTask> streamedFileIngestTasksQueue;
     private final IngestTaskTrackingQueue fileIngestTasksQueue;
     private final IngestTaskTrackingQueue artifactIngestTasksQueue;
+    private final IngestTaskTrackingQueue resultIngestTasksQueue;
 
     /**
      * Gets the ingest tasks scheduler singleton that creates ingest tasks for
@@ -92,6 +93,7 @@ final class IngestTasksScheduler {
         fileIngestTasksQueue = new IngestTaskTrackingQueue();
         streamedFileIngestTasksQueue = new LinkedList<>();
         artifactIngestTasksQueue = new IngestTaskTrackingQueue();
+        resultIngestTasksQueue = new IngestTaskTrackingQueue();
     }
 
     /**
@@ -363,6 +365,16 @@ final class IngestTasksScheduler {
      */
     synchronized void notifyTaskCompleted(DataArtifactIngestTask task) {
         artifactIngestTasksQueue.taskCompleted(task);
+    }
+
+    /**
+     * Allows an ingest thread to notify this ingest task scheduler that a data
+     * artifact ingest task has been completed.
+     *
+     * @param task The completed task.
+     */
+    synchronized void notifyTaskCompleted(AnalysisResultIngestTask task) {
+        resultIngestTasksQueue.taskCompleted(task);
     }
 
     /**
@@ -1137,7 +1149,7 @@ final class IngestTasksScheduler {
         long getRunningListSize() {
             return runningListSize;
         }
-        
+
         long getArtifactsQueueSize() {
             return artifactsQueueSize;
         }

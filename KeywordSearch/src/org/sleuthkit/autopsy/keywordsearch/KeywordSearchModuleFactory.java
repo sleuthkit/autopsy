@@ -130,7 +130,7 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
-        return new KeywordSearchArtifactIngestModule();
+        return new KwsDataArtifactIngestModule();
     }    
     
 }
