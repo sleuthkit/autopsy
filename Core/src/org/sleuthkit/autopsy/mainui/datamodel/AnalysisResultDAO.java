@@ -149,7 +149,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
 
-    private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(SearchParams<? extends AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private AnalysisResultTableSearchResultsDTO fetchKeywordHitsForTable(SearchParams<? extends AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
@@ -158,42 +158,23 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         Long dataSourceId = searchParams.getDataSourceId();
         BlackboardArtifact.Type artType = searchParams.getArtifactType();
-
-        // We currently can't make a query on the set name field because need to use a prepared statement
-        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID()
-                + (dataSourceId != null ? " AND artifacts.data_source_obj_id = " + dataSourceId : "")
-                + " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
-                + " AND blackboard_attributes.value_int32 = " + searchParams.getSearchType().getType(); //NON-NLS
         
-        if (searchParams.getKeyword() != null && !searchParams.getKeyword().isEmpty()) {
-                originalWhereClause += " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()//NON-NLS
-                        + " AND blackboard_attributes.value_text = " + searchParams.getKeyword();
-        }
-        
-        if (searchParams.getRegex() != null && !searchParams.getRegex().isEmpty()) {
-                originalWhereClause += " AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID() //NON-NLS
-                        + " AND blackboard_attributes.value_text = " + searchParams.getRegex();
-        }
-        
-        String expectedSetName = searchParams.getSetName();
+        List<BlackboardArtifact> allHits  = blackboard.getKeywordRegexSearchResults(searchParams.getKeyword(), searchParams.getRegex(), searchParams.getSearchType(), searchParams.getSetName(), dataSourceId);
+        /* ELTODO switch (searchParams.getSearchType()) {
+            case REGEX:
+                allHits = blackboard.getKeywordRegexSearchResults(searchParams.getKeyword(), searchParams.getRegex(), searchParams.getSearchType(), searchParams.getSetName(), dataSourceId);
+                break;
+            case LITERAL:
+            case SUBSTRING:   
+            default:
+                allHits = blackboard.getKeywordSearchResults(searchParams.getKeyword(), searchParams.getSearchType(), searchParams.getSetName(), dataSourceId);
+        }*/
 
-        List<BlackboardArtifact> allHashHits = new ArrayList<>();
-        allHashHits.addAll(blackboard.getAnalysisResultsWhere(originalWhereClause));
-        blackboard.loadBlackboardAttributes(allHashHits);
+        blackboard.loadBlackboardAttributes(allHits);
 
-        // Filter for the selected set
-        List<BlackboardArtifact> arts = new ArrayList<>();
-        for (BlackboardArtifact art : allHashHits) {
-            BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
-            if ((expectedSetName == null && setNameAttr == null)
-                    || (expectedSetName != null && setNameAttr != null && expectedSetName.equals(setNameAttr.getValueString()))) {
-                arts.add(art);
-            }
-        }
-
-        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
+        List<BlackboardArtifact> pagedArtifacts = getPaged(allHits, cacheKey);
         TableData tableData = createTableData(artType, pagedArtifacts);
-        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), allHits.size());
     }
 
     @Override
@@ -295,7 +276,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             setHitCache.invalidate(searchParams);
         }
 
-        return setHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
+        return setHitCache.get(searchParams, () -> fetchKeywordHitsForTable(searchParams));
     }
 
     // TODO - JIRA-8117
@@ -312,7 +293,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             keywordHitCache.invalidate(searchParams);
         }
 
-        return keywordHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
+        return keywordHitCache.get(searchParams, () -> fetchKeywordHitsForTable(searchParams));
     }
 
     public void dropAnalysisResultCache() {

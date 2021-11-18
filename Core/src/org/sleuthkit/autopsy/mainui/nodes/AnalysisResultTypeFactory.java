@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Factory for displaying analysis result types in the tree.
@@ -355,16 +356,15 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            KeywordSearchTermParams searchParams = this.getItemData().getTypeData();
+            KeywordSearchTermParams searchTermParams = this.getItemData().getTypeData();
 
-            if (!searchParams.hasChildren()) {
-                dataResultPanel.displayKeywordHits(
-                        new KeywordHitSearchParam(
-                                searchParams.getDataSourceId(),
-                                searchParams.getSetName(),
-                                searchParams.getSearchTerm(),
-                                null,
-                                searchParams.getSearchType()));
+            if (!searchTermParams.hasChildren()) {
+                KeywordHitSearchParam searchParams = new KeywordHitSearchParam(searchTermParams.getDataSourceId(),
+                            searchTermParams.getSetName(),
+                            searchTermParams.getSearchTerm(),
+                            null,
+                            searchTermParams.getSearchType());
+                dataResultPanel.displayKeywordHits(searchParams);
             } else {
                 super.respondSelection(dataResultPanel);
             }
