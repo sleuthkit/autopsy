@@ -1,4 +1,6 @@
 AnalysisResultTypeFactory_adHocName=Adhoc Results
+FileSystemFactory.FileSystemTreeNode.ExtractUnallocAction.text=Extract Unallocated Space to Single Files
+FileSystemFactory.FileSystemTreeNode.OpenFileSearchByAttr.text=Open File Search by Attributes
 FileSystemFactory.UnsupportedTreeNode.displayName=Unsupported Content
 ImageNode_ExtractUnallocAction_text=Extract Unallocated Space to Single Files
 SearchResultRootNode_createSheet_childCount_displayName=Child Count

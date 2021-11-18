@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VirtualDirectoryR
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.PoolRowDTO;
-import static org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.getExtensionMediaType;
+import static org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils.getExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;

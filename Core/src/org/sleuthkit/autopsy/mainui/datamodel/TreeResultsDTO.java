@@ -55,7 +55,6 @@ public class TreeResultsDTO<T> {
         private final Long count;
         private final T typeData;
         private final Object id;
-        //private final Optional<Long> contentId;
 
         /**
          * Main constructor.
@@ -77,19 +76,6 @@ public class TreeResultsDTO<T> {
             this.count = count;
             this.typeData = typeData;
         }
-
-        //public TreeItemDTO(String typeId, T typeData, Object id, String displayName, Long count, Long contentId) {
-        //    this.typeId = typeId;
-        //    this.id = id;
-        //    this.displayName = displayName;
-        //    this.count = count;
-        //    this.typeData = typeData;
-        //    this.contentId = Optional.ofNullable(contentId);
-        //}
-        
-        //public Optional<Long> getContentId() {
-         //   return contentId;
-        //}
         
         /**
          * @return The display name of this row.
