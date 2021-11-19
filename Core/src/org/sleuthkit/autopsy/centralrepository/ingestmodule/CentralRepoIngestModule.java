@@ -58,6 +58,66 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private CentralRepository centralRepo;
     private CorrelationAttributeInstance.Type filesType;
 
+    @Override
+    public ProcessResult process(AbstractFile abstractFile) {
+        if (!flagNotableItems && !saveCorrAttrInstances) {
+            return ProcessResult.OK;
+        }
+
+        if (!filesType.isEnabled()) {
+            return ProcessResult.OK;
+        }
+
+        if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
+            return ProcessResult.OK;
+        }
+
+        if (!CorrelationAttributeUtil.isSupportedAbstractFileType(abstractFile)) {
+            return ProcessResult.OK;
+        }
+ 
+        /*
+         * The correlation attribute value for a file is its MD5 hash. This
+         * module cannot do anything with a file if the hash calculation has not
+         * been done, but the decision has been made to not do a hash
+         * calculation here if the file hashing and lookup module is not in this
+         * pipeline ahead of this module (affirmed per BC, 11/8/21).
+         */
+        String md5 = abstractFile.getMd5Hash();
+        if ((md5 == null) || (HashUtility.isNoDataMd5(md5))) {
+            return ProcessResult.OK;
+        }
+
+        if (flagNotableItems) {
+            try {
+                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Central Repository: Notable artifact query");
+                Set<String> otherCases = new HashSet<>();
+                otherCases.addAll(centralRepo.getListCasesHavingArtifactInstancesKnownBad(filesType, md5));
+                HealthMonitor.submitTimingMetric(timingMetric);
+                if (!otherCases.isEmpty()) {
+                    makePrevNotableAnalysisResult(abstractFile, otherCases, filesType, md5, context.getDataSource().getId(), context.getJobId());
+                }
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
+            }
+        }
+
+        if (saveCorrAttrInstances) {
+            List<CorrelationAttributeInstance> corrAttrs = CorrelationAttributeUtil.makeCorrAttrsToSave(abstractFile);
+            for (CorrelationAttributeInstance corrAttr : corrAttrs) {
+                try {
+                    centralRepo.addAttributeInstanceBulk(corrAttr);
+                } catch (CentralRepoException ex) {
+                    logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+                }
+            }
+        }
+
+        return ProcessResult.OK;
+    }
+    
     /**
      * Constructs a file ingest module that adds correlation attributes for
      * files to the central repository, and makes previously notable analysis
@@ -126,66 +186,6 @@ final class CentralRepoIngestModule implements FileIngestModule {
                 throw new IngestModuleException(Bundle.CentralRepoIngestModule_cannotGetCrDataSourceErrMsg(), ex);
             }
         }
-    }
-
-    @Override
-    public ProcessResult process(AbstractFile abstractFile) {
-        if (!flagNotableItems && !saveCorrAttrInstances) {
-            return ProcessResult.OK;
-        }
-
-        if (!filesType.isEnabled()) {
-            return ProcessResult.OK;
-        }
-
-        if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
-            return ProcessResult.OK;
-        }
-
-        if (!CorrelationAttributeUtil.isSupportedAbstractFileType(abstractFile)) {
-            return ProcessResult.OK;
-        }
- 
-        /*
-         * The correlation attribute value for a file is its MD5 hash. This
-         * module cannot do anything with a file if the hash calculation has not
-         * been done, but the decision has been made to not do a hash
-         * calculation here if the file hashing and lookup module is not in this
-         * pipeline ahead of this module (affirmed per BC, 11/8/21).
-         */
-        String md5 = abstractFile.getMd5Hash();
-        if ((md5 == null) || (HashUtility.isNoDataMd5(md5))) {
-            return ProcessResult.OK;
-        }
-
-        if (flagNotableItems) {
-            try {
-                TimingMetric timingMetric = HealthMonitor.getTimingMetric("Central Repository: Notable artifact query");
-                Set<String> otherCases = new HashSet<>();
-                otherCases.addAll(centralRepo.getListCasesHavingArtifactInstancesKnownBad(filesType, md5));
-                HealthMonitor.submitTimingMetric(timingMetric);
-                if (!otherCases.isEmpty()) {
-                    makePrevNotableAnalysisResult(abstractFile, otherCases, filesType, md5, context.getDataSource().getId(), context.getJobId());
-                }
-            } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
-            } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
-            }
-        }
-
-        if (saveCorrAttrInstances) {
-            List<CorrelationAttributeInstance> corrAttrs = CorrelationAttributeUtil.makeCorrAttrsToSave(abstractFile);
-            for (CorrelationAttributeInstance corrAttr : corrAttrs) {
-                try {
-                    centralRepo.addAttributeInstanceBulk(corrAttr);
-                } catch (CentralRepoException ex) {
-                    logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
-                }
-            }
-        }
-
-        return ProcessResult.OK;
     }
 
     @Override
