@@ -57,7 +57,19 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private IngestJobContext context;
     private CentralRepository centralRepo;
     private CorrelationAttributeInstance.Type filesType;
-
+    
+    /**
+     * Constructs a file ingest module that adds correlation attributes for
+     * files to the central repository, and makes previously notable analysis
+     * results for files marked as notable in other cases.
+     *
+     * @param settings The ingest job settings.
+     */
+    CentralRepoIngestModule(IngestSettings settings) {
+        flagNotableItems = settings.isFlagTaggedNotableItems();
+        saveCorrAttrInstances = settings.shouldCreateCorrelationProperties();
+    }    
+    
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
         if (!flagNotableItems && !saveCorrAttrInstances) {
@@ -117,19 +129,18 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
         return ProcessResult.OK;
     }
-    
-    /**
-     * Constructs a file ingest module that adds correlation attributes for
-     * files to the central repository, and makes previously notable analysis
-     * results for files marked as notable in other cases.
-     *
-     * @param settings The ingest job settings.
-     */
-    CentralRepoIngestModule(IngestSettings settings) {
-        flagNotableItems = settings.isFlagTaggedNotableItems();
-        saveCorrAttrInstances = settings.shouldCreateCorrelationProperties();
-    }
 
+    @Override
+    public void shutDown() {
+        if (refCounter.decrementAndGet(context.getJobId()) == 0) {
+            try {
+                centralRepo.commitAttributeInstancesBulk();
+            } catch (CentralRepoException ex) {
+                logger.log(Level.SEVERE, String.format("Error committing bulk insert of correlation attributes (job ID=%d)", context.getJobId()), ex); // NON-NLS
+            }
+        }
+    }    
+    
     @Messages({
         "CentralRepoIngestModule_missingFileCorrAttrTypeErrMsg=Correlation attribute type for files not found in the central repository",
         "CentralRepoIngestModule_cannotGetCrCaseErrMsg=Case not present in the central repository",
@@ -184,17 +195,6 @@ final class CentralRepoIngestModule implements FileIngestModule {
                 CorrelationDataSource.fromTSKDataSource(centralRepoCase, context.getDataSource());
             } catch (CentralRepoException ex) {
                 throw new IngestModuleException(Bundle.CentralRepoIngestModule_cannotGetCrDataSourceErrMsg(), ex);
-            }
-        }
-    }
-
-    @Override
-    public void shutDown() {
-        if (refCounter.decrementAndGet(context.getJobId()) == 0) {
-            try {
-                centralRepo.commitAttributeInstancesBulk();
-            } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, String.format("Error committing bulk insert of correlation attributes (job ID=%d)", context.getJobId()), ex); // NON-NLS
             }
         }
     }
