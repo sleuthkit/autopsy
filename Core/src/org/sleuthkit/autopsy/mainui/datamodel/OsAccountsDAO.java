@@ -116,7 +116,7 @@ public class OsAccountsDAO extends AbstractDAO {
         return searchParamsCache.get(searchParams, () -> fetchAccountsDTOs(searchParams));
     }
 
-    public boolean isOSAccountInvalidatingEvt(OsAccountsSearchParams searchParams, DAOEvent evt) {
+    private boolean isOSAccountInvalidatingEvt(OsAccountsSearchParams searchParams, DAOEvent evt) {
         return evt instanceof OsAccountEvent;
     }
 

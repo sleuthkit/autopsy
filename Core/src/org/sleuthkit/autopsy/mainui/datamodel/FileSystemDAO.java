@@ -119,7 +119,7 @@ public class FileSystemDAO extends AbstractDAO {
 
     private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
-    public boolean isSystemContentInvalidating(FileSystemContentSearchParam key, DAOEvent daoEvent) {
+    private boolean isSystemContentInvalidating(FileSystemContentSearchParam key, DAOEvent daoEvent) {
         if (!(daoEvent instanceof FileSystemContentEvent)) {
             return false;
         }
@@ -129,7 +129,7 @@ public class FileSystemDAO extends AbstractDAO {
         return contentEvt.getContentObjectId() == null || key.getContentObjectId().equals(contentEvt.getContentObjectId());
     }
 
-    public boolean isSystemHostInvalidating(FileSystemHostSearchParam key, DAOEvent daoEvent) {
+    private boolean isSystemHostInvalidating(FileSystemHostSearchParam key, DAOEvent daoEvent) {
         if (!(daoEvent instanceof FileSystemHostEvent)) {
             return false;
         }

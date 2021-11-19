@@ -163,7 +163,7 @@ public class ViewsDAO extends AbstractDAO {
         return searchParamsCache.get(searchParams, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId(), startItem, maxCount));
     }
 
-    public boolean isFilesByExtInvalidating(FileTypeExtensionsSearchParams key, DAOEvent eventData) {
+    private boolean isFilesByExtInvalidating(FileTypeExtensionsSearchParams key, DAOEvent eventData) {
         if (!(eventData instanceof FileTypeExtensionsEvent)) {
             return false;
         }
@@ -174,7 +174,7 @@ public class ViewsDAO extends AbstractDAO {
                 && (key.getDataSourceId() == null || key.getDataSourceId() == extEvt.getDataSourceId());
     }
 
-    public boolean isFilesByMimeInvalidating(FileTypeMimeSearchParams key, DAOEvent eventData) {
+    private boolean isFilesByMimeInvalidating(FileTypeMimeSearchParams key, DAOEvent eventData) {
         if (!(eventData instanceof FileTypeMimeEvent)) {
             return false;
         }
@@ -184,7 +184,7 @@ public class ViewsDAO extends AbstractDAO {
                 && (key.getDataSourceId() == null || key.getDataSourceId() == mimeEvt.getDataSourceId());
     }
 
-    public boolean isFilesBySizeInvalidating(FileTypeSizeSearchParams key, DAOEvent eventData) {
+    private boolean isFilesBySizeInvalidating(FileTypeSizeSearchParams key, DAOEvent eventData) {
         if (!(eventData instanceof FileTypeSizeEvent)) {
             return false;
         }

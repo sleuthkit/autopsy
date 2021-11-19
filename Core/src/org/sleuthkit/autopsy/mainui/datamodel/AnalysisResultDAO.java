@@ -278,7 +278,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return analysisResultCache.get(searchParams, () -> fetchAnalysisResultsForTable(searchParams));
     }
 
-    public boolean isAnalysisResultsInvalidating(AnalysisResultSearchParam key, DAOEvent eventData) {
+    private boolean isAnalysisResultsInvalidating(AnalysisResultSearchParam key, DAOEvent eventData) {
         if (!(eventData instanceof AnalysisResultEvent)) {
             return false;
         }
@@ -288,7 +288,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 && (key.getDataSourceId() == null || key.getDataSourceId() == analysisResultEvt.getDataSourceId());
     }
 
-    public boolean isAnalysisResultsSetInvalidating(AnalysisResultSetSearchParam key, DAOEvent event) {
+    private boolean isAnalysisResultsSetInvalidating(AnalysisResultSetSearchParam key, DAOEvent event) {
         if (!(event instanceof AnalysisResultSetEvent)) {
             return false;
         }

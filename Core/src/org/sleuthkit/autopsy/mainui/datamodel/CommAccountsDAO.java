@@ -212,7 +212,7 @@ public class CommAccountsDAO extends AbstractDAO {
      *
      * @return True if event invalidates parameters.
      */
-    public boolean isCommAcctInvalidating(CommAccountsSearchParams parameters, DAOEvent evt) {
+    private boolean isCommAcctInvalidating(CommAccountsSearchParams parameters, DAOEvent evt) {
         if (evt instanceof CommAccountsEvent) {
             CommAccountsEvent commEvt = (CommAccountsEvent) evt;
             return (parameters.getType().getTypeName().equals(commEvt.getAccountType()))

@@ -119,7 +119,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return dataArtifactCache.get(searchParams, () -> fetchDataArtifactsForTable(searchParams));
     }
 
-    public boolean isDataArtifactInvalidating(DataArtifactSearchParam key, DAOEvent eventData) {
+    private boolean isDataArtifactInvalidating(DataArtifactSearchParam key, DAOEvent eventData) {
         if (!(eventData instanceof DataArtifactEvent)) {
             return false;
         } else {

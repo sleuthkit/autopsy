@@ -298,7 +298,7 @@ public class TagsDAO extends AbstractDAO {
      *
      * @return True if the event could affect the results of the search params.
      */
-    public boolean isTagsInvalidatingEvent(TagsSearchParams tagParams, DAOEvent daoEvt) {
+    private boolean isTagsInvalidatingEvent(TagsSearchParams tagParams, DAOEvent daoEvt) {
         if (!(daoEvt instanceof TagsEvent)) {
             return false;
         }
