@@ -34,13 +34,14 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler.Refresher;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 
 /**
  * Factory for populating tree with results.
@@ -55,26 +56,13 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-            // case was closed. Remove listeners so that we don't get called with a stale case handle
-            if (evt.getNewValue() == null) {
-                removeNotify();
-            }
-        } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-            /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
-             */
-            try {
-                Case.getCurrentCaseThrows();
-                refresh(false);
-            } catch (NoCurrentCaseException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
+        if (evt.getNewValue() instanceof DAOAggregateEvent) {
+            DAOAggregateEvent aggEvt = (DAOAggregateEvent) evt.getNewValue();
+            for (DAOEvent daoEvt : aggEvt.getEvents()) {
+                if (isChildInvalidating(daoEvt)) {
+                    updateData();
+                    break;
+                }
             }
         }
     };
@@ -217,4 +205,6 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
      * @throws ExecutionException
      */
     protected abstract TreeResultsDTO<? extends T> getChildResults() throws IllegalArgumentException, ExecutionException;
+
+    protected abstract boolean isChildInvalidating(DAOEvent daoEvt);
 }
