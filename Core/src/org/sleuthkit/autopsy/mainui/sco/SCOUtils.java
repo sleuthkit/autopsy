@@ -30,7 +30,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.mainui.nodes.sco.Bundle;
 import org.sleuthkit.datamodel.Tag;
 
 /**

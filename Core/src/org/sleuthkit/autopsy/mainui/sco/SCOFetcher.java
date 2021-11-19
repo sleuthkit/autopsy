@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
@@ -34,6 +33,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.sco.SCOFetcher.SCOData;
 import org.sleuthkit.datamodel.AbstractFile;

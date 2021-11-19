@@ -25,7 +25,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
-import org.sleuthkit.autopsy.mainui.nodes.sco.Bundle;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
