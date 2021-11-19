@@ -54,9 +54,9 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private final boolean flagNotableItems;
     private final boolean saveCorrAttrInstances;
+    private CorrelationAttributeInstance.Type filesType;
     private IngestJobContext context;
     private CentralRepository centralRepo;
-    private CorrelationAttributeInstance.Type filesType;
     
     /**
      * Constructs a file ingest module that adds correlation attributes for
