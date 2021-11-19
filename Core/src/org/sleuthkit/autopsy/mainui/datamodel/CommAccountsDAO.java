@@ -203,9 +203,23 @@ public class CommAccountsDAO extends AbstractDAO {
                 .collect(Collectors.toList());
     }
 
-    private boolean isCommAcctInvalidating(CommAccountsSearchParams parameters, DAOEvent evt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-
+    /**
+     * Returns true if the dao event could update the data stored in the
+     * parameters.
+     *
+     * @param parameters The parameters.
+     * @param evt        The event.
+     *
+     * @return True if event invalidates parameters.
+     */
+    public boolean isCommAcctInvalidating(CommAccountsSearchParams parameters, DAOEvent evt) {
+        if (evt instanceof CommAccountsEvent) {
+            CommAccountsEvent commEvt = (CommAccountsEvent) evt;
+            return (parameters.getType().getTypeName().equals(commEvt.getAccountType()))
+                    && (parameters.getDataSourceId() == null || parameters.getDataSourceId() == commEvt.getDataSourceId());
+        } else {
+            return false;
+        }
     }
 
     /**
