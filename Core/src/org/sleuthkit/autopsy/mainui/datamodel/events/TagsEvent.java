@@ -22,7 +22,8 @@ import java.util.Objects;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType;
 
 /**
- * An event affecting tags
+ * An event to signal that tags have been added or removed on the 
+ * given data source with the given types. 
  */
 public class TagsEvent implements DAOEvent {
 

@@ -22,7 +22,8 @@ import java.util.Objects;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSizeFilter;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * An event to signal that files have been added or removed 
+ * within the given size range on the given data source. 
  */
 public class FileTypeSizeEvent implements DAOEvent {
 
