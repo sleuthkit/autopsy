@@ -350,7 +350,10 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             super(itemData.getTypeData().getSearchTerm(),
                     getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT),
                     itemData,
-                    itemData.getTypeData().hasChildren() ? Children.create(new KeywordFoundMatchFactory(itemData.getTypeData()), true) : Children.LEAF,
+                    (itemData.getTypeData().hasChildren() || itemData.getTypeData().getSearchType() == TskData.KeywordSearchQueryType.REGEX 
+                            // for regex queries always create a subtree, even if there is only one child
+                            ? Children.create(new KeywordFoundMatchFactory(itemData.getTypeData()), true) 
+                            : Children.LEAF),
                     getDefaultLookup(itemData));
         }
 

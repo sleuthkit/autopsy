@@ -159,16 +159,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         Long dataSourceId = searchParams.getDataSourceId();
         BlackboardArtifact.Type artType = searchParams.getArtifactType();
         
-        List<BlackboardArtifact> allHits  = blackboard.getKeywordRegexSearchResults(searchParams.getKeyword(), searchParams.getRegex(), searchParams.getSearchType(), searchParams.getSetName(), dataSourceId);
-        /* ELTODO switch (searchParams.getSearchType()) {
-            case REGEX:
-                allHits = blackboard.getKeywordRegexSearchResults(searchParams.getKeyword(), searchParams.getRegex(), searchParams.getSearchType(), searchParams.getSetName(), dataSourceId);
-                break;
-            case LITERAL:
-            case SUBSTRING:   
-            default:
-                allHits = blackboard.getKeywordSearchResults(searchParams.getKeyword(), searchParams.getSearchType(), searchParams.getSetName(), dataSourceId);
-        }*/
+        List<BlackboardArtifact> allHits  = blackboard.getKeywordSearchResults(searchParams.getKeyword(), searchParams.getRegex(), searchParams.getSearchType(), searchParams.getSetName(), dataSourceId);
 
         blackboard.loadBlackboardAttributes(allHits);
 
