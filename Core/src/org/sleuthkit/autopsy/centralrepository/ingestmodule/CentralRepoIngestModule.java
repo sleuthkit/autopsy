@@ -48,9 +48,9 @@ import static org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIn
  * central repository, and makes previously notable analysis results for files
  * marked as notable in other cases.
  */
-final class CentralRepoFileIngestModule implements FileIngestModule {
+final class CentralRepoIngestModule implements FileIngestModule {
 
-    private static final Logger logger = Logger.getLogger(CentralRepoFileIngestModule.class.getName());
+    private static final Logger logger = Logger.getLogger(CentralRepoIngestModule.class.getName());
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private final boolean flagNotableItems;
     private final boolean saveCorrAttrInstances;
@@ -65,7 +65,7 @@ final class CentralRepoFileIngestModule implements FileIngestModule {
      *
      * @param settings The ingest job settings.
      */
-    CentralRepoFileIngestModule(IngestSettings settings) {
+    CentralRepoIngestModule(IngestSettings settings) {
         flagNotableItems = settings.isFlagTaggedNotableItems();
         saveCorrAttrInstances = settings.shouldCreateCorrelationProperties();
     }

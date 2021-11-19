@@ -72,14 +72,14 @@ public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         if (settings instanceof IngestSettings) {
-            return new CentralRepoFileIngestModule((IngestSettings) settings);
+            return new CentralRepoIngestModule((IngestSettings) settings);
         }
         /*
          * Earlier versions of the modules had no ingest job settings. Create a
          * module with the default settings.
          */
         if (settings instanceof NoIngestModuleIngestJobSettings) {
-            return new CentralRepoFileIngestModule((IngestSettings) getDefaultIngestJobSettings());
+            return new CentralRepoIngestModule((IngestSettings) getDefaultIngestJobSettings());
         }
         throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
     }
