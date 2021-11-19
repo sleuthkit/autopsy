@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.ingest.IngestTasksScheduler.IngestJobTasksSnapshot;
+import org.sleuthkit.autopsy.ingest.IngestTasksScheduler.IngestTasksSnapshot;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.IngestJobInfo;
@@ -52,12 +52,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
- * Manages the construction, start up, execution, and shut down of the ingest
- * module pipelines for an ingest job.
+ * Executes an ingest job by orchestrating the construction, start up, ingest
+ * task execution, and shut down of the ingest module pipelines for an ingest
+ * job.
  */
 final class IngestJobExecutor {
 
@@ -211,6 +213,8 @@ final class IngestJobExecutor {
     private ProgressHandle fileIngestProgressBar;
     private final Object artifactIngestProgressLock = new Object();
     private ProgressHandle artifactIngestProgressBar;
+    private final Object resultIngestProgressLock = new Object();
+    private ProgressHandle resultIngestProgressBar;
 
     /*
      * The ingest job details that are stored to the case database are tracked
@@ -230,8 +234,10 @@ final class IngestJobExecutor {
     private final Set<Thread> pausedIngestThreads = new HashSet<>();
 
     /**
-     * Constructs an object that manages the construction, start up, execution,
-     * and shut down of the ingest module pipelines for an ingest job.
+     * Constructs an object that executes an ingest job by orchestrating the
+     * construction, start up, ingest task execution, and shut down of the
+     * ingest module pipelines for an ingest job.
+     *
      *
      * @param ingestJob  The ingest job.
      * @param dataSource The data source.
@@ -718,6 +724,9 @@ final class IngestJobExecutor {
                 if (hasDataArtifactIngestModules()) {
                     startArtifactIngestProgressBar();
                 }
+                if (hasAnalysisResultIngestModules()) {
+                    startResultIngestProgressBar();
+                }
             }
 
             /*
@@ -773,6 +782,9 @@ final class IngestJobExecutor {
                 if (hasDataArtifactIngestModules()) {
                     startArtifactIngestProgressBar();
                 }
+                if (hasAnalysisResultIngestModules()) {
+                    startResultIngestProgressBar();
+                }                
             }
 
             if (hasDataArtifactIngestModules()) {
@@ -783,6 +795,7 @@ final class IngestJobExecutor {
                  * artifacts added to the case database by those tasks twice.
                  */
                 taskScheduler.scheduleDataArtifactIngestTasks(this);
+                taskScheduler.scheduleAnalysisResultIngestTasks(this);
             }
         }
     }
@@ -871,17 +884,51 @@ final class IngestJobExecutor {
      */
     private void startArtifactIngestProgressBar() {
         if (usingNetBeansGUI) {
-            synchronized (artifactIngestProgressLock) {
-                String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataArtifactIngest.displayName", this.dataSource.getName());
-                artifactIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
+            String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataArtifactIngest.displayName", dataSource.getName());
+            startArtifactIngestProgressBar(artifactIngestProgressLock, artifactIngestProgressBar, displayName);
+        }
+    }
+
+    /**
+     * Starts a data artifacts analysis NetBeans progress bar in the lower right
+     * hand corner of the main application window. The progress bar provides the
+     * user with a task cancellation button. Pressing it cancels the ingest job.
+     * Analysis already completed at the time that cancellation occurs is NOT
+     * discarded.
+     */
+    @NbBundle.Messages({
+        "# {0} - data source name", "IngestJob.progress.analysisResultIngest.displayName=Analyzing data artifacts from {0}"
+    })
+    private void startResultIngestProgressBar() {
+        if (usingNetBeansGUI) {
+            String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataArtifactIngest.displayName", dataSource.getName());
+            startArtifactIngestProgressBar(resultIngestProgressLock, resultIngestProgressBar, displayName);
+        }
+    }
+
+    /**
+     * Starts a data artifacts or analysis results analysis NetBeans progress
+     * bar in the lower right hand corner of the main application window. The
+     * progress bar provides the user with a task cancellation button. Pressing
+     * it cancels the ingest job. Analysis already completed at the time that
+     * cancellation occurs is NOT discarded.
+     *
+     * @param progressBarLock The lock for the progress bar.
+     * @param progressBar     The progress bar.
+     * @param displayName     The display name for the progress bar.
+     */
+    private void startArtifactIngestProgressBar(Object progressBarLock, ProgressHandle progressBar, String displayName) {
+        if (usingNetBeansGUI) {
+            synchronized (progressBarLock) {
+                progressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
                         IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
                         return true;
                     }
                 });
-                artifactIngestProgressBar.start();
-                artifactIngestProgressBar.switchToIndeterminate();
+                progressBar.start();
+                progressBar.switchToIndeterminate();
             }
         }
     }
@@ -1042,6 +1089,13 @@ final class IngestJobExecutor {
                     if (artifactIngestProgressBar != null) {
                         artifactIngestProgressBar.finish();
                         artifactIngestProgressBar = null;
+                    }
+                }
+
+                synchronized (resultIngestProgressLock) {
+                    if (resultIngestProgressBar != null) {
+                        resultIngestProgressBar.finish();
+                        resultIngestProgressBar = null;
                     }
                 }
             }
@@ -1280,15 +1334,40 @@ final class IngestJobExecutor {
                 || stage.equals(IngestJobStage.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
             taskScheduler.scheduleDataArtifactIngestTasks(this, artifactsToAnalyze);
         } else {
-            logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
+            logErrorMessage(Level.SEVERE, "Adding data artifacts to job during stage " + stage.toString() + " not supported");
         }
 
         /**
          * The intended clients of this method are ingest modules running code
          * in an ingest thread that is holding a reference to a "primary" ingest
-         * task that was the source of the files, in which case a completion
-         * check would not be necessary, so this is a bit of defensive
-         * programming.
+         * task that was the source of the data artifacts, in which case a
+         * completion check would not be necessary, so this is a bit of
+         * defensive programming.
+         */
+        checkForStageCompleted();
+    }
+
+    /**
+     * Adds analysis results for analysis.
+     *
+     * @param results The analysis results.
+     */
+    void addAnalysisResults(List<AnalysisResult> results) {
+        List<AnalysisResult> resultsToAnalyze = new ArrayList<>(results);
+        if (stage.equals(IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY)
+                || stage.equals(IngestJobStage.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)
+                || stage.equals(IngestJobStage.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
+            taskScheduler.scheduleAnalysisResultIngestTasks(this, resultsToAnalyze);
+        } else {
+            logErrorMessage(Level.SEVERE, "Adding analysis results to job during stage " + stage.toString() + " not supported");
+        }
+
+        /**
+         * The intended clients of this method are ingest modules running code
+         * in an ingest thread that is holding a reference to a "primary" ingest
+         * task that was the source of the analysis results, in which case a
+         * completion check would not be necessary, so this is a bit of
+         * defensive programming.
          */
         checkForStageCompleted();
     }
@@ -1459,7 +1538,7 @@ final class IngestJobExecutor {
     void cancel(IngestJob.CancellationReason reason) {
         jobCancelled = true;
         cancellationReason = reason;
-        IngestJobExecutor.taskScheduler.cancelPendingFileTasksForIngestJob(this);
+        IngestJobExecutor.taskScheduler.cancelPendingFileTasksForIngestJob(getIngestJobId());
 
         if (usingNetBeansGUI) {
             synchronized (dataSourceIngestProgressLock) {
@@ -1594,7 +1673,7 @@ final class IngestJobExecutor {
         long processedFilesCount = 0;
         long estimatedFilesToProcessCount = 0;
         long snapShotTime = new Date().getTime();
-        IngestJobTasksSnapshot tasksSnapshot = null;
+        IngestTasksSnapshot tasksSnapshot = null;
         if (includeIngestTasksSnapshot) {
             synchronized (fileIngestProgressLock) {
                 processedFilesCount = processedFiles;

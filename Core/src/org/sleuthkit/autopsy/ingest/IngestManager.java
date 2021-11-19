@@ -70,6 +70,7 @@ import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
 import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -194,7 +195,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
         resultIngestTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-results-ingest-%d").build()); //NON-NLS;        
         threadId = nextIngestManagerTaskId.incrementAndGet();
-        resultIngestTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getResultIngestTaskQueue()));
+        resultIngestTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getDataArtifactIngestTaskQueue()));
         // RJCTODO
         // ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
         // RJCTODO: Where is the shut down code?
@@ -301,13 +302,16 @@ public class IngestManager implements IngestProgressSnapshotProvider {
          * job for possible analysis.
          */
         List<DataArtifact> newDataArtifacts = new ArrayList<>();
+        List<AnalysisResult> newAnalysisResults = new ArrayList<>();
         Collection<BlackboardArtifact> newArtifacts = tskEvent.getArtifacts();
         for (BlackboardArtifact artifact : newArtifacts) {
             if (artifact instanceof DataArtifact) {
                 newDataArtifacts.add((DataArtifact) artifact);
+            } else {
+                newAnalysisResults.add((AnalysisResult) artifact);
             }
         }
-        if (!newDataArtifacts.isEmpty()) {
+        if (!newDataArtifacts.isEmpty() || !newAnalysisResults.isEmpty()) {
             IngestJob ingestJob = null;
             Optional<Long> ingestJobId = tskEvent.getIngestJobId();
             if (ingestJobId.isPresent()) {
@@ -379,7 +383,12 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                 }
             }
             if (ingestJob != null) {
-                ingestJob.addDataArtifacts(newDataArtifacts);
+                if (!newDataArtifacts.isEmpty()) {
+                    ingestJob.addDataArtifacts(newDataArtifacts);
+                }
+                if (!newAnalysisResults.isEmpty()) {
+                    ingestJob.addAnalysisResults(newAnalysisResults);
+                }
             }
         }
 
