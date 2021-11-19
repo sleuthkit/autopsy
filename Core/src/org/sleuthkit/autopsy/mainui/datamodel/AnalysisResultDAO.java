@@ -260,7 +260,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new AnalysisResultRowDTO((AnalysisResult) artifact, srcContent, isTimelineSupported, cellValues, id);
     }
 
-    public AnalysisResultTableSearchResultsDTO getAnalysisResultsForTable(AnalysisResultSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public AnalysisResultTableSearchResultsDTO getAnalysisResultsForTable(AnalysisResultSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
 
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.ANALYSIS_RESULT
@@ -271,10 +271,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         SearchParams<BlackboardArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
-        if (hardRefresh) {
-            analysisResultCache.invalidate(searchParams);
-        }
-
         return analysisResultCache.get(searchParams, () -> fetchAnalysisResultsForTable(searchParams));
     }
 
@@ -299,7 +295,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     // GVDTODO handle keyword hits
-    public AnalysisResultTableSearchResultsDTO getAnalysisResultSetHits(AnalysisResultSetSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public AnalysisResultTableSearchResultsDTO getAnalysisResultSetHits(AnalysisResultSetSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Data source id must be null or > 0.  "
@@ -307,16 +303,12 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         SearchParams<AnalysisResultSetSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
-        if (hardRefresh) {
-            setHitCache.invalidate(searchParams);
-        }
-
         return setHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
     // TODO - JIRA-8117
     // This needs to use more than just the set name
-    public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Data source id must be null or > 0.  "
@@ -324,10 +316,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         SearchParams<KeywordHitSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
-        if (hardRefresh) {
-            keywordHitCache.invalidate(searchParams);
-        }
-
         return keywordHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
@@ -840,8 +828,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return getDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize);
         }
 
         @Override
@@ -869,8 +857,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return getDAO().getAnalysisResultSetHits(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getAnalysisResultSetHits(this.getParameters(), pageIdx * pageSize, (long) pageSize);
         }
 
         @Override
@@ -898,8 +886,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return getDAO().getKeywordHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getKeywordHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize);
         }
 
         @Override

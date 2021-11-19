@@ -101,7 +101,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return new DataArtifactRowDTO((DataArtifact) artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id);
     }
 
-    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
 
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT
@@ -112,10 +112,6 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         SearchParams<BlackboardArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
-        if (hardRefresh) {
-            this.dataArtifactCache.invalidate(searchParams);
-        }
-
         return dataArtifactCache.get(searchParams, () -> fetchDataArtifactsForTable(searchParams));
     }
 
@@ -242,8 +238,8 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return getDAO().getDataArtifactsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getDataArtifactsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize);
         }
 
         @Override

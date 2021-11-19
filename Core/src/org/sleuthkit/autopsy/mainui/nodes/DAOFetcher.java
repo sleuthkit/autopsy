@@ -55,13 +55,12 @@ public abstract class DAOFetcher<P> {
      *
      * @param pageSize    The number of items per page.
      * @param pageIdx     The page index.
-     * @param hardRefresh Whether or not to perform a hard refresh.
      *
      * @return The retrieved data.
      *
      * @throws ExecutionException
      */
-    public abstract SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException;
+    public abstract SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException;
 
     /**
      * Returns true if the ingest module event will require a refresh in the

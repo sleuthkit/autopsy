@@ -1397,7 +1397,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     private void refreshSearchResultChildren() {
         try {
-            refreshSearchResultChildren(this.searchResultManager.getRefreshedData());
+            refreshSearchResultChildren(this.searchResultManager.getResults());
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, "There was an error refreshing data: ", ex);
         }

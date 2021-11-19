@@ -21,7 +21,8 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
 import java.util.Objects;
 
 /**
- * An event that affects the given parent content.
+ * An event signaling that children files were added or removed from the given
+ * parent ID.
  */
 public class FileSystemContentEvent implements DAOEvent {
 

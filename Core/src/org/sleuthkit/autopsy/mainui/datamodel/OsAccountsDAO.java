@@ -101,7 +101,7 @@ public class OsAccountsDAO extends AbstractDAO {
         return new ColumnKey(name, name, Bundle.OsAccountsDAO_fileColumns_noDescription());
     }
 
-    public SearchResultsDTO getAccounts(OsAccountsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public SearchResultsDTO getAccounts(OsAccountsSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (key == null) {
             throw new IllegalArgumentException("Search parameters are null");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
@@ -109,10 +109,6 @@ public class OsAccountsDAO extends AbstractDAO {
         }
 
         SearchParams<OsAccountsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
-        if (hardRefresh) {
-            this.searchParamsCache.invalidate(searchParams);
-        }
-
         return searchParamsCache.get(searchParams, () -> fetchAccountsDTOs(searchParams));
     }
 
@@ -220,8 +216,8 @@ public class OsAccountsDAO extends AbstractDAO {
         }
 
         @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return getDAO().getAccounts(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getAccounts(this.getParameters(), pageIdx * pageSize, (long) pageSize);
         }
 
         @Override
