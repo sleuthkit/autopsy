@@ -108,7 +108,8 @@ public class MainDAO extends AbstractDAO {
     private final ViewsDAO viewsDAO = ViewsDAO.getInstance();
     private final FileSystemDAO fileSystemDAO = FileSystemDAO.getInstance();
     private final TagsDAO tagsDAO = TagsDAO.getInstance();
-    private final OsAccountsDAO accountsDAO = OsAccountsDAO.getInstance();
+    private final OsAccountsDAO osAccountsDAO = OsAccountsDAO.getInstance();
+    private final CommAccountsDAO commAccountsDAO = CommAccountsDAO.getInstance();
 
     // NOTE: whenever adding a new sub-dao, it should be added to this list for event updates.
     private final List<AbstractDAO> allDAOs = ImmutableList.of(
@@ -140,7 +141,11 @@ public class MainDAO extends AbstractDAO {
     }
 
     public OsAccountsDAO getOsAccountsDAO() {
-        return accountsDAO;
+        return osAccountsDAO;
+    }
+    
+    public CommAccountsDAO getCommAccountsDAO() {
+        return commAccountsDAO;
     }
 
     @Override

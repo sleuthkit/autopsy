@@ -60,7 +60,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemHostEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemPersonEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
-import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
