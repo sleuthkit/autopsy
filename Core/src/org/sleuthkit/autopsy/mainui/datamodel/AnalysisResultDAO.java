@@ -762,22 +762,24 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     /**
-     * Generate DAO events from digest of autopsy events.
+     * Generate DAO events from digest of Autopsy events. 
      *
-     * @param analysisResultMap A mapping of analysis result type ids to data
-     *                          sources where artifacts were created.
-     * @param setMap            A mapping of (artifact type id, set name) to
-     *                          data sources where artifacts were created.
+     * @param analysisResultMap Contains the analysis results that do not use
+     *                          a set name. A mapping of analysis result type ids to data
+     *                          sources where the results were created.
+     * @param resultsWithSetMap Contains the anlaysis results that do use a set
+     *                          name.  A mapping of (analysis result type id, set name) to
+     *                          data sources where results were created.
      *
      * @return The list of dao events.
      */
-    private List<DAOEvent> getDAOEvents(Map<Integer, Set<Long>> analysisResultMap, Map<Pair<Integer, String>, Set<Long>> setMap) {
+    private List<DAOEvent> getDAOEvents(Map<Integer, Set<Long>> analysisResultMap, Map<Pair<Integer, String>, Set<Long>> resultsWithSetMap) {
         // invalidate cache entries that are affected by events
         // GVDTODO handle concurrency issues that may arise
         Stream<DAOEvent> analysisResultEvts = analysisResultMap.entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new AnalysisResultEvent(entry.getKey(), dsId)));
 
-        Stream<DAOEvent> analysisResultSetEvts = setMap.entrySet().stream()
+        Stream<DAOEvent> analysisResultSetEvts = resultsWithSetMap.entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new AnalysisResultSetEvent(entry.getKey().getRight(), entry.getKey().getLeft(), dsId)));
 
         // GVDTODO handle keyword hits
@@ -789,12 +791,14 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     /**
      * Clears cache entries given the provided digests of autopsy events.
      *
-     * @param analysisResultMap A mapping of analysis result type ids to data
-     *                          sources where artifacts were created.
-     * @param setMap            A mapping of (artifact type id, set name) to
-     *                          data sources where artifacts were created.
+     * @param analysisResultMap Contains the analysis results that do not use
+     *                          a set name. A mapping of analysis result type ids to data
+     *                          sources where the results were created.
+     * @param resultsWithSetMap Contains the anlaysis results that do use a set
+     *                          name.  A mapping of (analysis result type id, set name) to
+     *                          data sources where results were created.
      */
-    private void clearRelevantCacheEntries(Map<Integer, Set<Long>> analysisResultMap, Map<Pair<Integer, String>, Set<Long>> setMap) {
+    private void clearRelevantCacheEntries(Map<Integer, Set<Long>> analysisResultMap, Map<Pair<Integer, String>, Set<Long>> resultsWithSetMap) {
         ConcurrentMap<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> arConcurrentMap = this.analysisResultCache.asMap();
         arConcurrentMap.forEach((k, v) -> {
             BlackboardArtifactSearchParam searchParam = k.getParamData();
@@ -807,7 +811,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         ConcurrentMap<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setConcurrentMap = this.setHitCache.asMap();
         setConcurrentMap.forEach((k, v) -> {
             AnalysisResultSetSearchParam searchParam = k.getParamData();
-            Set<Long> dsIds = setMap.get(Pair.of(searchParam.getArtifactType().getTypeID(), searchParam.getSetName()));
+            Set<Long> dsIds = resultsWithSetMap.get(Pair.of(searchParam.getArtifactType().getTypeID(), searchParam.getSetName()));
             if (dsIds != null && (searchParam.getDataSourceId() == null || dsIds.contains(searchParam.getDataSourceId()))) {
                 arConcurrentMap.remove(k);
             }
