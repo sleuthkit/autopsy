@@ -24,8 +24,15 @@ import java.util.Objects;
  * An event that affects the given parent content.
  */
 public class FileSystemContentEvent implements DAOEvent {
+
     private final Long contentObjectId;
 
+    /**
+     * Main constructor.
+     *
+     * @param contentObjectId The parent content object id. If null, performs
+     *                        full refresh of file tree.
+     */
     public FileSystemContentEvent(Long contentObjectId) {
         this.contentObjectId = contentObjectId;
     }

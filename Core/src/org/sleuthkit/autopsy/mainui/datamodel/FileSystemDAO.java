@@ -65,6 +65,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
@@ -78,6 +79,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  *
@@ -123,7 +125,9 @@ public class FileSystemDAO extends AbstractDAO {
             return false;
         }
 
-        return key.getContentObjectId() == ((FileSystemContentEvent) daoEvent).getContentObjectId();
+        FileSystemContentEvent contentEvt = (FileSystemContentEvent) daoEvent;
+
+        return contentEvt.getContentObjectId() == null || key.getContentObjectId().equals(contentEvt.getContentObjectId());
     }
 
     public boolean isSystemHostInvalidating(FileSystemHostSearchParam key, DAOEvent daoEvent) {
@@ -342,22 +346,56 @@ public class FileSystemDAO extends AbstractDAO {
         }
     }
 
+    /**
+     * In instances where parents are hidden, refresh the entire tree.
+     *
+     * @param parentContent The parent content.
+     *
+     * @return True if full tree should be refreshed.
+     */
+    private boolean invalidatesAllFileSystem(Content parentContent) {
+        if (parentContent instanceof VolumeSystem || parentContent instanceof FileSystem) {
+            return true;
+        }
+
+        if (parentContent instanceof Directory) {
+            Directory dir = (Directory) parentContent;
+            return dir.isRoot() && !dir.getName().equals(".") && !dir.getName().equals("..");
+        }
+
+        if (parentContent instanceof LocalDirectory) {
+            return ((LocalDirectory) parentContent).isRoot();
+        }
+
+        return false;
+    }
+
     @Override
     List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
         Set<Long> affectedPersons = new HashSet<>();
         Set<Long> affectedHosts = new HashSet<>();
         Set<Long> affectedParentContent = new HashSet<>();
+        boolean refreshAllContent = false;
 
         for (PropertyChangeEvent evt : evts) {
-            Content content = DAOEventUtils.getContentFromEvt(evt);
-            if (content instanceof AbstractContent) {
+            Content content = DAOEventUtils.getDerivedContentFromEvt(evt);
+            if (content != null) {
+                Content parentContent;
                 try {
-                    Optional<Long> parentId = ((AbstractContent) content).getParentId();
-                    if (parentId.isPresent()) {
-                        affectedParentContent.add(parentId.get());
-                    }
+                    parentContent = content.getParent();
                 } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "An exception occurred getting the parent id of content: " + content.getId(), ex);
+                    logger.log(Level.WARNING, "Unable to get parent content of content with id: " + content.getId(), ex);
+                    continue;
+                }
+
+                if (parentContent == null) {
+                    continue;
+                }
+
+                if (invalidatesAllFileSystem(parentContent)) {
+                    refreshAllContent = true;
+                } else {
+                    affectedParentContent.add(parentContent.getId());
                 }
             } else if (evt instanceof DataSourceAddedEvent) {
                 Long hostId = getHostFromDs(((DataSourceAddedEvent) evt).getDataSource());
@@ -382,6 +420,8 @@ public class FileSystemDAO extends AbstractDAO {
             }
         }
 
+        final boolean triggerFullRefresh = refreshAllContent;
+
         // GVDTODO handling null ids versus the 'No Persons' option
         ConcurrentMap<SearchParams<?>, BaseSearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
         concurrentMap.forEach((k, v) -> {
@@ -398,16 +438,22 @@ public class FileSystemDAO extends AbstractDAO {
                 }
             } else if (searchParams instanceof FileSystemContentSearchParam) {
                 FileSystemContentSearchParam contentParams = (FileSystemContentSearchParam) searchParams;
-                if (affectedParentContent.contains(contentParams)) {
+                if (triggerFullRefresh
+                        || contentParams.getContentObjectId() == null
+                        || affectedParentContent.contains(contentParams.getContentObjectId())) {
                     concurrentMap.remove(k);
                 }
             }
         });
 
+        Stream<DAOEvent> fileEvts = triggerFullRefresh
+                ? Stream.of(new FileSystemContentEvent(null))
+                : affectedParentContent.stream().map(id -> new FileSystemContentEvent(id));
+
         return Stream.of(
                 affectedPersons.stream().map(id -> new FileSystemPersonEvent(id)),
                 affectedHosts.stream().map(id -> new FileSystemHostEvent(id)),
-                affectedParentContent.stream().map(id -> new FileSystemContentEvent(id))
+                fileEvts
         )
                 .flatMap(s -> s)
                 .collect(Collectors.toList());

@@ -32,8 +32,8 @@ import org.sleuthkit.datamodel.Content;
 public class DAOEventUtils {
 
     /**
-     * Returns the content from the ModuleContentEvent. If the event does not
-     * contain a ModuleContentEvent or the event does not contain Content, null
+     * Returns the content from the event. If the event does not
+     * contain a event or the event does not contain Content, null
      * is returned.
      *
      * @param evt The event
@@ -42,12 +42,9 @@ public class DAOEventUtils {
      */
     public static Content getContentFromEvt(PropertyChangeEvent evt) {
         String eventName = evt.getPropertyName();
-        if (IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventName)
-                && (evt.getOldValue() instanceof ModuleContentEvent)
-                && ((ModuleContentEvent) evt.getOldValue()).getSource() instanceof Content) {
-
-            return (Content) ((ModuleContentEvent) evt.getOldValue()).getSource();
-
+        Content derivedContent = getDerivedContentFromEvt(evt);
+        if (derivedContent != null) {
+            return derivedContent;
         } else if (IngestManager.IngestModuleEvent.FILE_DONE.toString().equals(eventName)
                 && (evt.getNewValue() instanceof Content)) {
             return (Content) evt.getNewValue();
@@ -55,7 +52,32 @@ public class DAOEventUtils {
             return null;
         }
     }
+    
+    /**
+     * Returns the content from the ModuleContentEvent. If the event does not
+     * contain a event or the event does not contain Content, null
+     * is returned.
+     * @param evt The event
+     * @return The inner content or null if no content.
+     */
+    public static Content getDerivedContentFromEvt(PropertyChangeEvent evt) {
+        String eventName = evt.getPropertyName();
+        if (IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventName)
+                && (evt.getOldValue() instanceof ModuleContentEvent)
+                && ((ModuleContentEvent) evt.getOldValue()).getSource() instanceof Content) {
 
+            return (Content) ((ModuleContentEvent) evt.getOldValue()).getSource();
+
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Returns a file in the event if a file is found in the event.
+     * @param evt The autopsy event.
+     * @return The inner file or null if no file found.
+     */
     public static AbstractFile getFileFromEvt(PropertyChangeEvent evt) {
         Content content = getContentFromEvt(evt);
         return (content instanceof AbstractFile)
