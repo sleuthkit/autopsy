@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
@@ -62,6 +63,12 @@ import org.sleuthkit.datamodel.VolumeSystem;
 public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     private static Logger logger = Logger.getLogger(AnalysisResultDAO.class.getName());
+    
+    // rule of thumb: 10 entries times number of cached SearchParams sub-types (BlackboardArtifactSearchParam, AnalysisResultSetSearchParam, KeywordHitSearchParam)
+    private static final int CACHE_SIZE = 30; 
+    private static final long CACHE_DURATION = 2;
+    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
+    private final Cache<SearchParams<?>, AnalysisResultTableSearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();    
 
     private static AnalysisResultDAO instance = null;
 
@@ -126,11 +133,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
-    // ELTODO We can probably combine all the caches at some point
-    private final Cache<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-
     private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
@@ -152,17 +154,18 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     private AnalysisResultTableSearchResultsDTO fetchKeywordHitsForTable(SearchParams<? extends AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
-        Blackboard blackboard = skCase.getBlackboard();
-        
+        Blackboard blackboard = skCase.getBlackboard();        
         KeywordHitSearchParam searchParams = (KeywordHitSearchParam) cacheKey.getParamData();
-
         Long dataSourceId = searchParams.getDataSourceId();
         BlackboardArtifact.Type artType = searchParams.getArtifactType();
         
+        // get all keyword hits for the search params
         List<BlackboardArtifact> allHits  = blackboard.getKeywordSearchResults(searchParams.getKeyword(), searchParams.getRegex(), searchParams.getSearchType(), searchParams.getSetName(), dataSourceId);
 
+        // populate all attributes in one optimized database call
         blackboard.loadBlackboardAttributes(allHits);
 
+        // do paging, if necessary
         List<BlackboardArtifact> pagedArtifacts = getPaged(allHits, cacheKey);
         TableData tableData = createTableData(artType, pagedArtifacts);
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), allHits.size());
@@ -245,10 +248,10 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         SearchParams<BlackboardArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         if (hardRefresh) {
-            analysisResultCache.invalidate(searchParams);
+            searchParamsCache.invalidate(searchParams);
         }
 
-        return analysisResultCache.get(searchParams, () -> fetchAnalysisResultsForTable(searchParams));
+        return searchParamsCache.get(searchParams, () -> fetchAnalysisResultsForTable(searchParams));
     }
 
     public boolean isAnalysisResultsInvalidating(AnalysisResultSearchParam key, ModuleDataEvent eventData) {
@@ -264,14 +267,12 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         SearchParams<AnalysisResultSetSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         if (hardRefresh) {
-            setHitCache.invalidate(searchParams);
+            searchParamsCache.invalidate(searchParams);
         }
 
-        return setHitCache.get(searchParams, () -> fetchKeywordHitsForTable(searchParams));
+        return searchParamsCache.get(searchParams, () -> fetchKeywordHitsForTable(searchParams));
     }
 
-    // TODO - JIRA-8117
-    // This needs to use more than just the set name
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
@@ -281,22 +282,10 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         SearchParams<KeywordHitSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         if (hardRefresh) {
-            keywordHitCache.invalidate(searchParams);
+            searchParamsCache.invalidate(searchParams);
         }
 
-        return keywordHitCache.get(searchParams, () -> fetchKeywordHitsForTable(searchParams));
-    }
-
-    public void dropAnalysisResultCache() {
-        analysisResultCache.invalidateAll();
-    }
-
-    public void dropHashHitCache() {
-        setHitCache.invalidateAll();
-    }
-
-    public void dropKeywordHitCache() {
-        keywordHitCache.invalidateAll();
+        return searchParamsCache.get(searchParams, () -> fetchKeywordHitsForTable(searchParams));
     }
 
     /**
