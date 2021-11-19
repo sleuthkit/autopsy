@@ -86,7 +86,7 @@ public class OsAccountsDAO extends AbstractDAO {
             Case.Events.OS_ACCOUNTS_UPDATED.toString(),
             Case.Events.OS_ACCT_INSTANCES_ADDED.toString()
     );
-        
+
     private static OsAccountsDAO instance = null;
 
     synchronized static OsAccountsDAO getInstance() {
@@ -115,7 +115,7 @@ public class OsAccountsDAO extends AbstractDAO {
 
         return searchParamsCache.get(searchParams, () -> fetchAccountsDTOs(searchParams));
     }
-    
+
     public boolean isOSAccountInvalidatingEvt(OsAccountsSearchParams searchParams, DAOEvent evt) {
         return evt instanceof OsAccountEvent;
     }
@@ -193,11 +193,11 @@ public class OsAccountsDAO extends AbstractDAO {
                 .map(evt -> new OsAccountEvent())
                 .limit(1)
                 .collect(Collectors.toList());
-        
+
         if (!daoEvts.isEmpty()) {
             this.searchParamsCache.invalidateAll();
         }
-        
+
         return daoEvts;
     }
 
@@ -206,8 +206,6 @@ public class OsAccountsDAO extends AbstractDAO {
      */
     public static class AccountFetcher extends DAOFetcher<OsAccountsSearchParams> {
 
-        private final OsAccountsDAO dao;
-
         /**
          * Main constructor.
          *
@@ -215,17 +213,20 @@ public class OsAccountsDAO extends AbstractDAO {
          */
         public AccountFetcher(OsAccountsSearchParams params) {
             super(params);
-            this.dao = MainDAO.getInstance().getOsAccountsDAO();
+        }
+
+        protected OsAccountsDAO getDAO() {
+            return MainDAO.getInstance().getOsAccountsDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return dao.getAccounts(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return getDAO().getAccounts(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return dao.isOSAccountInvalidatingEvt(this.getParameters(), evt);
+            return getDAO().isOSAccountInvalidatingEvt(this.getParameters(), evt);
         }
     }
 }

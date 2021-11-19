@@ -118,7 +118,8 @@ public class MainDAO extends AbstractDAO {
             viewsDAO,
             fileSystemDAO,
             tagsDAO,
-            accountsDAO);
+            osAccountsDAO,
+            commAccountsDAO);
 
     public DataArtifactDAO getDataArtifactsDAO() {
         return dataArtifactDAO;

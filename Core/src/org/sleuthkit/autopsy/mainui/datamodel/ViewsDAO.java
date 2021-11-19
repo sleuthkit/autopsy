@@ -798,7 +798,7 @@ public class ViewsDAO extends AbstractDAO {
                         || suffixes.values().stream().flatMap(set -> set.stream()).anyMatch(ds -> ds == mimeParams.getDataSourceId()))) {
 
                     concurrentMap.remove(k);
-                // otherwise, see if suffix is present
+                    // otherwise, see if suffix is present
                 } else {
                     Set<Long> dataSources = suffixes.get(mimePieces.getValue());
                     if (dataSources != null && (mimeParams.getDataSourceId() == null || dataSources.contains(mimeParams.getDataSourceId()))) {
@@ -821,8 +821,6 @@ public class ViewsDAO extends AbstractDAO {
      */
     public static class FileTypeExtFetcher extends DAOFetcher<FileTypeExtensionsSearchParams> {
 
-        private final ViewsDAO dao;
-
         /**
          * Main constructor.
          *
@@ -830,17 +828,20 @@ public class ViewsDAO extends AbstractDAO {
          */
         public FileTypeExtFetcher(FileTypeExtensionsSearchParams params) {
             super(params);
-            this.dao = MainDAO.getInstance().getViewsDAO();
+        }
+
+        protected ViewsDAO getDAO() {
+            return MainDAO.getInstance().getViewsDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return this.dao.getFilesByExtension(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return getDAO().getFilesByExtension(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return this.dao.isFilesByExtInvalidating(this.getParameters(), evt);
+            return getDAO().isFilesByExtInvalidating(this.getParameters(), evt);
         }
     }
 
@@ -849,8 +850,6 @@ public class ViewsDAO extends AbstractDAO {
      */
     public static class FileTypeMimeFetcher extends DAOFetcher<FileTypeMimeSearchParams> {
 
-        private final ViewsDAO dao;
-
         /**
          * Main constructor.
          *
@@ -858,17 +857,20 @@ public class ViewsDAO extends AbstractDAO {
          */
         public FileTypeMimeFetcher(FileTypeMimeSearchParams params) {
             super(params);
-            this.dao = MainDAO.getInstance().getViewsDAO();
+        }
+
+        protected ViewsDAO getDAO() {
+            return MainDAO.getInstance().getViewsDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return this.dao.getFilesByMime(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return getDAO().getFilesByMime(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return this.dao.isFilesByMimeInvalidating(this.getParameters(), evt);
+            return getDAO().isFilesByMimeInvalidating(this.getParameters(), evt);
         }
     }
 
@@ -877,8 +879,6 @@ public class ViewsDAO extends AbstractDAO {
      */
     public class FileTypeSizeFetcher extends DAOFetcher<FileTypeSizeSearchParams> {
 
-        private final ViewsDAO dao;
-
         /**
          * Main constructor.
          *
@@ -886,17 +886,20 @@ public class ViewsDAO extends AbstractDAO {
          */
         public FileTypeSizeFetcher(FileTypeSizeSearchParams params) {
             super(params);
-            this.dao = MainDAO.getInstance().getViewsDAO();
+        }
+
+        protected ViewsDAO getDAO() {
+            return MainDAO.getInstance().getViewsDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return this.dao.getFilesBySize(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return getDAO().getFilesBySize(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return this.dao.isFilesBySizeInvalidating(this.getParameters(), evt);
+            return getDAO().isFilesBySizeInvalidating(this.getParameters(), evt);
         }
     }
 }

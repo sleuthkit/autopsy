@@ -408,8 +408,6 @@ public class TagsDAO extends AbstractDAO {
      */
     public static class TagFetcher extends DAOFetcher<TagsSearchParams> {
 
-        private final TagsDAO dao;
-
         /**
          * Main constructor.
          *
@@ -417,17 +415,20 @@ public class TagsDAO extends AbstractDAO {
          */
         public TagFetcher(TagsSearchParams params) {
             super(params);
-            this.dao = MainDAO.getInstance().getTagsDAO();
+        }
+
+        protected TagsDAO getDAO() {
+            return MainDAO.getInstance().getTagsDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return dao.getTags(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return getDAO().getTags(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return dao.isTagsInvalidatingEvent(this.getParameters(), evt);
+            return getDAO().isTagsInvalidatingEvent(this.getParameters(), evt);
         }
     }
 }

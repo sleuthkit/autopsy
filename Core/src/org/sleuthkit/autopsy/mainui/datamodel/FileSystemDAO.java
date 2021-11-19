@@ -463,8 +463,6 @@ public class FileSystemDAO extends AbstractDAO {
      */
     public static class FileSystemFetcher extends DAOFetcher<FileSystemContentSearchParam> {
 
-        private final FileSystemDAO dao;
-
         /**
          * Main constructor.
          *
@@ -472,23 +470,24 @@ public class FileSystemDAO extends AbstractDAO {
          */
         public FileSystemFetcher(FileSystemContentSearchParam params) {
             super(params);
-            this.dao = MainDAO.getInstance().getFileSystemDAO();
+        }
+
+        protected FileSystemDAO getDAO() {
+            return MainDAO.getInstance().getFileSystemDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return this.dao.getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return getDAO().getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return this.dao.isSystemContentInvalidating(this.getParameters(), evt);
+            return getDAO().isSystemContentInvalidating(this.getParameters(), evt);
         }
     }
 
     public static class FileSystemHostFetcher extends DAOFetcher<FileSystemHostSearchParam> {
-
-        private final FileSystemDAO dao;
 
         /**
          * Main constructor.
@@ -497,17 +496,20 @@ public class FileSystemDAO extends AbstractDAO {
          */
         public FileSystemHostFetcher(FileSystemHostSearchParam params) {
             super(params);
-            this.dao = MainDAO.getInstance().getFileSystemDAO();
+        }
+
+        protected FileSystemDAO getDAO() {
+            return MainDAO.getInstance().getFileSystemDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return this.dao.getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return getDAO().getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return this.dao.isSystemHostInvalidating(this.getParameters(), evt);
+            return getDAO().isSystemHostInvalidating(this.getParameters(), evt);
         }
     }
 }

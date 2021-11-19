@@ -822,8 +822,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      */
     public static class AnalysisResultFetcher extends DAOFetcher<AnalysisResultSearchParam> {
 
-        private final AnalysisResultDAO dao;
-
         /**
          * Main constructor.
          *
@@ -831,17 +829,20 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
          */
         public AnalysisResultFetcher(AnalysisResultSearchParam params) {
             super(params);
-            this.dao = MainDAO.getInstance().getAnalysisResultDAO();
+        }
+
+        protected AnalysisResultDAO getDAO() {
+            return MainDAO.getInstance().getAnalysisResultDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return dao.getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return getDAO().getAnalysisResultsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return dao.isAnalysisResultsInvalidating(this.getParameters(), evt);
+            return getDAO().isAnalysisResultsInvalidating(this.getParameters(), evt);
         }
     }
 
@@ -850,8 +851,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      */
     public static class AnalysisResultSetFetcher extends DAOFetcher<AnalysisResultSetSearchParam> {
 
-        private final AnalysisResultDAO dao;
-
         /**
          * Main constructor.
          *
@@ -859,17 +858,20 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
          */
         public AnalysisResultSetFetcher(AnalysisResultSetSearchParam params) {
             super(params);
-            this.dao = MainDAO.getInstance().getAnalysisResultDAO();
+        }
+
+        protected AnalysisResultDAO getDAO() {
+            return MainDAO.getInstance().getAnalysisResultDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return dao.getAnalysisResultSetHits(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return getDAO().getAnalysisResultSetHits(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return dao.isAnalysisResultsSetInvalidating(this.getParameters(), evt);
+            return getDAO().isAnalysisResultsSetInvalidating(this.getParameters(), evt);
         }
     }
 
@@ -878,8 +880,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      */
     public static class KeywordHitResultFetcher extends DAOFetcher<KeywordHitSearchParam> {
 
-        private final AnalysisResultDAO dao;
-
         /**
          * Main constructor.
          *
@@ -887,18 +887,21 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
          */
         public KeywordHitResultFetcher(KeywordHitSearchParam params) {
             super(params);
-            this.dao = MainDAO.getInstance().getAnalysisResultDAO();
+        }
+
+        protected AnalysisResultDAO getDAO() {
+            return MainDAO.getInstance().getAnalysisResultDAO();
         }
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return dao.getKeywordHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+            return getDAO().getKeywordHitsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
         }
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
             // GVDTODO
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return true;
         }
     }
 }
