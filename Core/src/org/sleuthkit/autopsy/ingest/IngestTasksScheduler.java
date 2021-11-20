@@ -148,6 +148,9 @@ final class IngestTasksScheduler {
      * settings that causes the ingest task scheduler to discard all of the file
      * tasks.
      *
+     * RJCTODO: Return a count of scheduled tasks or even just a boolean; let
+     * the caller know if file filters, etc., caused no tasks to be scheduled.
+     *
      * @param executor The ingest job executor that will execute the scheduled
      *                 tasks. A reference to the executor is added to each task
      *                 so that when the task is dequeued by an ingest thread,
@@ -164,7 +167,7 @@ final class IngestTasksScheduler {
             }
             if (executor.hasDataArtifactIngestModules()) {
                 scheduleDataArtifactIngestTasks(executor);
-            }            
+            }
             if (executor.hasAnalysisResultIngestModules()) {
                 scheduleAnalysisResultIngestTasks(executor);
             }
@@ -194,8 +197,8 @@ final class IngestTasksScheduler {
     }
 
     /**
-     * Schedules file tasks for either all the files, or a given subset of the
-     * files, for a data source. The data source is obtained from the ingest
+     * Schedules file tasks for either all of the files, or a given subset of
+     * the files, for a data source. The data source is obtained from the ingest
      * ingest job executor passed in.
      *
      * @param executor The ingest job executor that will execute the scheduled
@@ -204,7 +207,7 @@ final class IngestTasksScheduler {
      *                 the task can pass its target item to the executor for
      *                 processing by the executor's ingest module pipelines.
      * @param files    A subset of the files from the data source; if empty,
-     *                 then all if the files from the data source are candidates
+     *                 then all of the files from the data source are candidates
      *                 for scheduling.
      */
     synchronized void scheduleFileIngestTasks(IngestJobExecutor executor, Collection<AbstractFile> files) {
@@ -267,7 +270,7 @@ final class IngestTasksScheduler {
      *                 processing by the executor's ingest module pipelines.
      * @param files    The files.
      */
-    synchronized void fastTrackFileIngestTasks(IngestJobExecutor executor, Collection<AbstractFile> files) {
+    synchronized void scheduleHighPriorityFileIngestTasks(IngestJobExecutor executor, Collection<AbstractFile> files) {
         if (!executor.isCancelled()) {
             /*
              * Put the files directly into the queue for the file ingest
@@ -450,8 +453,7 @@ final class IngestTasksScheduler {
      *
      * @return True or false.
      */
-    synchronized boolean currentTasksAreCompleted(IngestJobExecutor executor) {
-        long ingestJobId = executor.getIngestJobId();
+    synchronized boolean currentTasksAreCompleted(Long ingestJobId) {
         return !(dataSourceIngestTasksQueue.hasTasksForJob(ingestJobId)
                 || hasTasksForJob(topLevelFileIngestTasksQueue, ingestJobId)
                 || hasTasksForJob(batchedFileIngestTasksQueue, ingestJobId)
@@ -498,7 +500,9 @@ final class IngestTasksScheduler {
         List<AbstractFile> topLevelFiles = new ArrayList<>();
         Collection<AbstractFile> rootObjects = dataSource.accept(new GetRootDirectoryVisitor());
         if (rootObjects.isEmpty() && dataSource instanceof AbstractFile) {
-            // The data source is itself a file to be processed.
+            /*
+             * The data source is itself a file to be processed.
+             */
             topLevelFiles.add((AbstractFile) dataSource);
         } else {
             for (AbstractFile root : rootObjects) {
@@ -506,12 +510,17 @@ final class IngestTasksScheduler {
                 try {
                     children = root.getChildren();
                     if (children.isEmpty()) {
-                        // Add the root object itself, it could be an unallocated
-                        // space file, or a child of a volume or an image.
+                        /*
+                         * Add the root object itself, it could be an
+                         * unallocated space file, or a child of a volume or an
+                         * image.
+                         */
                         topLevelFiles.add(root);
                     } else {
-                        // The root object is a file system root directory, get
-                        // the files within it.
+                        /*
+                         * The root object is a file system root directory, get
+                         * the files within it.
+                         */
                         for (Content child : children) {
                             if (child instanceof AbstractFile) {
                                 topLevelFiles.add((AbstractFile) child);
@@ -623,7 +632,8 @@ final class IngestTasksScheduler {
             AbstractFile file = null;
             try {
                 file = nextTask.getFile();
-                for (Content child : file.getChildren()) {
+                List<Content> children = file.getChildren();
+                for (Content child : children) {
                     if (child instanceof AbstractFile) {
                         AbstractFile childFile = (AbstractFile) child;
                         FileIngestTask childTask = new FileIngestTask(nextTask.getIngestJobExecutor(), childFile);
@@ -663,8 +673,10 @@ final class IngestTasksScheduler {
             return false;
         }
 
-        // Skip the task if the file is actually the pseudo-file for the parent
-        // or current directory.
+        /*
+         * Skip the task if the file is actually the pseudo-file for the parent
+         * or current directory.
+         */
         String fileName = file.getName();
 
         if (fileName.equals(".") || fileName.equals("..")) {
@@ -687,12 +699,16 @@ final class IngestTasksScheduler {
             return false;
         }
 
-        // Skip the task if the file is one of a select group of special, large
-        // NTFS or FAT file system files.
+        /*
+         * Skip the task if the file is one of a select group of special, large
+         * NTFS or FAT file system files.
+         */
         if (file instanceof org.sleuthkit.datamodel.File) {
             final org.sleuthkit.datamodel.File f = (org.sleuthkit.datamodel.File) file;
 
-            // Get the type of the file system, if any, that owns the file.
+            /*
+             * Get the type of the file system, if any, that owns the file.
+             */
             TskData.TSK_FS_TYPE_ENUM fsType = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_UNSUPP;
             try {
                 FileSystem fs = f.getFileSystem();
@@ -703,12 +719,16 @@ final class IngestTasksScheduler {
                 logger.log(Level.SEVERE, "Error querying file system for " + f, ex); //NON-NLS
             }
 
-            // If the file system is not NTFS or FAT, don't skip the file.
+            /*
+             * If the file system is not NTFS or FAT, don't skip the file.
+             */
             if ((fsType.getValue() & FAT_NTFS_FLAGS) == 0) {
                 return true;
             }
 
-            // Find out whether the file is in a root directory. 
+            /*
+             * Find out whether the file is in a root directory.
+             */
             boolean isInRootDir = false;
             try {
                 AbstractFile parent = f.getParentDirectory();
@@ -721,9 +741,11 @@ final class IngestTasksScheduler {
                 logger.log(Level.WARNING, "Error querying parent directory for" + f.getName(), ex); //NON-NLS
             }
 
-            // If the file is in the root directory of an NTFS or FAT file 
-            // system, check its meta-address and check its name for the '$'
-            // character and a ':' character (not a default attribute).
+            /*
+             * If the file is in the root directory of an NTFS or FAT file
+             * system, check its meta-address and check its name for the '$'
+             * character and a ':' character (not a default attribute).
+             */
             if (isInRootDir && f.getMetaAddr() < 32) {
                 String name = f.getName();
                 if (name.length() > 0 && name.charAt(0) == '$' && name.contains(":")) {
@@ -839,7 +861,7 @@ final class IngestTasksScheduler {
                 fileIngestTasksQueue.countQueuedTasksForJob(ingestJobId),
                 countTasksForJob(streamedFileIngestTasksQueue, ingestJobId),
                 artifactIngestTasksQueue.countQueuedTasksForJob(ingestJobId),
-                artifactIngestTasksQueue.countQueuedTasksForJob(ingestJobId),
+                resultIngestTasksQueue.countQueuedTasksForJob(ingestJobId),
                 dataSourceIngestTasksQueue.countRunningTasksForJob(ingestJobId) + fileIngestTasksQueue.countRunningTasksForJob(ingestJobId) + artifactIngestTasksQueue.countRunningTasksForJob(ingestJobId) + resultIngestTasksQueue.countRunningTasksForJob(ingestJobId)
         );
     }
@@ -852,20 +874,27 @@ final class IngestTasksScheduler {
 
         @Override
         public int compare(FileIngestTask q1, FileIngestTask q2) {
-            // In practice the case where one or both calls to getFile() fails
-            // should never occur since such tasks would not be added to the queue.
+            /*
+             * In practice the case where one or both calls to getFile() fails
+             * should never occur since such tasks would not be added to the
+             * queue.
+             */
             AbstractFile file1 = null;
             AbstractFile file2 = null;
             try {
                 file1 = q1.getFile();
             } catch (TskCoreException ex) {
-                // Do nothing - the exception has been logged elsewhere
+                /*
+                 * Do nothing - the exception has been logged elsewhere
+                 */
             }
 
             try {
                 file2 = q2.getFile();
             } catch (TskCoreException ex) {
-                // Do nothing - the exception has been logged elsewhere
+                /*
+                 * Do nothing - the exception has been logged elsewhere
+                 */
             }
 
             if (file1 == null) {
@@ -910,15 +939,11 @@ final class IngestTasksScheduler {
             static final List<Pattern> HIGH_PRI_PATHS = new ArrayList<>();
 
             /*
-             * prioritize root directory folders based on the assumption that we
+             * Prioritize root directory folders based on the assumption that we
              * are looking for user content. Other types of investigations may
              * want different priorities.
              */
-            static /*
-             * prioritize root directory folders based on the assumption that we
-             * are looking for user content. Other types of investigations may
-             * want different priorities.
-             */ {
+            static {
                 // these files have no structure, so they go last
                 //unalloc files are handled as virtual files in getPriority()
                 //LAST_PRI_PATHS.schedule(Pattern.compile("^\\$Unalloc", Pattern.CASE_INSENSITIVE));
@@ -1170,16 +1195,16 @@ final class IngestTasksScheduler {
          * @param resultsQueueSize      The number of queued ingest tasks for
          *                              analysis results.
          */
-        IngestTasksSnapshot(long ingestJobId, long dataSourceQueueSize, long rootQueueSize, long dirQueueSize, long fileQueueSize, long inProgressListSize, long streamedFileQueueSize, long artifactsQueueSize, long resultsQueueSize) {
+        IngestTasksSnapshot(long ingestJobId, long dataSourceQueueSize, long rootQueueSize, long dirQueueSize, long fileQueueSize, long streamedFileQueueSize, long artifactsQueueSize, long resultsQueueSize, long inProgressListSize) {
             this.ingestJobId = ingestJobId;
             this.dataSourceQueueSize = dataSourceQueueSize;
             this.rootQueueSize = rootQueueSize;
             this.dirQueueSize = dirQueueSize;
             this.fileQueueSize = fileQueueSize;
-            this.inProgressListSize = inProgressListSize;
             this.streamedFileQueueSize = streamedFileQueueSize;
             this.artifactsQueueSize = artifactsQueueSize;
             this.resultsQueueSize = resultsQueueSize;
+            this.inProgressListSize = inProgressListSize;
         }
 
         /**

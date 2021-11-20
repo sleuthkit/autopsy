@@ -200,6 +200,13 @@ public final class Snapshot implements Serializable {
         return tasksSnapshot.getArtifactsQueueSize();
     }
 
+    long getResultTasksQueueSize() {
+        if (tasksSnapshot == null) {
+            return 0;
+        }
+        return tasksSnapshot.getResultsQueueSize();
+    }
+    
     boolean isCancelled() {
         return this.jobCancelled;
     }

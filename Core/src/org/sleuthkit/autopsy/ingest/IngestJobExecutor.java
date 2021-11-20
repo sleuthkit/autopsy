@@ -1006,7 +1006,7 @@ final class IngestJobExecutor {
             if (stage == IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY) {
                 return;
             }
-            if (taskScheduler.currentTasksAreCompleted(this)) {
+            if (taskScheduler.currentTasksAreCompleted(getIngestJobId())) {
                 switch (stage) {
                     case FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS:
                         finishFileAndHighPriorityDataSrcAnalysis();
@@ -1307,7 +1307,7 @@ final class IngestJobExecutor {
     void addFiles(List<AbstractFile> files) {
         if (stage.equals(IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY)
                 || stage.equals(IngestJobStage.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
-            taskScheduler.fastTrackFileIngestTasks(this, files);
+            taskScheduler.scheduleHighPriorityFileIngestTasks(this, files);
         } else {
             logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
         }
@@ -1683,12 +1683,20 @@ final class IngestJobExecutor {
             tasksSnapshot = taskScheduler.getTasksSnapshotForJob(getIngestJobId());
         }
 
-        return new Snapshot(dataSource.getName(),
-                getIngestJobId(), createTime,
+        return new Snapshot(
+                dataSource.getName(),
+                getIngestJobId(), 
+                createTime,
                 getCurrentDataSourceIngestModule(),
-                fileIngestRunning, fileIngestStartTime,
-                jobCancelled, cancellationReason, cancelledDataSourceIngestModules,
-                processedFilesCount, estimatedFilesToProcessCount, snapShotTime, tasksSnapshot);
+                fileIngestRunning, 
+                fileIngestStartTime,
+                jobCancelled, 
+                cancellationReason, 
+                cancelledDataSourceIngestModules,
+                processedFilesCount, 
+                estimatedFilesToProcessCount, 
+                snapShotTime, 
+                tasksSnapshot);
     }
 
     /**
