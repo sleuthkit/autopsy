@@ -21,24 +21,18 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.DirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.ImageRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.VolumeRowDTO;
@@ -51,7 +45,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.PoolRowDTO;
 import static org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils.getExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Directory;
@@ -312,9 +305,7 @@ public class FileSystemDAO {
                         ds.getName(),
                         null
                 ));
-                // TODO sort
             }
-            
             return new TreeResultsDTO<>(treeItemRows);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching images for host with ID " + host.getHostId(), ex);
@@ -340,11 +331,11 @@ public class FileSystemDAO {
     }
     
     /**
-     * TODO
+     * Get the children that will be displayed in the tree for a given content ID.
      *
      * @param contentId Object ID of parent content.
      *
-     * @return 
+     * @return The results.
      *
      * @throws ExecutionException
      */
@@ -358,12 +349,8 @@ public class FileSystemDAO {
                 Long countForNode = null;
                 if ((child instanceof AbstractFile)
                         && ! (child instanceof LocalFilesDataSource)) {
-                    countForNode = new Long(child.getChildrenCount()); // TODO probably not correct
+                    countForNode = new Long(child.getChildrenCount()); // TODO does not account for hidden children
                 }
-                // public TreeItemDTO(String typeId, T typeData, Object id, String displayName, Long count) {
-                System.out.println("### Creating TreeItemDTO for " + child.getClass().getSimpleName() 
-                        + " child with name: " + child.getName()
-                        + " and ID: " + child.getId());
                 treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
                         child.getClass().getSimpleName(),
                         new FileSystemContentSearchParam(child.getId()),
@@ -371,24 +358,7 @@ public class FileSystemDAO {
                         getNameForContent(child),
                         countForNode
                 ));
-                // TODO sort
             }
-            
-            // get row dto's sorted by display name
-            //Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.DATA_ARTIFACT, dataSourceId);
-            //List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = typeCounts.entrySet().stream()
-            //        .map(entry -> {
-             //           return new TreeResultsDTO.TreeItemDTO<>(
-             //                   BlackboardArtifact.Category.DATA_ARTIFACT.name(),
-             //                   new DataArtifactSearchParam(entry.getKey(), dataSourceId),
-             //                   entry.getKey().getTypeID(),
-             //                   entry.getKey().getDisplayName(),
-             //                   entry.getValue());
-             //       })
-             //       .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
-             //       .collect(Collectors.toList());
-
-            // return results
             return new TreeResultsDTO<>(treeItemRows);
 
         } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -400,6 +370,8 @@ public class FileSystemDAO {
         // Currently the only special case is for volumes
         if (content instanceof Volume) {
             return FileSystemColumnUtils.getVolumeDisplayName((Volume)content);
+        } else if (content instanceof AbstractFile) {
+            return FileSystemColumnUtils.convertDotDirName((AbstractFile) content);
         }
         return content.getName();
     }

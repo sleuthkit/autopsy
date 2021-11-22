@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -536,7 +537,17 @@ public class FileSystemColumnUtils {
         return getDisplayableContentForTableAndTree(content);
     }
     
-    static List<Content> getDisplayableContentForTableAndTree(Content content) throws TskCoreException {    
+    /**
+     * Get the displayable content children in common between the table and tree views.
+     * Advances past content types we do not display (volume systems, file systems, root folder).
+     * 
+     * @param content The content to get the children of.
+     * 
+     * @return List of displayable content children.
+     * 
+     * @throws TskCoreException 
+     */
+    private static List<Content> getDisplayableContentForTableAndTree(Content content) throws TskCoreException {    
         // If the given content is displayable, return it
         if (FileSystemColumnUtils.isDisplayable(content)) {
             return Arrays.asList(content);
@@ -586,18 +597,25 @@ public class FileSystemColumnUtils {
         return new ColumnKey(name, name, Bundle.FileSystemColumnUtils_noDescription());
     }
     
+    /**
+     * Get the children of a given content ID that will be visible in the tree.
+     * 
+     * @param contentId The ID of the parent content.
+     * 
+     * @return The visible children of the given content.
+     * 
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException 
+     */
     public static List<Content> getVisibleTreeNodeChildren(Long contentId) throws TskCoreException, NoCurrentCaseException {
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         Content content = skCase.getContentById(contentId);
-        System.out.println("### getting displayable children for " + content.getClass().getSimpleName()
-            + " with ID " + contentId);
         List<Content> originalChildren = content.getChildren();
-        // TODO so much filtering
 
         // First, advance past anything we don't display (volume systems, file systems, root folders)
         List<Content> treeChildren = new ArrayList<>();
         for (Content child : originalChildren) {
-            treeChildren.addAll(FileSystemColumnUtils.getDisplayableContentForTableAndTree(child)); // TODO known, slack
+            treeChildren.addAll(FileSystemColumnUtils.getDisplayableContentForTableAndTree(child));
         }
             
         // Filter out the . and .. directories
@@ -615,20 +633,26 @@ public class FileSystemColumnUtils {
                 iter.remove();
             }
         }
-            
-        // sort? maybe sort earlier... 
+        
         return treeChildren;
     }
     
-   private static boolean hasDisplayableContentChildren(AbstractFile file) {
+    /**
+     * Check whether a file has displayable children.
+     * 
+     * @param file The file to check.
+     * 
+     * @return True if the file has displayable children, false otherwise.
+     */
+    private static boolean hasDisplayableContentChildren(AbstractFile file) {
         if (file != null) {
             try {
+                // If the file has no children at all, then it has no displayable children.
                 if (!file.hasChildren()) {
                     return false;
                 }
             } catch (TskCoreException ex) {
-
-                //logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + c, ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error checking if the node has children for file with ID: " + file.getId(), ex); //NON-NLS
                 return false;
             }
 
@@ -647,7 +671,7 @@ public class FileSystemColumnUtils {
                     return (0 < resultSet.getInt("count"));
                 }
             } catch (TskCoreException | SQLException | NoCurrentCaseException ex) {
-                //logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + c, ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error checking if the node has children for file with ID: " + file.getId(), ex); //NON-NLS
             }
         }
         return false;
