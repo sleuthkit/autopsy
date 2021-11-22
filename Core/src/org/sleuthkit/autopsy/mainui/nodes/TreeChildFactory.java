@@ -22,52 +22,54 @@ import com.google.common.collect.MapMaker;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.openide.util.WeakListeners;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
-import org.sleuthkit.autopsy.guiutils.RefreshThrottler.Refresher;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
  * Factory for populating tree with results.
  */
-public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object> implements Refresher {
+public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object> {
 
     private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
 
-    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST
-            = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
-
-    private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
-
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
-        if (evt.getNewValue() instanceof DAOAggregateEvent) {
+        if (evt.getNewValue() instanceof DAOEvent) {
             DAOAggregateEvent aggEvt = (DAOAggregateEvent) evt.getNewValue();
             for (DAOEvent daoEvt : aggEvt.getEvents()) {
-                if (isChildInvalidating(daoEvt)) {
-                    updateData();
-                    break;
+                if (daoEvt instanceof TreeEvent) {
+                    TreeEvent treeEvt = (TreeEvent) daoEvt;
+                    if (isChildInvalidating(treeEvt.getDaoEvent())) {
+                        try {
+                            if (treeEvt.isDeterminate()) {
+                                updateData();   
+                            } else {
+                                showIndeterminate(treeEvt);
+                            }
+                        } catch (ExecutionException ex) {
+                            logger.log(Level.WARNING, "An error occurred while updating the data for this factory of type: " + this.getClass().getName(), ex);
+                        }
+                        break;
+                    }
                 }
             }
         }
     };
 
-    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, MainDAO.getInstance().getTreeEventsManager());
 
     private final Map<Object, TreeNode<T>> typeNodeMap = new MapMaker().weakValues().makeMap();
     private TreeResultsDTO<? extends T> curResults = null;
@@ -122,11 +124,6 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
 
     }
 
-    @Override
-    public void refresh() {
-        update();
-    }
-
     /**
      * Fetches child view from the database and updates the tree.
      */
@@ -153,18 +150,15 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
      * Register listeners for autopsy events.
      */
     private void registerListeners() {
-        refreshThrottler.registerForIngestModuleEvents();
-        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+        MainDAO.getInstance().getTreeEventsManager().addPropertyChangeListener(weakPcl);
     }
 
     /**
      * Unregister listeners for autopsy events.
      */
     private void unregisterListeners() {
-        refreshThrottler.unregisterEventListener();
-        IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
-        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+        // GVDTODO this may not be necessary due to the weak listener's ability to unregister itself
+        MainDAO.getInstance().getTreeEventsManager().removePropertyChangeListener(weakPcl);
     }
 
     @Override

@@ -353,7 +353,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                                 new AnalysisResultSearchParam(entry.getKey(), dataSourceId),
                                 entry.getKey().getTypeID(),
                                 entry.getKey().getDisplayName(),
-                                entry.getValue());
+                                TreeCount.getDeterminate(entry.getValue()));
                     })
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
                     .collect(Collectors.toList());
@@ -452,7 +452,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                                     new AnalysisResultSetSearchParam(type, dataSourceId, entry.getKey()),
                                     entry.getKey() == null ? 0 : entry.getKey(),
                                     entry.getKey() == null ? nullSetName : entry.getKey(),
-                                    entry.getValue());
+                                    TreeCount.getDeterminate(entry.getValue()));
                         })
                         .collect(Collectors.toList());
 
@@ -595,7 +595,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                                 new KeywordSearchTermParams(setName, searchTerm, searchType, hasChildren, dataSourceId),
                                 searchTermModified,
                                 searchTermModified,
-                                count
+                                TreeCount.getDeterminate(count)
                         ));
                     }
                 } catch (SQLException ex) {
@@ -685,7 +685,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                                 new KeywordMatchParams(setName, regexStr, keyword, searchType, dataSourceId),
                                 keyword,
                                 keyword == null ? "" : keyword,
-                                count));
+                                TreeCount.getDeterminate(count)));
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);

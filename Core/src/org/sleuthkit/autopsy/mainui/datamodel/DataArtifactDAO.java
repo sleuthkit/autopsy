@@ -152,7 +152,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                                 new DataArtifactSearchParam(entry.getKey(), dataSourceId),
                                 entry.getKey().getTypeID(),
                                 entry.getKey().getDisplayName(),
-                                entry.getValue());
+                                TreeCount.getDeterminate(entry.getValue()));
                     })
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
                     .collect(Collectors.toList());

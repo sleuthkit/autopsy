@@ -93,35 +93,35 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
     }
 
-    @Override
-    public boolean isRefreshRequired(PropertyChangeEvent evt) {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-            /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
-             */
-            try {
-                Case.getCurrentCaseThrows();
-                /**
-                 * Due to some unresolved issues with how cases are closed, it
-                 * is possible for the event to have a null oldValue if the
-                 * event is a remote event.
-                 */
-                final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                if (null != event && Category.ANALYSIS_RESULT.equals(event.getBlackboardArtifactType().getCategory())
-                        && !(AnalysisResultDAO.getIgnoredTreeTypes().contains(event.getBlackboardArtifactType()))) {
-                    return true;
-                }
-            } catch (NoCurrentCaseException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
-            }
-        }
-        return false;
-    }
+//    @Override
+//    public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//        String eventType = evt.getPropertyName();
+//        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+//            /**
+//             * This is a stop gap measure until a different way of handling the
+//             * closing of cases is worked out. Currently, remote events may be
+//             * received for a case that is already closed.
+//             */
+//            try {
+//                Case.getCurrentCaseThrows();
+//                /**
+//                 * Due to some unresolved issues with how cases are closed, it
+//                 * is possible for the event to have a null oldValue if the
+//                 * event is a remote event.
+//                 */
+//                final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
+//                if (null != event && Category.ANALYSIS_RESULT.equals(event.getBlackboardArtifactType().getCategory())
+//                        && !(AnalysisResultDAO.getIgnoredTreeTypes().contains(event.getBlackboardArtifactType()))) {
+//                    return true;
+//                }
+//            } catch (NoCurrentCaseException notUsed) {
+//                /**
+//                 * Case is closed, do nothing.
+//                 */
+//            }
+//        }
+//        return false;
+//    }
 
     /**
      * See if expected blackboard type matches event.
@@ -232,10 +232,10 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             return MainDAO.getInstance().getAnalysisResultDAO().getSetCounts(this.artifactType, this.dataSourceId, this.nullSetName);
         }
 
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            return AnalysisResultTypeFactory.isRefreshRequired(artifactType, evt);
-        }
+//        @Override
+//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//            return AnalysisResultTypeFactory.isRefreshRequired(artifactType, evt);
+//        }
 
         @Override
         protected TreeNode<AnalysisResultSetSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> rowData) {
@@ -328,10 +328,10 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             return MainDAO.getInstance().getAnalysisResultDAO().getKeywordSearchTermCounts(this.setParams.getSetName(), this.setParams.getDataSourceId());
         }
 
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_KEYWORD_HIT, evt);
-        }
+//        @Override
+//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_KEYWORD_HIT, evt);
+//        }
 
     }
 
@@ -402,10 +402,10 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     this.setParams.getDataSourceId());
         }
 
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_KEYWORD_HIT, evt);
-        }
+//        @Override
+//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_KEYWORD_HIT, evt);
+//        }
     }
 
     /**

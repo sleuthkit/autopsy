@@ -27,17 +27,19 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.collections.CollectionUtils;
 import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEventTimer;
 
 /**
  * Main entry point for DAO for providing data to populate the data results
@@ -58,7 +60,9 @@ public class MainDAO extends AbstractDAO {
             Case.Events.OS_ACCT_INSTANCES_ADDED.toString()
     );
 
-    private static final long MILLIS_BATCH = 5000;
+    private static final long MILLIS_BATCH = 5 * 1000;
+    private static final long TREE_TIMEOUT_MILLIS = 2 * 60 * 1000;
+    private static final long TREE_CHECK_RESOLUTION_MILLIS = 10 * 1000;
 
     private static MainDAO instance = null;
 
@@ -78,7 +82,7 @@ public class MainDAO extends AbstractDAO {
         if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
             this.clearCaches();
         } else if (QUEUED_CASE_EVENTS.contains(evt.getPropertyName())) {
-            queueAutopsyEvent(evt);
+            enqueueAutopsyEvent(evt);
         } else {
             // handle case events immediately
             handleAutopsyEvent(Arrays.asList(evt));
@@ -96,12 +100,20 @@ public class MainDAO extends AbstractDAO {
      * The ingest module event listener.
      */
     private final PropertyChangeListener ingestModuleEventListener = (evt) -> {
-        queueAutopsyEvent(evt);
+        enqueueAutopsyEvent(evt);
     };
 
-    private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    private final PropertyChangeManager resultEventsManager = new PropertyChangeManager();
+    private final PropertyChangeManager treeEventsManager = new PropertyChangeManager();
 
-    private final DAOEventBatcher<PropertyChangeEvent> eventBatcher = new DAOEventBatcher<>((evts) -> this.getDAOEventsAndFire(evts), MILLIS_BATCH);
+    private final DAOEventBatcher<DAOEvent> eventBatcher = new DAOEventBatcher<>(
+            (evts) -> resultEventsManager.firePropertyChange("DATA_CHANGE", null, new DAOAggregateEvent(evts)), MILLIS_BATCH);
+
+    private final TreeEventTimer<DAOEvent> treeEventTimer = new TreeEventTimer<>(
+            (evts, determinate) -> fireTreeEvents(evts, determinate),
+            TREE_TIMEOUT_MILLIS,
+            TREE_CHECK_RESOLUTION_MILLIS
+    );
 
     private final DataArtifactDAO dataArtifactDAO = DataArtifactDAO.getInstance();
     private final AnalysisResultDAO analysisResultDAO = AnalysisResultDAO.getInstance();
@@ -144,7 +156,7 @@ public class MainDAO extends AbstractDAO {
     public OsAccountsDAO getOsAccountsDAO() {
         return osAccountsDAO;
     }
-    
+
     public CommAccountsDAO getCommAccountsDAO() {
         return commAccountsDAO;
     }
@@ -154,6 +166,7 @@ public class MainDAO extends AbstractDAO {
         allDAOs.forEach((subDAO) -> subDAO.clearCaches());
     }
 
+    // TODO breakup
     @Override
     List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evt) {
         return allDAOs.stream()
@@ -162,25 +175,31 @@ public class MainDAO extends AbstractDAO {
                 .collect(Collectors.toList());
     }
 
+    private void fireTreeEvents(Collection<DAOEvent> evts, boolean determinate) {
+        List<DAOEvent> treeEvts = evts.stream()
+                .map((daoEvt) -> new TreeEvent(daoEvt, determinate))
+                .collect(Collectors.toList());
+
+        treeEventsManager.firePropertyChange("TREE_CHANGE", null, new DAOAggregateEvent(treeEvts));
+    }
+
     /**
-     * Determines DAO events from autopsy events and fires DAO aggregate event
-     * if there are any created DAO events.
+     * Handle incoming autopsy event by queueing in batch and firing events.
      *
-     * @param evts The autopsy events.
+     * @param autopsyEvent The autopsy event.
      */
-    private void getDAOEventsAndFire(Collection<PropertyChangeEvent> evts) {
-        List<DAOEvent> daoEvents = handleAutopsyEvent(evts);
-        if (!CollectionUtils.isEmpty(daoEvents)) {
-            support.firePropertyChange(new PropertyChangeEvent(this, "DATA_CHANGE", null, new DAOAggregateEvent(daoEvents)));
-        }
+    private void enqueueAutopsyEvent(PropertyChangeEvent autopsyEvent) {
+        List<DAOEvent> daoEvents = handleAutopsyEvent(Collections.singletonList(autopsyEvent));
+        this.eventBatcher.enqueueAllEvents(daoEvents);
+        this.treeEventTimer.enqueueAll(daoEvents);
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        support.addPropertyChangeListener(listener);
+    public PropertyChangeManager getResultEventsManager() {
+        return this.resultEventsManager;
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        support.removePropertyChangeListener(listener);
+    public PropertyChangeManager getTreeEventsManager() {
+        return treeEventsManager;
     }
 
     /**
@@ -207,11 +226,28 @@ public class MainDAO extends AbstractDAO {
     }
 
     /**
-     * Handle incoming autopsy event by queueing in batch and firing events.
-     *
-     * @param autopsyEvent The autopsy event.
+     * A wrapper around property change support that exposes
+     * addPropertyChangeListener and removePropertyChangeListener so that weak
+     * listeners can automatically unregister.
      */
-    private void queueAutopsyEvent(PropertyChangeEvent autopsyEvent) {
-        this.eventBatcher.queueEvent(autopsyEvent);
+    public static class PropertyChangeManager {
+
+        private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+
+        public void addPropertyChangeListener(PropertyChangeListener listener) {
+            support.addPropertyChangeListener(listener);
+        }
+
+        public void removePropertyChangeListener(PropertyChangeListener listener) {
+            support.removePropertyChangeListener(listener);
+        }
+
+        PropertyChangeListener[] getPropertyChangeListeners() {
+            return support.getPropertyChangeListeners();
+        }
+
+        void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+            support.firePropertyChange(propertyName, oldValue, newValue);
+        }
     }
 }

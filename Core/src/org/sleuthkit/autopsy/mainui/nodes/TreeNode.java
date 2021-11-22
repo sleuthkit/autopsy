@@ -88,6 +88,14 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
     protected TreeItemDTO<? extends T> getItemData() {
         return itemData;
     }
+    
+    /**
+     * Sets this node to an indeterminate state.
+     */
+    void setIndeterminate() {
+        String baseName = this.itemData == null ? this.itemData.getDisplayName() : "";
+        this.setDisplayName(baseName + "...");
+    }
 
     /**
      * Sets the display name of the node to include the display name and count

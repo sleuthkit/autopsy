@@ -348,7 +348,7 @@ public class ViewsDAO extends AbstractDAO {
                             new FileTypeExtensionsSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
-                            entry.getValue());
+                            TreeCount.getDeterminate(entry.getValue()));
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
@@ -382,7 +382,7 @@ public class ViewsDAO extends AbstractDAO {
                             new FileTypeSizeSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
-                            entry.getValue());
+                            TreeCount.getDeterminate(entry.getValue()));
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
@@ -467,7 +467,7 @@ public class ViewsDAO extends AbstractDAO {
                                     new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
                                     name,
                                     name,
-                                    entry.getValue());
+                                    TreeCount.getDeterminate(entry.getValue()));
                         })
                         .sorted((a, b) -> stringCompare(a.getTypeData().getMimeType(), b.getTypeData().getMimeType()))
                         .collect(Collectors.toList());

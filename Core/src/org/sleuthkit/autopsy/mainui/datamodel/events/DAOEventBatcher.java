@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -49,7 +49,7 @@ public class DAOEventBatcher<T> {
             = new ScheduledThreadPoolExecutor(1,
                     new ThreadFactoryBuilder().setNameFormat(DAOEventBatcher.class.getName()).build());
 
-    private List<T> aggregateEvents = new ArrayList<>();
+    private Set<T> aggregateEvents = new HashSet<>();
     private Object eventListLock = new Object();
     private boolean isRunning = false;
 
@@ -63,15 +63,37 @@ public class DAOEventBatcher<T> {
 
     /**
      * Queues an event to be fired as a part of a time-windowed batch.
+     *
      * @param event The event.
      */
     public void queueEvent(T event) {
         synchronized (this.eventListLock) {
             this.aggregateEvents.add(event);
+            verifyRunning();
+        }
+    }
+
+    /**
+     * Starts up throttled event runner if not currently running.
+     */
+    private void verifyRunning() {
+        synchronized (this.eventListLock) {
             if (!this.isRunning) {
                 refreshExecutor.schedule(() -> fireEvents(), this.batchMillis, TimeUnit.MILLISECONDS);
                 this.isRunning = true;
             }
+        }
+    }
+
+    /**
+     * Queues an event to be fired as a part of a time-windowed batch.
+     *
+     * @param events The events.
+     */
+    public void enqueueAllEvents(Collection<T> events) {
+        synchronized (this.eventListLock) {
+            this.aggregateEvents.addAll(events);
+            verifyRunning();
         }
     }
 
@@ -82,7 +104,7 @@ public class DAOEventBatcher<T> {
         Collection<T> evtsToFire;
         synchronized (this.eventListLock) {
             evtsToFire = this.aggregateEvents;
-            this.aggregateEvents = new ArrayList<>();
+            this.aggregateEvents = new HashSet<>();
             this.isRunning = false;
         }
 

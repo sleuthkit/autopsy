@@ -439,7 +439,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private void initListeners() {
         UserPreferences.addChangeListener(this.pageSizeListener);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.weakCaseEventListener);
-        this.mainDAO.addPropertyChangeListener(this.weakDAOListener);
+        this.mainDAO.getResultEventsManager().addPropertyChangeListener(this.weakDAOListener);
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakDAOListener);
     }
 
@@ -449,7 +449,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private void closeListeners() {
         UserPreferences.removeChangeListener(this.pageSizeListener);
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseEventListener);
-        this.mainDAO.removePropertyChangeListener(this.weakDAOListener);
+        this.mainDAO.getResultEventsManager().removePropertyChangeListener(this.weakDAOListener);
     }
 
     /**

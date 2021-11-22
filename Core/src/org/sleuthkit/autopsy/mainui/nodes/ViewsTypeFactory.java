@@ -99,22 +99,22 @@ public class ViewsTypeFactory {
             return MainDAO.getInstance().getViewsDAO().getFileSizeCounts(this.dataSourceId);
         }
 
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            AbstractFile evtFile = getFileInDataSourceFromEvt(evt, this.dataSourceId);
-            if (evtFile == null) {
-                return false;
-            }
-
-            long size = evtFile.getSize();
-            for (FileSizeFilter filter : FileSizeFilter.values()) {
-                if (size >= filter.getMinBound() || size < filter.getMaxBound()) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
+//        @Override
+//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//            AbstractFile evtFile = getFileInDataSourceFromEvt(evt, this.dataSourceId);
+//            if (evtFile == null) {
+//                return false;
+//            }
+//
+//            long size = evtFile.getSize();
+//            for (FileSizeFilter filter : FileSizeFilter.values()) {
+//                if (size >= filter.getMinBound() || size < filter.getMaxBound()) {
+//                    return true;
+//                }
+//            }
+//
+//            return false;
+//        }
 
         /**
          * Shows a file size tree node.
@@ -164,10 +164,10 @@ public class ViewsTypeFactory {
             return MainDAO.getInstance().getViewsDAO().getFileMimeCounts(null, this.dataSourceId);
         }
 
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            return getFileInDataSourceFromEvt(evt, this.dataSourceId) != null;
-        }
+//        @Override
+//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//            return getFileInDataSourceFromEvt(evt, this.dataSourceId) != null;
+//        }
 
         static class FileMimePrefixNode extends TreeNode<FileTypeMimeSearchParams> {
 
@@ -218,15 +218,15 @@ public class ViewsTypeFactory {
             return MainDAO.getInstance().getViewsDAO().getFileMimeCounts(this.mimeTypePrefix, this.dataSourceId);
         }
 
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            AbstractFile file = getFileInDataSourceFromEvt(evt, dataSourceId);
-            if (file == null || file.getMIMEType() == null) {
-                return false;
-            }
-
-            return file.getMIMEType().toLowerCase().startsWith(this.mimeTypePrefix.toLowerCase());
-        }
+//        @Override
+//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//            AbstractFile file = getFileInDataSourceFromEvt(evt, dataSourceId);
+//            if (file == null || file.getMIMEType() == null) {
+//                return false;
+//            }
+//
+//            return file.getMIMEType().toLowerCase().startsWith(this.mimeTypePrefix.toLowerCase());
+//        }
 
         /**
          * Displays an individual suffix node in the tree (i.e. 'aac' underneath
@@ -302,12 +302,12 @@ public class ViewsTypeFactory {
             return MainDAO.getInstance().getViewsDAO().getFileExtCounts(this.childFilters, this.dataSourceId);
         }
 
-        @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            AbstractFile file = getFileInDataSourceFromEvt(evt, this.dataSourceId);
-            return file != null && file.getNameExtension() != null && 
-                    this.childFilters.stream().anyMatch((filter) -> filter.getFilter().contains("." + file.getNameExtension().toLowerCase()));
-        }
+//        @Override
+//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+//            AbstractFile file = getFileInDataSourceFromEvt(evt, this.dataSourceId);
+//            return file != null && file.getNameExtension() != null && 
+//                    this.childFilters.stream().anyMatch((filter) -> filter.getFilter().contains("." + file.getNameExtension().toLowerCase()));
+//        }
 
         /**
          * Represents a file extension tree node that may or may not have child
