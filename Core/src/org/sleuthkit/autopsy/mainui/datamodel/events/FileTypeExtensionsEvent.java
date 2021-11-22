@@ -21,7 +21,8 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
 import java.util.Objects;
 
 /**
- * An event where file type extensions could be affected.
+ * An event to signal that files have been added or removed 
+ * with the given extension on the given data source. 
  */
 public class FileTypeExtensionsEvent implements DAOEvent {
 

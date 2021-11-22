@@ -75,7 +75,7 @@ public class CommAccountsDAO extends AbstractDAO {
         return instance;
     }
 
-    public SearchResultsDTO getCommAcounts(CommAccountsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public SearchResultsDTO getCommAcounts(CommAccountsSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (key.getType() == null) {
             throw new IllegalArgumentException("Must have non-null type");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
@@ -83,10 +83,6 @@ public class CommAccountsDAO extends AbstractDAO {
         }
 
         SearchParams<CommAccountsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
-        if (hardRefresh) {
-            this.searchParamsCache.invalidate(searchParams);
-        }
-
         return searchParamsCache.get(searchParams, () -> fetchCommAccountsDTOs(searchParams));
     }
 
@@ -212,7 +208,7 @@ public class CommAccountsDAO extends AbstractDAO {
      *
      * @return True if event invalidates parameters.
      */
-    public boolean isCommAcctInvalidating(CommAccountsSearchParams parameters, DAOEvent evt) {
+    private boolean isCommAcctInvalidating(CommAccountsSearchParams parameters, DAOEvent evt) {
         if (evt instanceof CommAccountsEvent) {
             CommAccountsEvent commEvt = (CommAccountsEvent) evt;
             return (parameters.getType().getTypeName().equals(commEvt.getAccountType()))
@@ -241,8 +237,8 @@ public class CommAccountsDAO extends AbstractDAO {
         }
 
         @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return getDAO().getCommAcounts(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getCommAcounts(this.getParameters(), pageIdx * pageSize, (long) pageSize);
         }
 
         @Override

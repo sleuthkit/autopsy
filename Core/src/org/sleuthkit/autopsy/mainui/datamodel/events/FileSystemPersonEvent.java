@@ -21,7 +21,8 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
 import java.util.Objects;
 
 /**
- * An event that affects the given person.
+ * An event signaling that a host has been added or removed from the given
+ * Person.
  */
 public class FileSystemPersonEvent implements DAOEvent {
 

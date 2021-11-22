@@ -128,7 +128,7 @@ public class TagsDAO extends AbstractDAO {
         return new ColumnKey(name, name, Bundle.TagsDAO_fileColumns_noDescription());
     }
 
-    public SearchResultsDTO getTags(TagsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public SearchResultsDTO getTags(TagsSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (key.getTagName() == null) {
             throw new IllegalArgumentException("Must have non-null tag name");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
@@ -138,10 +138,6 @@ public class TagsDAO extends AbstractDAO {
         }
 
         SearchParams<TagsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
-        if (hardRefresh) {
-            this.searchParamsCache.invalidate(searchParams);
-        }
-
         return searchParamsCache.get(searchParams, () -> fetchTagsDTOs(searchParams));
     }
 
@@ -298,7 +294,7 @@ public class TagsDAO extends AbstractDAO {
      *
      * @return True if the event could affect the results of the search params.
      */
-    public boolean isTagsInvalidatingEvent(TagsSearchParams tagParams, DAOEvent daoEvt) {
+    private boolean isTagsInvalidatingEvent(TagsSearchParams tagParams, DAOEvent daoEvt) {
         if (!(daoEvt instanceof TagsEvent)) {
             return false;
         }
@@ -422,8 +418,8 @@ public class TagsDAO extends AbstractDAO {
         }
 
         @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return getDAO().getTags(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getTags(this.getParameters(), pageIdx * pageSize, (long) pageSize);
         }
 
         @Override

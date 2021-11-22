@@ -133,7 +133,7 @@ public class SearchManager {
      */
     public synchronized SearchResultsDTO updatePageIdx(int pageIdx) throws IllegalArgumentException, ExecutionException {
         setPageIdx(pageIdx);
-        return fetchResults(false);
+        return getResults();
     }
 
     /**
@@ -196,17 +196,6 @@ public class SearchManager {
     }
 
     /**
-     * Forces a refresh of data based on current search parameters.
-     *
-     * @return The refreshed data.
-     *
-     * @throws ExecutionException
-     */
-    public synchronized SearchResultsDTO getRefreshedData() throws ExecutionException {
-        return fetchResults(true);
-    }
-
-    /**
      * Queries the dao cache for results storing the result in the current
      * search results.
      *
@@ -216,25 +205,13 @@ public class SearchManager {
      * @throws ExecutionException
      */
     public synchronized SearchResultsDTO getResults() throws IllegalArgumentException, ExecutionException {
-        return fetchResults(false);
+        return fetchResults(this.daoFetcher);
     }
 
-    /**
-     * Fetches results using current page fetcher or returns null if no current
-     * page fetcher. Also stores current results in local variable.
-     *
-     * @return The current search results or null if no current page fetcher.
-     *
-     * @throws ExecutionException
-     */
-    private synchronized SearchResultsDTO fetchResults(boolean hardRefresh) throws ExecutionException {
-        return fetchResults(this.daoFetcher, hardRefresh);
-    }
-
-    private synchronized SearchResultsDTO fetchResults(DAOFetcher<?> dataFetcher, boolean hardRefresh) throws ExecutionException {
+    private synchronized SearchResultsDTO fetchResults(DAOFetcher<?> dataFetcher) throws ExecutionException {
         SearchResultsDTO newResults = null;
         if (dataFetcher != null) {
-            newResults = dataFetcher.getSearchResults(this.pageSize, this.pageIdx, hardRefresh);
+            newResults = dataFetcher.getSearchResults(this.pageSize, this.pageIdx);
         }
 
         this.currentSearchResults = newResults;

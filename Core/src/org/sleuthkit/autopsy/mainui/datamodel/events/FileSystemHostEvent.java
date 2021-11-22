@@ -21,7 +21,8 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
 import java.util.Objects;
 
 /**
- * An event that affects the given host.
+ * An event signaling that a data source has been added or removed from the
+ * given Host.
  */
 public class FileSystemHostEvent implements DAOEvent {
 
