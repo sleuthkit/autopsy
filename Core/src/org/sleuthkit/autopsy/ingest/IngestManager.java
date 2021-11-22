@@ -191,7 +191,6 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         analysisResultIngestTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-analysis-result-ingest-%d").build()); //NON-NLS;        
         threadId = nextIngestManagerTaskId.incrementAndGet();
         analysisResultIngestTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getAnalysisResultIngestTaskQueue()));
-
         
         // RJCTODO
         // ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
