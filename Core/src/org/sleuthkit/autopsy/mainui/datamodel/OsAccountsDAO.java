@@ -35,6 +35,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.OsAccountRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -157,10 +158,9 @@ public class OsAccountsDAO {
                     "", // GVDTODO this is filled by a background GetOsAccountRealmTask task 
                     timeDisplayStr);
 
-            fileRows.add(new BaseRowDTO(
-                    cellValues,
-                    OS_ACCOUNTS_TYPE_ID,
-                    account.getId()));
+            fileRows.add(new OsAccountRowDTO(
+                    account,
+                    cellValues));
         };
 
         return new BaseSearchResultsDTO(OS_ACCOUNTS_TYPE_ID, Bundle.OsAccounts_name_text(), OS_ACCOUNTS_WITH_SCO_COLUMNS, fileRows, 0, allAccounts.size());

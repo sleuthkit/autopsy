@@ -19,20 +19,23 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.List;
-import org.openide.nodes.AbstractNode;
+import java.util.Optional;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentTagsRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 
 /**
  * A node representing a ContentTag.
  */
-public final class ContentTagNode extends AbstractNode {
+public final class ContentTagNode extends BaseNode<SearchResultsDTO, ContentTagsRowDTO> {
 
     private static final String CONTENT_ICON_PATH = "org/sleuthkit/autopsy/images/blue-tag-icon-16.png"; //NON-NLS
 
@@ -45,8 +48,8 @@ public final class ContentTagNode extends AbstractNode {
      * @param results Search results.
      * @param rowData Row data.
      */
-public ContentTagNode(SearchResultsDTO results, ContentTagsRowDTO rowData) {
-        super(Children.LEAF, createLookup(rowData.getTag()));
+    public ContentTagNode(SearchResultsDTO results, ContentTagsRowDTO rowData) {
+        super(Children.LEAF, createLookup(rowData.getTag()), results, rowData);
         this.rowData = rowData;
         this.columns = results.getColumns();
         setDisplayName(rowData.getDisplayName());
@@ -70,57 +73,63 @@ public ContentTagNode(SearchResultsDTO results, ContentTagsRowDTO rowData) {
         return Lookups.fixed(tag, tag.getContent());
     }
 
-// Not adding support for actions at this time, but am deleting the original node
-// classes in dataModel.  This is the action code from the original ContentTagNode    
-//    public Action[] getActions(boolean context) {
-//        List<Action> actions = new ArrayList<>();
-//        
-//
-//        AbstractFile file = getLookup().lookup(AbstractFile.class);
-//        if (file != null) {
-//            actions.add(ViewFileInTimelineAction.createViewFileAction(file));
-//        }
-//
-//        actions.addAll(DataModelActionsFactory.getActions(tag, false));
-//        actions.add(null);
-//        actions.addAll(Arrays.asList(super.getActions(context))); 
-//        return actions.toArray(new Action[actions.size()]);
-//    }
-//    From DataModelActionsFactory
-//        public static List<Action> getActions(ContentTag contentTag, boolean isArtifactSource) {
-//        List<Action> actionsList = new ArrayList<>();
-//        actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), contentTag.getContent()));
-//        final ContentTagNode tagNode = new ContentTagNode(contentTag);
-//        actionsList.add(null); // creates a menu separator
-//        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, tagNode));
-//        final Collection<AbstractFile> selectedFilesList
-//                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-//        if (selectedFilesList.size() == 1) {
-//            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, tagNode));
-//        } else {
-//            actionsList.add(ExternalViewerShortcutAction.getInstance());
-//        }
-//        actionsList.add(null); // creates a menu separator
-//        actionsList.add(ExtractAction.getInstance());
-//        actionsList.add(ExportCSVAction.getInstance());
-//        actionsList.add(null); // creates a menu separator
-//        actionsList.add(AddContentTagAction.getInstance());
-//        if (isArtifactSource) {
-//            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
-//        }
-//        if (selectedFilesList.size() == 1) {
-//            actionsList.add(DeleteFileContentTagAction.getInstance());
-//        }
-//        if (isArtifactSource) {
-//            final Collection<BlackboardArtifact> selectedArtifactsList
-//                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-//            if (selectedArtifactsList.size() == 1) {
-//                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
-//            }
-//        }
-//        actionsList.add(DeleteContentTagAction.getInstance());
-//        actionsList.add(ReplaceContentTagAction.getInstance());
-//        actionsList.addAll(ContextMenuExtensionPoint.getActions());
-//        return actionsList;
-//    }
+    @Override
+    public Optional<AbstractFile> getFileForViewInTimelineAction() {
+        Content tagContent = rowData.getTag().getContent();
+        if (tagContent instanceof AbstractFile) {
+            return Optional.of((AbstractFile) tagContent);
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean supportsViewInTimeline() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsAssociatedFileActions() {
+        return true;
+    }
+
+    @Override
+    public Optional<AbstractFile> getLinkedFile() {
+        Content content = rowData.getTag().getContent();
+        if (content instanceof AbstractFile) {
+            return Optional.of((AbstractFile) content);
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean supportsSourceContentViewerActions() {
+        return true;
+    }
+
+    @Override
+    public Optional<Node> getNewWindowActionNode() {
+        return Optional.of(this);
+    }
+
+    @Override
+    public Optional<Node> getExternalViewerActionNode() {
+        return Optional.of(this);
+    }
+
+    @Override
+    public boolean supportsTableExtractActions() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsContentTagAction() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsReplaceTagAction() {
+        return true;
+    }
 }

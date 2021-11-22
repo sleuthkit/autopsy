@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import org.openide.nodes.Children;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.TskContentItem;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemRowDTO.PoolRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.PoolRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**

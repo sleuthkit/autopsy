@@ -66,25 +66,25 @@ public class FileIDSelectionModel {
         selected.addListener((Observable observable) -> {
             Set<Long> fileIDs = ImmutableSet.copyOf(selected);
             SwingUtilities.invokeLater(() -> {
-//                ArrayList<FileNode> fileNodes = new ArrayList<>();
-//                for (Long id : fileIDs) {
-//                    try {
-//                        fileNodes.add(new FileNode(controller.getCaseDatabase().getAbstractFileById(id)));
-//                    } catch (TskCoreException ex) {
-//                        LOGGER.log(Level.SEVERE, "Failed to get abstract file by its ID", ex); //NON-NLS
-//                    }
-//                }
-//                FileNode[] fileNodeArray = fileNodes.stream().toArray(FileNode[]::new);
-//                Children.Array children = new Children.Array();
-//                children.add(fileNodeArray);
-//
-//                ImageGalleryTopComponent etc = ImageGalleryTopComponent.getTopComponent();
-//                etc.getExplorerManager().setRootContext(new AbstractNode(children));
-//                try {
-//                    etc.getExplorerManager().setSelectedNodes(fileNodeArray);
-//                } catch (PropertyVetoException ex) {
-//                    LOGGER.log(Level.SEVERE, "Explorer manager selection was vetoed.", ex); //NON-NLS
-//                }
+                ArrayList<FileNode> fileNodes = new ArrayList<>();
+                for (Long id : fileIDs) {
+                    try {
+                        fileNodes.add(new FileNode(controller.getCaseDatabase().getAbstractFileById(id)));
+                    } catch (TskCoreException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to get abstract file by its ID", ex); //NON-NLS
+                    }
+                }
+                FileNode[] fileNodeArray = fileNodes.stream().toArray(FileNode[]::new);
+                Children.Array children = new Children.Array();
+                children.add(fileNodeArray);
+
+                ImageGalleryTopComponent etc = ImageGalleryTopComponent.getTopComponent();
+                etc.getExplorerManager().setRootContext(new AbstractNode(children));
+                try {
+                    etc.getExplorerManager().setSelectedNodes(fileNodeArray);
+                } catch (PropertyVetoException ex) {
+                    LOGGER.log(Level.SEVERE, "Explorer manager selection was vetoed.", ex); //NON-NLS
+                }
             });
         });
     }

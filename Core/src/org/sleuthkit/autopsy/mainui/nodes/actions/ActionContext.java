@@ -194,6 +194,10 @@ public interface ActionContext {
     default boolean supportsArtifactTagAction() {
         return false;
     }
+    
+    default boolean supportsReplaceTagAction() {
+        return false;
+    }
 
     /**
      * Returns the file to be extracted.

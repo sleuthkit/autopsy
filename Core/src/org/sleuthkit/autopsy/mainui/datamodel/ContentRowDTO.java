@@ -24,6 +24,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
@@ -31,7 +32,7 @@ import org.sleuthkit.datamodel.Volume;
 /*
  * A base class for FileSystem table row DTOs.
  */
-public abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
+public abstract class ContentRowDTO<T extends Content> extends BaseRowDTO {
 
     private final T content;
 
@@ -42,7 +43,7 @@ public abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
      * @param cellValues The table cell values.
      * @param typeId     The string type id for this DTO.
      */
-    private FileSystemRowDTO(T content, List<Object> cellValues, String typeId) {
+    private ContentRowDTO(T content, List<Object> cellValues, String typeId) {
         super(cellValues, typeId, content.getId());
         this.content = content;
     }
@@ -59,7 +60,7 @@ public abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
     /**
      * DTO Representing an Volume in the results view.
      */
-    public static class VolumeRowDTO extends FileSystemRowDTO<Volume> {
+    public static class VolumeRowDTO extends ContentRowDTO<Volume> {
 
         private static final String TYPE_ID = "VOLUME";
 
@@ -81,7 +82,7 @@ public abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
     /**
      * DTO Representing an Image in the results view.
      */
-    public static class ImageRowDTO extends FileSystemRowDTO<Image> {
+    public static class ImageRowDTO extends ContentRowDTO<Image> {
 
         private static final String TYPE_ID = "IMAGE";
 
@@ -103,7 +104,7 @@ public abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
     /**
      * DTO Representing a LocalDirectory file in the results view.
      */
-    public static class LocalDirectoryRowDTO extends FileSystemRowDTO<LocalDirectory> {
+    public static class LocalDirectoryRowDTO extends ContentRowDTO<LocalDirectory> {
 
         private static final String TYPE_ID = "LOCAL_DIRECTORY";
 
@@ -125,7 +126,7 @@ public abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
     /**
      * DTO Representing a VirtualDirectory in the results view.
      */
-    public static class VirtualDirectoryRowDTO extends FileSystemRowDTO<VirtualDirectory> {
+    public static class VirtualDirectoryRowDTO extends ContentRowDTO<VirtualDirectory> {
 
         private static final String TYPE_ID = "VIRTUAL_DIRECTORY";
 
@@ -181,7 +182,7 @@ public abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
     /**
      * DTO Representing a Directory in the results view.
      */
-    public static class DirectoryRowDTO extends FileSystemRowDTO<Directory> {
+    public static class DirectoryRowDTO extends ContentRowDTO<Directory> {
 
         private static final String TYPE_ID = "DIRECTORY";
 
@@ -203,7 +204,7 @@ public abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
     /**
      * DTO representing a pool in the results view.
      */
-    public static class PoolRowDTO extends FileSystemRowDTO<Pool> {
+    public static class PoolRowDTO extends ContentRowDTO<Pool> {
 
         private static final String TYPE_ID = "POOL";
 
@@ -217,6 +218,18 @@ public abstract class FileSystemRowDTO<T extends Content> extends BaseRowDTO {
             super(pool, cellValues, TYPE_ID);
         }
 
+        public static String getTypeIdForClass() {
+            return TYPE_ID;
+        }
+    }
+    
+    public static class OsAccountRowDTO extends ContentRowDTO<OsAccount> {
+        private static final String TYPE_ID = "OS_ACCOUNT";
+        
+        public OsAccountRowDTO(OsAccount osAccount, List<Object> cellValues) {
+            super(osAccount, cellValues, TYPE_ID);
+        }
+        
         public static String getTypeIdForClass() {
             return TYPE_ID;
         }

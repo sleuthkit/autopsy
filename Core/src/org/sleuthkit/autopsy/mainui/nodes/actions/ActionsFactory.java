@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes.actions;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -31,13 +32,18 @@ import java.util.stream.Stream;
 import javax.swing.Action;
 import org.openide.actions.PropertiesAction;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
+import org.sleuthkit.autopsy.actions.ReplaceBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.ReplaceContentTagAction;
 import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
@@ -108,7 +114,10 @@ public final class ActionsFactory {
 
         group = new ActionGroup();
         if (actionContext.supportsAssociatedFileActions()) {
-            group.addAll(getAssociatedFileActions(actionContext).get());
+            Optional<ActionGroup> subGroup = getAssociatedFileActions(actionContext);
+            if(subGroup.isPresent()) {
+                group.addAll(subGroup.get());
+            }
         }
 
         if (actionContext.getSourceContent().isPresent()) {
@@ -178,7 +187,12 @@ public final class ActionsFactory {
      */
     static ActionGroup getTableExtractActions() {
         ActionGroup actionsGroup = new ActionGroup();
-        actionsGroup.add(ExtractAction.getInstance());
+        
+        Lookup lookup = Utilities.actionsGlobalContext();
+        Collection<? extends AbstractFile> selectedFiles =lookup.lookupAll(AbstractFile.class);
+        if(selectedFiles.size() > 0) {
+            actionsGroup.add(ExtractAction.getInstance());
+        }
         actionsGroup.add(ExportCSVAction.getInstance());
 
         return actionsGroup;
@@ -327,7 +341,12 @@ public final class ActionsFactory {
         if (context.supportsArtifactTagAction() && selectedArtifactCount == 1) {
             actionGroup.add(DeleteFileBlackboardArtifactTagAction.getInstance());
         }
-
+        
+        if((context.supportsArtifactTagAction() || context.supportsContentTagAction()) && context.supportsReplaceTagAction()) {
+            actionGroup.add(DeleteContentTagAction.getInstance());
+            actionGroup.add(ReplaceContentTagAction.getInstance());
+        }
+        
         return actionGroup;
     }
 
