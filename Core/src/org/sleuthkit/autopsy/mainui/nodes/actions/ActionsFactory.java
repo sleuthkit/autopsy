@@ -406,15 +406,10 @@ public final class ActionsFactory {
         "ActionFactory_openFileSearchByAttr_text=Open File Search by Attributes"
     })
     private static Optional<ActionGroup> getRunIngestAction(ActionContext context) {
-        ActionGroup group = new ActionGroup();
-        Optional<Content> optional = context.getContentForFileSearchAction();
-        
+        ActionGroup group = new ActionGroup();        
+        Optional<Content> optional = context.getDataSourceForActions();
         if(optional.isPresent()) {
             group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
-        }
-        
-        optional = context.getDataSourceForActions();
-        if(optional.isPresent()) {
             group.add(new ViewSummaryInformationAction(optional.get().getId()));
             group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
             group.add(new DeleteDataSourceAction(optional.get().getId()));

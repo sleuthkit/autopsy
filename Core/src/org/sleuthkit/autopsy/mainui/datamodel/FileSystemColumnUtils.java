@@ -485,7 +485,7 @@ public class FileSystemColumnUtils {
      * 
      * @return The display name.
      */
-    private static String getVolumeDisplayName(Volume vol) {
+    public static String getVolumeDisplayName(Volume vol) {
         // set name, display name, and icon
         String volName = "vol" + Long.toString(vol.getAddr());
         long end = vol.getStart() + (vol.getLength() - 1);

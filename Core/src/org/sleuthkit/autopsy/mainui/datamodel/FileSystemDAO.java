@@ -368,7 +368,7 @@ public class FileSystemDAO {
                         child.getClass().getSimpleName(),
                         new FileSystemContentSearchParam(child.getId()),
                         child,
-                        child.getName(),
+                        getNameForContent(child),
                         countForNode
                 ));
                 // TODO sort
@@ -394,6 +394,14 @@ public class FileSystemDAO {
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
         }
+    }
+    
+    private String getNameForContent(Content content) {
+        // Currently the only special case is for volumes
+        if (content instanceof Volume) {
+            return FileSystemColumnUtils.getVolumeDisplayName((Volume)content);
+        }
+        return content.getName();
     }
 
     /**

@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
-import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -216,8 +215,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
      * Display name and count of a file system node in the tree.
      */
     @NbBundle.Messages({
-    "FileSystemFactory.FileSystemTreeNode.ExtractUnallocAction.text=Extract Unallocated Space to Single Files",
-    "FileSystemFactory.FileSystemTreeNode.OpenFileSearchByAttr.text=Open File Search by Attributes"})
+    "FileSystemFactory.FileSystemTreeNode.ExtractUnallocAction.text=Extract Unallocated Space to Single Files"})
     public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> implements ActionContext {
 
 
@@ -274,7 +272,6 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
             group.add(new ExtractUnallocAction(
                     Bundle.FileSystemFactory_FileSystemTreeNode_ExtractUnallocAction_text(), image));
-            group.add(new FileSearchAction(Bundle.FileSystemFactory_FileSystemTreeNode_OpenFileSearchByAttr_text(), image.getId()));
             return Optional.of(group);
         }
 
@@ -298,7 +295,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         Volume volume;
         
         VolumeTreeNode(Volume volume, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(itemData.getDisplayName(),
+            super(FileSystemColumnUtils.getVolumeDisplayName(volume),
                     NodeIconUtil.VOLUME.getPath(),
                     itemData,
                     createChildrenForContent(itemData.getTypeData().getContentObjectId()),
@@ -373,7 +370,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         public Node clone() {
             return new DirectoryTreeNode(dir, getItemData());
         }
-         
+        
         @Override
         public boolean supportsViewInTimeline() {
             return true;
@@ -425,11 +422,6 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         public Optional<Content> getContentForRunIngestionModuleAction() {
-            return Optional.of(dir);
-        }
-
-        @Override
-        public Optional<Content> getContentForFileSearchAction() {
             return Optional.of(dir);
         }
     }

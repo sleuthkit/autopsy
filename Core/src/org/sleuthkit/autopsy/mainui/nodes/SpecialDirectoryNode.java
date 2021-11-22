@@ -68,11 +68,6 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, FileSyste
     }
 
     @Override
-    public Optional<Content> getContentForFileSearchAction() {
-        return Optional.of(getRowDTO().getContent());
-    }
-
-    @Override
     public Optional<Content> getDataSourceForActions() {
         return getRowDTO().getContent().isDataSource()
                 ? Optional.of(getRowDTO().getContent())

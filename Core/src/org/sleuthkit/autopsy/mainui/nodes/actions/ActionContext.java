@@ -203,10 +203,6 @@ public interface ActionContext {
         return Optional.empty();
     }
     
-    default Optional<Content> getContentForFileSearchAction() {
-        return Optional.empty();
-    }
-    
     default Optional<Content> getDataSourceForActions() {
         return Optional.empty();
     }
