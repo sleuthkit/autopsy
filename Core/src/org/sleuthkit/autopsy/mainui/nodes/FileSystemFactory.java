@@ -382,7 +382,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public boolean supportsExtractActions() {
+        public boolean supportsTreeExtractActions() {
             return true;
         }
 
@@ -416,7 +416,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public boolean supportsExtractActions() {
+        public boolean supportsTreeExtractActions() {
             return true;
         }
 
@@ -542,7 +542,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public boolean supportsExtractActions() {
+        public boolean supportsTreeExtractActions() {
             return true;
         }
 

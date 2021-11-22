@@ -69,7 +69,7 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
 

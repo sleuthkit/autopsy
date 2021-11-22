@@ -128,8 +128,10 @@ public final class ActionsFactory {
             }
         }
 
-        if (actionContext.supportsExtractActions()) {
-            actionGroups.add(getExtractActions());
+        if (actionContext.supportsTableExtractActions()) {
+            actionGroups.add(getTableExtractActions());
+        } else if (actionContext.supportsTreeExtractActions()) {
+            actionGroups.add(getTreeExtractActions());
         }
         
         group = new ActionGroup();
@@ -165,15 +167,28 @@ public final class ActionsFactory {
     }
 
     /**
-     * Returns the Extract actions. These actions are not specific to the
+     * Returns the Extract actions for a table node. These actions are not specific to the
      * ActionContext.
      *
      * @return The Extract ActionGroup.
      */
-    static ActionGroup getExtractActions() {
+    static ActionGroup getTableExtractActions() {
         ActionGroup actionsGroup = new ActionGroup();
         actionsGroup.add(ExtractAction.getInstance());
         actionsGroup.add(ExportCSVAction.getInstance());
+
+        return actionsGroup;
+    }
+    
+    /**
+     * Returns the Extract actions for a tree node. These actions are not specific to the
+     * ActionContext.
+     *
+     * @return The Extract ActionGroup.
+     */
+    static ActionGroup getTreeExtractActions() {
+        ActionGroup actionsGroup = new ActionGroup();
+        actionsGroup.add(ExtractAction.getInstance());
 
         return actionsGroup;
     }

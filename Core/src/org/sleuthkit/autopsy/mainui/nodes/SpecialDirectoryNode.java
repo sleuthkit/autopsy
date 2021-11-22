@@ -58,7 +58,7 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, FileSyste
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
 

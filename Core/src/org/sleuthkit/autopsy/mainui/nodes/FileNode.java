@@ -108,7 +108,7 @@ public class FileNode extends AbstractNode implements ActionContext {
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
 
