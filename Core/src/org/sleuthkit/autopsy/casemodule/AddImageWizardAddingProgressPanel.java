@@ -430,7 +430,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
             //log error messages as Severe if there was a critical error otherwise as Warning.
             //logging performed off of UI thread
             for (String err : errList) {
-                Logger.getLogger(AddImageWizardAddingProgressVisual.class.getName()).log(level, err);
+                Logger.getLogger(AddImageWizardAddingProgressVisual.class.getName()).log(level, "DatasourceID: {0} Error Message: {1}", new Object[]{dataSourceId.toString(), err});
             }
             //notify the UI of the new content added to the case
             try {
