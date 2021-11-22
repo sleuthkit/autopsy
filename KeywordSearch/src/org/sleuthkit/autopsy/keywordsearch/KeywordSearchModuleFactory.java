@@ -25,8 +25,8 @@ import java.util.List;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.ingest.AnalysisResultIngestModule;
 import org.sleuthkit.autopsy.ingest.DataArtifactIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  * searching.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
+public class KeywordSearchModuleFactory implements IngestModuleFactory {
 
     private static final HashSet<String> defaultDisabledKeywordListNames = new HashSet<>(Arrays.asList("Phone Numbers", "IP Addresses", "URLs", "Credit Card Numbers")); //NON-NLS
     private KeywordSearchJobSettingsPanel jobSettingsPanel = null;
@@ -131,6 +131,16 @@ public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
     @Override
     public DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
         return new KwsDataArtifactIngestModule();
+    }    
+    
+    @Override
+    public boolean isAnalysisResultIngestModuleFactory() {
+        return true;
+    }    
+ 
+    @Override
+    public AnalysisResultIngestModule createAnalysisResultIngestModule(IngestModuleIngestJobSettings settings) {
+        return new KwsAnalysisResultIngestModule();
     }    
     
 }
