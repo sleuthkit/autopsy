@@ -425,9 +425,14 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
             //  TBD: there probably should be an error level for each error
             addErrors(err, critErr);
         }
-
-        //notify the UI of the new content added to the case
+        final Level level = critErr ? Level.SEVERE : Level.WARNING;
         new Thread(() -> {
+            //log error messages as Severe if there was a critical error otherwise as Warning.
+            //logging performed off of UI thread
+            for (String err : errList) {
+                Logger.getLogger(AddImageWizardAddingProgressVisual.class.getName()).log(level, err);
+            }
+            //notify the UI of the new content added to the case
             try {
                 if (!contents.isEmpty()) {
                     Case.getCurrentCaseThrows().notifyDataSourceAdded(contents.get(0), dataSourceId);
