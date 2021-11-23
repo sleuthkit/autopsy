@@ -364,6 +364,8 @@ final class IngestJobExecutor {
         Map<String, IngestModuleTemplate> jythonFileModuleTemplates = new LinkedHashMap<>();
         Map<String, IngestModuleTemplate> javaArtifactModuleTemplates = new LinkedHashMap<>();
         Map<String, IngestModuleTemplate> jythonArtifactModuleTemplates = new LinkedHashMap<>();
+        Map<String, IngestModuleTemplate> javaResultModuleTemplates = new LinkedHashMap<>();
+        Map<String, IngestModuleTemplate> jythonResultModuleTemplates = new LinkedHashMap<>();
         for (IngestModuleTemplate template : enabledTemplates) {
             if (template.isDataSourceIngestModuleTemplate()) {
                 addModuleTemplateToSortingMap(javaDataSourceModuleTemplates, jythonDataSourceModuleTemplates, template);
@@ -375,14 +377,16 @@ final class IngestJobExecutor {
                 addModuleTemplateToSortingMap(javaArtifactModuleTemplates, jythonArtifactModuleTemplates, template);
             }
             if (template.isAnalysisResultIngestModuleTemplate()) {
-                addModuleTemplateToSortingMap(javaArtifactModuleTemplates, jythonArtifactModuleTemplates, template);
+                addModuleTemplateToSortingMap(javaResultModuleTemplates, jythonResultModuleTemplates, template);
             }
         }
 
         /**
          * Take the module templates that have pipeline configuration entries
          * out of the buckets and add them to ingest module pipeline templates
-         * in the order prescribed by the pipeline configuration.
+         * in the order prescribed by the pipeline configuration. There is
+         * currently no pipeline configuration file support for data artifact or
+         * analysis result ingest module pipelines.
          */
         IngestPipelinesConfiguration pipelineConfig = IngestPipelinesConfiguration.getInstance();
         List<IngestModuleTemplate> firstStageDataSourcePipelineTemplate = createIngestPipelineTemplate(javaDataSourceModuleTemplates, jythonDataSourceModuleTemplates, pipelineConfig.getStageOneDataSourceIngestPipelineConfig());
@@ -396,13 +400,13 @@ final class IngestJobExecutor {
          * appropriate ingest module pipeline templates. Data source level
          * ingest modules templates that were not listed in the pipeline
          * configuration are added to the first stage data source pipeline
-         * template, Java modules are added before Jython modules and Core
+         * template, Java modules are added before Jython modules, and Core
          * Autopsy modules are added before third party modules.
          */
         addToIngestPipelineTemplate(firstStageDataSourcePipelineTemplate, javaDataSourceModuleTemplates, jythonDataSourceModuleTemplates);
         addToIngestPipelineTemplate(filePipelineTemplate, javaFileModuleTemplates, jythonFileModuleTemplates);
         addToIngestPipelineTemplate(artifactPipelineTemplate, javaArtifactModuleTemplates, jythonArtifactModuleTemplates);
-        addToIngestPipelineTemplate(resultsPipelineTemplate, javaArtifactModuleTemplates, jythonArtifactModuleTemplates);
+        addToIngestPipelineTemplate(resultsPipelineTemplate, javaResultModuleTemplates, jythonResultModuleTemplates);
 
         /**
          * Construct the ingest module pipelines from the ingest module pipeline
@@ -502,7 +506,8 @@ final class IngestJobExecutor {
         return hasFileIngestModules()
                 || hasHighPriorityDataSourceIngestModules()
                 || hasLowPriorityDataSourceIngestModules()
-                || hasDataArtifactIngestModules();
+                || hasDataArtifactIngestModules()
+                || hasAnalysisResultIngestModules();
     }
 
     /**
@@ -581,7 +586,7 @@ final class IngestJobExecutor {
         List<IngestModuleError> errors = startUpIngestModulePipelines();
         if (errors.isEmpty()) {
             recordIngestJobStartUpInfo();
-            if (hasHighPriorityDataSourceIngestModules() || hasFileIngestModules() || hasDataArtifactIngestModules()) {
+            if (hasHighPriorityDataSourceIngestModules() || hasFileIngestModules() || hasDataArtifactIngestModules() || hasAnalysisResultIngestModules()) {
                 if (ingestJob.getIngestMode() == IngestJob.Mode.STREAMING) {
                     startStreamingModeAnalysis();
                 } else {
@@ -801,7 +806,7 @@ final class IngestJobExecutor {
                 }
             }
 
-            if (hasDataArtifactIngestModules()) {
+            if (hasDataArtifactIngestModules()) { // RJCTODO
                 /*
                  * Schedule artifact ingest tasks for any artifacts currently in
                  * the case database. This needs to be done before any files or

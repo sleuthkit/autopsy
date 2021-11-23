@@ -62,8 +62,8 @@ public class AnalysisResultIngestPipeline extends IngestPipeline<AnalysisResultI
     }
 
     /**
-     * A decorator that adds ingest infrastructure operations to a data artifact
-     * ingest module.
+     * A decorator that adds ingest infrastructure operations to an analysis
+     * result ingest module.
      */
     static final class AnalysisResultIngestPipelineModule extends IngestPipeline.PipelineModule<AnalysisResultIngestTask> {
 
@@ -71,7 +71,7 @@ public class AnalysisResultIngestPipeline extends IngestPipeline<AnalysisResultI
 
         /**
          * Constructs a decorator that adds ingest infrastructure operations to
-         * a data artifact ingest module.
+         * an analysis result ingest module.
          *
          * @param module      The module.
          * @param displayName The display name of the module.
@@ -89,4 +89,5 @@ public class AnalysisResultIngestPipeline extends IngestPipeline<AnalysisResultI
         }
 
     }
+    
 }
