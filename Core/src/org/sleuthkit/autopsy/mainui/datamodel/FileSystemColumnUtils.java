@@ -177,6 +177,12 @@ class FileSystemColumnUtils {
      */
     static boolean isDisplayable(Content content) {
         if (content instanceof AbstractFile) {
+            // .. directories near the top of the directory structure can
+            // pass the isRoot() check, so first check if the name is empty
+            // (real root directories will have a blank name field)
+            if (!content.getName().isEmpty()) {
+                return true;
+            }
             return ! ((AbstractFile)content).isRoot();
         }
         return (getContentType(content) != ContentType.UNSUPPORTED);
