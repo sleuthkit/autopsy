@@ -1289,7 +1289,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         if (values == null || values.isEmpty()) {
             throw new CorrelationAttributeNormalizationException("Cannot get artifact instances without specified values");
         }
-        return getArtifactInstances(prepareGetInstancesSql(aType, values), aType);
+        return getCorrAttrInstances(prepareGetInstancesSql(aType, values), aType);
     }
 
     @Override
@@ -1312,7 +1312,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         inValuesBuilder.append(sql);
         inValuesBuilder.append(caseIds.stream().map(String::valueOf).collect(Collectors.joining("', '")));
         inValuesBuilder.append("')");
-        return getArtifactInstances(inValuesBuilder.toString(), aType);
+        return getCorrAttrInstances(inValuesBuilder.toString(), aType);
     }
 
     /**
@@ -1361,40 +1361,44 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     }
 
     /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValues of the given eamArtifact.
+     * Retrieves correlation attribute instances from the central repository
+     * that match a given SQL query and correlation attribute type.
      *
-     * @param aType  The type of the artifact
-     * @param values The list of correlation values to get
-     *               CorrelationAttributeInstances for
+     * @param sql      The SQL query.
+     * @param attrType The correlation attribute type.
      *
-     * @return List of artifact instances for a given type with the specified
-     *         values
+     * @return The correlation attribute instanes.
      *
-     * @throws CorrelationAttributeNormalizationException
-     * @throws CentralRepoException
+     * @throws CorrelationAttributeNormalizationException The exception is
+     *                                                    thrown if the supplied
+     *                                                    correlation attribute
+     *                                                    value cannot be
+     *                                                    normlaized.
+     * @throws CentralRepoException                       The exception is
+     *                                                    thrown if there is an
+     *                                                    error querying the
+     *                                                    central repository.
      */
-    private List<CorrelationAttributeInstance> getArtifactInstances(String sql, CorrelationAttributeInstance.Type aType) throws CorrelationAttributeNormalizationException, CentralRepoException {
+    private List<CorrelationAttributeInstance> getCorrAttrInstances(String sql, CorrelationAttributeInstance.Type attrType) throws CorrelationAttributeNormalizationException, CentralRepoException {
+        List<CorrelationAttributeInstance> corrAttrs = new ArrayList<>();
         Connection conn = connect();
-        List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
-        CorrelationAttributeInstance artifactInstance;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
             preparedStatement = conn.prepareStatement(sql);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet, aType);
-                artifactInstances.add(artifactInstance);
+                CorrelationAttributeInstance corrAttr = getCorrAttrFromResultSet(resultSet, attrType);
+                corrAttrs.add(corrAttr);
             }
         } catch (SQLException ex) {
-            throw new CentralRepoException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
+            throw new CentralRepoException(String.format("Error getting correlation attributes using query %s", sql), ex); // NON-NLS
         } finally {
             CentralRepoDbUtil.closeResultSet(resultSet);
             CentralRepoDbUtil.closeStatement(preparedStatement);
             CentralRepoDbUtil.closeConnection(conn);
         }
-        return artifactInstances;
+        return corrAttrs;
     }
 
     /**
@@ -1509,7 +1513,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
             PreparedStatement preparedStatement = null;
             String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(instance.getCorrelationType());
             ResultSet resultSet = null;
-            
+
             try {
                 if (correlationCaseId > 0 && sourceObjID != null && correlationDataSourceId > 0) {
                     //The CorrelationCase is in the Central repository.  
@@ -3643,7 +3647,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      *
      * @throws SQLException when an expected column name is not in the resultSet
      */
-    private CorrelationAttributeInstance getEamArtifactInstanceFromResultSet(ResultSet resultSet, CorrelationAttributeInstance.Type aType) throws SQLException, CentralRepoException, CorrelationAttributeNormalizationException {
+    private CorrelationAttributeInstance getCorrAttrFromResultSet(ResultSet resultSet, CorrelationAttributeInstance.Type aType) throws SQLException, CentralRepoException, CorrelationAttributeNormalizationException {
         if (null == resultSet) {
             return null;
         }

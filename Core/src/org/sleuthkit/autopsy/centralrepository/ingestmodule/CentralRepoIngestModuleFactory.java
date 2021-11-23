@@ -128,7 +128,7 @@ public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
-        return new CentralRepoDataArtifactIngestModule();
+        return new CentralRepoDataArtifactIngestModule((IngestSettings) settings);
     }
 
 }
