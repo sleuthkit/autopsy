@@ -104,7 +104,7 @@ public final class ExtractUnallocAction extends AbstractAction {
     public ExtractUnallocAction(String title, Image image, Volume volume) {
         super(title);
 
-        this.volume = null;
+        this.volume = volume;
         this.image = image;
         
         chooserFactory = new JFileChooserFactory(CustomFileChooser.class);
