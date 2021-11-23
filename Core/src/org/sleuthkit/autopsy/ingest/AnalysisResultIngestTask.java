@@ -29,8 +29,8 @@ final class AnalysisResultIngestTask extends IngestTask {
     private final AnalysisResult analysisResult;
 
     /**
-     * Constructs analysis result ingest task that will be executed by an ingest
-     * thread using a given ingest job executor.
+     * Constructs an analysis result ingest task that will be executed by an
+     * ingest thread using a given ingest job executor.
      *
      * @param ingestJobExecutor The ingest job executor to use to execute the
      *                          task.
@@ -39,8 +39,8 @@ final class AnalysisResultIngestTask extends IngestTask {
     AnalysisResultIngestTask(IngestJobExecutor ingestJobExecutor, AnalysisResult analysisResult) {
         super(analysisResult.getName(), ingestJobExecutor);
         this.analysisResult = analysisResult;
-    }   
-    
+    }
+
     /**
      * Gets the analysis result for this task.
      *
