@@ -26,21 +26,21 @@ import java.util.Collections;
  */
 public class DAOAggregateEvent {
 
-    private final Collection<DAOEvent> objects;
+    private final Collection<? extends DAOEvent> objects;
 
     /**
      * Main constructor.
      *
      * @param objects The list of events in this aggregate event.
      */
-    public DAOAggregateEvent(Collection<DAOEvent> objects) {
+    public DAOAggregateEvent(Collection<? extends DAOEvent> objects) {
         this.objects = Collections.unmodifiableCollection(objects);
     }
 
     /**
      * @return The events in this aggregate event.
      */
-    public Collection<DAOEvent> getEvents() {
+    public Collection<? extends DAOEvent> getEvents() {
         return objects;
     }
 }

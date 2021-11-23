@@ -18,20 +18,23 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
+import java.util.Objects;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+
 /**
  * An event for an artifact added in a particular type.
  */
 public class BlackboardArtifactEvent implements DAOEvent {
-    private final long artifactTypeId;
+    private final BlackboardArtifact.Type artifactType;
     private final long dataSourceId;
 
-    BlackboardArtifactEvent(long artifactTypeId, long dataSourceId) {
-        this.artifactTypeId = artifactTypeId;
+    BlackboardArtifactEvent(BlackboardArtifact.Type artifactType, long dataSourceId) {
+        this.artifactType = artifactType;
         this.dataSourceId = dataSourceId;
     }
 
-    public long getArtifactTypeId() {
-        return artifactTypeId;
+    public BlackboardArtifact.Type getArtifactType() {
+        return artifactType;
     }
 
     public long getDataSourceId() {
@@ -41,8 +44,8 @@ public class BlackboardArtifactEvent implements DAOEvent {
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 67 * hash + (int) (this.artifactTypeId ^ (this.artifactTypeId >>> 32));
-        hash = 67 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
+        hash = 17 * hash + Objects.hashCode(this.artifactType);
+        hash = 17 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
         return hash;
     }
 
@@ -58,15 +61,16 @@ public class BlackboardArtifactEvent implements DAOEvent {
             return false;
         }
         final BlackboardArtifactEvent other = (BlackboardArtifactEvent) obj;
-        if (this.artifactTypeId != other.artifactTypeId) {
+        if (this.dataSourceId != other.dataSourceId) {
             return false;
         }
-        if (this.dataSourceId != other.dataSourceId) {
+        if (!Objects.equals(this.artifactType, other.artifactType)) {
             return false;
         }
         return true;
     }
 
+    
     @Override
     public Type getType() {
         return Type.RESULT;

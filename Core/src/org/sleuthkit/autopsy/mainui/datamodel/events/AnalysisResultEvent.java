@@ -18,14 +18,16 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
+import org.sleuthkit.datamodel.BlackboardArtifact;
+
 /**
  * An event for an artifact added or changed of a particular type possibly for a
  * particular data source.
  */
 public class AnalysisResultEvent extends BlackboardArtifactEvent {
 
-    public AnalysisResultEvent(long artifactTypeId, long dataSourceId) {
-        super(artifactTypeId, dataSourceId);
+    public AnalysisResultEvent(BlackboardArtifact.Type artifactType, long dataSourceId) {
+        super(artifactType, dataSourceId);
     }
 
 }

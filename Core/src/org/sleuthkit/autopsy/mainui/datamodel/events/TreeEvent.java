@@ -19,19 +19,22 @@
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
-
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 
 public class TreeEvent implements DAOEvent {
-    private final DAOEvent daoEvent;
+
+    private final TreeItemDTO<?> itemRecord;
     private final boolean determinate;
 
-    public TreeEvent(DAOEvent daoEvent, boolean determinate) {
-        this.daoEvent = daoEvent;
+    public TreeEvent(TreeItemDTO<?> itemRecord, boolean determinate) {
+        this.itemRecord = itemRecord;
         this.determinate = determinate;
     }
 
-    public DAOEvent getDaoEvent() {
-        return daoEvent;
+    public TreeItemDTO<?> getItemRecord() {
+        return itemRecord;
     }
 
     public boolean isDeterminate() {
@@ -40,9 +43,9 @@ public class TreeEvent implements DAOEvent {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 41 * hash + Objects.hashCode(this.daoEvent);
-        hash = 41 * hash + (this.determinate ? 1 : 0);
+        int hash = 7;
+        hash = 89 * hash + Objects.hashCode(this.itemRecord);
+        hash = 89 * hash + (this.determinate ? 1 : 0);
         return hash;
     }
 
@@ -61,16 +64,16 @@ public class TreeEvent implements DAOEvent {
         if (this.determinate != other.determinate) {
             return false;
         }
-        if (!Objects.equals(this.daoEvent, other.daoEvent)) {
+        if (!Objects.equals(this.itemRecord, other.itemRecord)) {
             return false;
         }
         return true;
     }
 
+    
+
     @Override
     public Type getType() {
         return Type.TREE;
     }
-    
-    
 }

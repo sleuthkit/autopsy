@@ -29,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,7 +38,12 @@ import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEventTimedCache;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -65,7 +68,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
         return instance;
     }
-
+            
     /**
      * @return The set of types that are not shown in the tree.
      */
@@ -73,6 +76,8 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
+    
+    private final TreeEventTimedCache<DataArtifactEvent> treeCache = new TreeEventTimedCache<>();   
     private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -120,7 +125,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             return false;
         } else {
             DataArtifactEvent dataArtEvt = (DataArtifactEvent) eventData;
-            return key.getArtifactType().getTypeID() == dataArtEvt.getArtifactTypeId()
+            return key.getArtifactType().getTypeID() == dataArtEvt.getArtifactType().getTypeID()
                     && (key.getDataSourceId() == null || (key.getDataSourceId() == dataArtEvt.getDataSourceId()));
         }
     }
@@ -152,7 +157,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                                 new DataArtifactSearchParam(entry.getKey(), dataSourceId),
                                 entry.getKey().getTypeID(),
                                 entry.getKey().getDisplayName(),
-                                TreeCount.getDeterminate(entry.getValue()));
+                                entry.getValue());
                     })
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
                     .collect(Collectors.toList());
@@ -168,27 +173,30 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     @Override
     void clearCaches() {
         this.dataArtifactCache.invalidateAll();
+        this.flushEvents();
     }
 
     @Override
-    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
+    List<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
         // get a grouping of artifacts mapping the artifact type id to data source id.
-        Map<Integer, Set<Long>> artifactTypeDataSourceMap = new HashMap<>();
-        evts.stream()
-                .map(evt -> DAOEventUtils.getModuleDataFromEvt(evt))
-                .filter(dataEvt -> dataEvt != null)
-                .flatMap(dataEvt -> dataEvt.getArtifacts().stream())
-                .forEach((art) -> {
+        ModuleDataEvent dataEvt = DAOEventUtils.getModuleDataFromEvt(evt);
+        if (evt == null) {
+            return Collections.emptyList();
+        }
+        
+        Map<BlackboardArtifact.Type, Set<Long>> artifactTypeDataSourceMap = dataEvt.getArtifacts().stream()
+                .map((art) -> {
                     try {
                         if (BlackboardArtifact.Category.DATA_ARTIFACT.equals(art.getType().getCategory())) {
-                            artifactTypeDataSourceMap
-                                    .computeIfAbsent(art.getArtifactTypeID(), (k) -> new HashSet<>())
-                                    .add(art.getDataSourceObjectID());
+                            return Pair.of(art.getType(), art.getDataSourceObjectID());
                         }
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Unable to fetch artifact category for artifact with id: " + art.getId(), ex);
                     }
-                });
+                    return null;
+                })
+                .filter(pr -> pr != null)
+                .collect(Collectors.groupingBy(pr -> pr.getKey(), Collectors.mapping(pr -> pr.getValue(), Collectors.toSet())));
 
         // don't do anything else if no relevant events
         if (artifactTypeDataSourceMap.isEmpty()) {
@@ -208,15 +216,34 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         });
 
         // gather dao events based on artifacts
-        List<DAOEvent> toRet = new ArrayList<>();
-        for (Entry<Integer, Set<Long>> entry : artifactTypeDataSourceMap.entrySet()) {
-            int artTypeId = entry.getKey();
+        List<DataArtifactEvent> dataArtifactEvents = new ArrayList<>();
+        for (Entry<BlackboardArtifact.Type, Set<Long>> entry : artifactTypeDataSourceMap.entrySet()) {
+            BlackboardArtifact.Type artType = entry.getKey();
             for (Long dsObjId : entry.getValue()) {
-                toRet.add(new DataArtifactEvent(artTypeId, dsObjId));
+                DataArtifactEvent newEvt = new DataArtifactEvent(artType, dsObjId);
+                dataArtifactEvents.add(newEvt);
             }
         }
+        
+        List<TreeEvent> newTreeEvents = this.treeCache.enqueueAll(dataArtifactEvents).stream()
+                .map(daoEvt -> new TreeEvent(new DataArtifactSearchParam(daoEvt.getArtifactType(), daoEvt.getDataSourceId()), false))
+                .collect(Collectors.toList());
+        
+        return Stream.of(dataArtifactEvents, newTreeEvents)
+                .flatMap((lst) -> lst.stream())
+                .collect(Collectors.toList());
+    }
 
-        return toRet;
+    @Override
+    Collection<? extends DAOEvent> flushEvents() {
+        return this.treeCache.flushEvents();
+    }
+
+    @Override
+    Collection<? extends TreeEvent> shouldRefreshTree() {
+        return this.treeCache.getEventTimeouts().stream()
+                .map(dataEvt -> new TreeEvent(dataEvt, true))
+                .collect(Collectors.toList());
     }
 
     /*

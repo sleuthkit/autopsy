@@ -313,7 +313,7 @@ public class TagsDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
+    List<DAOEvent> processEvent(Collection<PropertyChangeEvent> evts) {
         Map<Pair<TagType, Long>, Set<Optional<Long>>> mapping = new HashMap<>();
         for (PropertyChangeEvent evt : evts) {
             // tag type, tag name id, data source id (or null if unknown)

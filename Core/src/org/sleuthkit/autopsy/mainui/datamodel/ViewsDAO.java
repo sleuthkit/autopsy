@@ -348,7 +348,7 @@ public class ViewsDAO extends AbstractDAO {
                             new FileTypeExtensionsSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
-                            TreeCount.getDeterminate(entry.getValue()));
+                            entry.getValue());
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
@@ -382,7 +382,7 @@ public class ViewsDAO extends AbstractDAO {
                             new FileTypeSizeSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
-                            TreeCount.getDeterminate(entry.getValue()));
+                            entry.getValue());
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
@@ -467,7 +467,7 @@ public class ViewsDAO extends AbstractDAO {
                                     new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
                                     name,
                                     name,
-                                    TreeCount.getDeterminate(entry.getValue()));
+                                    entry.getValue());
                         })
                         .sorted((a, b) -> stringCompare(a.getTypeData().getMimeType(), b.getTypeData().getMimeType()))
                         .collect(Collectors.toList());
@@ -653,7 +653,7 @@ public class ViewsDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> autopsyEvts) {
+    List<DAOEvent> processEvent(Collection<PropertyChangeEvent> autopsyEvts) {
         Map<String, Set<Long>> fileExtensionDsMap = new HashMap<>();
         Map<String, Map<String, Set<Long>>> mimeTypeDsMap = new HashMap<>();
         Map<FileSizeFilter, Set<Long>> fileSizeDsMap = new HashMap<>();

@@ -184,7 +184,7 @@ public class OsAccountsDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
+    List<DAOEvent> processEvent(Collection<PropertyChangeEvent> evts) {
         List<DAOEvent> daoEvts = evts.stream().filter(evt -> OS_EVENTS.contains(evt.getPropertyName()))
                 .map(evt -> new OsAccountEvent())
                 .limit(1)

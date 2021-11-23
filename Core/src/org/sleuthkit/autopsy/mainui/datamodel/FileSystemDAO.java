@@ -355,7 +355,7 @@ public class FileSystemDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
+    List<DAOEvent> processEvent(Collection<PropertyChangeEvent> evts) {
         Set<Long> affectedPersons = new HashSet<>();
         Set<Long> affectedHosts = new HashSet<>();
         Set<Long> affectedParentContent = new HashSet<>();

@@ -24,8 +24,9 @@ import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DataArtifactEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -55,39 +56,20 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     }
 
     @Override
-    protected boolean isChildInvalidating(DAOEvent daoEvt) {
-        return daoEvt instanceof DataArtifactEvent;
+    protected TreeItemDTO<? extends DataArtifactSearchParam> getInvalidatedChild(TreeEvent daoEvt) {
+        if (daoEvt.getSearchParams() instanceof DataArtifactSearchParam) {
+            DataArtifactEvent dataArtifactEvent = (DataArtifactEvent) daoEvt.getDaoEvent();
+            if (this.dataSourceId == null || this.dataSourceId == dataArtifactEvent.getDataSourceId()) {
+                return new TreeItemDTO<DataArtifactSearchParam>
+            }
+        }
+        return null;
     }
 
-//    @Override
-//    public boolean isRefreshRequired(PropertyChangeEvent evt) {
-//        String eventType = evt.getPropertyName();
-//        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-//            /**
-//             * This is a stop gap measure until a different way of handling the
-//             * closing of cases is worked out. Currently, remote events may be
-//             * received for a case that is already closed.
-//             */
-//            try {
-//                Case.getCurrentCaseThrows();
-//                /**
-//                 * Due to some unresolved issues with how cases are closed, it
-//                 * is possible for the event to have a null oldValue if the
-//                 * event is a remote event.
-//                 */
-//                final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-//                if (null != event && Category.DATA_ARTIFACT.equals(event.getBlackboardArtifactType().getCategory())
-//                        && !(DataArtifactDAO.getIgnoredTreeTypes().contains(event.getBlackboardArtifactType()))) {
-//                    return true;
-//                }
-//            } catch (NoCurrentCaseException notUsed) {
-//                /**
-//                 * Case is closed, do nothing.
-//                 */
-//            }
-//        }
-//        return false;
-//    }
+    @Override
+    public int compare(DataArtifactSearchParam o1, DataArtifactSearchParam o2) {
+        return o1.getArtifactType().getDisplayName().compareTo(o2.getArtifactType().getDisplayName());
+    }
 
     /**
      * Display name and count of a data artifact type in the tree.

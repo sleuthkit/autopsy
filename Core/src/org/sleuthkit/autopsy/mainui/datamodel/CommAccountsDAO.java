@@ -154,7 +154,7 @@ public class CommAccountsDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evts) {
+    List<DAOEvent> processEvent(Collection<PropertyChangeEvent> evts) {
         // maps account type to the data sources affected
         Map<String, Set<Long>> commAccountsAffected = new HashMap<>();
         try {

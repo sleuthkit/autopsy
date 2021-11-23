@@ -51,7 +51,7 @@ public class TreeResultsDTO<T> {
 
         private final String displayName;
         private final String typeId;
-        private final TreeCount count;
+        private final Long count;
         private final T typeData;
         private final Object id;
 
@@ -65,9 +65,10 @@ public class TreeResultsDTO<T> {
          * @param id          The id of this row. Can be any object that
          *                    implements equals and hashCode.
          * @param displayName The display name of this row.
-         * @param count       The count of results for this row.
+         * @param count       The count of results for this row or null if not
+         *                    applicable.
          */
-        public TreeItemDTO(String typeId, T typeData, Object id, String displayName, TreeCount count) {
+        public TreeItemDTO(String typeId, T typeData, Object id, String displayName, Long count) {
             this.typeId = typeId;
             this.id = id;
             this.displayName = displayName;
@@ -83,9 +84,9 @@ public class TreeResultsDTO<T> {
         }
 
         /**
-         * @return The count of results for this row.
+         * @return The count of results for this row or null if not applicable.
          */
-        public TreeCount getCount() {
+        public Long getCount() {
             return count;
         }
 
@@ -113,6 +114,7 @@ public class TreeResultsDTO<T> {
         public String getTypeId() {
             return typeId;
         }
-
+        
+        
     }
 }

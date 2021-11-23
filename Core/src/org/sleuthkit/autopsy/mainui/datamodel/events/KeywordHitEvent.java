@@ -18,16 +18,19 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
+import org.sleuthkit.datamodel.BlackboardArtifact;
+
 /**
  * An event for an artifact added or changed of a particular type possibly for a
  * particular data source.
  */
 public class KeywordHitEvent extends AnalysisResultSetEvent {
+
     private final String regex;
     private final String match;
 
-    public KeywordHitEvent(String regex, String match, String setName, long artifactTypeId, long dataSourceId) {
-        super(setName, artifactTypeId, dataSourceId);
+    public KeywordHitEvent(String regex, String match, String setName, BlackboardArtifact.Type artifactType, long dataSourceId) {
+        super(setName, artifactType, dataSourceId);
         this.regex = regex;
         this.match = match;
     }

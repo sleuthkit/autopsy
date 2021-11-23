@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.collections4.CollectionUtils;
 
 /**
  *
@@ -91,9 +92,25 @@ public class DAOEventBatcher<T> {
      * @param events The events.
      */
     public void enqueueAllEvents(Collection<T> events) {
+        if (CollectionUtils.isNotEmpty(events)) {
+            synchronized (this.eventListLock) {
+                this.aggregateEvents.addAll(events);
+                verifyRunning();
+            }
+        }
+    }
+
+    /**
+     * Flushes any currently batched events emptying queue of batched events.
+     *
+     * @return The flushed events.
+     */
+    public Collection<T> flushEvents() {
         synchronized (this.eventListLock) {
-            this.aggregateEvents.addAll(events);
-            verifyRunning();
+            Collection<T> evtsToFire = this.aggregateEvents;
+            this.aggregateEvents = new HashSet<>();
+            this.isRunning = false;
+            return evtsToFire;
         }
     }
 
@@ -101,13 +118,6 @@ public class DAOEventBatcher<T> {
      * Fires all events and clears batch.
      */
     private void fireEvents() {
-        Collection<T> evtsToFire;
-        synchronized (this.eventListLock) {
-            evtsToFire = this.aggregateEvents;
-            this.aggregateEvents = new HashSet<>();
-            this.isRunning = false;
-        }
-
-        this.eventsHandler.handle(evtsToFire);
+        this.eventsHandler.handle(flushEvents());
     }
 }

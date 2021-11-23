@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.Collection;
-import java.util.List;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
  * Internal methods that DAOs implement.
@@ -39,16 +39,27 @@ abstract class AbstractDAO {
      * and returning one or more DAOEvents that should be broadcasted to the
      * views.
      *
-     * This method is responsible for minimizing the number of DAOEvents that
-     * are returned. For example, if there are 100 Autopsy events for the same
-     * type of data artifact in the same data source, then only a single
-     * DataArtifact event needs to be returned.
-     *
-     * @param evt The Autopsy events that recently came in from Ingest/Case.
+     * @param evt The Autopsy event that recently came in from Ingest/Case.
      *
      * @return The list of DAOEvents that should be broadcasted to the views or
      *         an empty list if the Autopsy events are irrelevant to this DAO.
      */
-    abstract List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evt);
+    abstract Collection<? extends DAOEvent> processEvent(PropertyChangeEvent evt);
 
+    /**
+     * Any events that are delayed or batched are flushed and returned.
+     *
+     * @return The flushed events that were delayed and batched.
+     */
+    abstract Collection<? extends DAOEvent> flushEvents();
+
+    /**
+     * Returns any categories that require a tree refresh. For instance, if web
+     * cache and web bookmarks haven't updated recently, and are currently set
+     * to an indeterminate amount (i.e. "..."), then broadcast an event forcing
+     * tree to update to a determinate count.
+     *
+     * @return The categories that require a tree refresh.
+     */
+    abstract Collection<? extends TreeEvent> shouldRefreshTree();
 }

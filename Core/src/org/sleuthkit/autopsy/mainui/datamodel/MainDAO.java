@@ -22,30 +22,40 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventBatcher;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.collections4.CollectionUtils;
 import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
-import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEventTimer;
 
 /**
  * Main entry point for DAO for providing data to populate the data results
  * viewer.
  */
 public class MainDAO extends AbstractDAO {
+
+    private static final Logger logger = Logger.getLogger(MainDAO.class.getName());
+
+    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = EnumSet.of(
+            IngestManager.IngestJobEvent.COMPLETED,
+            IngestManager.IngestJobEvent.CANCELLED
+    );
 
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS = EnumSet.of(
             IngestManager.IngestModuleEvent.CONTENT_CHANGED,
@@ -60,16 +70,16 @@ public class MainDAO extends AbstractDAO {
             Case.Events.OS_ACCT_INSTANCES_ADDED.toString()
     );
 
-    private static final long MILLIS_BATCH = 5 * 1000;
-    private static final long TREE_TIMEOUT_MILLIS = 2 * 60 * 1000;
-    private static final long TREE_CHECK_RESOLUTION_MILLIS = 10 * 1000;
+    private static final long WATCH_RESOLUTION_MILLIS = 30 * 1000;
+
+    private static final long RESULT_BATCH_MILLIS = 5 * 1000;
 
     private static MainDAO instance = null;
 
     public synchronized static MainDAO getInstance() {
         if (instance == null) {
             instance = new MainDAO();
-            instance.register();
+            instance.init();
         }
 
         return instance;
@@ -82,10 +92,10 @@ public class MainDAO extends AbstractDAO {
         if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
             this.clearCaches();
         } else if (QUEUED_CASE_EVENTS.contains(evt.getPropertyName())) {
-            enqueueAutopsyEvent(evt);
+            handleEvent(evt, false);
         } else {
             // handle case events immediately
-            handleAutopsyEvent(Arrays.asList(evt));
+            handleEvent(evt, true);
         }
     };
 
@@ -100,20 +110,25 @@ public class MainDAO extends AbstractDAO {
      * The ingest module event listener.
      */
     private final PropertyChangeListener ingestModuleEventListener = (evt) -> {
-        enqueueAutopsyEvent(evt);
+        handleEvent(evt, false);
     };
+
+    /**
+     * The ingest job event listener.
+     */
+    private final PropertyChangeListener ingestJobEventListener = (evt) -> {
+        handleEventFlush();
+    };
+
+    private final ScheduledThreadPoolExecutor timeoutExecutor
+            = new ScheduledThreadPoolExecutor(1,
+                    new ThreadFactoryBuilder().setNameFormat(MainDAO.class.getName()).build());
 
     private final PropertyChangeManager resultEventsManager = new PropertyChangeManager();
     private final PropertyChangeManager treeEventsManager = new PropertyChangeManager();
 
     private final DAOEventBatcher<DAOEvent> eventBatcher = new DAOEventBatcher<>(
-            (evts) -> resultEventsManager.firePropertyChange("DATA_CHANGE", null, new DAOAggregateEvent(evts)), MILLIS_BATCH);
-
-    private final TreeEventTimer<DAOEvent> treeEventTimer = new TreeEventTimer<>(
-            (evts, determinate) -> fireTreeEvents(evts, determinate),
-            TREE_TIMEOUT_MILLIS,
-            TREE_CHECK_RESOLUTION_MILLIS
-    );
+            (evts) -> fireResultEvts(evts), RESULT_BATCH_MILLIS);
 
     private final DataArtifactDAO dataArtifactDAO = DataArtifactDAO.getInstance();
     private final AnalysisResultDAO analysisResultDAO = AnalysisResultDAO.getInstance();
@@ -161,39 +176,6 @@ public class MainDAO extends AbstractDAO {
         return commAccountsDAO;
     }
 
-    @Override
-    void clearCaches() {
-        allDAOs.forEach((subDAO) -> subDAO.clearCaches());
-    }
-
-    // TODO breakup
-    @Override
-    List<DAOEvent> handleAutopsyEvent(Collection<PropertyChangeEvent> evt) {
-        return allDAOs.stream()
-                .map(subDAO -> subDAO.handleAutopsyEvent(evt))
-                .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
-                .collect(Collectors.toList());
-    }
-
-    private void fireTreeEvents(Collection<DAOEvent> evts, boolean determinate) {
-        List<DAOEvent> treeEvts = evts.stream()
-                .map((daoEvt) -> new TreeEvent(daoEvt, determinate))
-                .collect(Collectors.toList());
-
-        treeEventsManager.firePropertyChange("TREE_CHANGE", null, new DAOAggregateEvent(treeEvts));
-    }
-
-    /**
-     * Handle incoming autopsy event by queueing in batch and firing events.
-     *
-     * @param autopsyEvent The autopsy event.
-     */
-    private void enqueueAutopsyEvent(PropertyChangeEvent autopsyEvent) {
-        List<DAOEvent> daoEvents = handleAutopsyEvent(Collections.singletonList(autopsyEvent));
-        this.eventBatcher.enqueueAllEvents(daoEvents);
-        this.treeEventTimer.enqueueAll(daoEvents);
-    }
-
     public PropertyChangeManager getResultEventsManager() {
         return this.resultEventsManager;
     }
@@ -202,13 +184,98 @@ public class MainDAO extends AbstractDAO {
         return treeEventsManager;
     }
 
+    @Override
+    void clearCaches() {
+        allDAOs.forEach((subDAO) -> subDAO.clearCaches());
+    }
+
+    @Override
+    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+        return allDAOs.stream()
+                .map(subDAO -> subDAO.processEvent(evt))
+                .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    List<TreeEvent> shouldRefreshTree() {
+        return allDAOs.stream()
+                .map((subDAO) -> subDAO.shouldRefreshTree())
+                .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    Collection<? extends DAOEvent> flushEvents() {
+        Stream<Collection<? extends DAOEvent>> daoStreamEvts = allDAOs.stream()
+                .map((subDAO) -> subDAO.flushEvents());
+
+        Collection<DAOEvent> batchFlushedEvts = eventBatcher.flushEvents();
+
+        return Stream.concat(daoStreamEvts, Stream.of(batchFlushedEvts))
+                .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
+                .collect(Collectors.toList());
+    }
+
+    private void handleEvent(PropertyChangeEvent evt, boolean immediateAction) {
+        Collection<DAOEvent> daoEvts = processEvent(evt);
+
+        Map<DAOEvent.Type, List<DAOEvent>> daoEvtsByType = daoEvts.stream()
+                .collect(Collectors.groupingBy(e -> e.getType()));
+
+        fireTreeEvts(daoEvtsByType.get(DAOEvent.Type.TREE));
+
+        List<DAOEvent> resultEvts = daoEvtsByType.get(DAOEvent.Type.RESULT);
+        if (immediateAction) {
+            fireResultEvts(resultEvts);
+        } else {
+            eventBatcher.enqueueAllEvents(resultEvts);
+        }
+    }
+
+    private void handleEventFlush() {
+        Collection<? extends DAOEvent> daoEvts = flushEvents();
+
+        Map<DAOEvent.Type, List<DAOEvent>> daoEvtsByType = daoEvts.stream()
+                .collect(Collectors.groupingBy(e -> e.getType()));
+
+        fireTreeEvts(daoEvtsByType.get(DAOEvent.Type.TREE));
+
+        List<DAOEvent> resultEvts = daoEvtsByType.get(DAOEvent.Type.RESULT);
+        fireResultEvts(resultEvts);
+    }
+
+    private void fireResultEvts(Collection<DAOEvent> resultEvts) {
+        if (CollectionUtils.isNotEmpty(resultEvts)) {
+            resultEventsManager.firePropertyChange("DATA_CHANGE", null, new DAOAggregateEvent(resultEvts));
+        }
+    }
+
+    private void fireTreeEvts(Collection<? extends DAOEvent> treeEvts) {
+        if (CollectionUtils.isNotEmpty(treeEvts)) {
+            treeEventsManager.firePropertyChange("TREE_CHANGE", null, new DAOAggregateEvent(treeEvts));
+        }
+    }
+
+    private void handleTreeEventTimeouts() {
+        fireTreeEvts(this.shouldRefreshTree());
+    }
+
     /**
-     * Registers listeners with autopsy event publishers.
+     * Registers listeners with autopsy event publishers and starts internal
+     * threads.
      */
-    void register() {
+    void init() {
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS, ingestJobEventListener);
         Case.addPropertyChangeListener(caseEventListener);
         UserPreferences.addChangeListener(userPreferenceListener);
+
+        this.timeoutExecutor.scheduleAtFixedRate(
+                () -> handleTreeEventTimeouts(),
+                WATCH_RESOLUTION_MILLIS,
+                WATCH_RESOLUTION_MILLIS,
+                TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -221,14 +288,15 @@ public class MainDAO extends AbstractDAO {
      */
     void unregister() {
         IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
+        IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS, ingestJobEventListener);
         Case.removePropertyChangeListener(caseEventListener);
         UserPreferences.removeChangeListener(userPreferenceListener);
     }
 
     /**
      * A wrapper around property change support that exposes
-     * addPropertyChangeListener and removePropertyChangeListener so that weak
-     * listeners can automatically unregister.
+     * addPropertyChangeListener and removePropertyChangeListener so that
+     * netbeans weak listeners can automatically unregister.
      */
     public static class PropertyChangeManager {
 
