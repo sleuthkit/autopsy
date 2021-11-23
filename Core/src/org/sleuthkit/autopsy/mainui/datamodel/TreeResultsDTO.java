@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
+import java.util.Objects;
+import org.python.icu.text.MessageFormat;
 
 /**
  * A list of items to display in the tree.
@@ -44,6 +46,84 @@ public class TreeResultsDTO<T> {
     }
 
     /**
+     * Captures the count to be displayed in the UI.
+     */
+    public static class TreeDisplayCount {
+
+        public enum Type {
+            DETERMINATE,
+            INDETERMINATE,
+            NOT_SHOWN
+        }
+
+        private final Type type;
+        private final long count;
+
+        public static final TreeDisplayCount INDETERMINATE = new TreeDisplayCount(Type.INDETERMINATE, -1);
+        public static final TreeDisplayCount NOT_SHOWN = new TreeDisplayCount(Type.NOT_SHOWN, -1);
+
+        public static TreeDisplayCount getDeterminate(long count) {
+            return new TreeDisplayCount(Type.DETERMINATE, count);
+        }
+
+        private TreeDisplayCount(Type type, long count) {
+            this.type = type;
+            this.count = count;
+        }
+
+        public Type getType() {
+            return type;
+        }
+
+        public long getCount() {
+            return count;
+        }
+
+        public String getDisplaySuffix() {
+            switch (this.type) {
+                case DETERMINATE:
+                    return " (" + count + ")";
+                case INDETERMINATE:
+                    return "...";
+                case NOT_SHOWN:
+                default:
+                    return "";
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 97 * hash + Objects.hashCode(this.type);
+            hash = 97 * hash + (int) (this.count ^ (this.count >>> 32));
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final TreeDisplayCount other = (TreeDisplayCount) obj;
+            if (this.count != other.count) {
+                return false;
+            }
+            if (this.type != other.type) {
+                return false;
+            }
+            return true;
+        }
+        
+        
+    }
+
+    /**
      * A result providing a category and a count for that category. Equals and
      * hashCode are based on id, type id, and type data.
      */
@@ -51,7 +131,7 @@ public class TreeResultsDTO<T> {
 
         private final String displayName;
         private final String typeId;
-        private final Long count;
+        private final TreeDisplayCount count;
         private final T typeData;
         private final Object id;
 
@@ -68,7 +148,7 @@ public class TreeResultsDTO<T> {
          * @param count       The count of results for this row or null if not
          *                    applicable.
          */
-        public TreeItemDTO(String typeId, T typeData, Object id, String displayName, Long count) {
+        public TreeItemDTO(String typeId, T typeData, Object id, String displayName, TreeDisplayCount count) {
             this.typeId = typeId;
             this.id = id;
             this.displayName = displayName;
@@ -86,7 +166,7 @@ public class TreeResultsDTO<T> {
         /**
          * @return The count of results for this row or null if not applicable.
          */
-        public Long getCount() {
+        public TreeDisplayCount getDisplayCount() {
             return count;
         }
 
@@ -114,7 +194,6 @@ public class TreeResultsDTO<T> {
         public String getTypeId() {
             return typeId;
         }
-        
-        
+
     }
 }

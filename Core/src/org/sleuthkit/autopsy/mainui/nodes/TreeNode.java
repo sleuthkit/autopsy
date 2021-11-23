@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import java.text.MessageFormat;
 import java.util.logging.Level;
+import org.bouncycastle.util.Objects;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.Lookup;
@@ -90,14 +91,6 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
     }
     
     /**
-     * Sets this node to an indeterminate state.
-     */
-    void setIndeterminate() {
-        String baseName = this.itemData == null ? this.itemData.getDisplayName() : "";
-        this.setDisplayName(baseName + "...");
-    }
-
-    /**
      * Sets the display name of the node to include the display name and count
      * of the item.
      *
@@ -108,10 +101,10 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
         // update display name only if there is a change.
         if (prevData == null
                 || !prevData.getDisplayName().equals(curData.getDisplayName())
-                || prevData.getCount() != curData.getCount()) {
-            String displayName = curData.getCount() == null
+                || !Objects.areEqual(prevData.getDisplayCount(), curData.getDisplayCount())) {
+            String displayName = curData.getDisplayCount() == null
                     ? curData.getDisplayName()
-                    : MessageFormat.format("{0} ({1})", curData.getDisplayName(), curData.getCount());
+                    : curData.getDisplayName() + curData.getDisplayCount().getDisplaySuffix();
 
             this.setDisplayName(displayName);
         }

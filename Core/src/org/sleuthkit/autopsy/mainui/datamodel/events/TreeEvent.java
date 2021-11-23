@@ -19,33 +19,31 @@
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
-import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 
 public class TreeEvent implements DAOEvent {
 
     private final TreeItemDTO<?> itemRecord;
-    private final boolean determinate;
+    private final boolean refreshRequired;
 
-    public TreeEvent(TreeItemDTO<?> itemRecord, boolean determinate) {
+    public TreeEvent(TreeItemDTO<?> itemRecord, boolean refreshRequired) {
         this.itemRecord = itemRecord;
-        this.determinate = determinate;
+        this.refreshRequired = refreshRequired;
     }
 
     public TreeItemDTO<?> getItemRecord() {
         return itemRecord;
     }
 
-    public boolean isDeterminate() {
-        return determinate;
+    public boolean isRefreshRequired() {
+        return refreshRequired;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
         hash = 89 * hash + Objects.hashCode(this.itemRecord);
-        hash = 89 * hash + (this.determinate ? 1 : 0);
+        hash = 89 * hash + (this.refreshRequired ? 1 : 0);
         return hash;
     }
 
@@ -61,7 +59,7 @@ public class TreeEvent implements DAOEvent {
             return false;
         }
         final TreeEvent other = (TreeEvent) obj;
-        if (this.determinate != other.determinate) {
+        if (this.refreshRequired != other.refreshRequired) {
             return false;
         }
         if (!Objects.equals(this.itemRecord, other.itemRecord)) {

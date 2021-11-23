@@ -54,11 +54,11 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
                     TreeEvent treeEvt = (TreeEvent) daoEvt;
                     TreeItemDTO<? extends T> item = getInvalidatedChild(treeEvt);
                     if (item != null) {
-                        if (treeEvt.isDeterminate()) {
+                        if (treeEvt.isRefreshRequired()) {
                             update();
                             break;
                         } else {
-                            setIndeterminate(item);
+                            updateNodeData(item);
                         }
                     }
                 }
@@ -120,7 +120,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
      *
      * @param item The added item.
      */
-    protected void setIndeterminate(TreeItemDTO<? extends T> item) {
+    protected void updateNodeData(TreeItemDTO<? extends T> item) {
         TreeNode<T> cachedTreeNode = this.typeNodeMap.get(item.getId());
         if (cachedTreeNode == null) {
             synchronized (resultsUpdateLock) {
@@ -222,6 +222,15 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     protected void addNotify() {
         registerListeners();
         super.addNotify();
+    }
+    
+    public static <T> TreeItemDTO<T> getUpdatedTreeData(TreeItemDTO<T> original, T updatedData) {
+        return new TreeItemDTO<>(
+                original.getTypeId(),
+                updatedData,
+                original.getId(),
+                original.getDisplayName(),
+                original.getDisplayCount());
     }
 
     /**

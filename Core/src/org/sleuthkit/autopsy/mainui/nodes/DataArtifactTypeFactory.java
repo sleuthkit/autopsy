@@ -56,11 +56,12 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     }
 
     @Override
-    protected TreeItemDTO<? extends DataArtifactSearchParam> getInvalidatedChild(TreeEvent daoEvt) {
-        if (daoEvt.getSearchParams() instanceof DataArtifactSearchParam) {
-            DataArtifactEvent dataArtifactEvent = (DataArtifactEvent) daoEvt.getDaoEvent();
-            if (this.dataSourceId == null || this.dataSourceId == dataArtifactEvent.getDataSourceId()) {
-                return new TreeItemDTO<DataArtifactSearchParam>
+    protected TreeItemDTO<DataArtifactSearchParam> getInvalidatedChild(TreeEvent daoEvt) {
+        if (daoEvt.getItemRecord().getTypeData() instanceof DataArtifactSearchParam) {
+            TreeItemDTO<DataArtifactSearchParam> originalTreeItem = (TreeItemDTO<DataArtifactSearchParam>) daoEvt.getItemRecord();
+            DataArtifactSearchParam searchParam = originalTreeItem.getTypeData();
+            if (this.dataSourceId == null || this.dataSourceId == searchParam.getDataSourceId()) {
+                return TreeChildFactory.getUpdatedTreeData(originalTreeItem, new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()));
             }
         }
         return null;

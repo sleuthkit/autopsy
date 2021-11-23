@@ -42,6 +42,8 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEventTimedCache;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
@@ -151,14 +153,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             // get row dto's sorted by display name
             Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.DATA_ARTIFACT, dataSourceId);
             List<TreeResultsDTO.TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
-                    .map(entry -> {
-                        return new TreeResultsDTO.TreeItemDTO<>(
-                                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
-                                new DataArtifactSearchParam(entry.getKey(), dataSourceId),
-                                entry.getKey().getTypeID(),
-                                entry.getKey().getDisplayName(),
-                                entry.getValue());
-                    })
+                    .map(entry -> getTreeItem(entry.getKey(), dataSourceId, TreeDisplayCount.getDeterminate(entry.getValue())))
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
                     .collect(Collectors.toList());
 
@@ -226,12 +221,21 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
         
         List<TreeEvent> newTreeEvents = this.treeCache.enqueueAll(dataArtifactEvents).stream()
-                .map(daoEvt -> new TreeEvent(new DataArtifactSearchParam(daoEvt.getArtifactType(), daoEvt.getDataSourceId()), false))
+                .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false))
                 .collect(Collectors.toList());
         
         return Stream.of(dataArtifactEvents, newTreeEvents)
                 .flatMap((lst) -> lst.stream())
                 .collect(Collectors.toList());
+    }
+    
+    private TreeItemDTO<DataArtifactSearchParam> getTreeItem(BlackboardArtifact.Type artifactType, long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeResultsDTO.TreeItemDTO<>(
+                                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                                new DataArtifactSearchParam(artifactType, dataSourceId),
+                                artifactType.getTypeID(),
+                                artifactType.getDisplayName(),
+                                displayCount);
     }
 
     @Override
@@ -242,7 +246,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     @Override
     Collection<? extends TreeEvent> shouldRefreshTree() {
         return this.treeCache.getEventTimeouts().stream()
-                .map(dataEvt -> new TreeEvent(dataEvt, true))
+                .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), true))
                 .collect(Collectors.toList());
     }
 
