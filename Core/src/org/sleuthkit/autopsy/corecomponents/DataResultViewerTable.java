@@ -528,13 +528,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof TableFilterNode) {
-            TableFilterNode tfn = (TableFilterNode) rootNode;
+        if (rootNode instanceof TableFilterNode || searchResults != null) {
+            TableFilterNode tfn = searchResults == null ? (TableFilterNode) rootNode : null;
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             final ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
                 String columnName = entry.getKey();
-                final String columnHiddenKey = ResultViewerPersistence.getColumnHiddenKey(tfn, columnName);
+                final String columnHiddenKey = 
+                        tfn != null ? ResultViewerPersistence.getColumnHiddenKey(tfn, columnName) : 
+                        ResultViewerPersistence.getColumnHiddenKey(searchResults, columnName);
                 final TableColumn column = entry.getValue();
                 boolean columnHidden = columnModel.isColumnHidden(column);
                 if (columnHidden) {
@@ -554,12 +556,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof TableFilterNode) {
-            TableFilterNode tfn = (TableFilterNode) rootNode;
+        if (rootNode instanceof TableFilterNode || searchResults != null) {
+            TableFilterNode tfn = searchResults == null ? (TableFilterNode) rootNode : null;
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             // Store the current order of the columns into settings
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
-                preferences.putInt(ResultViewerPersistence.getColumnPositionKey(tfn, entry.getValue().getName()), entry.getKey());
+                preferences.putInt(tfn != null ?
+                        ResultViewerPersistence.getColumnPositionKey(tfn, entry.getValue().getName()) :
+                        ResultViewerPersistence.getColumnPositionKey(searchResults, entry.getValue().getName()), entry.getKey());
             }
         }
     }
@@ -571,16 +575,20 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof TableFilterNode) {
-            final TableFilterNode tfn = ((TableFilterNode) rootNode);
+        if (rootNode instanceof TableFilterNode || searchResults != null) {
+            final TableFilterNode tfn = searchResults == null ? ((TableFilterNode) rootNode) : null;
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
                 ETableColumn etc = entry.getValue();
                 String columnName = entry.getKey();
                 //store sort rank and order
-                final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
-                final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
+                final String columnSortOrderKey = 
+                        searchResults == null ? ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName) :
+                        ResultViewerPersistence.getColumnSortOrderKey(searchResults, columnName);
+                final String columnSortRankKey = 
+                        searchResults == null ? ResultViewerPersistence.getColumnSortRankKey(tfn, columnName):
+                        ResultViewerPersistence.getColumnSortRankKey(searchResults, columnName);
                 if (etc.isSorted() && (columnModel.isColumnHidden(etc) == false)) {
                     preferences.putBoolean(columnSortOrderKey, etc.isAscending());
                     preferences.putInt(columnSortRankKey, etc.getSortRank());
@@ -590,7 +598,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     preferences.remove(columnSortRankKey);
                 }
             }
-        }
+        } 
     }
 
     /**
@@ -603,17 +611,23 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof TableFilterNode) {
-            final TableFilterNode tfn = (TableFilterNode) rootNode;
+        if (rootNode instanceof TableFilterNode || searchResults != null) {
+            final TableFilterNode tfn = (searchResults == null ? (TableFilterNode) rootNode : null);
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             //organize property sorting information, sorted by rank
             TreeSet<ColumnSortInfo> sortInfos = new TreeSet<>(Comparator.comparing(ColumnSortInfo::getRank));
             propertiesMap.entrySet().stream().forEach(entry -> {
                 final String propName = entry.getValue().getName();
                 //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
-                Integer sortRank = preferences.getInt(ResultViewerPersistence.getColumnSortRankKey(tfn, propName), 0);
+                Integer sortRank = preferences.getInt(
+                        tfn != null ?
+                        ResultViewerPersistence.getColumnSortRankKey(tfn, propName) :
+                        ResultViewerPersistence.getColumnSortRankKey(searchResults, propName), 0);
                 //default to true => ascending
-                Boolean sortOrder = preferences.getBoolean(ResultViewerPersistence.getColumnSortOrderKey(tfn, propName), true);
+                Boolean sortOrder = preferences.getBoolean(
+                        tfn != null ?
+                        ResultViewerPersistence.getColumnSortOrderKey(tfn, propName) :
+                        ResultViewerPersistence.getColumnSortOrderKey(searchResults, propName), true);
                 sortInfos.add(new ColumnSortInfo(entry.getKey(), sortRank, sortOrder));
             });
             //apply sort information in rank order.
@@ -629,13 +643,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (rootNode == null || propertiesMap.isEmpty()) {
             return;
         }
-        if (rootNode instanceof TableFilterNode) {
+        if (rootNode instanceof TableFilterNode || searchResults != null) {
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
-            final TableFilterNode tfn = ((TableFilterNode) rootNode);
+            final TableFilterNode tfn = (searchResults == null ? ((TableFilterNode) rootNode) : null);
             ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
                 final String propName = entry.getValue().getName();
-                boolean hidden = preferences.getBoolean(ResultViewerPersistence.getColumnHiddenKey(tfn, propName), false);
+                boolean hidden = preferences.getBoolean(
+                        tfn != null ?
+                        ResultViewerPersistence.getColumnHiddenKey(tfn, propName) :
+                        ResultViewerPersistence.getColumnHiddenKey(searchResults, propName), false);
                 final TableColumn column = columnMap.get(propName);
                 columnModel.setColumnHidden(column, hidden);
             }
@@ -653,16 +670,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private synchronized List<Node.Property<?>> loadColumnOrder() {
 
         if (searchResults != null) {
-            return searchResults.getColumns().stream()
-                    .map(columnKey -> {
-                        return new NodeProperty<>(
-                                columnKey.getFieldName(),
-                                columnKey.getDisplayName(),
-                                columnKey.getDescription(),
-                                ""
-                        );
-                    })
-                    .collect(Collectors.toList());
+            return loadColumnOrderForSearchResults();
         }
 
         List<Property<?>> props = ResultViewerPersistence.getAllChildProperties(rootNode, 100);
@@ -687,6 +695,51 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         for (Property<?> prop : props) {
             Integer value = preferences.getInt(ResultViewerPersistence.getColumnPositionKey(tfn, prop.getName()), -1);
+            if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
+                propertiesMap.put(value, prop);
+            } else {
+                propertiesMap.put(offset, prop);
+                offset++;
+            }
+        }
+
+        /*
+         * NOTE: it is possible to have "discontinuities" in the keys (i.e.
+         * column numbers) of the map. This happens when some of the columns had
+         * a previous setting, and other columns did not. We need to make the
+         * keys 0-indexed and continuous.
+         */
+        compactPropertiesMap();
+
+        return new ArrayList<>(propertiesMap.values());
+    }
+    
+    private synchronized List<Node.Property<?>> loadColumnOrderForSearchResults() {
+        List<Node.Property<?>> props = searchResults.getColumns().stream()
+                .map(columnKey -> {
+                    return new NodeProperty<>(
+                            columnKey.getFieldName(),
+                            columnKey.getDisplayName(),
+                            columnKey.getDescription(),
+                            ""
+                    );
+                })
+                .collect(Collectors.toList());
+
+        propertiesMap.clear();
+
+        /*
+         * We load column index values into the properties map. If a property's
+         * index is outside the range of the number of properties or the index
+         * has already appeared as the position of another property, we put that
+         * property at the end.
+         */
+        int offset = props.size();
+
+        final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
+
+        for (Property<?> prop : props) {
+            Integer value = preferences.getInt(ResultViewerPersistence.getColumnPositionKey(searchResults, prop.getName()), -1);
             if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
                 propertiesMap.put(value, prop);
             } else {
