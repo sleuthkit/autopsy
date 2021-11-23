@@ -31,18 +31,20 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
     private final List<RowDTO> items;
     private final long totalResultsCount;
     private final long startItem;
+    private final String signature;
 
-    public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowDTO> items) {
-        this(typeId, displayName, columns, items, 0, items == null ? 0 : items.size());
+    public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowDTO> items, String signature) {
+        this(typeId, displayName, columns, items, signature, 0, items == null ? 0 : items.size());
     }
 
-    public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowDTO> items, long startItem, long totalResultsCount) {
+    public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowDTO> items, String signature, long startItem, long totalResultsCount) {
         this.typeId = typeId;
         this.displayName = displayName;
         this.columns = columns;
         this.items = items;
         this.startItem = startItem;
         this.totalResultsCount = totalResultsCount;
+        this.signature = signature;
     }
 
     @Override
@@ -73,5 +75,10 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
     @Override
     public long getStartItem() {
         return startItem;
+    }
+    
+    @Override
+    public String getSignature() {
+        return signature;
     }
 }
