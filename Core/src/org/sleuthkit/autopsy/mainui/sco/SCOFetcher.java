@@ -172,7 +172,7 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
             return null;
         }
 
-        return new SCOData(scoreAndDescription, commentStatus, countAndDescription);
+        return new SCOData(scoreAndDescription, commentStatus, countAndDescription, content.getId());
     }
 
     @Messages({
@@ -188,19 +188,14 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
         if (scoSupporter == null) {
             return;
         }
-
-        Optional<Content> optional = scoSupporter.getContent();
-        if (optional.isPresent()) {
-            return;
-        }
-
+        SCOData data = null;
         try {
-            SCOData data = get();
+            data = get();
 
             if (data == null) {
                 return;
             }
-
+            
             List<NodeProperty<?>> props = new ArrayList<>();
 
             if (data.getScoreAndDescription() != null) {
@@ -232,7 +227,7 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
             }
 
         } catch (InterruptedException | ExecutionException ex) {
-            logger.log(Level.SEVERE, "Failed to update the SCO columns for content id=" + optional.get().getId(), ex);
+            logger.log(Level.SEVERE, "Failed to update the SCO columns for content id=" + (data.getContentId() != null ? data.getContentId() : "id unknown"), ex);
         }
     }
 
@@ -244,6 +239,7 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
         private final Pair<Score, String> scoreAndDescription;
         private final DataResultViewerTable.HasCommentStatus comment;
         private final Pair<Long, String> countAndDescription;
+        private final Long contentId;
 
         /**
          * Construct a new SCOData object.
@@ -252,10 +248,11 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
          * @param comment
          * @param countAndDescription
          */
-        SCOData(Pair<Score, String> scoreAndDescription, DataResultViewerTable.HasCommentStatus comment, Pair<Long, String> countAndDescription) {
+        SCOData(Pair<Score, String> scoreAndDescription, DataResultViewerTable.HasCommentStatus comment, Pair<Long, String> countAndDescription, Long contentId) {
             this.scoreAndDescription = scoreAndDescription;
             this.comment = comment;
             this.countAndDescription = countAndDescription;
+            this.contentId = contentId;
         }
 
         Pair<Score, String> getScoreAndDescription() {
@@ -268,6 +265,10 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
 
         Pair<Long, String> getCountAndDescription() {
             return countAndDescription;
+        }
+        
+        Long getContentId() {
+            return contentId;
         }
     }
 
