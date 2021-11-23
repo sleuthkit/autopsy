@@ -23,7 +23,6 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -508,7 +507,9 @@ public class FileSystemColumnUtils {
     /**
      * Get the content that should be displayed in the table based on the given object.
      * Algorithm:
-     * - If content is already displayable, return it
+     * - If content is known and known files are being hidden, return an empty list
+     * - If content is a slack file and slack files are being hidden, return an empty list
+     * - If content is a displayable type, return it
      * - If content is a volume system, return its displayable children
      * - If content is a file system, return the displayable children of the root folder
      * - If content is the root folder, return the displayable children of the root folder
@@ -538,12 +539,16 @@ public class FileSystemColumnUtils {
     }
     
     /**
-     * Get the displayable content children in common between the table and tree views.
-     * Advances past content types we do not display (volume systems, file systems, root folder).
+     * Get the content that should be displayed in the table based on the given object.
+     * Algorithm:
+     * - If content is a displayable type, return it
+     * - If content is a volume system, return its displayable children
+     * - If content is a file system, return the displayable children of the root folder
+     * - If content is the root folder, return the displayable children of the root folder
+     *
+     * @param content The base content.
      * 
-     * @param content The content to get the children of.
-     * 
-     * @return List of displayable content children.
+     * @return List of content to add to the table/tree.
      * 
      * @throws TskCoreException 
      */

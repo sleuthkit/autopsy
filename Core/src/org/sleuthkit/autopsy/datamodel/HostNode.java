@@ -29,7 +29,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
-
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
@@ -222,9 +221,7 @@ public class HostNode extends DisplayableItemNode implements SelectionResponder{
      * @param hosts The HostDataSources key.
      */
     HostNode(HostDataSources hosts) {
-        //super(Children.create(new FileSystemFactory(dsObjId), true), Lookups.singleton(NAME));
         this(Children.create(new FileSystemFactory(hosts.getHost()), true), hosts.getHost());
-        //this(Children.create(new HostGroupingChildren(HOST_DATA_SOURCES, hosts.getHost()), true), hosts.getHost());
     }
 
     /**

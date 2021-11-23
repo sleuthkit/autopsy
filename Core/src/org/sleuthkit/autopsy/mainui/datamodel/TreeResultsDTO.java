@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * A list of items to display in the tree.
@@ -76,7 +75,7 @@ public class TreeResultsDTO<T> {
             this.count = count;
             this.typeData = typeData;
         }
-        
+
         /**
          * @return The display name of this row.
          */

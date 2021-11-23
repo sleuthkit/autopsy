@@ -5,7 +5,13 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import org.sleuthkit.datamodel.*; // TODO
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LocalFilesDataSource;
+import org.sleuthkit.datamodel.Pool;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.Volume;
 
 /**
  * Consolidates node paths shared between the result view table and the tree.

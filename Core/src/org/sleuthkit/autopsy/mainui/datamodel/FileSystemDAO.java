@@ -22,10 +22,8 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -294,6 +292,15 @@ public class FileSystemDAO {
         return searchParamsCache.get(searchParams, () -> fetchHostsForTable(searchParams));
     }
     
+    /**
+     * Get all data sources belonging to a given host.
+     * 
+     * @param host The host.
+     * 
+     * @return Results containing all data sources for the given host.
+     * 
+     * @throws ExecutionException 
+     */
     public TreeResultsDTO<FileSystemContentSearchParam> getDataSourcesForHost(Host host) throws ExecutionException {
         try {
             List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
@@ -312,6 +319,15 @@ public class FileSystemDAO {
         }
     }
     
+    /**
+     * Create results for a single given data source ID (not its children).
+     * 
+     * @param dataSourceObjId The data source object ID.
+     * 
+     * @return Results containing just this data source.
+     * 
+     * @throws ExecutionException 
+     */
     public TreeResultsDTO<FileSystemContentSearchParam> getSingleDataSource(long dataSourceObjId) throws ExecutionException {
         try {
             List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
@@ -349,7 +365,7 @@ public class FileSystemDAO {
                 Long countForNode = null;
                 if ((child instanceof AbstractFile)
                         && ! (child instanceof LocalFilesDataSource)) {
-                    countForNode = new Long(child.getChildrenCount()); // TODO does not account for hidden children
+                    countForNode = getContentForTable(new FileSystemContentSearchParam(child.getId()), 0, null, false).getTotalResultsCount();
                 }
                 treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
                         child.getClass().getSimpleName(),
@@ -366,8 +382,14 @@ public class FileSystemDAO {
         }
     }
     
+    /**
+     * Get display name for the given content.
+     * 
+     * @param content The content.
+     * 
+     * @return Display name for the content.
+     */
     private String getNameForContent(Content content) {
-        // Currently the only special case is for volumes
         if (content instanceof Volume) {
             return FileSystemColumnUtils.getVolumeDisplayName((Volume)content);
         } else if (content instanceof AbstractFile) {

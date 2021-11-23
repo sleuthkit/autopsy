@@ -22,12 +22,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.logging.Level;
-import org.openide.nodes.Children;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.mainui.nodes.FileSystemFactory;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
@@ -50,9 +48,6 @@ class DataSourceGroupingNode extends DisplayableItemNode {
         super(Optional.ofNullable(createDSGroupingNodeChildren(dataSource))
                 .orElse(new RootContentChildren(Arrays.asList(Collections.EMPTY_LIST))),
                 Lookups.singleton(dataSource));
-        // TODO other part
-        //super(Children.create(new FileSystemFactory(dataSource.getId()), true),
-        //        Lookups.singleton(dataSource));
         
         if (dataSource instanceof Image) {
             Image image = (Image) dataSource;
