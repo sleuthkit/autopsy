@@ -37,10 +37,10 @@ final class AnalysisResultIngestTask extends IngestTask {
      * @param analysisResult    The analysis result to be processed.
      */
     AnalysisResultIngestTask(IngestJobExecutor ingestJobExecutor, AnalysisResult analysisResult) {
-        super(ingestJobExecutor);
+        super(analysisResult.getName(), ingestJobExecutor);
         this.analysisResult = analysisResult;
-    }
-
+    }   
+    
     /**
      * Gets the analysis result for this task.
      *

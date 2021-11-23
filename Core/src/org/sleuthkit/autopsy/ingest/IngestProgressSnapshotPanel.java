@@ -136,7 +136,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = snapshot.getThreadId();
                     break;
                 case 1:
-                    cellValue = snapshot.getActivity();
+                    cellValue = snapshot.getModuleDisplayName();
                     break;
                 case 2:
                     cellValue = snapshot.getDataSourceName();

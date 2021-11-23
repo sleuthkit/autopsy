@@ -58,6 +58,7 @@ final class DataArtifactIngestPipeline extends IngestPipeline<DataArtifactIngest
 
     @Override
     void cleanUpAfterTask(DataArtifactIngestTask task) throws IngestPipelineException {
+        IngestManager.getInstance().setIngestTaskProgressCompleted(task);
     }
 
     /**
@@ -83,6 +84,7 @@ final class DataArtifactIngestPipeline extends IngestPipeline<DataArtifactIngest
         @Override
         void process(IngestJobExecutor ingestJobExecutor, DataArtifactIngestTask task) throws IngestModuleException {
             DataArtifact artifact = task.getDataArtifact();
+            IngestManager.getInstance().setIngestTaskProgress(task, getDisplayName());
             module.process(artifact);
         }
 

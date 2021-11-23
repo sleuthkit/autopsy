@@ -58,6 +58,7 @@ public class AnalysisResultIngestPipeline extends IngestPipeline<AnalysisResultI
 
     @Override
     void cleanUpAfterTask(AnalysisResultIngestTask task) throws IngestPipelineException {
+        IngestManager.getInstance().setIngestTaskProgressCompleted(task);
     }
 
     /**
@@ -83,6 +84,7 @@ public class AnalysisResultIngestPipeline extends IngestPipeline<AnalysisResultI
         @Override
         void process(IngestJobExecutor ingestJobExecutor, AnalysisResultIngestTask task) throws IngestModule.IngestModuleException {
             AnalysisResult result = task.getAnalysisResult();
+            IngestManager.getInstance().setIngestTaskProgress(task, getDisplayName());
             module.process(result);
         }
 

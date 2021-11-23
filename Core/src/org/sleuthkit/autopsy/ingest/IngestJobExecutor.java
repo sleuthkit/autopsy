@@ -57,7 +57,7 @@ import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
- * Executes an ingest job by orchestrating the construction, start up, running,
+ * Executes an ingest job the orchestrating the construction, start up, running,
  * and shut down of the ingest module pipelines for an ingest job.
  */
 final class IngestJobExecutor {
@@ -736,10 +736,10 @@ final class IngestJobExecutor {
                     startDataSourceIngestProgressBar();
                 }
                 if (hasDataArtifactIngestModules()) {
-                    startArtifactIngestProgressBar();
+                    startDataArtifactIngestProgressBar();
                 }
                 if (hasAnalysisResultIngestModules()) {
-                    startResultIngestProgressBar();
+                    startAnalysisResultIngestProgressBar();
                 }
             }
 
@@ -794,10 +794,10 @@ final class IngestJobExecutor {
                     startFileIngestProgressBar();
                 }
                 if (hasDataArtifactIngestModules()) {
-                    startArtifactIngestProgressBar();
+                    startDataArtifactIngestProgressBar();
                 }
                 if (hasAnalysisResultIngestModules()) {
-                    startResultIngestProgressBar();
+                    startAnalysisResultIngestProgressBar();
                 }
             }
 
@@ -896,23 +896,23 @@ final class IngestJobExecutor {
      * Analysis already completed at the time that cancellation occurs is NOT
      * discarded.
      */
-    private void startArtifactIngestProgressBar() {
+    private void startDataArtifactIngestProgressBar() {
         if (usingNetBeansGUI) {
             artifactIngestProgressBar = startArtifactIngestProgressBar(artifactIngestProgressLock, NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataArtifactIngest.displayName", dataSource.getName()));
         }
     }
 
     /**
-     * Starts a data artifacts analysis NetBeans progress bar in the lower right
-     * hand corner of the main application window. The progress bar provides the
-     * user with a task cancellation button. Pressing it cancels the ingest job.
-     * Analysis already completed at the time that cancellation occurs is NOT
-     * discarded.
+     * Starts a analysis results analysis NetBeans progress bar in the lower
+     * right hand corner of the main application window. The progress bar
+     * provides the user with a task cancellation button. Pressing it cancels
+     * the ingest job. Analysis already completed at the time that cancellation
+     * occurs is NOT discarded.
      */
     @NbBundle.Messages({
         "# {0} - data source name", "IngestJob.progress.analysisResultIngest.displayName=Analyzing analysis results from {0}"
     })
-    private void startResultIngestProgressBar() {
+    private void startAnalysisResultIngestProgressBar() {
         if (usingNetBeansGUI) {
             resultIngestProgressBar = startArtifactIngestProgressBar(resultIngestProgressLock, Bundle.IngestJob_progress_analysisResultIngest_displayName(dataSource.getName()));
         }
