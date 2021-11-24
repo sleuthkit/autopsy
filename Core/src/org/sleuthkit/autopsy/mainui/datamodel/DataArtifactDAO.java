@@ -70,7 +70,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
         return instance;
     }
-            
+
     /**
      * @return The set of types that are not shown in the tree.
      */
@@ -78,8 +78,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
-    
-    private final TreeEventTimedCache<DataArtifactEvent> treeCache = new TreeEventTimedCache<>();   
+    private final TreeEventTimedCache<DataArtifactEvent> treeCache = new TreeEventTimedCache<>();
     private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -151,9 +150,19 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     public TreeResultsDTO<DataArtifactSearchParam> getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
         try {
             // get row dto's sorted by display name
+            Set<BlackboardArtifact.Type> indeterminateTypes = this.treeCache.getEnqueued().stream()
+                    .filter(evt -> dataSourceId == null || evt.getDataSourceId() == dataSourceId)
+                    .map(evt -> evt.getArtifactType())
+                    .collect(Collectors.toSet());
+
             Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.DATA_ARTIFACT, dataSourceId);
             List<TreeResultsDTO.TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
-                    .map(entry -> getTreeItem(entry.getKey(), dataSourceId, TreeDisplayCount.getDeterminate(entry.getValue())))
+                    .map(entry -> {
+                        return getTreeItem(entry.getKey(), dataSourceId,
+                                indeterminateTypes.contains(entry.getKey())
+                                ? TreeDisplayCount.INDETERMINATE
+                                : TreeDisplayCount.getDeterminate(entry.getValue()));
+                    })
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
                     .collect(Collectors.toList());
 
@@ -178,7 +187,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         if (evt == null) {
             return Collections.emptyList();
         }
-        
+
         Map<BlackboardArtifact.Type, Set<Long>> artifactTypeDataSourceMap = dataEvt.getArtifacts().stream()
                 .map((art) -> {
                     try {
@@ -219,23 +228,23 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                 dataArtifactEvents.add(newEvt);
             }
         }
-        
+
         List<TreeEvent> newTreeEvents = this.treeCache.enqueueAll(dataArtifactEvents).stream()
                 .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false))
                 .collect(Collectors.toList());
-        
+
         return Stream.of(dataArtifactEvents, newTreeEvents)
                 .flatMap((lst) -> lst.stream())
                 .collect(Collectors.toList());
     }
-    
+
     private TreeItemDTO<DataArtifactSearchParam> getTreeItem(BlackboardArtifact.Type artifactType, long dataSourceId, TreeDisplayCount displayCount) {
         return new TreeResultsDTO.TreeItemDTO<>(
-                                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
-                                new DataArtifactSearchParam(artifactType, dataSourceId),
-                                artifactType.getTypeID(),
-                                artifactType.getDisplayName(),
-                                displayCount);
+                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                new DataArtifactSearchParam(artifactType, dataSourceId),
+                artifactType.getTypeID(),
+                artifactType.getDisplayName(),
+                displayCount);
     }
 
     @Override

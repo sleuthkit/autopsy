@@ -21,8 +21,10 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class TreeEventTimedCache<T> {
     private static final long DEFAULT_TIMEOUT_MILLIS = 2 * 60 * 1000;
@@ -64,6 +66,10 @@ public class TreeEventTimedCache<T> {
         }
 
         return updateToIndeterminate;
+    }
+    
+    public Set<T> getEnqueued() {
+        return new HashSet<>(eventTimeouts.keySet());
     }
 
     public Collection<T> getEventTimeouts() {
