@@ -25,6 +25,7 @@ import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.events.OsAccountEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.OsAccountRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -184,17 +186,26 @@ public class OsAccountsDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> processEvent(Collection<PropertyChangeEvent> evts) {
-        List<DAOEvent> daoEvts = evts.stream().filter(evt -> OS_EVENTS.contains(evt.getPropertyName()))
-                .map(evt -> new OsAccountEvent())
-                .limit(1)
-                .collect(Collectors.toList());
+    Collection<? extends DAOEvent> flushEvents() {
+        // GVDTODO
+        return Collections.emptyList();
+    }
 
-        if (!daoEvts.isEmpty()) {
-            this.searchParamsCache.invalidateAll();
+    @Override
+    Collection<? extends TreeEvent> shouldRefreshTree() {
+        // GVDTODO
+        return Collections.emptyList();
+    }
+
+    @Override
+    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+        if (!OS_EVENTS.contains(evt.getPropertyName())) {
+            return Collections.emptyList();
         }
-
-        return daoEvts;
+        
+            this.searchParamsCache.invalidateAll();
+        
+        return Collections.singletonList(new OsAccountEvent());
     }
 
     /**

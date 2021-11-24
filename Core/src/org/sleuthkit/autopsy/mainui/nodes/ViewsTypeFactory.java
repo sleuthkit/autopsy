@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -33,9 +34,9 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileExtSearchFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSizeFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -99,22 +100,17 @@ public class ViewsTypeFactory {
             return MainDAO.getInstance().getViewsDAO().getFileSizeCounts(this.dataSourceId);
         }
 
-//        @Override
-//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-//            AbstractFile evtFile = getFileInDataSourceFromEvt(evt, this.dataSourceId);
-//            if (evtFile == null) {
-//                return false;
-//            }
-//
-//            long size = evtFile.getSize();
-//            for (FileSizeFilter filter : FileSizeFilter.values()) {
-//                if (size >= filter.getMinBound() || size < filter.getMaxBound()) {
-//                    return true;
-//                }
-//            }
-//
-//            return false;
-//        }
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> getInvalidatedChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(FileTypeSizeSearchParams o1, FileTypeSizeSearchParams o2) {
+            return Integer.compare(o1.getSizeFilter().getId(), o2.getSizeFilter().getId());
+        }
+
 
         /**
          * Shows a file size tree node.
@@ -164,10 +160,17 @@ public class ViewsTypeFactory {
             return MainDAO.getInstance().getViewsDAO().getFileMimeCounts(null, this.dataSourceId);
         }
 
-//        @Override
-//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-//            return getFileInDataSourceFromEvt(evt, this.dataSourceId) != null;
-//        }
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getInvalidatedChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(FileTypeMimeSearchParams o1, FileTypeMimeSearchParams o2) {
+            return StringUtils.compare(o1.getMimeType(), o2.getMimeType(), true);
+        }
+
 
         static class FileMimePrefixNode extends TreeNode<FileTypeMimeSearchParams> {
 
@@ -218,15 +221,18 @@ public class ViewsTypeFactory {
             return MainDAO.getInstance().getViewsDAO().getFileMimeCounts(this.mimeTypePrefix, this.dataSourceId);
         }
 
-//        @Override
-//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-//            AbstractFile file = getFileInDataSourceFromEvt(evt, dataSourceId);
-//            if (file == null || file.getMIMEType() == null) {
-//                return false;
-//            }
-//
-//            return file.getMIMEType().toLowerCase().startsWith(this.mimeTypePrefix.toLowerCase());
-//        }
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getInvalidatedChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(FileTypeMimeSearchParams o1, FileTypeMimeSearchParams o2) {
+            return StringUtils.compare(o1.getMimeType(), o2.getMimeType(), true);
+        }
+
+        
 
         /**
          * Displays an individual suffix node in the tree (i.e. 'aac' underneath
@@ -302,12 +308,18 @@ public class ViewsTypeFactory {
             return MainDAO.getInstance().getViewsDAO().getFileExtCounts(this.childFilters, this.dataSourceId);
         }
 
-//        @Override
-//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-//            AbstractFile file = getFileInDataSourceFromEvt(evt, this.dataSourceId);
-//            return file != null && file.getNameExtension() != null && 
-//                    this.childFilters.stream().anyMatch((filter) -> filter.getFilter().contains("." + file.getNameExtension().toLowerCase()));
-//        }
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> getInvalidatedChild(TreeEvent daoEvt) {
+            //GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(FileTypeExtensionsSearchParams o1, FileTypeExtensionsSearchParams o2) {
+            return StringUtils.compare(o1.getFilter().getDisplayName(), o2.getFilter().getDisplayName());
+        }
+
+        
 
         /**
          * Represents a file extension tree node that may or may not have child

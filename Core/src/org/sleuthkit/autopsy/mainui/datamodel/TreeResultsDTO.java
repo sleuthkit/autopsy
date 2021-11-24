@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
 import java.util.Objects;
-import org.python.icu.text.MessageFormat;
 
 /**
  * A list of items to display in the tree.

@@ -23,6 +23,7 @@ import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +45,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.CommAccountsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard;
@@ -154,23 +156,35 @@ public class CommAccountsDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> processEvent(Collection<PropertyChangeEvent> evts) {
+    Collection<? extends DAOEvent> flushEvents() {
+        // GVDTODO
+        return Collections.emptyList();
+    }
+
+    @Override
+    Collection<? extends TreeEvent> shouldRefreshTree() {
+        // GVDTODO
+        return Collections.emptyList();
+    }
+
+    @Override
+    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
         // maps account type to the data sources affected
+        // GVDTODO this can probably be rewritten now that it isn't handling a list of autopsy events
         Map<String, Set<Long>> commAccountsAffected = new HashMap<>();
         try {
-            for (PropertyChangeEvent evt : evts) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                    if (null != eventData
-                            && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
 
-                        // check that the update is for the same account type
-                        for (BlackboardArtifact artifact : eventData.getArtifacts()) {
-                            BlackboardAttribute typeAttr = artifact.getAttribute(BlackboardAttribute.Type.TSK_ACCOUNT_TYPE);
-                            commAccountsAffected.computeIfAbsent(typeAttr.getValueString(), (k) -> new HashSet<>())
-                                    .add(artifact.getDataSourceObjectID());
-                        }
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
+                ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                if (null != eventData
+                        && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
+
+                    // check that the update is for the same account type
+                    for (BlackboardArtifact artifact : eventData.getArtifacts()) {
+                        BlackboardAttribute typeAttr = artifact.getAttribute(BlackboardAttribute.Type.TSK_ACCOUNT_TYPE);
+                        commAccountsAffected.computeIfAbsent(typeAttr.getValueString(), (k) -> new HashSet<>())
+                                .add(artifact.getDataSourceObjectID());
                     }
                 }
             }

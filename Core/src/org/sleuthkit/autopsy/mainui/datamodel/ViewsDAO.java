@@ -48,11 +48,13 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTr
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeExtensionsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeMimeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeSizeEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
@@ -348,7 +350,7 @@ public class ViewsDAO extends AbstractDAO {
                             new FileTypeExtensionsSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
-                            entry.getValue());
+                            TreeDisplayCount.getDeterminate(entry.getValue()));
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
@@ -382,7 +384,7 @@ public class ViewsDAO extends AbstractDAO {
                             new FileTypeSizeSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
-                            entry.getValue());
+                            TreeDisplayCount.getDeterminate(entry.getValue()));
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
@@ -467,7 +469,7 @@ public class ViewsDAO extends AbstractDAO {
                                     new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
                                     name,
                                     name,
-                                    entry.getValue());
+                                    TreeDisplayCount.getDeterminate(entry.getValue()));
                         })
                         .sorted((a, b) -> stringCompare(a.getTypeData().getMimeType(), b.getTypeData().getMimeType()))
                         .collect(Collectors.toList());
@@ -653,44 +655,54 @@ public class ViewsDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> processEvent(Collection<PropertyChangeEvent> autopsyEvts) {
+    Collection<? extends DAOEvent> flushEvents() {
+        // GVDTODO
+        return Collections.emptyList();
+    }
+
+    @Override
+    Collection<? extends TreeEvent> shouldRefreshTree() {
+        // GVDTODO
+        return Collections.emptyList();
+    }
+
+    @Override
+    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
         Map<String, Set<Long>> fileExtensionDsMap = new HashMap<>();
         Map<String, Map<String, Set<Long>>> mimeTypeDsMap = new HashMap<>();
         Map<FileSizeFilter, Set<Long>> fileSizeDsMap = new HashMap<>();
 
-        for (PropertyChangeEvent evt : autopsyEvts) {
-            AbstractFile af = DAOEventUtils.getFileFromEvt(evt);
-            if (af == null) {
-                continue;
-            }
+        AbstractFile af = DAOEventUtils.getFileFromEvt(evt);
+        if (af == null) {
+            return Collections.emptyList();
+        }
 
-            // create an extension mapping if extension present
-            if (!StringUtils.isBlank(af.getNameExtension())) {
-                fileExtensionDsMap
-                        .computeIfAbsent(af.getNameExtension(), (k) -> new HashSet<>())
-                        .add(af.getDataSourceObjectId());
-            }
+        // create an extension mapping if extension present
+        if (!StringUtils.isBlank(af.getNameExtension())) {
+            fileExtensionDsMap
+                    .computeIfAbsent(af.getNameExtension(), (k) -> new HashSet<>())
+                    .add(af.getDataSourceObjectId());
+        }
 
-            // create a mime type mapping if mime type present
-            if (!StringUtils.isBlank(af.getMIMEType())) {
-                Pair<String, String> mimePieces = getMimePieces(af.getMIMEType());
-                mimeTypeDsMap
-                        .computeIfAbsent(mimePieces.getKey(), (k) -> new HashMap<>())
-                        .computeIfAbsent(mimePieces.getValue(), (k) -> new HashSet<>())
-                        .add(af.getDataSourceObjectId());
-            }
+        // create a mime type mapping if mime type present
+        if (!StringUtils.isBlank(af.getMIMEType())) {
+            Pair<String, String> mimePieces = getMimePieces(af.getMIMEType());
+            mimeTypeDsMap
+                    .computeIfAbsent(mimePieces.getKey(), (k) -> new HashMap<>())
+                    .computeIfAbsent(mimePieces.getValue(), (k) -> new HashSet<>())
+                    .add(af.getDataSourceObjectId());
+        }
 
-            // create a size mapping if size present
-            FileSizeFilter sizeFilter = Stream.of(FileSizeFilter.values())
-                    .filter(filter -> af.getSize() >= filter.getMinBound() && af.getSize() < filter.getMaxBound())
-                    .findFirst()
-                    .orElse(null);
+        // create a size mapping if size present
+        FileSizeFilter sizeFilter = Stream.of(FileSizeFilter.values())
+                .filter(filter -> af.getSize() >= filter.getMinBound() && af.getSize() < filter.getMaxBound())
+                .findFirst()
+                .orElse(null);
 
-            if (sizeFilter != null) {
-                fileSizeDsMap
-                        .computeIfAbsent(sizeFilter, (k) -> new HashSet<>())
-                        .add(af.getDataSourceObjectId());
-            }
+        if (sizeFilter != null) {
+            fileSizeDsMap
+                    .computeIfAbsent(sizeFilter, (k) -> new HashSet<>())
+                    .add(af.getDataSourceObjectId());
         }
 
         if (fileExtensionDsMap.isEmpty() && mimeTypeDsMap.isEmpty() && fileSizeDsMap.isEmpty()) {

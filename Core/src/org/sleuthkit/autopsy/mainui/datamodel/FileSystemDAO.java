@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -59,6 +60,7 @@ import static org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.getExtensionMediaT
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemHostEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemPersonEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -355,53 +357,64 @@ public class FileSystemDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> processEvent(Collection<PropertyChangeEvent> evts) {
+    Collection<? extends DAOEvent> flushEvents() {
+        // GVDTODO
+        return Collections.emptyList();
+    }
+
+    @Override
+    Collection<? extends TreeEvent> shouldRefreshTree() {
+        // GVDTODO
+        return Collections.emptyList();
+    }
+
+    @Override
+    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+        // GVDTODO these can probably be rewritten now that it isn't handling a collection of autopsy events
         Set<Long> affectedPersons = new HashSet<>();
         Set<Long> affectedHosts = new HashSet<>();
         Set<Long> affectedParentContent = new HashSet<>();
         boolean refreshAllContent = false;
 
-        for (PropertyChangeEvent evt : evts) {
-            Content content = DAOEventUtils.getDerivedContentFromEvt(evt);
-            if (content != null) {
-                Content parentContent;
-                try {
-                    parentContent = content.getParent();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Unable to get parent content of content with id: " + content.getId(), ex);
-                    continue;
-                }
-
-                if (parentContent == null) {
-                    continue;
-                }
-
-                if (invalidatesAllFileSystem(parentContent)) {
-                    refreshAllContent = true;
-                } else {
-                    affectedParentContent.add(parentContent.getId());
-                }
-            } else if (evt instanceof DataSourceAddedEvent) {
-                Long hostId = getHostFromDs(((DataSourceAddedEvent) evt).getDataSource());
-                if (hostId != null) {
-                    affectedHosts.add(hostId);
-                }
-            } else if (evt instanceof DataSourceNameChangedEvent) {
-                Long hostId = getHostFromDs(((DataSourceNameChangedEvent) evt).getDataSource());
-                if (hostId != null) {
-                    affectedHosts.add(hostId);
-                }
-            } else if (evt instanceof HostsAddedEvent) {
-                // GVDTODO how best to handle host added?
-            } else if (evt instanceof HostsUpdatedEvent) {
-                // GVDTODO how best to handle host updated?
-            } else if (evt instanceof HostsAddedToPersonEvent) {
-                Person person = ((HostsAddedToPersonEvent) evt).getPerson();
-                affectedPersons.add(person == null ? null : person.getPersonId());
-            } else if (evt instanceof HostsRemovedFromPersonEvent) {
-                Person person = ((HostsRemovedFromPersonEvent) evt).getPerson();
-                affectedPersons.add(person == null ? null : person.getPersonId());
+        Content content = DAOEventUtils.getDerivedContentFromEvt(evt);
+        if (content != null) {
+            Content parentContent;
+            try {
+                parentContent = content.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to get parent content of content with id: " + content.getId(), ex);
+                return Collections.emptyList();
             }
+
+            if (parentContent == null) {
+                return Collections.emptyList();
+            }
+
+            if (invalidatesAllFileSystem(parentContent)) {
+                refreshAllContent = true;
+            } else {
+                affectedParentContent.add(parentContent.getId());
+            }
+        } else if (evt instanceof DataSourceAddedEvent) {
+            Long hostId = getHostFromDs(((DataSourceAddedEvent) evt).getDataSource());
+            if (hostId != null) {
+                affectedHosts.add(hostId);
+            }
+        } else if (evt instanceof DataSourceNameChangedEvent) {
+            Long hostId = getHostFromDs(((DataSourceNameChangedEvent) evt).getDataSource());
+            if (hostId != null) {
+                affectedHosts.add(hostId);
+            }
+        } else if (evt instanceof HostsAddedEvent) {
+            // GVDTODO how best to handle host added?
+        } else if (evt instanceof HostsUpdatedEvent) {
+            // GVDTODO how best to handle host updated?
+        } else if (evt instanceof HostsAddedToPersonEvent) {
+            Person person = ((HostsAddedToPersonEvent) evt).getPerson();
+            affectedPersons.add(person == null ? null : person.getPersonId());
+        } else if (evt instanceof HostsRemovedFromPersonEvent) {
+            Person person = ((HostsRemovedFromPersonEvent) evt).getPerson();
+            affectedPersons.add(person == null ? null : person.getPersonId());
         }
 
         final boolean triggerFullRefresh = refreshAllContent;

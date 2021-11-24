@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
@@ -33,15 +34,14 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 
 /**
  * Factory for displaying analysis result types in the tree.
@@ -93,72 +93,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
     }
 
-//    @Override
-//    public boolean isRefreshRequired(PropertyChangeEvent evt) {
-//        String eventType = evt.getPropertyName();
-//        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-//            /**
-//             * This is a stop gap measure until a different way of handling the
-//             * closing of cases is worked out. Currently, remote events may be
-//             * received for a case that is already closed.
-//             */
-//            try {
-//                Case.getCurrentCaseThrows();
-//                /**
-//                 * Due to some unresolved issues with how cases are closed, it
-//                 * is possible for the event to have a null oldValue if the
-//                 * event is a remote event.
-//                 */
-//                final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-//                if (null != event && Category.ANALYSIS_RESULT.equals(event.getBlackboardArtifactType().getCategory())
-//                        && !(AnalysisResultDAO.getIgnoredTreeTypes().contains(event.getBlackboardArtifactType()))) {
-//                    return true;
-//                }
-//            } catch (NoCurrentCaseException notUsed) {
-//                /**
-//                 * Case is closed, do nothing.
-//                 */
-//            }
-//        }
-//        return false;
-//    }
 
-    /**
-     * See if expected blackboard type matches event.
-     *
-     * @param expectedType The expected artifact type.
-     * @param evt          The event.
-     *
-     * @return If the event is a data added event and contains the provided
-     *         type.
-     */
-    private static boolean isRefreshRequired(BlackboardArtifact.Type expectedType, PropertyChangeEvent evt) {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-            /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
-             */
-            try {
-                Case.getCurrentCaseThrows();
-                /**
-                 * Due to some unresolved issues with how cases are closed, it
-                 * is possible for the event to have a null oldValue if the
-                 * event is a remote event.
-                 */
-                final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                // GVDTODO it may be necessary to have more fine-grained check for refresh here.
-                if (null != event && expectedType.equals(event.getBlackboardArtifactType())) {
-                    return true;
-                }
-            } catch (NoCurrentCaseException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
-            }
-        }
-        return false;
+    @Override
+    protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getInvalidatedChild(TreeEvent daoEvt) {
+        // GVDTODO
+        return null;
+    }
+
+    @Override
+    public int compare(AnalysisResultSearchParam o1, AnalysisResultSearchParam o2) {
+        return o1.getArtifactType().getDisplayName().compareTo(o2.getArtifactType().getDisplayName());
     }
 
     /**
@@ -232,14 +176,20 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             return MainDAO.getInstance().getAnalysisResultDAO().getSetCounts(this.artifactType, this.dataSourceId, this.nullSetName);
         }
 
-//        @Override
-//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-//            return AnalysisResultTypeFactory.isRefreshRequired(artifactType, evt);
-//        }
-
         @Override
         protected TreeNode<AnalysisResultSetSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> rowData) {
             return new TreeSetTypeNode(rowData);
+        }
+
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> getInvalidatedChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(AnalysisResultSetSearchParam o1, AnalysisResultSetSearchParam o2) {
+            return StringUtils.compare(o1.getSetName(), o2.getSetName(), true);
         }
     }
 
@@ -328,10 +278,18 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             return MainDAO.getInstance().getAnalysisResultDAO().getKeywordSearchTermCounts(this.setParams.getSetName(), this.setParams.getDataSourceId());
         }
 
-//        @Override
-//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-//            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_KEYWORD_HIT, evt);
-//        }
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> getInvalidatedChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(KeywordSearchTermParams o1, KeywordSearchTermParams o2) {
+            return StringUtils.compare(o1.getSearchTerm(), o2.getSearchTerm(), true);
+        }
+
+        
 
     }
 
@@ -402,10 +360,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     this.setParams.getDataSourceId());
         }
 
-//        @Override
-//        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-//            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_KEYWORD_HIT, evt);
-//        }
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> getInvalidatedChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(KeywordMatchParams o1, KeywordMatchParams o2) {
+            return StringUtils.compare(o1.getKeywordMatch(), o2.getKeywordMatch(), true);
+        }
     }
 
     /**

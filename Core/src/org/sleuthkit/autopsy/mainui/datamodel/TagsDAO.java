@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TagsEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -313,16 +314,29 @@ public class TagsDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> processEvent(Collection<PropertyChangeEvent> evts) {
+    Collection<? extends DAOEvent> flushEvents() {
+        // GVDTODO
+        return Collections.emptyList();
+    }
+
+    @Override
+    Collection<? extends TreeEvent> shouldRefreshTree() {
+        // GVDTODO
+        return Collections.emptyList();
+    }
+
+    @Override
+    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+        // GVDTODO this may be rewritten simpler now that it isn't processing a list of events
         Map<Pair<TagType, Long>, Set<Optional<Long>>> mapping = new HashMap<>();
-        for (PropertyChangeEvent evt : evts) {
-            // tag type, tag name id, data source id (or null if unknown)
-            Triple<TagType, Long, Long> data = getTagData(evt);
-            if (data != null) {
-                mapping.computeIfAbsent(Pair.of(data.getLeft(), data.getMiddle()), k -> new HashSet<>())
-                        .add(Optional.ofNullable(data.getRight()));
-            }
+
+        // tag type, tag name id, data source id (or null if unknown)
+        Triple<TagType, Long, Long> data = getTagData(evt);
+        if (data != null) {
+            mapping.computeIfAbsent(Pair.of(data.getLeft(), data.getMiddle()), k -> new HashSet<>())
+                    .add(Optional.ofNullable(data.getRight()));
         }
+
 
         // don't continue if no mapping entries
         if (mapping.isEmpty()) {
