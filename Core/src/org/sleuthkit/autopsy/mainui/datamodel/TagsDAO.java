@@ -230,7 +230,7 @@ public class TagsDAO extends AbstractDAO {
                     blackboardTag.getId()));
         }
 
-        return new BaseSearchResultsDTO(BlackboardArtifactTagsRowDTO.getTypeIdForClass(), Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, 0, allTags.size());
+        return new BaseSearchResultsDTO(BlackboardArtifactTagsRowDTO.getTypeIdForClass(), Bundle.ResultTag_name_text(), RESULT_TAG_COLUMNS, fileRows, BlackboardArtifactTag.class.getName(), 0, allTags.size());
     }
 
     private SearchResultsDTO fetchFileTags(SearchParams<TagsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -283,7 +283,7 @@ public class TagsDAO extends AbstractDAO {
                     file.getId()));
         }
 
-        return new BaseSearchResultsDTO(ContentTagsRowDTO.getTypeIdForClass(), Bundle.FileTag_name_text(), FILE_TAG_COLUMNS, fileRows, 0, allTags.size());
+        return new BaseSearchResultsDTO(ContentTagsRowDTO.getTypeIdForClass(), Bundle.FileTag_name_text(), FILE_TAG_COLUMNS, fileRows, ContentTag.class.getName(), 0, allTags.size());
     }
 
     /**

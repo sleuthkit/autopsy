@@ -639,7 +639,7 @@ public class ViewsDAO extends AbstractDAO {
                     cellValues));
         }
 
-        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, startItem, totalResultsCount);
+        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
     }
 
     @Override

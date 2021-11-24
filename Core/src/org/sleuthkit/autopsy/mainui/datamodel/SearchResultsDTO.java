@@ -37,4 +37,6 @@ public interface SearchResultsDTO {
     long getTotalResultsCount();
     
     long getStartItem();
+    
+    String getSignature();
 }

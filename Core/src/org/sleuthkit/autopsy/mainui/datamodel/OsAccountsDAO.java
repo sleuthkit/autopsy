@@ -177,7 +177,7 @@ public class OsAccountsDAO extends AbstractDAO {
                     cellValues));
         };
 
-        return new BaseSearchResultsDTO(OS_ACCOUNTS_TYPE_ID, Bundle.OsAccounts_name_text(), OS_ACCOUNTS_WITH_SCO_COLUMNS, fileRows, 0, allAccounts.size());
+        return new BaseSearchResultsDTO(OS_ACCOUNTS_TYPE_ID, Bundle.OsAccounts_name_text(), OS_ACCOUNTS_WITH_SCO_COLUMNS, fileRows, OS_ACCOUNTS_TYPE_ID, 0, allAccounts.size());
     }
 
     @Override

@@ -212,7 +212,7 @@ public class FileSystemDAO extends AbstractDAO {
             List<Object> cellValues = FileSystemColumnUtils.getCellValuesForHost(host);
             rows.add(new BaseRowDTO(cellValues, FILE_SYSTEM_TYPE_ID, host.getHostId()));
         }
-        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, cacheKey.getStartItem(), hostsForTable.size());
+        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, Host.class.getName(), cacheKey.getStartItem(), hostsForTable.size());
     }
 
     private BaseSearchResultsDTO fetchContentForTable(SearchParams<?> cacheKey, List<Content> contentForTable,
@@ -275,7 +275,7 @@ public class FileSystemDAO extends AbstractDAO {
                         cellValues));
             }
         }
-        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, cacheKey.getStartItem(), contentForTable.size());
+        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, FILE_SYSTEM_TYPE_ID, cacheKey.getStartItem(), contentForTable.size());
     }
 
     /**
