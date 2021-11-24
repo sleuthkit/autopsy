@@ -21,12 +21,10 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dialog;
-import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
@@ -34,7 +32,7 @@ import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SortOrder;
-import javax.swing.SwingWorker;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.DialogDescriptor;
@@ -566,56 +564,38 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         switchPage();
     }
 
-    private void switchPage() {
-
-        EventQueue.invokeLater(() -> {
+    private void switchPage() {        
+        SwingUtilities.invokeLater(() -> {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        });
-
-        //Note the nodes factories are likely creating nodes in EDT anyway, but worker still helps 
-        new SwingWorker<Object, Void>() {
-            private ProgressHandle progress;
-
-            @Override
-            protected Object doInBackground() throws Exception {
+            try {
                 pagePrevButton.setEnabled(false);
                 pageNextButton.setEnabled(false);
                 goToPageField.setEnabled(false);
-                progress = ProgressHandle.createHandle(
+                ProgressHandle progress = ProgressHandle.createHandle(
                         NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.genThumbs"));
                 progress.start();
                 progress.switchToIndeterminate();
+                
                 ExplorerManager explorerManager = DataResultViewerThumbnail.this.getExplorerManager();
                 Node root = explorerManager.getRootContext();
                 Node pageNode = root.getChildren().getNodeAt(currentPage - 1);
                 explorerManager.setExploredContext(pageNode);
                 currentPageImages = pageNode.getChildren().getNodesCount();
-                return null;
-            }
-
-            @Override
-            protected void done() {
+                
                 progress.finish();
+            } catch (Exception ex) {
+                NotifyDescriptor d
+                        = new NotifyDescriptor.Message(
+                                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
+                                        ex.getMessage()),
+                                NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(d);
+                logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
+            } finally {
                 setCursor(null);
                 updateControls();
-                // see if any exceptions were thrown
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    NotifyDescriptor d
-                            = new NotifyDescriptor.Message(
-                                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
-                                            ex.getMessage()),
-                                    NotifyDescriptor.ERROR_MESSAGE);
-                    DialogDisplayer.getDefault().notify(d);
-                    logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
-                }
-                catch (java.util.concurrent.CancellationException ex) {
-                    // catch and ignore if we were cancelled
-                }
             }
-        }.execute();
-
+        });
     }
 
     @NbBundle.Messages({
