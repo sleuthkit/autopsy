@@ -159,7 +159,7 @@ public class ViewsDAO extends AbstractDAO {
         }
 
         FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) eventData;
-        String extension = "." + extEvt.getExtension().toLowerCase();
+        String extension = extEvt.getExtension().toLowerCase();
         return key.getFilter().getFilter().contains(extension)
                 && (key.getDataSourceId() == null || key.getDataSourceId() == extEvt.getDataSourceId());
     }
@@ -681,7 +681,7 @@ public class ViewsDAO extends AbstractDAO {
         // create an extension mapping if extension present
         if (!StringUtils.isBlank(af.getNameExtension())) {
             fileExtensionDsMap
-                    .computeIfAbsent(af.getNameExtension(), (k) -> new HashSet<>())
+                    .computeIfAbsent("." + af.getNameExtension(), (k) -> new HashSet<>())
                     .add(af.getDataSourceObjectId());
         }
 
@@ -696,7 +696,7 @@ public class ViewsDAO extends AbstractDAO {
 
         // create a size mapping if size present
         FileSizeFilter sizeFilter = Stream.of(FileSizeFilter.values())
-                .filter(filter -> af.getSize() >= filter.getMinBound() && af.getSize() < filter.getMaxBound())
+                .filter(filter -> af.getSize() >= filter.getMinBound() && (filter.getMaxBound() == null || af.getSize() < filter.getMaxBound()))
                 .findFirst()
                 .orElse(null);
 

@@ -819,7 +819,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         ConcurrentMap<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> arConcurrentMap = this.analysisResultCache.asMap();
         arConcurrentMap.forEach((k, v) -> {
             BlackboardArtifactSearchParam searchParam = k.getParamData();
-            Set<Long> dsIds = analysisResultMap.get(searchParam.getArtifactType().getTypeID());
+            Set<Long> dsIds = analysisResultMap.get(searchParam.getArtifactType());
             if (dsIds != null && (searchParam.getDataSourceId() == null || dsIds.contains(searchParam.getDataSourceId()))) {
                 arConcurrentMap.remove(k);
             }
@@ -828,7 +828,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         ConcurrentMap<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setConcurrentMap = this.setHitCache.asMap();
         setConcurrentMap.forEach((k, v) -> {
             AnalysisResultSetSearchParam searchParam = k.getParamData();
-            Set<Long> dsIds = resultsWithSetMap.get(Pair.of(searchParam.getArtifactType().getTypeID(), searchParam.getSetName()));
+            Set<Long> dsIds = resultsWithSetMap.get(Pair.of(searchParam.getArtifactType(), searchParam.getSetName()));
             if (dsIds != null && (searchParam.getDataSourceId() == null || dsIds.contains(searchParam.getDataSourceId()))) {
                 arConcurrentMap.remove(k);
             }

@@ -184,7 +184,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     List<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
         // get a grouping of artifacts mapping the artifact type id to data source id.
         ModuleDataEvent dataEvt = DAOEventUtils.getModuleDataFromEvt(evt);
-        if (evt == null) {
+        if (dataEvt == null) {
             return Collections.emptyList();
         }
 
@@ -210,7 +210,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         // invalidate cache entries that are affected by events
         ConcurrentMap<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> concurrentMap = this.dataArtifactCache.asMap();
         concurrentMap.forEach((k, v) -> {
-            Set<Long> dsIds = artifactTypeDataSourceMap.get(k.getParamData().getArtifactType().getTypeID());
+            Set<Long> dsIds = artifactTypeDataSourceMap.get(k.getParamData().getArtifactType());
             if (dsIds != null) {
                 Long searchDsId = k.getParamData().getDataSourceId();
                 if (searchDsId == null || dsIds.contains(searchDsId)) {

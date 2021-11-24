@@ -47,7 +47,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
-        if (evt.getNewValue() instanceof DAOEvent) {
+        if (evt.getNewValue() instanceof DAOAggregateEvent) {
             DAOAggregateEvent aggEvt = (DAOAggregateEvent) evt.getNewValue();
             for (DAOEvent daoEvt : aggEvt.getEvents()) {
                 if (daoEvt instanceof TreeEvent) {
