@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -89,13 +90,18 @@ public class MainDAO extends AbstractDAO {
      * The case event listener.
      */
     private final PropertyChangeListener caseEventListener = (evt) -> {
-        if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-            this.clearCaches();
-        } else if (QUEUED_CASE_EVENTS.contains(evt.getPropertyName())) {
-            handleEvent(evt, false);
-        } else {
-            // handle case events immediately
-            handleEvent(evt, true);
+        try {
+            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                this.clearCaches();
+            } else if (QUEUED_CASE_EVENTS.contains(evt.getPropertyName())) {
+                handleEvent(evt, false);
+            } else {
+                // handle case events immediately
+                handleEvent(evt, true);
+            }
+        } catch (Throwable ex) {
+            // firewall exception
+            logger.log(Level.WARNING, "An exception occurred while handling case events", ex);
         }
     };
 
@@ -103,21 +109,38 @@ public class MainDAO extends AbstractDAO {
      * The user preference listener.
      */
     private final PreferenceChangeListener userPreferenceListener = (evt) -> {
-        this.clearCaches();
+        try {
+            this.clearCaches();
+        } catch (Throwable ex) {
+            // firewall exception
+            logger.log(Level.WARNING, "An exception occurred while handling user preference change", ex);
+        }
+
     };
 
     /**
      * The ingest module event listener.
      */
     private final PropertyChangeListener ingestModuleEventListener = (evt) -> {
-        handleEvent(evt, false);
+        try {
+            handleEvent(evt, false);
+        } catch (Throwable ex) {
+            // firewall exception
+            logger.log(Level.WARNING, "An exception occurred while handling ingest module event", ex);
+        }
     };
 
     /**
      * The ingest job event listener.
      */
     private final PropertyChangeListener ingestJobEventListener = (evt) -> {
-        handleEventFlush();
+        try {
+            handleEventFlush();
+        } catch (Throwable ex) {
+            // firewall exception
+            logger.log(Level.WARNING, "An exception occurred while handling ingest job event", ex);
+        }
+
     };
 
     private final ScheduledThreadPoolExecutor timeoutExecutor
@@ -128,7 +151,15 @@ public class MainDAO extends AbstractDAO {
     private final PropertyChangeManager treeEventsManager = new PropertyChangeManager();
 
     private final DAOEventBatcher<DAOEvent> eventBatcher = new DAOEventBatcher<>(
-            (evts) -> fireResultEvts(evts), RESULT_BATCH_MILLIS);
+            (evts) -> {
+                try {
+                    fireResultEvts(evts);
+                } catch (Throwable ex) {
+                    // firewall exception
+                    logger.log(Level.WARNING, "An exception occurred while handling batched dao events", ex);
+                }
+            },
+            RESULT_BATCH_MILLIS);
 
     private final DataArtifactDAO dataArtifactDAO = DataArtifactDAO.getInstance();
     private final AnalysisResultDAO analysisResultDAO = AnalysisResultDAO.getInstance();
@@ -147,6 +178,40 @@ public class MainDAO extends AbstractDAO {
             tagsDAO,
             osAccountsDAO,
             commAccountsDAO);
+
+    /**
+     * Registers listeners with autopsy event publishers and starts internal
+     * threads.
+     */
+    void init() {
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
+        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS, ingestJobEventListener);
+        Case.addPropertyChangeListener(caseEventListener);
+        UserPreferences.addChangeListener(userPreferenceListener);
+
+        this.timeoutExecutor.scheduleAtFixedRate(
+                () -> {
+                    try {
+                        handleTreeEventTimeouts();
+                    } catch (Throwable ex) {
+                        // firewall exception
+                        logger.log(Level.WARNING, "An exception occurred while handling tree event timeouts", ex);
+                    }
+                },
+                WATCH_RESOLUTION_MILLIS,
+                WATCH_RESOLUTION_MILLIS,
+                TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Unregisters listeners from autopsy event publishers.
+     */
+    void unregister() {
+        IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
+        IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS, ingestJobEventListener);
+        Case.removePropertyChangeListener(caseEventListener);
+        UserPreferences.removeChangeListener(userPreferenceListener);
+    }
 
     public DataArtifactDAO getDataArtifactsDAO() {
         return dataArtifactDAO;
@@ -261,36 +326,9 @@ public class MainDAO extends AbstractDAO {
         fireTreeEvts(this.shouldRefreshTree());
     }
 
-    /**
-     * Registers listeners with autopsy event publishers and starts internal
-     * threads.
-     */
-    void init() {
-        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
-        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS, ingestJobEventListener);
-        Case.addPropertyChangeListener(caseEventListener);
-        UserPreferences.addChangeListener(userPreferenceListener);
-
-        this.timeoutExecutor.scheduleAtFixedRate(
-                () -> handleTreeEventTimeouts(),
-                WATCH_RESOLUTION_MILLIS,
-                WATCH_RESOLUTION_MILLIS,
-                TimeUnit.MILLISECONDS);
-    }
-
     @Override
     protected void finalize() throws Throwable {
         unregister();
-    }
-
-    /**
-     * Unregisters listeners from autopsy event publishers.
-     */
-    void unregister() {
-        IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, ingestModuleEventListener);
-        IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS, ingestJobEventListener);
-        Case.removePropertyChangeListener(caseEventListener);
-        UserPreferences.removeChangeListener(userPreferenceListener);
     }
 
     /**

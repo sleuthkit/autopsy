@@ -74,14 +74,10 @@ public class TreeEventTimedCache<T> {
 
     public Collection<T> getEventTimeouts() {
         long curTime = getCurTime();
-        List<T> toUpdate = new ArrayList<>();
+        List<T> toUpdate;
         synchronized (this.timeoutLock) {
-            this.eventTimeouts.forEach((k, v) -> {
-                if (v >= curTime) {
-                    toUpdate.add(k);
-                    this.eventTimeouts.remove(k);
-                }
-            });
+            toUpdate = new ArrayList<>(this.eventTimeouts.keySet());
+            this.eventTimeouts.keySet().removeAll(toUpdate);
         }
         return toUpdate;
     }
