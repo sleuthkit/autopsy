@@ -21,11 +21,19 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
 import java.util.Objects;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 
+/**
+ * An event to signal that an item in the tree has been 
+ * added or changed. 
+ */
 public class TreeEvent implements DAOEvent {
 
-    private final TreeItemDTO<?> itemRecord;
-    private final boolean refreshRequired;
+    private final TreeItemDTO<?> itemRecord;  // the updated item
+    private final boolean refreshRequired;  // true if tree should request new data from DAO
 
+    /**
+     * @param itemRecord The updated item
+     * @param rereshRequired True if the tree should go to the DAO for updated data
+     */
     public TreeEvent(TreeItemDTO<?> itemRecord, boolean refreshRequired) {
         this.itemRecord = itemRecord;
         this.refreshRequired = refreshRequired;
