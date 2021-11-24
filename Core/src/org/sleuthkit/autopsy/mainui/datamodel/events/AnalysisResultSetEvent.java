@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * An event for an artifact added or changed of a particular type possibly for a
- * particular data source.
+ * An event for an Analysis Result that is organized by Set names to
+ * signal that one has been added or removed on a given data source. 
  */
 public class AnalysisResultSetEvent extends AnalysisResultEvent {
     private final String setName;
