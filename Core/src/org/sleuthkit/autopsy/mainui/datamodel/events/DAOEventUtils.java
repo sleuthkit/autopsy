@@ -32,17 +32,16 @@ import org.sleuthkit.datamodel.Content;
 public class DAOEventUtils {
 
     /**
-     * Returns the content from the event. If the event does not
-     * contain a event or the event does not contain Content, null
-     * is returned.
+     * Returns the file content from the event. If the event is not a file event
+     * or the event does not contain file content, null is returned.
      *
      * @param evt The event
      *
      * @return The inner content or null if no content.
      */
-    public static Content getContentFromEvt(PropertyChangeEvent evt) {
+    public static Content getContentFromFileEvent(PropertyChangeEvent evt) {
         String eventName = evt.getPropertyName();
-        Content derivedContent = getDerivedContentFromEvt(evt);
+        Content derivedContent = getDerivedFileContentFromEvt(evt);
         if (derivedContent != null) {
             return derivedContent;
         } else if (IngestManager.IngestModuleEvent.FILE_DONE.toString().equals(eventName)
@@ -52,15 +51,16 @@ public class DAOEventUtils {
             return null;
         }
     }
-    
+
     /**
      * Returns the content from the ModuleContentEvent. If the event does not
-     * contain a event or the event does not contain Content, null
-     * is returned.
+     * contain a event or the event does not contain Content, null is returned.
+     *
      * @param evt The event
+     *
      * @return The inner content or null if no content.
      */
-    public static Content getDerivedContentFromEvt(PropertyChangeEvent evt) {
+    public static Content getDerivedFileContentFromEvt(PropertyChangeEvent evt) {
         String eventName = evt.getPropertyName();
         if (IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventName)
                 && (evt.getOldValue() instanceof ModuleContentEvent)
@@ -75,11 +75,13 @@ public class DAOEventUtils {
 
     /**
      * Returns a file in the event if a file is found in the event.
+     *
      * @param evt The autopsy event.
+     *
      * @return The inner file or null if no file found.
      */
     public static AbstractFile getFileFromEvt(PropertyChangeEvent evt) {
-        Content content = getContentFromEvt(evt);
+        Content content = getContentFromFileEvent(evt);
         return (content instanceof AbstractFile)
                 ? ((AbstractFile) content)
                 : null;
@@ -93,7 +95,7 @@ public class DAOEventUtils {
      *
      * @return The inner ModuleDataEvent or null.
      */
-    public static ModuleDataEvent getModuleDataFromEvt(PropertyChangeEvent evt) {
+    public static ModuleDataEvent getModuelDataFromArtifactEvent(PropertyChangeEvent evt) {
         String eventName = evt.getPropertyName();
         if (IngestManager.IngestModuleEvent.DATA_ADDED.toString().equals(eventName)
                 && (evt.getOldValue() instanceof ModuleDataEvent)) {

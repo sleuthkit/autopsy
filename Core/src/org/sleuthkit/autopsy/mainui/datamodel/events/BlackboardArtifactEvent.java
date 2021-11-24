@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * An event for an artifact added in a particular type.
  */
-public class BlackboardArtifactEvent implements DAOEvent {
+public abstract class BlackboardArtifactEvent implements DAOEvent {
     private final BlackboardArtifact.Type artifactType;
     private final long dataSourceId;
 

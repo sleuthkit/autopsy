@@ -271,9 +271,9 @@ public class MainDAO extends AbstractDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> flushEvents() {
+    Collection<? extends DAOEvent> handleIngestComplete() {
         List<Collection<? extends DAOEvent>> daoStreamEvts = allDAOs.stream()
-                .map((subDAO) -> subDAO.flushEvents())
+                .map((subDAO) -> subDAO.handleIngestComplete())
                 .collect(Collectors.toList());
 
         daoStreamEvts.add(eventBatcher.flushEvents());
@@ -283,7 +283,15 @@ public class MainDAO extends AbstractDAO {
                 .collect(Collectors.toList());
     }
 
-    private void handleEvent(PropertyChangeEvent evt, boolean immediateAction) {
+    /**
+     * Processes and handles an autopsy event.
+     *
+     * @param evt                   The event.
+     * @param immediateResultAction If true, result events are immediately
+     *                              fired. Otherwise, the result events are
+     *                              batched.
+     */
+    private void handleEvent(PropertyChangeEvent evt, boolean immediateResultAction) {
         Collection<DAOEvent> daoEvts = processEvent(evt);
 
         Map<DAOEvent.Type, List<DAOEvent>> daoEvtsByType = daoEvts.stream()
@@ -292,7 +300,7 @@ public class MainDAO extends AbstractDAO {
         fireTreeEvts(daoEvtsByType.get(DAOEvent.Type.TREE));
 
         List<DAOEvent> resultEvts = daoEvtsByType.get(DAOEvent.Type.RESULT);
-        if (immediateAction) {
+        if (immediateResultAction) {
             fireResultEvts(resultEvts);
         } else {
             eventBatcher.enqueueAllEvents(resultEvts);
@@ -300,7 +308,7 @@ public class MainDAO extends AbstractDAO {
     }
 
     private void handleEventFlush() {
-        Collection<? extends DAOEvent> daoEvts = flushEvents();
+        Collection<? extends DAOEvent> daoEvts = handleIngestComplete();
 
         Map<DAOEvent.Type, List<DAOEvent>> daoEvtsByType = daoEvts.stream()
                 .collect(Collectors.groupingBy(e -> e.getType()));

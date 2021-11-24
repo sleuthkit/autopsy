@@ -47,11 +47,12 @@ abstract class AbstractDAO {
     abstract Collection<? extends DAOEvent> processEvent(PropertyChangeEvent evt);
 
     /**
-     * Any events that are delayed or batched are flushed and returned.
+     * Handles the ingest complete or cancelled event. Any events that are
+     * delayed or batched are flushed and returned.
      *
      * @return The flushed events that were delayed and batched.
      */
-    abstract Collection<? extends DAOEvent> flushEvents();
+    abstract Collection<? extends DAOEvent> handleIngestComplete();
 
     /**
      * Returns any categories that require a tree refresh. For instance, if web

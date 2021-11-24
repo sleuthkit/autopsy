@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
-import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEventTimedCache;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -78,7 +78,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
-    private final TreeEventTimedCache<DataArtifactEvent> treeCache = new TreeEventTimedCache<>();
+    private final TreeCounts<DataArtifactEvent> treeCounts = new TreeCounts<>();
     private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -150,7 +150,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     public TreeResultsDTO<DataArtifactSearchParam> getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
         try {
             // get row dto's sorted by display name
-            Set<BlackboardArtifact.Type> indeterminateTypes = this.treeCache.getEnqueued().stream()
+            Set<BlackboardArtifact.Type> indeterminateTypes = this.treeCounts.getEnqueued().stream()
                     .filter(evt -> dataSourceId == null || evt.getDataSourceId() == dataSourceId)
                     .map(evt -> evt.getArtifactType())
                     .collect(Collectors.toSet());
@@ -177,13 +177,13 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     @Override
     void clearCaches() {
         this.dataArtifactCache.invalidateAll();
-        this.flushEvents();
+        this.handleIngestComplete();
     }
 
     @Override
     List<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
         // get a grouping of artifacts mapping the artifact type id to data source id.
-        ModuleDataEvent dataEvt = DAOEventUtils.getModuleDataFromEvt(evt);
+        ModuleDataEvent dataEvt = DAOEventUtils.getModuelDataFromArtifactEvent(evt);
         if (dataEvt == null) {
             return Collections.emptyList();
         }
@@ -229,7 +229,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             }
         }
 
-        List<TreeEvent> newTreeEvents = this.treeCache.enqueueAll(dataArtifactEvents).stream()
+        List<TreeEvent> newTreeEvents = this.treeCounts.enqueueAll(dataArtifactEvents).stream()
                 .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false))
                 .collect(Collectors.toList());
 
@@ -248,15 +248,15 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> flushEvents() {
-        return this.treeCache.flushEvents().stream()
+    Collection<? extends DAOEvent> handleIngestComplete() {
+        return this.treeCounts.flushEvents().stream()
                 .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), true))
                 .collect(Collectors.toList());
     }
 
     @Override
     Collection<? extends TreeEvent> shouldRefreshTree() {
-        return this.treeCache.getEventTimeouts().stream()
+        return this.treeCounts.getEventTimeouts().stream()
                 .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), true))
                 .collect(Collectors.toList());
     }

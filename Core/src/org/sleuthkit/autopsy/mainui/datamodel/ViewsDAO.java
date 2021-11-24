@@ -655,7 +655,7 @@ public class ViewsDAO extends AbstractDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> flushEvents() {
+    Collection<? extends DAOEvent> handleIngestComplete() {
         // GVDTODO
         return Collections.emptyList();
     }

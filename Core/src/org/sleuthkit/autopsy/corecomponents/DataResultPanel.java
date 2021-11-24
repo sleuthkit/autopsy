@@ -150,8 +150,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private final PropertyChangeListener caseEventListener = evt -> {
         String evtName = evt.getPropertyName();
-        if (Case.Events.CURRENT_CASE.toString().equals(evtName) && evt.getNewValue() == null) {
-            nodeNameToPageCountListenerMap.clear();
+        if (Case.Events.CURRENT_CASE.toString().equals(evtName)) {
+            searchResultManager = null;
+            if (evt.getNewValue() == null) {
+                nodeNameToPageCountListenerMap.clear();
+            }
         }
     };
 
@@ -163,7 +166,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             IngestManager.IngestModuleEvent.DATA_ADDED);
 
     private final MainDAO mainDAO = MainDAO.getInstance();
-    
+
     private final PropertyChangeListener DAOListener = evt -> {
         SearchManager manager = this.searchResultManager;
         if (manager != null && evt != null && evt.getNewValue() instanceof DAOAggregateEvent) {
@@ -489,7 +492,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         // if search result root node, it's fine; otherwise, wrap in result 
         // viewer filter node to make sure there are no grandchildren
-        this.currentRootNode = (rootNode instanceof SearchResultRootNode) 
+        this.currentRootNode = (rootNode instanceof SearchResultRootNode)
                 ? rootNode
                 : new ResultViewerFilterParentNode(rootNode);
 
@@ -1298,7 +1301,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ex);
         }
     }
-    
+
     /**
      * Displays results of querying the DAO for the given search parameters
      * query.
@@ -1338,7 +1341,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ex);
         }
     }
-    
+
     /**
      * Displays results of querying the DAO for the given search parameters
      * query.
@@ -1490,6 +1493,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         /**
          * Main constructor.
+         *
          * @param original The original node to wrap.
          */
         ResultViewerFilterParentNode(Node original) {

@@ -357,7 +357,7 @@ public class FileSystemDAO extends AbstractDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> flushEvents() {
+    Collection<? extends DAOEvent> handleIngestComplete() {
         // GVDTODO
         return Collections.emptyList();
     }
@@ -376,7 +376,7 @@ public class FileSystemDAO extends AbstractDAO {
         Set<Long> affectedParentContent = new HashSet<>();
         boolean refreshAllContent = false;
 
-        Content content = DAOEventUtils.getDerivedContentFromEvt(evt);
+        Content content = DAOEventUtils.getDerivedFileContentFromEvt(evt);
         if (content != null) {
             Content parentContent;
             try {
