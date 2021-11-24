@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import java.text.MessageFormat;
+import java.util.Objects;
 import java.util.logging.Level;
-import org.bouncycastle.util.Objects;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.Lookup;
@@ -101,7 +101,7 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
         // update display name only if there is a change.
         if (prevData == null
                 || !prevData.getDisplayName().equals(curData.getDisplayName())
-                || !Objects.areEqual(prevData.getDisplayCount(), curData.getDisplayCount())) {
+                || !Objects.equals(prevData.getDisplayCount(), curData.getDisplayCount())) {
             String displayName = curData.getDisplayCount() == null
                     ? curData.getDisplayName()
                     : curData.getDisplayName() + curData.getDisplayCount().getDisplaySuffix();

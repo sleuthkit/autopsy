@@ -238,7 +238,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                 .collect(Collectors.toList());
     }
 
-    private TreeItemDTO<DataArtifactSearchParam> getTreeItem(BlackboardArtifact.Type artifactType, long dataSourceId, TreeDisplayCount displayCount) {
+    private TreeItemDTO<DataArtifactSearchParam> getTreeItem(BlackboardArtifact.Type artifactType, Long dataSourceId, TreeDisplayCount displayCount) {
         return new TreeResultsDTO.TreeItemDTO<>(
                 BlackboardArtifact.Category.DATA_ARTIFACT.name(),
                 new DataArtifactSearchParam(artifactType, dataSourceId),

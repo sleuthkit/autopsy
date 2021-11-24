@@ -21,19 +21,14 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordSearchTermParams;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordMatchParams;
 import com.google.common.collect.ImmutableSet;
-import java.beans.PropertyChangeEvent;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
@@ -48,6 +43,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSearchParam> {
 
+    private final static Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
+
+    @SuppressWarnings("deprecation")
     private static Set<Integer> SET_TREE_ARTIFACTS = ImmutableSet.of(
             BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID(),
             BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
@@ -92,7 +90,6 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             return new AnalysisResultTypeTreeNode(rowData);
         }
     }
-
 
     @Override
     protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getInvalidatedChild(TreeEvent daoEvt) {
@@ -189,7 +186,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public int compare(AnalysisResultSetSearchParam o1, AnalysisResultSetSearchParam o2) {
-            return StringUtils.compare(o1.getSetName(), o2.getSetName(), true);
+            return STRING_COMPARATOR.compare(o1.getSetName(), o2.getSetName());
         }
     }
 
@@ -201,7 +198,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         /**
          * Main constructor.
          *
-         * @param itemData     The data to display.
+         * @param itemData The data to display.
          */
         public TreeSetTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
             super(itemData.getTypeData().getArtifactType().getTypeName(),
@@ -240,7 +237,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         /**
          * Main constructor.
          *
-         * @param itemData     The data to display.
+         * @param itemData The data to display.
          */
         public KeywordSetNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
             super(itemData.getTypeData().getArtifactType().getTypeName(),
@@ -248,7 +245,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     itemData,
                     Children.create(new KeywordSearchTermFactory(itemData.getTypeData()), true),
                     getDefaultLookup(itemData));
-        }        
+        }
     }
 
     /**
@@ -286,10 +283,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public int compare(KeywordSearchTermParams o1, KeywordSearchTermParams o2) {
-            return StringUtils.compare(o1.getSearchTerm(), o2.getSearchTerm(), true);
+            return STRING_COMPARATOR.compare(o1.getSearchTerm(), o2.getSearchTerm());
         }
-
-        
 
     }
 
@@ -368,7 +363,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public int compare(KeywordMatchParams o1, KeywordMatchParams o2) {
-            return StringUtils.compare(o1.getKeywordMatch(), o2.getKeywordMatch(), true);
+            return STRING_COMPARATOR.compare(o1.getKeywordMatch(), o2.getKeywordMatch());
         }
     }
 

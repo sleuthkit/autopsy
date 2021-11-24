@@ -20,10 +20,10 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -45,34 +45,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class ViewsTypeFactory {
 
-    /**
-     * Returns an AbstractFile if the event contains a ModuleContentEvent which
-     * contains an abstract file and that file belongs to the data source if a
-     * data source id is specified. Otherwise, returns null.
-     *
-     * @param evt          The event
-     * @param dataSourceId The data source object id that will be the parent of
-     *                     the file or null.
-     *
-     * @return The file meeting criteria or null.
-     */
-    private static AbstractFile getFileInDataSourceFromEvt(PropertyChangeEvent evt, Long dataSourceId) {
-        if (!(evt.getOldValue() instanceof ModuleContentEvent)) {
-            return null;
-        }
-
-        ModuleContentEvent contentEvt = (ModuleContentEvent) evt.getOldValue();
-        if (!(contentEvt.getSource() instanceof AbstractFile)) {
-            return null;
-        }
-
-        AbstractFile file = (AbstractFile) contentEvt.getSource();
-        if (dataSourceId != null && file.getDataSourceObjectId() != dataSourceId) {
-            return null;
-        }
-
-        return file;
-    }
+    private static final Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
 
     /**
      * The factory for creating file size tree nodes.
@@ -110,7 +83,6 @@ public class ViewsTypeFactory {
         public int compare(FileTypeSizeSearchParams o1, FileTypeSizeSearchParams o2) {
             return Integer.compare(o1.getSizeFilter().getId(), o2.getSizeFilter().getId());
         }
-
 
         /**
          * Shows a file size tree node.
@@ -168,9 +140,8 @@ public class ViewsTypeFactory {
 
         @Override
         public int compare(FileTypeMimeSearchParams o1, FileTypeMimeSearchParams o2) {
-            return StringUtils.compare(o1.getMimeType(), o2.getMimeType(), true);
+            return STRING_COMPARATOR.compare(o1.getMimeType(), o2.getMimeType());
         }
-
 
         static class FileMimePrefixNode extends TreeNode<FileTypeMimeSearchParams> {
 
@@ -229,10 +200,8 @@ public class ViewsTypeFactory {
 
         @Override
         public int compare(FileTypeMimeSearchParams o1, FileTypeMimeSearchParams o2) {
-            return StringUtils.compare(o1.getMimeType(), o2.getMimeType(), true);
+            return STRING_COMPARATOR.compare(o1.getMimeType(), o2.getMimeType());
         }
-
-        
 
         /**
          * Displays an individual suffix node in the tree (i.e. 'aac' underneath
@@ -316,10 +285,8 @@ public class ViewsTypeFactory {
 
         @Override
         public int compare(FileTypeExtensionsSearchParams o1, FileTypeExtensionsSearchParams o2) {
-            return StringUtils.compare(o1.getFilter().getDisplayName(), o2.getFilter().getDisplayName());
+            return STRING_COMPARATOR.compare(o1.getFilter().getDisplayName(), o2.getFilter().getDisplayName());
         }
-
-        
 
         /**
          * Represents a file extension tree node that may or may not have child

@@ -475,7 +475,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     private TreeItemDTO<AnalysisResultSetSearchParam> getSetTreeItem(BlackboardArtifact.Type type,
-            long dataSourceId, String setName, String displayName, TreeDisplayCount displayCount) {
+            Long dataSourceId, String setName, String displayName, TreeDisplayCount displayCount) {
 
         return new TreeItemDTO<>(
                 type.getTypeName(),

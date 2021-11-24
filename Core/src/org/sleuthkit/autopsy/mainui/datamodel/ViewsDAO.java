@@ -668,6 +668,7 @@ public class ViewsDAO extends AbstractDAO {
 
     @Override
     List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+        // GVDTODO maps may not be necessary now that this isn't processing a list of events.
         Map<String, Set<Long>> fileExtensionDsMap = new HashMap<>();
         Map<String, Map<String, Set<Long>>> mimeTypeDsMap = new HashMap<>();
         Map<FileSizeFilter, Set<Long>> fileSizeDsMap = new HashMap<>();
