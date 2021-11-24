@@ -735,7 +735,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
         // get a grouping of artifacts mapping the artifact type id to data source id.
         Map<BlackboardArtifact.Type, Set<Long>> analysisResultMap = new HashMap<>();
         Map<Pair<BlackboardArtifact.Type, String>, Set<Long>> setMap = new HashMap<>();
@@ -765,7 +765,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         // don't continue if no relevant items found
         if (analysisResultMap.isEmpty() && setMap.isEmpty() && keywordHitsMap.isEmpty()) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
         clearRelevantCacheEntries(analysisResultMap, setMap);
@@ -777,7 +777,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         return Stream.of(daoEvents, treeEvents)
                 .flatMap(lst -> lst.stream())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -863,17 +863,17 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> handleIngestComplete() {
+    Set<DAOEvent> handleIngestComplete() {
         return this.treeCounts.flushEvents().stream()
                 .map(arEvt -> getTreeEvent(arEvt, true))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     @Override
-    Collection<? extends TreeEvent> shouldRefreshTree() {
+    Set<TreeEvent> shouldRefreshTree() {
         return this.treeCounts.getEventTimeouts().stream()
                 .map(arEvt -> getTreeEvent(arEvt, true))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     /**

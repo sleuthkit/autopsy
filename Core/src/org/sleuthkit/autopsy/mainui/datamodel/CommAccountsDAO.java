@@ -156,19 +156,19 @@ public class CommAccountsDAO extends AbstractDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> handleIngestComplete() {
+    Set<DAOEvent> handleIngestComplete() {
         // GVDTODO
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    Collection<? extends TreeEvent> shouldRefreshTree() {
+    Set<TreeEvent> shouldRefreshTree() {
         // GVDTODO
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
         // maps account type to the data sources affected
         // GVDTODO this can probably be rewritten now that it isn't handling a list of autopsy events
         Map<String, Set<Long>> commAccountsAffected = new HashMap<>();
@@ -210,7 +210,7 @@ public class CommAccountsDAO extends AbstractDAO {
 
         return commAccountsAffected.entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new CommAccountsEvent(entry.getKey(), dsId)))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     /**

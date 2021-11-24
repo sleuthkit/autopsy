@@ -43,7 +43,7 @@ public class DAOEventBatcher<T> {
          *
          * @param events The events to handle.
          */
-        void handle(Collection<T> events);
+        void handle(Set<T> events);
     }
 
     private final ScheduledThreadPoolExecutor refreshExecutor
@@ -105,9 +105,9 @@ public class DAOEventBatcher<T> {
      *
      * @return The flushed events.
      */
-    public Collection<T> flushEvents() {
+    public Set<T> flushEvents() {
         synchronized (this.eventListLock) {
-            Collection<T> evtsToFire = this.aggregateEvents;
+            Set<T> evtsToFire = this.aggregateEvents;
             this.aggregateEvents = new HashSet<>();
             this.isRunning = false;
             return evtsToFire;

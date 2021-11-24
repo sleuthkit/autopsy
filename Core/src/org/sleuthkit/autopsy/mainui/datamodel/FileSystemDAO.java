@@ -357,19 +357,19 @@ public class FileSystemDAO extends AbstractDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> handleIngestComplete() {
+    Set<DAOEvent> handleIngestComplete() {
         // GVDTODO
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    Collection<? extends TreeEvent> shouldRefreshTree() {
+    Set<TreeEvent> shouldRefreshTree() {
         // GVDTODO
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
         // GVDTODO these can probably be rewritten now that it isn't handling a collection of autopsy events
         Set<Long> affectedPersons = new HashSet<>();
         Set<Long> affectedHosts = new HashSet<>();
@@ -383,11 +383,11 @@ public class FileSystemDAO extends AbstractDAO {
                 parentContent = content.getParent();
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get parent content of content with id: " + content.getId(), ex);
-                return Collections.emptyList();
+                return Collections.emptySet();
             }
 
             if (parentContent == null) {
-                return Collections.emptyList();
+                return Collections.emptySet();
             }
 
             if (invalidatesAllFileSystem(parentContent)) {
@@ -453,7 +453,7 @@ public class FileSystemDAO extends AbstractDAO {
                 fileEvts
         )
                 .flatMap(s -> s)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     /**

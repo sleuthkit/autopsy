@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import java.beans.PropertyChangeEvent;
-import java.util.Collection;
+import java.util.Set;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
@@ -44,7 +44,7 @@ abstract class AbstractDAO {
      * @return The list of DAOEvents that should be broadcasted to the views or
      *         an empty list if the Autopsy events are irrelevant to this DAO.
      */
-    abstract Collection<? extends DAOEvent> processEvent(PropertyChangeEvent evt);
+    abstract Set<DAOEvent> processEvent(PropertyChangeEvent evt);
 
     /**
      * Handles the ingest complete or cancelled event. Any events that are
@@ -52,7 +52,7 @@ abstract class AbstractDAO {
      *
      * @return The flushed events that were delayed and batched.
      */
-    abstract Collection<? extends DAOEvent> handleIngestComplete();
+    abstract Set<DAOEvent> handleIngestComplete();
 
     /**
      * Returns any categories that require a tree refresh. For instance, if web
@@ -62,5 +62,5 @@ abstract class AbstractDAO {
      *
      * @return The categories that require a tree refresh.
      */
-    abstract Collection<? extends TreeEvent> shouldRefreshTree();
+    abstract Set<TreeEvent> shouldRefreshTree();
 }

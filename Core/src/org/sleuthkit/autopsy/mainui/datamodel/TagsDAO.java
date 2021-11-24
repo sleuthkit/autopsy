@@ -314,19 +314,19 @@ public class TagsDAO extends AbstractDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> handleIngestComplete() {
+    Set<DAOEvent> handleIngestComplete() {
         // GVDTODO
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    Collection<? extends TreeEvent> shouldRefreshTree() {
+    Set<TreeEvent> shouldRefreshTree() {
         // GVDTODO
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
         // GVDTODO this may be rewritten simpler now that it isn't processing a list of events
         Map<Pair<TagType, Long>, Set<Optional<Long>>> mapping = new HashMap<>();
 
@@ -340,7 +340,7 @@ public class TagsDAO extends AbstractDAO {
 
         // don't continue if no mapping entries
         if (mapping.isEmpty()) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
         ConcurrentMap<SearchParams<TagsSearchParams>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
@@ -366,7 +366,7 @@ public class TagsDAO extends AbstractDAO {
                     return entry.getValue().stream()
                             .map((dsIdOpt) -> new TagsEvent(tagType, tagNameId, dsIdOpt.orElse(null)));
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     /**

@@ -655,19 +655,19 @@ public class ViewsDAO extends AbstractDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> handleIngestComplete() {
+    Set<DAOEvent> handleIngestComplete() {
         // GVDTODO
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    Collection<? extends TreeEvent> shouldRefreshTree() {
+    Set<TreeEvent> shouldRefreshTree() {
         // GVDTODO
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
         // GVDTODO maps may not be necessary now that this isn't processing a list of events.
         Map<String, Set<Long>> fileExtensionDsMap = new HashMap<>();
         Map<String, Map<String, Set<Long>>> mimeTypeDsMap = new HashMap<>();
@@ -675,7 +675,7 @@ public class ViewsDAO extends AbstractDAO {
 
         AbstractFile af = DAOEventUtils.getFileFromEvt(evt);
         if (af == null) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
         // create an extension mapping if extension present
@@ -707,7 +707,7 @@ public class ViewsDAO extends AbstractDAO {
         }
 
         if (fileExtensionDsMap.isEmpty() && mimeTypeDsMap.isEmpty() && fileSizeDsMap.isEmpty()) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
         clearRelevantCacheEntries(fileExtensionDsMap, mimeTypeDsMap, fileSizeDsMap);
@@ -728,14 +728,14 @@ public class ViewsDAO extends AbstractDAO {
      *
      * @return The list of affected dao events.
      */
-    private List<DAOEvent> getDAOEvents(Map<String, Set<Long>> fileExtensionDsMap,
+    private Set<DAOEvent> getDAOEvents(Map<String, Set<Long>> fileExtensionDsMap,
             Map<String, Map<String, Set<Long>>> mimeTypeDsMap,
             Map<FileSizeFilter, Set<Long>> fileSizeDsMap) {
 
         Stream<DAOEvent> fileExtStream = fileExtensionDsMap.entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new FileTypeExtensionsEvent(entry.getKey(), dsId)));
 
-        List<DAOEvent> fileMimeList = new ArrayList<>();
+        Set<DAOEvent> fileMimeList = new HashSet<>();
         for (Entry<String, Map<String, Set<Long>>> prefixEntry : mimeTypeDsMap.entrySet()) {
             String mimePrefix = prefixEntry.getKey();
             for (Entry<String, Set<Long>> suffixEntry : prefixEntry.getValue().entrySet()) {
@@ -752,7 +752,7 @@ public class ViewsDAO extends AbstractDAO {
 
         return Stream.of(fileExtStream, fileMimeList.stream(), fileSizeStream)
                 .flatMap(stream -> stream)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     /**

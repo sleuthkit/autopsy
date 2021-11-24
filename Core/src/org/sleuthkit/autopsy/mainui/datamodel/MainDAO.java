@@ -255,23 +255,23 @@ public class MainDAO extends AbstractDAO {
     }
 
     @Override
-    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
         return allDAOs.stream()
                 .map(subDAO -> subDAO.processEvent(evt))
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     @Override
-    List<TreeEvent> shouldRefreshTree() {
+    Set<TreeEvent> shouldRefreshTree() {
         return allDAOs.stream()
                 .map((subDAO) -> subDAO.shouldRefreshTree())
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     @Override
-    Collection<? extends DAOEvent> handleIngestComplete() {
+    Set<DAOEvent> handleIngestComplete() {
         List<Collection<? extends DAOEvent>> daoStreamEvts = allDAOs.stream()
                 .map((subDAO) -> subDAO.handleIngestComplete())
                 .collect(Collectors.toList());
@@ -280,7 +280,7 @@ public class MainDAO extends AbstractDAO {
 
         return daoStreamEvts.stream()
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -294,12 +294,12 @@ public class MainDAO extends AbstractDAO {
     private void handleEvent(PropertyChangeEvent evt, boolean immediateResultAction) {
         Collection<DAOEvent> daoEvts = processEvent(evt);
 
-        Map<DAOEvent.Type, List<DAOEvent>> daoEvtsByType = daoEvts.stream()
-                .collect(Collectors.groupingBy(e -> e.getType()));
+        Map<DAOEvent.Type, Set<DAOEvent>> daoEvtsByType = daoEvts.stream()
+                .collect(Collectors.groupingBy(e -> e.getType(), Collectors.toSet()));
 
         fireTreeEvts(daoEvtsByType.get(DAOEvent.Type.TREE));
 
-        List<DAOEvent> resultEvts = daoEvtsByType.get(DAOEvent.Type.RESULT);
+        Set<DAOEvent> resultEvts = daoEvtsByType.get(DAOEvent.Type.RESULT);
         if (immediateResultAction) {
             fireResultEvts(resultEvts);
         } else {
@@ -308,24 +308,24 @@ public class MainDAO extends AbstractDAO {
     }
 
     private void handleEventFlush() {
-        Collection<? extends DAOEvent> daoEvts = handleIngestComplete();
+        Collection<DAOEvent> daoEvts = handleIngestComplete();
 
-        Map<DAOEvent.Type, List<DAOEvent>> daoEvtsByType = daoEvts.stream()
-                .collect(Collectors.groupingBy(e -> e.getType()));
+        Map<DAOEvent.Type, Set<DAOEvent>> daoEvtsByType = daoEvts.stream()
+                .collect(Collectors.groupingBy(e -> e.getType(), Collectors.toSet()));
 
         fireTreeEvts(daoEvtsByType.get(DAOEvent.Type.TREE));
 
-        List<DAOEvent> resultEvts = daoEvtsByType.get(DAOEvent.Type.RESULT);
+        Set<DAOEvent> resultEvts = daoEvtsByType.get(DAOEvent.Type.RESULT);
         fireResultEvts(resultEvts);
     }
 
-    private void fireResultEvts(Collection<DAOEvent> resultEvts) {
+    private void fireResultEvts(Set<DAOEvent> resultEvts) {
         if (CollectionUtils.isNotEmpty(resultEvts)) {
             resultEventsManager.firePropertyChange("DATA_CHANGE", null, new DAOAggregateEvent(resultEvts));
         }
     }
 
-    private void fireTreeEvts(Collection<? extends DAOEvent> treeEvts) {
+    private void fireTreeEvts(Set<? extends DAOEvent> treeEvts) {
         if (CollectionUtils.isNotEmpty(treeEvts)) {
             treeEventsManager.firePropertyChange("TREE_CHANGE", null, new DAOAggregateEvent(treeEvts));
         }

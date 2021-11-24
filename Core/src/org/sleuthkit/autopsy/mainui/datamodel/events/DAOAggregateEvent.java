@@ -18,29 +18,29 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * A single event containing an aggregate of all affected data.
  */
 public class DAOAggregateEvent {
 
-    private final Collection<? extends DAOEvent> objects;
+    private final Set<? extends DAOEvent> objects;
 
     /**
      * Main constructor.
      *
      * @param objects The list of events in this aggregate event.
      */
-    public DAOAggregateEvent(Collection<? extends DAOEvent> objects) {
-        this.objects = Collections.unmodifiableCollection(objects);
+    public DAOAggregateEvent(Set<? extends DAOEvent> objects) {
+        this.objects = Collections.unmodifiableSet(objects);
     }
 
     /**
      * @return The events in this aggregate event.
      */
-    public Collection<? extends DAOEvent> getEvents() {
+    public Set<? extends DAOEvent> getEvents() {
         return objects;
     }
 }

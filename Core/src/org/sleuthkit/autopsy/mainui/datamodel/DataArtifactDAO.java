@@ -181,11 +181,11 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     }
 
     @Override
-    List<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
         // get a grouping of artifacts mapping the artifact type id to data source id.
         ModuleDataEvent dataEvt = DAOEventUtils.getModuelDataFromArtifactEvent(evt);
         if (dataEvt == null) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
         Map<BlackboardArtifact.Type, Set<Long>> artifactTypeDataSourceMap = dataEvt.getArtifacts().stream()
@@ -204,7 +204,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
         // don't do anything else if no relevant events
         if (artifactTypeDataSourceMap.isEmpty()) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
         // invalidate cache entries that are affected by events
@@ -235,7 +235,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
         return Stream.of(dataArtifactEvents, newTreeEvents)
                 .flatMap((lst) -> lst.stream())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     private TreeItemDTO<DataArtifactSearchParam> getTreeItem(BlackboardArtifact.Type artifactType, Long dataSourceId, TreeDisplayCount displayCount) {
@@ -248,17 +248,17 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> handleIngestComplete() {
+    Set<DAOEvent> handleIngestComplete() {
         return this.treeCounts.flushEvents().stream()
                 .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), true))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     @Override
-    Collection<? extends TreeEvent> shouldRefreshTree() {
+    Set<TreeEvent> shouldRefreshTree() {
         return this.treeCounts.getEventTimeouts().stream()
                 .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), true))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
 

@@ -186,26 +186,26 @@ public class OsAccountsDAO extends AbstractDAO {
     }
 
     @Override
-    Collection<? extends DAOEvent> handleIngestComplete() {
+    Set<DAOEvent> handleIngestComplete() {
         // GVDTODO
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    Collection<? extends TreeEvent> shouldRefreshTree() {
+    Set<TreeEvent> shouldRefreshTree() {
         // GVDTODO
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 
     @Override
-    List<DAOEvent> processEvent(PropertyChangeEvent evt) {
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
         if (!OS_EVENTS.contains(evt.getPropertyName())) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
         
             this.searchParamsCache.invalidateAll();
         
-        return Collections.singletonList(new OsAccountEvent());
+        return Collections.singleton(new OsAccountEvent());
     }
 
     /**
