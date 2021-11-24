@@ -272,12 +272,13 @@ public class MainDAO extends AbstractDAO {
 
     @Override
     Collection<? extends DAOEvent> flushEvents() {
-        Stream<Collection<? extends DAOEvent>> daoStreamEvts = allDAOs.stream()
-                .map((subDAO) -> subDAO.flushEvents());
+        List<Collection<? extends DAOEvent>> daoStreamEvts = allDAOs.stream()
+                .map((subDAO) -> subDAO.flushEvents())
+                .collect(Collectors.toList());
 
-        Collection<DAOEvent> batchFlushedEvts = eventBatcher.flushEvents();
+        daoStreamEvts.add(eventBatcher.flushEvents());
 
-        return Stream.concat(daoStreamEvts, Stream.of(batchFlushedEvts))
+        return daoStreamEvts.stream()
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
                 .collect(Collectors.toList());
     }

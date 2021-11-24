@@ -249,7 +249,9 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     @Override
     Collection<? extends DAOEvent> flushEvents() {
-        return this.treeCache.flushEvents();
+        return this.treeCache.flushEvents().stream()
+                .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), true))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -258,6 +260,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                 .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), true))
                 .collect(Collectors.toList());
     }
+
 
     /*
      * Handles fetching and paging of data artifacts.

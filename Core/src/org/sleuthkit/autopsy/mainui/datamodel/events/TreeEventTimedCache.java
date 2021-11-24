@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TreeEventTimedCache<T> {
     private static final long DEFAULT_TIMEOUT_MILLIS = 2 * 60 * 1000;
@@ -76,7 +77,11 @@ public class TreeEventTimedCache<T> {
         long curTime = getCurTime();
         List<T> toUpdate;
         synchronized (this.timeoutLock) {
-            toUpdate = new ArrayList<>(this.eventTimeouts.keySet());
+            toUpdate = this.eventTimeouts.entrySet().stream()
+                    .filter(e -> e.getValue() < curTime)
+                    .map(e -> e.getKey())
+                    .collect(Collectors.toList());
+
             this.eventTimeouts.keySet().removeAll(toUpdate);
         }
         return toUpdate;
