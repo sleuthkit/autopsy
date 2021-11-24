@@ -22,7 +22,8 @@ import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * An event for an artifact added in a particular type.
+ * A base class for DataArtifact and AnalysisResult events to signal that one
+ * has been added or removed. 
  */
 public class BlackboardArtifactEvent implements DAOEvent {
     private final BlackboardArtifact.Type artifactType;
