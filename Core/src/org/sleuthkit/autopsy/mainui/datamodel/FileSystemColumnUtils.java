@@ -151,9 +151,10 @@ class FileSystemColumnUtils {
      * 
      * @param content The Content object.
      * 
-     * @return The type corresponding to the content; UNSUPPORTED if the content will not be displayed
+     * @return The type corresponding to the content; UNSUPPORTED if the 
+     *         content will not be displayed in the file system section of the tree.
      */
-    private static ContentType getContentType(Content content) {
+    private static ContentType getDisplayableContentType(Content content) {
         if (content instanceof Image) {
             return ContentType.IMAGE;
         } else if (content instanceof Volume) {
@@ -167,9 +168,11 @@ class FileSystemColumnUtils {
     }
     
     /**
-     * Check whether a given content object should be displayed.
+     * Check whether a given content object should be displayed in the
+     * file system section of the tree.
      * We can display an object if ContentType is not UNSUPPORTED
-     * and if it is not the root directory.
+     * and if it is not the root directory. We can not display
+     * file systems, volume systems, artifacts, etc.
      * 
      * @param content The content.
      * 
@@ -185,7 +188,7 @@ class FileSystemColumnUtils {
             }
             return ! ((AbstractFile)content).isRoot();
         }
-        return (getContentType(content) != ContentType.UNSUPPORTED);
+        return (getDisplayableContentType(content) != ContentType.UNSUPPORTED);
     }
     
     /**
@@ -200,7 +203,7 @@ class FileSystemColumnUtils {
     static List<ContentType> getDisplayableTypesForContentList(List<Content> contentList) {
         List<ContentType> displayableTypes = new ArrayList<>();
         for (Content content : contentList) {
-            ContentType type = getContentType(content);
+            ContentType type = getDisplayableContentType(content);
             if (type != ContentType.UNSUPPORTED && ! displayableTypes.contains(type)) {
                 displayableTypes.add(type);
             }
