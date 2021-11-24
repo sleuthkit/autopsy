@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
- * Factory for populating tree with results.
+ * Factory for populating child nodes in a tree based on TreeResultsDTO
  */
 public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object> implements Comparator<T> {
 
@@ -68,17 +68,26 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
 
     private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, MainDAO.getInstance().getTreeEventsManager());
 
+    // maps the Node keys to the child TreeNode.  Used to update existing Node with new counts
     private final Map<Object, TreeNode<T>> typeNodeMap = new MapMaker().weakValues().makeMap();
     private final Object resultsUpdateLock = new Object();
 
+    // Results of the last full load from the DAO. May not be complete because 
+    // events will come in with more updated data. 
     private TreeResultsDTO<? extends T> curResults = null;
+    
+    // All current child items (sorted). May have more items than curResults does because 
+    // this is updated based on events and new data. 
     private List<TreeItemDTO<? extends T>> curItemsList = new ArrayList<>();
+    
+    // maps the Node key (ID) to its DTO
     private Map<Object, TreeItemDTO<? extends T>> idMapping = new HashMap<>();
 
     @Override
     protected boolean createKeys(List<Object> toPopulate) {
         List<TreeItemDTO<? extends T>> itemsList;
         synchronized (resultsUpdateLock) {
+            // Load data from DAO if we haven't already
             if (curResults == null) {
                 try {
                     updateData();
@@ -116,9 +125,9 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     }
 
     /**
-     * Updates an individual item in the display list.
+     * Finds and updates a node based on new/updated data. 
      *
-     * @param item The added item.
+     * @param item The added/updated item.
      */
     protected void updateNodeData(TreeItemDTO<? extends T> item) {
         TreeNode<T> cachedTreeNode = this.typeNodeMap.get(item.getId());
@@ -143,7 +152,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     }
 
     /**
-     * Updates local data by fetching data from the DAO's.
+     * Updates local data structures by fetching new data from the DAO's.
      *
      * @throws IllegalArgumentException
      * @throws ExecutionException
@@ -164,7 +173,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     }
 
     /**
-     * Fetches child view from the database and updates the tree.
+     * Updates the tree using new data from the DAO. 
      */
     public void update() {
         try {
@@ -190,14 +199,14 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     }
 
     /**
-     * Register listeners for autopsy events.
+     * Register listeners for DAO events.
      */
     private void registerListeners() {
         MainDAO.getInstance().getTreeEventsManager().addPropertyChangeListener(weakPcl);
     }
 
     /**
-     * Unregister listeners for autopsy events.
+     * Unregister listeners for DAO events.
      */
     private void unregisterListeners() {
         // GVDTODO this may not be necessary due to the weak listener's ability to unregister itself
