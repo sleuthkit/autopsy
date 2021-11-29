@@ -55,13 +55,13 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     }
 
     @Override
-    protected TreeItemDTO<DataArtifactSearchParam> getInvalidatedChild(TreeEvent daoEvt) {
-        if (daoEvt.getItemRecord().getTypeData() instanceof DataArtifactSearchParam) {
+    protected TreeItemDTO<DataArtifactSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
+        if (daoEvt.getItemRecord().getSearchParams() instanceof DataArtifactSearchParam) {
             @SuppressWarnings("unchecked")
             TreeItemDTO<DataArtifactSearchParam> originalTreeItem = (TreeItemDTO<DataArtifactSearchParam>) daoEvt.getItemRecord();
-            DataArtifactSearchParam searchParam = originalTreeItem.getTypeData();
+            DataArtifactSearchParam searchParam = originalTreeItem.getSearchParams();
             if (this.dataSourceId == null || this.dataSourceId == searchParam.getDataSourceId()) {
-                return TreeChildFactory.getUpdatedTreeData(originalTreeItem, new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()));
+                return TreeChildFactory.createTreeItemDTO(originalTreeItem, new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()));
             }
         }
         return null;
@@ -83,14 +83,14 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
 
         public DataArtifactTypeTreeNode(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> itemData) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData);
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayDataArtifact(this.getItemData().getTypeData());
+            dataResultPanel.displayDataArtifact(this.getItemData().getSearchParams());
         }
     }
 }

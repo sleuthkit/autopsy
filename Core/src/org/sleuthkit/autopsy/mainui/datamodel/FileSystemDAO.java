@@ -376,7 +376,7 @@ public class FileSystemDAO extends AbstractDAO {
         Set<Long> affectedParentContent = new HashSet<>();
         boolean refreshAllContent = false;
 
-        Content content = DAOEventUtils.getDerivedFileContentFromEvt(evt);
+        Content content = DAOEventUtils.getDerivedFileContentFromFileEvent(evt);
         if (content != null) {
             Content parentContent;
             try {

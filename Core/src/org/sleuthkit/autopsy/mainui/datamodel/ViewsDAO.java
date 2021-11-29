@@ -471,7 +471,7 @@ public class ViewsDAO extends AbstractDAO {
                                     name,
                                     TreeDisplayCount.getDeterminate(entry.getValue()));
                         })
-                        .sorted((a, b) -> stringCompare(a.getTypeData().getMimeType(), b.getTypeData().getMimeType()))
+                        .sorted((a, b) -> stringCompare(a.getSearchParams().getMimeType(), b.getSearchParams().getMimeType()))
                         .collect(Collectors.toList());
 
                 return new TreeResultsDTO<>(treeList);
@@ -673,7 +673,7 @@ public class ViewsDAO extends AbstractDAO {
         Map<String, Map<String, Set<Long>>> mimeTypeDsMap = new HashMap<>();
         Map<FileSizeFilter, Set<Long>> fileSizeDsMap = new HashMap<>();
 
-        AbstractFile af = DAOEventUtils.getFileFromEvt(evt);
+        AbstractFile af = DAOEventUtils.getFileFromFileEvent(evt);
         if (af == null) {
             return Collections.emptySet();
         }

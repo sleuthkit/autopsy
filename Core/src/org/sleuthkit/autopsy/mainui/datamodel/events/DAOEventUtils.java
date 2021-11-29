@@ -41,7 +41,7 @@ public class DAOEventUtils {
      */
     public static Content getContentFromFileEvent(PropertyChangeEvent evt) {
         String eventName = evt.getPropertyName();
-        Content derivedContent = getDerivedFileContentFromEvt(evt);
+        Content derivedContent = getDerivedFileContentFromFileEvent(evt);
         if (derivedContent != null) {
             return derivedContent;
         } else if (IngestManager.IngestModuleEvent.FILE_DONE.toString().equals(eventName)
@@ -60,7 +60,7 @@ public class DAOEventUtils {
      *
      * @return The inner content or null if no content.
      */
-    public static Content getDerivedFileContentFromEvt(PropertyChangeEvent evt) {
+    public static Content getDerivedFileContentFromFileEvent(PropertyChangeEvent evt) {
         String eventName = evt.getPropertyName();
         if (IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventName)
                 && (evt.getOldValue() instanceof ModuleContentEvent)
@@ -80,7 +80,7 @@ public class DAOEventUtils {
      *
      * @return The inner file or null if no file found.
      */
-    public static AbstractFile getFileFromEvt(PropertyChangeEvent evt) {
+    public static AbstractFile getFileFromFileEvent(PropertyChangeEvent evt) {
         Content content = getContentFromFileEvent(evt);
         return (content instanceof AbstractFile)
                 ? ((AbstractFile) content)

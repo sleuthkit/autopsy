@@ -82,9 +82,9 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
     @Override
     protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
-        if (SET_TREE_ARTIFACTS.contains(rowData.getTypeData().getArtifactType().getTypeID())) {
-            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getTypeData().getArtifactType(), dataSourceId, null));
-        } else if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getTypeData().getArtifactType())) {
+        if (SET_TREE_ARTIFACTS.contains(rowData.getSearchParams().getArtifactType().getTypeID())) {
+            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, null));
+        } else if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
             return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
         } else {
             return new AnalysisResultTypeTreeNode(rowData);
@@ -92,7 +92,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     }
 
     @Override
-    protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getInvalidatedChild(TreeEvent daoEvt) {
+    protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
         // GVDTODO
         return null;
     }
@@ -113,14 +113,14 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data to display.
          */
         public AnalysisResultTypeTreeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData);
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayAnalysisResult(this.getItemData().getTypeData());
+            dataResultPanel.displayAnalysisResult(this.getItemData().getSearchParams());
         }
     }
 
@@ -135,8 +135,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data to display.
          */
         public TreeTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData, ChildFactory<?> childFactory) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
                     Children.create(childFactory, true),
                     getDefaultLookup(itemData));
@@ -179,7 +179,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> getInvalidatedChild(TreeEvent daoEvt) {
+        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
             // GVDTODO
             return null;
         }
@@ -201,8 +201,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data to display.
          */
         public TreeSetTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
                     Children.LEAF,
                     getDefaultLookup(itemData));
@@ -210,7 +210,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayAnalysisResultSet(this.getItemData().getTypeData());
+            dataResultPanel.displayAnalysisResultSet(this.getItemData().getSearchParams());
         }
     }
 
@@ -240,10 +240,10 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data to display.
          */
         public KeywordSetNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
-                    Children.create(new KeywordSearchTermFactory(itemData.getTypeData()), true),
+                    Children.create(new KeywordSearchTermFactory(itemData.getSearchParams()), true),
                     getDefaultLookup(itemData));
         }
     }
@@ -276,7 +276,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> getInvalidatedChild(TreeEvent daoEvt) {
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
             // GVDTODO
             return null;
         }
@@ -299,16 +299,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data for the search term.
          */
         public KeywordSearchTermNode(TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> itemData) {
-            super(itemData.getTypeData().getSearchTerm(),
+            super(itemData.getSearchParams().getSearchTerm(),
                     getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT),
                     itemData,
-                    itemData.getTypeData().hasChildren() ? Children.create(new KeywordFoundMatchFactory(itemData.getTypeData()), true) : Children.LEAF,
+                    itemData.getSearchParams().hasChildren() ? Children.create(new KeywordFoundMatchFactory(itemData.getSearchParams()), true) : Children.LEAF,
                     getDefaultLookup(itemData));
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            KeywordSearchTermParams searchParams = this.getItemData().getTypeData();
+            KeywordSearchTermParams searchParams = this.getItemData().getSearchParams();
 
             if (!searchParams.hasChildren()) {
                 dataResultPanel.displayKeywordHits(
@@ -356,7 +356,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> getInvalidatedChild(TreeEvent daoEvt) {
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
             // GVDTODO
             return null;
         }
@@ -379,7 +379,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data for the match parameters.
          */
         public KeywordFoundMatchNode(TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> itemData) {
-            super(itemData.getTypeData().getKeywordMatch(),
+            super(itemData.getSearchParams().getKeywordMatch(),
                     getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT),
                     itemData,
                     Children.LEAF,
@@ -388,7 +388,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            KeywordMatchParams searchParams = this.getItemData().getTypeData();
+            KeywordMatchParams searchParams = this.getItemData().getSearchParams();
             dataResultPanel.displayKeywordHits(new KeywordHitSearchParam(
                     searchParams.getDataSourceId(),
                     searchParams.getSetName(),

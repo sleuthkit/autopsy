@@ -118,8 +118,7 @@ public class TreeResultsDTO<T> {
             }
             return true;
         }
-        
-        
+
     }
 
     /**
@@ -131,28 +130,27 @@ public class TreeResultsDTO<T> {
         private final String displayName;
         private final String typeId;
         private final TreeDisplayCount count;
-        private final T typeData;
+        private final T searchParams;
         private final Object id;
 
         /**
          * Main constructor.
          *
-         * @param typeId      The id of this item type.
-         * @param typeData    Data for this particular row's type (i.e.
-         *                    BlackboardArtifact.Type for counts of a particular
-         *                    artifact type).
-         * @param id          The id of this row. Can be any object that
-         *                    implements equals and hashCode.
-         * @param displayName The display name of this row.
-         * @param count       The count of results for this row or null if not
-         *                    applicable.
+         * @param typeId       The id of this item type.
+         * @param searchParams Search params for this tree item that can be used
+         *                     to display results.
+         * @param id           The id of this row. Can be any object that
+         *                     implements equals and hashCode.
+         * @param displayName  The display name of this row.
+         * @param count        The count of results for this row or null if not
+         *                     applicable.
          */
-        public TreeItemDTO(String typeId, T typeData, Object id, String displayName, TreeDisplayCount count) {
+        public TreeItemDTO(String typeId, T searchParams, Object id, String displayName, TreeDisplayCount count) {
             this.typeId = typeId;
             this.id = id;
             this.displayName = displayName;
             this.count = count;
-            this.typeData = typeData;
+            this.searchParams = searchParams;
         }
 
         /**
@@ -171,12 +169,11 @@ public class TreeResultsDTO<T> {
 
         /**
          *
-         * @return Data for this particular row's type (i.e.
-         *         BlackboardArtifact.Type for counts of a particular artifact
-         *         type).
+         * @return Search params for this tree item that can be used to display
+         *         results.
          */
-        public T getTypeData() {
-            return typeData;
+        public T getSearchParams() {
+            return searchParams;
         }
 
         /**

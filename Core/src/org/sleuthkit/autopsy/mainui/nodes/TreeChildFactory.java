@@ -52,7 +52,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
             for (DAOEvent daoEvt : aggEvt.getEvents()) {
                 if (daoEvt instanceof TreeEvent) {
                     TreeEvent treeEvt = (TreeEvent) daoEvt;
-                    TreeItemDTO<? extends T> item = getInvalidatedChild(treeEvt);
+                    TreeItemDTO<? extends T> item = getOrCreateRelevantChild(treeEvt);
                     if (item != null) {
                         if (treeEvt.isRefreshRequired()) {
                             update();
@@ -75,11 +75,11 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     // Results of the last full load from the DAO. May not be complete because 
     // events will come in with more updated data. 
     private TreeResultsDTO<? extends T> curResults = null;
-    
+
     // All current child items (sorted). May have more items than curResults does because 
     // this is updated based on events and new data. 
     private List<TreeItemDTO<? extends T>> curItemsList = new ArrayList<>();
-    
+
     // maps the Node key (ID) to its DTO
     private Map<Object, TreeItemDTO<? extends T>> idMapping = new HashMap<>();
 
@@ -125,7 +125,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     }
 
     /**
-     * Finds and updates a node based on new/updated data. 
+     * Finds and updates a node based on new/updated data.
      *
      * @param item The added/updated item.
      */
@@ -139,7 +139,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
                 // insert in sorted position
                 int insertIndex = 0;
                 for (; insertIndex < this.curItemsList.size(); insertIndex++) {
-                    if (this.compare(item.getTypeData(), this.curItemsList.get(insertIndex).getTypeData()) < 0) {
+                    if (this.compare(item.getSearchParams(), this.curItemsList.get(insertIndex).getSearchParams()) < 0) {
                         break;
                     }
                 }
@@ -173,7 +173,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     }
 
     /**
-     * Updates the tree using new data from the DAO. 
+     * Updates the tree using new data from the DAO.
      */
     public void update() {
         try {
@@ -232,8 +232,17 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
         registerListeners();
         super.addNotify();
     }
-    
-    public static <T> TreeItemDTO<T> getUpdatedTreeData(TreeItemDTO<T> original, T updatedData) {
+
+    /**
+     * A utility method that creates a TreeItemDTO using the data in 'original'
+     * for all fields except 'typeData' where 'updatedData' is used instead.
+     *
+     * @param original    The original tree item dto.
+     * @param updatedData The new type data to use.
+     *
+     * @return The created tree item dto.
+     */
+    static <T> TreeItemDTO<T> createTreeItemDTO(TreeItemDTO<T> original, T updatedData) {
         return new TreeItemDTO<>(
                 original.getTypeId(),
                 updatedData,
@@ -261,5 +270,14 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
      */
     protected abstract TreeResultsDTO<? extends T> getChildResults() throws IllegalArgumentException, ExecutionException;
 
-    protected abstract TreeItemDTO<? extends T> getInvalidatedChild(TreeEvent daoEvt);
+    /**
+     * Creates a child tree item dto that can be used to find the affected child
+     * node that requires updates.
+     *
+     * @param treeEvt The tree event.
+     *
+     * @return The tree item dto that can be used to find the child node
+     *         affected by the tree event.
+     */
+    protected abstract TreeItemDTO<? extends T> getOrCreateRelevantChild(TreeEvent treeEvt);
 }

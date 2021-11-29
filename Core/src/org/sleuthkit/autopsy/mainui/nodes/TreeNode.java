@@ -45,7 +45,7 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
      * @return The lookup to use in the node.
      */
     protected static <T> Lookup getDefaultLookup(TreeItemDTO<? extends T> itemData) {
-        return Lookups.fixed(itemData, itemData.getTypeData());
+        return Lookups.fixed(itemData, itemData.getSearchParams());
     }
 
     private TreeItemDTO<? extends T> itemData;
