@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
+import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -30,11 +31,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -64,22 +68,22 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
-    private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<? extends BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
-        
+
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
         String pagedWhereClause = getWhereClause(cacheKey);
-        
+
         List<BlackboardArtifact> arts = new ArrayList<>();
         arts.addAll(blackboard.getDataArtifactsWhere(pagedWhereClause));
         blackboard.loadBlackboardAttributes(arts);
-           
-        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());    
-        
+
+        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());
+
         TableData tableData = createTableData(artType, arts);
         return new DataArtifactTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
@@ -108,6 +112,74 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         return dataArtifactCache.get(searchParams, () -> fetchDataArtifactsForTable(searchParams));
+    }
+
+    /**
+     * Fetch data artifacts with the given account type from the database.
+     *
+     * @param searchParams The search params for the account type to fetch.
+     *
+     * @return The results.
+     *
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     */
+    private DataArtifactTableSearchResultsDTO fetchAccounts(SearchParams<? extends AccountSearchParams> searchParams) throws NoCurrentCaseException, TskCoreException {
+
+        // TODO improve performance
+        SleuthkitCase skCase = getCase();
+        Blackboard blackboard = skCase.getBlackboard();
+
+        Long dataSourceId = searchParams.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = searchParams.getParamData().getArtifactType();
+
+        // We currently can't make a query on the set name field because need to use a prepared statement
+        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() + " ";
+        if (dataSourceId != null) {
+            originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
+        }
+
+        String expectedAccountType = searchParams.getParamData().getAccountType();
+
+        List<BlackboardArtifact> allAccounts = new ArrayList<>();
+        allAccounts.addAll(blackboard.getAnalysisResultsWhere(originalWhereClause));
+        blackboard.loadBlackboardAttributes(allAccounts);
+
+        // Filter for the selected set
+        List<BlackboardArtifact> arts = new ArrayList<>();
+        for (BlackboardArtifact art : allAccounts) {
+            BlackboardAttribute accountTypeAttr = art.getAttribute(BlackboardAttribute.Type.TSK_ACCOUNT_TYPE);
+            if ((expectedAccountType == null && accountTypeAttr == null)
+                    || (expectedAccountType != null && accountTypeAttr != null && expectedAccountType.equals(accountTypeAttr.getValueString()))) {
+                arts.add(art);
+            }
+        }
+
+        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, searchParams);
+        TableData tableData = createTableData(artType, pagedArtifacts);
+        return new DataArtifactTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, searchParams.getStartItem(), arts.size());
+    }
+
+    /**
+     * Gets the cached data or fetched data for the given account search params.
+     *
+     * @param searchParams The search params.
+     * @param startItem    The starting item.
+     * @param maxCount     The maximum count of items to return.
+     *
+     * @return The resulting data.
+     *
+     * @throws ExecutionException
+     * @throws IllegalArgumentException
+     */
+    public DataArtifactTableSearchResultsDTO getAccountsForTable(AccountSearchParams searchParams, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
+        if (searchParams.getDataSourceId() != null && searchParams.getDataSourceId() < 0) {
+            throw new IllegalArgumentException(MessageFormat.format("Data source id must be null or > 0.",
+                    searchParams.getDataSourceId() == null ? "<null>" : searchParams.getDataSourceId()));
+        }
+
+        SearchParams<AccountSearchParams> pagedSearchParams = new SearchParams<>(searchParams, startItem, maxCount);
+        return dataArtifactCache.get(pagedSearchParams, () -> fetchAccounts(pagedSearchParams));
     }
 
     public boolean isDataArtifactInvalidating(DataArtifactSearchParam key, ModuleDataEvent eventData) {
@@ -154,6 +226,60 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
     }
 
+    /**
+     * Returns the accounts and their counts in the current data source if a
+     * data source id is provided or all accounts if data source id is null.
+     *
+     * @param dataSourceId The data source id or null for no data source filter.
+     *
+     * @return The results.
+     *
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<AccountSearchParams> getAccountsCounts(Long dataSourceId) throws ExecutionException {
+        String query = "SELECT res.account_type AS account_type, MIN(res.account_display_name) AS account_display_name, COUNT(*) AS count\n"
+                + "FROM (\n"
+                + "  SELECT MIN(account_types.type_name) AS account_type, MIN(account_types.display_name) AS account_display_name\n"
+                + "  FROM blackboard_artifacts\n"
+                + "  LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id\n"
+                + "  LEFT JOIN account_types ON blackboard_artifacts.value_text = account_types.type_name\n"
+                + "  WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
+                + "  AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
+                + (dataSourceId != null && dataSourceId > 0 ? "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId + " " : " ") + "\n"
+                + "  -- group by artifact_id to ensure only one account type per artifact\n"
+                + "  GROUP BY blackboard_artifacts.artifact_id\n"
+                + ") res\n"
+                + "GROUP BY res.account_type\n"
+                + "ORDER BY MIN(res.account_display_name)";
+
+        List<TreeItemDTO<AccountSearchParams>> accountParams = new ArrayList<>();
+        try {
+            getCase().getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        String accountType = resultSet.getString("account_type");
+                        String accountDisplayName = resultSet.getString("account_display_name");
+                        long count = resultSet.getLong("count");
+                        accountParams.add(new TreeItemDTO<>(
+                                accountType,
+                                new AccountSearchParams(accountType, dataSourceId),
+                                accountType,
+                                accountDisplayName,
+                                count));
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
+                }
+            });
+
+            // return results
+            return new TreeResultsDTO<>(accountParams);
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
+        }
+    }
+
     /*
      * Handles fetching and paging of data artifacts.
      */
@@ -181,6 +307,29 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             }
 
             return MainDAO.getInstance().getDataArtifactsDAO().isDataArtifactInvalidating(this.getParameters(), dataEvent);
+        }
+    }
+
+    public static class AccountFetcher extends DAOFetcher<AccountSearchParams> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public AccountFetcher(AccountSearchParams params) {
+            super(params);
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
+            return MainDAO.getInstance().getDataArtifactsDAO().getAccountsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        }
+
+        @Override
+        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+            // TODO
+            return false;
         }
     }
 }
