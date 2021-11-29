@@ -538,7 +538,7 @@ public class FileSystemDAO extends AbstractDAO {
                         new FileSystemContentSearchParam(child.getId()),
                         child,
                         getNameForContent(child),
-                        TreeDisplayCount.getDeterminate(countForNode)
+                        countForNode == null ? TreeDisplayCount.NOT_SHOWN : TreeDisplayCount.getDeterminate(countForNode)
                 ));
             }
             return new TreeResultsDTO<>(treeItemRows);
