@@ -158,11 +158,22 @@ public interface ActionContext {
     }
 
     /**
-     * Returns true if the context supported the extract action.
+     * Returns true if the context supported the extract actions
+     * for nodes in the table view.
      *
      * @return True if the action is supported.
      */
-    default boolean supportsExtractActions() {
+    default boolean supportsTableExtractActions() {
+        return false;
+    }
+    
+    /**
+     * Returns true if the context supported the extract actions
+     * for nodes in the tree view.
+     *
+     * @return True if the action is supported.
+     */
+    default boolean supportsTreeExtractActions() {
         return false;
     }
 
@@ -204,10 +215,6 @@ public interface ActionContext {
      * @return The content object for ingest.
      */
     default Optional<Content> getContentForRunIngestionModuleAction() {
-        return Optional.empty();
-    }
-    
-    default Optional<Content> getContentForFileSearchAction() {
         return Optional.empty();
     }
     

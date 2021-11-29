@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
+import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils.ExtensionMediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SlackFile;
@@ -28,10 +29,6 @@ import org.sleuthkit.datamodel.TskData;
  * DTO Representing an abstract file in the results view.
  */
 public class FileRowDTO extends BaseRowDTO {
-
-    public enum ExtensionMediaType {
-        IMAGE, VIDEO, AUDIO, DOC, EXECUTABLE, TEXT, WEB, PDF, ARCHIVE, UNCATEGORIZED
-    }
 
     private static String TYPE_ID = "FILE";
 

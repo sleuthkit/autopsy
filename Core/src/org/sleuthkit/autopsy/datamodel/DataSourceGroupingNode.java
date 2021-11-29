@@ -48,7 +48,7 @@ class DataSourceGroupingNode extends DisplayableItemNode {
         super(Optional.ofNullable(createDSGroupingNodeChildren(dataSource))
                 .orElse(new RootContentChildren(Arrays.asList(Collections.EMPTY_LIST))),
                 Lookups.singleton(dataSource));
-
+        
         if (dataSource instanceof Image) {
             Image image = (Image) dataSource;
 

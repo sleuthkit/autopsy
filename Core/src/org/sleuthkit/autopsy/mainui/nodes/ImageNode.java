@@ -43,7 +43,7 @@ public class ImageNode extends BaseNode<SearchResultsDTO, ImageRowDTO> {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
         setDisplayName(row.getContent().getName());
         setShortDescription(row.getContent().getName());
-        setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg"); //NON-NLS
+        setIconBaseWithExtension(NodeIconUtil.IMAGE.getPath()); //NON-NLS
     }
 
     @NbBundle.Messages({

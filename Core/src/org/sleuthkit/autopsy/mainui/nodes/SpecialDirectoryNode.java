@@ -58,17 +58,12 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
 
     @Override
     public Optional<Content> getContentForRunIngestionModuleAction() {
-        return Optional.of(getRowDTO().getContent());
-    }
-
-    @Override
-    public Optional<Content> getContentForFileSearchAction() {
         return Optional.of(getRowDTO().getContent());
     }
 
