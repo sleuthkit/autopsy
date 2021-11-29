@@ -173,7 +173,7 @@ public final class IngestJob {
     void processStreamingIngestDataSource() {
         if (ingestMode == Mode.STREAMING) {
             if (ingestModuleExecutor != null) {
-                ingestModuleExecutor.startStreamingModeDataSourceAnalysis();
+                ingestModuleExecutor.addStreamedDataSource();
             } else {
                 logger.log(Level.SEVERE, "Attempted to start data source analaysis with no ingest pipeline");
             }

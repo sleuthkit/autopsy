@@ -541,7 +541,7 @@ final class IngestJobExecutor {
     }
 
     /**
-     * Determnines which inges job stage to start in and starts up the ingest
+     * Determnines which ingets job stage to start in and starts up the ingest
      * module pipelines.
      *
      * @return A collection of ingest module startup errors, empty on success.
@@ -671,7 +671,7 @@ final class IngestJobExecutor {
      */
     private void startBatchModeAnalysis() {
         synchronized (stageTransitionLock) {
-            logInfoMessage(String.format("Starting analysis in batch mode for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), ingestJob.getId())); //NON-NLS            
+            logInfoMessage("Starting ingest job in batch mode"); //NON-NLS            
             stage = IngestJobStage.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
 
             if (hasFileIngestModules()) {
@@ -686,22 +686,15 @@ final class IngestJobExecutor {
                 } else {
                     estimatedFilesToProcess = files.size();
                 }
+                startFileIngestProgressBar();
             }
 
-            if (usingNetBeansGUI) {
-                /*
-                 * Start ingest progress bars in the lower right hand corner of
-                 * the main application window.
-                 */
-                if (hasFileIngestModules()) {
-                    startFileIngestProgressBar();
-                }
-                if (hasHighPriorityDataSourceIngestModules()) {
-                    startDataSourceIngestProgressBar();
-                }
-                if (hasDataArtifactIngestModules()) {
-                    startArtifactIngestProgressBar();
-                }
+            if (hasHighPriorityDataSourceIngestModules()) {
+                startDataSourceIngestProgressBar();
+            }
+
+            if (hasDataArtifactIngestModules()) {
+                startArtifactIngestProgressBar();
             }
 
             /*
@@ -711,60 +704,69 @@ final class IngestJobExecutor {
             currentDataSourceIngestPipeline = highPriorityDataSourceIngestPipeline;
 
             /*
-             * Schedule ingest tasks and then immediately check for stage
-             * completion. This is necessary because it is possible that zero
-             * tasks will actually make it to task execution due to the file
-             * filter or other ingest job settings. In that case, there will
-             * never be a stage completion check in an ingest thread executing
-             * an ingest task, so such a job would run forever without a check
-             * here.
+             * Schedule ingest tasks.
              */
             if (!files.isEmpty() && hasFileIngestModules()) {
                 taskScheduler.scheduleFileIngestTasks(this, files);
             } else if (hasHighPriorityDataSourceIngestModules() || hasFileIngestModules() || hasDataArtifactIngestModules()) {
                 taskScheduler.scheduleIngestTasks(this);
             }
+
+            /*
+             * Check for stage completion. This is necessary because it is
+             * possible that none of the tasks that were just scheduled will
+             * actually make it to task execution due to the file filter or
+             * other ingest job settings. In that case, there will never be a
+             * stage completion check in an ingest thread executing an ingest
+             * task, so such a job would run forever without a check here.
+             */
             checkForStageCompleted();
         }
     }
 
     /**
      * Starts analysis for a streaming mode ingest job. For a streaming mode
-     * job, the data source processor streams files in as it adds them to the
-     * case database and file analysis can begin before data source level
-     * analysis.
+     * job, a data source processor streams files to this ingest job executor as
+     * it adds the files to the case database, and file level analysis can begin
+     * before data source level analysis.
      */
     private void startStreamingModeAnalysis() {
         synchronized (stageTransitionLock) {
-            logInfoMessage("Starting data source level analysis in streaming mode"); //NON-NLS
+            logInfoMessage("Starting ingest job in streaming mode"); //NON-NLS
             stage = IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY;
 
-            if (usingNetBeansGUI) {
+            if (hasFileIngestModules()) {
                 /*
-                 * Start ingest progress bars in the lower right hand corner of
-                 * the main application window.
+                 * Start the file ingest progress bar, but do not schedule any
+                 * file or data source ingest tasks. File ingest tasks will
+                 * instead be scheduled as files are streamed in via
+                 * addStreamedFiles(), and a data source ingest task will be
+                 * scheduled later, via addStreamedDataSource().
+                 *
+                 * Note that because estimated files remaining to process still
+                 * has its initial value of zero, the fle ingest progress bar
+                 * will start in the "indeterminate" state. A rough estimate of
+                 * the files to processed will be computed later, when all of
+                 * the files have been added to the case database, as signaled
+                 * by a call to the addStreamedDataSource().
                  */
-                if (hasFileIngestModules()) {
-                    /*
-                     * Note that because estimated files remaining to process
-                     * still has its initial value of zero, the progress bar
-                     * will start in the "indeterminate" state. An estimate of
-                     * the files to process can be computed later, when all of
-                     * the files have been added ot the case database.
-                     */
-                    startFileIngestProgressBar();
-                }
-                if (hasDataArtifactIngestModules()) {
-                    startArtifactIngestProgressBar();
-                }
+                estimatedFilesToProcess = 0;
+                startFileIngestProgressBar();
             }
 
             if (hasDataArtifactIngestModules()) {
+                startArtifactIngestProgressBar();
+
                 /*
                  * Schedule artifact ingest tasks for any artifacts currently in
                  * the case database. This needs to be done before any files or
                  * the data source are streamed in to avoid analyzing the data
                  * artifacts added to the case database by those tasks twice.
+                 * This constraint is implemented by restricting construction of
+                 * a streaming mode IngestJob to
+                 * IngestManager.openIngestStream(), which constructs and starts
+                 * the job before returning the IngestStream that is used to
+                 * stream in the files and data source.
                  */
                 taskScheduler.scheduleDataArtifactIngestTasks(this);
             }
@@ -776,7 +778,7 @@ final class IngestJobExecutor {
      * case database and streamed in, and the data source is now ready for
      * analysis.
      */
-    void startStreamingModeDataSourceAnalysis() {
+    void addStreamedDataSource() {
         synchronized (stageTransitionLock) {
             logInfoMessage("Starting full first stage analysis in streaming mode"); //NON-NLS
             stage = IngestJobExecutor.IngestJobStage.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
@@ -859,20 +861,22 @@ final class IngestJobExecutor {
      */
     private void startArtifactIngestProgressBar() {
         if (usingNetBeansGUI) {
-            SwingUtilities.invokeLater(() -> {
-                String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataArtifactIngest.displayName", this.dataSource.getName());
-                artifactIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
-                    @Override
-                    public boolean cancel() {
-                        new Thread(() -> {
-                            IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
-                        }).start();
-                        return true;
-                    }
+            if (usingNetBeansGUI) {
+                SwingUtilities.invokeLater(() -> {
+                    String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataArtifactIngest.displayName", this.dataSource.getName());
+                    artifactIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
+                        @Override
+                        public boolean cancel() {
+                            new Thread(() -> {
+                                IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                            }).start();
+                            return true;
+                        }
+                    });
+                    artifactIngestProgressBar.start();
+                    artifactIngestProgressBar.switchToIndeterminate();
                 });
-                artifactIngestProgressBar.start();
-                artifactIngestProgressBar.switchToIndeterminate();
-            });
+            }
         }
     }
 
@@ -885,37 +889,39 @@ final class IngestJobExecutor {
      * cancellation occurs is NOT discarded.
      */
     private void startDataSourceIngestProgressBar() {
-        SwingUtilities.invokeLater(() -> {
-            String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName());
-            dataSourceIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
-                @Override
-                public boolean cancel() {
-                    /*
-                     * The user has already pressed the cancel button on this
-                     * progress bar, and the OK button of a cancelation
-                     * confirmation dialog supplied by NetBeans. Find out
-                     * whether the user wants to cancel only the currently
-                     * executing data source ingest module or the entire ingest
-                     * job.
-                     */
-                    DataSourceIngestCancellationPanel panel = new DataSourceIngestCancellationPanel();
-                    String dialogTitle = NbBundle.getMessage(IngestJobExecutor.this.getClass(), "IngestJob.cancellationDialog.title");
-                    JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
-                    if (panel.cancelAllDataSourceIngestModules()) {
-                        new Thread(() -> {
-                            IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
-                        }).start();
-                    } else {
-                        new Thread(() -> {
-                            IngestJobExecutor.this.cancelCurrentDataSourceIngestModule();
-                        }).start();
+        if (usingNetBeansGUI) {
+            SwingUtilities.invokeLater(() -> {
+                String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName());
+                dataSourceIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
+                    @Override
+                    public boolean cancel() {
+                        /*
+                         * The user has already pressed the cancel button on
+                         * this progress bar, and the OK button of a cancelation
+                         * confirmation dialog supplied by NetBeans. Find out
+                         * whether the user wants to cancel only the currently
+                         * executing data source ingest module or the entire
+                         * ingest job.
+                         */
+                        DataSourceIngestCancellationPanel panel = new DataSourceIngestCancellationPanel();
+                        String dialogTitle = NbBundle.getMessage(IngestJobExecutor.this.getClass(), "IngestJob.cancellationDialog.title");
+                        JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
+                        if (panel.cancelAllDataSourceIngestModules()) {
+                            new Thread(() -> {
+                                IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                            }).start();
+                        } else {
+                            new Thread(() -> {
+                                IngestJobExecutor.this.cancelCurrentDataSourceIngestModule();
+                            }).start();
+                        }
+                        return true;
                     }
-                    return true;
-                }
+                });
+                dataSourceIngestProgressBar.start();
+                dataSourceIngestProgressBar.switchToIndeterminate();
             });
-            dataSourceIngestProgressBar.start();
-            dataSourceIngestProgressBar.switchToIndeterminate();
-        });
+        }
     }
 
     private void finishProgressIndicators() {
@@ -947,20 +953,22 @@ final class IngestJobExecutor {
      * discarded.
      */
     private void startFileIngestProgressBar() {
-        SwingUtilities.invokeLater(() -> {
-            String displayName = NbBundle.getMessage(getClass(), "IngestJob.progress.fileIngest.displayName", dataSource.getName());
-            fileIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
-                @Override
-                public boolean cancel() {
-                    new Thread(() -> {
-                        IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
-                    }).start();
-                    return true;
-                }
+        if (usingNetBeansGUI) {
+            SwingUtilities.invokeLater(() -> {
+                String displayName = NbBundle.getMessage(getClass(), "IngestJob.progress.fileIngest.displayName", dataSource.getName());
+                fileIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
+                    @Override
+                    public boolean cancel() {
+                        new Thread(() -> {
+                            IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                        }).start();
+                        return true;
+                    }
+                });
+                fileIngestProgressBar.start();
+                fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
             });
-            fileIngestProgressBar.start();
-            fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
-        });
+        }
     }
 
     /**
@@ -1478,7 +1486,7 @@ final class IngestJobExecutor {
      * @param message The message.
      */
     private void logInfoMessage(String message) {
-        logger.log(Level.INFO, String.format("%s (data source = %s, object Id = %d, job id = %d)", message, dataSource.getName(), dataSource.getId(), getIngestJobId())); //NON-NLS        
+        logger.log(Level.INFO, String.format("%s (data source = %s, data source object Id = %d, job id = %d)", message, dataSource.getName(), dataSource.getId(), getIngestJobId())); //NON-NLS        
     }
 
     /**
@@ -1490,7 +1498,7 @@ final class IngestJobExecutor {
      * @param throwable The throwable associated with the error.
      */
     private void logErrorMessage(Level level, String message, Throwable throwable) {
-        logger.log(level, String.format("%s (data source = %s, object Id = %d, ingest job id = %d)", message, dataSource.getName(), dataSource.getId(), getIngestJobId()), throwable); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, data source object Id = %d, ingest job id = %d)", message, dataSource.getName(), dataSource.getId(), getIngestJobId()), throwable); //NON-NLS
     }
 
     /**
@@ -1501,7 +1509,7 @@ final class IngestJobExecutor {
      * @param message The message.
      */
     private void logErrorMessage(Level level, String message) {
-        logger.log(level, String.format("%s (data source = %s, object Id = %d, ingest job id %d)", message, dataSource.getName(), dataSource.getId(), getIngestJobId())); //NON-NLS
+        logger.log(level, String.format("%s (data source = %s, data source object Id = %d, ingest job id %d)", message, dataSource.getName(), dataSource.getId(), getIngestJobId())); //NON-NLS
     }
 
     /**
@@ -1523,7 +1531,7 @@ final class IngestJobExecutor {
      */
     private void logIngestModuleErrors(List<IngestModuleError> errors, AbstractFile file) {
         for (IngestModuleError error : errors) {
-            logErrorMessage(Level.SEVERE, String.format("%s experienced an error during analysis while processing file %s, object ID %d", error.getModuleDisplayName(), file.getName(), file.getId()), error.getThrowable()); //NON-NLS
+            logErrorMessage(Level.SEVERE, String.format("%s experienced an error during analysis while processing file %s (object ID = %d)", error.getModuleDisplayName(), file.getName(), file.getId()), error.getThrowable()); //NON-NLS
         }
     }
 
