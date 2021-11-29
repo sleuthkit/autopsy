@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 import javax.swing.Action;
 import org.openide.actions.PropertiesAction;
@@ -47,6 +48,7 @@ import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
@@ -77,6 +79,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * their supported actions.
  */
 public final class ActionsFactory {
+    
+    private static final Logger logger = Logger.getLogger(ActionsFactory.class.getName());
 
     // private constructor for utility class.
     private ActionsFactory() {}
@@ -137,8 +141,10 @@ public final class ActionsFactory {
             }
         }
 
-        if (actionContext.supportsExtractActions()) {
-            actionGroups.add(getExtractActions());
+        if (actionContext.supportsTableExtractActions()) {
+            actionGroups.add(getTableExtractActions());
+        } else if (actionContext.supportsTreeExtractActions()) {
+            actionGroups.add(getTreeExtractActions());
         }
         
         group = new ActionGroup();
@@ -174,12 +180,12 @@ public final class ActionsFactory {
     }
 
     /**
-     * Returns the Extract actions. These actions are not specific to the
+     * Returns the Extract actions for a table node. These actions are not specific to the
      * ActionContext.
      *
      * @return The Extract ActionGroup.
      */
-    static ActionGroup getExtractActions() {
+    static ActionGroup getTableExtractActions() {
         ActionGroup actionsGroup = new ActionGroup();
         
         Lookup lookup = Utilities.actionsGlobalContext();
@@ -188,6 +194,19 @@ public final class ActionsFactory {
             actionsGroup.add(ExtractAction.getInstance());
         }
         actionsGroup.add(ExportCSVAction.getInstance());
+
+        return actionsGroup;
+    }
+    
+    /**
+     * Returns the Extract actions for a tree node. These actions are not specific to the
+     * ActionContext.
+     *
+     * @return The Extract ActionGroup.
+     */
+    static ActionGroup getTreeExtractActions() {
+        ActionGroup actionsGroup = new ActionGroup();
+        actionsGroup.add(ExtractAction.getInstance());
 
         return actionsGroup;
     }
@@ -425,15 +444,10 @@ public final class ActionsFactory {
         "ActionFactory_openFileSearchByAttr_text=Open File Search by Attributes"
     })
     private static Optional<ActionGroup> getRunIngestAction(ActionContext context) {
-        ActionGroup group = new ActionGroup();
-        Optional<Content> optional = context.getContentForFileSearchAction();
-        
+        ActionGroup group = new ActionGroup();        
+        Optional<Content> optional = context.getDataSourceForActions();
         if(optional.isPresent()) {
             group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
-        }
-        
-        optional = context.getDataSourceForActions();
-        if(optional.isPresent()) {
             group.add(new ViewSummaryInformationAction(optional.get().getId()));
             group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
             group.add(new DeleteDataSourceAction(optional.get().getId()));
@@ -442,7 +456,11 @@ public final class ActionsFactory {
             optional = context.getContentForRunIngestionModuleAction();
 
             if(optional.isPresent()) {
-                group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
+                if (optional.get() instanceof AbstractFile) {
+                    group.add(new RunIngestModulesAction((AbstractFile)optional.get()));
+                } else {
+                    logger.log(Level.WARNING, "Can not create RunIngestModulesAction on non-AbstractFile content with ID " + optional.get().getId());
+                }
             }
         }
         

@@ -138,7 +138,7 @@ public final class BlackboardArtifactTagNode extends BaseNode<SearchResultsDTO, 
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
 

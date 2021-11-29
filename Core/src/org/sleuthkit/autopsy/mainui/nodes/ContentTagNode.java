@@ -119,7 +119,7 @@ public final class ContentTagNode extends BaseNode<SearchResultsDTO, ContentTags
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
 

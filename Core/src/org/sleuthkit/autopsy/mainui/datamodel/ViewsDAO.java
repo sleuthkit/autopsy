@@ -46,8 +46,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
-import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
-import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
@@ -85,35 +83,6 @@ public class ViewsDAO extends AbstractDAO {
         }
 
         return instance;
-    }
-
-    static ExtensionMediaType getExtensionMediaType(String ext) {
-        if (StringUtils.isBlank(ext)) {
-            return ExtensionMediaType.UNCATEGORIZED;
-        } else {
-            ext = "." + ext;
-        }
-        if (FileTypeExtensions.getImageExtensions().contains(ext)) {
-            return ExtensionMediaType.IMAGE;
-        } else if (FileTypeExtensions.getVideoExtensions().contains(ext)) {
-            return ExtensionMediaType.VIDEO;
-        } else if (FileTypeExtensions.getAudioExtensions().contains(ext)) {
-            return ExtensionMediaType.AUDIO;
-        } else if (FileTypeExtensions.getDocumentExtensions().contains(ext)) {
-            return ExtensionMediaType.DOC;
-        } else if (FileTypeExtensions.getExecutableExtensions().contains(ext)) {
-            return ExtensionMediaType.EXECUTABLE;
-        } else if (FileTypeExtensions.getTextExtensions().contains(ext)) {
-            return ExtensionMediaType.TEXT;
-        } else if (FileTypeExtensions.getWebExtensions().contains(ext)) {
-            return ExtensionMediaType.WEB;
-        } else if (FileTypeExtensions.getPDFExtensions().contains(ext)) {
-            return ExtensionMediaType.PDF;
-        } else if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
-            return ExtensionMediaType.ARCHIVE;
-        } else {
-            return ExtensionMediaType.UNCATEGORIZED;
-        }
     }
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
@@ -633,7 +602,7 @@ public class ViewsDAO extends AbstractDAO {
                     file.getId(),
                     file.getName(),
                     file.getNameExtension(),
-                    getExtensionMediaType(file.getNameExtension()),
+                    MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
                     file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
                     file.getType(),
                     cellValues));

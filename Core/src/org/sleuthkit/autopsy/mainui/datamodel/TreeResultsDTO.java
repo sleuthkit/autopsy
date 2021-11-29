@@ -192,6 +192,5 @@ public class TreeResultsDTO<T> {
         public String getTypeId() {
             return typeId;
         }
-
     }
 }
