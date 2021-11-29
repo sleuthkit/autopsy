@@ -795,38 +795,31 @@ final class IngestJobExecutor {
                  * processed.
                  */
                 estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
-                if (usingNetBeansGUI) {
-                    SwingUtilities.invokeLater(() -> {
-                        if (fileIngestProgressBar != null) {
-                            fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
-                        }
-                    });
-                }
+                switchFileIngestProgressBarToDeterminate();
             }
 
-            if (usingNetBeansGUI) {
+            currentDataSourceIngestPipeline = highPriorityDataSourceIngestPipeline;
+            if (hasHighPriorityDataSourceIngestModules()) {
                 /*
                  * Start a data source level ingest progress bar in the lower
                  * right hand corner of the main application window. The file
                  * and data artifact ingest progress bars were already started
                  * in startStreamingModeAnalysis().
                  */
-                if (hasHighPriorityDataSourceIngestModules()) {
-                    startDataSourceIngestProgressBar();
-                }
-            }
+                startDataSourceIngestProgressBar();
 
-            currentDataSourceIngestPipeline = highPriorityDataSourceIngestPipeline;
-            if (hasHighPriorityDataSourceIngestModules()) {
+                /*
+                 * Schedule a task for the data source.
+                 */
                 IngestJobExecutor.taskScheduler.scheduleDataSourceIngestTask(this);
             } else {
                 /*
-                 * If no data source level ingest task is scheduled at this time
-                 * and all of the file level and artifact ingest tasks scheduled
-                 * during the initial file streaming stage have already
-                 * executed, there will never be a stage completion check in an
-                 * ingest thread executing an ingest task, so such a job would
-                 * run forever without a check here.
+                 * If no data source level ingest task is scheduled at this
+                 * time, and all of the file level and artifact ingest tasks
+                 * scheduled during the initial file streaming stage have
+                 * already been executed, there will never be a stage completion
+                 * check in an ingest thread executing an ingest task, so such a
+                 * job would run forever without a check here.
                  */
                 checkForStageCompleted();
             }
@@ -839,13 +832,9 @@ final class IngestJobExecutor {
     private void startLowPriorityDataSourceAnalysis() {
         synchronized (stageTransitionLock) {
             if (hasLowPriorityDataSourceIngestModules()) {
-                logInfoMessage(String.format("Starting low priority data source analysis for %s (objID=%d, jobID=%d)", dataSource.getName(), dataSource.getId(), ingestJob.getId())); //NON-NLS
+                logInfoMessage("Starting low priority data source analysis"); //NON-NLS
                 stage = IngestJobExecutor.IngestJobStage.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS;
-
-                if (usingNetBeansGUI) {
-                    startDataSourceIngestProgressBar();
-                }
-
+                startDataSourceIngestProgressBar();
                 currentDataSourceIngestPipeline = lowPriorityDataSourceIngestPipeline;
                 taskScheduler.scheduleDataSourceIngestTask(this);
             }
@@ -853,38 +842,36 @@ final class IngestJobExecutor {
     }
 
     /**
-     * Starts a data artifacts analysis NetBeans progress bar in the lower right
-     * hand corner of the main application window. The progress bar provides the
-     * user with a task cancellation button. Pressing it cancels the ingest job.
-     * Analysis already completed at the time that cancellation occurs is NOT
-     * discarded.
+     * Starts a NetBeans progress bar for data artifacts analysis in the lower
+     * right hand corner of the main application window. The progress bar
+     * provides the user with a task cancellation button. Pressing it cancels
+     * the ingest job. Analysis already completed at the time that cancellation
+     * occurs is NOT discarded.
      */
     private void startArtifactIngestProgressBar() {
         if (usingNetBeansGUI) {
-            if (usingNetBeansGUI) {
-                SwingUtilities.invokeLater(() -> {
-                    String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataArtifactIngest.displayName", this.dataSource.getName());
-                    artifactIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
-                        @Override
-                        public boolean cancel() {
-                            new Thread(() -> {
-                                IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
-                            }).start();
-                            return true;
-                        }
-                    });
-                    artifactIngestProgressBar.start();
-                    artifactIngestProgressBar.switchToIndeterminate();
+            SwingUtilities.invokeLater(() -> {
+                String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataArtifactIngest.displayName", this.dataSource.getName());
+                artifactIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
+                    @Override
+                    public boolean cancel() {
+                        new Thread(() -> {
+                            IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                        }).start();
+                        return true;
+                    }
                 });
-            }
+                artifactIngestProgressBar.start();
+                artifactIngestProgressBar.switchToIndeterminate();
+            });
         }
     }
 
     /**
-     * Starts a data source level analysis NetBeans progress bar in the lower
-     * right hand corner of the main application window. The progress bar
+     * Starts a NetBeans progress bar for data source level analysis in the
+     * lower right hand corner of the main application window. The progress bar
      * provides the user with a task cancellation button. Pressing it cancels
-     * either the currently running data source level ingest module or the
+     * either the currently running data source level ingest module, or the
      * entire ingest job. Analysis already completed at the time that
      * cancellation occurs is NOT discarded.
      */
@@ -924,29 +911,8 @@ final class IngestJobExecutor {
         }
     }
 
-    private void finishProgressIndicators() {
-        if (usingNetBeansGUI) {
-            SwingUtilities.invokeLater(() -> {
-                if (dataSourceIngestProgressBar != null) {
-                    dataSourceIngestProgressBar.finish();
-                    dataSourceIngestProgressBar = null;
-                }
-
-                if (fileIngestProgressBar != null) {
-                    fileIngestProgressBar.finish();
-                    fileIngestProgressBar = null;
-                }
-
-                if (artifactIngestProgressBar != null) {
-                    artifactIngestProgressBar.finish();
-                    artifactIngestProgressBar = null;
-                }
-            });
-        }
-    }
-
     /**
-     * Starts a file analysis NetBeans progress bar in the lower right hand
+     * Starts a NetBeans progress bar for file analysis in the lower right hand
      * corner of the main application window. The progress bar provides the user
      * with a task cancellation button. Pressing it cancels the ingest job.
      * Analysis already completed at the time that cancellation occurs is NOT
@@ -967,6 +933,49 @@ final class IngestJobExecutor {
                 });
                 fileIngestProgressBar.start();
                 fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
+            });
+        }
+    }
+
+    /**
+     * Finishes the first stage progress bars.
+     */
+    private void finishFirstStageProgressBars() {
+        if (usingNetBeansGUI) {
+            SwingUtilities.invokeLater(() -> {
+                if (dataSourceIngestProgressBar != null) {
+                    dataSourceIngestProgressBar.finish();
+                    dataSourceIngestProgressBar = null;
+                }
+
+                if (fileIngestProgressBar != null) {
+                    fileIngestProgressBar.finish();
+                    fileIngestProgressBar = null;
+                }
+            });
+        }
+    }
+
+    /**
+     * Finishes all current progress bars.
+     */
+    private void finishProgressBars() {
+        if (usingNetBeansGUI) {
+            SwingUtilities.invokeLater(() -> {
+                if (dataSourceIngestProgressBar != null) {
+                    dataSourceIngestProgressBar.finish();
+                    dataSourceIngestProgressBar = null;
+                }
+
+                if (fileIngestProgressBar != null) {
+                    fileIngestProgressBar.finish();
+                    fileIngestProgressBar = null;
+                }
+
+                if (artifactIngestProgressBar != null) {
+                    artifactIngestProgressBar.finish();
+                    artifactIngestProgressBar = null;
+                }
             });
         }
     }
@@ -1008,19 +1017,7 @@ final class IngestJobExecutor {
                 shutDownIngestModulePipeline(pipeline);
             }
 
-            if (usingNetBeansGUI) {
-                SwingUtilities.invokeLater(() -> {
-                    if (dataSourceIngestProgressBar != null) {
-                        dataSourceIngestProgressBar.finish();
-                        dataSourceIngestProgressBar = null;
-                    }
-
-                    if (fileIngestProgressBar != null) {
-                        fileIngestProgressBar.finish();
-                        fileIngestProgressBar = null;
-                    }
-                });
-            }
+            finishFirstStageProgressBars();
 
             if (!jobCancelled && hasLowPriorityDataSourceIngestModules()) {
                 startLowPriorityDataSourceAnalysis();
@@ -1041,7 +1038,7 @@ final class IngestJobExecutor {
 
             shutDownIngestModulePipeline(currentDataSourceIngestPipeline);
             shutDownIngestModulePipeline(artifactIngestPipeline);
-            finishProgressIndicators();
+            finishProgressBars();
 
             if (ingestJobInfo != null) {
                 if (jobCancelled) {
@@ -1364,6 +1361,20 @@ final class IngestJobExecutor {
     }
 
     /**
+     * Switches the file ingest progress bar to determinate mode, using the
+     * estimated number of files to process as the number of work units.
+     */
+    private void switchFileIngestProgressBarToDeterminate() {
+        if (usingNetBeansGUI) {
+            SwingUtilities.invokeLater(() -> {
+                if (fileIngestProgressBar != null) {
+                    fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
+                }
+            });
+        }
+    }
+
+    /**
      * Queries whether or not a temporary cancellation of data source level
      * ingest in order to stop the currently executing data source level ingest
      * module is in effect for this job.
@@ -1383,7 +1394,6 @@ final class IngestJobExecutor {
     void currentDataSourceIngestModuleCancellationCompleted(String moduleDisplayName) {
         currentDataSourceIngestModuleCancelled = false;
         cancelledDataSourceIngestModules.add(moduleDisplayName);
-
         if (usingNetBeansGUI) {
             SwingUtilities.invokeLater(() -> {
                 /**
@@ -1433,7 +1443,6 @@ final class IngestJobExecutor {
     void cancel(IngestJob.CancellationReason reason) {
         jobCancelled = true;
         cancellationReason = reason;
-        IngestJobExecutor.taskScheduler.cancelPendingFileTasksForIngestJob(this);
 
         if (usingNetBeansGUI) {
             SwingUtilities.invokeLater(() -> {
@@ -1446,8 +1455,15 @@ final class IngestJobExecutor {
                     fileIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.fileIngest.displayName", dataSource.getName()));
                     fileIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
                 }
+
+                if (artifactIngestProgressBar != null) {
+                    artifactIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.dataArtifactIngest.displayName", dataSource.getName()));
+                    artifactIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
+                }
             });
         }
+
+        IngestJobExecutor.taskScheduler.cancelPendingFileTasksForIngestJob(this);
 
         synchronized (threadRegistrationLock) {
             for (Thread thread : pausedIngestThreads) {
