@@ -959,7 +959,7 @@ final class IngestJobExecutor {
     /**
      * Finishes all current progress bars.
      */
-    private void finishProgressBars() {
+    private void finishAllProgressBars() {
         if (usingNetBeansGUI) {
             SwingUtilities.invokeLater(() -> {
                 if (dataSourceIngestProgressBar != null) {
@@ -1038,7 +1038,7 @@ final class IngestJobExecutor {
 
             shutDownIngestModulePipeline(currentDataSourceIngestPipeline);
             shutDownIngestModulePipeline(artifactIngestPipeline);
-            finishProgressBars();
+            finishAllProgressBars();
 
             if (ingestJobInfo != null) {
                 if (jobCancelled) {
@@ -1114,7 +1114,7 @@ final class IngestJobExecutor {
                 if (!pipeline.isEmpty()) {
                     /*
                      * Get the file from the task. If the file was "streamed,"
-                     * the task may only have the file object ID and a trip to
+                     * the task may only have the file object ID, and a trip to
                      * the case database will be required.
                      */
                     AbstractFile file;
@@ -1128,47 +1128,24 @@ final class IngestJobExecutor {
                         return;
                     }
 
+                    /**
+                     * Run the file through the modules in the file ingest
+                     * pipeline.
+                     */
                     final String fileName = file.getName();
                     processedFiles++;
-                    if (usingNetBeansGUI) {
-                        SwingUtilities.invokeLater(() -> {
-                            if (processedFiles <= estimatedFilesToProcess) {
-                                fileIngestProgressBar.progress(fileName, (int) processedFiles);
-                            } else {
-                                fileIngestProgressBar.progress(fileName, (int) estimatedFilesToProcess);
-                            }
-                            filesInProgress.add(fileName);
-                        });
-                    }
-
-                    /**
-                     * Run the file through the modules in the pipeline.
-                     */
+                    updateFileIngestProgressForFileTaskStarted(fileName);
                     List<IngestModuleError> errors = new ArrayList<>();
                     errors.addAll(pipeline.performTask(task));
                     if (!errors.isEmpty()) {
                         logIngestModuleErrors(errors, file);
                     }
-
-                    if (usingNetBeansGUI && !jobCancelled) {
-                        SwingUtilities.invokeLater(() -> {
-                            /**
-                             * Update the file ingest progress bar again, in
-                             * case the file was being displayed.
-                             */
-                            filesInProgress.remove(fileName);
-                            if (filesInProgress.size() > 0) {
-                                fileIngestProgressBar.progress(filesInProgress.get(0));
-                            } else {
-                                fileIngestProgressBar.progress("");
-                            }
-                        });
-                    }
+                    updateFileProgressBarForFileTaskCompleted(fileName);
                 }
                 fileIngestPipelinesQueue.put(pipeline);
             }
         } catch (InterruptedException ex) {
-            logger.log(Level.SEVERE, String.format("Unexpected interrupt of file ingest thread during execution of file ingest job (file obj ID = %d)", task.getFileId()), ex);
+            logger.log(Level.SEVERE, String.format("Unexpected interrupt of file ingest thread during execution of file ingest job (file object ID = %d, thread ID = %d)", task.getFileId(), task.getThreadId()), ex);
             Thread.currentThread().interrupt();
         } finally {
             taskScheduler.notifyTaskCompleted(task);
@@ -1263,7 +1240,7 @@ final class IngestJobExecutor {
 
     /**
      * Updates the display name shown on the current data source level ingest
-     * progress bar for this job.
+     * progress bar for this job, if the job has not been cancelled.
      *
      * @param displayName The new display name.
      */
@@ -1279,8 +1256,8 @@ final class IngestJobExecutor {
 
     /**
      * Switches the current data source level ingest progress bar to determinate
-     * mode. This should be called if the total work units to process the data
-     * source is known.
+     * mode, if the job has not been cancelled. This should be called if the
+     * total work units to process the data source is known.
      *
      * @param workUnits Total number of work units for the processing of the
      *                  data source.
@@ -1297,8 +1274,8 @@ final class IngestJobExecutor {
 
     /**
      * Switches the current data source level ingest progress bar to
-     * indeterminate mode. This should be called if the total work units to
-     * process the data source is unknown.
+     * indeterminate mode, if the job has not been cancelled. This should be
+     * called if the total work units to process the data source is unknown.
      */
     void switchDataSourceIngestProgressBarToIndeterminate() {
         if (usingNetBeansGUI && !jobCancelled) {
@@ -1312,7 +1289,8 @@ final class IngestJobExecutor {
 
     /**
      * Updates the current data source level ingest progress bar with the number
-     * of work units performed, if in the determinate mode.
+     * of work units performed, if in the determinate mode, and the job has not
+     * been cancelled.
      *
      * @param workUnits Number of work units performed.
      */
@@ -1328,7 +1306,8 @@ final class IngestJobExecutor {
 
     /**
      * Updates the current data source level ingest progress bar with a new task
-     * name, where the task name is the "subtitle" under the display name.
+     * name, where the task name is the "subtitle" under the display name, if
+     * the job has not been cancelled.
      *
      * @param currentTask The task name.
      */
@@ -1344,8 +1323,9 @@ final class IngestJobExecutor {
 
     /**
      * Updates the current data source level ingest progress bar with a new task
-     * name and the number of work units performed, if in the determinate mode.
-     * The task name is the "subtitle" under the display name.
+     * name and the number of work units performed, if in the determinate mode,
+     * and the job has not been cancelled. The task name is the "subtitle" under
+     * the display name.
      *
      * @param currentTask The task name.
      * @param workUnits   Number of work units performed.
@@ -1375,6 +1355,74 @@ final class IngestJobExecutor {
     }
 
     /**
+     * Updates the current file ingest progress bar upon start of analysis of a
+     * file, if the job has not been cancelled, if the job has not been
+     * cancelled.
+     *
+     * @param fileName The name of the file.
+     */
+    private void updateFileIngestProgressForFileTaskStarted(String fileName) {
+        if (usingNetBeansGUI && !jobCancelled) {
+            SwingUtilities.invokeLater(() -> {
+                if (processedFiles <= estimatedFilesToProcess) {
+                    fileIngestProgressBar.progress(fileName, (int) processedFiles);
+                } else {
+                    fileIngestProgressBar.progress(fileName, (int) estimatedFilesToProcess);
+                }
+                filesInProgress.add(fileName);
+            });
+        }
+    }
+
+    /**
+     * Updates the current file ingest progress bar upon completion of analysis
+     * of a file, if the job has not been cancelled.
+     *
+     * @param fileName The name of the file.
+     */
+    private void updateFileProgressBarForFileTaskCompleted(String fileName) {
+        if (usingNetBeansGUI && !jobCancelled) {
+            SwingUtilities.invokeLater(() -> {
+                filesInProgress.remove(fileName);
+                /*
+                 * Display the name of another file in progress, or the empty
+                 * string if there are none.
+                 */
+                if (filesInProgress.size() > 0) {
+                    fileIngestProgressBar.progress(filesInProgress.get(0));
+                } else {
+                    fileIngestProgressBar.progress(""); // NON-NLS
+                }
+            });
+        }
+    }
+
+    /**
+     * Displays a "cancelling" message on all of the current ingest message
+     * progress bars.
+     */
+    private void displayCancellingProgressMessage() {
+        if (usingNetBeansGUI) {
+            SwingUtilities.invokeLater(() -> {
+                if (dataSourceIngestProgressBar != null) {
+                    dataSourceIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName()));
+                    dataSourceIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
+                }
+
+                if (fileIngestProgressBar != null) {
+                    fileIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.fileIngest.displayName", dataSource.getName()));
+                    fileIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
+                }
+
+                if (artifactIngestProgressBar != null) {
+                    artifactIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.dataArtifactIngest.displayName", dataSource.getName()));
+                    artifactIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
+                }
+            });
+        }
+    }
+
+    /**
      * Queries whether or not a temporary cancellation of data source level
      * ingest in order to stop the currently executing data source level ingest
      * module is in effect for this job.
@@ -1387,14 +1435,16 @@ final class IngestJobExecutor {
 
     /**
      * Rescinds a temporary cancellation of data source level ingest that was
-     * used to stop a single data source level ingest module for this job.
+     * used to stop a single data source level ingest module for this job. The
+     * data source ingest progress bar is reset, if the job has not been
+     * cancelled.
      *
      * @param moduleDisplayName The display name of the module that was stopped.
      */
     void currentDataSourceIngestModuleCancellationCompleted(String moduleDisplayName) {
         currentDataSourceIngestModuleCancelled = false;
         cancelledDataSourceIngestModules.add(moduleDisplayName);
-        if (usingNetBeansGUI) {
+        if (usingNetBeansGUI && !jobCancelled) {
             SwingUtilities.invokeLater(() -> {
                 /**
                  * A new progress bar must be created because the cancel button
@@ -1443,26 +1493,7 @@ final class IngestJobExecutor {
     void cancel(IngestJob.CancellationReason reason) {
         jobCancelled = true;
         cancellationReason = reason;
-
-        if (usingNetBeansGUI) {
-            SwingUtilities.invokeLater(() -> {
-                if (dataSourceIngestProgressBar != null) {
-                    dataSourceIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName()));
-                    dataSourceIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
-                }
-
-                if (fileIngestProgressBar != null) {
-                    fileIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.fileIngest.displayName", dataSource.getName()));
-                    fileIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
-                }
-
-                if (artifactIngestProgressBar != null) {
-                    artifactIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.dataArtifactIngest.displayName", dataSource.getName()));
-                    artifactIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
-                }
-            });
-        }
-
+        displayCancellingProgressMessage();
         IngestJobExecutor.taskScheduler.cancelPendingFileTasksForIngestJob(this);
 
         synchronized (threadRegistrationLock) {
