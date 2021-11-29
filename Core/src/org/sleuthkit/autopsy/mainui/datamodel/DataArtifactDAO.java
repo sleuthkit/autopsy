@@ -142,7 +142,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         String expectedAccountType = searchParams.getParamData().getAccountType();
 
         List<BlackboardArtifact> allAccounts = new ArrayList<>();
-        allAccounts.addAll(blackboard.getAnalysisResultsWhere(originalWhereClause));
+        allAccounts.addAll(blackboard.getDataArtifactsWhere(originalWhereClause));
         blackboard.loadBlackboardAttributes(allAccounts);
 
         // Filter for the selected set
@@ -237,12 +237,12 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<AccountSearchParams> getAccountsCounts(Long dataSourceId) throws ExecutionException {
-        String query = "SELECT res.account_type AS account_type, MIN(res.account_display_name) AS account_display_name, COUNT(*) AS count\n"
+        String query = "res.account_type AS account_type, MIN(res.account_display_name) AS account_display_name, COUNT(*) AS count\n"
                 + "FROM (\n"
                 + "  SELECT MIN(account_types.type_name) AS account_type, MIN(account_types.display_name) AS account_display_name\n"
                 + "  FROM blackboard_artifacts\n"
                 + "  LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id\n"
-                + "  LEFT JOIN account_types ON blackboard_artifacts.value_text = account_types.type_name\n"
+                + "  LEFT JOIN account_types ON blackboard_attributes.value_text = account_types.type_name\n"
                 + "  WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
                 + "  AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
                 + (dataSourceId != null && dataSourceId > 0 ? "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId + " " : " ") + "\n"
@@ -310,14 +310,17 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
     }
 
-    public static class AccountFetcher extends DAOFetcher<AccountSearchParams> {
+    /**
+     * Handles fetching and paging of account data artifacts.
+     */
+    public static class DataArtifactAccountFetcher extends DAOFetcher<AccountSearchParams> {
 
         /**
          * Main constructor.
          *
          * @param params Parameters to handle fetching of data.
          */
-        public AccountFetcher(AccountSearchParams params) {
+        public DataArtifactAccountFetcher(AccountSearchParams params) {
             super(params);
         }
 

@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 
@@ -179,6 +180,42 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
      */
     static class AccountTypeNode extends TreeNode<AccountSearchParams> {
 
+        private static final String ICON_BASE_PATH = "org/sleuthkit/autopsy/images/"; //NON-NLS
+
+        /**
+         * Get the path of the icon for the given Account Type.
+         *
+         * @return The path of the icon for the given Account Type.
+         */
+        public static String getAccountIconPath(String accountType) {
+
+            if (accountType.equals(Account.Type.CREDIT_CARD.getTypeName())) {
+                return ICON_BASE_PATH + "credit-card.png";
+            } else if (accountType.equals(Account.Type.DEVICE.getTypeName())) {
+                return ICON_BASE_PATH + "image.png";
+            } else if (accountType.equals(Account.Type.EMAIL.getTypeName())) {
+                return ICON_BASE_PATH + "email.png";
+            } else if (accountType.equals(Account.Type.FACEBOOK.getTypeName())) {
+                return ICON_BASE_PATH + "facebook.png";
+            } else if (accountType.equals(Account.Type.INSTAGRAM.getTypeName())) {
+                return ICON_BASE_PATH + "instagram.png";
+            } else if (accountType.equals(Account.Type.MESSAGING_APP.getTypeName())) {
+                return ICON_BASE_PATH + "messaging.png";
+            } else if (accountType.equals(Account.Type.PHONE.getTypeName())) {
+                return ICON_BASE_PATH + "phone.png";
+            } else if (accountType.equals(Account.Type.TWITTER.getTypeName())) {
+                return ICON_BASE_PATH + "twitter.png";
+            } else if (accountType.equals(Account.Type.WEBSITE.getTypeName())) {
+                return ICON_BASE_PATH + "web-file.png";
+            } else if (accountType.equals(Account.Type.WHATSAPP.getTypeName())) {
+                return ICON_BASE_PATH + "WhatsApp.png";
+            } else if (accountType.equals(Account.Type.CREDIT_CARD.getTypeName())) {
+                return ICON_BASE_PATH + "credit-cards.png";
+            } else {
+                return ICON_BASE_PATH + "face.png";
+            }
+        }
+
         /**
          * Main constructor.
          *
@@ -186,15 +223,13 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
          */
         public AccountTypeNode(TreeResultsDTO.TreeItemDTO<? extends AccountSearchParams> itemData) {
             super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
-                    itemData,
-                    Children.LEAF,
-                    getDefaultLookup(itemData));
+                    getAccountIconPath(itemData.getTypeData().getAccountType()),
+                    itemData);
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            // TODO action for clicking on a single account type.
+            dataResultPanel.displayAccounts(super.getItemData().getTypeData());
         }
     }
 }

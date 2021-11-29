@@ -62,11 +62,13 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.mainui.datamodel.AccountSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultSetFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactAccountFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
@@ -512,7 +514,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         // if search result root node, it's fine; otherwise, wrap in result 
         // viewer filter node to make sure there are no grandchildren
-        this.currentRootNode = (rootNode instanceof SearchResultRootNode) 
+        this.currentRootNode = (rootNode instanceof SearchResultRootNode)
                 ? rootNode
                 : new ResultViewerFilterParentNode(rootNode);
 
@@ -1187,6 +1189,27 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
     }
 
+    /**
+     * Displays results for querying the DAO for accounts matching the search
+     * parameters query.
+     *
+     * @param accountParams The search parameter query.
+     */
+    void displayAccounts(AccountSearchParams accountParams) {
+        try {
+            this.searchResultManager = new SearchManager(new DataArtifactAccountFetcher(accountParams), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING,
+                    MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}, account type: {2}]",
+                            accountParams.getArtifactType(),
+                            accountParams.getDataSourceId() == null ? "<null>" : accountParams.getDataSourceId(),
+                            accountParams.getAccountType()),
+                    ex);
+        }
+    }
+
     void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
         try {
             this.searchResultManager = new SearchManager(new AnalysisResultFetcher(analysisResultParams), getPageSize());
@@ -1321,7 +1344,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ex);
         }
     }
-    
+
     /**
      * Displays results of querying the DAO for the given search parameters
      * query.
@@ -1361,7 +1384,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ex);
         }
     }
-    
+
     /**
      * Displays results of querying the DAO for the given search parameters
      * query.
@@ -1513,6 +1536,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         /**
          * Main constructor.
+         *
          * @param original The original node to wrap.
          */
         ResultViewerFilterParentNode(Node original) {

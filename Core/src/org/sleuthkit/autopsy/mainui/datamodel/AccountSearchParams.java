@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -44,4 +45,32 @@ public class AccountSearchParams extends DataArtifactSearchParam {
     public String getAccountType() {
         return accountType;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 37 * hash + Objects.hashCode(this.accountType);
+        hash = 37 * hash + super.hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final AccountSearchParams other = (AccountSearchParams) obj;
+        if (!Objects.equals(this.accountType, other.accountType)) {
+            return false;
+        }
+        return super.equals(obj);
+    }
+    
+    
 }
