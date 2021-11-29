@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestTasksScheduler.IngestJobTasksSnapshot;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -190,21 +192,26 @@ final class IngestJobExecutor {
 
     /*
      * If running in the NetBeans thick client application version of Autopsy,
-     * NetBeans progress bars are used to display ingest job progress in the
-     * lower right hand corner of the main application window. A layer of
-     * abstraction to allow alternate representations of progress could be used
-     * here, as it is in other places in the application, to better decouple
-     * this object from the application's presentation layer.
+     * NetBeans progress handles (i.e., progress bars) are used to display
+     * ingest job progress in the lower right hand corner of the main
+     * application window.
+     *
+     * A layer of abstraction to allow alternate representations of progress
+     * could be used here, as it is in other places in the application (see
+     * implementations and usage of
+     * org.sleuthkit.autopsy.progress.ProgressIndicator interface), to better
+     * decouple this object from the application's presentation layer.
      */
+    private volatile long estimatedFilesToProcess;
+    private volatile long processedFiles;
     private final boolean usingNetBeansGUI;
-    private final Object dataSourceIngestProgressLock = new Object();
-    private ProgressHandle dataSourceIngestProgressBar;
-    private final Object fileIngestProgressLock = new Object();
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private final List<String> filesInProgress = new ArrayList<>();
-    private long estimatedFilesToProcess;
-    private long processedFiles;
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private ProgressHandle dataSourceIngestProgressBar;
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private ProgressHandle fileIngestProgressBar;
-    private final Object artifactIngestProgressLock = new Object();
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private ProgressHandle artifactIngestProgressBar;
 
     /*
@@ -674,14 +681,10 @@ final class IngestJobExecutor {
                  * how many files remain to be analyzed as each file ingest task
                  * is completed.
                  */
-                long filesToProcess;
                 if (files.isEmpty()) {
-                    filesToProcess = dataSource.accept(new GetFilesCountVisitor());
+                    estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
                 } else {
-                    filesToProcess = files.size();
-                }
-                synchronized (fileIngestProgressLock) {
-                    estimatedFilesToProcess = filesToProcess;
+                    estimatedFilesToProcess = files.size();
                 }
             }
 
@@ -781,17 +784,21 @@ final class IngestJobExecutor {
 
             if (hasFileIngestModules()) {
                 /*
-                 * Do a count of the files the data source processor has added
-                 * to the case database. This number will be used to estimate
-                 * how many files remain to be analyzed as each file ingest task
-                 * is completed.
+                 * For ingest job progress reporting purposes, do a count of the
+                 * files the data source processor has added to the case
+                 * database. This number will be used to estimate how many files
+                 * remain to be analyzed as each file ingest task is completed.
+                 * The estimate will likely be an over-estimate, since some of
+                 * the files will have already been "streamed" to this job and
+                 * processed.
                  */
-                long filesToProcess = dataSource.accept(new GetFilesCountVisitor());
-                synchronized (fileIngestProgressLock) {
-                    estimatedFilesToProcess = filesToProcess;
-                    if (usingNetBeansGUI && fileIngestProgressBar != null) {
-                        fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
-                    }
+                estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
+                if (usingNetBeansGUI) {
+                    SwingUtilities.invokeLater(() -> {
+                        if (fileIngestProgressBar != null) {
+                            fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
+                        }
+                    });
                 }
             }
 
@@ -852,18 +859,20 @@ final class IngestJobExecutor {
      */
     private void startArtifactIngestProgressBar() {
         if (usingNetBeansGUI) {
-            synchronized (artifactIngestProgressLock) {
+            SwingUtilities.invokeLater(() -> {
                 String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataArtifactIngest.displayName", this.dataSource.getName());
                 artifactIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
                     @Override
                     public boolean cancel() {
-                        IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                        new Thread(() -> {
+                            IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
+                        }).start();
                         return true;
                     }
                 });
                 artifactIngestProgressBar.start();
                 artifactIngestProgressBar.switchToIndeterminate();
-            }
+            });
         }
     }
 
@@ -876,34 +885,57 @@ final class IngestJobExecutor {
      * cancellation occurs is NOT discarded.
      */
     private void startDataSourceIngestProgressBar() {
-        if (usingNetBeansGUI) {
-            synchronized (dataSourceIngestProgressLock) {
-                String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName());
-                dataSourceIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
-                    @Override
-                    public boolean cancel() {
-                        /*
-                         * The user has already pressed the cancel button on
-                         * this progress bar, and the OK button of a cancelation
-                         * confirmation dialog supplied by NetBeans. Find out
-                         * whether the user wants to cancel only the currently
-                         * executing data source ingest module or the entire
-                         * ingest job.
-                         */
-                        DataSourceIngestCancellationPanel panel = new DataSourceIngestCancellationPanel();
-                        String dialogTitle = NbBundle.getMessage(IngestJobExecutor.this.getClass(), "IngestJob.cancellationDialog.title");
-                        JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
-                        if (panel.cancelAllDataSourceIngestModules()) {
+        SwingUtilities.invokeLater(() -> {
+            String displayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName());
+            dataSourceIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
+                @Override
+                public boolean cancel() {
+                    /*
+                     * The user has already pressed the cancel button on this
+                     * progress bar, and the OK button of a cancelation
+                     * confirmation dialog supplied by NetBeans. Find out
+                     * whether the user wants to cancel only the currently
+                     * executing data source ingest module or the entire ingest
+                     * job.
+                     */
+                    DataSourceIngestCancellationPanel panel = new DataSourceIngestCancellationPanel();
+                    String dialogTitle = NbBundle.getMessage(IngestJobExecutor.this.getClass(), "IngestJob.cancellationDialog.title");
+                    JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(), panel, dialogTitle, JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE);
+                    if (panel.cancelAllDataSourceIngestModules()) {
+                        new Thread(() -> {
                             IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
-                        } else {
+                        }).start();
+                    } else {
+                        new Thread(() -> {
                             IngestJobExecutor.this.cancelCurrentDataSourceIngestModule();
-                        }
-                        return true;
+                        }).start();
                     }
-                });
-                dataSourceIngestProgressBar.start();
-                dataSourceIngestProgressBar.switchToIndeterminate();
-            }
+                    return true;
+                }
+            });
+            dataSourceIngestProgressBar.start();
+            dataSourceIngestProgressBar.switchToIndeterminate();
+        });
+    }
+
+    private void finishProgressIndicators() {
+        if (usingNetBeansGUI) {
+            SwingUtilities.invokeLater(() -> {
+                if (dataSourceIngestProgressBar != null) {
+                    dataSourceIngestProgressBar.finish();
+                    dataSourceIngestProgressBar = null;
+                }
+
+                if (fileIngestProgressBar != null) {
+                    fileIngestProgressBar.finish();
+                    fileIngestProgressBar = null;
+                }
+
+                if (artifactIngestProgressBar != null) {
+                    artifactIngestProgressBar.finish();
+                    artifactIngestProgressBar = null;
+                }
+            });
         }
     }
 
@@ -915,20 +947,20 @@ final class IngestJobExecutor {
      * discarded.
      */
     private void startFileIngestProgressBar() {
-        if (usingNetBeansGUI) {
-            synchronized (fileIngestProgressLock) {
-                String displayName = NbBundle.getMessage(getClass(), "IngestJob.progress.fileIngest.displayName", dataSource.getName());
-                fileIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
-                    @Override
-                    public boolean cancel() {
+        SwingUtilities.invokeLater(() -> {
+            String displayName = NbBundle.getMessage(getClass(), "IngestJob.progress.fileIngest.displayName", dataSource.getName());
+            fileIngestProgressBar = ProgressHandle.createHandle(displayName, new Cancellable() {
+                @Override
+                public boolean cancel() {
+                    new Thread(() -> {
                         IngestJobExecutor.this.cancel(IngestJob.CancellationReason.USER_CANCELLED);
-                        return true;
-                    }
-                });
-                fileIngestProgressBar.start();
-                fileIngestProgressBar.switchToDeterminate((int) this.estimatedFilesToProcess);
-            }
-        }
+                    }).start();
+                    return true;
+                }
+            });
+            fileIngestProgressBar.start();
+            fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
+        });
     }
 
     /**
@@ -969,19 +1001,17 @@ final class IngestJobExecutor {
             }
 
             if (usingNetBeansGUI) {
-                synchronized (dataSourceIngestProgressLock) {
+                SwingUtilities.invokeLater(() -> {
                     if (dataSourceIngestProgressBar != null) {
                         dataSourceIngestProgressBar.finish();
                         dataSourceIngestProgressBar = null;
                     }
-                }
 
-                synchronized (fileIngestProgressLock) {
                     if (fileIngestProgressBar != null) {
                         fileIngestProgressBar.finish();
                         fileIngestProgressBar = null;
                     }
-                }
+                });
             }
 
             if (!jobCancelled && hasLowPriorityDataSourceIngestModules()) {
@@ -993,7 +1023,8 @@ final class IngestJobExecutor {
     }
 
     /**
-     * Shuts down the ingest module pipelines and progress bars.
+     * Shuts down the ingest module pipelines and ingest job progress
+     * indicators.
      */
     private void shutDown() {
         synchronized (stageTransitionLock) {
@@ -1002,29 +1033,7 @@ final class IngestJobExecutor {
 
             shutDownIngestModulePipeline(currentDataSourceIngestPipeline);
             shutDownIngestModulePipeline(artifactIngestPipeline);
-
-            if (usingNetBeansGUI) {
-                synchronized (dataSourceIngestProgressLock) {
-                    if (dataSourceIngestProgressBar != null) {
-                        dataSourceIngestProgressBar.finish();
-                        dataSourceIngestProgressBar = null;
-                    }
-                }
-
-                synchronized (fileIngestProgressLock) {
-                    if (fileIngestProgressBar != null) {
-                        fileIngestProgressBar.finish();
-                        fileIngestProgressBar = null;
-                    }
-                }
-
-                synchronized (artifactIngestProgressLock) {
-                    if (artifactIngestProgressBar != null) {
-                        artifactIngestProgressBar.finish();
-                        artifactIngestProgressBar = null;
-                    }
-                }
-            }
+            finishProgressIndicators();
 
             if (ingestJobInfo != null) {
                 if (jobCancelled) {
@@ -1114,16 +1123,17 @@ final class IngestJobExecutor {
                         return;
                     }
 
-                    synchronized (fileIngestProgressLock) {
-                        ++processedFiles;
-                        if (usingNetBeansGUI) {
+                    final String fileName = file.getName();
+                    processedFiles++;
+                    if (usingNetBeansGUI) {
+                        SwingUtilities.invokeLater(() -> {
                             if (processedFiles <= estimatedFilesToProcess) {
-                                fileIngestProgressBar.progress(file.getName(), (int) processedFiles);
+                                fileIngestProgressBar.progress(fileName, (int) processedFiles);
                             } else {
-                                fileIngestProgressBar.progress(file.getName(), (int) estimatedFilesToProcess);
+                                fileIngestProgressBar.progress(fileName, (int) estimatedFilesToProcess);
                             }
-                            filesInProgress.add(file.getName());
-                        }
+                            filesInProgress.add(fileName);
+                        });
                     }
 
                     /**
@@ -1136,18 +1146,18 @@ final class IngestJobExecutor {
                     }
 
                     if (usingNetBeansGUI && !jobCancelled) {
-                        synchronized (fileIngestProgressLock) {
+                        SwingUtilities.invokeLater(() -> {
                             /**
                              * Update the file ingest progress bar again, in
                              * case the file was being displayed.
                              */
-                            filesInProgress.remove(file.getName());
+                            filesInProgress.remove(fileName);
                             if (filesInProgress.size() > 0) {
                                 fileIngestProgressBar.progress(filesInProgress.get(0));
                             } else {
                                 fileIngestProgressBar.progress("");
                             }
-                        }
+                        });
                     }
                 }
                 fileIngestPipelinesQueue.put(pipeline);
@@ -1254,11 +1264,11 @@ final class IngestJobExecutor {
      */
     void updateDataSourceIngestProgressBarDisplayName(String displayName) {
         if (usingNetBeansGUI && !jobCancelled) {
-            synchronized (dataSourceIngestProgressLock) {
+            SwingUtilities.invokeLater(() -> {
                 if (dataSourceIngestProgressBar != null) {
                     dataSourceIngestProgressBar.setDisplayName(displayName);
                 }
-            }
+            });
         }
     }
 
@@ -1272,11 +1282,11 @@ final class IngestJobExecutor {
      */
     void switchDataSourceIngestProgressBarToDeterminate(int workUnits) {
         if (usingNetBeansGUI && !jobCancelled) {
-            synchronized (dataSourceIngestProgressLock) {
+            SwingUtilities.invokeLater(() -> {
                 if (dataSourceIngestProgressBar != null) {
                     dataSourceIngestProgressBar.switchToDeterminate(workUnits);
                 }
-            }
+            });
         }
     }
 
@@ -1287,11 +1297,11 @@ final class IngestJobExecutor {
      */
     void switchDataSourceIngestProgressBarToIndeterminate() {
         if (usingNetBeansGUI && !jobCancelled) {
-            synchronized (dataSourceIngestProgressLock) {
+            SwingUtilities.invokeLater(() -> {
                 if (dataSourceIngestProgressBar != null) {
                     dataSourceIngestProgressBar.switchToIndeterminate();
                 }
-            }
+            });
         }
     }
 
@@ -1303,11 +1313,11 @@ final class IngestJobExecutor {
      */
     void advanceDataSourceIngestProgressBar(int workUnits) {
         if (usingNetBeansGUI && !jobCancelled) {
-            synchronized (dataSourceIngestProgressLock) {
+            SwingUtilities.invokeLater(() -> {
                 if (dataSourceIngestProgressBar != null) {
                     dataSourceIngestProgressBar.progress("", workUnits);
                 }
-            }
+            });
         }
     }
 
@@ -1319,11 +1329,11 @@ final class IngestJobExecutor {
      */
     void advanceDataSourceIngestProgressBar(String currentTask) {
         if (usingNetBeansGUI && !jobCancelled) {
-            synchronized (dataSourceIngestProgressLock) {
+            SwingUtilities.invokeLater(() -> {
                 if (dataSourceIngestProgressBar != null) {
                     dataSourceIngestProgressBar.progress(currentTask);
                 }
-            }
+            });
         }
     }
 
@@ -1337,11 +1347,11 @@ final class IngestJobExecutor {
      */
     void advanceDataSourceIngestProgressBar(String currentTask, int workUnits) {
         if (usingNetBeansGUI && !jobCancelled) {
-            synchronized (dataSourceIngestProgressLock) {
+            SwingUtilities.invokeLater(() -> {
                 if (dataSourceIngestProgressBar != null) {
                     dataSourceIngestProgressBar.progress(currentTask, workUnits);
                 }
-            }
+            });
         }
     }
 
@@ -1367,18 +1377,18 @@ final class IngestJobExecutor {
         cancelledDataSourceIngestModules.add(moduleDisplayName);
 
         if (usingNetBeansGUI) {
-            /**
-             * A new progress bar must be created because the cancel button of
-             * the previously constructed component is disabled by NetBeans when
-             * the user selects the "OK" button of the cancellation confirmation
-             * dialog popped up by NetBeans when the progress bar cancel button
-             * is pressed.
-             */
-            synchronized (dataSourceIngestProgressLock) {
+            SwingUtilities.invokeLater(() -> {
+                /**
+                 * A new progress bar must be created because the cancel button
+                 * of the previously constructed component is disabled by
+                 * NetBeans when the user selects the "OK" button of the
+                 * cancellation confirmation dialog popped up by NetBeans when
+                 * the progress bar cancel button is pressed.
+                 */
                 dataSourceIngestProgressBar.finish();
                 dataSourceIngestProgressBar = null;
                 startDataSourceIngestProgressBar();
-            }
+            });
         }
     }
 
@@ -1404,8 +1414,11 @@ final class IngestJobExecutor {
     }
 
     /**
-     * Requests cancellation of ingest, i.e., a shutdown of the data source
-     * level and file level ingest pipelines.
+     * Requests cancellation of the ingest job. All pending ingest tasks for the
+     * job will be cancelled, but any tasks already in progress in ingest
+     * threads will run to completion. This could take a while if the ingest
+     * modules executing the tasks are not checking the ingest job cancellation
+     * flag via the ingest joib context.
      *
      * @param reason The cancellation reason.
      */
@@ -1415,19 +1428,17 @@ final class IngestJobExecutor {
         IngestJobExecutor.taskScheduler.cancelPendingFileTasksForIngestJob(this);
 
         if (usingNetBeansGUI) {
-            synchronized (dataSourceIngestProgressLock) {
+            SwingUtilities.invokeLater(() -> {
                 if (dataSourceIngestProgressBar != null) {
                     dataSourceIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName()));
                     dataSourceIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
                 }
-            }
 
-            synchronized (this.fileIngestProgressLock) {
-                if (null != this.fileIngestProgressBar) {
-                    this.fileIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.fileIngest.displayName", dataSource.getName()));
-                    this.fileIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
+                if (fileIngestProgressBar != null) {
+                    fileIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.fileIngest.displayName", dataSource.getName()));
+                    fileIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
                 }
-            }
+            });
         }
 
         synchronized (threadRegistrationLock) {
@@ -1437,15 +1448,13 @@ final class IngestJobExecutor {
             pausedIngestThreads.clear();
         }
 
-        /*
-         * If a data source had no tasks in progress it may now be complete.
-         */
         checkForStageCompleted();
     }
 
     /**
-     * Queries whether or not cancellation, i.e., a shut down of the data source
-     * level and file level ingest pipelines for this job, has been requested.
+     * Queries whether or not cancellation of the ingest job has been requested.
+     * Ingest modules executing ingest tasks for this job should check this flag
+     * frequently via the ingest job context.
      *
      * @return True or false.
      */
@@ -1454,9 +1463,9 @@ final class IngestJobExecutor {
     }
 
     /**
-     * Gets the reason this job was cancelled.
+     * If the ingest job was cancelled, gets the reason this job was cancelled.
      *
-     * @return The cancellation reason, may be not cancelled.
+     * @return The cancellation reason, may be "not cancelled."
      */
     IngestJob.CancellationReason getCancellationReason() {
         return cancellationReason;
@@ -1549,20 +1558,25 @@ final class IngestJobExecutor {
         long snapShotTime = new Date().getTime();
         IngestJobTasksSnapshot tasksSnapshot = null;
         if (includeIngestTasksSnapshot) {
-            synchronized (fileIngestProgressLock) {
-                processedFilesCount = processedFiles;
-                estimatedFilesToProcessCount = estimatedFilesToProcess;
-                snapShotTime = new Date().getTime();
-            }
+            processedFilesCount = processedFiles;
+            estimatedFilesToProcessCount = estimatedFilesToProcess;
+            snapShotTime = new Date().getTime();
             tasksSnapshot = taskScheduler.getTasksSnapshotForJob(getIngestJobId());
         }
-
-        return new Snapshot(dataSource.getName(),
-                getIngestJobId(), createTime,
+        return new Snapshot(
+                dataSource.getName(),
+                getIngestJobId(),
+                createTime,
                 getCurrentDataSourceIngestModule(),
-                fileIngestRunning, fileIngestStartTime,
-                jobCancelled, cancellationReason, cancelledDataSourceIngestModules,
-                processedFilesCount, estimatedFilesToProcessCount, snapShotTime, tasksSnapshot);
+                fileIngestRunning,
+                fileIngestStartTime,
+                jobCancelled,
+                cancellationReason,
+                cancelledDataSourceIngestModules,
+                processedFilesCount,
+                estimatedFilesToProcessCount,
+                snapShotTime,
+                tasksSnapshot);
     }
 
     /**

@@ -248,7 +248,8 @@ final class IngestSearchRunner {
     }
 
     /**
-     * Task to perform periodic searches for each job (does a single index commit first)
+     * Task to perform periodic searches for each job (does a single index
+     * commit first)
      */
     private final class PeriodicSearchTask implements Runnable {
 
@@ -296,24 +297,23 @@ final class IngestSearchRunner {
                                 NbBundle.getMessage(this.getClass(),
                                         "SearchRunner.Searcher.done.err.msg"), ex.getMessage()));
                     }// catch and ignore if we were cancelled
-                      catch (java.util.concurrent.CancellationException ex) {
+                    catch (java.util.concurrent.CancellationException ex) {
                     }
                 }
             }
             stopWatch.stop();
             logger.log(Level.INFO, "All periodic searches cumulatively took {0} secs", stopWatch.getElapsedTimeSecs()); //NON-NLS
-            
+
             // calculate "hold off" time
             recalculateUpdateIntervalTime(stopWatch.getElapsedTimeSecs()); // ELDEBUG
-            
+
             // schedule next PeriodicSearchTask
             jobProcessingTaskFuture = jobProcessingExecutor.schedule(new PeriodicSearchTask(), currentUpdateIntervalMs, MILLISECONDS);
-            
+
             // exit this thread
             return;
         }
-        
-        
+
         private void recalculateUpdateIntervalTime(long lastSerchTimeSec) {
             // If periodic search takes more than 1/4 of the current periodic search interval, then double the search interval
             if (lastSerchTimeSec * 1000 < currentUpdateIntervalMs / 4) {
@@ -321,7 +321,7 @@ final class IngestSearchRunner {
             }
             // double the search interval
             currentUpdateIntervalMs = currentUpdateIntervalMs * 2;
-            logger.log(Level.WARNING, "Last periodic search took {0} sec. Increasing search interval to {1} sec", new Object[]{lastSerchTimeSec, currentUpdateIntervalMs/1000});
+            logger.log(Level.WARNING, "Last periodic search took {0} sec. Increasing search interval to {1} sec", new Object[]{lastSerchTimeSec, currentUpdateIntervalMs / 1000});
             return;
         }
     }
@@ -484,26 +484,35 @@ final class IngestSearchRunner {
                         progressGroup.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
                     }
                     progressGroup.finish();
-                    return IngestSearchRunner.Searcher.this.cancel(true);
+                    new Thread(() -> {
+                        IngestSearchRunner.Searcher.this.cancel(true);
+                    }).start();
+                    return true;
                 }
-            }, null);
+            },
+                    null);
 
             updateKeywords();
 
-            ProgressContributor[] subProgresses = new ProgressContributor[keywords.size()];
-            int i = 0;
-            for (Keyword keywordQuery : keywords) {
-                subProgresses[i] = AggregateProgressFactory.createProgressContributor(keywordQuery.getSearchTerm());
-                progressGroup.addContributor(subProgresses[i]);
-                i++;
-            }
-
-            progressGroup.start();
+            SwingUtilities.invokeLater(() -> {
+                ProgressContributor[] subProgresses = new ProgressContributor[keywords.size()];
+                int i = 0;
+                for (Keyword keywordQuery : keywords) {
+                    subProgresses[i] = AggregateProgressFactory.createProgressContributor(keywordQuery.getSearchTerm());
+                    progressGroup.addContributor(subProgresses[i]);
+                    i++;
+                }
+                progressGroup.start();
+            });
 
             final StopWatch stopWatch = new StopWatch();
+
             stopWatch.start();
+
             try {
-                progressGroup.setDisplayName(displayName);
+                SwingUtilities.invokeLater(() -> {
+                    progressGroup.setDisplayName(displayName);
+                });
 
                 int keywordsSearched = 0;
 
