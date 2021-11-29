@@ -856,9 +856,12 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             AnalysisResultSetEvent setEvt = (AnalysisResultSetEvent) arEvt;
             return new TreeEvent(getSetTreeItem(setEvt.getArtifactType(), setEvt.getDataSourceId(),
                     setEvt.getSetName(), setEvt.getSetName() == null ? "" : setEvt.getSetName(),
-                    TreeDisplayCount.INDETERMINATE), shouldRefresh);
+                    shouldRefresh ? TreeDisplayCount.UNSPECIFIED : TreeDisplayCount.INDETERMINATE), 
+                    shouldRefresh);
         } else {
-            return new TreeEvent(getTreeItem(arEvt.getArtifactType(), arEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), shouldRefresh);
+            return new TreeEvent(getTreeItem(arEvt.getArtifactType(), arEvt.getDataSourceId(), 
+                    shouldRefresh ? TreeDisplayCount.UNSPECIFIED : TreeDisplayCount.INDETERMINATE), 
+                    shouldRefresh);
         }
     }
 

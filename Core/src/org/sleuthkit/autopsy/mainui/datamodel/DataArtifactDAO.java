@@ -158,7 +158,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.DATA_ARTIFACT, dataSourceId);
             List<TreeResultsDTO.TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
                     .map(entry -> {
-                        return getTreeItem(entry.getKey(), dataSourceId,
+                        return createTreeItem(entry.getKey(), dataSourceId,
                                 indeterminateTypes.contains(entry.getKey())
                                 ? TreeDisplayCount.INDETERMINATE
                                 : TreeDisplayCount.getDeterminate(entry.getValue()));
@@ -230,7 +230,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         List<TreeEvent> newTreeEvents = this.treeCounts.enqueueAll(dataArtifactEvents).stream()
-                .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false))
+                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false))
                 .collect(Collectors.toList());
 
         return Stream.of(dataArtifactEvents, newTreeEvents)
@@ -238,7 +238,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                 .collect(Collectors.toSet());
     }
 
-    private TreeItemDTO<DataArtifactSearchParam> getTreeItem(BlackboardArtifact.Type artifactType, Long dataSourceId, TreeDisplayCount displayCount) {
+    private TreeItemDTO<DataArtifactSearchParam> createTreeItem(BlackboardArtifact.Type artifactType, Long dataSourceId, TreeDisplayCount displayCount) {
         return new TreeResultsDTO.TreeItemDTO<>(
                 BlackboardArtifact.Category.DATA_ARTIFACT.name(),
                 new DataArtifactSearchParam(artifactType, dataSourceId),
@@ -250,14 +250,14 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     @Override
     Set<DAOEvent> handleIngestComplete() {
         return this.treeCounts.flushEvents().stream()
-                .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), true))
+                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true))
                 .collect(Collectors.toSet());
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
         return this.treeCounts.getEventTimeouts().stream()
-                .map(daoEvt -> new TreeEvent(getTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), true))
+                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true))
                 .collect(Collectors.toSet());
     }
 

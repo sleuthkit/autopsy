@@ -52,7 +52,8 @@ public class TreeResultsDTO<T> {
         public enum Type {
             DETERMINATE,
             INDETERMINATE,
-            NOT_SHOWN
+            NOT_SHOWN,
+            UNSPECIFIED
         }
 
         private final Type type;
@@ -60,6 +61,7 @@ public class TreeResultsDTO<T> {
 
         public static final TreeDisplayCount INDETERMINATE = new TreeDisplayCount(Type.INDETERMINATE, -1);
         public static final TreeDisplayCount NOT_SHOWN = new TreeDisplayCount(Type.NOT_SHOWN, -1);
+        public static final TreeDisplayCount UNSPECIFIED = new TreeDisplayCount(Type.UNSPECIFIED, -1);
 
         public static TreeDisplayCount getDeterminate(long count) {
             return new TreeDisplayCount(Type.DETERMINATE, count);
