@@ -22,9 +22,8 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.SwingWorker;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -53,8 +52,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * separate ExecutorService. Nodes should use the ExecutorService in BaseNode to
  * avoid interrupting other SwingWorkers.
  */
-public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
-
+public class SCOFetcher<T extends Content> implements Runnable {
+    
     private final WeakReference<SCOSupporter> weakSupporterRef;
     private static final Logger logger = Logger.getLogger(SCOFetcher.class.getName());
 
@@ -66,12 +65,28 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
     public SCOFetcher(WeakReference<SCOSupporter> weakSupporterRef) {
         this.weakSupporterRef = weakSupporterRef;
     }
-
+    
+    @Override
+    public void run() {
+        try {
+            SCOData data = doInBackground();
+            
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    SCOFetcher.done(data, weakSupporterRef.get());
+                }
+            });
+            
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "An exception occurred while trying to update the the SCO data", ex);
+        }
+    }
+    
     @NbBundle.Messages({"SCOFetcher_occurrences_defaultDescription=No correlation properties found",
         "SCOFetcher_occurrences_multipleProperties=Multiple different correlation properties exist for this result"
     })
-    @Override
-    protected SCOData doInBackground() throws Exception {
+    private SCOData doInBackground() throws Exception {
         SCOSupporter scoSupporter = weakSupporterRef.get();
         Content content = scoSupporter.getContent().get();
         //Check for stale reference or if columns are disabled
@@ -82,7 +97,7 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
         Pair<Score, String> scoreAndDescription;
         Pair<Long, String> countAndDescription = null;
         scoreAndDescription = scoSupporter.getScorePropertyAndDescription();
-
+        
         String description = Bundle.SCOFetcher_occurrences_defaultDescription();
         List<CorrelationAttributeInstance> listOfPossibleAttributes = new ArrayList<>();
         //the lists returned will be empty if the CR is not enabled
@@ -148,15 +163,15 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
                 logger.log(Level.SEVERE, "Unable to get the DataSource or OsAccountInstances from an OsAccount with ID: " + content.getId(), ex);
             }
         }
-
+        
         Optional<List<Tag>> optionalList = scoSupporter.getAllTagsFromDatabase();
-
+        
         DataResultViewerTable.HasCommentStatus commentStatus = DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-
+        
         if (optionalList.isPresent()) {
             commentStatus = scoSupporter.getCommentProperty(optionalList.get(), listOfPossibleAttributes);
         }
-
+        
         CorrelationAttributeInstance corInstance = null;
         if (CentralRepository.isEnabled()) {
             if (listOfPossibleAttributes.size() > 1) {
@@ -168,66 +183,50 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
             }
             countAndDescription = scoSupporter.getCountPropertyAndDescription(corInstance, description);
         }
-        if (isCancelled()) {
-            return null;
-        }
-
+        
         return new SCOData(scoreAndDescription, commentStatus, countAndDescription, content.getId());
     }
-
+    
     @Messages({
         "SCOFetcher_nodescription_text=No description"
     })
-    @Override
-    public void done() {
-        if (isCancelled() || UserPreferences.getHideSCOColumns()) {
+    private static void done(SCOData data, SCOSupporter scoSupporter) {
+        if (data == null || UserPreferences.getHideSCOColumns()) {
             return;
         }
 
-        SCOSupporter scoSupporter = weakSupporterRef.get();
         if (scoSupporter == null) {
             return;
         }
-        SCOData data = null;
-        try {
-            data = get();
-
-            if (data == null) {
-                return;
-            }
-            
-            List<NodeProperty<?>> props = new ArrayList<>();
-
-            if (data.getScoreAndDescription() != null) {
-                props.add(new NodeProperty<>(
-                        SCOUtils.SCORE_COLUMN_NAME,
-                        SCOUtils.SCORE_COLUMN_NAME,
-                        data.getScoreAndDescription().getRight(),
-                        data.getScoreAndDescription().getLeft()));
-            }
-
-            if (data.getComment() != null) {
-                props.add(new NodeProperty<>(
-                        SCOUtils.COMMENT_COLUMN_NAME,
-                        SCOUtils.COMMENT_COLUMN_NAME,
-                        Bundle.SCOFetcher_nodescription_text(),
-                        data.getComment()));
-            }
-
-            if (data.getCountAndDescription() != null) {
-                props.add(new NodeProperty<>(
-                        SCOUtils.OCCURANCES_COLUMN_NAME,
-                        SCOUtils.OCCURANCES_COLUMN_NAME,
-                        data.getCountAndDescription().getRight(),
-                        data.getCountAndDescription().getLeft()));
-            }
-
-            if (!props.isEmpty()) {
-                scoSupporter.updateSheet(props);
-            }
-
-        } catch (InterruptedException | ExecutionException ex) {
-            logger.log(Level.SEVERE, "Failed to update the SCO columns for content id=" + (data.getContentId() != null ? data.getContentId() : "id unknown"), ex);
+        
+        List<NodeProperty<?>> props = new ArrayList<>();
+        
+        if (data.getScoreAndDescription() != null) {
+            props.add(new NodeProperty<>(
+                    SCOUtils.SCORE_COLUMN_NAME,
+                    SCOUtils.SCORE_COLUMN_NAME,
+                    data.getScoreAndDescription().getRight(),
+                    data.getScoreAndDescription().getLeft()));
+        }
+        
+        if (data.getComment() != null) {
+            props.add(new NodeProperty<>(
+                    SCOUtils.COMMENT_COLUMN_NAME,
+                    SCOUtils.COMMENT_COLUMN_NAME,
+                    Bundle.SCOFetcher_nodescription_text(),
+                    data.getComment()));
+        }
+        
+        if (data.getCountAndDescription() != null) {
+            props.add(new NodeProperty<>(
+                    SCOUtils.OCCURANCES_COLUMN_NAME,
+                    SCOUtils.OCCURANCES_COLUMN_NAME,
+                    data.getCountAndDescription().getRight(),
+                    data.getCountAndDescription().getLeft()));
+        }
+        
+        if (!props.isEmpty()) {
+            scoSupporter.updateSheet(props);
         }
     }
 
@@ -235,7 +234,7 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
      * Class for passing the SCO data.
      */
     public static class SCOData {
-
+        
         private final Pair<Score, String> scoreAndDescription;
         private final DataResultViewerTable.HasCommentStatus comment;
         private final Pair<Long, String> countAndDescription;
@@ -254,15 +253,15 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
             this.countAndDescription = countAndDescription;
             this.contentId = contentId;
         }
-
+        
         Pair<Score, String> getScoreAndDescription() {
             return scoreAndDescription;
         }
-
+        
         DataResultViewerTable.HasCommentStatus getComment() {
             return comment;
         }
-
+        
         Pair<Long, String> getCountAndDescription() {
             return countAndDescription;
         }
@@ -270,6 +269,5 @@ public class SCOFetcher<T extends Content> extends SwingWorker<SCOData, Void> {
         Long getContentId() {
             return contentId;
         }
-    }
-
+    } 
 }
