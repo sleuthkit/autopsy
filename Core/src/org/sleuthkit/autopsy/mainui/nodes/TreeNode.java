@@ -120,7 +120,7 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
     public void update(TreeItemDTO<? extends T> updatedData) {
         if (updatedData == null) {
             logger.log(Level.WARNING, "Expected non-null updatedData");
-        } else if (this.itemData != null && this.itemData.getId() != updatedData.getId()) {
+        } else if (this.itemData != null && !Objects.equals(this.itemData.getId(), updatedData.getId())) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "Expected update data to have same id but received [id: {0}] replacing [id: {1}]",
                     updatedData.getId(),

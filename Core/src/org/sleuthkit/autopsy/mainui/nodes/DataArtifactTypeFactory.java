@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.util.concurrent.ExecutionException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
@@ -60,7 +61,8 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
             @SuppressWarnings("unchecked")
             TreeItemDTO<DataArtifactSearchParam> originalTreeItem = (TreeItemDTO<DataArtifactSearchParam>) daoEvt.getItemRecord();
             DataArtifactSearchParam searchParam = originalTreeItem.getSearchParams();
-            if (this.dataSourceId == null || this.dataSourceId == searchParam.getDataSourceId()) {
+            if ((this.dataSourceId == null || this.dataSourceId == searchParam.getDataSourceId()) && 
+                    !DataArtifactDAO.getIgnoredTreeTypes().contains(searchParam.getArtifactType())) {
                 return TreeChildFactory.createTreeItemDTO(originalTreeItem, new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()));
             }
         }
