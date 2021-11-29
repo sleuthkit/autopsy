@@ -202,13 +202,13 @@ final class IngestJobExecutor {
      * org.sleuthkit.autopsy.progress.ProgressIndicator interface), to better
      * decouple this object from the application's presentation layer.
      */
-    private volatile long estimatedFilesToProcess;
-    private volatile long processedFiles;
     private final boolean usingNetBeansGUI;
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private final List<String> filesInProgress = new ArrayList<>();
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private ProgressHandle dataSourceIngestProgressBar;
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private final List<String> filesInProgress = new ArrayList<>();
+    private volatile long estimatedFilesToProcess;
+    private volatile long processedFiles;
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private ProgressHandle fileIngestProgressBar;
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
