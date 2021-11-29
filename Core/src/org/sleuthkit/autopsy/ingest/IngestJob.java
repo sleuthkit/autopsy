@@ -170,7 +170,7 @@ public final class IngestJob {
      * Starts data source level analysis for this job if it is running in
      * streaming ingest mode.
      */
-    void processStreamingIngestDataSource() {
+    void addStreamedDataSource() {
         if (ingestMode == Mode.STREAMING) {
             if (ingestModuleExecutor != null) {
                 ingestModuleExecutor.addStreamedDataSource();
