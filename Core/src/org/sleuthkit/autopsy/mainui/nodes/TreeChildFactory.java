@@ -22,83 +22,86 @@ import com.google.common.collect.MapMaker;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.openide.util.WeakListeners;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
-import org.sleuthkit.autopsy.guiutils.RefreshThrottler.Refresher;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
- * Factory for populating tree with results.
+ * Factory for populating child nodes in a tree based on TreeResultsDTO
  */
-public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object> implements Refresher {
+public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object> implements Comparator<T> {
 
     private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
 
-    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST
-            = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
-
-    private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
-
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-            // case was closed. Remove listeners so that we don't get called with a stale case handle
-            if (evt.getNewValue() == null) {
-                removeNotify();
-            }
-        } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-            /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
-             */
-            try {
-                Case.getCurrentCaseThrows();
-                refresh(false);
-            } catch (NoCurrentCaseException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
+        if (evt.getNewValue() instanceof DAOAggregateEvent) {
+            DAOAggregateEvent aggEvt = (DAOAggregateEvent) evt.getNewValue();
+            for (DAOEvent daoEvt : aggEvt.getEvents()) {
+                if (daoEvt instanceof TreeEvent) {
+                    TreeEvent treeEvt = (TreeEvent) daoEvt;
+                    TreeItemDTO<? extends T> item = getOrCreateRelevantChild(treeEvt);
+                    if (item != null) {
+                        if (treeEvt.isRefreshRequired()) {
+                            update();
+                            break;
+                        } else {
+                            updateNodeData(item);
+                        }
+                    }
+                }
             }
         }
     };
 
-    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, MainDAO.getInstance().getTreeEventsManager());
 
+    // maps the Node keys to the child TreeNode.  Used to update existing Node with new counts
     private final Map<Object, TreeNode<T>> typeNodeMap = new MapMaker().weakValues().makeMap();
+    private final Object resultsUpdateLock = new Object();
+
+    // Results of the last full load from the DAO. May not be complete because 
+    // events will come in with more updated data. 
     private TreeResultsDTO<? extends T> curResults = null;
+
+    // All current child items (sorted). May have more items than curResults does because 
+    // this is updated based on events and new data. 
+    private List<TreeItemDTO<? extends T>> curItemsList = new ArrayList<>();
+
+    // maps the Node key (ID) to its DTO
     private Map<Object, TreeItemDTO<? extends T>> idMapping = new HashMap<>();
 
     @Override
     protected boolean createKeys(List<Object> toPopulate) {
-        if (curResults == null) {
-            try {
-                updateData();
-            } catch (IllegalArgumentException | ExecutionException ex) {
-                logger.log(Level.WARNING, "An error occurred while fetching keys", ex);
-                return false;
+        List<TreeItemDTO<? extends T>> itemsList;
+        synchronized (resultsUpdateLock) {
+            // Load data from DAO if we haven't already
+            if (curResults == null) {
+                try {
+                    updateData();
+                } catch (IllegalArgumentException | ExecutionException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching keys", ex);
+                    return false;
+                }
             }
+            itemsList = curItemsList;
         }
 
         // update existing cached nodes
         List<Object> curResultIds = new ArrayList<>();
-        for (TreeItemDTO<? extends T> dto : curResults.getItems()) {
+        for (TreeItemDTO<? extends T> dto : itemsList) {
             TreeNode<T> currentlyCached = typeNodeMap.get(dto.getId());
             if (currentlyCached != null) {
                 currentlyCached.update(dto);
@@ -122,25 +125,55 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     }
 
     /**
-     * Updates local data by fetching data from the DAO's.
+     * Finds and updates a node based on new/updated data.
+     *
+     * @param item The added/updated item.
+     */
+    protected void updateNodeData(TreeItemDTO<? extends T> item) {
+        TreeNode<T> cachedTreeNode = this.typeNodeMap.get(item.getId());
+        if (cachedTreeNode == null) {
+            synchronized (resultsUpdateLock) {
+                // add to id mapping
+                this.idMapping.put(item.getId(), item);
+
+                // insert in sorted position
+                int insertIndex = 0;
+                for (; insertIndex < this.curItemsList.size(); insertIndex++) {
+                    if (this.compare(item.getSearchParams(), this.curItemsList.get(insertIndex).getSearchParams()) < 0) {
+                        break;
+                    }
+                }
+                this.curItemsList.add(insertIndex, item);
+            }
+            this.refresh(false);
+        } else {
+            cachedTreeNode.update(item);
+        }
+    }
+
+    /**
+     * Updates local data structures by fetching new data from the DAO's.
      *
      * @throws IllegalArgumentException
      * @throws ExecutionException
      */
     protected void updateData() throws IllegalArgumentException, ExecutionException {
-        this.curResults = getChildResults();
-        this.idMapping = curResults.getItems().stream()
-                .collect(Collectors.toMap(item -> item.getId(), item -> item, (item1, item2) -> item1));
+        synchronized (resultsUpdateLock) {
+            this.curResults = getChildResults();
+            Map<Object, TreeItemDTO<? extends T>> idMapping = new HashMap<>();
+            List<TreeItemDTO<? extends T>> curItemsList = new ArrayList<>();
+            for (TreeItemDTO<? extends T> item : this.curResults.getItems()) {
+                idMapping.put(item.getId(), item);
+                curItemsList.add(item);
+            }
 
-    }
-
-    @Override
-    public void refresh() {
-        update();
+            this.idMapping = idMapping;
+            this.curItemsList = curItemsList;
+        }
     }
 
     /**
-     * Fetches child view from the database and updates the tree.
+     * Updates the tree using new data from the DAO.
      */
     public void update() {
         try {
@@ -156,40 +189,41 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
      * Dispose resources associated with this factory.
      */
     private void disposeResources() {
-        curResults = null;
         typeNodeMap.clear();
-        idMapping.clear();
+
+        synchronized (resultsUpdateLock) {
+            curResults = null;
+            this.curItemsList.clear();
+            idMapping.clear();
+        }
     }
 
     /**
-     * Register listeners for autopsy events.
+     * Register listeners for DAO events.
      */
     private void registerListeners() {
-        refreshThrottler.registerForIngestModuleEvents();
-        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+        MainDAO.getInstance().getTreeEventsManager().addPropertyChangeListener(weakPcl);
     }
 
     /**
-     * Unregister listeners for autopsy events.
+     * Unregister listeners for DAO events.
      */
     private void unregisterListeners() {
-        refreshThrottler.unregisterEventListener();
-        IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
-        Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+        // GVDTODO this may not be necessary due to the weak listener's ability to unregister itself
+        MainDAO.getInstance().getTreeEventsManager().removePropertyChangeListener(weakPcl);
     }
 
     @Override
     protected void removeNotify() {
-        disposeResources();
         unregisterListeners();
+        disposeResources();
         super.removeNotify();
     }
 
     @Override
     protected void finalize() throws Throwable {
-        disposeResources();
         unregisterListeners();
+        disposeResources();
         super.finalize();
     }
 
@@ -197,6 +231,24 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     protected void addNotify() {
         registerListeners();
         super.addNotify();
+    }
+
+    /**
+     * A utility method that creates a TreeItemDTO using the data in 'original'
+     * for all fields except 'typeData' where 'updatedData' is used instead.
+     *
+     * @param original    The original tree item dto.
+     * @param updatedData The new type data to use.
+     *
+     * @return The created tree item dto.
+     */
+    static <T> TreeItemDTO<T> createTreeItemDTO(TreeItemDTO<T> original, T updatedData) {
+        return new TreeItemDTO<>(
+                original.getTypeId(),
+                updatedData,
+                original.getId(),
+                original.getDisplayName(),
+                original.getDisplayCount());
     }
 
     /**
@@ -217,4 +269,15 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
      * @throws ExecutionException
      */
     protected abstract TreeResultsDTO<? extends T> getChildResults() throws IllegalArgumentException, ExecutionException;
+
+    /**
+     * Creates a child tree item dto that can be used to find the affected child
+     * node that requires updates.
+     *
+     * @param treeEvt The tree event.
+     *
+     * @return The tree item dto that can be used to find the child node
+     *         affected by the tree event.
+     */
+    protected abstract TreeItemDTO<? extends T> getOrCreateRelevantChild(TreeEvent treeEvt);
 }

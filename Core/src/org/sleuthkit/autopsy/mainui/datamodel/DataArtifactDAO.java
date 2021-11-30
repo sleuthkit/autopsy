@@ -18,20 +18,34 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import org.sleuthkit.autopsy.mainui.datamodel.events.DataArtifactEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -64,22 +78,23 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
+    private final TreeCounts<DataArtifactEvent> treeCounts = new TreeCounts<>();
     private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
-        
+
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
         String pagedWhereClause = getWhereClause(cacheKey);
-        
+
         List<BlackboardArtifact> arts = new ArrayList<>();
         arts.addAll(blackboard.getDataArtifactsWhere(pagedWhereClause));
         blackboard.loadBlackboardAttributes(arts);
-           
-        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());    
-        
+
+        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());
+
         TableData tableData = createTableData(artType, arts);
         return new DataArtifactTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
@@ -92,7 +107,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return new DataArtifactRowDTO((DataArtifact) artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id);
     }
 
-    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
 
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT
@@ -103,15 +118,17 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         SearchParams<BlackboardArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
-        if (hardRefresh) {
-            this.dataArtifactCache.invalidate(searchParams);
-        }
-
         return dataArtifactCache.get(searchParams, () -> fetchDataArtifactsForTable(searchParams));
     }
 
-    public boolean isDataArtifactInvalidating(DataArtifactSearchParam key, ModuleDataEvent eventData) {
-        return key.getArtifactType().equals(eventData.getBlackboardArtifactType());
+    private boolean isDataArtifactInvalidating(DataArtifactSearchParam key, DAOEvent eventData) {
+        if (!(eventData instanceof DataArtifactEvent)) {
+            return false;
+        } else {
+            DataArtifactEvent dataArtEvt = (DataArtifactEvent) eventData;
+            return key.getArtifactType().getTypeID() == dataArtEvt.getArtifactType().getTypeID()
+                    && (key.getDataSourceId() == null || (key.getDataSourceId() == dataArtEvt.getDataSourceId()));
+        }
     }
 
     public void dropDataArtifactCache() {
@@ -133,15 +150,18 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     public TreeResultsDTO<DataArtifactSearchParam> getDataArtifactCounts(Long dataSourceId) throws ExecutionException {
         try {
             // get row dto's sorted by display name
+            Set<BlackboardArtifact.Type> indeterminateTypes = this.treeCounts.getEnqueued().stream()
+                    .filter(evt -> dataSourceId == null || evt.getDataSourceId() == dataSourceId)
+                    .map(evt -> evt.getArtifactType())
+                    .collect(Collectors.toSet());
+
             Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.DATA_ARTIFACT, dataSourceId);
             List<TreeResultsDTO.TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
                     .map(entry -> {
-                        return new TreeResultsDTO.TreeItemDTO<>(
-                                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
-                                new DataArtifactSearchParam(entry.getKey(), dataSourceId),
-                                entry.getKey().getTypeID(),
-                                entry.getKey().getDisplayName(),
-                                entry.getValue());
+                        return createTreeItem(entry.getKey(), dataSourceId,
+                                indeterminateTypes.contains(entry.getKey())
+                                ? TreeDisplayCount.INDETERMINATE
+                                : TreeDisplayCount.getDeterminate(entry.getValue()));
                     })
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
                     .collect(Collectors.toList());
@@ -153,6 +173,94 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
         }
     }
+
+    @Override
+    void clearCaches() {
+        this.dataArtifactCache.invalidateAll();
+        this.handleIngestComplete();
+    }
+
+    @Override
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
+        // get a grouping of artifacts mapping the artifact type id to data source id.
+        ModuleDataEvent dataEvt = DAOEventUtils.getModuelDataFromArtifactEvent(evt);
+        if (dataEvt == null) {
+            return Collections.emptySet();
+        }
+
+        Map<BlackboardArtifact.Type, Set<Long>> artifactTypeDataSourceMap = dataEvt.getArtifacts().stream()
+                .map((art) -> {
+                    try {
+                        if (BlackboardArtifact.Category.DATA_ARTIFACT.equals(art.getType().getCategory())) {
+                            return Pair.of(art.getType(), art.getDataSourceObjectID());
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Unable to fetch artifact category for artifact with id: " + art.getId(), ex);
+                    }
+                    return null;
+                })
+                .filter(pr -> pr != null)
+                .collect(Collectors.groupingBy(pr -> pr.getKey(), Collectors.mapping(pr -> pr.getValue(), Collectors.toSet())));
+
+        // don't do anything else if no relevant events
+        if (artifactTypeDataSourceMap.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        // invalidate cache entries that are affected by events
+        ConcurrentMap<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> concurrentMap = this.dataArtifactCache.asMap();
+        concurrentMap.forEach((k, v) -> {
+            Set<Long> dsIds = artifactTypeDataSourceMap.get(k.getParamData().getArtifactType());
+            if (dsIds != null) {
+                Long searchDsId = k.getParamData().getDataSourceId();
+                if (searchDsId == null || dsIds.contains(searchDsId)) {
+                    concurrentMap.remove(k);
+                }
+            }
+        });
+
+        // gather dao events based on artifacts
+        List<DataArtifactEvent> dataArtifactEvents = new ArrayList<>();
+        for (Entry<BlackboardArtifact.Type, Set<Long>> entry : artifactTypeDataSourceMap.entrySet()) {
+            BlackboardArtifact.Type artType = entry.getKey();
+            for (Long dsObjId : entry.getValue()) {
+                DataArtifactEvent newEvt = new DataArtifactEvent(artType, dsObjId);
+                dataArtifactEvents.add(newEvt);
+            }
+        }
+
+        List<TreeEvent> newTreeEvents = this.treeCounts.enqueueAll(dataArtifactEvents).stream()
+                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false))
+                .collect(Collectors.toList());
+
+        return Stream.of(dataArtifactEvents, newTreeEvents)
+                .flatMap((lst) -> lst.stream())
+                .collect(Collectors.toSet());
+    }
+
+    private TreeItemDTO<DataArtifactSearchParam> createTreeItem(BlackboardArtifact.Type artifactType, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeResultsDTO.TreeItemDTO<>(
+                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                new DataArtifactSearchParam(artifactType, dataSourceId),
+                artifactType.getTypeID(),
+                artifactType.getDisplayName(),
+                displayCount);
+    }
+
+    @Override
+    Set<DAOEvent> handleIngestComplete() {
+        return this.treeCounts.flushEvents().stream()
+                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    Set<TreeEvent> shouldRefreshTree() {
+        return this.treeCounts.getEventTimeouts().stream()
+                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true))
+                .collect(Collectors.toSet());
+    }
+
 
     /*
      * Handles fetching and paging of data artifacts.
@@ -168,19 +276,18 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             super(params);
         }
 
-        @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getDataArtifactsDAO().getDataArtifactsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        protected DataArtifactDAO getDAO() {
+            return MainDAO.getInstance().getDataArtifactsDAO();
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            ModuleDataEvent dataEvent = this.getModuleDataFromEvt(evt);
-            if (dataEvent == null) {
-                return false;
-            }
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getDataArtifactsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        }
 
-            return MainDAO.getInstance().getDataArtifactsDAO().isDataArtifactInvalidating(this.getParameters(), dataEvent);
+        @Override
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return getDAO().isDataArtifactInvalidating(this.getParameters(), evt);
         }
     }
 }

@@ -16,37 +16,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * An event signaling that children files were added or removed from the given
+ * parent ID.
  */
-public class FileTypeSizeSearchParams {
+public class FileSystemContentEvent implements DAOEvent {
 
+    private final Long contentObjectId;
 
-    private final FileSizeFilter sizeFilter;
-    private final Long dataSourceId;
-
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
-        this.dataSourceId = dataSourceId;
+    /**
+     * Main constructor.
+     *
+     * @param contentObjectId The parent content object id. If null, performs
+     *                        full refresh of file tree.
+     */
+    public FileSystemContentEvent(Long contentObjectId) {
+        this.contentObjectId = contentObjectId;
     }
 
-    public FileSizeFilter getSizeFilter() {
-        return sizeFilter;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
+    public Long getContentObjectId() {
+        return contentObjectId;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 67 * hash + Objects.hashCode(this.contentObjectId);
         return hash;
     }
 
@@ -61,14 +60,15 @@ public class FileTypeSizeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (this.sizeFilter != other.sizeFilter) {
-            return false;
-        }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        final FileSystemContentEvent other = (FileSystemContentEvent) obj;
+        if (!Objects.equals(this.contentObjectId, other.contentObjectId)) {
             return false;
         }
         return true;
     }
 
+    @Override
+    public Type getType() {
+        return Type.RESULT;
+    }
 }

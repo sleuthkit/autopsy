@@ -16,37 +16,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * An event to signal that files have been added or removed 
+ * with the given extension on the given data source. 
  */
-public class FileTypeSizeSearchParams {
+public class FileTypeExtensionsEvent implements DAOEvent {
 
+    private final String extension;
+    private final long dataSourceId;
 
-    private final FileSizeFilter sizeFilter;
-    private final Long dataSourceId;
-
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
+    public FileTypeExtensionsEvent(String extension, long dataSourceId) {
+        this.extension = extension;
         this.dataSourceId = dataSourceId;
     }
 
-    public FileSizeFilter getSizeFilter() {
-        return sizeFilter;
+    public String getExtension() {
+        return extension;
     }
 
-    public Long getDataSourceId() {
+    public long getDataSourceId() {
         return dataSourceId;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 59 * hash + Objects.hashCode(this.extension);
+        hash = 59 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
         return hash;
     }
 
@@ -61,14 +61,18 @@ public class FileTypeSizeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (this.sizeFilter != other.sizeFilter) {
+        final FileTypeExtensionsEvent other = (FileTypeExtensionsEvent) obj;
+        if (this.dataSourceId != other.dataSourceId) {
             return false;
         }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        if (!Objects.equals(this.extension, other.extension)) {
             return false;
         }
         return true;
     }
 
+    @Override
+    public Type getType() {
+        return Type.RESULT;
+    }
 }

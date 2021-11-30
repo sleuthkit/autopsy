@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -71,7 +70,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "BlackboardArtifactDAO.columnKeys.dataSource.displayName=Data Source",
     "BlackboardArtifactDAO.columnKeys.dataSource.description=Data Source"
 })
-abstract class BlackboardArtifactDAO {
+abstract class BlackboardArtifactDAO extends AbstractDAO {
 
     private static Logger logger = Logger.getLogger(BlackboardArtifactDAO.class.getName());
 
@@ -149,6 +148,7 @@ abstract class BlackboardArtifactDAO {
     protected static Set<BlackboardArtifact.Type> getIgnoredTreeTypes() {
         return IGNORED_TYPES;
     }
+      
 
     TableData createTableData(BlackboardArtifact.Type artType, List<BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
         Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();

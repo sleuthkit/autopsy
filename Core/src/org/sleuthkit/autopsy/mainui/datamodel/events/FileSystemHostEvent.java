@@ -16,37 +16,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * An event signaling that a data source has been added or removed from the
+ * given Host.
  */
-public class FileTypeSizeSearchParams {
+public class FileSystemHostEvent implements DAOEvent {
 
+    private final Long hostObjectId;
 
-    private final FileSizeFilter sizeFilter;
-    private final Long dataSourceId;
-
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
-        this.dataSourceId = dataSourceId;
+    public FileSystemHostEvent(Long hostObjectId) {
+        this.hostObjectId = hostObjectId;
     }
 
-    public FileSizeFilter getSizeFilter() {
-        return sizeFilter;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
+    public Long getHostObjectId() {
+        return hostObjectId;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 67 * hash + Objects.hashCode(this.hostObjectId);
         return hash;
     }
 
@@ -61,14 +54,15 @@ public class FileTypeSizeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (this.sizeFilter != other.sizeFilter) {
-            return false;
-        }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        final FileSystemHostEvent other = (FileSystemHostEvent) obj;
+        if (!Objects.equals(this.hostObjectId, other.hostObjectId)) {
             return false;
         }
         return true;
     }
 
+    @Override
+    public DAOEvent.Type getType() {
+        return DAOEvent.Type.RESULT;
+    }
 }

@@ -16,20 +16,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSizeFilter;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * An event to signal that files have been added or removed 
+ * within the given size range on the given data source. 
  */
-public class FileTypeSizeSearchParams {
-
+public class FileTypeSizeEvent implements DAOEvent {
 
     private final FileSizeFilter sizeFilter;
     private final Long dataSourceId;
 
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
+    public FileTypeSizeEvent(FileSizeFilter sizeFilter, Long dataSourceId) {
         this.sizeFilter = sizeFilter;
         this.dataSourceId = dataSourceId;
     }
@@ -61,7 +62,7 @@ public class FileTypeSizeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
+        final FileTypeSizeEvent other = (FileTypeSizeEvent) obj;
         if (this.sizeFilter != other.sizeFilter) {
             return false;
         }
@@ -71,4 +72,8 @@ public class FileTypeSizeSearchParams {
         return true;
     }
 
+    @Override
+    public Type getType() {
+        return Type.RESULT;
+    }
 }

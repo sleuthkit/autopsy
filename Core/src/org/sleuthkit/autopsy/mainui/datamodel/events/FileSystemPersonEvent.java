@@ -16,37 +16,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * An event signaling that a host has been added or removed from the given
+ * Person.
  */
-public class FileTypeSizeSearchParams {
+public class FileSystemPersonEvent implements DAOEvent {
 
+    private final Long personObjectId;
 
-    private final FileSizeFilter sizeFilter;
-    private final Long dataSourceId;
-
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
-        this.dataSourceId = dataSourceId;
+    /**
+     * Main constructor.
+     *
+     * @param personObjectId May be null for hosts with no associated Person.
+     */
+    public FileSystemPersonEvent(Long personObjectId) {
+        this.personObjectId = personObjectId;
     }
 
-    public FileSizeFilter getSizeFilter() {
-        return sizeFilter;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
+    public Long getPersonObjectId() {
+        return personObjectId;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 67 * hash + Objects.hashCode(this.personObjectId);
         return hash;
     }
 
@@ -61,14 +59,15 @@ public class FileTypeSizeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (this.sizeFilter != other.sizeFilter) {
-            return false;
-        }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        final FileSystemPersonEvent other = (FileSystemPersonEvent) obj;
+        if (!Objects.equals(this.personObjectId, other.personObjectId)) {
             return false;
         }
         return true;
     }
 
+    @Override
+    public DAOEvent.Type getType() {
+        return DAOEvent.Type.RESULT;
+    }
 }

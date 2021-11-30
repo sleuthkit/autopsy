@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.python.google.common.primitives.Longs;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemColumnUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.CARVED_FILE;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.DELETED_FILE;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.DELETED_FOLDER;
@@ -105,7 +107,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
     @Override
     protected TreeNode<FileSystemContentSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> rowData) {
         try {
-            Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(rowData.getTypeData().getContentObjectId());
+            Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(rowData.getSearchParams().getContentObjectId());
             if (content instanceof Image) {
                 return new ImageTreeNode((Image) content, rowData);
             } else if (content instanceof Volume) {
@@ -134,38 +136,21 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             // Case was likely closed while nodes were being created - don't fill the log with errors.
             return null;
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating new node for content with ID: " + rowData.getTypeData().getContentObjectId(), ex);
+            logger.log(Level.SEVERE, "Error creating new node for content with ID: " + rowData.getSearchParams().getContentObjectId(), ex);
             return null;
         }
     }
 
     @Override
-    public boolean isRefreshRequired(PropertyChangeEvent evt) {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-            /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
-             */
-            try {
-                Case.getCurrentCaseThrows();
-                /**
-                 * Due to some unresolved issues with how cases are closed, it
-                 * is possible for the event to have a null oldValue if the
-                 * event is a remote event.
-                 */
-                // TODO
-                final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                // TODO make this work
-                return true;
-            } catch (NoCurrentCaseException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
-            }
-        }
-        return false;
+    protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
+        // GVDTODO
+        return null;
+    }
+
+    @Override
+    public int compare(FileSystemContentSearchParam o1, FileSystemContentSearchParam o2) {
+        // GVDTODO
+        return 0;
     }
 
     /**
@@ -213,11 +198,16 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            // TODO
-            return false;
+        protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            // GVDTODO
+            return null;
         }
 
+        @Override
+        public int compare(FileSystemContentSearchParam o1, FileSystemContentSearchParam o2) {
+            // GVDTODO
+            return 0;
+        }
     }
 
     /**
@@ -248,7 +238,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayFileSystemContent(this.getItemData().getTypeData());
+            dataResultPanel.displayFileSystemContent(this.getItemData().getSearchParams());
         }
 
         public abstract Node clone();
@@ -267,7 +257,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             super(itemData.getDisplayName(),
                     NodeIconUtil.IMAGE.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getTypeData().getContentObjectId()),
+                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(image));
             this.image = image;
         }
@@ -303,7 +293,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             super(FileSystemColumnUtils.getVolumeDisplayName(volume),
                     NodeIconUtil.VOLUME.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getTypeData().getContentObjectId()),
+                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(volume));
             this.volume = volume;
         }
@@ -335,7 +325,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             super(itemData.getDisplayName(),
                     NodeIconUtil.VOLUME.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getTypeData().getContentObjectId()),
+                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(pool));
             this.pool = pool;
         }
@@ -353,7 +343,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             super(itemData.getDisplayName(),
                     getDirectoryIcon(dir),
                     itemData,
-                    createChildrenForContent(itemData.getTypeData().getContentObjectId()),
+                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(dir));
             this.dir = dir;
         }
@@ -428,7 +418,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
                     itemData.getDisplayName(),
                     NodeIconUtil.FOLDER.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getTypeData().getContentObjectId()),
+                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(dir));
         }
 
@@ -449,7 +439,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
                     itemData.getDisplayName(),
                     NodeIconUtil.VOLUME.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getTypeData().getContentObjectId()),
+                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(localFilesDataSource));
         }
 
@@ -470,7 +460,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
                     itemData.getDisplayName(),
                     NodeIconUtil.VIRTUAL_DIRECTORY.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getTypeData().getContentObjectId()),
+                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(dir));
         }
 
@@ -487,7 +477,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             super(itemData.getDisplayName(),
                     getFileIcon(file),
                     itemData,
-                    createChildrenForContent(itemData.getTypeData().getContentObjectId()),
+                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(file));
             this.file = file;
         }
@@ -551,8 +541,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
-            // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
-            // See JIRA-8099
+            // TODO: See JIRA-8099
             boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
             boolean encryptionDetected = false;
             try {
@@ -575,7 +564,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             super(Bundle.FileSystemFactory_UnsupportedTreeNode_displayName(),
                     NodeIconUtil.FILE.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getTypeData().getContentObjectId()),
+                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     getDefaultLookup(itemData));
             this.content = content;
         }
