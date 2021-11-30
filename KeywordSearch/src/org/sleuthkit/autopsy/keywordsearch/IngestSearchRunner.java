@@ -38,15 +38,16 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import org.netbeans.api.progress.aggregate.AggregateProgressFactory;
+import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
-import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -248,7 +249,8 @@ final class IngestSearchRunner {
     }
 
     /**
-     * Task to perform periodic searches for each job (does a single index commit first)
+     * Task to perform periodic searches for each job (does a single index
+     * commit first)
      */
     private final class PeriodicSearchTask implements Runnable {
 
@@ -296,24 +298,23 @@ final class IngestSearchRunner {
                                 NbBundle.getMessage(this.getClass(),
                                         "SearchRunner.Searcher.done.err.msg"), ex.getMessage()));
                     }// catch and ignore if we were cancelled
-                      catch (java.util.concurrent.CancellationException ex) {
+                    catch (java.util.concurrent.CancellationException ex) {
                     }
                 }
             }
             stopWatch.stop();
             logger.log(Level.INFO, "All periodic searches cumulatively took {0} secs", stopWatch.getElapsedTimeSecs()); //NON-NLS
-            
+
             // calculate "hold off" time
             recalculateUpdateIntervalTime(stopWatch.getElapsedTimeSecs()); // ELDEBUG
-            
+
             // schedule next PeriodicSearchTask
             jobProcessingTaskFuture = jobProcessingExecutor.schedule(new PeriodicSearchTask(), currentUpdateIntervalMs, MILLISECONDS);
-            
+
             // exit this thread
             return;
         }
-        
-        
+
         private void recalculateUpdateIntervalTime(long lastSerchTimeSec) {
             // If periodic search takes more than 1/4 of the current periodic search interval, then double the search interval
             if (lastSerchTimeSec * 1000 < currentUpdateIntervalMs / 4) {
@@ -321,7 +322,7 @@ final class IngestSearchRunner {
             }
             // double the search interval
             currentUpdateIntervalMs = currentUpdateIntervalMs * 2;
-            logger.log(Level.WARNING, "Last periodic search took {0} sec. Increasing search interval to {1} sec", new Object[]{lastSerchTimeSec, currentUpdateIntervalMs/1000});
+            logger.log(Level.WARNING, "Last periodic search took {0} sec. Increasing search interval to {1} sec", new Object[]{lastSerchTimeSec, currentUpdateIntervalMs / 1000});
             return;
         }
     }
@@ -447,13 +448,15 @@ final class IngestSearchRunner {
         /**
          * Searcher has private copies/snapshots of the lists and keywords
          */
-        private SearchJobInfo job;
-        private List<Keyword> keywords; //keywords to search
-        private List<String> keywordListNames; // lists currently being searched
-        private List<KeywordList> keywordLists;
-        private Map<Keyword, KeywordList> keywordToList; //keyword to list name mapping
+        private final SearchJobInfo job;
+        private final List<Keyword> keywords; //keywords to search
+        private final List<String> keywordListNames; // lists currently being searched
+        private final List<KeywordList> keywordLists;
+        private final Map<Keyword, KeywordList> keywordToList; //keyword to list name mapping
+        private final boolean usingNetBeansGUI;
+        @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+        private ProgressHandle progressIndicator;
         private AggregateProgressHandle progressGroup;
-        private final Logger logger = Logger.getLogger(IngestSearchRunner.Searcher.class.getName());
         private boolean finalRun = false;
 
         Searcher(SearchJobInfo job) {
@@ -463,6 +466,7 @@ final class IngestSearchRunner {
             keywordToList = new HashMap<>();
             keywordLists = new ArrayList<>();
             //keywords are populated as searcher runs
+            usingNetBeansGUI = RuntimeProperties.runningWithGUI();
         }
 
         Searcher(SearchJobInfo job, boolean finalRun) {
@@ -473,76 +477,88 @@ final class IngestSearchRunner {
         @Override
         @Messages("SearchRunner.query.exception.msg=Error performing query:")
         protected Object doInBackground() throws Exception {
-            final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
-                    + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
-            final String pgDisplayName = displayName + (" (" + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.pendingMsg") + ")");
-            progressGroup = AggregateProgressFactory.createSystemHandle(pgDisplayName, null, new Cancellable() {
-                @Override
-                public boolean cancel() {
-                    logger.log(Level.INFO, "Cancelling the searcher by user."); //NON-NLS
-                    if (progressGroup != null) {
-                        progressGroup.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
-                    }
-                    progressGroup.finish();
-                    return IngestSearchRunner.Searcher.this.cancel(true);
-                }
-            }, null);
-
-            updateKeywords();
-
-            ProgressContributor[] subProgresses = new ProgressContributor[keywords.size()];
-            int i = 0;
-            for (Keyword keywordQuery : keywords) {
-                subProgresses[i] = AggregateProgressFactory.createProgressContributor(keywordQuery.getSearchTerm());
-                progressGroup.addContributor(subProgresses[i]);
-                i++;
+            if (usingNetBeansGUI) {
+                /*
+                 * If running in the NetBeans thick client application version
+                 * of Autopsy, NetBeans progress handles (i.e., progress bars)
+                 * are used to display search progress in the lower right hand
+                 * corner of the main application window.
+                 *
+                 * A layer of abstraction to allow alternate representations of
+                 * progress could be used here, as it is in other places in the
+                 * application (see implementations and usage of
+                 * org.sleuthkit.autopsy.progress.ProgressIndicator interface),
+                 * to better decouple keyword search from the application's
+                 * presentation layer.
+                 */
+                final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
+                        + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
+                SwingUtilities.invokeLater(() -> {
+                    progressIndicator = ProgressHandle.createHandle(displayName, new Cancellable() {
+                        @Override
+                        public boolean cancel() {
+                            progressIndicator.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
+                            logger.log(Level.INFO, "Search cancelled by user"); //NON-NLS
+                            new Thread(() -> {
+                                IngestSearchRunner.Searcher.this.cancel(true);
+                            }).start();
+                            return true;
+                        }
+                    });
+                    progressIndicator.start();
+                    progressIndicator.switchToIndeterminate();
+                });
             }
-
-            progressGroup.start();
 
             final StopWatch stopWatch = new StopWatch();
             stopWatch.start();
             try {
-                progressGroup.setDisplayName(displayName);
-
-                int keywordsSearched = 0;
-
+                updateKeywords();
                 for (Keyword keyword : keywords) {
-                    if (this.isCancelled() || this.job.getJobContext().fileIngestIsCancelled()) {
-                        logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keyword.getSearchTerm()); //NON-NLS
+                    if (isCancelled() || job.getJobContext().fileIngestIsCancelled()) {
+                        logger.log(Level.INFO, "Cancellation requested, exiting before new keyword processed: {0}", keyword.getSearchTerm()); //NON-NLS
                         return null;
                     }
 
-                    final KeywordList keywordList = keywordToList.get(keyword);
-
-                    //new subProgress will be active after the initial query
-                    //when we know number of hits to start() with
-                    if (keywordsSearched > 0) {
-                        subProgresses[keywordsSearched - 1].finish();
+                    KeywordList keywordList = keywordToList.get(keyword);
+                    if (usingNetBeansGUI) {
+                        String searchTermStr = keyword.getSearchTerm();
+                        if (searchTermStr.length() > 50) {
+                            searchTermStr = searchTermStr.substring(0, 49) + "...";
+                        } else {
+                            searchTermStr = searchTermStr;
+                        }
+                        final String progressMessage = keywordList.getName() + ": " + searchTermStr;
+                        SwingUtilities.invokeLater(() -> {
+                            progressIndicator.progress(progressMessage);
+                        });
                     }
-
-                    KeywordSearchQuery keywordSearchQuery = KeywordSearchUtil.getQueryForKeyword(keyword, keywordList);
 
                     // Filtering
                     //limit search to currently ingested data sources
                     //set up a filter with 1 or more image ids OR'ed
-                    final KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, job.getDataSourceId());
+                    KeywordSearchQuery keywordSearchQuery = KeywordSearchUtil.getQueryForKeyword(keyword, keywordList);
+                    KeywordQueryFilter dataSourceFilter = new KeywordQueryFilter(KeywordQueryFilter.FilterType.DATA_SOURCE, job.getDataSourceId());
                     keywordSearchQuery.addFilter(dataSourceFilter);
 
-                    QueryResults queryResults;
-
                     // Do the actual search
+                    QueryResults queryResults;
                     try {
                         queryResults = keywordSearchQuery.performQuery();
                     } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
                         logger.log(Level.SEVERE, "Error performing query: " + keyword.getSearchTerm(), ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(Bundle.SearchRunner_query_exception_msg() + keyword.getSearchTerm(), ex.getCause().getMessage());
+                        if (usingNetBeansGUI) {
+                            final String userMessage = Bundle.SearchRunner_query_exception_msg() + keyword.getSearchTerm();
+                            SwingUtilities.invokeLater(() -> {
+                                MessageNotifyUtil.Notify.error(userMessage, ex.getCause().getMessage());
+                            });
+                        }
                         //no reason to continue with next query if recovery failed
                         //or wait for recovery to kick in and run again later
                         //likely case has closed and threads are being interrupted
                         return null;
                     } catch (CancellationException e) {
-                        logger.log(Level.INFO, "Cancel detected, bailing during keyword query: {0}", keyword.getSearchTerm()); //NON-NLS
+                        logger.log(Level.INFO, "Cancellation requested, exiting during keyword query: {0}", keyword.getSearchTerm()); //NON-NLS
                         return null;
                     }
 
@@ -551,42 +567,25 @@ final class IngestSearchRunner {
                     QueryResults newResults = filterResults(queryResults);
 
                     if (!newResults.getKeywords().isEmpty()) {
-
-                        // Write results to BB
-                        //scale progress bar more more granular, per result sub-progress, within per keyword
-                        int totalUnits = newResults.getKeywords().size();
-                        subProgresses[keywordsSearched].start(totalUnits);
-                        int unitProgress = 0;
-                        String queryDisplayStr = keyword.getSearchTerm();
-                        if (queryDisplayStr.length() > 50) {
-                            queryDisplayStr = queryDisplayStr.substring(0, 49) + "...";
-                        }
-                        subProgresses[keywordsSearched].progress(keywordList.getName() + ": " + queryDisplayStr, unitProgress);
-
                         // Create blackboard artifacts                
-                        newResults.process(null, subProgresses[keywordsSearched], this, keywordList.getIngestMessages(), true, job.getJobId());
-
-                    } //if has results
-
-                    //reset the status text before it goes away
-                    subProgresses[keywordsSearched].progress("");
-
-                    ++keywordsSearched;
-
-                } //for each keyword
-
-            } //end try block
-            catch (Exception ex) {
-                logger.log(Level.WARNING, "searcher exception occurred", ex); //NON-NLS
-            } finally {
-                try {
-                    finalizeSearcher();
-                    stopWatch.stop();
-                    logger.log(Level.INFO, "Searcher took {0} secs to run (final = {1})", new Object[]{stopWatch.getElapsedTimeSecs(), this.finalRun}); //NON-NLS
-                } finally {
-                    // In case a thread is waiting on this worker to be done
-                    job.searchNotify();
+                        newResults.process(this, keywordList.getIngestMessages(), true, job.getJobId());
+                    }
                 }
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Error occurred during keyword search", ex); //NON-NLS
+            } finally {
+                if (progressGroup != null) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            progressGroup.finish();
+                        }
+                    });
+                }
+                stopWatch.stop();
+                logger.log(Level.INFO, "Searcher took {0} secs to run (final = {1})", new Object[]{stopWatch.getElapsedTimeSecs(), this.finalRun}); //NON-NLS
+                // In case a thread is waiting on this worker to be done
+                job.searchNotify();
             }
 
             return null;
@@ -610,20 +609,6 @@ final class IngestSearchRunner {
                     keywordToList.put(k, list);
                 }
             }
-        }
-
-        /**
-         * Performs the cleanup that needs to be done right AFTER
-         * doInBackground() returns without relying on done() method that is not
-         * guaranteed to run.
-         */
-        private void finalizeSearcher() {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    progressGroup.finish();
-                }
-            });
         }
 
         /**
