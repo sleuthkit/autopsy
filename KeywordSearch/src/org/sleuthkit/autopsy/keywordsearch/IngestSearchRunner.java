@@ -39,7 +39,6 @@ import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -456,7 +455,6 @@ final class IngestSearchRunner {
         private final boolean usingNetBeansGUI;
         @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
         private ProgressHandle progressIndicator;
-        private AggregateProgressHandle progressGroup;
         private boolean finalRun = false;
 
         Searcher(SearchJobInfo job) {
@@ -477,42 +475,42 @@ final class IngestSearchRunner {
         @Override
         @Messages("SearchRunner.query.exception.msg=Error performing query:")
         protected Object doInBackground() throws Exception {
-            if (usingNetBeansGUI) {
-                /*
-                 * If running in the NetBeans thick client application version
-                 * of Autopsy, NetBeans progress handles (i.e., progress bars)
-                 * are used to display search progress in the lower right hand
-                 * corner of the main application window.
-                 *
-                 * A layer of abstraction to allow alternate representations of
-                 * progress could be used here, as it is in other places in the
-                 * application (see implementations and usage of
-                 * org.sleuthkit.autopsy.progress.ProgressIndicator interface),
-                 * to better decouple keyword search from the application's
-                 * presentation layer.
-                 */
-                final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
-                        + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
-                SwingUtilities.invokeLater(() -> {
-                    progressIndicator = ProgressHandle.createHandle(displayName, new Cancellable() {
-                        @Override
-                        public boolean cancel() {
-                            progressIndicator.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
-                            logger.log(Level.INFO, "Search cancelled by user"); //NON-NLS
-                            new Thread(() -> {
-                                IngestSearchRunner.Searcher.this.cancel(true);
-                            }).start();
-                            return true;
-                        }
-                    });
-                    progressIndicator.start();
-                    progressIndicator.switchToIndeterminate();
-                });
-            }
-
             final StopWatch stopWatch = new StopWatch();
             stopWatch.start();
             try {
+                if (usingNetBeansGUI) {
+                    /*
+                     * If running in the NetBeans thick client application
+                     * version of Autopsy, NetBeans progress handles (i.e.,
+                     * progress bars) are used to display search progress in the
+                     * lower right hand corner of the main application window.
+                     *
+                     * A layer of abstraction to allow alternate representations
+                     * of progress could be used here, as it is in other places
+                     * in the application (see implementations and usage of
+                     * org.sleuthkit.autopsy.progress.ProgressIndicator
+                     * interface), to better decouple keyword search from the
+                     * application's presentation layer.
+                     */
+                    final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
+                            + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
+                    SwingUtilities.invokeAndWait(() -> {
+                        progressIndicator = ProgressHandle.createHandle(displayName, new Cancellable() {
+                            @Override
+                            public boolean cancel() {
+                                progressIndicator.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
+                                logger.log(Level.INFO, "Search cancelled by user"); //NON-NLS
+                                new Thread(() -> {
+                                    IngestSearchRunner.Searcher.this.cancel(true);
+                                }).start();
+                                return true;
+                            }
+                        });
+                        progressIndicator.start();
+                        progressIndicator.switchToIndeterminate();
+                    });
+                }
+
                 updateKeywords();
                 for (Keyword keyword : keywords) {
                     if (isCancelled() || job.getJobContext().fileIngestIsCancelled()) {
@@ -525,8 +523,6 @@ final class IngestSearchRunner {
                         String searchTermStr = keyword.getSearchTerm();
                         if (searchTermStr.length() > 50) {
                             searchTermStr = searchTermStr.substring(0, 49) + "...";
-                        } else {
-                            searchTermStr = searchTermStr;
                         }
                         final String progressMessage = keywordList.getName() + ": " + searchTermStr;
                         SwingUtilities.invokeLater(() -> {
@@ -574,11 +570,12 @@ final class IngestSearchRunner {
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error occurred during keyword search", ex); //NON-NLS
             } finally {
-                if (progressGroup != null) {
+                if (progressIndicator != null) {
                     SwingUtilities.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            progressGroup.finish();
+                            progressIndicator.finish();
+                            progressIndicator = null;
                         }
                     });
                 }
