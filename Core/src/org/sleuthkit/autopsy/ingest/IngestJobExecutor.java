@@ -541,7 +541,7 @@ final class IngestJobExecutor {
     }
 
     /**
-     * Determnines which ingets job stage to start in and starts up the ingest
+     * Determnines which ingest job stage to start in and starts up the ingest
      * module pipelines.
      *
      * @return A collection of ingest module startup errors, empty on success.
@@ -676,14 +676,23 @@ final class IngestJobExecutor {
 
             if (hasFileIngestModules()) {
                 /*
-                 * Do a count of the files the data source processor has added
-                 * to the case database. This number will be used to estimate
-                 * how many files remain to be analyzed as each file ingest task
-                 * is completed.
+                 * Do an estimate of the total number of files to be analyzed.
+                 * This number will be used to estimate of how many files remain
+                 * to be analyzed as each file ingest task is completed. The
+                 * numbers are estimates because file analysis can add carved
+                 * files and/or derived files.
                  */
                 if (files.isEmpty()) {
+                    /*
+                     * Do a count of the files the data source processor has
+                     * added to the case database.
+                     */
                     estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
                 } else {
+                    /*
+                     * Use the number of files in the specified subset of all of
+                     * the files for the data source.
+                     */
                     estimatedFilesToProcess = files.size();
                 }
                 startFileIngestProgressBar();
@@ -794,11 +803,7 @@ final class IngestJobExecutor {
                 /*
                  * For ingest job progress reporting purposes, do a count of the
                  * files the data source processor has added to the case
-                 * database. This number will be used to estimate how many files
-                 * remain to be analyzed as each file ingest task is completed.
-                 * The estimate will likely be an over-estimate, since some of
-                 * the files will have already been "streamed" to this job and
-                 * processed.
+                 * database.
                  */
                 estimatedFilesToProcess = dataSource.accept(new GetFilesCountVisitor());
                 switchFileIngestProgressBarToDeterminate();
@@ -1204,6 +1209,7 @@ final class IngestJobExecutor {
     void addFiles(List<AbstractFile> files) {
         if (stage.equals(IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY)
                 || stage.equals(IngestJobStage.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
+            estimatedFilesToProcess += files.size();
             taskScheduler.fastTrackFileIngestTasks(this, files);
         } else {
             logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
@@ -1362,19 +1368,17 @@ final class IngestJobExecutor {
 
     /**
      * Updates the current file ingest progress bar upon start of analysis of a
-     * file, if the job has not been cancelled, if the job has not been
-     * cancelled.
+     * file, if the job has not been cancelled.
      *
      * @param fileName The name of the file.
      */
     private void updateFileIngestProgressForFileTaskStarted(String fileName) {
         if (usingNetBeansGUI && !jobCancelled) {
             SwingUtilities.invokeLater(() -> {
-                if (processedFiles <= estimatedFilesToProcess) {
-                    fileIngestProgressBar.progress(fileName, (int) processedFiles);
-                } else {
-                    fileIngestProgressBar.progress(fileName, (int) estimatedFilesToProcess);
-                }
+                /*
+                 * Note that if processedFiles exceeds estimatedFilesToProcess
+                 */
+                fileIngestProgressBar.progress(fileName, (int) processedFiles);
                 filesInProgress.add(fileName);
             });
         }
