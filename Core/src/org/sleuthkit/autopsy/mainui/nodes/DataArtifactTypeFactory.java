@@ -21,12 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import org.openide.nodes.Children;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.mainui.datamodel.AccountSearchParams;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
@@ -63,7 +58,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
     @Override
     protected TreeNode<DataArtifactSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> rowData) {
-        if (rowData.getTypeData().getArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
+        if (rowData.getSearchParams().getArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
             return new AccountTypeParentNode(rowData, this.dataSourceId);
         } else {
             return new DataArtifactTypeTreeNode(rowData);
@@ -76,8 +71,8 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
             @SuppressWarnings("unchecked")
             TreeItemDTO<DataArtifactSearchParam> originalTreeItem = (TreeItemDTO<DataArtifactSearchParam>) daoEvt.getItemRecord();
             DataArtifactSearchParam searchParam = originalTreeItem.getSearchParams();
-            if ((this.dataSourceId == null || Objects.equals(this.dataSourceId, searchParam.getDataSourceId())) && 
-                    !DataArtifactDAO.getIgnoredTreeTypes().contains(searchParam.getArtifactType())) {
+            if ((this.dataSourceId == null || Objects.equals(this.dataSourceId, searchParam.getDataSourceId()))
+                    && !DataArtifactDAO.getIgnoredTreeTypes().contains(searchParam.getArtifactType())) {
                 return TreeChildFactory.createTreeItemDTO(originalTreeItem, new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()));
             }
         }
@@ -114,7 +109,27 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     /**
      * The account node that has nested children of account types.
      */
+    @Messages({
+        "DataArtifactTypeFactory_AccountTypeParentNode_displayName=Communcation Accounts"
+    })
     static class AccountTypeParentNode extends TreeNode<DataArtifactSearchParam> {
+
+        /**
+         * Sets correct title (not using artifact type display name).
+         *
+         * @param itemData The item data.
+         *
+         * @return The updated data.
+         */
+        private static TreeItemDTO<? extends DataArtifactSearchParam> createTitledData(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> itemData) {
+            return new TreeItemDTO<>(
+                    itemData.getTypeId(),
+                    itemData.getSearchParams(),
+                    itemData.getId(),
+                    Bundle.DataArtifactTypeFactory_AccountTypeParentNode_displayName(),
+                    itemData.getDisplayCount()
+            );
+        }
 
         /**
          * Main constructor.
@@ -124,12 +139,19 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
          *                     data source filter.
          */
         public AccountTypeParentNode(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> itemData, Long dataSourceId) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
-                    itemData,
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
+                    createTitledData(itemData),
                     Children.create(new AccountTypeFactory(dataSourceId), true),
-                    getDefaultLookup(itemData));
+                    getDefaultLookup(itemData)
+            );
         }
+
+        @Override
+        protected void updateDisplayName(TreeItemDTO<? extends DataArtifactSearchParam> prevData, TreeItemDTO<? extends DataArtifactSearchParam> curData) {
+            super.updateDisplayName(prevData, createTitledData(curData));
+        }
+
     }
 
     /**
@@ -156,14 +178,19 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            // GVDTODO
-            return false;
+        protected TreeNode<AccountSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AccountSearchParams> rowData) {
+            return new AccountTypeNode(rowData);
         }
 
         @Override
-        protected TreeNode<AccountSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AccountSearchParams> rowData) {
-            return new AccountTypeNode(rowData);
+        protected TreeItemDTO<? extends AccountSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            // TODO
+            return null;
+        }
+
+        @Override
+        public int compare(AccountSearchParams o1, AccountSearchParams o2) {
+            return 0;
         }
     }
 
@@ -214,14 +241,14 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
          * @param itemData The data to display.
          */
         public AccountTypeNode(TreeResultsDTO.TreeItemDTO<? extends AccountSearchParams> itemData) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getAccountIconPath(itemData.getTypeData().getAccountType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getAccountIconPath(itemData.getSearchParams().getAccountType()),
                     itemData);
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayAccounts(super.getItemData().getTypeData());
+            dataResultPanel.displayAccounts(super.getItemData().getSearchParams());
         }
     }
 }

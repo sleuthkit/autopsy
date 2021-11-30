@@ -286,7 +286,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                                 new AccountSearchParams(accountType, dataSourceId),
                                 accountType,
                                 accountDisplayName,
-                                count));
+                                TreeDisplayCount.getDeterminate(count)));
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
@@ -335,7 +335,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         // invalidate cache entries that are affected by events
-        ConcurrentMap<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> concurrentMap = this.dataArtifactCache.asMap();
+        ConcurrentMap<SearchParams<? extends BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> concurrentMap = this.dataArtifactCache.asMap();
         concurrentMap.forEach((k, v) -> {
             Set<Long> dsIds = artifactTypeDataSourceMap.get(k.getParamData().getArtifactType());
             if (dsIds != null) {
@@ -432,13 +432,18 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             super(params);
         }
 
+        protected DataArtifactDAO getDAO() {
+            return MainDAO.getInstance().getDataArtifactsDAO();
+        }
+
+
         @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getDataArtifactsDAO().getAccountsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getAccountsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize);
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
+        public boolean isRefreshRequired(DAOEvent evt) {
             // TODO
             return false;
         }
