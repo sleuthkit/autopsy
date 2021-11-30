@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
@@ -83,7 +84,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
-    private final Cache<SearchParams<? extends BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final Cache<SearchParams<AccountSearchParams>, DataArtifactTableSearchResultsDTO> accountCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final TreeCounts<DataArtifactEvent> treeCounts = new TreeCounts<>();
     private final TreeCounts<AccountEvent> accountCounts = new TreeCounts<>();
@@ -354,8 +355,9 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             return Collections.emptySet();
         }
 
-        invalidateInCaches(accountTypeMap, artifactTypeDataSourceMap);
-
+        super.invalidateKeys(this.dataArtifactCache, (sp) -> Pair.of(sp.getArtifactType(), sp.getDataSourceId()), artifactTypeDataSourceMap);
+        super.invalidateKeys(this.accountCache, (sp) -> Pair.of(sp.getAccountType(), sp.getDataSourceId()), accountTypeMap);
+        
         return getDAOEvts(accountTypeMap, artifactTypeDataSourceMap);
     }
 
@@ -390,38 +392,6 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return Stream.of(dataArtifactEvents, dataArtifactTreeEvents, accountEvents, newAccountTreeEvents)
                 .flatMap((lst) -> lst.stream())
                 .collect(Collectors.toSet());
-    }
-
-    /**
-     * Invalidates items in the cache based on digest of events.
-     *
-     * @param accountTypeMap            Maps account type to data source ids.
-     * @param artifactTypeDataSourceMap Maps artifact type to data source ids.
-     */
-    private void invalidateInCaches(Map<Account.Type, Set<Long>> accountTypeMap, Map<BlackboardArtifact.Type, Set<Long>> artifactTypeDataSourceMap) {
-        // invalidate cache entries that are affected by events
-        ConcurrentMap<SearchParams<? extends BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactConcurrentMap = this.dataArtifactCache.asMap();
-        dataArtifactConcurrentMap.forEach((k, v) -> {
-            Set<Long> dsIds = artifactTypeDataSourceMap.get(k.getParamData().getArtifactType());
-
-            if (dsIds != null) {
-                Long searchDsId = k.getParamData().getDataSourceId();
-                if (searchDsId == null || dsIds.contains(searchDsId)) {
-                    dataArtifactConcurrentMap.remove(k);
-                }
-            }
-        });
-
-        ConcurrentMap<SearchParams<AccountSearchParams>, DataArtifactTableSearchResultsDTO> accountConcurrentMap = this.accountCache.asMap();
-        accountConcurrentMap.forEach((k, v) -> {
-            Set<Long> dsIds = accountTypeMap.get(((AccountSearchParams) k.getParamData()).getAccountType());
-            if (dsIds != null) {
-                Long searchDsId = k.getParamData().getDataSourceId();
-                if (searchDsId == null || dsIds.contains(searchDsId)) {
-                    accountConcurrentMap.remove(k);
-                }
-            }
-        });
     }
 
     private TreeItemDTO<DataArtifactSearchParam> createDataArtifactTreeItem(BlackboardArtifact.Type artifactType, Long dataSourceId, TreeDisplayCount displayCount) {

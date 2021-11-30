@@ -18,9 +18,16 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import com.google.common.cache.Cache;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import java.beans.PropertyChangeEvent;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
@@ -63,4 +70,46 @@ abstract class AbstractDAO {
      * @return The categories that require a tree refresh.
      */
     abstract Set<TreeEvent> shouldRefreshTree();
+
+    /**
+     * Using a digest of event information, clears keys in a cache that may be
+     * effected by events.
+     *
+     * @param cache                 The cache.
+     * @param getKeys               Using a key from a cache, provides a tuple
+     *                              of the relevant key in the data source
+     *                              mapping and the data source id (or null if
+     *                              no data source filtering).
+     * @param itemDataSourceMapping The event digest.
+     */
+    <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Function<K, Pair<T, Long>> getKeys, Map<T, Set<Long>> itemDataSourceMapping) {
+        invalidateKeys(cache, getKeys, Collections.singletonList(itemDataSourceMapping));
+    }
+
+    /**
+     * Using a digest of event information, clears keys in a cache that may be
+     * effected by events.
+     *
+     * @param cache                 The cache.
+     * @param getKeys               Using a key from a cache, provides a tuple
+     *                              of the relevant key in the data source
+     *                              mapping and the data source id (or null if
+     *                              no data source filtering).
+     * @param itemDataSourceMapping The list of event digests.
+     */
+    <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Function<K, Pair<T, Long>> getKeys, List<Map<T, Set<Long>>> itemDataSourceMapping) {
+        ConcurrentMap<SearchParams<K>, ?> concurrentMap = cache.asMap();
+        concurrentMap.forEach((k, v) -> {
+            Pair<T, Long> pairItems = getKeys.apply(k.getParamData());
+            T searchParamsKey = pairItems.getLeft();
+            Long searchParamsDsId = pairItems.getRight();
+            for (Map<T, Set<Long>> itemDsMapping : itemDataSourceMapping) {
+                Set<Long> dsIds = itemDsMapping.get(searchParamsKey);
+                if (dsIds != null && (searchParamsDsId == null || dsIds.contains(searchParamsDsId))) {
+                    concurrentMap.remove(k);
+                }
+            }
+        });
+    }
+
 }

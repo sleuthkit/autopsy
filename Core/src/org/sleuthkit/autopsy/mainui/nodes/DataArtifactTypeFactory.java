@@ -32,7 +32,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.events.AccountEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -68,19 +67,20 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
     @Override
     protected TreeItemDTO<DataArtifactSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
-        if (daoEvt.getItemRecord().getSearchParams() instanceof DataArtifactSearchParam) {
-            @SuppressWarnings("unchecked")
-            TreeItemDTO<DataArtifactSearchParam> originalTreeItem = (TreeItemDTO<DataArtifactSearchParam>) daoEvt.getItemRecord();
+
+        TreeItemDTO<DataArtifactSearchParam> originalTreeItem = (TreeItemDTO<DataArtifactSearchParam>) daoEvt.getItemRecord();
+
+        if (originalTreeItem != null
+                && !DataArtifactDAO.getIgnoredTreeTypes().contains(originalTreeItem.getSearchParams().getArtifactType())
+                && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
             DataArtifactSearchParam searchParam = originalTreeItem.getSearchParams();
-            if ((this.dataSourceId == null || Objects.equals(this.dataSourceId, searchParam.getDataSourceId()))
-                    && !DataArtifactDAO.getIgnoredTreeTypes().contains(searchParam.getArtifactType())) {
-                return new TreeItemDTO<>(
-                        BlackboardArtifact.Category.DATA_ARTIFACT.name(),
-                        new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()),
-                        searchParam.getArtifactType().getTypeID(),
-                        searchParam.getArtifactType().getDisplayName(),
-                        originalTreeItem.getDisplayCount());
-            }
+            return new TreeItemDTO<>(
+                    BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                    new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()),
+                    searchParam.getArtifactType().getTypeID(),
+                    searchParam.getArtifactType().getDisplayName(),
+                    originalTreeItem.getDisplayCount());
         }
         return null;
     }
@@ -190,15 +190,16 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         protected TreeItemDTO<? extends AccountSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
-            if (treeEvt.getItemRecord().getSearchParams() instanceof AccountEvent) {
-                @SuppressWarnings("unchecked")
-                TreeItemDTO<AccountSearchParams> originalTreeItem = (TreeItemDTO<AccountSearchParams>) treeEvt.getItemRecord();
+
+            TreeItemDTO<AccountSearchParams> originalTreeItem = getTypedTreeItem(treeEvt, AccountSearchParams.class);
+
+            if (originalTreeItem != null
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
                 AccountSearchParams searchParam = originalTreeItem.getSearchParams();
-                if (this.dataSourceId == null || Objects.equals(this.dataSourceId, searchParam.getDataSourceId())) {
-                    return TreeChildFactory.createTreeItemDTO(originalTreeItem,
-                            new AccountSearchParams(searchParam.getAccountType(), searchParam.getDataSourceId()));
-                }
+                return TreeChildFactory.createTreeItemDTO(originalTreeItem,
+                        new AccountSearchParams(searchParam.getAccountType(), searchParam.getDataSourceId()));
             }
+
             return null;
         }
 

@@ -252,6 +252,29 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     }
 
     /**
+     * Returns the underlying tree item dto in the tree event if the search
+     * params of the tree item dto are of the expected type. Otherwise, returns
+     * null.
+     *
+     * @param treeEvt                  The tree event.
+     * @param expectedSearchParamsType The expected type of the search params of
+     *                                 the tree item dto in the tree event.
+     *
+     * @return The typed tree item dto in the tree event or null if no match
+     *         found.
+     */
+    protected <T> TreeItemDTO<T> getTypedTreeItem(TreeEvent treeEvt, Class<T> expectedSearchParamsType) {
+        if (treeEvt != null && treeEvt.getItemRecord() != null && treeEvt.getItemRecord().getSearchParams() != null
+                && expectedSearchParamsType.isAssignableFrom(treeEvt.getItemRecord().getSearchParams().getClass())) {
+
+            @SuppressWarnings("unchecked")
+            TreeItemDTO<T> originalTreeItem = (TreeItemDTO<T>) treeEvt.getItemRecord();
+            return originalTreeItem;
+        }
+        return null;
+    }
+
+    /**
      * Creates a TreeNode given the tree item data.
      *
      * @param rowData The tree item data.
