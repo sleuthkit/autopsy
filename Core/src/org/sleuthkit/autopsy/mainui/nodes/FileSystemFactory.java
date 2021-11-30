@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.beans.PropertyChangeEvent;
 import java.util.Optional;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -27,7 +26,6 @@ import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.python.google.common.primitives.Longs;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -35,8 +33,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
 import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemColumnUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;

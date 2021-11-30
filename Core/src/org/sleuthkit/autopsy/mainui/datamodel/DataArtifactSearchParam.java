@@ -25,7 +25,16 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class DataArtifactSearchParam extends BlackboardArtifactSearchParam {
 
+    private static final String TYPE_ID = "DATA_ARTIFACT";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     public DataArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        super (artifactType, dataSourceId);
-    }  
+        super(artifactType, dataSourceId);
+    }
 }

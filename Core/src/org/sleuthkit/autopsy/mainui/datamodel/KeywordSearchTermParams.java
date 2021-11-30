@@ -23,6 +23,15 @@ package org.sleuthkit.autopsy.mainui.datamodel;
  */
 public class KeywordSearchTermParams {
 
+    private static final String TYPE_ID = "KEYWORD_SEARCH_TERM";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final String setName;
     private final String searchTerm;
     private final boolean hasChildren;

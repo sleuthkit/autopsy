@@ -24,6 +24,16 @@ import java.util.Objects;
  * Key for content object in order to retrieve data from DAO.
  */
 public class FileSystemContentSearchParam {
+
+    private static final String TYPE_ID = "FILE_SYSTEM_CONTENT";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final Long contentObjectId;
 
     public FileSystemContentSearchParam(Long contentObjectId) {

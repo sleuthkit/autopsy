@@ -26,7 +26,15 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Search parameters for accounts.
  */
 public class AccountSearchParams extends DataArtifactSearchParam {
-
+    private static final String TYPE_ID = "DATA_ARTIFACT_ACCOUNT";
+    
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+    
     private final Account.Type accountType;
 
     /**

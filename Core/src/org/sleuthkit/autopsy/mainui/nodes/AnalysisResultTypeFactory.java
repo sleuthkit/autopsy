@@ -22,6 +22,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.KeywordSearchTermParams;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordMatchParams;
 import com.google.common.collect.ImmutableSet;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.openide.nodes.ChildFactory;
@@ -29,8 +30,11 @@ import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
@@ -92,8 +96,23 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     }
 
     @Override
-    protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
-        // GVDTODO
+    protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
+
+        TreeResultsDTO.TreeItemDTO<AnalysisResultSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, AnalysisResultSearchParam.class);
+
+        if (originalTreeItem != null
+                && !AnalysisResultDAO.getIgnoredTreeTypes().contains(originalTreeItem.getSearchParams().getArtifactType())
+                && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+            // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+            AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
+            return new TreeResultsDTO.TreeItemDTO<>(
+                    BlackboardArtifact.Category.ANALYSIS_RESULT.name(),
+                    new AnalysisResultSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()),
+                    searchParam.getArtifactType().getTypeID(),
+                    searchParam.getArtifactType().getDisplayName(),
+                    originalTreeItem.getDisplayCount());
+        }
         return null;
     }
 
@@ -179,8 +198,22 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<AnalysisResultSetSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, AnalysisResultSetSearchParam.class);
+
+            if (originalTreeItem != null
+                    && !AnalysisResultDAO.getIgnoredTreeTypes().contains(originalTreeItem.getSearchParams().getArtifactType())
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                AnalysisResultSetSearchParam searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        TBD,
+                        new AnalysisResultSetSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId(), searchParam.getSetName()),
+                        searchParam.getArtifactType().getTypeID(),
+                        searchParam.getArtifactType().getDisplayName(),
+                        originalTreeItem.getDisplayCount());
+            }
             return null;
         }
 
