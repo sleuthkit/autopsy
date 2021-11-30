@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.AccountEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
@@ -184,13 +185,21 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         protected TreeItemDTO<? extends AccountSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
-            // TODO
+            if (treeEvt.getItemRecord().getSearchParams() instanceof AccountEvent) {
+                @SuppressWarnings("unchecked")
+                TreeItemDTO<AccountSearchParams> originalTreeItem = (TreeItemDTO<AccountSearchParams>) treeEvt.getItemRecord();
+                AccountSearchParams searchParam = originalTreeItem.getSearchParams();
+                if (this.dataSourceId == null || Objects.equals(this.dataSourceId, searchParam.getDataSourceId())) {
+                    return TreeChildFactory.createTreeItemDTO(originalTreeItem, 
+                            new AccountSearchParams(searchParam.getAccountType(), searchParam.getDataSourceId()));
+                }
+            }
             return null;
         }
 
         @Override
         public int compare(AccountSearchParams o1, AccountSearchParams o2) {
-            return 0;
+            return o1.getAccountType().getDisplayName().compareToIgnoreCase(o2.getAccountType().getDisplayName());
         }
     }
 
@@ -206,29 +215,29 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
          *
          * @return The path of the icon for the given Account Type.
          */
-        public static String getAccountIconPath(String accountType) {
+        public static String getAccountIconPath(Account.Type accountType) {
 
-            if (accountType.equals(Account.Type.CREDIT_CARD.getTypeName())) {
+            if (accountType.equals(Account.Type.CREDIT_CARD)) {
                 return ICON_BASE_PATH + "credit-card.png";
-            } else if (accountType.equals(Account.Type.DEVICE.getTypeName())) {
+            } else if (accountType.equals(Account.Type.DEVICE)) {
                 return ICON_BASE_PATH + "image.png";
-            } else if (accountType.equals(Account.Type.EMAIL.getTypeName())) {
+            } else if (accountType.equals(Account.Type.EMAIL)) {
                 return ICON_BASE_PATH + "email.png";
-            } else if (accountType.equals(Account.Type.FACEBOOK.getTypeName())) {
+            } else if (accountType.equals(Account.Type.FACEBOOK)) {
                 return ICON_BASE_PATH + "facebook.png";
-            } else if (accountType.equals(Account.Type.INSTAGRAM.getTypeName())) {
+            } else if (accountType.equals(Account.Type.INSTAGRAM)) {
                 return ICON_BASE_PATH + "instagram.png";
-            } else if (accountType.equals(Account.Type.MESSAGING_APP.getTypeName())) {
+            } else if (accountType.equals(Account.Type.MESSAGING_APP)) {
                 return ICON_BASE_PATH + "messaging.png";
-            } else if (accountType.equals(Account.Type.PHONE.getTypeName())) {
+            } else if (accountType.equals(Account.Type.PHONE)) {
                 return ICON_BASE_PATH + "phone.png";
-            } else if (accountType.equals(Account.Type.TWITTER.getTypeName())) {
+            } else if (accountType.equals(Account.Type.TWITTER)) {
                 return ICON_BASE_PATH + "twitter.png";
-            } else if (accountType.equals(Account.Type.WEBSITE.getTypeName())) {
+            } else if (accountType.equals(Account.Type.WEBSITE)) {
                 return ICON_BASE_PATH + "web-file.png";
-            } else if (accountType.equals(Account.Type.WHATSAPP.getTypeName())) {
+            } else if (accountType.equals(Account.Type.WHATSAPP)) {
                 return ICON_BASE_PATH + "WhatsApp.png";
-            } else if (accountType.equals(Account.Type.CREDIT_CARD.getTypeName())) {
+            } else if (accountType.equals(Account.Type.CREDIT_CARD)) {
                 return ICON_BASE_PATH + "credit-cards.png";
             } else {
                 return ICON_BASE_PATH + "face.png";

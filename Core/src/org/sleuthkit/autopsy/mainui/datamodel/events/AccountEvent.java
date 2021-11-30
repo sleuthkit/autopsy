@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
 import org.sleuthkit.datamodel.Account;
@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Search parameters for accounts.
  */
-public class AccountSearchParams extends DataArtifactSearchParam {
+public class AccountEvent extends DataArtifactEvent {
 
     private final Account.Type accountType;
 
@@ -35,7 +35,7 @@ public class AccountSearchParams extends DataArtifactSearchParam {
      * @param accountType  The account type identifier.
      * @param dataSourceId The data source id to filter on or null.
      */
-    public AccountSearchParams(Account.Type accountType, Long dataSourceId) {
+    public AccountEvent(Account.Type accountType, Long dataSourceId) {
         super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
         this.accountType = accountType;
     }
@@ -66,13 +66,11 @@ public class AccountSearchParams extends DataArtifactSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final AccountSearchParams other = (AccountSearchParams) obj;
+        final AccountEvent other = (AccountEvent) obj;
         if (!Objects.equals(this.accountType, other.accountType)) {
             return false;
         }
         return super.equals(obj);
     }
 
-    
-    
 }

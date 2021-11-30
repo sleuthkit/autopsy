@@ -27,30 +27,30 @@ import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.AccountEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -84,7 +84,9 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     }
 
     private final Cache<SearchParams<? extends BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<AccountSearchParams>, DataArtifactTableSearchResultsDTO> accountCache = CacheBuilder.newBuilder().maximumSize(1000).build();
     private final TreeCounts<DataArtifactEvent> treeCounts = new TreeCounts<>();
+    private final TreeCounts<AccountEvent> accountCounts = new TreeCounts<>();
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
@@ -151,7 +153,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
         }
 
-        String expectedAccountType = searchParams.getParamData().getAccountType();
+        String expectedAccountTypeName = searchParams.getParamData().getAccountType().getTypeName();
 
         List<BlackboardArtifact> allAccounts = new ArrayList<>();
         allAccounts.addAll(blackboard.getDataArtifactsWhere(originalWhereClause));
@@ -161,8 +163,8 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         List<BlackboardArtifact> arts = new ArrayList<>();
         for (BlackboardArtifact art : allAccounts) {
             BlackboardAttribute accountTypeAttr = art.getAttribute(BlackboardAttribute.Type.TSK_ACCOUNT_TYPE);
-            if ((expectedAccountType == null && accountTypeAttr == null)
-                    || (expectedAccountType != null && accountTypeAttr != null && expectedAccountType.equals(accountTypeAttr.getValueString()))) {
+            if ((expectedAccountTypeName == null && accountTypeAttr == null)
+                    || (expectedAccountTypeName != null && accountTypeAttr != null && expectedAccountTypeName.equals(accountTypeAttr.getValueString()))) {
                 arts.add(art);
             }
         }
@@ -191,7 +193,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
 
         SearchParams<AccountSearchParams> pagedSearchParams = new SearchParams<>(searchParams, startItem, maxCount);
-        return dataArtifactCache.get(pagedSearchParams, () -> fetchAccounts(pagedSearchParams));
+        return accountCache.get(pagedSearchParams, () -> fetchAccounts(pagedSearchParams));
     }
 
     private boolean isDataArtifactInvalidating(DataArtifactSearchParam key, DAOEvent eventData) {
@@ -204,8 +206,14 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         }
     }
 
-    public void dropDataArtifactCache() {
-        dataArtifactCache.invalidateAll();
+    private boolean isAccountInvalidating(AccountSearchParams parameters, DAOEvent evt) {
+        if (!(evt instanceof AccountEvent)) {
+            return false;
+        } else {
+            AccountEvent accountEvt = (AccountEvent) evt;
+            return Objects.equals(parameters.getAccountType(), evt.getType())
+                    && (parameters.getDataSourceId() == null || (parameters.getDataSourceId() == accountEvt.getDataSourceId()));
+        }
     }
 
     /**
@@ -231,7 +239,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.DATA_ARTIFACT, dataSourceId);
             List<TreeResultsDTO.TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
                     .map(entry -> {
-                        return createTreeItem(entry.getKey(), dataSourceId,
+                        return createDataArtifactTreeItem(entry.getKey(), dataSourceId,
                                 indeterminateTypes.contains(entry.getKey())
                                 ? TreeDisplayCount.INDETERMINATE
                                 : TreeDisplayCount.getDeterminate(entry.getValue()));
@@ -278,15 +286,11 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             getCase().getCaseDbAccessManager().select(query, (resultSet) -> {
                 try {
                     while (resultSet.next()) {
-                        String accountType = resultSet.getString("account_type");
+                        String accountTypeName = resultSet.getString("account_type");
                         String accountDisplayName = resultSet.getString("account_display_name");
+                        Account.Type accountType = new Account.Type(accountTypeName, accountDisplayName);
                         long count = resultSet.getLong("count");
-                        accountParams.add(new TreeItemDTO<>(
-                                accountType,
-                                new AccountSearchParams(accountType, dataSourceId),
-                                accountType,
-                                accountDisplayName,
-                                TreeDisplayCount.getDeterminate(count)));
+                        accountParams.add(createAccountTreeItem(accountType, dataSourceId, TreeDisplayCount.getDeterminate(count)));
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
@@ -304,6 +308,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     @Override
     void clearCaches() {
         this.dataArtifactCache.invalidateAll();
+        this.accountCache.invalidateAll();
         this.handleIngestComplete();
     }
 
@@ -315,37 +320,46 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             return Collections.emptySet();
         }
 
-        Map<BlackboardArtifact.Type, Set<Long>> artifactTypeDataSourceMap = dataEvt.getArtifacts().stream()
-                .map((art) -> {
-                    try {
-                        if (BlackboardArtifact.Category.DATA_ARTIFACT.equals(art.getType().getCategory())) {
-                            return Pair.of(art.getType(), art.getDataSourceObjectID());
+        Map<BlackboardArtifact.Type, Set<Long>> artifactTypeDataSourceMap = new HashMap<>();
+        Map<Account.Type, Set<Long>> accountTypeMap = new HashMap<>();
+
+        for (BlackboardArtifact art : dataEvt.getArtifacts()) {
+            try {
+                if (BlackboardArtifact.Category.DATA_ARTIFACT.equals(art.getType().getCategory())) {
+                    if (art.getType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
+                        BlackboardAttribute accountTypeAttribute = art.getAttribute(BlackboardAttribute.Type.TSK_ACCOUNT_TYPE);
+                        if (accountTypeAttribute == null) {
+                            continue;
                         }
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.WARNING, "Unable to fetch artifact category for artifact with id: " + art.getId(), ex);
+
+                        String accountTypeName = accountTypeAttribute.getValueString();
+                        if (accountTypeName == null) {
+                            continue;
+                        }
+
+                        accountTypeMap.computeIfAbsent(getCase().getCommunicationsManager().getAccountType(accountTypeName), (k) -> new HashSet<>())
+                                .add(art.getDataSourceObjectID());
+                    } else {
+                        artifactTypeDataSourceMap.computeIfAbsent(art.getType(), (k) -> new HashSet<>())
+                                .add(art.getDataSourceObjectID());
                     }
-                    return null;
-                })
-                .filter(pr -> pr != null)
-                .collect(Collectors.groupingBy(pr -> pr.getKey(), Collectors.mapping(pr -> pr.getValue(), Collectors.toSet())));
+                }
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to fetch artifact category for artifact with id: " + art.getId(), ex);
+            }
+        }
 
         // don't do anything else if no relevant events
-        if (artifactTypeDataSourceMap.isEmpty()) {
+        if (artifactTypeDataSourceMap.isEmpty() && accountTypeMap.isEmpty()) {
             return Collections.emptySet();
         }
 
-        // invalidate cache entries that are affected by events
-        ConcurrentMap<SearchParams<? extends BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> concurrentMap = this.dataArtifactCache.asMap();
-        concurrentMap.forEach((k, v) -> {
-            Set<Long> dsIds = artifactTypeDataSourceMap.get(k.getParamData().getArtifactType());
-            if (dsIds != null) {
-                Long searchDsId = k.getParamData().getDataSourceId();
-                if (searchDsId == null || dsIds.contains(searchDsId)) {
-                    concurrentMap.remove(k);
-                }
-            }
-        });
+        invalidateInCaches(accountTypeMap, artifactTypeDataSourceMap);
 
+        return getDAOEvts(accountTypeMap, artifactTypeDataSourceMap);
+    }
+
+    private Set<DAOEvent> getDAOEvts(Map<Account.Type, Set<Long>> accountTypeDataSourceMap, Map<BlackboardArtifact.Type, Set<Long>> artifactTypeDataSourceMap) {
         // gather dao events based on artifacts
         List<DataArtifactEvent> dataArtifactEvents = new ArrayList<>();
         for (Entry<BlackboardArtifact.Type, Set<Long>> entry : artifactTypeDataSourceMap.entrySet()) {
@@ -356,16 +370,61 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             }
         }
 
-        List<TreeEvent> newTreeEvents = this.treeCounts.enqueueAll(dataArtifactEvents).stream()
-                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false))
+        List<TreeEvent> dataArtifactTreeEvents = this.treeCounts.enqueueAll(dataArtifactEvents).stream()
+                .map(daoEvt -> new TreeEvent(createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false))
                 .collect(Collectors.toList());
 
-        return Stream.of(dataArtifactEvents, newTreeEvents)
+        List<AccountEvent> accountEvents = new ArrayList<>();
+        for (Entry<Account.Type, Set<Long>> entry : accountTypeDataSourceMap.entrySet()) {
+            Account.Type accountType = entry.getKey();
+            for (Long dsObjId : entry.getValue()) {
+                AccountEvent newEvt = new AccountEvent(accountType, dsObjId);
+                accountEvents.add(newEvt);
+            }
+        }
+
+        List<TreeEvent> newAccountTreeEvents = this.accountCounts.enqueueAll(accountEvents).stream()
+                .map(daoEvt -> new TreeEvent(createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false))
+                .collect(Collectors.toList());
+
+        return Stream.of(dataArtifactEvents, dataArtifactTreeEvents, accountEvents, newAccountTreeEvents)
                 .flatMap((lst) -> lst.stream())
                 .collect(Collectors.toSet());
     }
 
-    private TreeItemDTO<DataArtifactSearchParam> createTreeItem(BlackboardArtifact.Type artifactType, Long dataSourceId, TreeDisplayCount displayCount) {
+    /**
+     * Invalidates items in the cache based on digest of events.
+     *
+     * @param accountTypeMap            Maps account type to data source ids.
+     * @param artifactTypeDataSourceMap Maps artifact type to data source ids.
+     */
+    private void invalidateInCaches(Map<Account.Type, Set<Long>> accountTypeMap, Map<BlackboardArtifact.Type, Set<Long>> artifactTypeDataSourceMap) {
+        // invalidate cache entries that are affected by events
+        ConcurrentMap<SearchParams<? extends BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactConcurrentMap = this.dataArtifactCache.asMap();
+        dataArtifactConcurrentMap.forEach((k, v) -> {
+            Set<Long> dsIds = artifactTypeDataSourceMap.get(k.getParamData().getArtifactType());
+
+            if (dsIds != null) {
+                Long searchDsId = k.getParamData().getDataSourceId();
+                if (searchDsId == null || dsIds.contains(searchDsId)) {
+                    dataArtifactConcurrentMap.remove(k);
+                }
+            }
+        });
+
+        ConcurrentMap<SearchParams<AccountSearchParams>, DataArtifactTableSearchResultsDTO> accountConcurrentMap = this.accountCache.asMap();
+        accountConcurrentMap.forEach((k, v) -> {
+            Set<Long> dsIds = accountTypeMap.get(((AccountSearchParams) k.getParamData()).getAccountType());
+            if (dsIds != null) {
+                Long searchDsId = k.getParamData().getDataSourceId();
+                if (searchDsId == null || dsIds.contains(searchDsId)) {
+                    accountConcurrentMap.remove(k);
+                }
+            }
+        });
+    }
+
+    private TreeItemDTO<DataArtifactSearchParam> createDataArtifactTreeItem(BlackboardArtifact.Type artifactType, Long dataSourceId, TreeDisplayCount displayCount) {
         return new TreeResultsDTO.TreeItemDTO<>(
                 BlackboardArtifact.Category.DATA_ARTIFACT.name(),
                 new DataArtifactSearchParam(artifactType, dataSourceId),
@@ -374,17 +433,26 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                 displayCount);
     }
 
+    private static TreeItemDTO<AccountSearchParams> createAccountTreeItem(Account.Type accountType, Long dataSourceId, TreeDisplayCount count) {
+        return new TreeItemDTO<>(
+                "ACCOUNTS",
+                new AccountSearchParams(accountType, dataSourceId),
+                accountType.getTypeName(),
+                accountType.getDisplayName(),
+                count);
+    }
+
     @Override
     Set<DAOEvent> handleIngestComplete() {
         return this.treeCounts.flushEvents().stream()
-                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true))
+                .map(daoEvt -> new TreeEvent(createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true))
                 .collect(Collectors.toSet());
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
         return this.treeCounts.getEventTimeouts().stream()
-                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true))
+                .map(daoEvt -> new TreeEvent(createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true))
                 .collect(Collectors.toSet());
     }
 
@@ -436,7 +504,6 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             return MainDAO.getInstance().getDataArtifactsDAO();
         }
 
-
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
             return getDAO().getAccountsForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize);
@@ -444,8 +511,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            // TODO
-            return false;
+            return getDAO().isAccountInvalidating(this.getParameters(), evt);
         }
     }
 }
