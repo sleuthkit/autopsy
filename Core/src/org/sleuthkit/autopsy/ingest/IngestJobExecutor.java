@@ -1376,7 +1376,8 @@ final class IngestJobExecutor {
             SwingUtilities.invokeLater(() -> {
                 /*
                  * Note that if processedFiles exceeds estimatedFilesToProcess,
-                 * the progress bar will go into an infinte loop throwing
+                 * i.e., max work units fopr the progress bar, the progress bar
+                 * will go into an infinte loop throwing
                  * IllegalArgumentExceptions in the EDT.
                  */
                 long processedFilesCapture = processedFiles;
