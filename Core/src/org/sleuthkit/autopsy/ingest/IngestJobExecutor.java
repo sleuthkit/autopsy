@@ -706,9 +706,9 @@ final class IngestJobExecutor {
             /*
              * Schedule ingest tasks. If only analyzing a subset of the files in
              * the data source, the current assumption is that only file ingest
-             * task need to be scheduled. Data artifact ingest tasks will be
-             * scheduled as data artifacts produced by the file analysis are
-             * posted to the blackboard.
+             * tasks for those files need to be scheduled. Data artifact ingest
+             * tasks will be scheduled as data artifacts produced by the file
+             * analysis are posted to the blackboard.
              */
             if (!files.isEmpty() && hasFileIngestModules()) {
                 taskScheduler.scheduleFileIngestTasks(this, files);
@@ -719,10 +719,11 @@ final class IngestJobExecutor {
             /*
              * Check for stage completion. This is necessary because it is
              * possible that none of the tasks that were just scheduled will
-             * actually make it to task execution due to the file filter or
-             * other ingest job settings. In that case, there will never be a
-             * stage completion check in an ingest thread executing an ingest
-             * task, so such a job would run forever without a check here.
+             * actually make it to task execution, due to the file filter or
+             * other ingest job settings. If that happens, there will never be
+             * another stage completion check for this job in an ingest thread
+             * executing an ingest task, so such a job would run forever without
+             * a check here.
              */
             checkForStageCompleted();
         }
@@ -769,8 +770,9 @@ final class IngestJobExecutor {
                  * This constraint is implemented by restricting construction of
                  * a streaming mode IngestJob to
                  * IngestManager.openIngestStream(), which constructs and starts
-                 * the job before returning the IngestStream that is used to
-                 * stream in the files and data source.
+                 * the job before returning the IngestStream. This means that
+                 * the code in this method will run before addStreamedFiles() or
+                 * addStreamedDataSource() can be called via the IngestStream.
                  */
                 taskScheduler.scheduleDataArtifactIngestTasks(this);
             }
@@ -822,8 +824,8 @@ final class IngestJobExecutor {
                  * time, and all of the file level and artifact ingest tasks
                  * scheduled during the initial file streaming stage have
                  * already been executed, there will never be a stage completion
-                 * check in an ingest thread executing an ingest task, so such a
-                 * job would run forever without a check here.
+                 * check in an ingest thread executing an ingest task for this
+                 * job, so such a job would run forever without a check here.
                  */
                 checkForStageCompleted();
             }
