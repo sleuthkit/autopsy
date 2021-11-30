@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.getIngestCompleteEvents;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.getRefreshEvents;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.events.CommAccountsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
@@ -196,6 +197,11 @@ public class CommAccountsDAO extends AbstractDAO {
 
         List<TreeResultsDTO.TreeItemDTO<CommAccountsSearchParams>> accountParams = new ArrayList<>();
         try {
+            Set<Account.Type> indeterminateTypes = this.accountCounts.getEnqueued().stream()
+                    .filter(evt -> dataSourceId == null || evt.getDataSourceId() == dataSourceId)
+                    .map(evt -> evt.getAccountType())
+                    .collect(Collectors.toSet());
+
             getCase().getCaseDbAccessManager().select(query, (resultSet) -> {
                 try {
                     while (resultSet.next()) {
@@ -203,7 +209,11 @@ public class CommAccountsDAO extends AbstractDAO {
                         String accountDisplayName = resultSet.getString("account_display_name");
                         Account.Type accountType = new Account.Type(accountTypeName, accountDisplayName);
                         long count = resultSet.getLong("count");
-                        accountParams.add(createAccountTreeItem(accountType, dataSourceId, TreeResultsDTO.TreeDisplayCount.getDeterminate(count)));
+                        TreeDisplayCount treeDisplayCount = indeterminateTypes.contains(accountType)
+                                ? TreeDisplayCount.INDETERMINATE
+                                : TreeResultsDTO.TreeDisplayCount.getDeterminate(count);
+                        
+                        accountParams.add(createAccountTreeItem(accountType, dataSourceId, treeDisplayCount));
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);

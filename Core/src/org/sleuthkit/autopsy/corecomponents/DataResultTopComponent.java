@@ -42,11 +42,11 @@ import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
-import org.sleuthkit.autopsy.mainui.datamodel.AccountSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
@@ -489,7 +489,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      *
      * @param accountParams The search parameter query.
      */
-    public void displayAccounts(AccountSearchParams accountParams) {
+    public void displayAccounts(CommAccountsSearchParams accountParams) {
         dataResultPanel.displayAccounts(accountParams);
     }
 
