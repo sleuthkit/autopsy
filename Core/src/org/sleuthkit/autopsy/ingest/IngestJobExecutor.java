@@ -1209,7 +1209,6 @@ final class IngestJobExecutor {
     void addFiles(List<AbstractFile> files) {
         if (stage.equals(IngestJobStage.STREAMED_FILE_ANALYSIS_ONLY)
                 || stage.equals(IngestJobStage.FILE_AND_HIGH_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
-            estimatedFilesToProcess += files.size();
             taskScheduler.fastTrackFileIngestTasks(this, files);
         } else {
             logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
