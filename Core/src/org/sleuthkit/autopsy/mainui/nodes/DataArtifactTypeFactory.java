@@ -66,9 +66,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     }
 
     @Override
-    protected TreeItemDTO<DataArtifactSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
+    protected TreeItemDTO<DataArtifactSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
 
-        TreeItemDTO<DataArtifactSearchParam> originalTreeItem = (TreeItemDTO<DataArtifactSearchParam>) daoEvt.getItemRecord();
+        TreeItemDTO<DataArtifactSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, DataArtifactSearchParam.class);
 
         if (originalTreeItem != null
                 && !DataArtifactDAO.getIgnoredTreeTypes().contains(originalTreeItem.getSearchParams().getArtifactType())

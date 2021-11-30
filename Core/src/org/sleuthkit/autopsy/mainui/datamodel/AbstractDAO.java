@@ -27,7 +27,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
@@ -82,7 +85,7 @@ abstract class AbstractDAO {
      *                              no data source filtering).
      * @param itemDataSourceMapping The event digest.
      */
-    <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Function<K, Pair<T, Long>> getKeys, Map<T, Set<Long>> itemDataSourceMapping) {
+    static <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Function<K, Pair<T, Long>> getKeys, Map<T, Set<Long>> itemDataSourceMapping) {
         invalidateKeys(cache, getKeys, Collections.singletonList(itemDataSourceMapping));
     }
 
@@ -97,7 +100,7 @@ abstract class AbstractDAO {
      *                              no data source filtering).
      * @param itemDataSourceMapping The list of event digests.
      */
-    <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Function<K, Pair<T, Long>> getKeys, List<Map<T, Set<Long>>> itemDataSourceMapping) {
+    static <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Function<K, Pair<T, Long>> getKeys, List<Map<T, Set<Long>>> itemDataSourceMapping) {
         ConcurrentMap<SearchParams<K>, ?> concurrentMap = cache.asMap();
         concurrentMap.forEach((k, v) -> {
             Pair<T, Long> pairItems = getKeys.apply(k.getParamData());
@@ -112,4 +115,27 @@ abstract class AbstractDAO {
         });
     }
 
+    /**
+     * Returns a set of tree events gathered from the TreeCounts instance after calling flushEvents.
+     * @param treeCounts The tree counts instance.
+     * @param converter The means of acquiring a tree item dto to be placed in the TreeEvent.
+     * @return The generated tree events.
+     */
+    static <E, T> Set<TreeEvent> getIngestCompleteEvents(TreeCounts<E> treeCounts, Function<E, TreeItemDTO<T>> converter) {
+        return treeCounts.flushEvents().stream()
+                .map(daoEvt -> new TreeEvent(converter.apply(daoEvt), true))
+                .collect(Collectors.toSet());
+    }
+    
+    /**
+     * Returns a set of tree events gathered from the TreeCounts instance after calling getEventTimeouts.
+     * @param treeCounts The tree counts instance.
+     * @param converter The means of acquiring a tree item dto to be placed in the TreeEvent.
+     * @return The generated tree events.
+     */
+    static <E, T> Set<TreeEvent> getRefreshEvents(TreeCounts<E> treeCounts, Function<E, TreeItemDTO<T>> converter) {
+        return treeCounts.getEventTimeouts().stream()
+                .map(daoEvt -> new TreeEvent(converter.apply(daoEvt), true))
+                .collect(Collectors.toSet());
+    }
 }

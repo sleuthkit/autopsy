@@ -414,15 +414,28 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     @Override
     Set<DAOEvent> handleIngestComplete() {
-        return this.treeCounts.flushEvents().stream()
-                .map(daoEvt -> new TreeEvent(createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true))
+        Set<TreeEvent> daoEvents = getIngestCompleteEvents(this.treeCounts, 
+                (daoEvt) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED));
+        
+        Set<TreeEvent> accountDaoEvents =
+            getIngestCompleteEvents(this.accountCounts, 
+                    (daoEvt) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED));
+        
+        return Stream.of(daoEvents, accountDaoEvents)
+                .flatMap(s -> s.stream())
                 .collect(Collectors.toSet());
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        return this.treeCounts.getEventTimeouts().stream()
-                .map(daoEvt -> new TreeEvent(createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true))
+        Set<TreeEvent> daoEvents = getRefreshEvents(this.treeCounts, 
+                (daoEvt) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED));
+        
+        Set<TreeEvent> accountDaoEvents = getRefreshEvents(this.accountCounts, 
+                    (daoEvt) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED));
+        
+        return Stream.of(daoEvents, accountDaoEvents)
+                .flatMap(s -> s.stream())
                 .collect(Collectors.toSet());
     }
 
