@@ -33,6 +33,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
@@ -128,6 +129,13 @@ public class DataResultFilterNode extends FilterNode {
     @Override
     public Action getPreferredAction() {
         final Node original = this.getOriginal();
+        
+        if (original instanceof SelectionResponder
+                && original instanceof AbstractNode) {
+            AbstractNode abstractNode = (AbstractNode)original;
+            return openChild(abstractNode);
+        }
+        
         // Once had a org.openide.nodes.ChildFactory$WaitFilterNode passed in
         if ((original instanceof DisplayableItemNode) == false) {
             return null;
@@ -136,6 +144,56 @@ public class DataResultFilterNode extends FilterNode {
         final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
         return originalNode.accept(getPreferredActionsDIV);
     }
+    
+        /**
+         * Tell the originating ExplorerManager to display the given
+         * dataModelNode.
+         *
+         * @param dataModelNode Original (non-filtered) dataModelNode to open
+         *
+         * @return
+         */
+        private AbstractAction openChild(final AbstractNode dataModelNode) {
+            // get the current selection from the directory tree explorer manager,
+            // which is a DirectoryTreeFilterNode. One of that node's children
+            // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
+            // to set that wrapped node as the selection and root context of the 
+            // directory tree explorer manager (sourceEm)
+            if (sourceEm == null || sourceEm.getSelectedNodes().length == 0) {
+                return null;
+            }
+            final Node currentSelectionInDirectoryTree = sourceEm.getSelectedNodes()[0];
+
+            return new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (currentSelectionInDirectoryTree != null) {
+                        // Find the filter version of the passed in dataModelNode. 
+                        final org.openide.nodes.Children children = currentSelectionInDirectoryTree.getChildren();
+                        // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
+                        Node newSelection = children.findChild(dataModelNode.getName());
+
+                        /*
+                         * We got null here when we were viewing a ZIP file in
+                         * the Views -> Archives area and double clicking on it
+                         * got to this code. It tried to find the child in the
+                         * tree and didn't find it. An exception was then thrown
+                         * from setting the selected node to be null.
+                         */
+                        if (newSelection != null) {
+                            try {
+                                sourceEm.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                            } catch (PropertyVetoException ex) {
+                                Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                                logger.log(Level.WARNING, "Error: can't open the selected directory.", ex); //NON-NLS
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+    
 
     @Override
     public Node.PropertySet[] getPropertySets() {
