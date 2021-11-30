@@ -704,7 +704,11 @@ final class IngestJobExecutor {
             currentDataSourceIngestPipeline = highPriorityDataSourceIngestPipeline;
 
             /*
-             * Schedule ingest tasks.
+             * Schedule ingest tasks. If only analyzing a subset of the files in
+             * the data source, the current assumption is that only file ingest
+             * task need to be scheduled. Data artifact ingest tasks will be
+             * scheduled as data artifacts produced by the file analysis are
+             * posted to the blackboard.
              */
             if (!files.isEmpty() && hasFileIngestModules()) {
                 taskScheduler.scheduleFileIngestTasks(this, files);
