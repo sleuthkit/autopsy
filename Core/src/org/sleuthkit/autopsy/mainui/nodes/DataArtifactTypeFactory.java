@@ -74,7 +74,12 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
             DataArtifactSearchParam searchParam = originalTreeItem.getSearchParams();
             if ((this.dataSourceId == null || Objects.equals(this.dataSourceId, searchParam.getDataSourceId()))
                     && !DataArtifactDAO.getIgnoredTreeTypes().contains(searchParam.getArtifactType())) {
-                return TreeChildFactory.createTreeItemDTO(originalTreeItem, new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()));
+                return new TreeItemDTO<>(
+                        BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                        new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()),
+                        searchParam.getArtifactType().getTypeID(),
+                        searchParam.getArtifactType().getDisplayName(),
+                        originalTreeItem.getDisplayCount());
             }
         }
         return null;
@@ -190,7 +195,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
                 TreeItemDTO<AccountSearchParams> originalTreeItem = (TreeItemDTO<AccountSearchParams>) treeEvt.getItemRecord();
                 AccountSearchParams searchParam = originalTreeItem.getSearchParams();
                 if (this.dataSourceId == null || Objects.equals(this.dataSourceId, searchParam.getDataSourceId())) {
-                    return TreeChildFactory.createTreeItemDTO(originalTreeItem, 
+                    return TreeChildFactory.createTreeItemDTO(originalTreeItem,
                             new AccountSearchParams(searchParam.getAccountType(), searchParam.getDataSourceId()));
                 }
             }
