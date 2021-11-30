@@ -29,7 +29,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.openide.nodes.ChildFactory;
-
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
@@ -46,6 +45,7 @@ import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.MergeHostMenuAction;
 import org.sleuthkit.autopsy.datamodel.hosts.RemoveParentPersonAction;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
+import org.sleuthkit.autopsy.mainui.nodes.FileSystemFactory;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
@@ -221,7 +221,7 @@ public class HostNode extends DisplayableItemNode implements SelectionResponder{
      * @param hosts The HostDataSources key.
      */
     HostNode(HostDataSources hosts) {
-        this(Children.create(new HostGroupingChildren(HOST_DATA_SOURCES, hosts.getHost()), true), hosts.getHost());
+        this(Children.create(new FileSystemFactory(hosts.getHost()), true), hosts.getHost());
     }
 
     /**

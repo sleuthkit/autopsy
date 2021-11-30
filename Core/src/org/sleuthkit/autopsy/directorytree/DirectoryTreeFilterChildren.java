@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
+import org.sleuthkit.autopsy.mainui.nodes.FileSystemFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -102,7 +103,10 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             return new Node[]{cloned};            
         } else if (origNode instanceof FileSize.FileSizeRootNode) {
             Node cloned = ((FileSize.FileSizeRootNode) origNode).clone();
-            return new Node[]{cloned};            
+            return new Node[]{cloned};     
+        } else if (origNode instanceof FileSystemFactory.FileSystemTreeNode) {
+            Node cloned = ((FileSystemFactory.FileSystemTreeNode) origNode).clone();
+            return new Node[]{cloned}; 
         } else if (origNode == null || !(origNode instanceof DisplayableItemNode)) {
             return new Node[]{};
         }

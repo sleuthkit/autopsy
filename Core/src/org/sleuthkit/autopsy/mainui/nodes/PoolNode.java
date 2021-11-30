@@ -52,7 +52,7 @@ public class PoolNode extends BaseNode<SearchResultsDTO, PoolRowDTO> implements 
         String name = row.getContent().getType().getName();
         setDisplayName(name);
         setShortDescription(name);
-        setIconBaseWithExtension("org/sleuthkit/autopsy/images/pool-icon.png");
+        setIconBaseWithExtension(NodeIconUtil.POOL.getPath());
     }
 
     @Override

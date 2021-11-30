@@ -140,7 +140,7 @@ public abstract class ArtifactNode<T extends BlackboardArtifact, R extends Artif
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return rowData.getSrcContent() instanceof AbstractFile;
     }
 

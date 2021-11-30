@@ -65,7 +65,7 @@ public class OsAccountNode extends BaseNode<SearchResultsDTO, OsAccountRowDTO> i
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
 

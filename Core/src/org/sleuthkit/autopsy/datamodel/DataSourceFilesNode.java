@@ -34,6 +34,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.nodes.FileSystemFactory;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
@@ -69,7 +70,7 @@ public class DataSourceFilesNode extends DisplayableItemNode {
     }
 
     public DataSourceFilesNode(long dsObjId) {
-        super(Children.create(new DataSourcesNodeChildren(dsObjId), true), Lookups.singleton(NAME));
+        super(Children.create(new FileSystemFactory.DataSourceFactory(dsObjId), true), Lookups.singleton(NAME));
         displayName = (dsObjId > 0) ? NbBundle.getMessage(DataSourceFilesNode.class, "DataSourcesNode.group_by_datasource.name") : NAME;
         init();
     }
@@ -83,75 +84,6 @@ public class DataSourceFilesNode extends DisplayableItemNode {
     @Override
     public String getItemType() {
         return getClass().getName();
-    }
-
-    /*
-     * Custom Keys implementation that listens for new data sources being added.
-     */
-    public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
-
-        private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
-        private final long datasourceObjId;
-
-        List<Content> currentKeys;
-
-        public DataSourcesNodeChildren() {
-            this(0);
-        }
-
-        public DataSourcesNodeChildren(long dsObjId) {
-            super("ds_" + Long.toString(dsObjId));
-            this.currentKeys = new ArrayList<>();
-            this.datasourceObjId = dsObjId;
-        }
-
-        private final PropertyChangeListener pcl = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String eventType = evt.getPropertyName();
-                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                    refresh(true);
-                }
-            }
-        };
-
-        @Override
-        protected void onAdd() {
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-        }
-
-        @Override
-        protected void onRemove() {
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
-            currentKeys.clear();
-        }
-
-        @Override
-        protected List<Content> makeKeys() {
-            try {
-                if (datasourceObjId == 0) {
-                    currentKeys = Case.getCurrentCaseThrows().getDataSources();
-                } else {
-                    Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(datasourceObjId);
-                    currentKeys = new ArrayList<>(Arrays.asList(content));
-                }
-
-                Collections.sort(currentKeys, new Comparator<Content>() {
-                    @Override
-                    public int compare(Content content1, Content content2) {
-                        String content1Name = content1.getName().toLowerCase();
-                        String content2Name = content2.getName().toLowerCase();
-                        return content1Name.compareTo(content2Name);
-                    }
-
-                });
-
-            } catch (TskCoreException | NoCurrentCaseException | TskDataException ex) {
-                logger.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
-            }
-
-            return currentKeys;
-        }
     }
 
     @Override

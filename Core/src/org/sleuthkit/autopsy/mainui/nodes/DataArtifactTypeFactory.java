@@ -18,20 +18,17 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.beans.PropertyChangeEvent;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 
 /**
  * Factory for displaying data artifact types in the tree.
@@ -60,33 +57,22 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     }
 
     @Override
-    public boolean isRefreshRequired(PropertyChangeEvent evt) {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-            /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
-             */
-            try {
-                Case.getCurrentCaseThrows();
-                /**
-                 * Due to some unresolved issues with how cases are closed, it
-                 * is possible for the event to have a null oldValue if the
-                 * event is a remote event.
-                 */
-                final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                if (null != event && Category.DATA_ARTIFACT.equals(event.getBlackboardArtifactType().getCategory())
-                        && !(DataArtifactDAO.getIgnoredTreeTypes().contains(event.getBlackboardArtifactType()))) {
-                    return true;
-                }
-            } catch (NoCurrentCaseException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
+    protected TreeItemDTO<DataArtifactSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
+        if (daoEvt.getItemRecord().getSearchParams() instanceof DataArtifactSearchParam) {
+            @SuppressWarnings("unchecked")
+            TreeItemDTO<DataArtifactSearchParam> originalTreeItem = (TreeItemDTO<DataArtifactSearchParam>) daoEvt.getItemRecord();
+            DataArtifactSearchParam searchParam = originalTreeItem.getSearchParams();
+            if ((this.dataSourceId == null || Objects.equals(this.dataSourceId, searchParam.getDataSourceId())) && 
+                    !DataArtifactDAO.getIgnoredTreeTypes().contains(searchParam.getArtifactType())) {
+                return TreeChildFactory.createTreeItemDTO(originalTreeItem, new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()));
             }
         }
-        return false;
+        return null;
+    }
+
+    @Override
+    public int compare(DataArtifactSearchParam o1, DataArtifactSearchParam o2) {
+        return o1.getArtifactType().getDisplayName().compareTo(o2.getArtifactType().getDisplayName());
     }
 
     /**
@@ -100,14 +86,14 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
 
         public DataArtifactTypeTreeNode(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> itemData) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData);
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayDataArtifact(this.getItemData().getTypeData());
+            dataResultPanel.displayDataArtifact(this.getItemData().getSearchParams());
         }
     }
 }

@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.concurrent.ExecutionException;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 /**
@@ -133,7 +133,7 @@ public class SearchManager {
      */
     public synchronized SearchResultsDTO updatePageIdx(int pageIdx) throws IllegalArgumentException, ExecutionException {
         setPageIdx(pageIdx);
-        return fetchResults(false);
+        return getResults();
     }
 
     /**
@@ -171,11 +171,11 @@ public class SearchManager {
     /**
      * Determines if a refresh is required for the currently selected item.
      *
-     * @param evt The ingest module event.
+     * @param evt The event.
      *
      * @return True if an update is required.
      */
-    public synchronized boolean isRefreshRequired(PropertyChangeEvent evt) {
+    public synchronized boolean isRefreshRequired(DAOEvent evt) {
         return isRefreshRequired(this.daoFetcher, evt);
     }
 
@@ -183,27 +183,16 @@ public class SearchManager {
      * Determines if a refresh is required for the currently selected item.
      *
      * @param dataFetcher The data fetcher.
-     * @param evt         The ingest module event.
+     * @param evt         The event.
      *
      * @return True if an update is required.
      */
-    private synchronized <P> boolean isRefreshRequired(DAOFetcher<P> dataFetcher, PropertyChangeEvent evt) {
+    private synchronized <P> boolean isRefreshRequired(DAOFetcher<P> dataFetcher, DAOEvent evt) {
         if (dataFetcher == null) {
             return false;
         }
 
         return dataFetcher.isRefreshRequired(evt);
-    }
-
-    /**
-     * Forces a refresh of data based on current search parameters.
-     *
-     * @return The refreshed data.
-     *
-     * @throws ExecutionException
-     */
-    public synchronized SearchResultsDTO getRefreshedData() throws ExecutionException {
-        return fetchResults(true);
     }
 
     /**
@@ -216,25 +205,13 @@ public class SearchManager {
      * @throws ExecutionException
      */
     public synchronized SearchResultsDTO getResults() throws IllegalArgumentException, ExecutionException {
-        return fetchResults(false);
+        return fetchResults(this.daoFetcher);
     }
 
-    /**
-     * Fetches results using current page fetcher or returns null if no current
-     * page fetcher. Also stores current results in local variable.
-     *
-     * @return The current search results or null if no current page fetcher.
-     *
-     * @throws ExecutionException
-     */
-    private synchronized SearchResultsDTO fetchResults(boolean hardRefresh) throws ExecutionException {
-        return fetchResults(this.daoFetcher, hardRefresh);
-    }
-
-    private synchronized SearchResultsDTO fetchResults(DAOFetcher<?> dataFetcher, boolean hardRefresh) throws ExecutionException {
+    private synchronized SearchResultsDTO fetchResults(DAOFetcher<?> dataFetcher) throws ExecutionException {
         SearchResultsDTO newResults = null;
         if (dataFetcher != null) {
-            newResults = dataFetcher.getSearchResults(this.pageSize, this.pageIdx, hardRefresh);
+            newResults = dataFetcher.getSearchResults(this.pageSize, this.pageIdx);
         }
 
         this.currentSearchResults = newResults;

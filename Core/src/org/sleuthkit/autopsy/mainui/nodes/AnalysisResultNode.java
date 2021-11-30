@@ -92,8 +92,7 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
     @Override
     public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
         Optional<Content> optionalSourceContent = getSourceContent();
-        // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
-        // See JIRA-8099
+        // TODO: See JIRA-8099
         boolean encryptionDetected = false;
         if (optionalSourceContent.isPresent()) {
             if (optionalSourceContent.get() instanceof AbstractFile) {
