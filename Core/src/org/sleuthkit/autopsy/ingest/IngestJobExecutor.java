@@ -1391,7 +1391,6 @@ final class IngestJobExecutor {
                 } else {
                     fileIngestProgressBar.progress(fileName, (int) estimatedFilesToProcess);
                 }
-                fileIngestProgressBar.progress(fileName, (int) processedFiles);
                 filesInProgress.add(fileName);
             });
         }
