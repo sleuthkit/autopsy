@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -130,7 +131,7 @@ public class ViewsDAO extends AbstractDAO {
         FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) eventData;
         String extension = extEvt.getExtension().toLowerCase();
         return key.getFilter().getFilter().contains(extension)
-                && (key.getDataSourceId() == null || key.getDataSourceId() == extEvt.getDataSourceId());
+                && (key.getDataSourceId() == null || key.getDataSourceId().equals(extEvt.getDataSourceId()));
     }
 
     private boolean isFilesByMimeInvalidating(FileTypeMimeSearchParams key, DAOEvent eventData) {
@@ -140,7 +141,7 @@ public class ViewsDAO extends AbstractDAO {
 
         FileTypeMimeEvent mimeEvt = (FileTypeMimeEvent) eventData;
         return mimeEvt.getMimeType().startsWith(key.getMimeType())
-                && (key.getDataSourceId() == null || key.getDataSourceId() == mimeEvt.getDataSourceId());
+                && (key.getDataSourceId() == null || Objects.equals(key.getDataSourceId(), mimeEvt.getDataSourceId()));
     }
 
     private boolean isFilesBySizeInvalidating(FileTypeSizeSearchParams key, DAOEvent eventData) {
@@ -150,7 +151,7 @@ public class ViewsDAO extends AbstractDAO {
 
         FileTypeSizeEvent sizeEvt = (FileTypeSizeEvent) eventData;
         return sizeEvt.getSizeFilter().equals(key.getSizeFilter())
-                && (key.getDataSourceId() == null || key.getDataSourceId() == sizeEvt.getDataSourceId());
+                && (key.getDataSourceId() == null || Objects.equals(key.getDataSourceId(), sizeEvt.getDataSourceId()));
     }
 
     /**
@@ -765,7 +766,7 @@ public class ViewsDAO extends AbstractDAO {
                 // if search params is top level mime prefix (without suffix) and data source is null or ==.
                 if (mimePieces.getValue() == null
                         && (mimeParams.getDataSourceId() == null
-                        || suffixes.values().stream().flatMap(set -> set.stream()).anyMatch(ds -> ds == mimeParams.getDataSourceId()))) {
+                        || suffixes.values().stream().flatMap(set -> set.stream()).anyMatch(ds -> Objects.equals(mimeParams.getDataSourceId(), ds)))) {
 
                     concurrentMap.remove(k);
                     // otherwise, see if suffix is present
