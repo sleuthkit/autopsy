@@ -492,9 +492,9 @@ final class IngestSearchRunner {
                      * interface), to better decouple keyword search from the
                      * application's presentation layer.
                      */
-                    final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
-                            + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
                     SwingUtilities.invokeAndWait(() -> {
+                        final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
+                                + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
                         progressIndicator = ProgressHandle.createHandle(displayName, new Cancellable() {
                             @Override
                             public boolean cancel() {
