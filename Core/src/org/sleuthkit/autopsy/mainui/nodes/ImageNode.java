@@ -18,20 +18,16 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Optional;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.ImageRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import static org.sleuthkit.autopsy.mainui.nodes.BaseNode.backgroundTasksPool;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
-import org.sleuthkit.autopsy.mainui.sco.SCOFetcher;
 import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.datamodel.Content;
 
@@ -78,13 +74,6 @@ public class ImageNode extends BaseNode<SearchResultsDTO, ImageRowDTO> implement
     @Override
     public boolean supportsSourceContentViewerActions() {
         return true;
-    }
-
-    @Override
-    protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        backgroundTasksPool.submit(new SCOFetcher<>(new WeakReference<>(this)));
-        return sheet;
     }
 
     @Override

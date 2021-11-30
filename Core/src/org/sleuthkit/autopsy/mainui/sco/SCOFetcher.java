@@ -22,6 +22,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.RunnableFuture;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.tuple.Pair;

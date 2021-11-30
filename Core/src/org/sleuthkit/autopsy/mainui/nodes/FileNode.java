@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +25,6 @@ import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
@@ -38,7 +36,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
-import org.sleuthkit.autopsy.mainui.sco.SCOFetcher;
 import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -155,13 +152,6 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
     @Override
     public Action[] getActions(boolean context) {
         return ActionsFactory.getActions(this);
-    }
-
-    @Override
-    protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        backgroundTasksPool.submit(new SCOFetcher<>(new WeakReference<>(this)));
-        return sheet;
     }
 
     @Override

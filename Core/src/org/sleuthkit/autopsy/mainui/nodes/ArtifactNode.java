@@ -18,16 +18,23 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.lang.ref.WeakReference;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle.Messages;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
@@ -36,15 +43,15 @@ import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
+import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.autopsy.mainui.datamodel.ArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import static org.sleuthkit.autopsy.mainui.nodes.BaseNode.backgroundTasksPool;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
-import org.sleuthkit.autopsy.mainui.sco.SCOFetcher;
 import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.autopsy.mainui.sco.SCOUtils;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -60,24 +67,18 @@ import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
-public abstract class ArtifactNode<T extends BlackboardArtifact, R extends ArtifactRowDTO<T>> extends BaseNode<SearchResultsDTO, ArtifactRowDTO> implements ActionContext, SCOSupporter {
+public abstract class ArtifactNode<T extends BlackboardArtifact, R extends ArtifactRowDTO<T>> extends BaseNode<SearchResultsDTO, ArtifactRowDTO<?>> implements ActionContext, SCOSupporter {
 
     private final R rowData;
     private final List<ColumnKey> columns;
     private Node parentFileNode;
+    private String translatedSourceName;
 
     ArtifactNode(SearchResultsDTO searchResults, R rowData, List<ColumnKey> columns, Lookup lookup, String iconPath) {
         super(Children.LEAF, lookup, searchResults, rowData);
         this.rowData = rowData;
         this.columns = columns;
         setupNodeDisplay(iconPath);
-    }
-
-    @Override
-    protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        backgroundTasksPool.submit(new SCOFetcher<>(new WeakReference<>(this)));
-        return sheet;
     }
 
     @Override
@@ -191,6 +192,63 @@ public abstract class ArtifactNode<T extends BlackboardArtifact, R extends Artif
     @Override
     public DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
         return SCOUtils.getCommentProperty(tags, attributes);
+    }
+    
+    @Override
+    protected Sheet createSheet() {
+        Sheet sheet = super.createSheet();
+        startTranslationTask();
+        return sheet;
+    }
+    
+    private void startTranslationTask() {
+        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
+            /*
+             * If machine translation is configured, add the original name of
+             * the of the source content of the artifact represented by this
+             * node to the sheet.
+             */
+
+            if (translatedSourceName == null) {
+                PropertyChangeListener listener = new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                         String eventType = evt.getPropertyName();
+                        if (eventType.equals(FileNameTransTask.getPropertyName())) {
+                            displayTranslation(evt.getOldValue().toString(), evt.getNewValue().toString());
+                        }
+                    }
+                };
+                /*
+                 * NOTE: The task makes its own weak reference to the listener.
+                 */
+                new FileNameTransTask(rowData.getSrcContent().getName(), this, listener).submit();
+            }
+        }
+    }
+    
+    // These strings need to be consistent with what is in
+    // BlackboardArtifactDAO
+    @Messages({
+        "ArtifactNode_columnKeys_srcFile_name=Source Name",
+        "ArtifactNode_columnKeys_srcFile_displayName=Source Name",
+        "ArtifactNode_columnKeys_srcFile_description=Source Name",
+    })
+    private void displayTranslation(String originalName, String translatedSourceName) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                ArtifactNode.this.translatedSourceName = translatedSourceName;
+                setDisplayName(translatedSourceName);
+                setShortDescription(originalName);
+                updateSheet(Collections.singletonList(new NodeProperty<>(
+                    Bundle.ArtifactNode_columnKeys_srcFile_name(),
+                    Bundle.ArtifactNode_columnKeys_srcFile_displayName(),
+                    Bundle.ArtifactNode_columnKeys_srcFile_description(),
+                    originalName)));
+            }
+        });
+        
     }
 
     /**

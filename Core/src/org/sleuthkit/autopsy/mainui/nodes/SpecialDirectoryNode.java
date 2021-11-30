@@ -23,15 +23,12 @@ import java.util.List;
 import java.util.Optional;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.LocalFileDataSourceRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.LocalDirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VirtualDirectoryRowDTO;
-import static org.sleuthkit.autopsy.mainui.nodes.BaseNode.backgroundTasksPool;
-import org.sleuthkit.autopsy.mainui.sco.SCOFetcher;
 import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SpecialDirectory;
@@ -79,13 +76,6 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
         return getRowDTO().getContent().isDataSource()
                 ? Optional.of(getRowDTO().getContent())
                 : Optional.empty();
-    }
-
-    @Override
-    protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        backgroundTasksPool.submit(new SCOFetcher<>(new WeakReference<>(this)));
-        return sheet;
     }
 
     @Override

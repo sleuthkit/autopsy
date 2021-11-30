@@ -19,9 +19,11 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
@@ -34,6 +36,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.BaseRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
+import org.sleuthkit.autopsy.mainui.sco.SCOFetcher;
+import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 
 /**
  * A a simple starting point for nodes.
@@ -49,6 +53,8 @@ public abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO>
      */
     static final ExecutorService backgroundTasksPool;
     private static final Integer MAX_POOL_SIZE = 10;
+    
+    private FutureTask<String> scoFutureTask;
     
     static {
         //Initialize this pool only once! This will be used by every instance BaseNode
@@ -83,7 +89,14 @@ public abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO>
 
     @Override
     protected Sheet createSheet() {
-        return ContentNodeUtil.setSheet(super.createSheet(), results.getColumns(), rowData.getCellValues());
+        Sheet sheet =  ContentNodeUtil.setSheet(super.createSheet(), results.getColumns(), rowData.getCellValues());
+        
+        if((scoFutureTask == null || scoFutureTask.isDone()) && this instanceof SCOSupporter) {
+            scoFutureTask = new FutureTask<>(new SCOFetcher<>(new WeakReference<>((SCOSupporter)this)), "");
+            backgroundTasksPool.submit(scoFutureTask);
+        }
+        
+        return sheet;
     }
 
     @Override

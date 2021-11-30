@@ -18,18 +18,14 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Optional;
 import org.openide.nodes.Children;
-import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.PoolRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import static org.sleuthkit.autopsy.mainui.nodes.BaseNode.backgroundTasksPool;
-import org.sleuthkit.autopsy.mainui.sco.SCOFetcher;
 import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.datamodel.Content;
 
@@ -53,13 +49,6 @@ public class PoolNode extends BaseNode<SearchResultsDTO, PoolRowDTO> implements 
         setDisplayName(name);
         setShortDescription(name);
         setIconBaseWithExtension(NodeIconUtil.POOL.getPath());
-    }
-
-    @Override
-    protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        backgroundTasksPool.submit(new SCOFetcher<>(new WeakReference<>(this)));
-        return sheet;
     }
 
     @Override
