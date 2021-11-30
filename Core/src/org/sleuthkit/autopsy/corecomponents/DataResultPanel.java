@@ -62,13 +62,13 @@ import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageCountChangeEvent;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.PageSizeChangeEvent;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.mainui.datamodel.AccountSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultSetFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactAccountFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsDAO.CommAccountFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
@@ -1175,17 +1175,17 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      *
      * @param accountParams The search parameter query.
      */
-    void displayAccounts(AccountSearchParams accountParams) {
+    void displayAccounts(CommAccountsSearchParams accountParams) {
         try {
-            this.searchResultManager = new SearchManager(new DataArtifactAccountFetcher(accountParams), getPageSize());
+            this.searchResultManager = new SearchManager(new CommAccountFetcher(accountParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
                     MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}, account type: {2}]",
-                            accountParams.getArtifactType(),
+                            accountParams.getType(),
                             accountParams.getDataSourceId() == null ? "<null>" : accountParams.getDataSourceId(),
-                            accountParams.getAccountType()),
+                            accountParams.getType()),
                     ex);
         }
     }

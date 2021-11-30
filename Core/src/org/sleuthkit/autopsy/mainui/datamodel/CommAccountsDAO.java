@@ -22,29 +22,33 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.getIngestCompleteEvents;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.getRefreshEvents;
 import org.sleuthkit.autopsy.mainui.datamodel.events.CommAccountsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Account;
@@ -65,7 +69,8 @@ public class CommAccountsDAO extends AbstractDAO {
     private static final int CACHE_SIZE = Account.Type.PREDEFINED_ACCOUNT_TYPES.size(); // number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<CommAccountsSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final TreeCounts<CommAccountsEvent> accountCounts = new TreeCounts<>();
 
     private static CommAccountsDAO instance = null;
 
@@ -75,6 +80,10 @@ public class CommAccountsDAO extends AbstractDAO {
         }
 
         return instance;
+    }
+
+    SleuthkitCase getCase() throws NoCurrentCaseException {
+        return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
     public SearchResultsDTO getCommAcounts(CommAccountsSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
@@ -150,66 +159,140 @@ public class CommAccountsDAO extends AbstractDAO {
         return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_ACCOUNT, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), allArtifacts.size());
     }
 
-    @Override
-    void clearCaches() {
-        this.searchParamsCache.invalidateAll();;
+    private static TreeResultsDTO.TreeItemDTO<CommAccountsSearchParams> createAccountTreeItem(Account.Type accountType, Long dataSourceId, TreeResultsDTO.TreeDisplayCount count) {
+        return new TreeResultsDTO.TreeItemDTO<>(
+                "ACCOUNTS",
+                new CommAccountsSearchParams(accountType, dataSourceId),
+                accountType.getTypeName(),
+                accountType.getDisplayName(),
+                count);
+    }
+
+    /**
+     * Returns the accounts and their counts in the current data source if a
+     * data source id is provided or all accounts if data source id is null.
+     *
+     * @param dataSourceId The data source id or null for no data source filter.
+     *
+     * @return The results.
+     *
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<CommAccountsSearchParams> getAccountsCounts(Long dataSourceId) throws ExecutionException {
+        String query = "res.account_type AS account_type, MIN(res.account_display_name) AS account_display_name, COUNT(*) AS count\n"
+                + "FROM (\n"
+                + "  SELECT MIN(account_types.type_name) AS account_type, MIN(account_types.display_name) AS account_display_name\n"
+                + "  FROM blackboard_artifacts\n"
+                + "  LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id\n"
+                + "  LEFT JOIN account_types ON blackboard_attributes.value_text = account_types.type_name\n"
+                + "  WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
+                + "  AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
+                + (dataSourceId != null && dataSourceId > 0 ? "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId + " " : " ") + "\n"
+                + "  -- group by artifact_id to ensure only one account type per artifact\n"
+                + "  GROUP BY blackboard_artifacts.artifact_id\n"
+                + ") res\n"
+                + "GROUP BY res.account_type\n"
+                + "ORDER BY MIN(res.account_display_name)";
+
+        List<TreeResultsDTO.TreeItemDTO<CommAccountsSearchParams>> accountParams = new ArrayList<>();
+        try {
+            getCase().getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        String accountTypeName = resultSet.getString("account_type");
+                        String accountDisplayName = resultSet.getString("account_display_name");
+                        Account.Type accountType = new Account.Type(accountTypeName, accountDisplayName);
+                        long count = resultSet.getLong("count");
+                        accountParams.add(createAccountTreeItem(accountType, dataSourceId, TreeResultsDTO.TreeDisplayCount.getDeterminate(count)));
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
+                }
+            });
+
+            // return results
+            return new TreeResultsDTO<>(accountParams);
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
+        }
     }
 
     @Override
-    Set<DAOEvent> handleIngestComplete() {
-        // GVDTODO
-        return Collections.emptySet();
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+        this.handleIngestComplete();
+    }
+
+    @Override
+    Set<? extends DAOEvent> handleIngestComplete() {
+        return getIngestCompleteEvents(
+                this.accountCounts,
+                (daoEvt) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.UNSPECIFIED)
+        );
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        // GVDTODO
-        return Collections.emptySet();
+        return getRefreshEvents(
+                this.accountCounts,
+                (daoEvt) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.UNSPECIFIED)
+        );
     }
 
     @Override
     Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
-        // maps account type to the data sources affected
-        // GVDTODO this can probably be rewritten now that it isn't handling a list of autopsy events
-        Map<String, Set<Long>> commAccountsAffected = new HashMap<>();
-        try {
-
-            String eventType = evt.getPropertyName();
-            if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-                ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                if (null != eventData
-                        && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
-
-                    // check that the update is for the same account type
-                    for (BlackboardArtifact artifact : eventData.getArtifacts()) {
-                        BlackboardAttribute typeAttr = artifact.getAttribute(BlackboardAttribute.Type.TSK_ACCOUNT_TYPE);
-                        commAccountsAffected.computeIfAbsent(typeAttr.getValueString(), (k) -> new HashSet<>())
-                                .add(artifact.getDataSourceObjectID());
-                    }
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to properly handle module data event.", ex);
+        // get a grouping of artifacts mapping the artifact type id to data source id.
+        ModuleDataEvent dataEvt = DAOEventUtils.getModuelDataFromArtifactEvent(evt);
+        if (dataEvt == null) {
+            return Collections.emptySet();
         }
 
-        // invalidate cache entries that are affected by events
-        ConcurrentMap<SearchParams<?>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
-        concurrentMap.forEach((k, v) -> {
-            Object objectKey = k.getParamData();
-            if (objectKey instanceof CommAccountsSearchParams) {
-                CommAccountsSearchParams commAcctKey = (CommAccountsSearchParams) objectKey;
-                Set<Long> dsIdsAffected = commAccountsAffected.get(commAcctKey.getType().getTypeName());
-                if (dsIdsAffected != null
-                        && (commAcctKey.getDataSourceId() == null
-                        || dsIdsAffected.contains(commAcctKey.getDataSourceId()))) {
+        Map<Account.Type, Set<Long>> accountTypeMap = new HashMap<>();
 
-                    concurrentMap.remove(k);
+        for (BlackboardArtifact art : dataEvt.getArtifacts()) {
+            try {
+                if (art.getType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
+                    BlackboardAttribute accountTypeAttribute = art.getAttribute(BlackboardAttribute.Type.TSK_ACCOUNT_TYPE);
+                    if (accountTypeAttribute == null) {
+                        continue;
+                    }
+
+                    String accountTypeName = accountTypeAttribute.getValueString();
+                    if (accountTypeName == null) {
+                        continue;
+                    }
+
+                    accountTypeMap.computeIfAbsent(getCase().getCommunicationsManager().getAccountType(accountTypeName), (k) -> new HashSet<>())
+                            .add(art.getDataSourceObjectID());
                 }
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to fetch artifact category for artifact with id: " + art.getId(), ex);
             }
-        });
+        }
 
-        return commAccountsAffected.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(dsId -> new CommAccountsEvent(entry.getKey(), dsId)))
+        // don't do anything else if no relevant events
+        if (accountTypeMap.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        super.invalidateKeys(this.searchParamsCache,
+                (sp) -> Pair.of(sp.getType(), sp.getDataSourceId()), accountTypeMap);
+
+        List<CommAccountsEvent> accountEvents = new ArrayList<>();
+        for (Map.Entry<Account.Type, Set<Long>> entry : accountTypeMap.entrySet()) {
+            Account.Type accountType = entry.getKey();
+            for (Long dsObjId : entry.getValue()) {
+                CommAccountsEvent newEvt = new CommAccountsEvent(accountType, dsObjId);
+                accountEvents.add(newEvt);
+            }
+        }
+
+        Stream<TreeEvent> treeEvents = this.accountCounts.enqueueAll(accountEvents).stream()
+                .map(daoEvt -> new TreeEvent(createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
+
+        return Stream.of(accountEvents.stream(), treeEvents)
+                .flatMap(s -> s)
                 .collect(Collectors.toSet());
     }
 
@@ -225,10 +308,11 @@ public class CommAccountsDAO extends AbstractDAO {
     private boolean isCommAcctInvalidating(CommAccountsSearchParams parameters, DAOEvent evt) {
         if (evt instanceof CommAccountsEvent) {
             CommAccountsEvent commEvt = (CommAccountsEvent) evt;
-            return (parameters.getType().getTypeName().equals(commEvt.getAccountType()))
-                    && (parameters.getDataSourceId() == null || parameters.getDataSourceId() == commEvt.getDataSourceId());
+            return (parameters.getType().getTypeName().equals(commEvt.getType()))
+                    && (parameters.getDataSourceId() == null || Objects.equals(parameters.getDataSourceId(), commEvt.getDataSourceId()));
         } else {
             return false;
+
         }
     }
 
