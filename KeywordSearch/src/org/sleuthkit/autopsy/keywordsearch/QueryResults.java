@@ -333,7 +333,7 @@ class QueryResults {
             }
             detailsSb.append("</table>"); //NON-NLS
 
-            String key = uniqueKey; // RC: Might be null, does this work?
+            final String key = uniqueKey; // Might be null, but that's supported.
             SwingUtilities.invokeLater(() -> {
                 IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(MODULE_NAME, subjectSb.toString(), detailsSb.toString(), key, artifact));
             });
