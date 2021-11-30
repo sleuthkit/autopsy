@@ -1375,8 +1375,22 @@ final class IngestJobExecutor {
         if (usingNetBeansGUI && !jobCancelled) {
             SwingUtilities.invokeLater(() -> {
                 /*
-                 * Note that if processedFiles exceeds estimatedFilesToProcess
+                 * If processedFiles exceeds estimatedFilesToProcess, i.e., the
+                 * max work units set for the progress bar, the progress bar
+                 * will go into an infinite loop throwing
+                 * IllegalArgumentExceptions in the EDT (NetBeans bug). Also, a
+                 * check-then-act race condition needs to be avoided here. This
+                 * can be done without guarding processedFiles and
+                 * estimatedFilesToProcess with the same lock because
+                 * estimatedFilesToProcess does not change after it is used to
+                 * switch the progress bar to determinate mode.
                  */
+                long processedFilesCapture = processedFiles;
+                if (processedFilesCapture <= estimatedFilesToProcess) {
+                    fileIngestProgressBar.progress(fileName, (int) processedFilesCapture);
+                } else {
+                    fileIngestProgressBar.progress(fileName, (int) estimatedFilesToProcess);
+                }
                 fileIngestProgressBar.progress(fileName, (int) processedFiles);
                 filesInProgress.add(fileName);
             });
