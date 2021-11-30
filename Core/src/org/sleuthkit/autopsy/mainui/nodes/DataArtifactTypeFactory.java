@@ -87,7 +87,15 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
     @Override
     public int compare(DataArtifactSearchParam o1, DataArtifactSearchParam o2) {
-        return o1.getArtifactType().getDisplayName().compareTo(o2.getArtifactType().getDisplayName());
+        String displayName1 = o1.getArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()
+                ? Bundle.DataArtifactTypeFactory_AccountTypeParentNode_displayName()
+                : o1.getArtifactType().getDisplayName();
+        
+        String displayName2 = o2.getArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()
+                ? Bundle.DataArtifactTypeFactory_AccountTypeParentNode_displayName()
+                : o2.getArtifactType().getDisplayName();
+                
+        return displayName1.compareToIgnoreCase(displayName2);
     }
 
     private static String getIconPath(BlackboardArtifact.Type artType) {
