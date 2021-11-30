@@ -1381,7 +1381,7 @@ final class IngestJobExecutor {
                  * IllegalArgumentExceptions in the EDT.
                  */
                 long processedFilesCapture = processedFiles;
-                if (processedFiles <= estimatedFilesToProcess) {
+                if (processedFilesCapture <= estimatedFilesToProcess) {
                     fileIngestProgressBar.progress(fileName, (int) processedFilesCapture);
                 } else {
                     fileIngestProgressBar.progress(fileName, (int) estimatedFilesToProcess);
