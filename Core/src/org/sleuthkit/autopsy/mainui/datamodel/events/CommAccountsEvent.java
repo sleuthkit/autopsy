@@ -16,26 +16,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * An event for handling
  */
-public class FileTypeSizeSearchParams {
+public class CommAccountsEvent implements DAOEvent {
 
-
-    private final FileSizeFilter sizeFilter;
+    private final String accountType;
     private final Long dataSourceId;
 
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
+    public CommAccountsEvent(String accountType, Long dataSourceId) {
+        this.accountType = accountType;
         this.dataSourceId = dataSourceId;
     }
 
-    public FileSizeFilter getSizeFilter() {
-        return sizeFilter;
+    public String getAccountType() {
+        return accountType;
     }
 
     public Long getDataSourceId() {
@@ -44,9 +43,9 @@ public class FileTypeSizeSearchParams {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        int hash = 3;
+        hash = 17 * hash + Objects.hashCode(this.accountType);
+        hash = 17 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -61,14 +60,19 @@ public class FileTypeSizeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (this.sizeFilter != other.sizeFilter) {
+        final CommAccountsEvent other = (CommAccountsEvent) obj;
+        if (!Objects.equals(this.accountType, other.accountType)) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.RESULT;
     }
 
 }

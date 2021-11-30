@@ -128,8 +128,7 @@ public class FileNode extends AbstractNode implements ActionContext {
 
     @Override
     public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
-        // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
-        // See JIRA-8099
+        // TODO: See JIRA-8099
         AbstractFile file = this.fileData.getAbstractFile();
         boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
         boolean encryptionDetected = false;

@@ -16,28 +16,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * An event to signal that tags have been added or removed on the 
+ * given data source with the given types. 
  */
-public class FileTypeSizeSearchParams {
+public class TagsEvent implements DAOEvent {
 
-
-    private final FileSizeFilter sizeFilter;
+    private final TagType type;
+    private final Long tagNameId;
     private final Long dataSourceId;
 
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
+    public TagsEvent(TagType type, Long tagNameId, Long dataSourceId) {
+        this.type = type;
+        this.tagNameId = tagNameId;
         this.dataSourceId = dataSourceId;
     }
 
-    public FileSizeFilter getSizeFilter() {
-        return sizeFilter;
+    public TagType getTagType() {
+        return type;
     }
 
+    public Long getTagNameId() {
+        return tagNameId;
+    }
+
+    /**
+     * @return The data source object id for the tag. Is null if cannot be
+     *         determined.
+     */
     public Long getDataSourceId() {
         return dataSourceId;
     }
@@ -45,8 +56,9 @@ public class FileTypeSizeSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 97 * hash + Objects.hashCode(this.type);
+        hash = 97 * hash + Objects.hashCode(this.tagNameId);
+        hash = 97 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -61,8 +73,11 @@ public class FileTypeSizeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (this.sizeFilter != other.sizeFilter) {
+        final TagsEvent other = (TagsEvent) obj;
+        if (this.type != other.type) {
+            return false;
+        }
+        if (!Objects.equals(this.tagNameId, other.tagNameId)) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
@@ -71,4 +86,8 @@ public class FileTypeSizeSearchParams {
         return true;
     }
 
+    @Override
+    public Type getType() {
+        return Type.RESULT;
+    }
 }

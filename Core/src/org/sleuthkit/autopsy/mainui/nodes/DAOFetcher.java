@@ -20,11 +20,8 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.beans.PropertyChangeEvent;
 import java.util.concurrent.ExecutionException;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Provides a generic interface to perform searches and determine if refreshes
@@ -58,13 +55,12 @@ public abstract class DAOFetcher<P> {
      *
      * @param pageSize    The number of items per page.
      * @param pageIdx     The page index.
-     * @param hardRefresh Whether or not to perform a hard refresh.
      *
      * @return The retrieved data.
      *
      * @throws ExecutionException
      */
-    public abstract SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException;
+    public abstract SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException;
 
     /**
      * Returns true if the ingest module event will require a refresh in the
@@ -74,49 +70,5 @@ public abstract class DAOFetcher<P> {
      *
      * @return True if the
      */
-    public abstract boolean isRefreshRequired(PropertyChangeEvent evt);
-
-    /**
-     * Returns the content from the ModuleContentEvent. If the event does not
-     * contain a ModuleContentEvent or the event does not contain Content, null
-     * is returned.
-     *
-     * @param evt The event
-     *
-     * @return The inner content or null if no content.
-     */
-    protected Content getContentFromEvt(PropertyChangeEvent evt) {
-        String eventName = evt.getPropertyName();
-        if (IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString().equals(eventName)
-                && (evt.getOldValue() instanceof ModuleContentEvent)
-                && ((ModuleContentEvent) evt.getOldValue()).getSource() instanceof Content) {
-
-            return (Content) ((ModuleContentEvent) evt.getOldValue()).getSource();
-
-        } else if (IngestManager.IngestModuleEvent.FILE_DONE.toString().equals(eventName)
-                && (evt.getNewValue() instanceof Content)) {
-            return (Content) evt.getNewValue();
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Returns the ModuleDataEvent in the event if there is a child
-     * ModuleDataEvent. If not, null is returned.
-     *
-     * @param evt The event.
-     *
-     * @return The inner ModuleDataEvent or null.
-     */
-    protected ModuleDataEvent getModuleDataFromEvt(PropertyChangeEvent evt) {
-        String eventName = evt.getPropertyName();
-        if (IngestManager.IngestModuleEvent.DATA_ADDED.toString().equals(eventName)
-                && (evt.getOldValue() instanceof ModuleDataEvent)) {
-
-            return (ModuleDataEvent) evt.getOldValue();
-        } else {
-            return null;
-        }
-    }
+    public abstract boolean isRefreshRequired(DAOEvent evt);
 }

@@ -16,37 +16,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Key for accessing data about file sizeFilter from the DAO.
+ * A base class for DataArtifact and AnalysisResult events to signal that one
+ * has been added or removed. 
  */
-public class FileTypeSizeSearchParams {
+public abstract class BlackboardArtifactEvent implements DAOEvent {
+    private final BlackboardArtifact.Type artifactType;
+    private final long dataSourceId;
 
-
-    private final FileSizeFilter sizeFilter;
-    private final Long dataSourceId;
-
-    public FileTypeSizeSearchParams(FileSizeFilter sizeFilter, Long dataSourceId) {
-        this.sizeFilter = sizeFilter;
+    BlackboardArtifactEvent(BlackboardArtifact.Type artifactType, long dataSourceId) {
+        this.artifactType = artifactType;
         this.dataSourceId = dataSourceId;
     }
 
-    public FileSizeFilter getSizeFilter() {
-        return sizeFilter;
+    public BlackboardArtifact.Type getArtifactType() {
+        return artifactType;
     }
 
-    public Long getDataSourceId() {
+    public long getDataSourceId() {
         return dataSourceId;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        int hash = 5;
+        hash = 17 * hash + Objects.hashCode(this.artifactType);
+        hash = 17 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
         return hash;
     }
 
@@ -61,14 +61,19 @@ public class FileTypeSizeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeSizeSearchParams other = (FileTypeSizeSearchParams) obj;
-        if (this.sizeFilter != other.sizeFilter) {
+        final BlackboardArtifactEvent other = (BlackboardArtifactEvent) obj;
+        if (this.dataSourceId != other.dataSourceId) {
             return false;
         }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        if (!Objects.equals(this.artifactType, other.artifactType)) {
             return false;
         }
         return true;
     }
 
+    
+    @Override
+    public Type getType() {
+        return Type.RESULT;
+    }
 }

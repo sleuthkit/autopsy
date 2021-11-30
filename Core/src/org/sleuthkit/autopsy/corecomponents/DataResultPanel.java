@@ -69,6 +69,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResult
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactAccountFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
@@ -78,8 +79,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.HashHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsDAO.AccountFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
@@ -89,7 +90,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeExtFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeMimeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeSizeFetcher;
-import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
 
 /**
@@ -142,21 +142,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private final PreferenceChangeListener pageSizeListener = (PreferenceChangeEvent evt) -> {
         if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
-            int newPageSize = UserPreferences.getResultsTablePageSize();
-
             nodeNameToPageCountListenerMap.values().forEach((ps) -> {
                 ps.postPageSizeChangeEvent();
             });
-
-            try {
-                if (this.searchResultManager != null) {
-                    DAOFetcher<?> previousFetcher = this.searchResultManager.getDaoFetcher();
-                    this.searchResultManager = new SearchManager(previousFetcher, newPageSize);
-                    displaySearchResults(this.searchResultManager.getResults(), false);
-                }
-            } catch (IllegalArgumentException | ExecutionException ex) {
-                logger.log(Level.WARNING, "There was an error while updating page size", ex);
-            }
         }
     };
 
@@ -164,10 +152,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private final PropertyChangeListener caseEventListener = evt -> {
         String evtName = evt.getPropertyName();
-        if (Case.Events.DATA_SOURCE_ADDED.toString().equals(evtName)) {
-            refreshSearchResultChildren();
-        } else if (Case.Events.CURRENT_CASE.toString().equals(evtName) && evt.getNewValue() == null) {
-            nodeNameToPageCountListenerMap.clear();
+        if (Case.Events.CURRENT_CASE.toString().equals(evtName)) {
+            searchResultManager = null;
+            if (evt.getNewValue() == null) {
+                nodeNameToPageCountListenerMap.clear();
+            }
         }
     };
 
@@ -178,27 +167,19 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             IngestManager.IngestModuleEvent.CONTENT_CHANGED,
             IngestManager.IngestModuleEvent.DATA_ADDED);
 
-    private final PropertyChangeListener ingestModuleListener = evt -> {
-        if (this.searchResultManager != null && this.searchResultManager.isRefreshRequired(evt)) {
-            refreshSearchResultChildren();
+    private final MainDAO mainDAO = MainDAO.getInstance();
+
+    private final PropertyChangeListener DAOListener = evt -> {
+        SearchManager manager = this.searchResultManager;
+        if (manager != null && evt != null && evt.getNewValue() instanceof DAOAggregateEvent) {
+            DAOAggregateEvent daoAggrEvt = (DAOAggregateEvent) evt.getNewValue();
+            if (daoAggrEvt.getEvents().stream().anyMatch((daoEvt) -> manager.isRefreshRequired(daoEvt))) {
+                refreshSearchResultChildren();
+            }
         }
     };
 
-    private final PropertyChangeListener weakIngestModuleListener = WeakListeners.propertyChange(ingestModuleListener, null);
-
-    private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS = EnumSet.of(
-            IngestManager.IngestJobEvent.COMPLETED,
-            IngestManager.IngestJobEvent.CANCELLED);
-
-    private final PropertyChangeListener ingestJobListener = (PropertyChangeEvent evt) -> {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-            refreshSearchResultChildren();
-        }
-    };
-
-    private final PropertyChangeListener weakIngestJobListener = WeakListeners.propertyChange(ingestJobListener, null);
+    private final PropertyChangeListener weakDAOListener = WeakListeners.propertyChange(DAOListener, mainDAO);
 
     /**
      * Creates and opens a Swing JPanel with a JTabbedPane child component that
@@ -463,8 +444,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private void initListeners() {
         UserPreferences.addChangeListener(this.pageSizeListener);
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.weakCaseEventListener);
-        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
-        IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS, weakIngestJobListener);
+        this.mainDAO.getResultEventsManager().addPropertyChangeListener(this.weakDAOListener);
+        IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakDAOListener);
     }
 
     /**
@@ -473,8 +454,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private void closeListeners() {
         UserPreferences.removeChangeListener(this.pageSizeListener);
         Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this.weakCaseEventListener);
-        IngestManager.getInstance().removeIngestModuleEventListener(INGEST_MODULE_EVENTS, this.weakIngestModuleListener);
-        IngestManager.getInstance().removeIngestJobEventListener(INGEST_JOB_EVENTS, weakIngestJobListener);
+        this.mainDAO.getResultEventsManager().removePropertyChangeListener(this.weakDAOListener);
     }
 
     /**
@@ -1293,7 +1273,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void displayFileSizes(FileTypeSizeSearchParams fileSizeKey) {
         try {
-            this.searchResultManager = new SearchManager(new FileTypeSizeFetcher(fileSizeKey), getPageSize());
+            this.searchResultManager = new SearchManager(MainDAO.getInstance().getViewsDAO().new FileTypeSizeFetcher(fileSizeKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {
@@ -1443,7 +1423,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     private void refreshSearchResultChildren() {
         try {
-            refreshSearchResultChildren(this.searchResultManager.getRefreshedData());
+            refreshSearchResultChildren(this.searchResultManager.getResults());
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, "There was an error refreshing data: ", ex);
         }
