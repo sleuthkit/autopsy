@@ -472,7 +472,7 @@ public class FileSystemDAO extends AbstractDAO {
             List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
             for (DataSource ds : Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getDataSourcesForHost(host)) {
                 treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
-                        ds.getClass().getSimpleName(),
+                        FileSystemContentSearchParam.getTypeId(),
                         new FileSystemContentSearchParam(ds.getId()),
                         ds,
                         ds.getName(),
@@ -499,7 +499,7 @@ public class FileSystemDAO extends AbstractDAO {
             List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
             DataSource ds = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(dataSourceObjId);
             treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
-                    ds.getClass().getSimpleName(),
+                    FileSystemContentSearchParam.getTypeId(),
                     new FileSystemContentSearchParam(ds.getId()),
                     ds,
                     ds.getName(),
@@ -534,7 +534,7 @@ public class FileSystemDAO extends AbstractDAO {
                     countForNode = getContentForTable(new FileSystemContentSearchParam(child.getId()), 0, null).getTotalResultsCount();
                 }
                 treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
-                        child.getClass().getSimpleName(),
+                        FileSystemContentSearchParam.getTypeId(),
                         new FileSystemContentSearchParam(child.getId()),
                         child,
                         getNameForContent(child),

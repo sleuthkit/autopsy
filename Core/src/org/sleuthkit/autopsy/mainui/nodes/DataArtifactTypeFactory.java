@@ -76,7 +76,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
             DataArtifactSearchParam searchParam = originalTreeItem.getSearchParams();
             return new TreeItemDTO<>(
-                    BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                    DataArtifactSearchParam.getTypeId(),
                     new DataArtifactSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()),
                     searchParam.getArtifactType().getTypeID(),
                     searchParam.getArtifactType().getDisplayName(),

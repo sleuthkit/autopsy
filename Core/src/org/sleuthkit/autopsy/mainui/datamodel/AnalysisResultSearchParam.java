@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class AnalysisResultSearchParam extends BlackboardArtifactSearchParam {
 
-    private static final String TYPE_ID = "ANALYSIS_RESULT";
+    private static final String TYPE_ID = BlackboardArtifact.Category.ANALYSIS_RESULT.name();
 
     /**
      * @return The type id for this search parameter.

@@ -162,7 +162,7 @@ public class CommAccountsDAO extends AbstractDAO {
 
     private static TreeResultsDTO.TreeItemDTO<CommAccountsSearchParams> createAccountTreeItem(Account.Type accountType, Long dataSourceId, TreeResultsDTO.TreeDisplayCount count) {
         return new TreeResultsDTO.TreeItemDTO<>(
-                "ACCOUNTS",
+                CommAccountsSearchParams.getTypeId(),
                 new CommAccountsSearchParams(accountType, dataSourceId),
                 accountType.getTypeName(),
                 accountType.getDisplayName(),

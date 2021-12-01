@@ -316,7 +316,7 @@ public class ViewsDAO extends AbstractDAO {
         List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
                 .map(entry -> {
                     return new TreeItemDTO<>(
-                            "FILE_EXT",
+                            FileTypeExtensionsSearchParams.getTypeId(),
                             new FileTypeExtensionsSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
@@ -350,7 +350,7 @@ public class ViewsDAO extends AbstractDAO {
         List<TreeItemDTO<FileTypeSizeSearchParams>> treeList = countsByFilter.entrySet().stream()
                 .map(entry -> {
                     return new TreeItemDTO<>(
-                            "FILE_SIZE",
+                            FileTypeSizeSearchParams.getTypeId(),
                             new FileTypeSizeSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
@@ -435,7 +435,7 @@ public class ViewsDAO extends AbstractDAO {
                                     : entry.getKey();
 
                             return new TreeItemDTO<>(
-                                    "FILE_MIME_TYPE",
+                                    FileTypeMimeSearchParams.getTypeId(),
                                     new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
                                     name,
                                     name,

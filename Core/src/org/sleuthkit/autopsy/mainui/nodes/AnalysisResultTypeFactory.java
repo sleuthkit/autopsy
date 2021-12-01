@@ -107,7 +107,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
             AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
             return new TreeResultsDTO.TreeItemDTO<>(
-                    BlackboardArtifact.Category.ANALYSIS_RESULT.name(),
+                    AnalysisResultSearchParam.getTypeId(),
                     new AnalysisResultSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()),
                     searchParam.getArtifactType().getTypeID(),
                     searchParam.getArtifactType().getDisplayName(),
@@ -208,7 +208,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
                 AnalysisResultSetSearchParam searchParam = originalTreeItem.getSearchParams();
                 return new TreeResultsDTO.TreeItemDTO<>(
-                        TBD,
+                        AnalysisResultSetSearchParam.getTypeId(),
                         new AnalysisResultSetSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId(), searchParam.getSetName()),
                         searchParam.getArtifactType().getTypeID(),
                         searchParam.getArtifactType().getDisplayName(),

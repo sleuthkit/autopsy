@@ -375,7 +375,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     private TreeItemDTO<AnalysisResultSearchParam> getTreeItem(BlackboardArtifact.Type type, Long dataSourceId, TreeDisplayCount displayCount) {
         return new TreeItemDTO<>(
-                BlackboardArtifact.Category.ANALYSIS_RESULT.name(),
+                AnalysisResultSearchParam.getTypeId(),
                 new AnalysisResultSearchParam(type, dataSourceId),
                 type.getTypeID(),
                 type.getDisplayName(),
@@ -478,7 +478,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             Long dataSourceId, String setName, String displayName, TreeDisplayCount displayCount) {
 
         return new TreeItemDTO<>(
-                type.getTypeName(),
+                AnalysisResultSetSearchParam.getTypeId(),
                 new AnalysisResultSetSearchParam(type, dataSourceId, setName),
                 setName == null ? 0 : setName,
                 displayName,
@@ -617,7 +617,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                         }
 
                         TreeItemDTO<KeywordSearchTermParams> treeItem = new TreeItemDTO<>(
-                                "KEYWORD_SEARCH_TERMS",
+                                KeywordSearchTermParams.getTypeId(),
                                 new KeywordSearchTermParams(setName, searchTerm, searchType, hasChildren, dataSourceId),
                                 searchTermModified,
                                 searchTermModified,
@@ -709,7 +709,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                         long count = resultSet.getLong("count");
 
                         items.add(new TreeItemDTO<>(
-                                "KEYWORD_MATCH",
+                                KeywordMatchParams.getTypeId(),
                                 new KeywordMatchParams(setName, regexStr, keyword, searchType, dataSourceId),
                                 keyword,
                                 keyword == null ? "" : keyword,
