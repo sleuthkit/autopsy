@@ -154,10 +154,11 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.DATA_ARTIFACT, dataSourceId);
             List<TreeResultsDTO.TreeItemDTO<DataArtifactSearchParam>> treeItemRows = typeCounts.entrySet().stream()
                     .map(entry -> {
-                        return createDataArtifactTreeItem(entry.getKey(), dataSourceId,
-                                indeterminateTypes.contains(entry.getKey())
+                        TreeDisplayCount displayCount = indeterminateTypes.contains(entry.getKey())
                                 ? TreeDisplayCount.INDETERMINATE
-                                : TreeDisplayCount.getDeterminate(entry.getValue()));
+                                : TreeDisplayCount.getDeterminate(entry.getValue());
+                        
+                        return createDataArtifactTreeItem(entry.getKey(), dataSourceId, displayCount);
                     })
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
                     .collect(Collectors.toList());

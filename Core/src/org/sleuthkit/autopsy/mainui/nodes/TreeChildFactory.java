@@ -96,7 +96,8 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
                     return false;
                 }
             }
-            itemsList = curItemsList;
+            // make copy to avoid concurrent modification
+            itemsList = new ArrayList<>(curItemsList);
         }
 
         // update existing cached nodes
