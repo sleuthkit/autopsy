@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
@@ -57,6 +58,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * DAO for providing data about data artifacts to populate the results viewer.
  */
+@NbBundle.Messages({
+    "DataArtifactDAO_Accounts_displayName=Communication Accounts"
+})
 public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     private static Logger logger = Logger.getLogger(DataArtifactDAO.class.getName());
@@ -157,7 +161,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                         TreeDisplayCount displayCount = indeterminateTypes.contains(entry.getKey())
                                 ? TreeDisplayCount.INDETERMINATE
                                 : TreeDisplayCount.getDeterminate(entry.getValue());
-                        
+
                         return createDataArtifactTreeItem(entry.getKey(), dataSourceId, displayCount);
                     })
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
@@ -226,12 +230,25 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Returns the display name for an artifact type.
+     *
+     * @param artifactType The artifact type.
+     *
+     * @return The display name.
+     */
+    public String getDisplayName(BlackboardArtifact.Type artifactType) {
+        return artifactType.getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()
+                ? Bundle.DataArtifactDAO_Accounts_displayName()
+                : artifactType.getDisplayName();
+    }
+
     private TreeItemDTO<DataArtifactSearchParam> createDataArtifactTreeItem(BlackboardArtifact.Type artifactType, Long dataSourceId, TreeDisplayCount displayCount) {
         return new TreeResultsDTO.TreeItemDTO<>(
                 BlackboardArtifact.Category.DATA_ARTIFACT.name(),
                 new DataArtifactSearchParam(artifactType, dataSourceId),
                 artifactType.getTypeID(),
-                artifactType.getDisplayName(),
+                getDisplayName(artifactType),
                 displayCount);
     }
 
