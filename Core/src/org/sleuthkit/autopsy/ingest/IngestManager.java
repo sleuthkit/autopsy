@@ -1021,7 +1021,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Creates and starts an ingest job for a collection of data sources.
+     * Creates and starts an ingest job.
      */
     private final class StartIngestJobTask implements Callable<Void> {
 
