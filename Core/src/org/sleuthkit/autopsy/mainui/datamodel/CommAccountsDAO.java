@@ -238,7 +238,7 @@ public class CommAccountsDAO extends AbstractDAO {
     Set<? extends DAOEvent> handleIngestComplete() {
         return getIngestCompleteEvents(
                 this.accountCounts,
-                (daoEvt) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.UNSPECIFIED)
+                (daoEvt, count) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), count)
         );
     }
 
@@ -246,7 +246,7 @@ public class CommAccountsDAO extends AbstractDAO {
     Set<TreeEvent> shouldRefreshTree() {
         return getRefreshEvents(
                 this.accountCounts,
-                (daoEvt) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.UNSPECIFIED)
+                (daoEvt, count) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), count)
         );
     }
 

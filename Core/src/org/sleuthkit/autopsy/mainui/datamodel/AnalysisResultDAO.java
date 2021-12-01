@@ -625,8 +625,10 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     /**
      * Returns the UI display name for a search term.
+     *
      * @param searchTerm The search term.
      * @param searchType The search type enum value.
+     *
      * @return The display name.
      */
     public String getSearchTermDisplayName(String searchTerm, int searchType) {
@@ -783,7 +785,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         List<AnalysisResultEvent> daoEvents = getResultViewEvents(analysisResultMap, setMap);
         Collection<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
-                .map(arEvt -> getTreeEvent(arEvt, false))
+                .map(arEvt -> new TreeEvent(getTreeItem(arEvt, TreeDisplayCount.INDETERMINATE), false))
                 .collect(Collectors.toList());
 
         return Stream.of(daoEvents, treeEvents)
@@ -852,42 +854,34 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     /**
-     * Creates a TreeEvent instance based on the analysis result event and
+     * Creates a TreeItemDTO instance based on the analysis result event and
      * whether or not this event should trigger a full refresh of counts.
      *
-     * @param arEvt         The analysis result event.
-     * @param shouldRefresh Whether or not this tree event should trigger a full
-     *                      refresh of counts.
+     * @param arEvt        The analysis result event.
+     * @param displayCount The count to display.
      *
      * @return The tree event.
      */
-    private TreeEvent getTreeEvent(AnalysisResultEvent arEvt, boolean shouldRefresh) {
+    private TreeItemDTO<?> getTreeItem(AnalysisResultEvent arEvt, TreeDisplayCount displayCount) {
         // GVDTODO handle keyword items when integrated
         if (arEvt instanceof AnalysisResultSetEvent) {
             AnalysisResultSetEvent setEvt = (AnalysisResultSetEvent) arEvt;
-            return new TreeEvent(getSetTreeItem(setEvt.getArtifactType(), setEvt.getDataSourceId(),
+            return getSetTreeItem(setEvt.getArtifactType(), setEvt.getDataSourceId(),
                     setEvt.getSetName(), setEvt.getSetName() == null ? "" : setEvt.getSetName(),
-                    shouldRefresh ? TreeDisplayCount.UNSPECIFIED : TreeDisplayCount.INDETERMINATE), 
-                    shouldRefresh);
+                    displayCount);
         } else {
-            return new TreeEvent(getTreeItem(arEvt.getArtifactType(), arEvt.getDataSourceId(), 
-                    shouldRefresh ? TreeDisplayCount.UNSPECIFIED : TreeDisplayCount.INDETERMINATE), 
-                    shouldRefresh);
+            return getTreeItem(arEvt.getArtifactType(), arEvt.getDataSourceId(), displayCount);
         }
     }
 
     @Override
-    Set<DAOEvent> handleIngestComplete() {
-        return this.treeCounts.flushEvents().stream()
-                .map(arEvt -> getTreeEvent(arEvt, true))
-                .collect(Collectors.toSet());
+    Set<? extends DAOEvent> handleIngestComplete() {
+        return getIngestCompleteEvents(this.treeCounts, (arEvt, count) -> getTreeItem(arEvt, count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        return this.treeCounts.getEventTimeouts().stream()
-                .map(arEvt -> getTreeEvent(arEvt, true))
-                .collect(Collectors.toSet());
+        return getRefreshEvents(this.treeCounts, (arEvt, count) -> getTreeItem(arEvt, count));
     }
 
     /**

@@ -255,13 +255,13 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
         return getIngestCompleteEvents(this.treeCounts,
-                (daoEvt) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED));
+                (daoEvt, count) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
         return getRefreshEvents(this.treeCounts,
-                (daoEvt) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED));
+                (daoEvt, count) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), count));
     }
 
 

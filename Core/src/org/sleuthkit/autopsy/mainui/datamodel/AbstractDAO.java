@@ -26,9 +26,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
@@ -121,9 +123,9 @@ abstract class AbstractDAO {
      * @param converter The means of acquiring a tree item dto to be placed in the TreeEvent.
      * @return The generated tree events.
      */
-    static <E, T> Set<TreeEvent> getIngestCompleteEvents(TreeCounts<E> treeCounts, Function<E, TreeItemDTO<T>> converter) {
+    static <E, T> Set<TreeEvent> getIngestCompleteEvents(TreeCounts<E> treeCounts, BiFunction<E, TreeDisplayCount, TreeItemDTO<T>> converter) {
         return treeCounts.flushEvents().stream()
-                .map(daoEvt -> new TreeEvent(converter.apply(daoEvt), true))
+                .map(daoEvt -> new TreeEvent(converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED), true))
                 .collect(Collectors.toSet());
     }
     
@@ -133,9 +135,9 @@ abstract class AbstractDAO {
      * @param converter The means of acquiring a tree item dto to be placed in the TreeEvent.
      * @return The generated tree events.
      */
-    static <E, T> Set<TreeEvent> getRefreshEvents(TreeCounts<E> treeCounts, Function<E, TreeItemDTO<T>> converter) {
+    static <E, T> Set<TreeEvent> getRefreshEvents(TreeCounts<E> treeCounts, BiFunction<E, TreeDisplayCount, TreeItemDTO<T>> converter) {
         return treeCounts.getEventTimeouts().stream()
-                .map(daoEvt -> new TreeEvent(converter.apply(daoEvt), true))
+                .map(daoEvt -> new TreeEvent(converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED), true))
                 .collect(Collectors.toSet());
     }
 }
