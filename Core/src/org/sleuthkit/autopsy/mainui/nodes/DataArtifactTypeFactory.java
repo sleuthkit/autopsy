@@ -22,7 +22,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.mainui.datamodel.AccountSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
@@ -171,7 +171,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     /**
      * Factory for displaying account types.
      */
-    static class AccountTypeFactory extends TreeChildFactory<AccountSearchParams> {
+    static class AccountTypeFactory extends TreeChildFactory<CommAccountsSearchParams> {
 
         private final Long dataSourceId;
 
@@ -187,40 +187,40 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
 
         @Override
-        protected TreeResultsDTO<? extends AccountSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getDataArtifactsDAO().getAccountsCounts(this.dataSourceId);
+        protected TreeResultsDTO<? extends CommAccountsSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
+            return MainDAO.getInstance().getCommAccountsDAO().getAccountsCounts(this.dataSourceId);
         }
 
         @Override
-        protected TreeNode<AccountSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AccountSearchParams> rowData) {
+        protected TreeNode<CommAccountsSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends CommAccountsSearchParams> rowData) {
             return new AccountTypeNode(rowData);
         }
 
         @Override
-        protected TreeItemDTO<? extends AccountSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+        protected TreeItemDTO<? extends CommAccountsSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
 
-            TreeItemDTO<AccountSearchParams> originalTreeItem = getTypedTreeItem(treeEvt, AccountSearchParams.class);
+            TreeItemDTO<CommAccountsSearchParams> originalTreeItem = getTypedTreeItem(treeEvt, CommAccountsSearchParams.class);
 
             if (originalTreeItem != null
                     && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
-                AccountSearchParams searchParam = originalTreeItem.getSearchParams();
+                CommAccountsSearchParams searchParam = originalTreeItem.getSearchParams();
                 return TreeChildFactory.createTreeItemDTO(originalTreeItem,
-                        new AccountSearchParams(searchParam.getAccountType(), searchParam.getDataSourceId()));
+                        new CommAccountsSearchParams(searchParam.getType(), searchParam.getDataSourceId()));
             }
 
             return null;
         }
 
         @Override
-        public int compare(AccountSearchParams o1, AccountSearchParams o2) {
-            return o1.getAccountType().getDisplayName().compareToIgnoreCase(o2.getAccountType().getDisplayName());
+        public int compare(CommAccountsSearchParams o1, CommAccountsSearchParams o2) {
+            return o1.getType().getDisplayName().compareToIgnoreCase(o2.getType().getDisplayName());
         }
     }
 
     /**
      * A node representing a single account type in the tree.
      */
-    static class AccountTypeNode extends TreeNode<AccountSearchParams> {
+    static class AccountTypeNode extends TreeNode<CommAccountsSearchParams> {
 
         private static final String ICON_BASE_PATH = "org/sleuthkit/autopsy/images/"; //NON-NLS
 
@@ -263,9 +263,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
          *
          * @param itemData The data to display.
          */
-        public AccountTypeNode(TreeResultsDTO.TreeItemDTO<? extends AccountSearchParams> itemData) {
-            super(itemData.getSearchParams().getArtifactType().getTypeName(),
-                    getAccountIconPath(itemData.getSearchParams().getAccountType()),
+        public AccountTypeNode(TreeResultsDTO.TreeItemDTO<? extends CommAccountsSearchParams> itemData) {
+            super(itemData.getSearchParams().getType().getTypeName(),
+                    getAccountIconPath(itemData.getSearchParams().getType()),
                     itemData);
         }
 
