@@ -599,22 +599,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                         long count = resultSet.getLong("count");
                         boolean hasChildren = resultSet.getBoolean("has_children");
 
-                        String searchTermModified;
-                        switch (searchType) {
-                            case 0:
-                                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch(searchTerm == null ? "" : searchTerm);
-                                break;
-                            case 1:
-                                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm == null ? "" : searchTerm);
-                                break;
-                            case 2:
-                                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch(searchTerm == null ? "" : searchTerm);
-                                break;
-                            default:
-                                logger.log(Level.WARNING, MessageFormat.format("Non-standard search type value: {0}.", searchType));
-                                searchTermModified = searchTerm;
-                                break;
-                        }
+                        String searchTermModified = getSearchTermDisplayName(searchTerm, searchType);
 
                         TreeItemDTO<KeywordSearchTermParams> treeItem = new TreeItemDTO<>(
                                 KeywordSearchTermParams.getTypeId(),
@@ -636,6 +621,32 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         } catch (SQLException | NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching set counts", ex);
         }
+    }
+
+    /**
+     * Returns the UI display name for a search term.
+     * @param searchTerm The search term.
+     * @param searchType The search type enum value.
+     * @return The display name.
+     */
+    public String getSearchTermDisplayName(String searchTerm, int searchType) {
+        String searchTermModified;
+        switch (searchType) {
+            case 0:
+                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch(searchTerm == null ? "" : searchTerm);
+                break;
+            case 1:
+                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm == null ? "" : searchTerm);
+                break;
+            case 2:
+                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch(searchTerm == null ? "" : searchTerm);
+                break;
+            default:
+                logger.log(Level.WARNING, MessageFormat.format("Non-standard search type value: {0}.", searchType));
+                searchTermModified = searchTerm;
+                break;
+        }
+        return searchTermModified;
     }
 
     /**

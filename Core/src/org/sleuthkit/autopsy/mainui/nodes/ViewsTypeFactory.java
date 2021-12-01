@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtDocumentFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtExecutableFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtRootFilter;
@@ -71,8 +73,21 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<FileTypeSizeSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeSizeSearchParams.class);
+
+            if (originalTreeItem != null
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                FileTypeSizeSearchParams searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        AnalysisResultSearchParam.getTypeId(),
+                        new FileTypeSizeSearchParams(searchParam.getSizeFilter(), this.dataSourceId),
+                        searchParam.getSizeFilter(),
+                        searchParam.getSizeFilter().getDisplayName(),
+                        originalTreeItem.getDisplayCount());
+            }
             return null;
         }
 
@@ -130,9 +145,23 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<FileTypeMimeSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeMimeSearchParams.class);
+
+            if (originalTreeItem != null
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                FileTypeMimeSearchParams searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        AnalysisResultSearchParam.getTypeId(),
+                        new FileTypeMimeSearchParams(searchParam.getMimeType(), this.dataSourceId),
+                        searchParam.getMimeType(),
+                        searchParam.getMimeType(),
+                        originalTreeItem.getDisplayCount());
+            }
             return null;
+
         }
 
         @Override
@@ -190,8 +219,24 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<FileTypeMimeSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeMimeSearchParams.class);
+
+            String prefixWithSlash = this.mimeTypePrefix + "/";
+            if (originalTreeItem != null
+                    && (originalTreeItem.getSearchParams().getMimeType().startsWith(prefixWithSlash))
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                FileTypeMimeSearchParams searchParam = originalTreeItem.getSearchParams();
+                String mimeSuffix = searchParam.getMimeType().substring(prefixWithSlash.length());
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        AnalysisResultSearchParam.getTypeId(),
+                        new FileTypeMimeSearchParams(searchParam.getMimeType(), this.dataSourceId),
+                        mimeSuffix,
+                        mimeSuffix,
+                        originalTreeItem.getDisplayCount());
+            }
             return null;
         }
 
@@ -275,8 +320,21 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            //GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<FileTypeExtensionsSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeExtensionsSearchParams.class);
+
+            if (originalTreeItem != null
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                FileTypeExtensionsSearchParams searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        AnalysisResultSearchParam.getTypeId(),
+                        new FileTypeExtensionsSearchParams(searchParam.getFilter(), this.dataSourceId),
+                        searchParam.getFilter(),
+                        searchParam.getFilter().getDisplayName(),
+                        originalTreeItem.getDisplayCount());
+            }
             return null;
         }
 

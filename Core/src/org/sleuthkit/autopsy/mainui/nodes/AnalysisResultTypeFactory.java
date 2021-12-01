@@ -315,8 +315,10 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     && (this.setParams.getDataSourceId() == null
                     || Objects.equals(this.setParams.getDataSourceId(), originalTreeItem.getSearchParams().getDataSourceId()))) {
 
-                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
                 KeywordSearchTermParams searchParam = originalTreeItem.getSearchParams();
+                String searchTermDisplayName = MainDAO.getInstance().getAnalysisResultDAO()
+                        .getSearchTermDisplayName(searchParam.getSearchTerm(), searchParam.getSearchType());
+
                 return new TreeResultsDTO.TreeItemDTO<>(
                         KeywordSearchTermParams.getTypeId(),
                         new KeywordSearchTermParams(
@@ -326,8 +328,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                                 searchParam.hasChildren(),
                                 this.setParams.getDataSourceId()
                         ),
-                        nameTBD,
-                        displayNameTBD,
+                        searchTermDisplayName,
+                        searchTermDisplayName,
                         originalTreeItem.getDisplayCount()
                 );
             }
