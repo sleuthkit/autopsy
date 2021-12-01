@@ -33,8 +33,6 @@ import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
-import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
@@ -108,7 +106,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
             return new TreeResultsDTO.TreeItemDTO<>(
                     AnalysisResultSearchParam.getTypeId(),
-                    new AnalysisResultSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId()),
+                    new AnalysisResultSearchParam(searchParam.getArtifactType(), this.dataSourceId),
                     searchParam.getArtifactType().getTypeID(),
                     searchParam.getArtifactType().getDisplayName(),
                     originalTreeItem.getDisplayCount());
@@ -202,16 +200,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             TreeResultsDTO.TreeItemDTO<AnalysisResultSetSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, AnalysisResultSetSearchParam.class);
 
             if (originalTreeItem != null
-                    && !AnalysisResultDAO.getIgnoredTreeTypes().contains(originalTreeItem.getSearchParams().getArtifactType())
+                    && originalTreeItem.getSearchParams().getArtifactType().equals(this.artifactType)
                     && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
                 AnalysisResultSetSearchParam searchParam = originalTreeItem.getSearchParams();
                 return new TreeResultsDTO.TreeItemDTO<>(
                         AnalysisResultSetSearchParam.getTypeId(),
-                        new AnalysisResultSetSearchParam(searchParam.getArtifactType(), searchParam.getDataSourceId(), searchParam.getSetName()),
-                        searchParam.getArtifactType().getTypeID(),
-                        searchParam.getArtifactType().getDisplayName(),
+                        new AnalysisResultSetSearchParam(this.artifactType, this.dataSourceId, searchParam.getSetName()),
+                        searchParam.getSetName(),
+                        searchParam.getSetName() == null ? nullSetName : searchParam.getSetName(),
                         originalTreeItem.getDisplayCount());
             }
             return null;
@@ -309,8 +307,30 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<KeywordSearchTermParams> originalTreeItem = super.getTypedTreeItem(treeEvt, KeywordSearchTermParams.class);
+
+            if (originalTreeItem != null
+                    && Objects.equals(originalTreeItem.getSearchParams().getSetName(), this.setParams.getSetName())
+                    && (this.setParams.getDataSourceId() == null
+                    || Objects.equals(this.setParams.getDataSourceId(), originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                KeywordSearchTermParams searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        KeywordSearchTermParams.getTypeId(),
+                        new KeywordSearchTermParams(
+                                this.setParams.getSetName(),
+                                searchParam.getSearchTerm(),
+                                searchParam.getSearchType(),
+                                searchParam.hasChildren(),
+                                this.setParams.getDataSourceId()
+                        ),
+                        nameTBD,
+                        displayNameTBD,
+                        originalTreeItem.getDisplayCount()
+                );
+            }
             return null;
         }
 
@@ -389,8 +409,30 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<KeywordMatchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, KeywordMatchParams.class);
+
+            if (originalTreeItem != null
+                    && Objects.equals(originalTreeItem.getSearchParams().getSetName(), this.setParams.getSetName())
+                    && (this.setParams.getDataSourceId() == null
+                    || Objects.equals(this.setParams.getDataSourceId(), originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                KeywordMatchParams searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        KeywordMatchParams.getTypeId(),
+                        new KeywordMatchParams(
+                                this.setParams.getSetName(),
+                                this.setParams.getSearchTerm(),
+                                searchParam.getKeywordMatch(),
+                                this.setParams.getSearchType(),
+                                this.setParams.getDataSourceId()
+                        ),
+                        searchParam.getKeywordMatch(),
+                        searchParam.getKeywordMatch() == null ? "" : searchParam.getKeywordMatch(),
+                        originalTreeItem.getDisplayCount()
+                );
+            }
             return null;
         }
 
