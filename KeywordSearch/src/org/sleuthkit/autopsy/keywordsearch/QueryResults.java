@@ -28,8 +28,6 @@ import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang.StringUtils;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -53,8 +51,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * about the search hits to the ingest inbox, and publishing an event to notify
  * subscribers of the blackboard posts.
  */
-
-
 class QueryResults {
 
     private static final Logger logger = Logger.getLogger(QueryResults.class.getName());

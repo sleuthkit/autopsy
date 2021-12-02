@@ -1080,6 +1080,11 @@ final class IngestJobExecutor {
                 if (artifactIngestProgressBar != null) {
                     artifactIngestProgressBar.finish();
                     artifactIngestProgressBar = null;
+                }            
+                
+                if (resultIngestProgressBar != null) {
+                    resultIngestProgressBar.finish();
+                    resultIngestProgressBar = null;
                 }
             });
         }
@@ -1320,7 +1325,12 @@ final class IngestJobExecutor {
 
     /**
      * Adds additional files produced by ingest modules (e.g., extracted or
-     * carved files) for analysis.
+     * carved files) for analysis. The intended clients of this method are
+     * ingest modules running code in an ingest thread that has not yet notified
+     * the ingest task scheduler that the the primary ingest task that is the
+     * source of the files is completed. This means that the new tasks will be
+     * scheduled BEFORE the primary task has been removed from the scheduler's
+     * running tasks list.
      *
      * @param files A list of the files to add.
      */
@@ -1331,19 +1341,15 @@ final class IngestJobExecutor {
         } else {
             logErrorMessage(Level.SEVERE, "Adding streaming files to job during stage " + stage.toString() + " not supported");
         }
-
-        /**
-         * The intended clients of this method are ingest modules running code
-         * in an ingest thread that is holding a reference to a "primary" ingest
-         * task that was the source of the files, in which case a completion
-         * check would not be necessary, so this check is a bit of defensive
-         * programming.
-         */
-        checkForStageCompleted();
     }
 
     /**
-     * Adds data artifacts for analysis.
+     * Adds data artifacts for analysis. The intended clients of this method are
+     * ingest modules running code in an ingest thread that has not yet notified
+     * the ingest task scheduler that the the primary ingest task that is the
+     * source of the data artifacts is completed. This means that the new tasks
+     * will be scheduled BEFORE the primary task has been removed from the
+     * scheduler's running tasks list.
      *
      * @param artifacts The data artifacts.
      */
@@ -1353,21 +1359,17 @@ final class IngestJobExecutor {
                 || stage.equals(IngestJobStage.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
             taskScheduler.scheduleDataArtifactIngestTasks(this, artifacts);
         } else {
-            logErrorMessage(Level.SEVERE, "Adding data artifacts to job during stage " + stage.toString() + " not supported");
+            logErrorMessage(Level.SEVERE, "Attempt to add data artifacts to job during stage " + stage.toString() + " not supported");
         }
-
-        /**
-         * The intended clients of this method are ingest modules running code
-         * in an ingest thread that is holding a reference to a "primary" ingest
-         * task that was the source of the data artifacts, in which case a
-         * completion check would not be necessary, so this is a bit of
-         * defensive programming.
-         */
-        checkForStageCompleted();
     }
 
     /**
-     * Adds analysis results for analysis.
+     * Adds analysis results for analysis. The intended clients of this method
+     * are ingest modules running code in an ingest thread that has not yet
+     * notified the ingest task scheduler that the the primary ingest task that
+     * is the source of the analysis results is completed. This means that the
+     * new tasks will be scheduled BEFORE the primary task has been removed from
+     * the scheduler's running tasks list.
      *
      * @param results The analysis results.
      */
@@ -1377,17 +1379,8 @@ final class IngestJobExecutor {
                 || stage.equals(IngestJobStage.LOW_PRIORITY_DATA_SRC_LEVEL_ANALYSIS)) {
             taskScheduler.scheduleAnalysisResultIngestTasks(this, results);
         } else {
-            logErrorMessage(Level.SEVERE, "Adding analysis results to job during stage " + stage.toString() + " not supported");
+            logErrorMessage(Level.SEVERE, "Attempt to add analysis results to job during stage " + stage.toString() + " not supported");
         }
-
-        /**
-         * The intended clients of this method are ingest modules running code
-         * in an ingest thread that is holding a reference to a "primary" ingest
-         * task that was the source of the analysis results, in which case a
-         * completion check would not be necessary, so this is a bit of
-         * defensive programming.
-         */
-        checkForStageCompleted();
     }
 
     /**
