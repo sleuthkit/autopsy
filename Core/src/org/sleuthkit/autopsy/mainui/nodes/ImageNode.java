@@ -41,6 +41,7 @@ public class ImageNode extends BaseNode<SearchResultsDTO, ImageRowDTO> {
      */
     public ImageNode(SearchResultsDTO results, ImageRowDTO row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
+        setName(ContentNodeUtil.getContentName(row.getContent().getId()));
         setDisplayName(row.getContent().getName());
         setShortDescription(row.getContent().getName());
         setIconBaseWithExtension(NodeIconUtil.IMAGE.getPath()); //NON-NLS

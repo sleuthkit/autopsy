@@ -41,6 +41,7 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
         setDisplayName(row.getContent().getName());
         setShortDescription(row.getContent().getName());
+        setName(ContentNodeUtil.getContentName(row.getContent().getId()));
         setIcon();
     }
 
