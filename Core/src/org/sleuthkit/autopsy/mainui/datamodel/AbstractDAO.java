@@ -21,13 +21,12 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import java.beans.PropertyChangeEvent;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
@@ -87,40 +86,40 @@ abstract class AbstractDAO {
      *                              no data source filtering).
      * @param itemDataSourceMapping The event digest.
      */
-    static <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Function<K, Pair<T, Long>> getKeys, Map<T, Set<Long>> itemDataSourceMapping) {
-        invalidateKeys(cache, getKeys, Collections.singletonList(itemDataSourceMapping));
+    static <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Function<K, Pair<T, Long>> getKeys, Map<T, Set<Long>> itemDsMapping) {
+        invalidateKeys(cache, (keyParams) -> {
+            Pair<T, Long> pairItems = getKeys.apply(keyParams);
+            T searchParamsKey = pairItems.getLeft();
+            Long searchParamsDsId = pairItems.getRight();
+            Set<Long> dsIds = itemDsMapping.get(searchParamsKey);
+            return (dsIds != null && (searchParamsDsId == null || dsIds.contains(searchParamsDsId)));
+        });
     }
 
     /**
-     * Using a digest of event information, clears keys in a cache that may be
-     * effected by events.
+     * Determines what keys should be kept in the cache while iterating through
+     * all the keys.
      *
-     * @param cache                 The cache.
-     * @param getKeys               Using a key from a cache, provides a tuple
-     *                              of the relevant key in the data source
-     *                              mapping and the data source id (or null if
-     *                              no data source filtering).
-     * @param itemDataSourceMapping The list of event digests.
+     * @param cache      The cache.
+     * @param shouldInvalidate If the key should be removed from the cache.
      */
-    static <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Function<K, Pair<T, Long>> getKeys, List<Map<T, Set<Long>>> itemDataSourceMapping) {
+    static <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Predicate<K> shouldInvalidate) {
         ConcurrentMap<SearchParams<K>, ?> concurrentMap = cache.asMap();
         concurrentMap.forEach((k, v) -> {
-            Pair<T, Long> pairItems = getKeys.apply(k.getParamData());
-            T searchParamsKey = pairItems.getLeft();
-            Long searchParamsDsId = pairItems.getRight();
-            for (Map<T, Set<Long>> itemDsMapping : itemDataSourceMapping) {
-                Set<Long> dsIds = itemDsMapping.get(searchParamsKey);
-                if (dsIds != null && (searchParamsDsId == null || dsIds.contains(searchParamsDsId))) {
-                    concurrentMap.remove(k);
-                }
+            if (shouldInvalidate.test(k.getParamData())) {
+                concurrentMap.remove(k);
             }
         });
     }
 
     /**
-     * Returns a set of tree events gathered from the TreeCounts instance after calling flushEvents.
+     * Returns a set of tree events gathered from the TreeCounts instance after
+     * calling flushEvents.
+     *
      * @param treeCounts The tree counts instance.
-     * @param converter The means of acquiring a tree item dto to be placed in the TreeEvent.
+     * @param converter  The means of acquiring a tree item dto to be placed in
+     *                   the TreeEvent.
+     *
      * @return The generated tree events.
      */
     static <E, T> Set<TreeEvent> getIngestCompleteEvents(TreeCounts<E> treeCounts, BiFunction<E, TreeDisplayCount, TreeItemDTO<T>> converter) {
@@ -128,11 +127,15 @@ abstract class AbstractDAO {
                 .map(daoEvt -> new TreeEvent(converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED), true))
                 .collect(Collectors.toSet());
     }
-    
+
     /**
-     * Returns a set of tree events gathered from the TreeCounts instance after calling getEventTimeouts.
+     * Returns a set of tree events gathered from the TreeCounts instance after
+     * calling getEventTimeouts.
+     *
      * @param treeCounts The tree counts instance.
-     * @param converter The means of acquiring a tree item dto to be placed in the TreeEvent.
+     * @param converter  The means of acquiring a tree item dto to be placed in
+     *                   the TreeEvent.
+     *
      * @return The generated tree events.
      */
     static <E, T> Set<TreeEvent> getRefreshEvents(TreeCounts<E> treeCounts, BiFunction<E, TreeDisplayCount, TreeItemDTO<T>> converter) {

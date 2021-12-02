@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -49,6 +50,8 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTr
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultSetEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeExtensionsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeMimeEvent;
@@ -734,7 +737,9 @@ public class ViewsDAO extends AbstractDAO {
             return createExtensionTreeItem(extEvt.getExtensionFilter(), extEvt.getDataSourceId(), count);
         } else if (daoEvent instanceof FileTypeMimeEvent) {
             FileTypeMimeEvent mimeEvt = (FileTypeMimeEvent) daoEvent;
-            return createMimeTreeItem(mimeEvt.getMimeType(), mimeEvt.getDataSourceId(), count);
+            Pair<String, String> mimePieces = getMimePieces(mimeEvt.getMimeType());
+            String mimeName = mimePieces.getRight() == null ? mimePieces.getLeft() : mimePieces.getRight();
+            return createMimeTreeItem(mimeEvt.getMimeType(), mimeName, mimeEvt.getDataSourceId(), count);
         } else if (daoEvent instanceof FileTypeSizeEvent) {
             FileTypeSizeEvent sizeEvt = (FileTypeSizeEvent) daoEvent;
             return createSizeTreeItem(sizeEvt.getSizeFilter(), sizeEvt.getDataSourceId(), count);
@@ -757,51 +762,56 @@ public class ViewsDAO extends AbstractDAO {
 
     @Override
     Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
-        // GVDTODO maps may not be necessary now that this isn't processing a list of events.
-        Map<String, Set<Long>> fileExtensionDsMap = new HashMap<>();
-        Map<String, Map<String, Set<Long>>> mimeTypeDsMap = new HashMap<>();
-        Map<FileSizeFilter, Set<Long>> fileSizeDsMap = new HashMap<>();
-
         AbstractFile af = DAOEventUtils.getFileFromFileEvent(evt);
         if (af == null) {
             return Collections.emptySet();
         }
 
+        long dsId = af.getDataSourceObjectId();
+
         // create an extension mapping if extension present
-        if (!StringUtils.isBlank(af.getNameExtension())) {
-            fileExtensionDsMap
-                    .computeIfAbsent("." + af.getNameExtension(), (k) -> new HashSet<>())
-                    .add(af.getDataSourceObjectId());
-        }
+        Set<FileExtSearchFilter> fileExtensionDsSet = StringUtils.isBlank(af.getNameExtension())
+                ? Collections.emptySet()
+                : EXTENSION_FILTER_MAP.getOrDefault("." + af.getNameExtension(), Collections.emptySet());
 
         // create a mime type mapping if mime type present
-        if (!StringUtils.isBlank(af.getMIMEType())) {
-            Pair<String, String> mimePieces = getMimePieces(af.getMIMEType());
-            mimeTypeDsMap
-                    .computeIfAbsent(mimePieces.getKey(), (k) -> new HashMap<>())
-                    .computeIfAbsent(mimePieces.getValue(), (k) -> new HashSet<>())
-                    .add(af.getDataSourceObjectId());
-        }
+        String evtMimeType = StringUtils.isBlank(af.getMIMEType()) ? null : af.getMIMEType();
 
-        // create a size mapping if size present
-        FileSizeFilter sizeFilter = Stream.of(FileSizeFilter.values())
+        // create a size mapping if size present in filters
+        FileSizeFilter evtFileSize = Stream.of(FileSizeFilter.values())
                 .filter(filter -> af.getSize() >= filter.getMinBound() && (filter.getMaxBound() == null || af.getSize() < filter.getMaxBound()))
                 .findFirst()
                 .orElse(null);
 
-        if (sizeFilter != null) {
-            fileSizeDsMap
-                    .computeIfAbsent(sizeFilter, (k) -> new HashSet<>())
-                    .add(af.getDataSourceObjectId());
-        }
-
-        if (fileExtensionDsMap.isEmpty() && mimeTypeDsMap.isEmpty() && fileSizeDsMap.isEmpty()) {
+        if (fileExtensionDsSet.isEmpty() && evtMimeType == null && evtFileSize == null) {
             return Collections.emptySet();
         }
 
-        clearRelevantCacheEntries(fileExtensionDsMap, mimeTypeDsMap, fileSizeDsMap);
+        invalidateKeys(this.searchParamsCache, (searchParams) -> {
+            if (searchParams instanceof FileTypeExtensionsSearchParams) {
+                FileTypeExtensionsSearchParams extParams = (FileTypeExtensionsSearchParams) searchParams;
+                return fileExtensionDsSet.contains(extParams.getFilter())
+                        && (extParams.getDataSourceId() == null || Objects.equals(extParams.getDataSourceId(), dsId));
 
-        return getDAOEvents(fileExtensionDsMap, mimeTypeDsMap, fileSizeDsMap);
+            } else if (searchParams instanceof FileTypeMimeSearchParams) {
+                FileTypeMimeSearchParams mimeParams = (FileTypeMimeSearchParams) searchParams;
+                return evtMimeType != null && evtMimeType.startsWith(mimeParams.getMimeType()) 
+                        && (mimeParams.getDataSourceId() == null || Objects.equals(mimeParams.getDataSourceId(), dsId));
+
+            } else if (searchParams instanceof FileTypeSizeSearchParams) {
+                FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) searchParams;
+                return Objects.equals(sizeParams.getSizeFilter(), evtFileSize) 
+                        && (sizeParams.getDataSourceId() == null || Objects.equals(sizeParams.getDataSourceId(), dsId));
+            } else {
+                return false;
+            }
+        });
+
+        return getDAOEvents(fileExtensionDsSet, evtMimeType, evtFileSize, dsId);
+    }
+
+    private boolean isInDsFilter(Long dsFilter, Long ds) {
+        return dsFilter == null || Objects.equals(dsFilter, ds);
     }
 
     /**
@@ -809,38 +819,32 @@ public class ViewsDAO extends AbstractDAO {
      * Clears relevant cache entries from cache based on digest of autopsy
      * events.
      *
-     * @param fileExtensionDsMap Maps the file extension to the data sources
-     *                           where files were found with that extension.
-     * @param mimeTypeDsMap      Maps the mime type to the data sources where
-     *                           files were found with that mime type.
-     * @param fileSizeDsMap      Maps the size to the data sources where files
      *
      * @return The list of affected dao events.
      */
-    private Set<DAOEvent> getDAOEvents(Map<String, Set<Long>> fileExtensionDsMap,
-            Map<String, Map<String, Set<Long>>> mimeTypeDsMap,
-            Map<FileSizeFilter, Set<Long>> fileSizeDsMap) {
+    private Set<DAOEvent> getDAOEvents(Set<FileExtSearchFilter> extFilters,
+            String mimeType,
+            FileSizeFilter sizeFilter,
+            long dsId) {
 
-        Stream<DAOEvent> fileExtStream = fileExtensionDsMap.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(dsId -> new FileTypeExtensionsEvent(entry.getKey(), dsId)));
-
-        Set<DAOEvent> fileMimeList = new HashSet<>();
-        for (Entry<String, Map<String, Set<Long>>> prefixEntry : mimeTypeDsMap.entrySet()) {
-            String mimePrefix = prefixEntry.getKey();
-            for (Entry<String, Set<Long>> suffixEntry : prefixEntry.getValue().entrySet()) {
-                String mimeSuffix = suffixEntry.getKey();
-                for (long dsId : suffixEntry.getValue()) {
-                    String mimeType = mimePrefix + (mimeSuffix == null ? "" : ("/" + mimeSuffix));
-                    fileMimeList.add(new FileTypeMimeEvent(mimeType, dsId));
-                }
-            }
+        List<DAOEvent> daoEvents = extFilters.stream()
+                .map(extFilter -> new FileTypeExtensionsEvent(extFilter, dsId))
+                .collect(Collectors.toList());
+        
+        if (mimeType != null) {
+            daoEvents.add(new FileTypeMimeEvent(mimeType, dsId));
         }
+        
+        if (sizeFilter != null) {
+            daoEvents.add(new FileTypeSizeEvent(sizeFilter, dsId));
+        }
+        
+        List<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
+                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt, TreeDisplayCount.INDETERMINATE), false))
+                .collect(Collectors.toList());
 
-        Stream<DAOEvent> fileSizeStream = fileSizeDsMap.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(dsId -> new FileTypeSizeEvent(entry.getKey(), dsId)));
-
-        return Stream.of(fileExtStream, fileMimeList.stream(), fileSizeStream)
-                .flatMap(stream -> stream)
+        return Stream.of(daoEvents, treeEvents)
+                .flatMap(lst -> lst.stream())
                 .collect(Collectors.toSet());
     }
 
@@ -904,6 +908,7 @@ public class ViewsDAO extends AbstractDAO {
                 }
             }
         });
+
     }
 
     /**

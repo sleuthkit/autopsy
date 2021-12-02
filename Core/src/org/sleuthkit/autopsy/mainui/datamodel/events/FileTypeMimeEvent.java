@@ -25,22 +25,16 @@ import java.util.Objects;
  */
 public class FileTypeMimeEvent implements DAOEvent {
 
-    private final String mimeTypePrefix;
-    private final String mimeTypeSuffix;
+    private final String mimeType;
     private final long dataSourceId;
 
-    public FileTypeMimeEvent(String mimeTypePrefix, String mimeTypeSuffix, long dataSourceId) {
-        this.mimeTypePrefix = mimeTypePrefix;
-        this.mimeTypeSuffix = mimeTypeSuffix;
+    public FileTypeMimeEvent(String mimeType, long dataSourceId) {
+        this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
     }
 
-    public String getMimeTypePrefix() {
-        return mimeTypePrefix;
-    }
-
-    public String getMimeTypeSuffix() {
-        return mimeTypeSuffix;
+    public String getMimeType() {
+        return mimeType;
     }
 
     public long getDataSourceId() {
@@ -50,9 +44,8 @@ public class FileTypeMimeEvent implements DAOEvent {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 31 * hash + Objects.hashCode(this.mimeTypePrefix);
-        hash = 31 * hash + Objects.hashCode(this.mimeTypeSuffix);
-        hash = 31 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
+        hash = 29 * hash + Objects.hashCode(this.mimeType);
+        hash = 29 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -68,19 +61,14 @@ public class FileTypeMimeEvent implements DAOEvent {
             return false;
         }
         final FileTypeMimeEvent other = (FileTypeMimeEvent) obj;
-        if (this.dataSourceId != other.dataSourceId) {
+        if (!Objects.equals(this.mimeType, other.mimeType)) {
             return false;
         }
-        if (!Objects.equals(this.mimeTypePrefix, other.mimeTypePrefix)) {
-            return false;
-        }
-        if (!Objects.equals(this.mimeTypeSuffix, other.mimeTypeSuffix)) {
+        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
         return true;
     }
-
-    
 
     @Override
     public Type getType() {
