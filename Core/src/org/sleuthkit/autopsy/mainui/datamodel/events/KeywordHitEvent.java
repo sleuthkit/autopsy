@@ -26,20 +26,36 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class KeywordHitEvent extends AnalysisResultSetEvent {
 
-    private final String regex;
+    private final String searchString;
     private final String match;
+    private final int searchType;
 
-    public KeywordHitEvent(String regex, String match, String setName, BlackboardArtifact.Type artifactType, long dataSourceId) {
+    /**
+     * Main constructor.
+     *
+     * @param searchString The search string or regex.
+     * @param match        The match string.
+     * @param searchType   THe search type.
+     * @param setName      The set name.
+     * @param artifactType The artifact type.
+     * @param dataSourceId The data source id.
+     */
+    public KeywordHitEvent(String searchString, String match, int searchType, String setName, BlackboardArtifact.Type artifactType, long dataSourceId) {
         super(setName, artifactType, dataSourceId);
-        this.regex = regex;
+        this.searchString = searchString;
         this.match = match;
+        this.searchType = searchType;
     }
 
-    public String getRegex() {
-        return regex;
+    public String getSearchString() {
+        return searchString;
     }
 
     public String getMatch() {
         return match;
+    }
+
+    public int getSearchType() {
+        return searchType;
     }
 }
