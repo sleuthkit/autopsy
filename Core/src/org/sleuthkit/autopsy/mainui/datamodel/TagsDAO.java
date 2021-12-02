@@ -27,20 +27,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -52,7 +46,9 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TagsEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -90,7 +86,6 @@ public class TagsDAO extends AbstractDAO {
     private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<SearchParams<TagsSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
 
@@ -128,6 +123,11 @@ public class TagsDAO extends AbstractDAO {
     private static ColumnKey getFileColumnKey(String name) {
         return new ColumnKey(name, name, Bundle.TagsDAO_fileColumns_noDescription());
     }
+
+    private final Cache<SearchParams<TagsSearchParams>, SearchResultsDTO> searchParamsCache
+            = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+
+    private final TreeCounts<TagsEvent> treeCounts = new TreeCounts<>();
 
     public SearchResultsDTO getTags(TagsSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (key.getTagName() == null) {
@@ -301,71 +301,59 @@ public class TagsDAO extends AbstractDAO {
         }
 
         TagsEvent tagEvt = (TagsEvent) daoEvt;
-        return (tagParams.getTagName().getId() == tagEvt.getTagNameId()
+        return (Objects.equals(tagParams.getTagName(), tagEvt.getTagName())
                 && tagParams.getTagType().equals(tagEvt.getTagType())
                 && (tagParams.getDataSourceId() == null
                 || tagEvt.getDataSourceId() == null
                 || tagParams.getDataSourceId() == tagEvt.getDataSourceId()));
     }
 
-    @Override
-    void clearCaches() {
-        this.searchParamsCache.invalidateAll();
+    private TreeItemDTO<TagsSearchParams> getTreeItem(TagsEvent evt, TreeResultsDTO.TreeDisplayCount count) {
+        return new TreeItemDTO<>(
+                TagsSearchParams.getTypeId(), 
+                new TagsSearchParams(evt.getTagName(), evt.getTagType(), evt.getDataSourceId()), 
+                evt.getTagName().getId(), 
+                evt.getTagName().getDisplayName(), 
+                count);
     }
 
     @Override
-    Set<DAOEvent> handleIngestComplete() {
-        // GVDTODO
-        return Collections.emptySet();
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+        handleIngestComplete();
+    }
+
+    @Override
+    Set<? extends DAOEvent> handleIngestComplete() {
+        return getIngestCompleteEvents(this.treeCounts, (evt, count) -> getTreeItem(evt, count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        // GVDTODO
-        return Collections.emptySet();
+        return getRefreshEvents(this.treeCounts, (evt, count) -> getTreeItem(evt, count));
     }
 
     @Override
     Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
-        // GVDTODO this may be rewritten simpler now that it isn't processing a list of events
-        Map<Pair<TagType, Long>, Set<Optional<Long>>> mapping = new HashMap<>();
-
-        // tag type, tag name id, data source id (or null if unknown)
-        Triple<TagType, Long, Long> data = getTagData(evt);
-        if (data != null) {
-            mapping.computeIfAbsent(Pair.of(data.getLeft(), data.getMiddle()), k -> new HashSet<>())
-                    .add(Optional.ofNullable(data.getRight()));
-        }
-
-
-        // don't continue if no mapping entries
-        if (mapping.isEmpty()) {
+        TagsEvent data = getTagData(evt);
+        if (data == null) {
             return Collections.emptySet();
         }
 
-        ConcurrentMap<SearchParams<TagsSearchParams>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
-        concurrentMap.forEach((k, v) -> {
-            TagsSearchParams paramData = k.getParamData();
-            Set<Optional<Long>> affectedDataSources = mapping.get(Pair.of(paramData.getTagType(), paramData.getTagName().getId()));
-            // we only clear key if the tag name / type line up and either the parameters data source wasn't specified,
-            // there is a wild card data source for the event, or the data source is contained in the list of data sources
-            // affected by the event
-            if (affectedDataSources != null
-                    && (paramData.getDataSourceId() == null
-                    || affectedDataSources.contains(Optional.empty())
-                    || affectedDataSources.contains(Optional.of(paramData.getDataSourceId())))) {
-                concurrentMap.remove(k);
-            }
+        invalidateKeys(this.searchParamsCache, (searchParams) -> {
+            return (Objects.equals(searchParams.getTagType(), data.getTagType())
+                    && Objects.equals(searchParams.getTagName(), data.getTagName())
+                    && (searchParams.getDataSourceId() == null || Objects.equals(searchParams.getDataSourceId(), data.getDataSourceId())));
         });
 
-        return mapping.entrySet().stream()
-                .flatMap(entry -> {
-                    TagType tagType = entry.getKey().getLeft();
-                    Long tagNameId = entry.getKey().getRight();
+        Collection<TagsEvent> daoEvents = Collections.singletonList(data);
 
-                    return entry.getValue().stream()
-                            .map((dsIdOpt) -> new TagsEvent(tagType, tagNameId, dsIdOpt.orElse(null)));
-                })
+        Collection<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
+                .map(arEvt -> new TreeEvent(getTreeItem(arEvt, TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false))
+                .collect(Collectors.toList());
+
+        return Stream.of(daoEvents, treeEvents)
+                .flatMap(lst -> lst.stream())
                 .collect(Collectors.toSet());
     }
 
@@ -378,21 +366,21 @@ public class TagsDAO extends AbstractDAO {
      * @return tag type, tag name id, data source id (or null if none determined
      *         from event).
      */
-    private Triple<TagType, Long, Long> getTagData(PropertyChangeEvent evt) {
+    private TagsEvent getTagData(PropertyChangeEvent evt) {
         if (evt instanceof BlackBoardArtifactTagAddedEvent) {
             BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
             // ensure tag added event has a valid content id
             if (event.getAddedTag() != null
                     && event.getAddedTag().getContent() != null
                     && event.getAddedTag().getArtifact() != null) {
-                return Triple.of(TagType.RESULT, event.getAddedTag().getName().getId(), event.getAddedTag().getArtifact().getDataSourceObjectID());
+                return new TagsEvent(TagType.RESULT, event.getAddedTag().getName(), event.getAddedTag().getArtifact().getDataSourceObjectID());
             }
 
         } else if (evt instanceof BlackBoardArtifactTagDeletedEvent) {
             BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
             BlackBoardArtifactTagDeletedEvent.DeletedBlackboardArtifactTagInfo deletedTagInfo = event.getDeletedTagInfo();
             if (deletedTagInfo != null) {
-                return Triple.of(TagType.RESULT, deletedTagInfo.getName().getId(), null);
+                return new TagsEvent(TagType.RESULT, deletedTagInfo.getName(), null);
             }
         } else if (evt instanceof ContentTagAddedEvent) {
             ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
@@ -400,14 +388,14 @@ public class TagsDAO extends AbstractDAO {
             if (event.getAddedTag() != null && event.getAddedTag().getContent() != null) {
                 Content content = event.getAddedTag().getContent();
                 Long dsId = content instanceof AbstractFile ? ((AbstractFile) content).getDataSourceObjectId() : null;
-                return Triple.of(TagType.FILE, event.getAddedTag().getName().getId(), dsId);
+                return new TagsEvent(TagType.FILE, event.getAddedTag().getName(), dsId);
             }
         } else if (evt instanceof ContentTagDeletedEvent) {
             ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
             // ensure tag deleted event has a valid content id
             ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = event.getDeletedTagInfo();
             if (deletedTagInfo != null) {
-                return Triple.of(TagType.FILE, deletedTagInfo.getName().getId(), null);
+                return new TagsEvent(TagType.FILE, deletedTagInfo.getName(), null);
             }
         }
         return null;

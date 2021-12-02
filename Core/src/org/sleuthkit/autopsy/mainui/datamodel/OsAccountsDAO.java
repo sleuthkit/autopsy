@@ -187,13 +187,11 @@ public class OsAccountsDAO extends AbstractDAO {
 
     @Override
     Set<DAOEvent> handleIngestComplete() {
-        // GVDTODO
         return Collections.emptySet();
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        // GVDTODO
         return Collections.emptySet();
     }
 
@@ -202,9 +200,9 @@ public class OsAccountsDAO extends AbstractDAO {
         if (!OS_EVENTS.contains(evt.getPropertyName())) {
             return Collections.emptySet();
         }
-        
-            this.searchParamsCache.invalidateAll();
-        
+
+        this.searchParamsCache.invalidateAll();
+
         return Collections.singleton(new OsAccountEvent());
     }
 
