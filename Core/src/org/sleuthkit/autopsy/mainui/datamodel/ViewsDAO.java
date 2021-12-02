@@ -50,8 +50,6 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTr
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultEvent;
-import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultSetEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeExtensionsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeMimeEvent;
@@ -97,7 +95,7 @@ public class ViewsDAO extends AbstractDAO {
         return instance;
     }
 
-    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<Object>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<DAOEvent> treeCounts = new TreeCounts<>();
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
@@ -111,7 +109,7 @@ public class ViewsDAO extends AbstractDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        SearchParams<FileTypeExtensionsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
+        SearchParams<Object> searchParams = new SearchParams<>(key, startItem, maxCount);
         return searchParamsCache.get(searchParams, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId(), startItem, maxCount));
     }
 
@@ -122,7 +120,7 @@ public class ViewsDAO extends AbstractDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        SearchParams<FileTypeMimeSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
+        SearchParams<Object> searchParams = new SearchParams<>(key, startItem, maxCount);
         return searchParamsCache.get(searchParams, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId(), startItem, maxCount));
     }
 
@@ -133,7 +131,7 @@ public class ViewsDAO extends AbstractDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        SearchParams<FileTypeSizeSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
+        SearchParams<Object> searchParams = new SearchParams<>(key, startItem, maxCount);
         return searchParamsCache.get(searchParams, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId(), startItem, maxCount));
     }
 
@@ -770,7 +768,7 @@ public class ViewsDAO extends AbstractDAO {
         long dsId = af.getDataSourceObjectId();
 
         // create an extension mapping if extension present
-        Set<FileExtSearchFilter> fileExtensionDsSet = StringUtils.isBlank(af.getNameExtension())
+        Set<FileExtSearchFilter> evtExtFilters = StringUtils.isBlank(af.getNameExtension())
                 ? Collections.emptySet()
                 : EXTENSION_FILTER_MAP.getOrDefault("." + af.getNameExtension(), Collections.emptySet());
 
@@ -783,42 +781,49 @@ public class ViewsDAO extends AbstractDAO {
                 .findFirst()
                 .orElse(null);
 
-        if (fileExtensionDsSet.isEmpty() && evtMimeType == null && evtFileSize == null) {
+        if (evtExtFilters.isEmpty() && evtMimeType == null && evtFileSize == null) {
             return Collections.emptySet();
         }
 
-        invalidateKeys(this.searchParamsCache, (searchParams) -> {
-            if (searchParams instanceof FileTypeExtensionsSearchParams) {
-                FileTypeExtensionsSearchParams extParams = (FileTypeExtensionsSearchParams) searchParams;
-                return fileExtensionDsSet.contains(extParams.getFilter())
-                        && (extParams.getDataSourceId() == null || Objects.equals(extParams.getDataSourceId(), dsId));
+        invalidateKeys(this.searchParamsCache,
+                (Predicate<Object>) (searchParams) -> searchParamsMatchEvent(evtExtFilters, evtMimeType, evtFileSize, dsId, searchParams));
 
-            } else if (searchParams instanceof FileTypeMimeSearchParams) {
-                FileTypeMimeSearchParams mimeParams = (FileTypeMimeSearchParams) searchParams;
-                return evtMimeType != null && evtMimeType.startsWith(mimeParams.getMimeType()) 
-                        && (mimeParams.getDataSourceId() == null || Objects.equals(mimeParams.getDataSourceId(), dsId));
-
-            } else if (searchParams instanceof FileTypeSizeSearchParams) {
-                FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) searchParams;
-                return Objects.equals(sizeParams.getSizeFilter(), evtFileSize) 
-                        && (sizeParams.getDataSourceId() == null || Objects.equals(sizeParams.getDataSourceId(), dsId));
-            } else {
-                return false;
-            }
-        });
-
-        return getDAOEvents(fileExtensionDsSet, evtMimeType, evtFileSize, dsId);
+        return getDAOEvents(evtExtFilters, evtMimeType, evtFileSize, dsId);
     }
 
-    private boolean isInDsFilter(Long dsFilter, Long ds) {
-        return dsFilter == null || Objects.equals(dsFilter, ds);
+    private boolean searchParamsMatchEvent(Set<FileExtSearchFilter> evtExtFilters,
+            String evtMimeType,
+            FileSizeFilter evtFileSize,
+            long dsId,
+            Object searchParams) {
+
+        if (searchParams instanceof FileTypeExtensionsSearchParams) {
+            FileTypeExtensionsSearchParams extParams = (FileTypeExtensionsSearchParams) searchParams;
+            return evtExtFilters.contains(extParams.getFilter())
+                    && (extParams.getDataSourceId() == null || Objects.equals(extParams.getDataSourceId(), dsId));
+
+        } else if (searchParams instanceof FileTypeMimeSearchParams) {
+            FileTypeMimeSearchParams mimeParams = (FileTypeMimeSearchParams) searchParams;
+            return evtMimeType != null && evtMimeType.startsWith(mimeParams.getMimeType())
+                    && (mimeParams.getDataSourceId() == null || Objects.equals(mimeParams.getDataSourceId(), dsId));
+
+        } else if (searchParams instanceof FileTypeSizeSearchParams) {
+            FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) searchParams;
+            return Objects.equals(sizeParams.getSizeFilter(), evtFileSize)
+                    && (sizeParams.getDataSourceId() == null || Objects.equals(sizeParams.getDataSourceId(), dsId));
+        } else {
+            return false;
+        }
     }
 
     /**
-     *
      * Clears relevant cache entries from cache based on digest of autopsy
      * events.
      *
+     * @param extFilters The set of affected extension filters.
+     * @param mimeType   The affected mime type or null.
+     * @param sizeFilter The affected size filter or null.
+     * @param dsId       The file object id.
      *
      * @return The list of affected dao events.
      */
@@ -830,15 +835,15 @@ public class ViewsDAO extends AbstractDAO {
         List<DAOEvent> daoEvents = extFilters.stream()
                 .map(extFilter -> new FileTypeExtensionsEvent(extFilter, dsId))
                 .collect(Collectors.toList());
-        
+
         if (mimeType != null) {
             daoEvents.add(new FileTypeMimeEvent(mimeType, dsId));
         }
-        
+
         if (sizeFilter != null) {
             daoEvents.add(new FileTypeSizeEvent(sizeFilter, dsId));
         }
-        
+
         List<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
                 .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt, TreeDisplayCount.INDETERMINATE), false))
                 .collect(Collectors.toList());
@@ -846,69 +851,6 @@ public class ViewsDAO extends AbstractDAO {
         return Stream.of(daoEvents, treeEvents)
                 .flatMap(lst -> lst.stream())
                 .collect(Collectors.toSet());
-    }
-
-    /**
-     * Clears relevant cache entries from cache based on digest of autopsy
-     * events.
-     *
-     * @param fileExtensionDsMap Maps the file extension to the data sources
-     *                           where files were found with that extension.
-     * @param mimeTypeDsMap      Maps the mime type to the data sources where
-     *                           files were found with that mime type.
-     * @param fileSizeDsMap      Maps the size to the data sources where files
-     *                           were found within that size filter.
-     */
-    private void clearRelevantCacheEntries(Map<String, Set<Long>> fileExtensionDsMap,
-            Map<String, Map<String, Set<Long>>> mimeTypeDsMap,
-            Map<FileSizeFilter, Set<Long>> fileSizeDsMap) {
-
-        // invalidate cache entries that are affected by events
-        ConcurrentMap<SearchParams<?>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
-        concurrentMap.forEach((k, v) -> {
-            Object baseParams = k.getParamData();
-            if (baseParams instanceof FileTypeExtensionsSearchParams) {
-                FileTypeExtensionsSearchParams extParams = (FileTypeExtensionsSearchParams) baseParams;
-                // if search params have a filter where extension is present and the data source id is null or ==
-                boolean isMatch = extParams.getFilter().getFilter().stream().anyMatch((ext) -> {
-                    Set<Long> dsIds = fileExtensionDsMap.get(ext);
-                    return (dsIds != null && (extParams.getDataSourceId() == null || dsIds.contains(extParams.getDataSourceId())));
-                });
-
-                if (isMatch) {
-                    concurrentMap.remove(k);
-                }
-            } else if (baseParams instanceof FileTypeMimeSearchParams) {
-                FileTypeMimeSearchParams mimeParams = (FileTypeMimeSearchParams) baseParams;
-                Pair<String, String> mimePieces = getMimePieces(mimeParams.getMimeType());
-                Map<String, Set<Long>> suffixes = mimeTypeDsMap.get(mimePieces.getKey());
-                if (suffixes == null) {
-                    return;
-                }
-
-                // if search params is top level mime prefix (without suffix) and data source is null or ==.
-                if (mimePieces.getValue() == null
-                        && (mimeParams.getDataSourceId() == null
-                        || suffixes.values().stream().flatMap(set -> set.stream()).anyMatch(ds -> Objects.equals(mimeParams.getDataSourceId(), ds)))) {
-
-                    concurrentMap.remove(k);
-                    // otherwise, see if suffix is present
-                } else {
-                    Set<Long> dataSources = suffixes.get(mimePieces.getValue());
-                    if (dataSources != null && (mimeParams.getDataSourceId() == null || dataSources.contains(mimeParams.getDataSourceId()))) {
-                        concurrentMap.remove(k);
-                    }
-                }
-
-            } else if (baseParams instanceof FileTypeSizeSearchParams) {
-                FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) baseParams;
-                Set<Long> dataSources = fileSizeDsMap.get(sizeParams.getSizeFilter());
-                if (dataSources != null && (sizeParams.getDataSourceId() == null || dataSources.contains(sizeParams.getDataSourceId()))) {
-                    concurrentMap.remove(k);
-                }
-            }
-        });
-
     }
 
     /**

@@ -103,7 +103,7 @@ abstract class AbstractDAO {
      * @param cache      The cache.
      * @param shouldInvalidate If the key should be removed from the cache.
      */
-    static <T, K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Predicate<K> shouldInvalidate) {
+    static <K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Predicate<K> shouldInvalidate) {
         ConcurrentMap<SearchParams<K>, ?> concurrentMap = cache.asMap();
         concurrentMap.forEach((k, v) -> {
             if (shouldInvalidate.test(k.getParamData())) {
