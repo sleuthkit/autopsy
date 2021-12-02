@@ -49,6 +49,7 @@ public class VolumeNode extends BaseNode<SearchResultsDTO, VolumeRowDTO> {
                 ? row.getCellValues().get(0).toString()
                 : "";
 
+        setName(ContentNodeUtil.getContentName(row.getContent().getId()));
         setDisplayName(displayName);
         setShortDescription(displayName);
     }
