@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeExtensionsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeMimeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeSizeEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -72,7 +73,6 @@ public class ViewsDAO extends AbstractDAO {
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
@@ -85,6 +85,9 @@ public class ViewsDAO extends AbstractDAO {
 
         return instance;
     }
+
+    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final TreeCounts<DAOEvent> treeCounts = new TreeCounts<>();
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -306,6 +309,20 @@ public class ViewsDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<FileTypeExtensionsSearchParams> getFileExtCounts(Collection<FileExtSearchFilter> filters, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        Set<FileExtSearchFilter> indeterminateFilters = new HashSet<>();
+        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof FileTypeExtensionsEvent) {
+                FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) evt;
+                if (dataSourceId == null || Objects.equals(extEvt.getDataSourceId(), dataSourceId)) {
+                    for (FileExtSearchFilter filter : filters) {
+                        if (filter.getFilter().contains(evt)) {
+                            indeterminateFilters.add(filter);
+                        }
+                    }
+                }
+            }
+        }
+
         Map<FileExtSearchFilter, String> whereClauses = filters.stream()
                 .collect(Collectors.toMap(
                         filter -> filter,
@@ -315,12 +332,16 @@ public class ViewsDAO extends AbstractDAO {
 
         List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
                 .map(entry -> {
+                    TreeDisplayCount displayCount = indeterminateFilters.contains(entry.getKey())
+                            ? TreeDisplayCount.INDETERMINATE
+                            : TreeDisplayCount.getDeterminate(entry.getValue());
+
                     return new TreeItemDTO<>(
                             FileTypeExtensionsSearchParams.getTypeId(),
                             new FileTypeExtensionsSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
-                            TreeDisplayCount.getDeterminate(entry.getValue()));
+                            displayCount);
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
@@ -340,6 +361,16 @@ public class ViewsDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<FileTypeSizeSearchParams> getFileSizeCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        Set<FileSizeFilter> indeterminateFilters = new HashSet<>();
+        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof FileTypeSizeEvent) {
+                FileTypeSizeEvent sizeEvt = (FileTypeSizeEvent) evt;
+                if (dataSourceId == null || Objects.equals(sizeEvt.getDataSourceId(), dataSourceId)) {
+                    indeterminateFilters.add(sizeEvt.getSizeFilter());
+                }
+            }
+        }
+
         Map<FileSizeFilter, String> whereClauses = Stream.of(FileSizeFilter.values())
                 .collect(Collectors.toMap(
                         filter -> filter,
@@ -349,12 +380,16 @@ public class ViewsDAO extends AbstractDAO {
 
         List<TreeItemDTO<FileTypeSizeSearchParams>> treeList = countsByFilter.entrySet().stream()
                 .map(entry -> {
+                    TreeDisplayCount displayCount = indeterminateFilters.contains(entry.getKey())
+                            ? TreeDisplayCount.INDETERMINATE
+                            : TreeDisplayCount.getDeterminate(entry.getValue());
+
                     return new TreeItemDTO<>(
                             FileTypeSizeSearchParams.getTypeId(),
                             new FileTypeSizeSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
-                            TreeDisplayCount.getDeterminate(entry.getValue()));
+                            displayCount);
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
@@ -378,6 +413,22 @@ public class ViewsDAO extends AbstractDAO {
     public TreeResultsDTO<FileTypeMimeSearchParams> getFileMimeCounts(String prefix, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         String prefixWithSlash = StringUtils.isNotBlank(prefix) ? prefix.replaceAll("/", "") + "/" : null;
         String likeItem = StringUtils.isNotBlank(prefixWithSlash) ? prefixWithSlash.replaceAll("%", "") + "%" : null;
+
+        Set<String> indeterminateMimeTypes = new HashSet<>();
+        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof FileTypeMimeEvent) {
+                FileTypeMimeEvent mimeEvt = (FileTypeMimeEvent) evt;
+                if ((dataSourceId == null || Objects.equals(mimeEvt.getDataSourceId(), dataSourceId))
+                        && (prefixWithSlash == null || mimeEvt.getMimeType().startsWith(prefixWithSlash))) {
+
+                    String mimePortion = prefixWithSlash != null
+                            ? mimeEvt.getMimeType().substring(prefixWithSlash.length())
+                            : mimeEvt.getMimeType().substring(0, mimeEvt.getMimeType().indexOf("/"));
+
+                    indeterminateMimeTypes.add(mimePortion);
+                }
+            }
+        }
 
         String baseFilter = "WHERE " + getBaseFileMimeFilter()
                 + getDataSourceAndClause(dataSourceId)
@@ -434,12 +485,16 @@ public class ViewsDAO extends AbstractDAO {
                                     ? entry.getKey().substring(prefixWithSlash.length())
                                     : entry.getKey();
 
+                            TreeDisplayCount displayCount = indeterminateMimeTypes.contains(name)
+                                    ? TreeDisplayCount.INDETERMINATE
+                                    : TreeDisplayCount.getDeterminate(entry.getValue());
+
                             return new TreeItemDTO<>(
                                     FileTypeMimeSearchParams.getTypeId(),
                                     new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
                                     name,
                                     name,
-                                    TreeDisplayCount.getDeterminate(entry.getValue()));
+                                    displayCount);
                         })
                         .sorted((a, b) -> stringCompare(a.getSearchParams().getMimeType(), b.getSearchParams().getMimeType()))
                         .collect(Collectors.toList());
