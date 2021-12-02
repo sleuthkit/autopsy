@@ -18,15 +18,24 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.awt.event.ActionEvent;
+import java.beans.PropertyVetoException;
+import java.util.logging.Level;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
+import org.openide.explorer.ExplorerManager;
+import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.autopsy.mainui.datamodel.BaseRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
 /**
  * A a simple starting point for nodes.
@@ -68,5 +77,53 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
     @Override
     public Action[] getActions(boolean context) {
         return ActionsFactory.getActions(this);
+    }
+    
+    @Override
+    public Action getPreferredAction() {
+        System.out.println("### getPreferredAction for node of type: " + this.getClass().getSimpleName());
+        DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
+        ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
+        
+        // For now, skip .. case
+        if (treeViewExplorerMgr == null || treeViewExplorerMgr.getSelectedNodes().length == 0) {
+            return null;
+        }
+        final Node currentSelectionInDirectoryTree = treeViewExplorerMgr.getSelectedNodes()[0];
+        final String currentNodeName = this.getDisplayName();
+
+        return new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentSelectionInDirectoryTree != null) {
+                    // Find the filter version of the passed in dataModelNode. 
+                    final org.openide.nodes.Children children = currentSelectionInDirectoryTree.getChildren();
+                    // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
+                    System.out.println("### Looking for child with name " + currentNodeName);
+                    Node newSelection = children.findChild(currentNodeName);
+                    if (newSelection == null) {
+                        System.out.println("    Did not find it");
+                    } else {
+                        System.out.println("    Found it!");
+                    }
+
+                    /*
+                     * We got null here when we were viewing a ZIP file in
+                     * the Views -> Archives area and double clicking on it
+                     * got to this code. It tried to find the child in the
+                     * tree and didn't find it. An exception was then thrown
+                     * from setting the selected node to be null.
+                     */
+                    if (newSelection != null) {
+                        try {
+                            treeViewExplorerMgr.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                        } catch (PropertyVetoException ex) {
+                            Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                            logger.log(Level.WARNING, "Error: can't open the selected directory.", ex); //NON-NLS
+                        }
+                    }
+                }
+            }
+        };
     }
 }
