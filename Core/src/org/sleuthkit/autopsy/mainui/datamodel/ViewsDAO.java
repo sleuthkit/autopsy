@@ -73,6 +73,14 @@ public class ViewsDAO extends AbstractDAO {
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
+    private static final Map<String, Set<FileExtSearchFilter>> EXTENSION_FILTER_MAP
+            = Stream.of((FileExtSearchFilter[]) FileExtRootFilter.values(), FileExtDocumentFilter.values(), FileExtExecutableFilter.values())
+                    .flatMap(arr -> Stream.of(arr))
+                    .flatMap(filter -> filter.getFilter().stream().map(ext -> Pair.of(ext, filter)))
+                    .collect(Collectors.groupingBy(
+                            pair -> pair.getKey(),
+                            Collectors.mapping(pair -> pair.getValue(),
+                                    Collectors.toSet())));
 
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
@@ -132,8 +140,7 @@ public class ViewsDAO extends AbstractDAO {
         }
 
         FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) eventData;
-        String extension = extEvt.getExtension().toLowerCase();
-        return key.getFilter().getFilter().contains(extension)
+        return key.getFilter().equals(extEvt.getExtensionFilter())
                 && (key.getDataSourceId() == null || key.getDataSourceId().equals(extEvt.getDataSourceId()));
     }
 
@@ -336,17 +343,30 @@ public class ViewsDAO extends AbstractDAO {
                             ? TreeDisplayCount.INDETERMINATE
                             : TreeDisplayCount.getDeterminate(entry.getValue());
 
-                    return new TreeItemDTO<>(
-                            FileTypeExtensionsSearchParams.getTypeId(),
-                            new FileTypeExtensionsSearchParams(entry.getKey(), dataSourceId),
-                            entry.getKey(),
-                            entry.getKey().getDisplayName(),
-                            displayCount);
+                    return createExtensionTreeItem(entry.getKey(), dataSourceId, displayCount);
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
 
         return new TreeResultsDTO<>(treeList);
+    }
+
+    /**
+     * Creates an extension tree item.
+     *
+     * @param filter       The extension filter.
+     * @param dataSourceId The data source id or null.
+     * @param displayCount The count to display.
+     *
+     * @return The extension tree item.
+     */
+    private TreeItemDTO<FileTypeExtensionsSearchParams> createExtensionTreeItem(FileExtSearchFilter filter, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeItemDTO<>(
+                FileTypeExtensionsSearchParams.getTypeId(),
+                new FileTypeExtensionsSearchParams(filter, dataSourceId),
+                filter,
+                filter.getDisplayName(),
+                displayCount);
     }
 
     /**
@@ -384,17 +404,30 @@ public class ViewsDAO extends AbstractDAO {
                             ? TreeDisplayCount.INDETERMINATE
                             : TreeDisplayCount.getDeterminate(entry.getValue());
 
-                    return new TreeItemDTO<>(
-                            FileTypeSizeSearchParams.getTypeId(),
-                            new FileTypeSizeSearchParams(entry.getKey(), dataSourceId),
-                            entry.getKey(),
-                            entry.getKey().getDisplayName(),
-                            displayCount);
+                    return createSizeTreeItem(entry.getKey(), dataSourceId, displayCount);
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
 
         return new TreeResultsDTO<>(treeList);
+    }
+
+    /**
+     * Creates a size tree item.
+     *
+     * @param filter       The file size filter.
+     * @param dataSourceId The data source id.
+     * @param displayCount The display count.
+     *
+     * @return The tree item.
+     */
+    private TreeItemDTO<FileTypeSizeSearchParams> createSizeTreeItem(FileSizeFilter filter, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeItemDTO<>(
+                FileTypeSizeSearchParams.getTypeId(),
+                new FileTypeSizeSearchParams(filter, dataSourceId),
+                filter,
+                filter.getDisplayName(),
+                displayCount);
     }
 
     /**
@@ -489,12 +522,7 @@ public class ViewsDAO extends AbstractDAO {
                                     ? TreeDisplayCount.INDETERMINATE
                                     : TreeDisplayCount.getDeterminate(entry.getValue());
 
-                            return new TreeItemDTO<>(
-                                    FileTypeMimeSearchParams.getTypeId(),
-                                    new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
-                                    name,
-                                    name,
-                                    displayCount);
+                            return createMimeTreeItem(entry.getKey(), name, dataSourceId, displayCount);
                         })
                         .sorted((a, b) -> stringCompare(a.getSearchParams().getMimeType(), b.getSearchParams().getMimeType()))
                         .collect(Collectors.toList());
@@ -506,6 +534,26 @@ public class ViewsDAO extends AbstractDAO {
         } catch (NoCurrentCaseException ex) {
             throw new ExecutionException("An error occurred while fetching file counts.", ex);
         }
+    }
+
+    /**
+     * Creates a mime type tree item.
+     *
+     * @param fullMime     The full mime type.
+     * @param mimeName     The mime type segment that will be displayed (suffix
+     *                     or prefix).
+     * @param dataSourceId The data source id.
+     * @param displayCount The count to display.
+     *
+     * @return The created tree item.
+     */
+    private TreeItemDTO<FileTypeMimeSearchParams> createMimeTreeItem(String fullMime, String mimeName, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeItemDTO<>(
+                FileTypeMimeSearchParams.getTypeId(),
+                new FileTypeMimeSearchParams(fullMime, dataSourceId),
+                mimeName,
+                mimeName,
+                displayCount);
     }
 
     /**
@@ -667,11 +715,6 @@ public class ViewsDAO extends AbstractDAO {
         return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
     }
 
-    @Override
-    void clearCaches() {
-        this.searchParamsCache.invalidateAll();
-    }
-
     private Pair<String, String> getMimePieces(String mimeType) {
         int idx = mimeType.indexOf("/");
         String mimePrefix = idx > 0 ? mimeType.substring(0, idx) : mimeType;
@@ -680,15 +723,36 @@ public class ViewsDAO extends AbstractDAO {
     }
 
     @Override
-    Set<DAOEvent> handleIngestComplete() {
-        // GVDTODO
-        return Collections.emptySet();
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+        handleIngestComplete();
+    }
+
+    private TreeItemDTO<?> createTreeItem(DAOEvent daoEvent, TreeDisplayCount count) {
+        if (daoEvent instanceof FileTypeExtensionsEvent) {
+            FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) daoEvent;
+            return createExtensionTreeItem(extEvt.getExtensionFilter(), extEvt.getDataSourceId(), count);
+        } else if (daoEvent instanceof FileTypeMimeEvent) {
+            FileTypeMimeEvent mimeEvt = (FileTypeMimeEvent) daoEvent;
+            return createMimeTreeItem(mimeEvt.getMimeType(), mimeEvt.getDataSourceId(), count);
+        } else if (daoEvent instanceof FileTypeSizeEvent) {
+            FileTypeSizeEvent sizeEvt = (FileTypeSizeEvent) daoEvent;
+            return createSizeTreeItem(sizeEvt.getSizeFilter(), sizeEvt.getDataSourceId(), count);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    Set<? extends DAOEvent> handleIngestComplete() {
+        return getIngestCompleteEvents(this.treeCounts,
+                (daoEvt, count) -> createTreeItem(daoEvt, count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        // GVDTODO
-        return Collections.emptySet();
+        return getRefreshEvents(this.treeCounts,
+                (daoEvt, count) -> createTreeItem(daoEvt, count));
     }
 
     @Override
