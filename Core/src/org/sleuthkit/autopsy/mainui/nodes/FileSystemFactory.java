@@ -211,8 +211,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         "FileSystemFactory.FileSystemTreeNode.ExtractUnallocAction.text=Extract Unallocated Space to Single Files"})
     public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> implements ActionContext {
 
-        protected FileSystemTreeNode(String nodeName, String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children, Lookup lookup) {
-            super(nodeName, icon, itemData, children, lookup);
+        protected FileSystemTreeNode(String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children, Lookup lookup) {
+            super(ContentNodeUtil.getContentName(itemData.getSearchParams().getContentObjectId()), icon, itemData, children, lookup);
         }
 
         protected static Children createChildrenForContent(Long contentId) {
@@ -248,8 +248,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         Image image;
 
         ImageTreeNode(Image image, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(itemData.getDisplayName(),
-                    NodeIconUtil.IMAGE.getPath(),
+            super(NodeIconUtil.IMAGE.getPath(),
                     itemData,
                     createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(image));
@@ -284,8 +283,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         Volume volume;
 
         VolumeTreeNode(Volume volume, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(FileSystemColumnUtils.getVolumeDisplayName(volume),
-                    NodeIconUtil.VOLUME.getPath(),
+            super(NodeIconUtil.VOLUME.getPath(),
                     itemData,
                     createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(volume));
@@ -316,8 +314,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         Pool pool;
 
         PoolTreeNode(Pool pool, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(itemData.getDisplayName(),
-                    NodeIconUtil.VOLUME.getPath(),
+            super(NodeIconUtil.VOLUME.getPath(),
                     itemData,
                     createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(pool));
@@ -334,8 +331,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         AbstractFile dir;
 
         DirectoryTreeNode(AbstractFile dir, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(itemData.getDisplayName(),
-                    getDirectoryIcon(dir),
+            super(getDirectoryIcon(dir),
                     itemData,
                     createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(dir));
@@ -384,8 +380,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         AbstractFile dir;
 
-        protected SpecialDirectoryTreeNode(AbstractFile dir, String nodeName, String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children, Lookup lookup) {
-            super(nodeName, icon, itemData, children, lookup);
+        protected SpecialDirectoryTreeNode(AbstractFile dir, String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children, Lookup lookup) {
+            super(icon, itemData, children, lookup);
             this.dir = dir;
         }
 
@@ -409,7 +405,6 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         LocalDirectoryTreeNode(AbstractFile dir, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
             super(dir,
-                    itemData.getDisplayName(),
                     NodeIconUtil.FOLDER.getPath(),
                     itemData,
                     createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
@@ -430,7 +425,6 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         LocalFilesDataSourceTreeNode(AbstractFile localFilesDataSource, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
             super(localFilesDataSource,
-                    itemData.getDisplayName(),
                     NodeIconUtil.VOLUME.getPath(),
                     itemData,
                     createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
@@ -451,7 +445,6 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         VirtualDirectoryTreeNode(AbstractFile dir, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
             super(dir,
-                    itemData.getDisplayName(),
                     NodeIconUtil.VIRTUAL_DIRECTORY.getPath(),
                     itemData,
                     createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
@@ -468,8 +461,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         AbstractFile file;
 
         FileTreeNode(AbstractFile file, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(itemData.getDisplayName(),
-                    getFileIcon(file),
+            super(getFileIcon(file),
                     itemData,
                     createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(file));
@@ -555,8 +547,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         Content content;
 
         UnsupportedTreeNode(Content content, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(Bundle.FileSystemFactory_UnsupportedTreeNode_displayName(),
-                    NodeIconUtil.FILE.getPath(),
+            super(NodeIconUtil.FILE.getPath(),
                     itemData,
                     createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     getDefaultLookup(itemData));
