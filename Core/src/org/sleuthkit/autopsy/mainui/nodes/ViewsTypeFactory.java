@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
@@ -92,8 +93,8 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        public int compare(FileTypeSizeSearchParams o1, FileTypeSizeSearchParams o2) {
-            return Integer.compare(o1.getSizeFilter().getId(), o2.getSizeFilter().getId());
+        public int compare(TreeItemDTO<? extends FileTypeSizeSearchParams> o1, TreeItemDTO<? extends FileTypeSizeSearchParams> o2) {
+            return Integer.compare(o1.getSearchParams().getSizeFilter().getId(), o2.getSearchParams().getSizeFilter().getId());
         }
 
         /**
@@ -165,8 +166,8 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        public int compare(FileTypeMimeSearchParams o1, FileTypeMimeSearchParams o2) {
-            return STRING_COMPARATOR.compare(o1.getMimeType(), o2.getMimeType());
+        public int compare(TreeItemDTO<? extends FileTypeMimeSearchParams> o1, TreeItemDTO<? extends FileTypeMimeSearchParams> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getMimeType(), o2.getSearchParams().getMimeType());
         }
 
         static class FileMimePrefixNode extends TreeNode<FileTypeMimeSearchParams> {
@@ -241,8 +242,8 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        public int compare(FileTypeMimeSearchParams o1, FileTypeMimeSearchParams o2) {
-            return STRING_COMPARATOR.compare(o1.getMimeType(), o2.getMimeType());
+        public int compare(TreeItemDTO<? extends FileTypeMimeSearchParams> o1, TreeItemDTO<? extends FileTypeMimeSearchParams> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getMimeType(), o2.getSearchParams().getMimeType());
         }
 
         /**
@@ -339,8 +340,8 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        public int compare(FileTypeExtensionsSearchParams o1, FileTypeExtensionsSearchParams o2) {
-            return STRING_COMPARATOR.compare(o1.getFilter().getDisplayName(), o2.getFilter().getDisplayName());
+        public int compare(TreeItemDTO<? extends FileTypeExtensionsSearchParams> o1, TreeItemDTO<? extends FileTypeExtensionsSearchParams> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getFilter().getDisplayName(), o2.getSearchParams().getFilter().getDisplayName());
         }
 
         /**

@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -115,8 +116,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     }
 
     @Override
-    public int compare(AnalysisResultSearchParam o1, AnalysisResultSearchParam o2) {
-        return o1.getArtifactType().getDisplayName().compareTo(o2.getArtifactType().getDisplayName());
+    public int compare(TreeItemDTO<? extends AnalysisResultSearchParam> o1, TreeItemDTO<? extends AnalysisResultSearchParam> o2) {
+        return o1.getSearchParams().getArtifactType().getDisplayName().compareTo(o2.getSearchParams().getArtifactType().getDisplayName());
     }
 
     /**
@@ -216,8 +217,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        public int compare(AnalysisResultSetSearchParam o1, AnalysisResultSetSearchParam o2) {
-            return STRING_COMPARATOR.compare(o1.getSetName(), o2.getSetName());
+        public int compare(TreeItemDTO<? extends AnalysisResultSetSearchParam> o1, TreeItemDTO<? extends AnalysisResultSetSearchParam> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getSetName(), o2.getSearchParams().getSetName());
         }
     }
 
@@ -337,8 +338,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        public int compare(KeywordSearchTermParams o1, KeywordSearchTermParams o2) {
-            return STRING_COMPARATOR.compare(o1.getSearchTerm(), o2.getSearchTerm());
+        public int compare(TreeItemDTO<? extends KeywordSearchTermParams> o1, TreeItemDTO<? extends KeywordSearchTermParams> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getSearchTerm(), o2.getSearchParams().getSearchTerm());
         }
 
     }
@@ -439,8 +440,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        public int compare(KeywordMatchParams o1, KeywordMatchParams o2) {
-            return STRING_COMPARATOR.compare(o1.getKeywordMatch(), o2.getKeywordMatch());
+        public int compare(TreeItemDTO<? extends KeywordMatchParams> o1, TreeItemDTO<? extends KeywordMatchParams> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getKeywordMatch(), o2.getSearchParams().getKeywordMatch());
         }
     }
 

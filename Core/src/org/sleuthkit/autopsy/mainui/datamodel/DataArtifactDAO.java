@@ -210,7 +210,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             return Collections.emptySet();
         }
 
-        super.invalidateKeys(this.dataArtifactCache, (sp) -> Pair.of(sp.getArtifactType(), sp.getDataSourceId()), artifactTypeDataSourceMap);
+        invalidateKeys(this.dataArtifactCache, (sp) -> Pair.of(sp.getArtifactType(), sp.getDataSourceId()), artifactTypeDataSourceMap);
 
         // gather dao events based on artifacts
         List<DataArtifactEvent> dataArtifactEvents = new ArrayList<>();

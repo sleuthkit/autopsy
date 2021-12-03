@@ -723,12 +723,6 @@ public class ViewsDAO extends AbstractDAO {
         return Pair.of(mimePrefix, mimeSuffix);
     }
 
-    @Override
-    void clearCaches() {
-        this.searchParamsCache.invalidateAll();
-        handleIngestComplete();
-    }
-
     private TreeItemDTO<?> createTreeItem(DAOEvent daoEvent, TreeDisplayCount count) {
         if (daoEvent instanceof FileTypeExtensionsEvent) {
             FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) daoEvent;
@@ -744,6 +738,12 @@ public class ViewsDAO extends AbstractDAO {
         } else {
             return null;
         }
+    }
+
+    @Override
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+        handleIngestComplete();
     }
 
     @Override

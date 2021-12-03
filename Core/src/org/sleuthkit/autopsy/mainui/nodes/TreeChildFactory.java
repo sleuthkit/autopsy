@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 /**
  * Factory for populating child nodes in a tree based on TreeResultsDTO
  */
-public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object> implements Comparator<T> {
+public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object> implements Comparator<TreeItemDTO<? extends T>> {
 
     private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
 
@@ -140,7 +140,8 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
                 // insert in sorted position
                 int insertIndex = 0;
                 for (; insertIndex < this.curItemsList.size(); insertIndex++) {
-                    if (this.compare(item.getSearchParams(), this.curItemsList.get(insertIndex).getSearchParams()) < 0) {
+                    TreeItemDTO<? extends T> curItem = this.curItemsList.get(insertIndex);
+                    if (this.compare(item, curItem) < 0) {
                         break;
                     }
                 }

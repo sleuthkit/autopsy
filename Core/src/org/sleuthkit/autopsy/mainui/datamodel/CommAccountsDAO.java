@@ -286,7 +286,7 @@ public class CommAccountsDAO extends AbstractDAO {
             return Collections.emptySet();
         }
 
-        super.invalidateKeys(this.searchParamsCache,
+        invalidateKeys(this.searchParamsCache,
                 (sp) -> Pair.of(sp.getType(), sp.getDataSourceId()), accountTypeMap);
 
         List<CommAccountsEvent> accountEvents = new ArrayList<>();

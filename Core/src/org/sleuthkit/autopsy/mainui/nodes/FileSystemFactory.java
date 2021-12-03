@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemColumnUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.CARVED_FILE;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.DELETED_FILE;
@@ -139,14 +140,13 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     @Override
     protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
-        // GVDTODO
-        return null;
+        // GVDTODO handle virtual directory creation (may be fine as events may invalidate all)
+        return getTypedTreeItem(treeEvt, FileSystemContentSearchParam.class);
     }
 
     @Override
-    public int compare(FileSystemContentSearchParam o1, FileSystemContentSearchParam o2) {
-        // GVDTODO
-        return 0;
+    public int compare(TreeItemDTO<? extends FileSystemContentSearchParam> o1, TreeItemDTO<? extends FileSystemContentSearchParam> o2) {
+        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
     }
 
     /**
@@ -195,14 +195,12 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
-            // GVDTODO
-            return null;
+            return getTypedTreeItem(treeEvt, FileSystemContentSearchParam.class);
         }
 
         @Override
-        public int compare(FileSystemContentSearchParam o1, FileSystemContentSearchParam o2) {
-            // GVDTODO
-            return 0;
+        public int compare(TreeItemDTO<? extends FileSystemContentSearchParam> o1, TreeItemDTO<? extends FileSystemContentSearchParam> o2) {
+            return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
         }
     }
 
