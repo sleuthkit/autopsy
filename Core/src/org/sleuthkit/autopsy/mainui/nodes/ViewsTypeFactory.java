@@ -154,11 +154,17 @@ public class ViewsTypeFactory {
 
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
                 FileTypeMimeSearchParams searchParam = originalTreeItem.getSearchParams();
+                String mimePrefix = searchParam.getMimeType() == null ? "" : searchParam.getMimeType();
+                int indexOfSlash = mimePrefix.indexOf("/");
+                if (indexOfSlash >= 0) {
+                    mimePrefix = mimePrefix.substring(0, indexOfSlash);
+                }
+                
                 return new TreeResultsDTO.TreeItemDTO<>(
                         AnalysisResultSearchParam.getTypeId(),
-                        new FileTypeMimeSearchParams(searchParam.getMimeType(), this.dataSourceId),
-                        searchParam.getMimeType(),
-                        searchParam.getMimeType(),
+                        new FileTypeMimeSearchParams(mimePrefix, this.dataSourceId),
+                        mimePrefix,
+                        mimePrefix,
                         originalTreeItem.getDisplayCount());
             }
             return null;
@@ -325,6 +331,7 @@ public class ViewsTypeFactory {
             TreeResultsDTO.TreeItemDTO<FileTypeExtensionsSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeExtensionsSearchParams.class);
 
             if (originalTreeItem != null
+                    && this.childFilters.contains(originalTreeItem.getSearchParams().getFilter())
                     && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.

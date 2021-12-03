@@ -100,7 +100,7 @@ abstract class AbstractDAO {
      * Determines what keys should be kept in the cache while iterating through
      * all the keys.
      *
-     * @param cache      The cache.
+     * @param cache            The cache.
      * @param shouldInvalidate If the key should be removed from the cache.
      */
     static <K> void invalidateKeys(Cache<SearchParams<K>, ?> cache, Predicate<K> shouldInvalidate) {
@@ -125,6 +125,7 @@ abstract class AbstractDAO {
     static <E, T> Set<TreeEvent> getIngestCompleteEvents(TreeCounts<E> treeCounts, BiFunction<E, TreeDisplayCount, TreeItemDTO<T>> converter) {
         return treeCounts.flushEvents().stream()
                 .map(daoEvt -> new TreeEvent(converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED), true))
+                .filter(evt -> evt != null)
                 .collect(Collectors.toSet());
     }
 
@@ -141,6 +142,7 @@ abstract class AbstractDAO {
     static <E, T> Set<TreeEvent> getRefreshEvents(TreeCounts<E> treeCounts, BiFunction<E, TreeDisplayCount, TreeItemDTO<T>> converter) {
         return treeCounts.getEventTimeouts().stream()
                 .map(daoEvt -> new TreeEvent(converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED), true))
+                .filter(evt -> evt != null)
                 .collect(Collectors.toSet());
     }
 }
