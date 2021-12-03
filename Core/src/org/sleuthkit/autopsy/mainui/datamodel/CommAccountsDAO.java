@@ -43,8 +43,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.getIngestCompleteEvents;
-import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.getRefreshEvents;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.events.CommAccountsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
@@ -236,7 +234,7 @@ public class CommAccountsDAO extends AbstractDAO {
 
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
-        return getIngestCompleteEvents(
+        return SubDAOUtils.getIngestCompleteEvents(
                 this.accountCounts,
                 (daoEvt) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.UNSPECIFIED)
         );
@@ -244,7 +242,7 @@ public class CommAccountsDAO extends AbstractDAO {
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        return getRefreshEvents(
+        return SubDAOUtils.getRefreshEvents(
                 this.accountCounts,
                 (daoEvt) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.UNSPECIFIED)
         );
@@ -286,7 +284,7 @@ public class CommAccountsDAO extends AbstractDAO {
             return Collections.emptySet();
         }
 
-        super.invalidateKeys(this.searchParamsCache,
+        SubDAOUtils.invalidateKeys(this.searchParamsCache,
                 (sp) -> Pair.of(sp.getType(), sp.getDataSourceId()), accountTypeMap);
 
         List<CommAccountsEvent> accountEvents = new ArrayList<>();
