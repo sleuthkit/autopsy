@@ -1686,21 +1686,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return getOpenChildAction(nodeName, treeViewExplorerMgr);
     }
     
-    public static AbstractAction getOpenChildAction(String nodeName, ExplorerManager explorerManager) {
+    static AbstractAction getOpenChildAction(String nodeName, ExplorerManager explorerManager) {
         // get the current selection from the directory tree explorer manager,
         // which is a DirectoryTreeFilterNode. One of that node's children
         // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
         // to set that wrapped node as the selection and root context of the 
         // directory tree explorer manager (sourceEm)
-        if (explorerManager != null) {
-            System.out.println("### Selected node count: " + explorerManager.getSelectedNodes().length);
-        }
         if (explorerManager == null || explorerManager.getSelectedNodes().length == 0) {
-            System.out.println("### Returning early...");
             return null;
         }
         final Node currentSelectionInDirectoryTree = explorerManager.getSelectedNodes()[0];
-        System.out.println("### Current selection name: " + currentSelectionInDirectoryTree.getName());
 
         return new AbstractAction() {
             @Override
@@ -1709,7 +1704,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     // Find the filter version of the passed in dataModelNode. 
                     final org.openide.nodes.Children children = currentSelectionInDirectoryTree.getChildren();
                     // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
-                    System.out.println("### Looking for child with name: " + nodeName);
                     Node newSelection = children.findChild(nodeName);
 
                     /*
@@ -1720,15 +1714,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                      * from setting the selected node to be null.
                      */
                     if (newSelection != null) {
-                        System.out.println("###   Found it!");
                         try {
                             explorerManager.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
                         } catch (PropertyVetoException ex) {
                             Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
                             logger.log(Level.WARNING, "Error: can't open the selected directory.", ex); //NON-NLS
                         }
-                    } else {
-                        System.out.println("###   Did not find it...");
                     }
                 }
             }
@@ -1741,11 +1732,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return getOpenParentAction(treeViewExplorerMgr);
     }
 
-    public static AbstractAction getOpenParentAction(ExplorerManager explorerManager) {
+    static AbstractAction getOpenParentAction(ExplorerManager explorerManager) {
         if (explorerManager == null) {
             return null;
         }
-        // @@@ Why do we ignore node?
         Node[] selectedFilterNodes = explorerManager.getSelectedNodes();
         Node selectedFilterNode = selectedFilterNodes[0];
         final Node parentNode = selectedFilterNode.getParentNode();

@@ -133,7 +133,7 @@ public class DataResultFilterNode extends FilterNode {
         if (original instanceof SelectionResponder
                 && original instanceof AbstractNode) {
             AbstractNode abstractNode = (AbstractNode)original;
-            return openChild(abstractNode);
+            return DirectoryTreeTopComponent.getOpenChildAction(abstractNode.getName(), sourceEm);
         }
         
         // Once had a org.openide.nodes.ChildFactory$WaitFilterNode passed in
@@ -143,18 +143,6 @@ public class DataResultFilterNode extends FilterNode {
 
         final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
         return originalNode.accept(getPreferredActionsDIV);
-    }
-    
-    /**
-     * Tell the originating ExplorerManager to display the given
-     * dataModelNode.
-     *
-     * @param dataModelNode Original (non-filtered) dataModelNode to open
-     *
-     * @return
-     */
-    private AbstractAction openChild(final AbstractNode dataModelNode) {
-        return DirectoryTreeTopComponent.getOpenChildAction(dataModelNode.getName(), sourceEm);
     }
 
     @Override
