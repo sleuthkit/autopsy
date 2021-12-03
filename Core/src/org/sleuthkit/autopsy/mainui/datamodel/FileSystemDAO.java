@@ -57,12 +57,14 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.PoolRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemHostEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemPersonEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
@@ -415,9 +417,25 @@ public class FileSystemDAO extends AbstractDAO {
         List<DAOEvent> daoEvents = new ArrayList<>();
 
         if (triggerFullRefresh) {
-            daoEvents.add(new FileSystemContentEvent(null));
+            daoEvents.add(new FileSystemContentEvent(null, null, null));
         } else if (affectedContent != null) {
-            daoEvents.add(new FileSystemContentEvent(affectedContent));
+
+            Long parentContentId = null;
+            Long parentHostId = null;
+
+            try {
+                parentContentId = (affectedContent instanceof AbstractContent)
+                        ? ((AbstractContent) affectedContent).getParentId().orElse(null)
+                        : null;
+
+                parentHostId = (affectedContent instanceof DataSource)
+                        ? ((DataSource) affectedContent).getHost().getHostId()
+                        : null;
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching content id and host id for content with id of: " + affectedContent.getId(), ex);
+            }
+
+            daoEvents.add(new FileSystemContentEvent(affectedContent, parentContentId, parentHostId));
         }
 
         if (affectedHost != null) {
@@ -429,7 +447,7 @@ public class FileSystemDAO extends AbstractDAO {
         });
 
         List<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
-                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt, TreeDisplayCount.INDETERMINATE), false))
+                .map(daoEvt -> createTreeEvent(daoEvt, TreeDisplayCount.INDETERMINATE, false))
                 .collect(Collectors.toList());
 
         return Stream.of(daoEvents, treeEvents)
@@ -571,6 +589,24 @@ public class FileSystemDAO extends AbstractDAO {
         return content.getName();
     }
 
+    private TreeEvent createTreeEvent(DAOEvent daoEvent, TreeDisplayCount count, boolean fullRefresh) {
+
+        if (daoEvent instanceof FileSystemContentEvent) {
+            FileSystemContentEvent contentEvt = (FileSystemContentEvent) daoEvent;
+            return new FileSystemTreeEvent(
+                    contentEvt.getParentObjId(), 
+                    contentEvt.getParentHostId(), 
+                    createDisplayableContentTreeItem(contentEvt.getContent(), count), 
+                    fullRefresh);
+        } else if (daoEvent instanceof FileSystemHostEvent) {
+            // GVDTODO not currently integrated into tree
+        } else if (daoEvent instanceof FileSystemPersonEvent) {
+            // GVDTODO not currently integrated into tree
+        }
+        
+        return null;
+    }
+
     private TreeResultsDTO.TreeItemDTO<?> createTreeItem(DAOEvent daoEvent, TreeDisplayCount count) {
         if (daoEvent instanceof FileSystemContentEvent) {
             return createDisplayableContentTreeItem(((FileSystemContentEvent) daoEvent).getContent(), count);
@@ -578,8 +614,8 @@ public class FileSystemDAO extends AbstractDAO {
             // GVDTODO not currently integrated into tree
         } else if (daoEvent instanceof FileSystemPersonEvent) {
             // GVDTODO not currently integrated into tree
-        } 
-        
+        }
+
         return null;
     }
 
@@ -591,14 +627,123 @@ public class FileSystemDAO extends AbstractDAO {
 
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
+                return treeCounts.flushEvents().stream()
+                .map(daoEvt -> new TreeEvent(converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED), true))
+                .collect(Collectors.toSet());
+        
         return getIngestCompleteEvents(this.treeCounts,
                 (daoEvt, count) -> createTreeItem(daoEvt, count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        return getRefreshEvents(this.treeCounts,
-                (daoEvt, count) -> createTreeItem(daoEvt, count));
+         return treeCounts.getEventTimeouts().stream()
+                .map(daoEvt -> new TreeEvent(converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED), true))
+                .collect(Collectors.toSet());
+    }
+    
+    
+    
+    public static class DataSourceRefreshTreeEvent extends TreeEvent {
+        private final long dataSourceId;
+
+        public DataSourceRefreshTreeEvent(long dataSourceId) {
+            super(null, true);
+            this.dataSourceId = dataSourceId;
+        }
+
+        public long getDataSourceId() {
+            return dataSourceId;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 37 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final DataSourceRefreshTreeEvent other = (DataSourceRefreshTreeEvent) obj;
+            if (this.dataSourceId != other.dataSourceId) {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    public static class FileSystemTreeEvent extends TreeEvent {
+
+        private final Long parentContentId;
+        private final Long parentHostId;
+        private final TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam> itemRecord;
+
+
+        FileSystemTreeEvent(Long parentContentId, Long parentHostId, TreeItemDTO<FileSystemContentSearchParam> itemRecord, boolean refreshRequired) {
+            super(itemRecord, refreshRequired);
+            this.parentContentId = parentContentId;
+            this.parentHostId = parentHostId;
+            this.itemRecord = itemRecord;
+        }
+
+        public Long getParentContentId() {
+            return parentContentId;
+        }
+
+        public Long getParentHostId() {
+            return parentHostId;
+        }
+
+        @Override
+        public TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam> getItemRecord() {
+            // override to be typed to FileSystemContentSearchParam
+            return itemRecord;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 59 * hash + Objects.hashCode(this.parentContentId);
+            hash = 59 * hash + Objects.hashCode(this.parentHostId);
+            hash = 59 * hash + Objects.hashCode(this.itemRecord);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final FileSystemTreeEvent other = (FileSystemTreeEvent) obj;
+            if (!Objects.equals(this.parentContentId, other.parentContentId)) {
+                return false;
+            }
+            if (!Objects.equals(this.parentHostId, other.parentHostId)) {
+                return false;
+            }
+            if (!Objects.equals(this.itemRecord, other.itemRecord)) {
+                return false;
+            }
+            return true;
+        }
+
+        
     }
 
     /**

@@ -18,46 +18,25 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
-import java.util.Objects;
-import org.sleuthkit.datamodel.Content;
-
 /**
- * An event signaling that children files were added or removed from the given
- * parent ID.
+ * An event signaling that all items from a data source should be refreshed.
  */
-public class FileSystemContentEvent implements DAOEvent {
+public class FileSystemDataSourceRefreshEvent implements DAOEvent {
 
-    private final Content content;
-    private final Long parentObjId;
-    private final Long parentHostId;
+    private final long dataSourceId;
 
-    public FileSystemContentEvent(Content content, Long parentObjId, Long parentHostId) {
-        this.content = content;
-        this.parentObjId = parentObjId;
-        this.parentHostId = parentHostId;
+    public FileSystemDataSourceRefreshEvent(long dataSourceId) {
+        this.dataSourceId = dataSourceId;
     }
 
-    public Long getParentObjId() {
-        return parentObjId;
+    public long getDataSourceId() {
+        return dataSourceId;
     }
 
-    public Long getParentHostId() {
-        return parentHostId;
-    }
-
-    public Content getContent() {
-        return content;
-    }
-
-    public Long getContentObjectId() {
-        return (content == null) ? null : content.getId();
-    }
-    
-    
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 71 * hash + Objects.hashCode(this.content);
+        int hash = 3;
+        hash = 29 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
         return hash;
     }
 
@@ -72,8 +51,8 @@ public class FileSystemContentEvent implements DAOEvent {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileSystemContentEvent other = (FileSystemContentEvent) obj;
-        if (!Objects.equals(this.content, other.content)) {
+        final FileSystemDataSourceRefreshEvent other = (FileSystemDataSourceRefreshEvent) obj;
+        if (this.dataSourceId != other.dataSourceId) {
             return false;
         }
         return true;
