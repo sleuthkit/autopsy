@@ -162,8 +162,9 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         if (o1 instanceof FileSystemTreeItem && o2 instanceof FileSystemTreeItem) {
             FileSystemTreeItem fs1 = (FileSystemTreeItem) o1;
             FileSystemTreeItem fs2 = (FileSystemTreeItem) o2;
+            // ordering taken from SELECT_FILES_BY_PARENT in SleuthkitCase
             if (fs1.getMetaType().getValue() != fs2.getMetaType().getValue()) {
-                return Short.compare(fs1.getMetaType().getValue(), fs2.getMetaType().getValue());
+                return -Short.compare(fs1.getMetaType().getValue(), fs2.getMetaType().getValue());
             }
         }
         return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
