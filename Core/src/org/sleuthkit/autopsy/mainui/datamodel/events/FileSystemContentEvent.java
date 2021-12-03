@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * An event signaling that children files were added or removed from the given
@@ -29,22 +30,26 @@ public class FileSystemContentEvent implements DAOEvent {
 
     private final Content content;
     private final Long parentObjId;
-    private final Long parentHostId;
+    private final Host parentHost;
 
-    public FileSystemContentEvent(Content content, Long parentObjId, Long parentHostId) {
+    public FileSystemContentEvent(Content content, Long parentObjId, Host parentHost) {
         this.content = content;
         this.parentObjId = parentObjId;
-        this.parentHostId = parentHostId;
+        this.parentHost = parentHost;
     }
 
     public Long getParentObjId() {
         return parentObjId;
     }
 
-    public Long getParentHostId() {
-        return parentHostId;
+    public Host getParentHost() {
+        return parentHost;
     }
 
+    /**
+     * @return The content associated with the event, if null, triggers a full
+     *         refresh.
+     */
     public Content getContent() {
         return content;
     }
@@ -52,8 +57,7 @@ public class FileSystemContentEvent implements DAOEvent {
     public Long getContentObjectId() {
         return (content == null) ? null : content.getId();
     }
-    
-    
+
     @Override
     public int hashCode() {
         int hash = 7;

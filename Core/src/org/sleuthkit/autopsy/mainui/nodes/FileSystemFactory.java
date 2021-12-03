@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.Objects;
 import java.util.Optional;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
 import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemColumnUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
@@ -140,8 +142,18 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     @Override
     protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
-        // GVDTODO handle virtual directory creation (may be fine as events may invalidate all)
-        return getTypedTreeItem(treeEvt, FileSystemContentSearchParam.class);
+        if (treeEvt instanceof FileSystemTreeEvent) {
+            FileSystemTreeEvent fsTreeEvent = (FileSystemTreeEvent) treeEvt;
+            // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
+            if (fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId() == null
+                    || (Objects.equals(this.host, fsTreeEvent.getParentHost())
+                    && Objects.equals(this.contentId, fsTreeEvent.getParentContentId()))) {
+
+                return fsTreeEvent.getItemRecord();
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -195,7 +207,18 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
-            return getTypedTreeItem(treeEvt, FileSystemContentSearchParam.class);
+            if (treeEvt instanceof FileSystemTreeEvent) {
+                FileSystemTreeEvent fsTreeEvent = (FileSystemTreeEvent) treeEvt;
+                // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
+                if (fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId() == null
+                        || Objects.equals(fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId(), dataSourceId)) {
+
+                    return fsTreeEvent.getItemRecord();
+                }
+            }
+
+            return null;
+
         }
 
         @Override
