@@ -73,8 +73,6 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
     
     @Override
     public Action getPreferredAction() {
-        System.out.println("### getPreferredAction for node of type: " + this.getClass().getSimpleName());
-        // TODO - figure out ..
         return DirectoryTreeTopComponent.getOpenChildAction(getName());
     }
 }

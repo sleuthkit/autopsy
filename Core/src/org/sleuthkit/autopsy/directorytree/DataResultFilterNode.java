@@ -399,25 +399,7 @@ public class DataResultFilterNode extends FilterNode {
          * @return
          */
         private AbstractAction openParent(AbstractNode node) {
-            if (sourceEm == null) {
-                return null;
-            }
-            // @@@ Why do we ignore node?
-            Node[] selectedFilterNodes = sourceEm.getSelectedNodes();
-            Node selectedFilterNode = selectedFilterNodes[0];
-            final Node parentNode = selectedFilterNode.getParentNode();
-
-            return new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        sourceEm.setSelectedNodes(new Node[]{parentNode});
-                    } catch (PropertyVetoException ex) {
-                        Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                        logger.log(Level.WARNING, "Error: can't open the parent directory.", ex); //NON-NLS
-                    }
-                }
-            };
+            return DirectoryTreeTopComponent.getOpenParentAction();
         }
     }
 }

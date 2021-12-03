@@ -1734,5 +1734,32 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         };
     }
+    
+    public static AbstractAction getOpenParentAction() {
+        DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
+        ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
+        return getOpenParentAction(treeViewExplorerMgr);
+    }
 
+    public static AbstractAction getOpenParentAction(ExplorerManager explorerManager) {
+        if (explorerManager == null) {
+            return null;
+        }
+        // @@@ Why do we ignore node?
+        Node[] selectedFilterNodes = explorerManager.getSelectedNodes();
+        Node selectedFilterNode = selectedFilterNodes[0];
+        final Node parentNode = selectedFilterNode.getParentNode();
+
+        return new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    explorerManager.setSelectedNodes(new Node[]{parentNode});
+                } catch (PropertyVetoException ex) {
+                    Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                    logger.log(Level.WARNING, "Error: can't open the parent directory.", ex); //NON-NLS
+                }
+            }
+        };
+    }
 }

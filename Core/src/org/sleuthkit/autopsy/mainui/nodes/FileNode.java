@@ -26,6 +26,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
@@ -149,6 +150,11 @@ public class FileNode extends AbstractNode implements ActionContext {
     @Override
     protected Sheet createSheet() {
         return ContentNodeUtil.setSheet(super.createSheet(), this.columns, this.fileData.getCellValues());
+    }
+    
+    @Override
+    public Action getPreferredAction() {
+        return DirectoryTreeTopComponent.getOpenChildAction(getName());
     }
 
     /**

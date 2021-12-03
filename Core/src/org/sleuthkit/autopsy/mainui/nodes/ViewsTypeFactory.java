@@ -107,7 +107,6 @@ public class ViewsTypeFactory {
 
             @Override
             public Action getPreferredAction() {
-                System.out.println("### getPreferredAction for node of type: " + this.getClass().getSimpleName());
                 return DirectoryTreeTopComponent.getOpenChildAction(getName());
             }
         }
@@ -168,7 +167,6 @@ public class ViewsTypeFactory {
 
             @Override
             public Action getPreferredAction() {
-                System.out.println("### getPreferredAction for node of type: " + this.getClass().getSimpleName());
                 return DirectoryTreeTopComponent.getOpenChildAction(getName());
             }
         }
@@ -240,7 +238,6 @@ public class ViewsTypeFactory {
 
             @Override
             public Action getPreferredAction() {
-                System.out.println("### getPreferredAction for node of type: " + this.getClass().getSimpleName());
                 return DirectoryTreeTopComponent.getOpenChildAction(getName());
             }
         }
@@ -342,7 +339,6 @@ public class ViewsTypeFactory {
 
             @Override
             public Action getPreferredAction() {
-                System.out.println("### getPreferredAction for node of type: " + this.getClass().getSimpleName());
                 return DirectoryTreeTopComponent.getOpenChildAction(getName());
             }
         }
