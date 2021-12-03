@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.Cursor;
 import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
@@ -41,6 +42,7 @@ import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -1676,6 +1678,61 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     public void addOnFinishedListener(PropertyChangeListener l) {
         DirectoryTreeTopComponent.this.addPropertyChangeListener(l);
+    }
+    
+    public static AbstractAction getOpenChildAction(String nodeName) {
+        DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
+        ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
+        return getOpenChildAction(nodeName, treeViewExplorerMgr);
+    }
+    
+    public static AbstractAction getOpenChildAction(String nodeName, ExplorerManager explorerManager) {
+        // get the current selection from the directory tree explorer manager,
+        // which is a DirectoryTreeFilterNode. One of that node's children
+        // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
+        // to set that wrapped node as the selection and root context of the 
+        // directory tree explorer manager (sourceEm)
+        if (explorerManager != null) {
+            System.out.println("### Selected node count: " + explorerManager.getSelectedNodes().length);
+        }
+        if (explorerManager == null || explorerManager.getSelectedNodes().length == 0) {
+            System.out.println("### Returning early...");
+            return null;
+        }
+        final Node currentSelectionInDirectoryTree = explorerManager.getSelectedNodes()[0];
+        System.out.println("### Current selection name: " + currentSelectionInDirectoryTree.getName());
+
+        return new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentSelectionInDirectoryTree != null) {
+                    // Find the filter version of the passed in dataModelNode. 
+                    final org.openide.nodes.Children children = currentSelectionInDirectoryTree.getChildren();
+                    // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
+                    System.out.println("### Looking for child with name: " + nodeName);
+                    Node newSelection = children.findChild(nodeName);
+
+                    /*
+                     * We got null here when we were viewing a ZIP file in
+                     * the Views -> Archives area and double clicking on it
+                     * got to this code. It tried to find the child in the
+                     * tree and didn't find it. An exception was then thrown
+                     * from setting the selected node to be null.
+                     */
+                    if (newSelection != null) {
+                        System.out.println("###   Found it!");
+                        try {
+                            explorerManager.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                        } catch (PropertyVetoException ex) {
+                            Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                            logger.log(Level.WARNING, "Error: can't open the selected directory.", ex); //NON-NLS
+                        }
+                    } else {
+                        System.out.println("###   Did not find it...");
+                    }
+                }
+            }
+        };
     }
 
 }

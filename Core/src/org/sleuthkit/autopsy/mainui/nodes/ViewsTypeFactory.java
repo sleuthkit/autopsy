@@ -24,8 +24,10 @@ import java.util.Comparator;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtDocumentFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtExecutableFilter;
@@ -103,6 +105,11 @@ public class ViewsTypeFactory {
                 dataResultPanel.displayFileSizes(this.getItemData().getSearchParams());
             }
 
+            @Override
+            public Action getPreferredAction() {
+                System.out.println("### getPreferredAction for node of type: " + this.getClass().getSimpleName());
+                return DirectoryTreeTopComponent.getOpenChildAction(getName());
+            }
         }
     }
 
@@ -157,6 +164,12 @@ public class ViewsTypeFactory {
                         itemData,
                         Children.create(new FileMimeSuffixFactory(itemData.getSearchParams().getDataSourceId(), itemData.getSearchParams().getMimeType()), true),
                         getDefaultLookup(itemData));
+            }
+
+            @Override
+            public Action getPreferredAction() {
+                System.out.println("### getPreferredAction for node of type: " + this.getClass().getSimpleName());
+                return DirectoryTreeTopComponent.getOpenChildAction(getName());
             }
         }
     }
@@ -225,6 +238,11 @@ public class ViewsTypeFactory {
                 dataResultPanel.displayFileMimes(this.getItemData().getSearchParams());
             }
 
+            @Override
+            public Action getPreferredAction() {
+                System.out.println("### getPreferredAction for node of type: " + this.getClass().getSimpleName());
+                return DirectoryTreeTopComponent.getOpenChildAction(getName());
+            }
         }
     }
 
@@ -322,6 +340,11 @@ public class ViewsTypeFactory {
                 }
             }
 
+            @Override
+            public Action getPreferredAction() {
+                System.out.println("### getPreferredAction for node of type: " + this.getClass().getSimpleName());
+                return DirectoryTreeTopComponent.getOpenChildAction(getName());
+            }
         }
     }
 
