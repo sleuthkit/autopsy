@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemColumnUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeItem;
 import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
@@ -158,6 +159,13 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     @Override
     public int compare(TreeItemDTO<? extends FileSystemContentSearchParam> o1, TreeItemDTO<? extends FileSystemContentSearchParam> o2) {
+        if (o1 instanceof FileSystemTreeItem && o2 instanceof FileSystemTreeItem) {
+            FileSystemTreeItem fs1 = (FileSystemTreeItem) o1;
+            FileSystemTreeItem fs2 = (FileSystemTreeItem) o2;
+            if (fs1.getMetaType().getValue() != fs2.getMetaType().getValue()) {
+                return Short.compare(fs1.getMetaType().getValue(), fs2.getMetaType().getValue());
+            }
+        }
         return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
     }
 

@@ -359,7 +359,7 @@ public class FileSystemDAO extends AbstractDAO {
 
     @Override
     Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
-        Content affectedParentContent = null;
+        Content affectedContent = null;
         Host affectedParentHost = null;
 
         // GVDTODO person parents and parent of persons not handled yet
@@ -381,7 +381,7 @@ public class FileSystemDAO extends AbstractDAO {
             if (invalidatesAllFileSystem(parentContent)) {
                 refreshAllContent = true;
             } else {
-                affectedParentContent = parentContent;
+                affectedContent = content;
             }
         } else if (evt instanceof DataSourceAddedEvent) {
             Host host = getHostFromDs(((DataSourceAddedEvent) evt).getDataSource());
@@ -404,13 +404,13 @@ public class FileSystemDAO extends AbstractDAO {
         }
 
         // if nothing affected, return no events
-        if (!refreshAllContent && affectedParentContent == null && affectedParentHost == null && !affectedParentPerson.isPresent()) {
+        if (!refreshAllContent && affectedContent == null && affectedParentHost == null && !affectedParentPerson.isPresent()) {
             return Collections.emptySet();
         }
 
-        invalidateKeys(affectedParentPerson, affectedParentHost, affectedParentContent, refreshAllContent);
+        invalidateKeys(affectedParentPerson, affectedParentHost, affectedContent, refreshAllContent);
 
-        return getDAOEvents(affectedParentPerson, affectedParentHost, affectedParentContent, refreshAllContent);
+        return getDAOEvents(affectedParentPerson, affectedParentHost, affectedContent, refreshAllContent);
     }
 
     private Set<DAOEvent> getDAOEvents(Optional<Person> affectedPerson, Host affectedHost, Content affectedContent, boolean triggerFullRefresh) {
@@ -447,6 +447,7 @@ public class FileSystemDAO extends AbstractDAO {
 
         List<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
                 .map(daoEvt -> createTreeEvent(daoEvt, TreeDisplayCount.INDETERMINATE, false))
+                .filter(evt -> evt != null)
                 .collect(Collectors.toList());
 
         return Stream.of(daoEvents, treeEvents)
@@ -562,12 +563,13 @@ public class FileSystemDAO extends AbstractDAO {
         }
     }
 
-    private TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam> createDisplayableContentTreeItem(Content child, TreeDisplayCount displayCount) {
-        return new TreeResultsDTO.TreeItemDTO<>(
+    private FileSystemTreeItem createDisplayableContentTreeItem(Content child, TreeDisplayCount displayCount) {
+        return new FileSystemTreeItem(
                 FileSystemContentSearchParam.getTypeId(),
                 new FileSystemContentSearchParam(child == null ? null : child.getId()),
                 child,
                 child == null ? null : getNameForContent(child),
+                child instanceof AbstractFile ? ((AbstractFile) child).getMetaType() : null,
                 displayCount
         );
     }
@@ -592,11 +594,13 @@ public class FileSystemDAO extends AbstractDAO {
 
         if (daoEvent instanceof FileSystemContentEvent) {
             FileSystemContentEvent contentEvt = (FileSystemContentEvent) daoEvent;
+
             return new FileSystemTreeEvent(
                     contentEvt.getParentObjId(),
                     contentEvt.getParentHost(),
                     createDisplayableContentTreeItem(contentEvt.getContent(), count),
                     fullRefresh);
+
         } else if (daoEvent instanceof FileSystemHostEvent) {
             // GVDTODO not currently integrated into tree
         } else if (daoEvent instanceof FileSystemPersonEvent) {
@@ -616,6 +620,7 @@ public class FileSystemDAO extends AbstractDAO {
     Set<? extends DAOEvent> handleIngestComplete() {
         return treeCounts.flushEvents().stream()
                 .map(daoEvt -> createTreeEvent(daoEvt, TreeDisplayCount.UNSPECIFIED, true))
+                .filter(evt -> evt != null)
                 .collect(Collectors.toSet());
     }
 
@@ -623,6 +628,7 @@ public class FileSystemDAO extends AbstractDAO {
     Set<TreeEvent> shouldRefreshTree() {
         return treeCounts.getEventTimeouts().stream()
                 .map(daoEvt -> createTreeEvent(daoEvt, TreeDisplayCount.UNSPECIFIED, true))
+                .filter(evt -> evt != null)
                 .collect(Collectors.toSet());
     }
 
@@ -634,13 +640,35 @@ public class FileSystemDAO extends AbstractDAO {
 
     }
 
+    public static class FileSystemTreeItem extends TreeItemDTO<FileSystemContentSearchParam> {
+
+        private final TskData.TSK_FS_META_TYPE_ENUM metaType;
+
+        FileSystemTreeItem(
+                String typeId,
+                FileSystemContentSearchParam searchParams,
+                Object id,
+                String displayName,
+                TskData.TSK_FS_META_TYPE_ENUM metaType,
+                TreeDisplayCount count) {
+
+            super(typeId, searchParams, id, displayName, count);
+            this.metaType = metaType;
+        }
+
+        public TskData.TSK_FS_META_TYPE_ENUM getMetaType() {
+            return metaType;
+        }
+
+    }
+
     public static class FileSystemTreeEvent extends TreeEvent {
 
         private final Long parentContentId;
         private final Host parentHost;
-        private final TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam> itemRecord;
+        private final FileSystemTreeItem itemRecord;
 
-        FileSystemTreeEvent(Long parentContentId, Host parentHost, TreeItemDTO<FileSystemContentSearchParam> itemRecord, boolean refreshRequired) {
+        FileSystemTreeEvent(Long parentContentId, Host parentHost, FileSystemTreeItem itemRecord, boolean refreshRequired) {
             super(itemRecord, refreshRequired);
             this.parentContentId = parentContentId;
             this.parentHost = parentHost;
@@ -656,8 +684,8 @@ public class FileSystemDAO extends AbstractDAO {
         }
 
         @Override
-        public TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam> getItemRecord() {
-            // override to be typed to FileSystemContentSearchParam
+        public FileSystemTreeItem getItemRecord() {
+            // override to be typed and contain extra information
             return itemRecord;
         }
 
@@ -686,7 +714,6 @@ public class FileSystemDAO extends AbstractDAO {
             return true;
         }
 
-        
     }
 
     /**
