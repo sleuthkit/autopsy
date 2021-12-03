@@ -210,7 +210,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             return Collections.emptySet();
         }
 
-        invalidateKeys(this.dataArtifactCache, (sp) -> Pair.of(sp.getArtifactType(), sp.getDataSourceId()), artifactTypeDataSourceMap);
+        SubDAOUtils.invalidateKeys(this.dataArtifactCache, (sp) -> Pair.of(sp.getArtifactType(), sp.getDataSourceId()), artifactTypeDataSourceMap);
 
         // gather dao events based on artifacts
         List<DataArtifactEvent> dataArtifactEvents = new ArrayList<>();
@@ -254,13 +254,13 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
-        return getIngestCompleteEvents(this.treeCounts,
+        return SubDAOUtils.getIngestCompleteEvents(this.treeCounts,
                 (daoEvt, count) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        return getRefreshEvents(this.treeCounts,
+        return SubDAOUtils.getRefreshEvents(this.treeCounts,
                 (daoEvt, count) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), count));
     }
 

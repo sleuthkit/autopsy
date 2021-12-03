@@ -325,12 +325,12 @@ public class TagsDAO extends AbstractDAO {
 
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
-        return getIngestCompleteEvents(this.treeCounts, (evt, count) -> getTreeItem(evt, count));
+        return SubDAOUtils.getIngestCompleteEvents(this.treeCounts, (evt, count) -> getTreeItem(evt, count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        return getRefreshEvents(this.treeCounts, (evt, count) -> getTreeItem(evt, count));
+        return SubDAOUtils.getRefreshEvents(this.treeCounts, (evt, count) -> getTreeItem(evt, count));
     }
 
     @Override
@@ -340,7 +340,7 @@ public class TagsDAO extends AbstractDAO {
             return Collections.emptySet();
         }
 
-        invalidateKeys(this.searchParamsCache, (searchParams) -> {
+        SubDAOUtils.invalidateKeys(this.searchParamsCache, (searchParams) -> {
             return (Objects.equals(searchParams.getTagType(), data.getTagType())
                     && Objects.equals(searchParams.getTagName(), data.getTagName())
                     && (searchParams.getDataSourceId() == null || Objects.equals(searchParams.getDataSourceId(), data.getDataSourceId())));

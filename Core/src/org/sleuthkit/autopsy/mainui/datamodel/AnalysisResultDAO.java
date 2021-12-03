@@ -832,8 +832,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             return Collections.emptySet();
         }
 
-        invalidateKeys(this.analysisResultCache, ar -> Pair.of(ar.getArtifactType(), ar.getDataSourceId()), analysisResultMap);
-        invalidateKeys(this.setHitCache, ar -> Pair.of(Pair.of(ar.getArtifactType(), ar.getSetName()), ar.getDataSourceId()), setMap);
+        SubDAOUtils.invalidateKeys(this.analysisResultCache, ar -> Pair.of(ar.getArtifactType(), ar.getDataSourceId()), analysisResultMap);
+        SubDAOUtils.invalidateKeys(this.setHitCache, ar -> Pair.of(Pair.of(ar.getArtifactType(), ar.getSetName()), ar.getDataSourceId()), setMap);
 
         // GVDTODO handle keyword hits
         return getResultViewEvents(analysisResultMap, setMap);
@@ -897,12 +897,12 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
-        return getIngestCompleteEvents(this.treeCounts, (arEvt, count) -> getTreeItem(arEvt, count));
+        return SubDAOUtils.getIngestCompleteEvents(this.treeCounts, (arEvt, count) -> getTreeItem(arEvt, count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        return getRefreshEvents(this.treeCounts, (arEvt, count) -> getTreeItem(arEvt, count));
+        return SubDAOUtils.getRefreshEvents(this.treeCounts, (arEvt, count) -> getTreeItem(arEvt, count));
 
     }
 

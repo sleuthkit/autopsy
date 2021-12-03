@@ -748,13 +748,13 @@ public class ViewsDAO extends AbstractDAO {
 
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
-        return getIngestCompleteEvents(this.treeCounts,
+        return SubDAOUtils.getIngestCompleteEvents(this.treeCounts,
                 (daoEvt, count) -> createTreeItem(daoEvt, count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        return getRefreshEvents(this.treeCounts,
+        return SubDAOUtils.getRefreshEvents(this.treeCounts,
                 (daoEvt, count) -> createTreeItem(daoEvt, count));
     }
 
@@ -785,7 +785,7 @@ public class ViewsDAO extends AbstractDAO {
             return Collections.emptySet();
         }
 
-        invalidateKeys(this.searchParamsCache,
+        SubDAOUtils.invalidateKeys(this.searchParamsCache,
                 (Predicate<Object>) (searchParams) -> searchParamsMatchEvent(evtExtFilters, evtMimeType, evtFileSize, dsId, searchParams));
 
         return getDAOEvents(evtExtFilters, evtMimeType, evtFileSize, dsId);
