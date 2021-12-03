@@ -18,19 +18,9 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import com.google.common.cache.Cache;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import java.beans.PropertyChangeEvent;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import org.apache.commons.lang3.tuple.Pair;
-import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
