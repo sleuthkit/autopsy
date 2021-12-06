@@ -22,12 +22,14 @@ import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import java.text.MessageFormat;
 import java.util.Objects;
 import java.util.logging.Level;
+import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 
 /**
@@ -138,5 +140,16 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
         dataResultPanel.setNode(this);
     }
     
-    
+    @Override
+    public Action getPreferredAction() {
+        // TreeNodes are used for both the result viewer and the tree viewer. For the result viewer,
+        // we want to open the child of the double-clicked node. For the tree viewer, we want the default
+        // action (explanding/closing the node). If getOpenChildAction() returns null, we likely
+        // have a tree node and want to call the default preferred action.
+        Action openChildAction = DirectoryTreeTopComponent.getOpenChildAction(getName());
+        if (openChildAction == null) {
+            return super.getPreferredAction();
+        }
+        return openChildAction;
+    }
 }

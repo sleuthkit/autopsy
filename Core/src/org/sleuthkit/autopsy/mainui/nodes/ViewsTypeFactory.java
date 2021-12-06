@@ -104,11 +104,6 @@ public class ViewsTypeFactory {
             public void respondSelection(DataResultTopComponent dataResultPanel) {
                 dataResultPanel.displayFileSizes(this.getItemData().getSearchParams());
             }
-
-            @Override
-            public Action getPreferredAction() {
-                return DirectoryTreeTopComponent.getOpenChildAction(getName());
-            }
         }
     }
 
@@ -163,11 +158,6 @@ public class ViewsTypeFactory {
                         itemData,
                         Children.create(new FileMimeSuffixFactory(itemData.getSearchParams().getDataSourceId(), itemData.getSearchParams().getMimeType()), true),
                         getDefaultLookup(itemData));
-            }
-
-            @Override
-            public Action getPreferredAction() {
-                return DirectoryTreeTopComponent.getOpenChildAction(getName());
             }
         }
     }
@@ -234,11 +224,6 @@ public class ViewsTypeFactory {
             @Override
             public void respondSelection(DataResultTopComponent dataResultPanel) {
                 dataResultPanel.displayFileMimes(this.getItemData().getSearchParams());
-            }
-
-            @Override
-            public Action getPreferredAction() {
-                return DirectoryTreeTopComponent.getOpenChildAction(getName());
             }
         }
     }
@@ -335,11 +320,6 @@ public class ViewsTypeFactory {
                 } else {
                     super.respondSelection(dataResultPanel);
                 }
-            }
-
-            @Override
-            public Action getPreferredAction() {
-                return DirectoryTreeTopComponent.getOpenChildAction(getName());
             }
         }
     }

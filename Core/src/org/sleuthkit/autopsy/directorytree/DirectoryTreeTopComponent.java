@@ -1680,22 +1680,47 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         DirectoryTreeTopComponent.this.addPropertyChangeListener(l);
     }
     
+    /**
+     * Gets the open child action for the given node name. Will return
+     * null if the nodeName matches the currently selected tree node.
+     * 
+     * @param nodeName The child node to open.
+     * 
+     * @return The openChild action or null if not valid.
+     */
     public static AbstractAction getOpenChildAction(String nodeName) {
         DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
         ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
         return getOpenChildAction(nodeName, treeViewExplorerMgr);
     }
     
+    /**
+     * Gets the open child action for the given node name. Will return
+     * null if the nodeName matches the currently selected tree node.
+     * 
+     * @param nodeName The child node to open.
+     * @param explorerManager The explorer manager for the tree.
+     * 
+     * @return The openChild action or null if not valid.
+     */
     static AbstractAction getOpenChildAction(String nodeName, ExplorerManager explorerManager) {
         // get the current selection from the directory tree explorer manager,
         // which is a DirectoryTreeFilterNode. One of that node's children
         // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
         // to set that wrapped node as the selection and root context of the 
         // directory tree explorer manager (sourceEm)
-        if (explorerManager == null || explorerManager.getSelectedNodes().length == 0) {
+        if (explorerManager == null || explorerManager.getSelectedNodes().length == 0 || nodeName == null) {
             return null;
         }
         final Node currentSelectionInDirectoryTree = explorerManager.getSelectedNodes()[0];
+        
+        // We have several node types that are used in both the tree and the result viewer.
+        // For tree nodes, we don't want to do the open child action.
+        // When double-clicking on a tree node, the nodeName to open will be the same
+        // as the currently seleted node, so don't return an action if this is the case.
+        if (nodeName.equals(currentSelectionInDirectoryTree.getName())) {
+            return null;
+        }
 
         return new AbstractAction() {
             @Override
@@ -1726,12 +1751,24 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         };
     }
     
+    /**
+     * Gets the open parent action for the currently selected node.
+     * 
+     * @return The openChild action.
+     */
     public static AbstractAction getOpenParentAction() {
         DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
         ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
         return getOpenParentAction(treeViewExplorerMgr);
     }
 
+    /**
+     * Gets the open parent action for the currently selected node.
+     * 
+     * @param explorerManager The explorer manager for the tree.
+     * 
+     * @return The open parent action or null if given an invalid ExplorerManager.
+     */
     static AbstractAction getOpenParentAction(ExplorerManager explorerManager) {
         if (explorerManager == null) {
             return null;
