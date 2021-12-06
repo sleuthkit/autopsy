@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -33,7 +34,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -62,6 +62,7 @@ import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_TYPE_ENUM;
 
 /**
  * Provides information to populate the results viewer for data in the views
@@ -196,14 +197,29 @@ public class ViewsDAO extends AbstractDAO {
     }
 
     /**
+     * @return If user preference of hide known files, returns sql and clause to
+     *         hide known files or returns empty string otherwise.
+     */
+    private String getHideKnownAndClause() {
+        return (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known <> " + TskData.FileKnown.KNOWN.getFileKnownValue() + ") ") : "");
+    }
+
+    /**
+     * @return A clause (no 'and' or 'where' prefixed) indicating the dir_type
+     *         is regular.
+     */
+    private String getRegDirTypeClause() {
+        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")";
+    }
+
+    /**
      * Returns a clause that will filter out files that aren't to be counted in
      * the file extensions view.
      *
      * @return The filter that will need to be proceeded with 'where' or 'and'.
      */
     private String getBaseFileExtensionFilter() {
-        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known <> " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "");
+        return getRegDirTypeClause() + getHideKnownAndClause();
     }
 
     /**
@@ -224,21 +240,32 @@ public class ViewsDAO extends AbstractDAO {
     }
 
     /**
+     * @return The TSK_DB_FILES_TYPE_ENUm values allowed for mime type view
+     *         items.
+     */
+    private Set<TskData.TSK_DB_FILES_TYPE_ENUM> getMimeDbFilesTypes() {
+        return Stream.of(
+                TskData.TSK_DB_FILES_TYPE_ENUM.FS,
+                TskData.TSK_DB_FILES_TYPE_ENUM.CARVED,
+                TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED,
+                TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE,
+                TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL,
+                (hideSlackFilesInViewsTree() ? null : (TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)))
+                .filter(ordinal -> ordinal != null)
+                .collect(Collectors.toSet());
+    }
+
+    /**
      * Returns a statement to be proceeded with 'where' or 'and' that will
      * filter out results that should not be viewed in mime types view.
      *
      * @return A statement to be proceeded with 'and' or 'where'.
      */
     private String getBaseFileMimeFilter() {
-        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
+        return getRegDirTypeClause()
+                + getHideKnownAndClause()
                 + " AND (type IN ("
-                + TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
-                + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
+                + getMimeDbFilesTypes().stream().map(v -> Integer.toString(v.ordinal())).collect(Collectors.joining(", "))
                 + "))";
     }
 
@@ -281,8 +308,7 @@ public class ViewsDAO extends AbstractDAO {
      */
     private String getBaseFileSizeFilter() {
         // Ignore unallocated block files.
-        return "(type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"
-                + ((hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")); //NON-NLS
+        return "(type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")" + getHideKnownAndClause();
     }
 
     /**
@@ -763,23 +789,29 @@ public class ViewsDAO extends AbstractDAO {
         AbstractFile af = DAOEventUtils.getFileFromFileEvent(evt);
         if (af == null) {
             return Collections.emptySet();
+        } else if (hideKnownFilesInViewsTree() && TskData.FileKnown.KNOWN.equals(af.getKnown())) {
+            return Collections.emptySet();
         }
 
         long dsId = af.getDataSourceObjectId();
 
         // create an extension mapping if extension present
-        Set<FileExtSearchFilter> evtExtFilters = StringUtils.isBlank(af.getNameExtension())
+        Set<FileExtSearchFilter> evtExtFilters = (StringUtils.isBlank(af.getNameExtension()) || !TSK_FS_NAME_TYPE_ENUM.REG.equals(af.getDirType()))
                 ? Collections.emptySet()
                 : EXTENSION_FILTER_MAP.getOrDefault("." + af.getNameExtension(), Collections.emptySet());
 
         // create a mime type mapping if mime type present
-        String evtMimeType = StringUtils.isBlank(af.getMIMEType()) ? null : af.getMIMEType();
+        String evtMimeType = (StringUtils.isBlank(af.getMIMEType()) || !TSK_FS_NAME_TYPE_ENUM.REG.equals(af.getDirType())) || !getMimeDbFilesTypes().contains(af.getType())
+                ? null
+                : af.getMIMEType();
 
         // create a size mapping if size present in filters
-        FileSizeFilter evtFileSize = Stream.of(FileSizeFilter.values())
-                .filter(filter -> af.getSize() >= filter.getMinBound() && (filter.getMaxBound() == null || af.getSize() < filter.getMaxBound()))
-                .findFirst()
-                .orElse(null);
+        FileSizeFilter evtFileSize = !TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.equals(af.getType())
+                ? null
+                : Stream.of(FileSizeFilter.values())
+                        .filter(filter -> af.getSize() >= filter.getMinBound() && (filter.getMaxBound() == null || af.getSize() < filter.getMaxBound()))
+                        .findFirst()
+                        .orElse(null);
 
         if (evtExtFilters.isEmpty() && evtMimeType == null && evtFileSize == null) {
             return Collections.emptySet();
