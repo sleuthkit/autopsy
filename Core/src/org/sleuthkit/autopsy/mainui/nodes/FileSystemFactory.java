@@ -211,7 +211,9 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
      */
     @NbBundle.Messages({
         "FileSystemFactory.FileSystemTreeNode.ExtractUnallocAction.text=Extract Unallocated Space to Single Files"})
-    public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> implements ActionContext {
+    public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> implements ActionContext, TableNodeSelectionInfo {
+
+        private Long childContentToSelect;
 
         protected FileSystemTreeNode(String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children, Lookup lookup) {
             super(ContentNodeUtil.getContentName(itemData.getSearchParams().getContentObjectId()), icon, itemData, children, lookup);
@@ -234,6 +236,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            getItemData().getSearchParams().setChildIdToSelect(childContentToSelect);
             dataResultPanel.displayFileSystemContent(this.getItemData().getSearchParams());
         }
 
@@ -242,6 +245,16 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         @Override
         public Action[] getActions(boolean context) {
             return ActionsFactory.getActions(this);
+        }
+
+        @Override
+        public void setChildIdToSelect(Long content) {
+            childContentToSelect = content;
+        }
+
+        @Override
+        public Long getChildIdToSelect() {
+            return childContentToSelect;
         }
     }
 

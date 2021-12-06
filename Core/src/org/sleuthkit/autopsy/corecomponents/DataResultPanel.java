@@ -1313,7 +1313,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             this.searchResultManager = new SearchManager(new FileSystemFetcher(fileSystemKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, fileSystemKey.getChildIdToSelect());
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for file system filter: {0}.",
@@ -1374,16 +1374,23 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         "# {1} - pageCount",
         "DataResultPanel_pageIdxOfCount={0} of {1}"
     })
-    private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging) {
+    
+     private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging) {
+         displaySearchResults(searchResults, resetPaging, null);
+     }
+    
+    private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging, Long contentIdToSelect) {
         if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> displaySearchResults(searchResults, resetPaging));
+            SwingUtilities.invokeLater(() -> displaySearchResults(searchResults, resetPaging, contentIdToSelect));
             return;
         }
 
         if (searchResults == null) {
             setNode(null, resetPaging);
         } else {
-            setNode(new SearchResultRootNode(searchResults), resetPaging);
+            SearchResultRootNode node = new SearchResultRootNode(searchResults);
+            node.setChildIdToSelect(contentIdToSelect);
+            setNode(node, resetPaging);
             setNumberOfChildNodes(
                     searchResults.getTotalResultsCount() > Integer.MAX_VALUE
                     ? Integer.MAX_VALUE
