@@ -24,10 +24,8 @@ import java.util.Comparator;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtDocumentFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtExecutableFilter;
@@ -104,6 +102,7 @@ public class ViewsTypeFactory {
             public void respondSelection(DataResultTopComponent dataResultPanel) {
                 dataResultPanel.displayFileSizes(this.getItemData().getSearchParams());
             }
+
         }
     }
 
@@ -225,6 +224,7 @@ public class ViewsTypeFactory {
             public void respondSelection(DataResultTopComponent dataResultPanel) {
                 dataResultPanel.displayFileMimes(this.getItemData().getSearchParams());
             }
+
         }
     }
 
@@ -321,6 +321,7 @@ public class ViewsTypeFactory {
                     super.respondSelection(dataResultPanel);
                 }
             }
+
         }
     }
 
