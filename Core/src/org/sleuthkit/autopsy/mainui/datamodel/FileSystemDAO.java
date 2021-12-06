@@ -360,6 +360,7 @@ public class FileSystemDAO extends AbstractDAO {
     @Override
     Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
         Content affectedContent = null;
+        Content affectedParentContent = null;
         Host affectedParentHost = null;
 
         // GVDTODO person parents and parent of persons not handled yet
@@ -382,6 +383,7 @@ public class FileSystemDAO extends AbstractDAO {
                 refreshAllContent = true;
             } else {
                 affectedContent = content;
+                affectedParentContent = parentContent;
             }
         } else if (evt instanceof DataSourceAddedEvent) {
             Host host = getHostFromDs(((DataSourceAddedEvent) evt).getDataSource());
@@ -410,23 +412,18 @@ public class FileSystemDAO extends AbstractDAO {
 
         invalidateKeys(affectedParentPerson, affectedParentHost, affectedContent, refreshAllContent);
 
-        return getDAOEvents(affectedParentPerson, affectedParentHost, affectedContent, refreshAllContent);
+        return getDAOEvents(affectedParentPerson, affectedParentHost, affectedContent, affectedParentContent, refreshAllContent);
     }
 
-    private Set<DAOEvent> getDAOEvents(Optional<Person> affectedPerson, Host affectedHost, Content affectedContent, boolean triggerFullRefresh) {
+    private Set<DAOEvent> getDAOEvents(Optional<Person> affectedPerson, Host affectedHost, Content affectedContent, Content affectedParentContent, boolean triggerFullRefresh) {
         List<DAOEvent> daoEvents = new ArrayList<>();
 
         if (triggerFullRefresh) {
             daoEvents.add(new FileSystemContentEvent(null, null, null));
         } else if (affectedContent != null) {
-            Long parentContentId = null;
             Host parentHost = null;
 
             try {
-                parentContentId = (affectedContent instanceof AbstractContent)
-                        ? ((AbstractContent) affectedContent).getParentId().orElse(null)
-                        : null;
-
                 parentHost = (affectedContent instanceof DataSource)
                         ? ((DataSource) affectedContent).getHost()
                         : null;
@@ -434,7 +431,7 @@ public class FileSystemDAO extends AbstractDAO {
                 logger.log(Level.WARNING, "An error occurred while fetching content id and host id for content with id of: " + affectedContent.getId(), ex);
             }
 
-            daoEvents.add(new FileSystemContentEvent(affectedContent, parentContentId, parentHost));
+            daoEvents.add(new FileSystemContentEvent(affectedContent, affectedParentContent == null ? null : affectedParentContent.getId(), parentHost));
         }
 
         if (affectedHost != null) {
