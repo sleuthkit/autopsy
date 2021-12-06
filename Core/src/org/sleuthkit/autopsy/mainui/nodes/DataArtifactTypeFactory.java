@@ -24,13 +24,13 @@ import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -215,42 +215,6 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
      * A node representing a single account type in the tree.
      */
     static class AccountTypeNode extends TreeNode<CommAccountsSearchParams> {
-        
-        private static final String ICON_BASE_PATH = "org/sleuthkit/autopsy/images/"; //NON-NLS
-
-        /**
-         * Get the path of the icon for the given Account Type.
-         *
-         * @return The path of the icon for the given Account Type.
-         */
-        public static String getAccountIconPath(Account.Type accountType) {
-            
-            if (accountType.equals(Account.Type.CREDIT_CARD)) {
-                return ICON_BASE_PATH + "credit-card.png";
-            } else if (accountType.equals(Account.Type.DEVICE)) {
-                return ICON_BASE_PATH + "image.png";
-            } else if (accountType.equals(Account.Type.EMAIL)) {
-                return ICON_BASE_PATH + "email.png";
-            } else if (accountType.equals(Account.Type.FACEBOOK)) {
-                return ICON_BASE_PATH + "facebook.png";
-            } else if (accountType.equals(Account.Type.INSTAGRAM)) {
-                return ICON_BASE_PATH + "instagram.png";
-            } else if (accountType.equals(Account.Type.MESSAGING_APP)) {
-                return ICON_BASE_PATH + "messaging.png";
-            } else if (accountType.equals(Account.Type.PHONE)) {
-                return ICON_BASE_PATH + "phone.png";
-            } else if (accountType.equals(Account.Type.TWITTER)) {
-                return ICON_BASE_PATH + "twitter.png";
-            } else if (accountType.equals(Account.Type.WEBSITE)) {
-                return ICON_BASE_PATH + "web-file.png";
-            } else if (accountType.equals(Account.Type.WHATSAPP)) {
-                return ICON_BASE_PATH + "WhatsApp.png";
-            } else if (accountType.equals(Account.Type.CREDIT_CARD)) {
-                return ICON_BASE_PATH + "credit-cards.png";
-            } else {
-                return ICON_BASE_PATH + "face.png";
-            }
-        }
 
         /**
          * Main constructor.
@@ -259,7 +223,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
          */
         public AccountTypeNode(TreeResultsDTO.TreeItemDTO<? extends CommAccountsSearchParams> itemData) {
             super(itemData.getSearchParams().getType().getTypeName(),
-                    getAccountIconPath(itemData.getSearchParams().getType()),
+                    Accounts.getIconFilePath(itemData.getSearchParams().getType()),
                     itemData);
         }
         
