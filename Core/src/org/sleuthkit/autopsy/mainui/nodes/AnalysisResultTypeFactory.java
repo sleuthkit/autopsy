@@ -52,7 +52,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     private static Set<Integer> SET_TREE_ARTIFACTS = ImmutableSet.of(
             BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID(),
             BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
-            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
+            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID(),
+            BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()
     );
 
     /**

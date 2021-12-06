@@ -806,7 +806,7 @@ public class ViewsDAO extends AbstractDAO {
                 : af.getMIMEType();
 
         // create a size mapping if size present in filters
-        FileSizeFilter evtFileSize = !TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.equals(af.getType())
+        FileSizeFilter evtFileSize = TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.equals(af.getType())
                 ? null
                 : Stream.of(FileSizeFilter.values())
                         .filter(filter -> af.getSize() >= filter.getMinBound() && (filter.getMaxBound() == null || af.getSize() < filter.getMaxBound()))
