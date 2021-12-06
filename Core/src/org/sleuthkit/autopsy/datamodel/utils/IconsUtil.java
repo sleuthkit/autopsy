@@ -140,8 +140,11 @@ public final class IconsUtil {
         } else if (typeID == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
             imageFile = "keyword_hits.png";
         } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()
-                || typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()) {
+                || typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
+                || typeID == BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()) {
             imageFile = "interesting_item.png";
+        } else if (typeID == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
+            imageFile = "accounts.png";
         } else {
             imageFile = "artifact-icon.png"; //NON-NLS
         }
