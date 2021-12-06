@@ -43,6 +43,7 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
      */
     private SpecialDirectoryNode(SearchResultsDTO results, ContentRowDTO<? extends SpecialDirectory> row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
+        setName(ContentNodeUtil.getContentName(row.getContent().getId()));
         setDisplayName(row.getContent().getName());
         setShortDescription(row.getContent().getName());
     }
@@ -58,17 +59,12 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
 
     @Override
     public Optional<Content> getContentForRunIngestionModuleAction() {
-        return Optional.of(getRowDTO().getContent());
-    }
-
-    @Override
-    public Optional<Content> getContentForFileSearchAction() {
         return Optional.of(getRowDTO().getContent());
     }
 

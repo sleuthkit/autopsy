@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
@@ -480,6 +481,16 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      */
     public void displayOsAccounts(OsAccountsSearchParams osAccountParams) {
         dataResultPanel.displayOsAccount(osAccountParams);
+    }
+    
+    /**
+     * Displays results for querying the DAO for accounts matching the search
+     * parameters query.
+     *
+     * @param accountParams The search parameter query.
+     */
+    public void displayAccounts(CommAccountsSearchParams accountParams) {
+        dataResultPanel.displayAccounts(accountParams);
     }
 
     @Override

@@ -27,11 +27,12 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public class DataArtifactTableSearchResultsDTO extends BaseSearchResultsDTO {
 
     private static final String TYPE_ID = "DATA_ARTIFACT";
+    private static final String SIGNATURE = "dataartifact";
 
     private final BlackboardArtifact.Type artifactType;
 
     public DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type artifactType, List<ColumnKey> columns, List<RowDTO> items, long startItem, long totalResultsCount) {
-        super(TYPE_ID, artifactType.getDisplayName(), columns, items, startItem, totalResultsCount);
+        super(TYPE_ID, artifactType.getDisplayName(), columns, items, SIGNATURE, startItem, totalResultsCount);
         this.artifactType = artifactType;
     }
 

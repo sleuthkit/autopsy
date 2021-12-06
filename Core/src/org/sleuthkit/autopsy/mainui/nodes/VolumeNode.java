@@ -42,13 +42,14 @@ public class VolumeNode extends BaseNode<SearchResultsDTO, VolumeRowDTO> {
      */
     public VolumeNode(SearchResultsDTO results, VolumeRowDTO row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
-        setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png"); //NON-NLS
+        setIconBaseWithExtension(NodeIconUtil.VOLUME.getPath()); //NON-NLS
 
         // use first cell value for display name
         String displayName = row.getCellValues().size() > 0
                 ? row.getCellValues().get(0).toString()
                 : "";
 
+        setName(ContentNodeUtil.getContentName(row.getContent().getId()));
         setDisplayName(displayName);
         setShortDescription(displayName);
     }

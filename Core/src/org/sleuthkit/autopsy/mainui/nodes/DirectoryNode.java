@@ -39,6 +39,7 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
      */
     public DirectoryNode(SearchResultsDTO results, DirectoryRowDTO row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
+        setName(ContentNodeUtil.getContentName(row.getContent().getId()));
         setDisplayName(row.getContent().getName());
         setShortDescription(row.getContent().getName());
         setIcon();
@@ -52,9 +53,9 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
     private void setIcon() {
         // set name, display name, and icon
         if (getRowDTO().getContent().isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png"); //NON-NLS
+            this.setIconBaseWithExtension(NodeIconUtil.DELETED_FOLDER.getPath()); //NON-NLS
         } else {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
+            this.setIconBaseWithExtension(NodeIconUtil.FOLDER.getPath()); //NON-NLS
         }
     }
 
@@ -69,7 +70,7 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
 

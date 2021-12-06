@@ -21,27 +21,22 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordSearchTermParams;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordMatchParams;
 import com.google.common.collect.ImmutableSet;
-import java.beans.PropertyChangeEvent;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -49,6 +44,9 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSearchParam> {
 
+    private final static Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
+
+    @SuppressWarnings("deprecation")
     private static Set<Integer> SET_TREE_ARTIFACTS = ImmutableSet.of(
             BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID(),
             BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
@@ -85,9 +83,9 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
     @Override
     protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
-        if (SET_TREE_ARTIFACTS.contains(rowData.getTypeData().getArtifactType().getTypeID())) {
-            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getTypeData().getArtifactType(), dataSourceId, null));
-        } else if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getTypeData().getArtifactType())) {
+        if (SET_TREE_ARTIFACTS.contains(rowData.getSearchParams().getArtifactType().getTypeID())) {
+            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, null));
+        } else if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
             return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
         } else {
             return new AnalysisResultTypeTreeNode(rowData);
@@ -95,71 +93,14 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     }
 
     @Override
-    public boolean isRefreshRequired(PropertyChangeEvent evt) {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-            /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
-             */
-            try {
-                Case.getCurrentCaseThrows();
-                /**
-                 * Due to some unresolved issues with how cases are closed, it
-                 * is possible for the event to have a null oldValue if the
-                 * event is a remote event.
-                 */
-                final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                if (null != event && Category.ANALYSIS_RESULT.equals(event.getBlackboardArtifactType().getCategory())
-                        && !(AnalysisResultDAO.getIgnoredTreeTypes().contains(event.getBlackboardArtifactType()))) {
-                    return true;
-                }
-            } catch (NoCurrentCaseException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
-            }
-        }
-        return false;
+    protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
+        // GVDTODO
+        return null;
     }
 
-    /**
-     * See if expected blackboard type matches event.
-     *
-     * @param expectedType The expected artifact type.
-     * @param evt          The event.
-     *
-     * @return If the event is a data added event and contains the provided
-     *         type.
-     */
-    private static boolean isRefreshRequired(BlackboardArtifact.Type expectedType, PropertyChangeEvent evt) {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-            /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
-             */
-            try {
-                Case.getCurrentCaseThrows();
-                /**
-                 * Due to some unresolved issues with how cases are closed, it
-                 * is possible for the event to have a null oldValue if the
-                 * event is a remote event.
-                 */
-                final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
-                // GVDTODO it may be necessary to have more fine-grained check for refresh here.
-                if (null != event && expectedType.equals(event.getBlackboardArtifactType())) {
-                    return true;
-                }
-            } catch (NoCurrentCaseException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
-            }
-        }
-        return false;
+    @Override
+    public int compare(AnalysisResultSearchParam o1, AnalysisResultSearchParam o2) {
+        return o1.getArtifactType().getDisplayName().compareTo(o2.getArtifactType().getDisplayName());
     }
 
     /**
@@ -173,14 +114,14 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data to display.
          */
         public AnalysisResultTypeTreeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData);
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayAnalysisResult(this.getItemData().getTypeData());
+            dataResultPanel.displayAnalysisResult(this.getItemData().getSearchParams());
         }
     }
 
@@ -195,8 +136,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data to display.
          */
         public TreeTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData, ChildFactory<?> childFactory) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
                     Children.create(childFactory, true),
                     getDefaultLookup(itemData));
@@ -234,13 +175,19 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            return AnalysisResultTypeFactory.isRefreshRequired(artifactType, evt);
+        protected TreeNode<AnalysisResultSetSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> rowData) {
+            return new TreeSetTypeNode(rowData);
         }
 
         @Override
-        protected TreeNode<AnalysisResultSetSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> rowData) {
-            return new TreeSetTypeNode(rowData);
+        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(AnalysisResultSetSearchParam o1, AnalysisResultSetSearchParam o2) {
+            return STRING_COMPARATOR.compare(o1.getSetName(), o2.getSetName());
         }
     }
 
@@ -252,11 +199,11 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         /**
          * Main constructor.
          *
-         * @param itemData     The data to display.
+         * @param itemData The data to display.
          */
         public TreeSetTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
                     Children.LEAF,
                     getDefaultLookup(itemData));
@@ -264,7 +211,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayAnalysisResultSet(this.getItemData().getTypeData());
+            dataResultPanel.displayAnalysisResultSet(this.getItemData().getSearchParams());
         }
     }
 
@@ -291,15 +238,15 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         /**
          * Main constructor.
          *
-         * @param itemData     The data to display.
+         * @param itemData The data to display.
          */
         public KeywordSetNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
-            super(itemData.getTypeData().getArtifactType().getTypeName(),
-                    getIconPath(itemData.getTypeData().getArtifactType()),
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
-                    Children.create(new KeywordSearchTermFactory(itemData.getTypeData()), true),
+                    Children.create(new KeywordSearchTermFactory(itemData.getSearchParams()), true),
                     getDefaultLookup(itemData));
-        }        
+        }
     }
 
     /**
@@ -330,8 +277,14 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_KEYWORD_HIT, evt);
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(KeywordSearchTermParams o1, KeywordSearchTermParams o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchTerm(), o2.getSearchTerm());
         }
 
     }
@@ -347,19 +300,19 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data for the search term.
          */
         public KeywordSearchTermNode(TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> itemData) {
-            super(itemData.getTypeData().getSearchTerm(),
+            super(itemData.getSearchParams().getSearchTerm(),
                     getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT),
                     itemData,
-                    (itemData.getTypeData().hasChildren() || itemData.getTypeData().getSearchType() == TskData.KeywordSearchQueryType.REGEX 
+                    (itemData.getSearchParams().hasChildren() || itemData.getSearchParams().getSearchType() == TskData.KeywordSearchQueryType.REGEX 
                             // for regex queries always create a subtree, even if there is only one child
-                            ? Children.create(new KeywordFoundMatchFactory(itemData.getTypeData()), true) 
+                            ? Children.create(new KeywordFoundMatchFactory(itemData.getSearchParams()), true) 
                             : Children.LEAF),
                     getDefaultLookup(itemData));
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            KeywordSearchTermParams searchTermParams = this.getItemData().getTypeData();
+            KeywordSearchTermParams searchTermParams = this.getItemData().getSearchParams();
 
             if (!searchTermParams.hasChildren()) {
                 KeywordHitSearchParam searchParams = new KeywordHitSearchParam(searchTermParams.getDataSourceId(),
@@ -407,8 +360,14 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            return AnalysisResultTypeFactory.isRefreshRequired(BlackboardArtifact.Type.TSK_KEYWORD_HIT, evt);
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(KeywordMatchParams o1, KeywordMatchParams o2) {
+            return STRING_COMPARATOR.compare(o1.getKeywordMatch(), o2.getKeywordMatch());
         }
     }
 
@@ -424,7 +383,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data for the match parameters.
          */
         public KeywordFoundMatchNode(TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> itemData) {
-            super(itemData.getTypeData().getKeywordMatch(),
+            super(itemData.getSearchParams().getKeywordMatch(),
                     getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT),
                     itemData,
                     Children.LEAF,
@@ -433,7 +392,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            KeywordMatchParams searchParams = this.getItemData().getTypeData();
+            KeywordMatchParams searchParams = this.getItemData().getSearchParams();
             dataResultPanel.displayKeywordHits(new KeywordHitSearchParam(
                     searchParams.getDataSourceId(),
                     searchParams.getSetName(),

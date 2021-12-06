@@ -18,29 +18,41 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Pool;
+import org.sleuthkit.datamodel.SlackFile;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Utility class for creating consistent table data.
  */
-class FileSystemColumnUtils {
+public class FileSystemColumnUtils {
     
     private static final Logger logger = Logger.getLogger(FileSystemColumnUtils.class.getName());
     
@@ -151,9 +163,10 @@ class FileSystemColumnUtils {
      * 
      * @param content The Content object.
      * 
-     * @return The type corresponding to the content; UNSUPPORTED if the content will not be displayed
+     * @return The type corresponding to the content; UNSUPPORTED if the 
+     *         content will not be displayed in the file system section of the tree.
      */
-    private static ContentType getContentType(Content content) {
+    private static ContentType getDisplayableContentType(Content content) {
         if (content instanceof Image) {
             return ContentType.IMAGE;
         } else if (content instanceof Volume) {
@@ -167,9 +180,11 @@ class FileSystemColumnUtils {
     }
     
     /**
-     * Check whether a given content object should be displayed.
+     * Check whether a given content object should be displayed in the
+     * file system section of the tree.
      * We can display an object if ContentType is not UNSUPPORTED
-     * and if it is not the root directory.
+     * and if it is not the root directory. We can not display
+     * file systems, volume systems, artifacts, etc.
      * 
      * @param content The content.
      * 
@@ -177,9 +192,15 @@ class FileSystemColumnUtils {
      */
     static boolean isDisplayable(Content content) {
         if (content instanceof AbstractFile) {
+            // .. directories near the top of the directory structure can
+            // pass the isRoot() check, so first check if the name is empty
+            // (real root directories will have a blank name field)
+            if (!content.getName().isEmpty()) {
+                return true;
+            }
             return ! ((AbstractFile)content).isRoot();
         }
-        return (getContentType(content) != ContentType.UNSUPPORTED);
+        return (getDisplayableContentType(content) != ContentType.UNSUPPORTED);
     }
     
     /**
@@ -194,7 +215,7 @@ class FileSystemColumnUtils {
     static List<ContentType> getDisplayableTypesForContentList(List<Content> contentList) {
         List<ContentType> displayableTypes = new ArrayList<>();
         for (Content content : contentList) {
-            ContentType type = getContentType(content);
+            ContentType type = getDisplayableContentType(content);
             if (type != ContentType.UNSUPPORTED && ! displayableTypes.contains(type)) {
                 displayableTypes.add(type);
             }
@@ -288,10 +309,24 @@ class FileSystemColumnUtils {
             return pool.getType().getName(); // We currently use the type name for both the name and type fields
         } else if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile)content;
-            return file.getName(); // GVDTODO handle . and .. from getContentDisplayName()
+            return convertDotDirName(file);
         }
         return content.getName();
     }
+    
+    
+    @NbBundle.Messages({
+        "FileSystemColumnUtils.getContentName.dotDir=[current folder]",
+        "FileSystemColumnUtils.getContentName.dotDotDir=[parent folder]",
+    })
+    public static String convertDotDirName(AbstractFile file) {
+        if (file.getName().equals("..")) {
+            return Bundle.FileSystemColumnUtils_getContentName_dotDotDir();
+        } else if (file.getName().equals(".")) {
+            return Bundle.FileSystemColumnUtils_getContentName_dotDir();
+        }
+        return file.getName();
+    }    
     
     /**
      * Get the column keys for an abstract file object.
@@ -459,7 +494,7 @@ class FileSystemColumnUtils {
      * 
      * @return The display name.
      */
-    private static String getVolumeDisplayName(Volume vol) {
+    public static String getVolumeDisplayName(Volume vol) {
         // set name, display name, and icon
         String volName = "vol" + Long.toString(vol.getAddr());
         long end = vol.getStart() + (vol.getLength() - 1);
@@ -481,7 +516,9 @@ class FileSystemColumnUtils {
     /**
      * Get the content that should be displayed in the table based on the given object.
      * Algorithm:
-     * - If content is already displayable, return it
+     * - If content is known and known files are being hidden, return an empty list
+     * - If content is a slack file and slack files are being hidden, return an empty list
+     * - If content is a displayable type, return it
      * - If content is a volume system, return its displayable children
      * - If content is a file system, return the displayable children of the root folder
      * - If content is the root folder, return the displayable children of the root folder
@@ -490,8 +527,41 @@ class FileSystemColumnUtils {
      * 
      * @return List of content to add to the table.
      */
-    static List<Content> getNextDisplayableContent(Content content) throws TskCoreException {
+    static List<Content> getDisplayableContentForTable(Content content) throws TskCoreException {
         
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile)content;
+            // Skip known files if requested
+            if (UserPreferences.hideKnownFilesInDataSourcesTree() 
+                    && file.getKnown().equals(TskData.FileKnown.KNOWN)) {
+                return new ArrayList<>();
+            }
+            
+            // Skip slack files if requested
+            if (UserPreferences.hideSlackFilesInDataSourcesTree()
+                    && file instanceof SlackFile) {
+                return new ArrayList<>();
+            }
+        }
+        
+        return getDisplayableContentForTableAndTree(content);
+    }
+    
+    /**
+     * Get the content that should be displayed in the table based on the given object.
+     * Algorithm:
+     * - If content is a displayable type, return it
+     * - If content is a volume system, return its displayable children
+     * - If content is a file system, return the displayable children of the root folder
+     * - If content is the root folder, return the displayable children of the root folder
+     *
+     * @param content The base content.
+     * 
+     * @return List of content to add to the table/tree.
+     * 
+     * @throws TskCoreException 
+     */
+    private static List<Content> getDisplayableContentForTableAndTree(Content content) throws TskCoreException {    
         // If the given content is displayable, return it
         if (FileSystemColumnUtils.isDisplayable(content)) {
             return Arrays.asList(content);
@@ -541,4 +611,83 @@ class FileSystemColumnUtils {
         return new ColumnKey(name, name, Bundle.FileSystemColumnUtils_noDescription());
     }
     
+    /**
+     * Get the children of a given content ID that will be visible in the tree.
+     * 
+     * @param contentId The ID of the parent content.
+     * 
+     * @return The visible children of the given content.
+     * 
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException 
+     */
+    public static List<Content> getVisibleTreeNodeChildren(Long contentId) throws TskCoreException, NoCurrentCaseException {
+        SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        Content content = skCase.getContentById(contentId);
+        List<Content> originalChildren = content.getChildren();
+
+        // First, advance past anything we don't display (volume systems, file systems, root folders)
+        List<Content> treeChildren = new ArrayList<>();
+        for (Content child : originalChildren) {
+            treeChildren.addAll(FileSystemColumnUtils.getDisplayableContentForTableAndTree(child));
+        }
+            
+        // Filter out the . and .. directories
+        for (Iterator<Content> iter = treeChildren.listIterator(); iter.hasNext(); ) {
+            Content c = iter.next();
+            if ((c instanceof AbstractFile) && ContentUtils.isDotDirectory((AbstractFile)c)) {
+                iter.remove();
+            }
+        }
+
+        // Filter out any files without children
+        for (Iterator<Content> iter = treeChildren.listIterator(); iter.hasNext(); ) {
+            Content c = iter.next();
+            if (c instanceof AbstractFile && (! hasDisplayableContentChildren((AbstractFile)c))) {
+                iter.remove();
+            }
+        }
+        
+        return treeChildren;
+    }
+    
+    /**
+     * Check whether a file has displayable children.
+     * 
+     * @param file The file to check.
+     * 
+     * @return True if the file has displayable children, false otherwise.
+     */
+    private static boolean hasDisplayableContentChildren(AbstractFile file) {
+        if (file != null) {
+            try {
+                // If the file has no children at all, then it has no displayable children.
+                if (!file.hasChildren()) {
+                    return false;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error checking if the node has children for file with ID: " + file.getId(), ex); //NON-NLS
+                return false;
+            }
+
+            String query = "SELECT COUNT(obj_id) AS count FROM "
+                    + " ( SELECT obj_id FROM tsk_objects WHERE par_obj_id = " + file.getId() + " AND type = "
+                    + TskData.ObjectType.ARTIFACT.getObjectType()
+                    + "   INTERSECT SELECT artifact_obj_id FROM blackboard_artifacts WHERE obj_id = " + file.getId()
+                    + "     AND (artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()
+                    + " OR artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() + ") "
+                    + "   UNION SELECT obj_id FROM tsk_objects WHERE par_obj_id = " + file.getId()
+                    + "     AND type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + ") AS OBJECT_IDS"; //NON-NLS;
+
+            try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery(query)) {
+                ResultSet resultSet = dbQuery.getResultSet();
+                if (resultSet.next()) {
+                    return (0 < resultSet.getInt("count"));
+                }
+            } catch (TskCoreException | SQLException | NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Error checking if the node has children for file with ID: " + file.getId(), ex); //NON-NLS
+            }
+        }
+        return false;
+    }    
 }

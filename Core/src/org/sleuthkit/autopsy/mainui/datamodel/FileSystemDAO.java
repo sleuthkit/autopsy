@@ -20,17 +20,34 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsAddedToPersonEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsRemovedFromPersonEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
+import static org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils.getExtensionMediaType;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.DirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.ImageRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VolumeRowDTO;
@@ -40,11 +57,17 @@ import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VirtualDirectoryRowD
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.PoolRowDTO;
-import static org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.getExtensionMediaType;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
+import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemContentEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemHostEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemPersonEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
@@ -55,20 +78,40 @@ import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  *
  */
-public class FileSystemDAO {
+public class FileSystemDAO extends AbstractDAO {
+
+    private static final Logger logger = Logger.getLogger(FileSystemDAO.class.getName());
 
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
+    private static final Set<String> HOST_LEVEL_EVTS = ImmutableSet.of(
+            Case.Events.DATA_SOURCE_ADDED.toString(),
+            // this should trigger the case to be reopened
+            // Case.Events.DATA_SOURCE_DELETED.toString(),
+            Case.Events.DATA_SOURCE_NAME_CHANGED.toString(),
+            Case.Events.HOSTS_ADDED.toString(),
+            Case.Events.HOSTS_DELETED.toString(),
+            Case.Events.HOSTS_UPDATED.toString()
+    );
+
+    private static final Set<String> PERSON_LEVEL_EVTS = ImmutableSet.of(
+            Case.Events.HOSTS_ADDED_TO_PERSON.toString(),
+            Case.Events.HOSTS_REMOVED_FROM_PERSON.toString()
+    );
+
+    private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    
     private static final String FILE_SYSTEM_TYPE_ID = "FILE_SYSTEM";
 
     private static FileSystemDAO instance = null;
@@ -79,26 +122,23 @@ public class FileSystemDAO {
         }
         return instance;
     }
-    
-    public boolean isSystemContentInvalidating(FileSystemContentSearchParam key, Content eventContent) {
-        if(!(eventContent instanceof Content)) {
+
+    private boolean isSystemContentInvalidating(FileSystemContentSearchParam key, DAOEvent daoEvent) {
+        if (!(daoEvent instanceof FileSystemContentEvent)) {
             return false;
         }
-        
-        try {
-            return key.getContentObjectId() != eventContent.getParent().getId();
-        } catch (TskCoreException ex) {
-            // There is nothing we can do with the exception.
-            return false;
-        }
+
+        FileSystemContentEvent contentEvt = (FileSystemContentEvent) daoEvent;
+
+        return contentEvt.getContentObjectId() == null || key.getContentObjectId().equals(contentEvt.getContentObjectId());
     }
-    
-    public boolean isSystemHostInvalidating(FileSystemHostSearchParam key, Host eventHost) {
-        if(!(eventHost instanceof Host)) {
+
+    private boolean isSystemHostInvalidating(FileSystemHostSearchParam key, DAOEvent daoEvent) {
+        if (!(daoEvent instanceof FileSystemHostEvent)) {
             return false;
         }
-        
-        return key.getHostObjectId() != eventHost.getHostId();
+
+        return key.getHostObjectId() == ((FileSystemHostEvent) daoEvent).getHostObjectId();
     }
 
     private BaseSearchResultsDTO fetchContentForTableFromContent(SearchParams<FileSystemContentSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -115,7 +155,7 @@ public class FileSystemDAO {
 
         parentName = parentContent.getName();
         for (Content content : parentContent.getChildren()) {
-            contentForTable.addAll(FileSystemColumnUtils.getNextDisplayableContent(content));
+            contentForTable.addAll(FileSystemColumnUtils.getDisplayableContentForTable(content));
         }
 
         return fetchContentForTable(cacheKey, contentForTable, parentName);
@@ -174,7 +214,7 @@ public class FileSystemDAO {
             List<Object> cellValues = FileSystemColumnUtils.getCellValuesForHost(host);
             rows.add(new BaseRowDTO(cellValues, FILE_SYSTEM_TYPE_ID, host.getHostId()));
         }
-        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, cacheKey.getStartItem(), hostsForTable.size());
+        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, Host.class.getName(), cacheKey.getStartItem(), hostsForTable.size());
     }
 
     private BaseSearchResultsDTO fetchContentForTable(SearchParams<?> cacheKey, List<Content> contentForTable,
@@ -229,7 +269,7 @@ public class FileSystemDAO {
                 rows.add(new FileRowDTO(
                         file,
                         file.getId(),
-                        file.getName(),
+                        FileSystemColumnUtils.convertDotDirName(file),
                         file.getNameExtension(),
                         getExtensionMediaType(file.getNameExtension()),
                         file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
@@ -237,7 +277,7 @@ public class FileSystemDAO {
                         cellValues));
             }
         }
-        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, cacheKey.getStartItem(), contentForTable.size());
+        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, FILE_SYSTEM_TYPE_ID, cacheKey.getStartItem(), contentForTable.size());
     }
 
     /**
@@ -260,34 +300,268 @@ public class FileSystemDAO {
         return pagedArtsStream.collect(Collectors.toList());
     }
 
-    public BaseSearchResultsDTO getContentForTable(FileSystemContentSearchParam objectKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-
+    public BaseSearchResultsDTO getContentForTable(FileSystemContentSearchParam objectKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         SearchParams<FileSystemContentSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
-        if (hardRefresh) {
-            searchParamsCache.invalidate(searchParams);
-        }
-
         return searchParamsCache.get(searchParams, () -> fetchContentForTableFromContent(searchParams));
     }
 
-    public BaseSearchResultsDTO getContentForTable(FileSystemHostSearchParam objectKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-
+    public BaseSearchResultsDTO getContentForTable(FileSystemHostSearchParam objectKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         SearchParams<FileSystemHostSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
-        if (hardRefresh) {
-            searchParamsCache.invalidate(searchParams);
-        }
-
         return searchParamsCache.get(searchParams, () -> fetchContentForTableFromHost(searchParams));
     }
 
-    public BaseSearchResultsDTO getHostsForTable(FileSystemPersonSearchParam objectKey, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
-
+    public BaseSearchResultsDTO getHostsForTable(FileSystemPersonSearchParam objectKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         SearchParams<FileSystemPersonSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
-        if (hardRefresh) {
-            searchParamsCache.invalidate(searchParams);
+        return searchParamsCache.get(searchParams, () -> fetchHostsForTable(searchParams));
+    }
+
+    @Override
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+    }
+
+    private Long getHostFromDs(Content dataSource) {
+        if (!(dataSource instanceof DataSource)) {
+            return null;
         }
 
-        return searchParamsCache.get(searchParams, () -> fetchHostsForTable(searchParams));
+        try {
+            Host host = ((DataSource) dataSource).getHost();
+            return host == null ? null : host.getHostId();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "There was an error getting the host for data source with id: " + dataSource.getId(), ex);
+            return null;
+        }
+    }
+
+    /**
+     * In instances where parents are hidden, refresh the entire tree.
+     *
+     * @param parentContent The parent content.
+     *
+     * @return True if full tree should be refreshed.
+     */
+    private boolean invalidatesAllFileSystem(Content parentContent) {
+        if (parentContent instanceof VolumeSystem || parentContent instanceof FileSystem) {
+            return true;
+        }
+
+        if (parentContent instanceof Directory) {
+            Directory dir = (Directory) parentContent;
+            return dir.isRoot() && !dir.getName().equals(".") && !dir.getName().equals("..");
+        }
+
+        if (parentContent instanceof LocalDirectory) {
+            return ((LocalDirectory) parentContent).isRoot();
+        }
+
+        return false;
+    }
+
+    @Override
+    Set<DAOEvent> handleIngestComplete() {
+        // GVDTODO
+        return Collections.emptySet();
+    }
+
+    @Override
+    Set<TreeEvent> shouldRefreshTree() {
+        // GVDTODO
+        return Collections.emptySet();
+    }
+
+    @Override
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
+        // GVDTODO these can probably be rewritten now that it isn't handling a collection of autopsy events
+        Set<Long> affectedPersons = new HashSet<>();
+        Set<Long> affectedHosts = new HashSet<>();
+        Set<Long> affectedParentContent = new HashSet<>();
+        boolean refreshAllContent = false;
+
+        Content content = DAOEventUtils.getDerivedFileContentFromFileEvent(evt);
+        if (content != null) {
+            Content parentContent;
+            try {
+                parentContent = content.getParent();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to get parent content of content with id: " + content.getId(), ex);
+                return Collections.emptySet();
+            }
+
+            if (parentContent == null) {
+                return Collections.emptySet();
+            }
+
+            if (invalidatesAllFileSystem(parentContent)) {
+                refreshAllContent = true;
+            } else {
+                affectedParentContent.add(parentContent.getId());
+            }
+        } else if (evt instanceof DataSourceAddedEvent) {
+            Long hostId = getHostFromDs(((DataSourceAddedEvent) evt).getDataSource());
+            if (hostId != null) {
+                affectedHosts.add(hostId);
+            }
+        } else if (evt instanceof DataSourceNameChangedEvent) {
+            Long hostId = getHostFromDs(((DataSourceNameChangedEvent) evt).getDataSource());
+            if (hostId != null) {
+                affectedHosts.add(hostId);
+            }
+        } else if (evt instanceof HostsAddedEvent) {
+            // GVDTODO how best to handle host added?
+        } else if (evt instanceof HostsUpdatedEvent) {
+            // GVDTODO how best to handle host updated?
+        } else if (evt instanceof HostsAddedToPersonEvent) {
+            Person person = ((HostsAddedToPersonEvent) evt).getPerson();
+            affectedPersons.add(person == null ? null : person.getPersonId());
+        } else if (evt instanceof HostsRemovedFromPersonEvent) {
+            Person person = ((HostsRemovedFromPersonEvent) evt).getPerson();
+            affectedPersons.add(person == null ? null : person.getPersonId());
+        }
+
+        final boolean triggerFullRefresh = refreshAllContent;
+
+        // GVDTODO handling null ids versus the 'No Persons' option
+        ConcurrentMap<SearchParams<?>, BaseSearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
+        concurrentMap.forEach((k, v) -> {
+            Object searchParams = k.getParamData();
+            if (searchParams instanceof FileSystemPersonSearchParam) {
+                FileSystemPersonSearchParam personParam = (FileSystemPersonSearchParam) searchParams;
+                if (affectedPersons.contains(personParam.getPersonObjectId())) {
+                    concurrentMap.remove(k);
+                }
+            } else if (searchParams instanceof FileSystemHostSearchParam) {
+                FileSystemHostSearchParam hostParams = (FileSystemHostSearchParam) searchParams;
+                if (affectedHosts.contains(hostParams.getHostObjectId())) {
+                    concurrentMap.remove(k);
+                }
+            } else if (searchParams instanceof FileSystemContentSearchParam) {
+                FileSystemContentSearchParam contentParams = (FileSystemContentSearchParam) searchParams;
+                if (triggerFullRefresh
+                        || contentParams.getContentObjectId() == null
+                        || affectedParentContent.contains(contentParams.getContentObjectId())) {
+                    concurrentMap.remove(k);
+                }
+            }
+        });
+
+        Stream<DAOEvent> fileEvts = triggerFullRefresh
+                ? Stream.of(new FileSystemContentEvent(null))
+                : affectedParentContent.stream().map(id -> new FileSystemContentEvent(id));
+
+        return Stream.of(
+                affectedPersons.stream().map(id -> new FileSystemPersonEvent(id)),
+                affectedHosts.stream().map(id -> new FileSystemHostEvent(id)),
+                fileEvts
+        )
+                .flatMap(s -> s)
+                .collect(Collectors.toSet());
+    }
+    
+    /**
+     * Get all data sources belonging to a given host.
+     * 
+     * @param host The host.
+     * 
+     * @return Results containing all data sources for the given host.
+     * 
+     * @throws ExecutionException 
+     */
+    public TreeResultsDTO<FileSystemContentSearchParam> getDataSourcesForHost(Host host) throws ExecutionException {
+        try {
+            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
+            for (DataSource ds : Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getDataSourcesForHost(host)) {
+                treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
+                        ds.getClass().getSimpleName(),
+                        new FileSystemContentSearchParam(ds.getId()),
+                        ds,
+                        ds.getName(),
+                        null
+                ));
+            }
+            return new TreeResultsDTO<>(treeItemRows);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching images for host with ID " + host.getHostId(), ex);
+        }
+    }
+    
+    /**
+     * Create results for a single given data source ID (not its children).
+     * 
+     * @param dataSourceObjId The data source object ID.
+     * 
+     * @return Results containing just this data source.
+     * 
+     * @throws ExecutionException 
+     */
+    public TreeResultsDTO<FileSystemContentSearchParam> getSingleDataSource(long dataSourceObjId) throws ExecutionException {
+        try {
+            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
+            DataSource ds = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(dataSourceObjId);
+            treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
+                    ds.getClass().getSimpleName(),
+                    new FileSystemContentSearchParam(ds.getId()),
+                    ds,
+                    ds.getName(),
+                    null
+            ));
+            
+            return new TreeResultsDTO<>(treeItemRows);
+        } catch (NoCurrentCaseException | TskCoreException | TskDataException ex) {
+            throw new ExecutionException("An error occurred while fetching data source with ID " + dataSourceObjId, ex);
+        }
+    }
+    
+    /**
+     * Get the children that will be displayed in the tree for a given content ID.
+     *
+     * @param contentId Object ID of parent content.
+     *
+     * @return The results.
+     *
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<FileSystemContentSearchParam> getDisplayableContentChildren(Long contentId) throws ExecutionException {
+        try {
+            
+            List<Content> treeChildren = FileSystemColumnUtils.getVisibleTreeNodeChildren(contentId);
+            
+            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
+            for (Content child : treeChildren) {
+                Long countForNode = null;
+                if ((child instanceof AbstractFile)
+                        && ! (child instanceof LocalFilesDataSource)) {
+                    countForNode = getContentForTable(new FileSystemContentSearchParam(child.getId()), 0, null).getTotalResultsCount();
+                }
+                treeItemRows.add(new TreeResultsDTO.TreeItemDTO<>(
+                        child.getClass().getSimpleName(),
+                        new FileSystemContentSearchParam(child.getId()),
+                        child,
+                        getNameForContent(child),
+                        countForNode == null ? TreeDisplayCount.NOT_SHOWN : TreeDisplayCount.getDeterminate(countForNode)
+                ));
+            }
+            return new TreeResultsDTO<>(treeItemRows);
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
+        }
+    }
+    
+    /**
+     * Get display name for the given content.
+     * 
+     * @param content The content.
+     * 
+     * @return Display name for the content.
+     */
+    private String getNameForContent(Content content) {
+        if (content instanceof Volume) {
+            return FileSystemColumnUtils.getVolumeDisplayName((Volume)content);
+        } else if (content instanceof AbstractFile) {
+            return FileSystemColumnUtils.convertDotDirName((AbstractFile) content);
+        }
+        return content.getName();
     }
 
     /**
@@ -304,19 +578,18 @@ public class FileSystemDAO {
             super(params);
         }
 
-        @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getFileSystemDAO().getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        protected FileSystemDAO getDAO() {
+            return MainDAO.getInstance().getFileSystemDAO();
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            Content content = getContentFromEvt(evt);
-            if (content == null) {
-                return false;
-            }
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        }
 
-            return MainDAO.getInstance().getFileSystemDAO().isSystemContentInvalidating(getParameters(), content);
+        @Override
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return getDAO().isSystemContentInvalidating(this.getParameters(), evt);
         }
     }
 
@@ -331,16 +604,18 @@ public class FileSystemDAO {
             super(params);
         }
 
-        @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getFileSystemDAO().getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        protected FileSystemDAO getDAO() {
+            return MainDAO.getInstance().getFileSystemDAO();
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            // TODO implement the method for determining if 
-            // a refresh is needed.
-            return false;
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getContentForTable(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        }
+
+        @Override
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return getDAO().isSystemHostInvalidating(this.getParameters(), evt);
         }
     }
 }

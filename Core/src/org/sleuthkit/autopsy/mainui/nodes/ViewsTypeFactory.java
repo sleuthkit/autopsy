@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.beans.PropertyChangeEvent;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,9 +34,9 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileExtSearchFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams.FileSizeFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -44,34 +45,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 public class ViewsTypeFactory {
 
-    /**
-     * Returns an AbstractFile if the event contains a ModuleContentEvent which
-     * contains an abstract file and that file belongs to the data source if a
-     * data source id is specified. Otherwise, returns null.
-     *
-     * @param evt          The event
-     * @param dataSourceId The data source object id that will be the parent of
-     *                     the file or null.
-     *
-     * @return The file meeting criteria or null.
-     */
-    private static AbstractFile getFileInDataSourceFromEvt(PropertyChangeEvent evt, Long dataSourceId) {
-        if (!(evt.getOldValue() instanceof ModuleContentEvent)) {
-            return null;
-        }
-
-        ModuleContentEvent contentEvt = (ModuleContentEvent) evt.getOldValue();
-        if (!(contentEvt.getSource() instanceof AbstractFile)) {
-            return null;
-        }
-
-        AbstractFile file = (AbstractFile) contentEvt.getSource();
-        if (dataSourceId != null && file.getDataSourceObjectId() != dataSourceId) {
-            return null;
-        }
-
-        return file;
-    }
+    private static final Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
 
     /**
      * The factory for creating file size tree nodes.
@@ -100,20 +74,14 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            AbstractFile evtFile = getFileInDataSourceFromEvt(evt, this.dataSourceId);
-            if (evtFile == null) {
-                return false;
-            }
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
 
-            long size = evtFile.getSize();
-            for (FileSizeFilter filter : FileSizeFilter.values()) {
-                if (size >= filter.getMinBound() || size < filter.getMaxBound()) {
-                    return true;
-                }
-            }
-
-            return false;
+        @Override
+        public int compare(FileTypeSizeSearchParams o1, FileTypeSizeSearchParams o2) {
+            return Integer.compare(o1.getSizeFilter().getId(), o2.getSizeFilter().getId());
         }
 
         /**
@@ -127,12 +95,12 @@ public class ViewsTypeFactory {
              * @param itemData The data for the node.
              */
             FileSizeTypeNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> itemData) {
-                super("FILE_SIZE_" + itemData.getTypeData().getSizeFilter().getName(), "org/sleuthkit/autopsy/images/file-size-16.png", itemData);
+                super("FILE_SIZE_" + itemData.getSearchParams().getSizeFilter().getName(), "org/sleuthkit/autopsy/images/file-size-16.png", itemData);
             }
 
             @Override
             public void respondSelection(DataResultTopComponent dataResultPanel) {
-                dataResultPanel.displayFileSizes(this.getItemData().getTypeData());
+                dataResultPanel.displayFileSizes(this.getItemData().getSearchParams());
             }
 
         }
@@ -165,8 +133,14 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            return getFileInDataSourceFromEvt(evt, this.dataSourceId) != null;
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(FileTypeMimeSearchParams o1, FileTypeMimeSearchParams o2) {
+            return STRING_COMPARATOR.compare(o1.getMimeType(), o2.getMimeType());
         }
 
         static class FileMimePrefixNode extends TreeNode<FileTypeMimeSearchParams> {
@@ -178,10 +152,10 @@ public class ViewsTypeFactory {
              */
             public FileMimePrefixNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> itemData) {
                 super(
-                        "FILE_MIME_" + itemData.getTypeData().getMimeType(),
+                        "FILE_MIME_" + itemData.getSearchParams().getMimeType(),
                         "org/sleuthkit/autopsy/images/file_types.png",
                         itemData,
-                        Children.create(new FileMimeSuffixFactory(itemData.getTypeData().getDataSourceId(), itemData.getTypeData().getMimeType()), true),
+                        Children.create(new FileMimeSuffixFactory(itemData.getSearchParams().getDataSourceId(), itemData.getSearchParams().getMimeType()), true),
                         getDefaultLookup(itemData));
             }
         }
@@ -219,13 +193,14 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            AbstractFile file = getFileInDataSourceFromEvt(evt, dataSourceId);
-            if (file == null || file.getMIMEType() == null) {
-                return false;
-            }
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
+            // GVDTODO
+            return null;
+        }
 
-            return file.getMIMEType().toLowerCase().startsWith(this.mimeTypePrefix.toLowerCase());
+        @Override
+        public int compare(FileTypeMimeSearchParams o1, FileTypeMimeSearchParams o2) {
+            return STRING_COMPARATOR.compare(o1.getMimeType(), o2.getMimeType());
         }
 
         /**
@@ -240,14 +215,14 @@ public class ViewsTypeFactory {
              * @param itemData The data for the node.
              */
             public FileMimeSuffixNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> itemData) {
-                super("FILE_MIME_" + itemData.getTypeData().getMimeType(),
+                super("FILE_MIME_" + itemData.getSearchParams().getMimeType(),
                         "org/sleuthkit/autopsy/images/file-filter-icon.png",
                         itemData);
             }
 
             @Override
             public void respondSelection(DataResultTopComponent dataResultPanel) {
-                dataResultPanel.displayFileMimes(this.getItemData().getTypeData());
+                dataResultPanel.displayFileMimes(this.getItemData().getSearchParams());
             }
 
         }
@@ -286,9 +261,9 @@ public class ViewsTypeFactory {
         @Override
         protected TreeNode<FileTypeExtensionsSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> rowData) {
             Collection<FileExtSearchFilter> childFilters;
-            if (rowData.getTypeData().getFilter() == FileExtRootFilter.TSK_DOCUMENT_FILTER) {
+            if (rowData.getSearchParams().getFilter() == FileExtRootFilter.TSK_DOCUMENT_FILTER) {
                 childFilters = Stream.of(FileExtDocumentFilter.values()).collect(Collectors.toList());
-            } else if (rowData.getTypeData().getFilter() == FileExtRootFilter.TSK_EXECUTABLE_FILTER) {
+            } else if (rowData.getSearchParams().getFilter() == FileExtRootFilter.TSK_EXECUTABLE_FILTER) {
                 childFilters = Stream.of(FileExtExecutableFilter.values()).collect(Collectors.toList());
             } else {
                 childFilters = null;
@@ -303,11 +278,14 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            AbstractFile file = getFileInDataSourceFromEvt(evt, this.dataSourceId);
-            return file != null && this.childFilters.stream()
-                    .anyMatch((filter) -> MainDAO.getInstance().getViewsDAO().isFilesByExtInvalidating(
-                    new FileTypeExtensionsSearchParams(filter, this.dataSourceId), file));
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
+            //GVDTODO
+            return null;
+        }
+
+        @Override
+        public int compare(FileTypeExtensionsSearchParams o1, FileTypeExtensionsSearchParams o2) {
+            return STRING_COMPARATOR.compare(o1.getFilter().getDisplayName(), o2.getFilter().getDisplayName());
         }
 
         /**
@@ -326,10 +304,10 @@ public class ViewsTypeFactory {
              *                     children of this node.
              */
             public FileExtNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> itemData, Collection<FileExtSearchFilter> childFilters) {
-                super("FILE_EXT_" + itemData.getTypeData().getFilter().getName(),
+                super("FILE_EXT_" + itemData.getSearchParams().getFilter().getName(),
                         childFilters == null ? "org/sleuthkit/autopsy/images/file-filter-icon.png" : "org/sleuthkit/autopsy/images/file_types.png",
                         itemData,
-                        childFilters == null ? Children.LEAF : Children.create(new FileExtFactory(itemData.getTypeData().getDataSourceId(), childFilters), true),
+                        childFilters == null ? Children.LEAF : Children.create(new FileExtFactory(itemData.getSearchParams().getDataSourceId(), childFilters), true),
                         getDefaultLookup(itemData));
 
                 this.childFilters = childFilters;
@@ -338,7 +316,7 @@ public class ViewsTypeFactory {
             @Override
             public void respondSelection(DataResultTopComponent dataResultPanel) {
                 if (childFilters == null) {
-                    dataResultPanel.displayFileExtensions(this.getItemData().getTypeData());
+                    dataResultPanel.displayFileExtensions(this.getItemData().getSearchParams());
                 } else {
                     super.respondSelection(dataResultPanel);
                 }

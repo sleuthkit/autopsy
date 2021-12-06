@@ -41,8 +41,9 @@ public class PoolNode extends BaseNode<SearchResultsDTO, PoolRowDTO> {
                 results, row);
 
         String name = row.getContent().getType().getName();
+        setName(ContentNodeUtil.getContentName(row.getContent().getId()));
         setDisplayName(name);
         setShortDescription(name);
-        setIconBaseWithExtension("org/sleuthkit/autopsy/images/pool-icon.png");
+        setIconBaseWithExtension(NodeIconUtil.POOL.getPath());
     }
 }

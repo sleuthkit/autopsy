@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import java.text.MessageFormat;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -44,7 +45,7 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
      * @return The lookup to use in the node.
      */
     protected static <T> Lookup getDefaultLookup(TreeItemDTO<? extends T> itemData) {
-        return Lookups.fixed(itemData, itemData.getTypeData());
+        return Lookups.fixed(itemData, itemData.getSearchParams());
     }
 
     private TreeItemDTO<? extends T> itemData;
@@ -88,7 +89,7 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
     protected TreeItemDTO<? extends T> getItemData() {
         return itemData;
     }
-
+    
     /**
      * Sets the display name of the node to include the display name and count
      * of the item.
@@ -100,10 +101,10 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
         // update display name only if there is a change.
         if (prevData == null
                 || !prevData.getDisplayName().equals(curData.getDisplayName())
-                || prevData.getCount() != curData.getCount()) {
-            String displayName = curData.getCount() == null
+                || !Objects.equals(prevData.getDisplayCount(), curData.getDisplayCount())) {
+            String displayName = curData.getDisplayCount() == null
                     ? curData.getDisplayName()
-                    : MessageFormat.format("{0} ({1})", curData.getDisplayName(), curData.getCount());
+                    : curData.getDisplayName() + curData.getDisplayCount().getDisplaySuffix();
 
             this.setDisplayName(displayName);
         }
@@ -119,7 +120,7 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
     public void update(TreeItemDTO<? extends T> updatedData) {
         if (updatedData == null) {
             logger.log(Level.WARNING, "Expected non-null updatedData");
-        } else if (this.itemData != null && this.itemData.getId() != updatedData.getId()) {
+        } else if (this.itemData != null && !Objects.equals(this.itemData.getId(), updatedData.getId())) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "Expected update data to have same id but received [id: {0}] replacing [id: {1}]",
                     updatedData.getId(),

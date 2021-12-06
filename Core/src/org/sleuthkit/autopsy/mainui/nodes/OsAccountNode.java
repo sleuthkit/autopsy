@@ -39,7 +39,7 @@ public class OsAccountNode extends BaseNode<SearchResultsDTO, OsAccountRowDTO>{
                 results, 
                 rowData);
         String name = rowData.getContent().getName();
-        setName(name);
+        setName(ContentNodeUtil.getContentName(rowData.getContent().getId()));
         setDisplayName(name);
         setShortDescription(name);
         setIconBaseWithExtension(ICON_PATH);
@@ -56,7 +56,7 @@ public class OsAccountNode extends BaseNode<SearchResultsDTO, OsAccountRowDTO>{
     }
     
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
     

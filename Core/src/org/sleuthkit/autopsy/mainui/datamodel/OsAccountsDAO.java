@@ -18,24 +18,31 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.events.OsAccountEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.OsAccountRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -55,7 +62,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     "OsAccountsDAO.createSheet.comment.displayName=C",
     "OsAccountsDAO.createSheet.count.displayName=O",
     "OsAccountsDAO.fileColumns.noDescription=No Description",})
-public class OsAccountsDAO {
+public class OsAccountsDAO extends AbstractDAO {
 
     private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
@@ -75,6 +82,13 @@ public class OsAccountsDAO {
             getFileColumnKey(Bundle.OsAccountsDAO_accountRealmNameProperty_displayName()),
             getFileColumnKey(Bundle.OsAccountsDAO_createdTimeProperty_displayName()));
 
+    private static final Set<String> OS_EVENTS = ImmutableSet.of(
+            Case.Events.OS_ACCOUNTS_ADDED.toString(),
+            Case.Events.OS_ACCOUNTS_DELETED.toString(),
+            Case.Events.OS_ACCOUNTS_UPDATED.toString(),
+            Case.Events.OS_ACCT_INSTANCES_ADDED.toString()
+    );
+
     private static OsAccountsDAO instance = null;
 
     synchronized static OsAccountsDAO getInstance() {
@@ -89,7 +103,7 @@ public class OsAccountsDAO {
         return new ColumnKey(name, name, Bundle.OsAccountsDAO_fileColumns_noDescription());
     }
 
-    public SearchResultsDTO getAccounts(OsAccountsSearchParams key, long startItem, Long maxCount, boolean hardRefresh) throws ExecutionException, IllegalArgumentException {
+    public SearchResultsDTO getAccounts(OsAccountsSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (key == null) {
             throw new IllegalArgumentException("Search parameters are null");
         } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
@@ -97,11 +111,11 @@ public class OsAccountsDAO {
         }
 
         SearchParams<OsAccountsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
-        if (hardRefresh) {
-            this.searchParamsCache.invalidate(searchParams);
-        }
-
         return searchParamsCache.get(searchParams, () -> fetchAccountsDTOs(searchParams));
+    }
+
+    private boolean isOSAccountInvalidatingEvt(OsAccountsSearchParams searchParams, DAOEvent evt) {
+        return evt instanceof OsAccountEvent;
     }
 
     /**
@@ -163,7 +177,35 @@ public class OsAccountsDAO {
                     cellValues));
         };
 
-        return new BaseSearchResultsDTO(OS_ACCOUNTS_TYPE_ID, Bundle.OsAccounts_name_text(), OS_ACCOUNTS_WITH_SCO_COLUMNS, fileRows, 0, allAccounts.size());
+        return new BaseSearchResultsDTO(OS_ACCOUNTS_TYPE_ID, Bundle.OsAccounts_name_text(), OS_ACCOUNTS_WITH_SCO_COLUMNS, fileRows, OS_ACCOUNTS_TYPE_ID, 0, allAccounts.size());
+    }
+
+    @Override
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+    }
+
+    @Override
+    Set<DAOEvent> handleIngestComplete() {
+        // GVDTODO
+        return Collections.emptySet();
+    }
+
+    @Override
+    Set<TreeEvent> shouldRefreshTree() {
+        // GVDTODO
+        return Collections.emptySet();
+    }
+
+    @Override
+    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
+        if (!OS_EVENTS.contains(evt.getPropertyName())) {
+            return Collections.emptySet();
+        }
+        
+            this.searchParamsCache.invalidateAll();
+        
+        return Collections.singleton(new OsAccountEvent());
     }
 
     /**
@@ -180,19 +222,18 @@ public class OsAccountsDAO {
             super(params);
         }
 
-        @Override
-        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx, boolean hardRefresh) throws ExecutionException {
-            return MainDAO.getInstance().getOsAccountsDAO().getAccounts(this.getParameters(), pageIdx * pageSize, (long) pageSize, hardRefresh);
+        protected OsAccountsDAO getDAO() {
+            return MainDAO.getInstance().getOsAccountsDAO();
         }
 
         @Override
-        public boolean isRefreshRequired(PropertyChangeEvent evt) {
-            String eventType = evt.getPropertyName();
-            if (eventType.equals(Case.Events.OS_ACCOUNTS_ADDED.toString())
-                    || eventType.equals(Case.Events.OS_ACCOUNTS_DELETED.toString())) {
-                return true;
-            }
-            return false;
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getAccounts(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        }
+
+        @Override
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return getDAO().isOSAccountInvalidatingEvt(this.getParameters(), evt);
         }
     }
 }

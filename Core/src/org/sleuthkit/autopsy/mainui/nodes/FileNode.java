@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
-import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.ExtensionMediaType;
+import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
@@ -47,44 +47,6 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  */
 public class FileNode extends AbstractNode implements ActionContext {
 
-    /**
-     * Gets the path to the icon file that should be used to visually represent
-     * an AbstractFile, using the file name extension to select the icon.
-     *
-     * @param file An AbstractFile.
-     *
-     * @return An icon file path.
-     */
-    static String getIconForFileType(ExtensionMediaType fileType) {
-        if (fileType == null) {
-            return "org/sleuthkit/autopsy/images/file-icon.png";
-        }
-
-        switch (fileType) {
-            case IMAGE:
-                return "org/sleuthkit/autopsy/images/image-file.png";
-            case VIDEO:
-                return "org/sleuthkit/autopsy/images/video-file.png";
-            case AUDIO:
-                return "org/sleuthkit/autopsy/images/audio-file.png";
-            case DOC:
-                return "org/sleuthkit/autopsy/images/doc-file.png";
-            case EXECUTABLE:
-                return "org/sleuthkit/autopsy/images/exe-file.png";
-            case TEXT:
-                return "org/sleuthkit/autopsy/images/text-file.png";
-            case WEB:
-                return "org/sleuthkit/autopsy/images/web-file.png";
-            case PDF:
-                return "org/sleuthkit/autopsy/images/pdf-file.png";
-            case ARCHIVE:
-                return "org/sleuthkit/autopsy/images/archive-file.png";
-            default:
-            case UNCATEGORIZED:
-                return "org/sleuthkit/autopsy/images/file-icon.png";
-        }
-    }
-
     private final boolean directoryBrowseMode;
     private final FileRowDTO fileData;
     private final List<ColumnKey> columns;
@@ -97,8 +59,8 @@ public class FileNode extends AbstractNode implements ActionContext {
         // GVDTODO: at some point, this leaf will need to allow for children
         super(Children.LEAF, ContentNodeUtil.getLookup(file.getAbstractFile()));
         setIcon(file);
-        setDisplayName(ContentNodeUtil.getContentDisplayName(file.getFileName()));
         setName(ContentNodeUtil.getContentName(file.getId()));
+        setDisplayName(ContentNodeUtil.getContentDisplayName(file.getFileName()));
         setShortDescription(ContentNodeUtil.getContentDisplayName(file.getFileName()));
         this.directoryBrowseMode = directoryBrowseMode;
         this.fileData = file;
@@ -116,7 +78,7 @@ public class FileNode extends AbstractNode implements ActionContext {
                 this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
             }
         } else {
-            this.setIconBaseWithExtension(getIconForFileType(fileData.getExtensionMediaType()));
+            this.setIconBaseWithExtension(MediaTypeUtils.getIconForFileType(fileData.getExtensionMediaType()));
         }
     }
 
@@ -146,7 +108,7 @@ public class FileNode extends AbstractNode implements ActionContext {
     }
 
     @Override
-    public boolean supportsExtractActions() {
+    public boolean supportsTableExtractActions() {
         return true;
     }
 
@@ -166,8 +128,7 @@ public class FileNode extends AbstractNode implements ActionContext {
 
     @Override
     public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
-        // GVDTODO: HANDLE THIS ACTION IN A BETTER WAY!-----
-        // See JIRA-8099
+        // TODO: See JIRA-8099
         AbstractFile file = this.fileData.getAbstractFile();
         boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
         boolean encryptionDetected = false;
@@ -207,17 +168,17 @@ public class FileNode extends AbstractNode implements ActionContext {
             LayoutFile lf = ((LayoutFileRowDTO) fileData).getLayoutFile();
             switch (lf.getType()) {
                 case CARVED:
-                    setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png");
+                    setIconBaseWithExtension(NodeIconUtil.CARVED_FILE.getPath());
                     break;
                 case LAYOUT_FILE:
                     if (lf.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-                        setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+                        setIconBaseWithExtension(NodeIconUtil.DELETED_FILE.getPath());
                     } else {
-                        setIconBaseWithExtension(getIconForFileType(layoutFileRow.getExtensionMediaType()));
+                        setIconBaseWithExtension(MediaTypeUtils.getIconForFileType(layoutFileRow.getExtensionMediaType()));
                     }
                     break;
                 default:
-                    setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+                    setIconBaseWithExtension(NodeIconUtil.DELETED_FILE.getPath());
             }
         }
     }
@@ -236,12 +197,12 @@ public class FileNode extends AbstractNode implements ActionContext {
             AbstractFile file = fileData.getAbstractFile();
             if (file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
                 if (file.getType().equals(TSK_DB_FILES_TYPE_ENUM.CARVED)) {
-                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
+                    this.setIconBaseWithExtension(NodeIconUtil.CARVED_FILE.getPath()); //NON-NLS
                 } else {
-                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+                    this.setIconBaseWithExtension(NodeIconUtil.DELETED_FILE.getPath()); //NON-NLS
                 }
             } else {
-                this.setIconBaseWithExtension(getIconForFileType(fileData.getExtensionMediaType()));
+                this.setIconBaseWithExtension(MediaTypeUtils.getIconForFileType(fileData.getExtensionMediaType()));
             }
         }
     }
