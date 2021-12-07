@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Factory for displaying analysis result types in the tree.
@@ -302,21 +303,24 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             super(itemData.getSearchParams().getSearchTerm(),
                     getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT),
                     itemData,
-                    itemData.getSearchParams().hasChildren() ? Children.create(new KeywordFoundMatchFactory(itemData.getSearchParams()), true) : Children.LEAF,
+                    (itemData.getSearchParams().hasChildren() || itemData.getSearchParams().getSearchType() == TskData.KeywordSearchQueryType.REGEX 
+                            // for regex queries always create a subtree, even if there is only one child
+                            ? Children.create(new KeywordFoundMatchFactory(itemData.getSearchParams()), true) 
+                            : Children.LEAF),
                     getDefaultLookup(itemData));
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            KeywordSearchTermParams searchParams = this.getItemData().getSearchParams();
+            KeywordSearchTermParams searchTermParams = this.getItemData().getSearchParams();
 
-            if (!searchParams.hasChildren()) {
-                dataResultPanel.displayKeywordHits(
-                        new KeywordHitSearchParam(
-                                searchParams.getDataSourceId(),
-                                searchParams.getSetName(),
-                                null,
-                                searchParams.getSearchTerm()));
+            if (!searchTermParams.hasChildren()) {
+                KeywordHitSearchParam searchParams = new KeywordHitSearchParam(searchTermParams.getDataSourceId(),
+                            searchTermParams.getSetName(),
+                            searchTermParams.getSearchTerm(),
+                            null,
+                            searchTermParams.getSearchType());
+                dataResultPanel.displayKeywordHits(searchParams);
             } else {
                 super.respondSelection(dataResultPanel);
             }
@@ -393,7 +397,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     searchParams.getDataSourceId(),
                     searchParams.getSetName(),
                     searchParams.getKeywordMatch(),
-                    searchParams.getSearchTerm()));
+                    searchParams.getSearchTerm(),
+                    searchParams.getSearchType()));
         }
 
     }
