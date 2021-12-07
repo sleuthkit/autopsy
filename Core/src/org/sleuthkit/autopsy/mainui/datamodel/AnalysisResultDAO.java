@@ -194,6 +194,42 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         TableData tableData = createTableData(artType, pagedArtifacts);
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), allHits.size());
     }
+    
+    // filters results by TSK_SET_NAME attr and needs a search param with the set name
+    private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(SearchParams<? extends AnalysisResultSetSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+
+        SleuthkitCase skCase = getCase();
+        Blackboard blackboard = skCase.getBlackboard();
+
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
+
+        // We currently can't make a query on the set name field because need to use a prepared statement
+        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() + " ";
+        if (dataSourceId != null) {
+            originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
+        }
+
+        String expectedSetName = cacheKey.getParamData().getSetName();
+
+        List<BlackboardArtifact> allHashHits = new ArrayList<>();
+        allHashHits.addAll(blackboard.getAnalysisResultsWhere(originalWhereClause));
+        blackboard.loadBlackboardAttributes(allHashHits);
+
+        // Filter for the selected set
+        List<BlackboardArtifact> arts = new ArrayList<>();
+        for (BlackboardArtifact art : allHashHits) {
+            BlackboardAttribute setNameAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
+            if ((expectedSetName == null && setNameAttr == null)
+                    || (expectedSetName != null && setNameAttr != null && expectedSetName.equals(setNameAttr.getValueString()))) {
+                arts.add(art);
+            }
+        }
+
+        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
+        TableData tableData = createTableData(artType, pagedArtifacts);
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
+    }    
 
     @Override
     void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
@@ -303,7 +339,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         SearchParams<AnalysisResultSetSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
-        return setHitCache.get(searchParams, () -> fetchKeywordHitsForTable(searchParams));
+        return setHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
