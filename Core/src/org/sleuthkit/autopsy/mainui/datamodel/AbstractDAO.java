@@ -44,7 +44,7 @@ abstract class AbstractDAO {
      * @return The list of DAOEvents that should be broadcasted to the views or
      *         an empty list if the Autopsy events are irrelevant to this DAO.
      */
-    abstract Set<DAOEvent> processEvent(PropertyChangeEvent evt);
+    abstract Set<? extends DAOEvent> processEvent(PropertyChangeEvent evt);
 
     /**
      * Handles the ingest complete or cancelled event. Any events that are
@@ -52,7 +52,7 @@ abstract class AbstractDAO {
      *
      * @return The flushed events that were delayed and batched.
      */
-    abstract Set<DAOEvent> handleIngestComplete();
+    abstract Set<? extends DAOEvent> handleIngestComplete();
 
     /**
      * Returns any categories that require a tree refresh. For instance, if web
@@ -62,5 +62,5 @@ abstract class AbstractDAO {
      *
      * @return The categories that require a tree refresh.
      */
-    abstract Set<TreeEvent> shouldRefreshTree();
+    abstract Set<? extends TreeEvent> shouldRefreshTree();
 }

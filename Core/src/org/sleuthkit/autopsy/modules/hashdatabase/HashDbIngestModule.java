@@ -439,7 +439,7 @@ public class HashDbIngestModule implements FileIngestModule {
         attributesList.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, HashLookupModuleFactory.getModuleName(), db.getDisplayName()));
         try {
             Blackboard tskBlackboard = skCase.getBlackboard();
-            if (tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, attributesList) == false) {
+            if (tskBlackboard.artifactExists(file, BlackboardArtifact.Type.TSK_HASHSET_HIT, attributesList) == false) {
                 postHashSetHitToBlackboard(file, file.getMd5Hash(), db, comment);
             }
         } catch (TskCoreException ex) {

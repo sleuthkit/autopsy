@@ -48,7 +48,7 @@ public class OsAccountNode extends BaseNode<SearchResultsDTO, OsAccountRowDTO> i
                 results,
                 rowData);
         String name = rowData.getContent().getName();
-        setName(name);
+        setName(ContentNodeUtil.getContentName(rowData.getContent().getId()));
         setDisplayName(name);
         setShortDescription(name);
         setIconBaseWithExtension(ICON_PATH);

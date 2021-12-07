@@ -27,6 +27,7 @@ BlackboardArtifactDAO.columnKeys.srcFile.displayName=Source Name
 BlackboardArtifactDAO.columnKeys.srcFile.name=Source Name
 CommAccounts.name.text=Communication Accounts
 CommAccountsDAO.fileColumns.noDescription=No Description
+DataArtifactDAO_Accounts_displayName=Communication Accounts
 FileExtDocumentFilter_html_displayName=HTML
 FileExtDocumentFilter_office_displayName=Office
 FileExtDocumentFilter_pdf_displayName=PDF

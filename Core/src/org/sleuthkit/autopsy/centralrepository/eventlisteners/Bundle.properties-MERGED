@@ -1,18 +1,8 @@
 caseeventlistener.evidencetag=Evidence
-CaseEventsListener.module.name=Central Repository
-CaseEventsListener.prevCaseComment.text=Users seen in previous cases
-CaseEventsListener.prevExists.text=Previously Seen Users (Central Repository)
 CentralRepositoryNotificationDialog.bulletHeader=This data is used to:
 CentralRepositoryNotificationDialog.bulletOne=Ignore common items (files, domains, and accounts)
 CentralRepositoryNotificationDialog.bulletThree=Create personas that group accounts
 CentralRepositoryNotificationDialog.bulletTwo=Identify where an item was previously seen
 CentralRepositoryNotificationDialog.finalRemarks=To limit what is stored, use the Central Repository options panel.
 CentralRepositoryNotificationDialog.header=Autopsy stores data about each case in its Central Repository.
-IngestEventsListener.ingestmodule.name=Central Repository
-IngestEventsListener.prevCaseComment.text=Previous Case: 
-# {0} - typeName
-# {1} - count
-IngestEventsListener.prevCount.text=Number of previous {0}: {1}
-IngestEventsListener.prevExists.text=Previously Seen Devices (Central Repository)
-IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)
 Installer.centralRepoUpgradeFailed.title=Central repository disabled
