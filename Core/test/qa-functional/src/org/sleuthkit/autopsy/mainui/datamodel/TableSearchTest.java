@@ -102,6 +102,7 @@ public class TableSearchTest extends NbTestCase {
     private static final String KEYWORD_SET_1 = "Keyword Set 1";
     private static final String KEYWORD_SET_2 = "Keyword Set 2";
     private static final String KEYWORD = "bomb";  
+    private static final String KEYWORD_REGEX = "bomb*";  
     private static final String KEYWORD_PREVIEW = "There is a bomb.";
     
     // Extension and MIME type test
@@ -391,6 +392,16 @@ public class TableSearchTest extends NbTestCase {
             fileA3.newAnalysisResult(
                     BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_NOTABLE, 
                     null, KEYWORD_SET_2, null, attrs);
+            
+            attrs.clear();
+            attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME, MODULE_NAME, KEYWORD_SET_2));
+            attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_KEYWORD, MODULE_NAME, KEYWORD));
+            attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_KEYWORD_REGEXP, MODULE_NAME, KEYWORD_REGEX));
+            attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_KEYWORD_PREVIEW, MODULE_NAME, KEYWORD_PREVIEW));
+            attrs.add(new BlackboardAttribute(BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.REGEX.getType()));
+            fileB1.newAnalysisResult(
+                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_NOTABLE, 
+                    null, KEYWORD_SET_2, null, attrs);            
             
             // This is the artifact that will get most of the testing. It is in data source 2 and has the previous hash hit as source.
             attrs.clear();
@@ -1057,13 +1068,19 @@ public class TableSearchTest extends NbTestCase {
         try {
             // Test keyword set hits
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
-            KeywordHitSearchParam kwParam = new KeywordHitSearchParam(null, KEYWORD_SET_1, "", "", TskData.KeywordSearchQueryType.LITERAL);
+            KeywordHitSearchParam kwParam = new KeywordHitSearchParam(null, KEYWORD_SET_1, "keyword1", "", TskData.KeywordSearchQueryType.LITERAL);
             AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getKeywordHitsForTable(kwParam, 0, null);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
-            assertEquals(2, results.getTotalResultsCount());
-            assertEquals(2, results.getItems().size());
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
             
-            kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_1, "", "", TskData.KeywordSearchQueryType.LITERAL);
+            kwParam = new KeywordHitSearchParam(dataSource1.getId(), KEYWORD_SET_2, "keyword2", "", TskData.KeywordSearchQueryType.LITERAL);
+            results = analysisResultDAO.getKeywordHitsForTable(kwParam, 0, null);
+            assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
+            assertEquals(1, results.getTotalResultsCount());
+            assertEquals(1, results.getItems().size());
+            
+            kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_2, KEYWORD, KEYWORD_REGEX, TskData.KeywordSearchQueryType.REGEX);
             results = analysisResultDAO.getKeywordHitsForTable(kwParam, 0, null);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
@@ -1079,13 +1096,10 @@ public class TableSearchTest extends NbTestCase {
             assertTrue(rowDTO instanceof AnalysisResultRowDTO);
             AnalysisResultRowDTO analysisResultRowDTO = (AnalysisResultRowDTO) rowDTO;
             
-            // Check that the artifact, source content and linked file are correct
-            assertEquals(keywordHitAnalysisResult, analysisResultRowDTO.getAnalysisResult());
-            assertEquals(keywordHitSource, analysisResultRowDTO.getSrcContent());
-            
             // Check that the keyword and preview are present
             assertTrue(analysisResultRowDTO.getCellValues().contains(KEYWORD));
             assertTrue(analysisResultRowDTO.getCellValues().contains(KEYWORD_PREVIEW));
+            assertTrue(analysisResultRowDTO.getCellValues().contains(KEYWORD_REGEX));
             
         } catch (ExecutionException ex) {
             Exceptions.printStackTrace(ex);
