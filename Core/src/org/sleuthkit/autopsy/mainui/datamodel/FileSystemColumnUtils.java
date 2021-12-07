@@ -664,6 +664,8 @@ public class FileSystemColumnUtils {
         if (file != null) {
             try {
                 // If the file has no children at all, then it has no displayable children.
+                // NOTE: AbstractContent.hasChildren() uses in-memory data to determine children 
+                // and no DB query is required. 
                 if (!file.hasChildren()) {
                     return false;
                 }
