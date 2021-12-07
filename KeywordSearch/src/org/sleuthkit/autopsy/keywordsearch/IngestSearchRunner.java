@@ -518,7 +518,9 @@ final class IngestSearchRunner {
                         progressIndicator = ProgressHandle.createHandle(displayName, new Cancellable() {
                             @Override
                             public boolean cancel() {
-                                progressIndicator.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
+                                if (progressIndicator != null) {
+                                    progressIndicator.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
+                                }
                                 logger.log(Level.INFO, "Search cancelled by user"); //NON-NLS
                                 new Thread(() -> {
                                     IngestSearchRunner.Searcher.this.cancel(true);

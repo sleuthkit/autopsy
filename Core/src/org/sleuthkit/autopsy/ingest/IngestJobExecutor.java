@@ -1300,12 +1300,12 @@ final class IngestJobExecutor {
     void execute(AnalysisResultIngestTask task) {
         jobStateLock.readLock().lock();
         try {
-            if (!isCancelled() && !analysisResultIngestPipeline.isEmpty()) {
+            if (!isCancelled() && !analysisResultIngestPipeline.isEmpty()) {              
                 List<IngestModuleError> errors = new ArrayList<>();
                 errors.addAll(analysisResultIngestPipeline.performTask(task));
                 if (!errors.isEmpty()) {
                     logIngestModuleErrors(errors);
-                }
+                }             
             }
         } finally {
             taskScheduler.notifyTaskCompleted(task);
@@ -1588,7 +1588,7 @@ final class IngestJobExecutor {
                     artifactIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
                 }
                 if (resultIngestProgressBar != null) {
-                    resultIngestProgressBar.setDisplayName(NbBundle.getMessage(getClass(), "IngestJob.progress.resultArtifactIngest.displayName", dataSource.getName()));
+                    resultIngestProgressBar.setDisplayName(Bundle.IngestJob_progress_analysisResultIngest_displayName(dataSource.getName()));
                     resultIngestProgressBar.progress(NbBundle.getMessage(getClass(), "IngestJob.progress.cancelling"));
                 }
             });
