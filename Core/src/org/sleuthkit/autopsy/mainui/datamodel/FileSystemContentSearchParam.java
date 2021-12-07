@@ -19,12 +19,12 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.autopsy.mainui.nodes.TableNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.NodeSelectionInfo.ContentNodeSelectionInfo;
 
 /**
  * Key for content object in order to retrieve data from DAO.
  */
-public class FileSystemContentSearchParam implements TableNodeSelectionInfo{
+public class FileSystemContentSearchParam implements ContentNodeSelectionInfo{
     private final Long contentObjectId;
     
     // This param is can change, is not used as part of the search query and

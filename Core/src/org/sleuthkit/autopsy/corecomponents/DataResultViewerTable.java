@@ -72,7 +72,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import org.sleuthkit.autopsy.mainui.nodes.TableNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.NodeSelectionInfo.ContentNodeSelectionInfo;
 import org.sleuthkit.datamodel.Score.Significance;
 
 /**
@@ -387,8 +387,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * If one of the child nodes of the root node is to be selected, select
          * it.
          */
-        if (rootNode instanceof TableNodeSelectionInfo) {
-            TableNodeSelectionInfo selectedChildInfo = ((TableNodeSelectionInfo) rootNode);
+        if (rootNode instanceof ContentNodeSelectionInfo) {
+            ContentNodeSelectionInfo selectedChildInfo = ((ContentNodeSelectionInfo) rootNode);
             if (null != selectedChildInfo) {
                 Node[] childNodes = rootNode.getChildren().getNodes(true);
                 for (int i = 0; i < childNodes.length; ++i) {
@@ -406,7 +406,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     }
                 }
                 // Once it is selected clear the id.
-                ((TableNodeSelectionInfo) rootNode).setChildIdToSelect(null);
+                ((ContentNodeSelectionInfo) rootNode).setChildIdToSelect(null);
             }
         }
 

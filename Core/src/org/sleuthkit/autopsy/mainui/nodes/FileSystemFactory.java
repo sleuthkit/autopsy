@@ -43,6 +43,7 @@ import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.CARVED_FILE;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.DELETED_FILE;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.DELETED_FOLDER;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.FOLDER;
+import org.sleuthkit.autopsy.mainui.nodes.NodeSelectionInfo.ContentNodeSelectionInfo;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
@@ -211,7 +212,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
      */
     @NbBundle.Messages({
         "FileSystemFactory.FileSystemTreeNode.ExtractUnallocAction.text=Extract Unallocated Space to Single Files"})
-    public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> implements ActionContext, TableNodeSelectionInfo {
+    public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> implements ActionContext, ContentNodeSelectionInfo {
 
         private Long childContentToSelect;
 

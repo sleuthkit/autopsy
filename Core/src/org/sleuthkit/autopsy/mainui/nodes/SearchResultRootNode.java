@@ -18,22 +18,19 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.util.Optional;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
-import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.autopsy.mainui.nodes.NodeSelectionInfo.ContentNodeSelectionInfo;
 
 /**
  * A node whose children will be displayed in the results view and determines
  * children based on a SearchResultDTO.
  */
-public class SearchResultRootNode extends AbstractNode implements TableNodeSelectionInfo{
+public class SearchResultRootNode extends AbstractNode implements ContentNodeSelectionInfo{
 
     private final SearchResultChildFactory factory;
     

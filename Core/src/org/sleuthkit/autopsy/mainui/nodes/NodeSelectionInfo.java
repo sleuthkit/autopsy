@@ -24,12 +24,7 @@ import org.sleuthkit.datamodel.Content;
 /**
  * An interface for nodes that support the view selected file\directory.
  */
-public interface TableNodeSelectionInfo {
-
-    void setChildIdToSelect(Long contentId);
-
-    Long getChildIdToSelect();
-
+public interface NodeSelectionInfo {
     /**
      * Determine of the given node represents the child content to
      * be selected.
@@ -38,12 +33,20 @@ public interface TableNodeSelectionInfo {
      * 
      * @return True if there is a match. 
      */
-    default boolean matches(Node node) {
-        Content content = node.getLookup().lookup(Content.class);
-        if (content != null && getChildIdToSelect() != null) {
-            return getChildIdToSelect().equals(content.getId());
-        }
+    boolean matches(Node node);
+    
+    public interface ContentNodeSelectionInfo extends NodeSelectionInfo{
+        void setChildIdToSelect(Long contentId);
 
-        return false;
+        Long getChildIdToSelect();
+        
+        default boolean matches(Node node) {
+            Content content = node.getLookup().lookup(Content.class);
+            if (content != null && getChildIdToSelect() != null) {
+                return getChildIdToSelect().equals(content.getId());
+            }
+
+            return false;
+        }
     }
 }

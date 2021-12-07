@@ -50,7 +50,7 @@ import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DataSourceFilesNode;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
-import org.sleuthkit.autopsy.mainui.nodes.TableNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.NodeSelectionInfo.ContentNodeSelectionInfo;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -345,8 +345,8 @@ public class ViewContextAction extends AbstractAction {
             }
         }
         
-        if(parentTreeViewNode instanceof TableNodeSelectionInfo) {
-            ((TableNodeSelectionInfo) parentTreeViewNode).setChildIdToSelect(childIdToSelect);
+        if(parentTreeViewNode instanceof ContentNodeSelectionInfo) {
+            ((ContentNodeSelectionInfo) parentTreeViewNode).setChildIdToSelect(childIdToSelect);
         }
 
         TreeView treeView = treeViewTopComponent.getTree();
