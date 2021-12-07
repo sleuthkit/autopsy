@@ -240,7 +240,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data to display.
          */
         public KeywordSetNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
-            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+            super("KEYWORD_SET_NODE_AD_HOC",
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
                     Children.create(new KeywordSearchTermFactory(itemData.getSearchParams()), true),
