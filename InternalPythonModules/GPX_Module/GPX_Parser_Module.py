@@ -134,7 +134,7 @@ class GPXParserFileIngestModule(FileIngestModule):
 
         # Create a GeoArtifactsHelper for this file.
         geoArtifactHelper = GeoArtifactsHelper(
-            self.skCase, self.moduleName, None, file, context.getJobId())
+            self.skCase, self.moduleName, None, file, self.context.getJobId())
 
         if self.writeDebugMsgs:
             self.log(Level.INFO, "Processing " + file.getUniquePath() +
@@ -213,7 +213,7 @@ class GPXParserFileIngestModule(FileIngestModule):
 
                     art = file.newDataArtifact(BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK), attributes)
 
-                    self.blackboard.postArtifact(art, self.moduleName, context.getJobId())
+                    self.blackboard.postArtifact(art, self.moduleName, self.context.getJobId())
 
                 except Blackboard.BlackboardException as e:
                     self.log(Level.SEVERE, "Error posting GPS bookmark artifact for " +
