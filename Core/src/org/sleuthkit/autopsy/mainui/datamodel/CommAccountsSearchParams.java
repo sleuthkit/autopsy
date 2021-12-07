@@ -20,16 +20,18 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Key for accessing data about communication accounts from the DAO.
  */
-public class CommAccountsSearchParams {
+public class CommAccountsSearchParams extends DataArtifactSearchParam {
 
     private final Account.Type type;
     private final Long dataSourceId;
  
     public CommAccountsSearchParams(Account.Type type, Long dataSourceId) {
+        super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
         this.type = type;
         this.dataSourceId = dataSourceId;
     }

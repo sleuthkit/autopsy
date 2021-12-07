@@ -67,8 +67,8 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
         // GVDTODO: at some point, this leaf will need to allow for children
         super(Children.LEAF, ContentNodeUtil.getLookup(file.getAbstractFile()), results, file);
         setIcon(file);
-        setDisplayName(ContentNodeUtil.getContentDisplayName(file.getFileName()));
         setName(ContentNodeUtil.getContentName(file.getId()));
+        setDisplayName(ContentNodeUtil.getContentDisplayName(file.getFileName()));
         setShortDescription(ContentNodeUtil.getContentDisplayName(file.getFileName()));
         this.directoryBrowseMode = directoryBrowseMode;
         this.fileData = file;
