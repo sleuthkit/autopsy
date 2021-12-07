@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -63,7 +62,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.FileKnown;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
+import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
+import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_TYPE_ENUM;
 
 /**
@@ -157,7 +159,7 @@ public class ViewsDAO extends AbstractDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        SearchParams<DeletedContentSearchParams> searchParams = new SearchParams<>(params, startItem, maxCount);
+        SearchParams<Object> searchParams = new SearchParams<>(params, startItem, maxCount);
         return searchParamsCache.get(searchParams, () -> fetchDeletedSearchResultsDTOs(params.getFilter(), params.getDataSourceId(), startItem, maxCount));
     }
 
@@ -236,7 +238,7 @@ public class ViewsDAO extends AbstractDAO {
      *         hide known files or returns empty string otherwise.
      */
     private String getHideKnownAndClause() {
-        return (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known <> " + TskData.FileKnown.KNOWN.getFileKnownValue() + ") ") : "");
+        return (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known <> " + FileKnown.KNOWN.getFileKnownValue() + ") ") : "");
     }
 
     /**
@@ -244,7 +246,7 @@ public class ViewsDAO extends AbstractDAO {
      *         is regular.
      */
     private String getRegDirTypeClause() {
-        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")";
+        return "(dir_type = " + TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")";
     }
 
     /**
@@ -278,14 +280,14 @@ public class ViewsDAO extends AbstractDAO {
      * @return The TSK_DB_FILES_TYPE_ENUm values allowed for mime type view
      *         items.
      */
-    private Set<TskData.TSK_DB_FILES_TYPE_ENUM> getMimeDbFilesTypes() {
+    private Set<TSK_DB_FILES_TYPE_ENUM> getMimeDbFilesTypes() {
         return Stream.of(
-                TskData.TSK_DB_FILES_TYPE_ENUM.FS,
-                TskData.TSK_DB_FILES_TYPE_ENUM.CARVED,
-                TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED,
-                TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE,
-                TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL,
-                (hideSlackFilesInViewsTree() ? null : (TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)))
+                TSK_DB_FILES_TYPE_ENUM.FS,
+                TSK_DB_FILES_TYPE_ENUM.CARVED,
+                TSK_DB_FILES_TYPE_ENUM.DERIVED,
+                TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE,
+                TSK_DB_FILES_TYPE_ENUM.LOCAL,
+                (hideSlackFilesInViewsTree() ? null : (TSK_DB_FILES_TYPE_ENUM.SLACK)))
                 .filter(ordinal -> ordinal != null)
                 .collect(Collectors.toSet());
     }
@@ -361,22 +363,22 @@ public class ViewsDAO extends AbstractDAO {
     private static String getDeletedContentClause(DeletedContentFilter filter) throws IllegalArgumentException {
         switch (filter) {
             case FS_DELETED_FILTER:
-                return "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
-                        + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
-                        + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType(); //NON-NLS
+                return "dir_flags = " + TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
+                        + " AND meta_flags != " + TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
+                        + " AND type = " + TSK_DB_FILES_TYPE_ENUM.FS.getFileType(); //NON-NLS
 
             case ALL_DELETED_FILTER:
                 return " ( "
                         + "( "
-                        + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
+                        + "(dir_flags = " + TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
                         + " OR " //NON-NLS
-                        + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
+                        + "meta_flags = " + TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
                         + ")"
-                        + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
+                        + " AND type = " + TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
                         + " )"
-                        + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType() //NON-NLS
-                        + " OR (dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
-                        + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.getFileType() + " )"
+                        + " OR type = " + TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType() //NON-NLS
+                        + " OR (dir_flags = " + TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
+                        + " AND type = " + TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.getFileType() + " )"
                         + " )";
 
             default:
@@ -392,7 +394,7 @@ public class ViewsDAO extends AbstractDAO {
      */
     private String getBaseFileSizeFilter() {
         // Ignore unallocated block files.
-        return "(type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")" + getHideKnownAndClause();
+        return "(type != " + TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")" + getHideKnownAndClause();
     }
 
     /**
@@ -556,6 +558,7 @@ public class ViewsDAO extends AbstractDAO {
 
         return new TreeResultsDTO<>(treeList);
     }
+
     /**
      * Creates a size tree item.
      *
@@ -856,7 +859,7 @@ public class ViewsDAO extends AbstractDAO {
                     file.getName(),
                     file.getNameExtension(),
                     MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
-                    file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
+                    file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
                     file.getType(),
                     cellValues));
         }
@@ -911,7 +914,7 @@ public class ViewsDAO extends AbstractDAO {
         AbstractFile af = DAOEventUtils.getFileFromFileEvent(evt);
         if (af == null) {
             return Collections.emptySet();
-        } else if (hideKnownFilesInViewsTree() && TskData.FileKnown.KNOWN.equals(af.getKnown())) {
+        } else if (hideKnownFilesInViewsTree() && FileKnown.KNOWN.equals(af.getKnown())) {
             return Collections.emptySet();
         }
 
@@ -922,13 +925,15 @@ public class ViewsDAO extends AbstractDAO {
                 ? Collections.emptySet()
                 : EXTENSION_FILTER_MAP.getOrDefault("." + af.getNameExtension(), Collections.emptySet());
 
+        Set<DeletedContentFilter> deletedContentFilters = getMatchingDeletedContentFilters(af);
+
         // create a mime type mapping if mime type present
         String evtMimeType = (StringUtils.isBlank(af.getMIMEType()) || !TSK_FS_NAME_TYPE_ENUM.REG.equals(af.getDirType())) || !getMimeDbFilesTypes().contains(af.getType())
                 ? null
                 : af.getMIMEType();
 
         // create a size mapping if size present in filters
-        FileSizeFilter evtFileSize = TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.equals(af.getType())
+        FileSizeFilter evtFileSize = TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.equals(af.getType())
                 ? null
                 : Stream.of(FileSizeFilter.values())
                         .filter(filter -> af.getSize() >= filter.getMinBound() && (filter.getMaxBound() == null || af.getSize() < filter.getMaxBound()))
@@ -940,12 +945,13 @@ public class ViewsDAO extends AbstractDAO {
         }
 
         SubDAOUtils.invalidateKeys(this.searchParamsCache,
-                (Predicate<Object>) (searchParams) -> searchParamsMatchEvent(evtExtFilters, evtMimeType, evtFileSize, dsId, searchParams));
+                (Predicate<Object>) (searchParams) -> searchParamsMatchEvent(evtExtFilters, deletedContentFilters, evtMimeType, evtFileSize, dsId, searchParams));
 
-        return getDAOEvents(evtExtFilters, evtMimeType, evtFileSize, dsId);
+        return getDAOEvents(evtExtFilters, deletedContentFilters, evtMimeType, evtFileSize, dsId);
     }
 
     private boolean searchParamsMatchEvent(Set<FileExtSearchFilter> evtExtFilters,
+            Set<DeletedContentFilter> deletedContentFilters,
             String evtMimeType,
             FileSizeFilter evtFileSize,
             long dsId,
@@ -965,6 +971,10 @@ public class ViewsDAO extends AbstractDAO {
             FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) searchParams;
             return Objects.equals(sizeParams.getSizeFilter(), evtFileSize)
                     && (sizeParams.getDataSourceId() == null || Objects.equals(sizeParams.getDataSourceId(), dsId));
+        } else if (searchParams instanceof DeletedContentSearchParams) {
+            DeletedContentSearchParams deletedParams = (DeletedContentSearchParams) searchParams;
+            return evtExtFilters.contains(deletedParams.getFilter())
+                    && (deletedParams.getDataSourceId() == null || Objects.equals(deletedParams.getDataSourceId(), dsId));           
         } else {
             return false;
         }
@@ -974,22 +984,29 @@ public class ViewsDAO extends AbstractDAO {
      * Clears relevant cache entries from cache based on digest of autopsy
      * events.
      *
-     * @param extFilters The set of affected extension filters.
-     * @param mimeType   The affected mime type or null.
-     * @param sizeFilter The affected size filter or null.
-     * @param dsId       The file object id.
+     * @param extFilters            The set of affected extension filters.
+     * @param deletedContentFilters The set of affected deleted content filters.
+     * @param mimeType              The affected mime type or null.
+     * @param sizeFilter            The affected size filter or null.
+     * @param dsId                  The file object id.
      *
      * @return The list of affected dao events.
      */
     private Set<DAOEvent> getDAOEvents(Set<FileExtSearchFilter> extFilters,
+            Set<DeletedContentFilter> deletedContentFilters,
             String mimeType,
             FileSizeFilter sizeFilter,
             long dsId) {
 
-        List<DAOEvent> daoEvents = extFilters.stream()
-                .map(extFilter -> new FileTypeExtensionsEvent(extFilter, dsId))
-                .collect(Collectors.toList());
+        Stream<DAOEvent> extEvents = extFilters.stream()
+                .map(extFilter -> new FileTypeExtensionsEvent(extFilter, dsId));
 
+        Stream<DAOEvent> deletedEvents = deletedContentFilters.stream()
+                .map(deletedFilter -> new DeletedContentEvent(deletedFilter, dsId));        
+
+        List<DAOEvent> daoEvents = Stream.concat(extEvents, deletedEvents)
+                .collect(Collectors.toList());
+        
         if (mimeType != null) {
             daoEvents.add(new FileTypeMimeEvent(mimeType, dsId));
         }
@@ -1005,6 +1022,28 @@ public class ViewsDAO extends AbstractDAO {
         return Stream.of(daoEvents, treeEvents)
                 .flatMap(lst -> lst.stream())
                 .collect(Collectors.toSet());
+    }
+
+    private Set<DeletedContentFilter> getMatchingDeletedContentFilters(AbstractFile af) {
+        Set<DeletedContentFilter> toRet = new HashSet<>();
+        
+        TSK_DB_FILES_TYPE_ENUM type = af.getType();
+        
+        if (af.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC) 
+                && !af.isMetaFlagSet(TSK_FS_META_FLAG_ENUM.ORPHAN) 
+                && TSK_DB_FILES_TYPE_ENUM.FS.equals(type)) {
+            
+            toRet.add(DeletedContentFilter.FS_DELETED_FILTER);
+        }
+        
+        if ((((af.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC) || af.isMetaFlagSet(TSK_FS_META_FLAG_ENUM.ORPHAN)) && TSK_DB_FILES_TYPE_ENUM.FS.equals(type)) 
+                || TSK_DB_FILES_TYPE_ENUM.CARVED.equals(type) 
+                || (af.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC) && TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.equals(type)))) {
+            
+            toRet.add(DeletedContentFilter.ALL_DELETED_FILTER);
+        }
+        
+        return toRet;
     }
 
     /**

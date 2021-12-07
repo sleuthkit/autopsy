@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
-import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentFilter;
+import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentFilter;
 
 /**
  * An event to signal that deleted files have been added to the given case on
