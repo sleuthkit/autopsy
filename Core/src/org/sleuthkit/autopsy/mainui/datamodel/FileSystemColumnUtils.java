@@ -307,26 +307,9 @@ public class FileSystemColumnUtils {
         } else if (content instanceof Pool) {
             Pool pool = (Pool)content;
             return pool.getType().getName(); // We currently use the type name for both the name and type fields
-        } else if (content instanceof AbstractFile) {
-            AbstractFile file = (AbstractFile)content;
-            return convertDotDirName(file);
         }
         return content.getName();
     }
-    
-    
-    @NbBundle.Messages({
-        "FileSystemColumnUtils.getContentName.dotDir=[current folder]",
-        "FileSystemColumnUtils.getContentName.dotDotDir=[parent folder]",
-    })
-    public static String convertDotDirName(AbstractFile file) {
-        if (file.getName().equals("..")) {
-            return Bundle.FileSystemColumnUtils_getContentName_dotDotDir();
-        } else if (file.getName().equals(".")) {
-            return Bundle.FileSystemColumnUtils_getContentName_dotDir();
-        }
-        return file.getName();
-    }    
     
     /**
      * Get the column keys for an abstract file object.
