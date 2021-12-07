@@ -27,6 +27,9 @@ import org.openide.util.NbBundle;
     "DeletedContent.allDelFilter.text=All"})
 public enum DeletedContentFilter {
 
+    /**
+     * Names are used in sql query so make sure they are sql friendly.
+     */
     FS_DELETED_FILTER(0, "FS_DELETED_FILTER", Bundle.DeletedContent_fsDelFilter_text()),
     ALL_DELETED_FILTER(1, "ALL_DELETED_FILTER", Bundle.DeletedContent_allDelFilter_text());
 
