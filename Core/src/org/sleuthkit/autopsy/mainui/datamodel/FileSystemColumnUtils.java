@@ -623,10 +623,12 @@ public class FileSystemColumnUtils {
             }
         }
 
-        // Filter out any files without children
+        // Filter out any files that aren't directories and do not have children
         for (Iterator<Content> iter = treeChildren.listIterator(); iter.hasNext(); ) {
             Content c = iter.next();
-            if (c instanceof AbstractFile && (! hasDisplayableContentChildren((AbstractFile)c))) {
+            if (c instanceof AbstractFile 
+                    && (! ((AbstractFile)c).isDir())
+                    && (! hasDisplayableContentChildren((AbstractFile)c))) {
                 iter.remove();
             }
         }
@@ -645,6 +647,8 @@ public class FileSystemColumnUtils {
         if (file != null) {
             try {
                 // If the file has no children at all, then it has no displayable children.
+                // NOTE: AbstractContent.hasChildren() uses in-memory data to determine children 
+                // and no DB query is required. 
                 if (!file.hasChildren()) {
                     return false;
                 }
