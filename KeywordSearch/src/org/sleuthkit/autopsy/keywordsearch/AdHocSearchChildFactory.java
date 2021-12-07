@@ -31,15 +31,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
@@ -89,7 +92,8 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
      * Constructor
      *
      * @param queryRequests Query results
-     * @param saveResults Flag whether to save search results as KWS artifacts.
+     * @param saveResults   Flag whether to save search results as KWS
+     *                      artifacts.
      */
     AdHocSearchChildFactory(Collection<AdHocQueryRequest> queryRequests, boolean saveResults) {
         this.queryRequests = queryRequests;
@@ -129,7 +133,7 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
 
             createFlatKeys(queryRequest.getQuery(), toPopulate);
         }
-        
+
         // If there were no hits, make a single Node that will display that
         // no results were found.
         if (toPopulate.isEmpty()) {
@@ -176,7 +180,7 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
              * Get file properties.
              */
             Map<String, Object> properties = new LinkedHashMap<>();
- 
+
             /**
              * Add a snippet property, if available.
              */
@@ -203,7 +207,6 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
             } else {
                 properties.put(LOCATION.toString(), contentName);
             }
-
 
             String hitName;
             BlackboardArtifact artifact = null;
@@ -414,21 +417,35 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
             this.saveResults = saveResults;
         }
 
-        protected void finalizeWorker() {
-            deregisterWriter(this);
-            EventQueue.invokeLater(progress::finish);
-        }
-
         @Override
         protected Void doInBackground() throws Exception {
-            registerWriter(this); //register (synchronized on class) outside of writerLock to prevent deadlock
-            final String queryStr = query.getQueryString();
-            final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
             try {
-                progress = ProgressHandle.createHandle(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), () -> BlackboardResultWriter.this.cancel(true));
-                hits.process(progress, null, this, false, saveResults, null);
+                if (RuntimeProperties.runningWithGUI()) {
+                    final String queryStr = query.getQueryString();
+                    final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
+                    SwingUtilities.invokeLater(() -> {
+                        progress = ProgressHandle.createHandle(
+                                NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp),
+                                new Cancellable() {
+                            @Override
+                            public boolean cancel() {
+                                //progress.setDisplayName(displayName + " " + NbBundle.getMessage(this.getClass(), "SearchRunner.doInBackGround.cancelMsg"));
+                                logger.log(Level.INFO, "Ad hoc search cancelled by user"); //NON-NLS
+                                new Thread(() -> {
+                                    BlackboardResultWriter.this.cancel(true);
+                                }).start();
+                                return true;
+                            }
+                        });
+                    });
+                }
+                registerWriter(this); //register (synchronized on class) outside of writerLock to prevent deadlock
+                hits.process(this, false, saveResults, null);
             } finally {
-                finalizeWorker();
+                deregisterWriter(this);
+                if (RuntimeProperties.runningWithGUI() && progress != null) {
+                    EventQueue.invokeLater(progress::finish);
+                }
             }
             return null;
         }

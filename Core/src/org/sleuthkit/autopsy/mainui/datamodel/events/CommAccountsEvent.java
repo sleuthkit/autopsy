@@ -19,33 +19,39 @@
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * An event for handling
  */
-public class CommAccountsEvent implements DAOEvent {
+public class CommAccountsEvent  extends DataArtifactEvent {
 
-    private final String accountType;
-    private final Long dataSourceId;
+    private final Account.Type accountType;
 
-    public CommAccountsEvent(String accountType, Long dataSourceId) {
+    /**
+     * Main constructor.
+     *
+     * @param accountType  The account type identifier.
+     * @param dataSourceId The data source id to filter on or null.
+     */
+    public CommAccountsEvent(Account.Type accountType, Long dataSourceId) {
+        super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
         this.accountType = accountType;
-        this.dataSourceId = dataSourceId;
     }
 
-    public String getAccountType() {
+    /**
+     * @return The account type identifier.
+     */
+    public Account.Type getAccountType() {
         return accountType;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
     }
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 17 * hash + Objects.hashCode(this.accountType);
-        hash = 17 * hash + Objects.hashCode(this.dataSourceId);
+        int hash = 7;
+        hash = 29 * hash + Objects.hashCode(this.accountType);
+        hash = 29 * hash + super.hashCode();
         return hash;
     }
 
@@ -64,15 +70,7 @@ public class CommAccountsEvent implements DAOEvent {
         if (!Objects.equals(this.accountType, other.accountType)) {
             return false;
         }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public Type getType() {
-        return Type.RESULT;
+        return super.equals(obj);
     }
 
 }
