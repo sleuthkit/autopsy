@@ -60,6 +60,11 @@ public interface IngestModule {
      * must also be taken into consideration when sharing resources between
      * module instances. See IngestModuleReferenceCounter.
      *
+     * IMPORTANT: Start up IngestModuleException messages are displayed to the
+     * user, if a user is present. Therefore, an exception to the policy that
+     * exception messages are not localized is appropriate in this method. Also,
+     * the exception messages should be user-friendly.
+     *
      * @param context Provides data and services specific to the ingest job and
      *                the ingest pipeline of which the module is a part.
      *
