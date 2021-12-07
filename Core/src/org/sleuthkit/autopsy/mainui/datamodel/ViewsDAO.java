@@ -23,6 +23,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,6 +51,7 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTr
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DeletedContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeExtensionsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeMimeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeSizeEvent;
@@ -123,6 +125,29 @@ public class ViewsDAO extends AbstractDAO {
         return searchParamsCache.get(searchParams, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId(), startItem, maxCount));
     }
 
+    /**
+     * Returns search results for the given deleted content search params.
+     *
+     * @param params    The deleted content search params.
+     * @param startItem The starting item to start returning at.
+     * @param maxCount  The maximum number of items to return.
+     *
+     * @return The search results.
+     *
+     * @throws ExecutionException
+     * @throws IllegalArgumentException
+     */
+    public SearchResultsDTO getDeletedContent(DeletedContentSearchParams params, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
+        if (params.getFilter() == null) {
+            throw new IllegalArgumentException("Must have non-null filter");
+        } else if (params.getDataSourceId() != null && params.getDataSourceId() <= 0) {
+            throw new IllegalArgumentException("Data source id must be greater than 0 or null");
+        }
+
+        SearchParams<DeletedContentSearchParams> searchParams = new SearchParams<>(params, startItem, maxCount);
+        return searchParamsCache.get(searchParams, () -> fetchDeletedSearchResultsDTOs(params.getFilter(), params.getDataSourceId(), startItem, maxCount));
+    }
+
     private boolean isFilesByExtInvalidating(FileTypeExtensionsSearchParams key, DAOEvent eventData) {
         if (!(eventData instanceof FileTypeExtensionsEvent)) {
             return false;
@@ -152,6 +177,16 @@ public class ViewsDAO extends AbstractDAO {
         FileTypeSizeEvent sizeEvt = (FileTypeSizeEvent) eventData;
         return sizeEvt.getSizeFilter().equals(key.getSizeFilter())
                 && (key.getDataSourceId() == null || Objects.equals(key.getDataSourceId(), sizeEvt.getDataSourceId()));
+    }
+
+    private boolean isDeletedContentInvalidating(DeletedContentSearchParams params, DAOEvent eventData) {
+        if (!(eventData instanceof DeletedContentEvent)) {
+            return false;
+        }
+
+        DeletedContentEvent deletedContentEvt = (DeletedContentEvent) eventData;
+        return deletedContentEvt.getFilter().equals(params.getFilter())
+                && (params.getDataSourceId() == null || Objects.equals(params.getDataSourceId(), deletedContentEvt.getDataSourceId()));
     }
 
     /**
@@ -214,6 +249,21 @@ public class ViewsDAO extends AbstractDAO {
 
     /**
      * Returns a statement to be proceeded with 'where' or 'and' that will
+     * filter results to the provided filter and data source id (if non null).
+     *
+     * @param filter       The deleted content filter.
+     * @param dataSourceId The data source id or null if no data source
+     *                     filtering is to occur.
+     *
+     * @return The sql statement to be proceeded with 'and' or 'where'.
+     */
+    private String getDeletedContentWhereStatement(DeletedContentFilter filter, Long dataSourceId) {
+        String whereClause = getDeletedContentClause(filter) + getDataSourceAndClause(dataSourceId);
+        return whereClause;
+    }
+
+    /**
+     * Returns a statement to be proceeded with 'where' or 'and' that will
      * filter out results that should not be viewed in mime types view.
      *
      * @return A statement to be proceeded with 'and' or 'where'.
@@ -260,6 +310,40 @@ public class ViewsDAO extends AbstractDAO {
         return filter.getMaxBound() == null
                 ? "(size >= " + filter.getMinBound() + ")"
                 : "(size >= " + filter.getMinBound() + " AND size < " + filter.getMaxBound() + ")";
+    }
+
+    /**
+     * Returns clause to be proceeded with 'where' or 'and' to filter deleted
+     * content.
+     *
+     * @param filter The deleted content filter.
+     *
+     * @return The clause to be proceeded with 'where' or 'and'.
+     */
+    private static String getDeletedContentClause(DeletedContentFilter filter) throws IllegalArgumentException {
+        switch (filter) {
+            case FS_DELETED_FILTER:
+                return "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
+                        + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
+                        + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType(); //NON-NLS
+
+            case ALL_DELETED_FILTER:
+                return " ( "
+                        + "( "
+                        + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
+                        + " OR " //NON-NLS
+                        + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
+                        + ")"
+                        + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
+                        + " )"
+                        + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType() //NON-NLS
+                        + " OR (dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
+                        + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.getFileType() + " )"
+                        + " )";
+
+            default:
+                throw new IllegalArgumentException(MessageFormat.format("Unsupported filter type to get deleted content: {0}", filter)); //NON-NLS
+        }
     }
 
     /**
@@ -352,6 +436,40 @@ public class ViewsDAO extends AbstractDAO {
                     return new TreeItemDTO<>(
                             "FILE_SIZE",
                             new FileTypeSizeSearchParams(entry.getKey(), dataSourceId),
+                            entry.getKey(),
+                            entry.getKey().getDisplayName(),
+                            TreeDisplayCount.getDeterminate(entry.getValue()));
+                })
+                .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
+                .collect(Collectors.toList());
+
+        return new TreeResultsDTO<>(treeList);
+    }
+
+    /**
+     * Returns counts for deleted content categories.
+     *
+     * @param dataSourceId The data source object id or null if no data source
+     *                     filtering should occur.
+     *
+     * @return The results.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<DeletedContentSearchParams> getDeletedContentCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        Map<DeletedContentFilter, String> whereClauses = Stream.of(DeletedContentFilter.values())
+                .collect(Collectors.toMap(
+                        filter -> filter,
+                        filter -> getDeletedContentClause(filter)));
+
+        Map<DeletedContentFilter, Long> countsByFilter = getFilesCounts(whereClauses, null, dataSourceId, true);
+
+        List<TreeItemDTO<DeletedContentSearchParams>> treeList = countsByFilter.entrySet().stream()
+                .map(entry -> {
+                    return new TreeItemDTO<>(
+                            "DELETED_CONTENT",
+                            new DeletedContentSearchParams(entry.getKey(), dataSourceId),
                             entry.getKey(),
                             entry.getKey().getDisplayName(),
                             TreeDisplayCount.getDeterminate(entry.getValue()));
@@ -553,6 +671,11 @@ public class ViewsDAO extends AbstractDAO {
         }
 
         return typeCounts;
+    }
+
+    private SearchResultsDTO fetchDeletedSearchResultsDTOs(DeletedContentFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+        String whereStatement = getDeletedContentWhereStatement(filter, dataSourceId);
+        return fetchFileViewFiles(whereStatement, filter.getDisplayName(), startItem, maxResultCount);
     }
 
     private SearchResultsDTO fetchExtensionSearchResultsDTOs(FileExtSearchFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
@@ -872,5 +995,35 @@ public class ViewsDAO extends AbstractDAO {
         public boolean isRefreshRequired(DAOEvent evt) {
             return getDAO().isFilesBySizeInvalidating(this.getParameters(), evt);
         }
+    }
+
+    /**
+     * Handles fetching and paging of data for deleted content.
+     */
+    public static class DeletedFileFetcher extends DAOFetcher<DeletedContentSearchParams> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public DeletedFileFetcher(DeletedContentSearchParams params) {
+            super(params);
+        }
+
+        protected ViewsDAO getDAO() {
+            return MainDAO.getInstance().getViewsDAO();
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getDeletedContent(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        }
+
+        @Override
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return getDAO().isDeletedContentInvalidating(this.getParameters(), evt);
+        }
+
     }
 }
