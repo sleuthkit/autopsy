@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.modules.filetypeid.CustomFileTypesManager.CustomFil
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
@@ -194,7 +193,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
             Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
             // Create artifact if it doesn't already exist.
-            if (!tskBlackboard.artifactExists(file, TSK_INTERESTING_ITEM, attributes)) {
+            if (!tskBlackboard.artifactExists(file, BlackboardArtifact.Type.TSK_INTERESTING_ITEM, attributes)) {
                 BlackboardArtifact artifact = file.newAnalysisResult(
                         BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE, 
                         null, fileType.getInterestingFilesSetName(), null, 

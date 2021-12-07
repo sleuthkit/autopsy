@@ -170,10 +170,10 @@ public final class IngestJob {
      * Starts data source level analysis for this job if it is running in
      * streaming ingest mode.
      */
-    void processStreamingIngestDataSource() {
+    void addStreamedDataSource() {
         if (ingestMode == Mode.STREAMING) {
             if (ingestModuleExecutor != null) {
-                ingestModuleExecutor.startStreamingModeDataSourceAnalysis();
+                ingestModuleExecutor.addStreamedDataSource();
             } else {
                 logger.log(Level.SEVERE, "Attempted to start data source analaysis with no ingest pipeline");
             }
