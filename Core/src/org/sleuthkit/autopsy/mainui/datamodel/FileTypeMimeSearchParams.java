@@ -25,9 +25,18 @@ import java.util.Objects;
  */
 public class FileTypeMimeSearchParams {
 
+    private static final String TYPE_ID = "FILE_VIEWS_MIME";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final String mimeType;
     private final Long dataSourceId;
- 
+
     public FileTypeMimeSearchParams(String mimeType, Long dataSourceId) {
         this.mimeType = mimeType;
         this.dataSourceId = dataSourceId;
@@ -70,5 +79,4 @@ public class FileTypeMimeSearchParams {
         return true;
     }
 
-    
 }

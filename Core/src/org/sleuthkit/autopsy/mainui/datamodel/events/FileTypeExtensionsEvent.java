@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.mainui.datamodel.FileExtSearchFilter;
 
 /**
  * An event to signal that files have been added or removed 
@@ -26,16 +27,16 @@ import java.util.Objects;
  */
 public class FileTypeExtensionsEvent implements DAOEvent {
 
-    private final String extension;
+    private final FileExtSearchFilter extensionFilter;
     private final long dataSourceId;
 
-    public FileTypeExtensionsEvent(String extension, long dataSourceId) {
-        this.extension = extension;
+    public FileTypeExtensionsEvent(FileExtSearchFilter extensionFilter, long dataSourceId) {
+        this.extensionFilter = extensionFilter;
         this.dataSourceId = dataSourceId;
     }
 
-    public String getExtension() {
-        return extension;
+    public FileExtSearchFilter getExtensionFilter() {
+        return extensionFilter;
     }
 
     public long getDataSourceId() {
@@ -45,8 +46,8 @@ public class FileTypeExtensionsEvent implements DAOEvent {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 59 * hash + Objects.hashCode(this.extension);
-        hash = 59 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
+        hash = 83 * hash + Objects.hashCode(this.extensionFilter);
+        hash = 83 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
         return hash;
     }
 
@@ -65,12 +66,14 @@ public class FileTypeExtensionsEvent implements DAOEvent {
         if (this.dataSourceId != other.dataSourceId) {
             return false;
         }
-        if (!Objects.equals(this.extension, other.extension)) {
+        if (!Objects.equals(this.extensionFilter, other.extensionFilter)) {
             return false;
         }
         return true;
     }
 
+    
+    
     @Override
     public Type getType() {
         return Type.RESULT;

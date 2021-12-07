@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.Objects;
 import java.util.Optional;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -35,9 +36,12 @@ import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
 import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemColumnUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeItem;
 import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.CARVED_FILE;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.DELETED_FILE;
@@ -139,14 +143,31 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     @Override
     protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
-        // GVDTODO
+        if (treeEvt instanceof FileSystemTreeEvent) {
+            FileSystemTreeEvent fsTreeEvent = (FileSystemTreeEvent) treeEvt;
+            // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
+            if (fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId() == null
+                    || (Objects.equals(this.host, fsTreeEvent.getParentHost())
+                    && Objects.equals(this.contentId, fsTreeEvent.getParentContentId()))) {
+
+                return fsTreeEvent.getItemRecord();
+            }
+        }
+
         return null;
     }
 
     @Override
-    public int compare(FileSystemContentSearchParam o1, FileSystemContentSearchParam o2) {
-        // GVDTODO
-        return 0;
+    public int compare(TreeItemDTO<? extends FileSystemContentSearchParam> o1, TreeItemDTO<? extends FileSystemContentSearchParam> o2) {
+        if (o1 instanceof FileSystemTreeItem && o2 instanceof FileSystemTreeItem) {
+            FileSystemTreeItem fs1 = (FileSystemTreeItem) o1;
+            FileSystemTreeItem fs2 = (FileSystemTreeItem) o2;
+            // ordering taken from SELECT_FILES_BY_PARENT in SleuthkitCase
+            if (fs1.getMetaType().getValue() != fs2.getMetaType().getValue()) {
+                return -Short.compare(fs1.getMetaType().getValue(), fs2.getMetaType().getValue());
+            }
+        }
+        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
     }
 
     /**
@@ -195,14 +216,23 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
-            // GVDTODO
+            if (treeEvt instanceof FileSystemTreeEvent) {
+                FileSystemTreeEvent fsTreeEvent = (FileSystemTreeEvent) treeEvt;
+                // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
+                if (fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId() == null
+                        || Objects.equals(fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId(), dataSourceId)) {
+
+                    return fsTreeEvent.getItemRecord();
+                }
+            }
+
             return null;
+
         }
 
         @Override
-        public int compare(FileSystemContentSearchParam o1, FileSystemContentSearchParam o2) {
-            // GVDTODO
-            return 0;
+        public int compare(TreeItemDTO<? extends FileSystemContentSearchParam> o1, TreeItemDTO<? extends FileSystemContentSearchParam> o2) {
+            return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
         }
     }
 

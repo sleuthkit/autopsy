@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -34,9 +35,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -55,6 +56,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DeletedContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeExtensionsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeMimeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeSizeEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -62,6 +64,7 @@ import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_TYPE_ENUM;
 
 /**
  * Provides information to populate the results viewer for data in the views
@@ -74,7 +77,14 @@ public class ViewsDAO extends AbstractDAO {
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private static final Map<String, Set<FileExtSearchFilter>> EXTENSION_FILTER_MAP
+            = Stream.of((FileExtSearchFilter[]) FileExtRootFilter.values(), FileExtDocumentFilter.values(), FileExtExecutableFilter.values())
+                    .flatMap(arr -> Stream.of(arr))
+                    .flatMap(filter -> filter.getFilter().stream().map(ext -> Pair.of(ext, filter)))
+                    .collect(Collectors.groupingBy(
+                            pair -> pair.getKey(),
+                            Collectors.mapping(pair -> pair.getValue(),
+                                    Collectors.toSet())));
 
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
@@ -88,6 +98,9 @@ public class ViewsDAO extends AbstractDAO {
         return instance;
     }
 
+    private final Cache<SearchParams<Object>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final TreeCounts<DAOEvent> treeCounts = new TreeCounts<>();
+
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
@@ -99,7 +112,7 @@ public class ViewsDAO extends AbstractDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        SearchParams<FileTypeExtensionsSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
+        SearchParams<Object> searchParams = new SearchParams<>(key, startItem, maxCount);
         return searchParamsCache.get(searchParams, () -> fetchExtensionSearchResultsDTOs(key.getFilter(), key.getDataSourceId(), startItem, maxCount));
     }
 
@@ -110,7 +123,7 @@ public class ViewsDAO extends AbstractDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        SearchParams<FileTypeMimeSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
+        SearchParams<Object> searchParams = new SearchParams<>(key, startItem, maxCount);
         return searchParamsCache.get(searchParams, () -> fetchMimeSearchResultsDTOs(key.getMimeType(), key.getDataSourceId(), startItem, maxCount));
     }
 
@@ -121,7 +134,7 @@ public class ViewsDAO extends AbstractDAO {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         }
 
-        SearchParams<FileTypeSizeSearchParams> searchParams = new SearchParams<>(key, startItem, maxCount);
+        SearchParams<Object> searchParams = new SearchParams<>(key, startItem, maxCount);
         return searchParamsCache.get(searchParams, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId(), startItem, maxCount));
     }
 
@@ -154,8 +167,7 @@ public class ViewsDAO extends AbstractDAO {
         }
 
         FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) eventData;
-        String extension = extEvt.getExtension().toLowerCase();
-        return key.getFilter().getFilter().contains(extension)
+        return key.getFilter().equals(extEvt.getExtensionFilter())
                 && (key.getDataSourceId() == null || key.getDataSourceId().equals(extEvt.getDataSourceId()));
     }
 
@@ -220,14 +232,29 @@ public class ViewsDAO extends AbstractDAO {
     }
 
     /**
+     * @return If user preference of hide known files, returns sql and clause to
+     *         hide known files or returns empty string otherwise.
+     */
+    private String getHideKnownAndClause() {
+        return (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known <> " + TskData.FileKnown.KNOWN.getFileKnownValue() + ") ") : "");
+    }
+
+    /**
+     * @return A clause (no 'and' or 'where' prefixed) indicating the dir_type
+     *         is regular.
+     */
+    private String getRegDirTypeClause() {
+        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")";
+    }
+
+    /**
      * Returns a clause that will filter out files that aren't to be counted in
      * the file extensions view.
      *
      * @return The filter that will need to be proceeded with 'where' or 'and'.
      */
     private String getBaseFileExtensionFilter() {
-        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known <> " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "");
+        return getRegDirTypeClause() + getHideKnownAndClause();
     }
 
     /**
@@ -245,6 +272,22 @@ public class ViewsDAO extends AbstractDAO {
                 + getDataSourceAndClause(dataSourceId)
                 + " AND (" + getFileExtensionClause(filter) + ")";
         return whereClause;
+    }
+
+    /**
+     * @return The TSK_DB_FILES_TYPE_ENUm values allowed for mime type view
+     *         items.
+     */
+    private Set<TskData.TSK_DB_FILES_TYPE_ENUM> getMimeDbFilesTypes() {
+        return Stream.of(
+                TskData.TSK_DB_FILES_TYPE_ENUM.FS,
+                TskData.TSK_DB_FILES_TYPE_ENUM.CARVED,
+                TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED,
+                TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE,
+                TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL,
+                (hideSlackFilesInViewsTree() ? null : (TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)))
+                .filter(ordinal -> ordinal != null)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -269,15 +312,10 @@ public class ViewsDAO extends AbstractDAO {
      * @return A statement to be proceeded with 'and' or 'where'.
      */
     private String getBaseFileMimeFilter() {
-        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + (hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")
+        return getRegDirTypeClause()
+                + getHideKnownAndClause()
                 + " AND (type IN ("
-                + TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.ordinal() + ","
-                + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
-                + (hideSlackFilesInViewsTree() ? "" : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
+                + getMimeDbFilesTypes().stream().map(v -> Integer.toString(v.ordinal())).collect(Collectors.joining(", "))
                 + "))";
     }
 
@@ -354,8 +392,7 @@ public class ViewsDAO extends AbstractDAO {
      */
     private String getBaseFileSizeFilter() {
         // Ignore unallocated block files.
-        return "(type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"
-                + ((hideKnownFilesInViewsTree() ? (" AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")") : "")); //NON-NLS
+        return "(type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")" + getHideKnownAndClause();
     }
 
     /**
@@ -390,6 +427,20 @@ public class ViewsDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<FileTypeExtensionsSearchParams> getFileExtCounts(Collection<FileExtSearchFilter> filters, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        Set<FileExtSearchFilter> indeterminateFilters = new HashSet<>();
+        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof FileTypeExtensionsEvent) {
+                FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) evt;
+                if (dataSourceId == null || Objects.equals(extEvt.getDataSourceId(), dataSourceId)) {
+                    for (FileExtSearchFilter filter : filters) {
+                        if (filter.getFilter().contains(evt)) {
+                            indeterminateFilters.add(filter);
+                        }
+                    }
+                }
+            }
+        }
+
         Map<FileExtSearchFilter, String> whereClauses = filters.stream()
                 .collect(Collectors.toMap(
                         filter -> filter,
@@ -399,17 +450,34 @@ public class ViewsDAO extends AbstractDAO {
 
         List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
                 .map(entry -> {
-                    return new TreeItemDTO<>(
-                            "FILE_EXT",
-                            new FileTypeExtensionsSearchParams(entry.getKey(), dataSourceId),
-                            entry.getKey(),
-                            entry.getKey().getDisplayName(),
-                            TreeDisplayCount.getDeterminate(entry.getValue()));
+                    TreeDisplayCount displayCount = indeterminateFilters.contains(entry.getKey())
+                            ? TreeDisplayCount.INDETERMINATE
+                            : TreeDisplayCount.getDeterminate(entry.getValue());
+
+                    return createExtensionTreeItem(entry.getKey(), dataSourceId, displayCount);
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
 
         return new TreeResultsDTO<>(treeList);
+    }
+
+    /**
+     * Creates an extension tree item.
+     *
+     * @param filter       The extension filter.
+     * @param dataSourceId The data source id or null.
+     * @param displayCount The count to display.
+     *
+     * @return The extension tree item.
+     */
+    private TreeItemDTO<FileTypeExtensionsSearchParams> createExtensionTreeItem(FileExtSearchFilter filter, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeItemDTO<>(
+                FileTypeExtensionsSearchParams.getTypeId(),
+                new FileTypeExtensionsSearchParams(filter, dataSourceId),
+                filter,
+                filter.getDisplayName(),
+                displayCount);
     }
 
     /**
@@ -424,6 +492,16 @@ public class ViewsDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<FileTypeSizeSearchParams> getFileSizeCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        Set<FileSizeFilter> indeterminateFilters = new HashSet<>();
+        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof FileTypeSizeEvent) {
+                FileTypeSizeEvent sizeEvt = (FileTypeSizeEvent) evt;
+                if (dataSourceId == null || Objects.equals(sizeEvt.getDataSourceId(), dataSourceId)) {
+                    indeterminateFilters.add(sizeEvt.getSizeFilter());
+                }
+            }
+        }
+
         Map<FileSizeFilter, String> whereClauses = Stream.of(FileSizeFilter.values())
                 .collect(Collectors.toMap(
                         filter -> filter,
@@ -433,12 +511,11 @@ public class ViewsDAO extends AbstractDAO {
 
         List<TreeItemDTO<FileTypeSizeSearchParams>> treeList = countsByFilter.entrySet().stream()
                 .map(entry -> {
-                    return new TreeItemDTO<>(
-                            "FILE_SIZE",
-                            new FileTypeSizeSearchParams(entry.getKey(), dataSourceId),
-                            entry.getKey(),
-                            entry.getKey().getDisplayName(),
-                            TreeDisplayCount.getDeterminate(entry.getValue()));
+                    TreeDisplayCount displayCount = indeterminateFilters.contains(entry.getKey())
+                            ? TreeDisplayCount.INDETERMINATE
+                            : TreeDisplayCount.getDeterminate(entry.getValue());
+
+                    return createSizeTreeItem(entry.getKey(), dataSourceId, displayCount);
                 })
                 .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
@@ -479,6 +556,23 @@ public class ViewsDAO extends AbstractDAO {
 
         return new TreeResultsDTO<>(treeList);
     }
+    /**
+     * Creates a size tree item.
+     *
+     * @param filter       The file size filter.
+     * @param dataSourceId The data source id.
+     * @param displayCount The display count.
+     *
+     * @return The tree item.
+     */
+    private TreeItemDTO<FileTypeSizeSearchParams> createSizeTreeItem(FileSizeFilter filter, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeItemDTO<>(
+                FileTypeSizeSearchParams.getTypeId(),
+                new FileTypeSizeSearchParams(filter, dataSourceId),
+                filter,
+                filter.getDisplayName(),
+                displayCount);
+    }
 
     /**
      * Returns counts for file mime type categories.
@@ -496,6 +590,22 @@ public class ViewsDAO extends AbstractDAO {
     public TreeResultsDTO<FileTypeMimeSearchParams> getFileMimeCounts(String prefix, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         String prefixWithSlash = StringUtils.isNotBlank(prefix) ? prefix.replaceAll("/", "") + "/" : null;
         String likeItem = StringUtils.isNotBlank(prefixWithSlash) ? prefixWithSlash.replaceAll("%", "") + "%" : null;
+
+        Set<String> indeterminateMimeTypes = new HashSet<>();
+        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof FileTypeMimeEvent) {
+                FileTypeMimeEvent mimeEvt = (FileTypeMimeEvent) evt;
+                if ((dataSourceId == null || Objects.equals(mimeEvt.getDataSourceId(), dataSourceId))
+                        && (prefixWithSlash == null || mimeEvt.getMimeType().startsWith(prefixWithSlash))) {
+
+                    String mimePortion = prefixWithSlash != null
+                            ? mimeEvt.getMimeType().substring(prefixWithSlash.length())
+                            : mimeEvt.getMimeType().substring(0, mimeEvt.getMimeType().indexOf("/"));
+
+                    indeterminateMimeTypes.add(mimePortion);
+                }
+            }
+        }
 
         String baseFilter = "WHERE " + getBaseFileMimeFilter()
                 + getDataSourceAndClause(dataSourceId)
@@ -552,12 +662,11 @@ public class ViewsDAO extends AbstractDAO {
                                     ? entry.getKey().substring(prefixWithSlash.length())
                                     : entry.getKey();
 
-                            return new TreeItemDTO<>(
-                                    "FILE_MIME_TYPE",
-                                    new FileTypeMimeSearchParams(entry.getKey(), dataSourceId),
-                                    name,
-                                    name,
-                                    TreeDisplayCount.getDeterminate(entry.getValue()));
+                            TreeDisplayCount displayCount = indeterminateMimeTypes.contains(name)
+                                    ? TreeDisplayCount.INDETERMINATE
+                                    : TreeDisplayCount.getDeterminate(entry.getValue());
+
+                            return createMimeTreeItem(entry.getKey(), name, dataSourceId, displayCount);
                         })
                         .sorted((a, b) -> stringCompare(a.getSearchParams().getMimeType(), b.getSearchParams().getMimeType()))
                         .collect(Collectors.toList());
@@ -569,6 +678,26 @@ public class ViewsDAO extends AbstractDAO {
         } catch (NoCurrentCaseException ex) {
             throw new ExecutionException("An error occurred while fetching file counts.", ex);
         }
+    }
+
+    /**
+     * Creates a mime type tree item.
+     *
+     * @param fullMime     The full mime type.
+     * @param mimeName     The mime type segment that will be displayed (suffix
+     *                     or prefix).
+     * @param dataSourceId The data source id.
+     * @param displayCount The count to display.
+     *
+     * @return The created tree item.
+     */
+    private TreeItemDTO<FileTypeMimeSearchParams> createMimeTreeItem(String fullMime, String mimeName, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeItemDTO<>(
+                FileTypeMimeSearchParams.getTypeId(),
+                new FileTypeMimeSearchParams(fullMime, dataSourceId),
+                mimeName,
+                mimeName,
+                displayCount);
     }
 
     /**
@@ -735,11 +864,6 @@ public class ViewsDAO extends AbstractDAO {
         return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
     }
 
-    @Override
-    void clearCaches() {
-        this.searchParamsCache.invalidateAll();
-    }
-
     private Pair<String, String> getMimePieces(String mimeType) {
         int idx = mimeType.indexOf("/");
         String mimePrefix = idx > 0 ? mimeType.substring(0, idx) : mimeType;
@@ -747,167 +871,140 @@ public class ViewsDAO extends AbstractDAO {
         return Pair.of(mimePrefix, mimeSuffix);
     }
 
+    private TreeItemDTO<?> createTreeItem(DAOEvent daoEvent, TreeDisplayCount count) {
+        if (daoEvent instanceof FileTypeExtensionsEvent) {
+            FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) daoEvent;
+            return createExtensionTreeItem(extEvt.getExtensionFilter(), extEvt.getDataSourceId(), count);
+        } else if (daoEvent instanceof FileTypeMimeEvent) {
+            FileTypeMimeEvent mimeEvt = (FileTypeMimeEvent) daoEvent;
+            Pair<String, String> mimePieces = getMimePieces(mimeEvt.getMimeType());
+            String mimeName = mimePieces.getRight() == null ? mimePieces.getLeft() : mimePieces.getRight();
+            return createMimeTreeItem(mimeEvt.getMimeType(), mimeName, mimeEvt.getDataSourceId(), count);
+        } else if (daoEvent instanceof FileTypeSizeEvent) {
+            FileTypeSizeEvent sizeEvt = (FileTypeSizeEvent) daoEvent;
+            return createSizeTreeItem(sizeEvt.getSizeFilter(), sizeEvt.getDataSourceId(), count);
+        } else {
+            return null;
+        }
+    }
+
     @Override
-    Set<DAOEvent> handleIngestComplete() {
-        // GVDTODO
-        return Collections.emptySet();
+    void clearCaches() {
+        this.searchParamsCache.invalidateAll();
+        handleIngestComplete();
+    }
+
+    @Override
+    Set<? extends DAOEvent> handleIngestComplete() {
+        return SubDAOUtils.getIngestCompleteEvents(this.treeCounts,
+                (daoEvt, count) -> createTreeItem(daoEvt, count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        // GVDTODO
-        return Collections.emptySet();
+        return SubDAOUtils.getRefreshEvents(this.treeCounts,
+                (daoEvt, count) -> createTreeItem(daoEvt, count));
     }
 
     @Override
     Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
-        // GVDTODO maps may not be necessary now that this isn't processing a list of events.
-        Map<String, Set<Long>> fileExtensionDsMap = new HashMap<>();
-        Map<String, Map<String, Set<Long>>> mimeTypeDsMap = new HashMap<>();
-        Map<FileSizeFilter, Set<Long>> fileSizeDsMap = new HashMap<>();
-
         AbstractFile af = DAOEventUtils.getFileFromFileEvent(evt);
         if (af == null) {
             return Collections.emptySet();
-        }
-
-        // create an extension mapping if extension present
-        if (!StringUtils.isBlank(af.getNameExtension())) {
-            fileExtensionDsMap
-                    .computeIfAbsent("." + af.getNameExtension(), (k) -> new HashSet<>())
-                    .add(af.getDataSourceObjectId());
-        }
-
-        // create a mime type mapping if mime type present
-        if (!StringUtils.isBlank(af.getMIMEType())) {
-            Pair<String, String> mimePieces = getMimePieces(af.getMIMEType());
-            mimeTypeDsMap
-                    .computeIfAbsent(mimePieces.getKey(), (k) -> new HashMap<>())
-                    .computeIfAbsent(mimePieces.getValue(), (k) -> new HashSet<>())
-                    .add(af.getDataSourceObjectId());
-        }
-
-        // create a size mapping if size present
-        FileSizeFilter sizeFilter = Stream.of(FileSizeFilter.values())
-                .filter(filter -> af.getSize() >= filter.getMinBound() && (filter.getMaxBound() == null || af.getSize() < filter.getMaxBound()))
-                .findFirst()
-                .orElse(null);
-
-        if (sizeFilter != null) {
-            fileSizeDsMap
-                    .computeIfAbsent(sizeFilter, (k) -> new HashSet<>())
-                    .add(af.getDataSourceObjectId());
-        }
-
-        if (fileExtensionDsMap.isEmpty() && mimeTypeDsMap.isEmpty() && fileSizeDsMap.isEmpty()) {
+        } else if (hideKnownFilesInViewsTree() && TskData.FileKnown.KNOWN.equals(af.getKnown())) {
             return Collections.emptySet();
         }
 
-        clearRelevantCacheEntries(fileExtensionDsMap, mimeTypeDsMap, fileSizeDsMap);
+        long dsId = af.getDataSourceObjectId();
 
-        return getDAOEvents(fileExtensionDsMap, mimeTypeDsMap, fileSizeDsMap);
+        // create an extension mapping if extension present
+        Set<FileExtSearchFilter> evtExtFilters = (StringUtils.isBlank(af.getNameExtension()) || !TSK_FS_NAME_TYPE_ENUM.REG.equals(af.getDirType()))
+                ? Collections.emptySet()
+                : EXTENSION_FILTER_MAP.getOrDefault("." + af.getNameExtension(), Collections.emptySet());
+
+        // create a mime type mapping if mime type present
+        String evtMimeType = (StringUtils.isBlank(af.getMIMEType()) || !TSK_FS_NAME_TYPE_ENUM.REG.equals(af.getDirType())) || !getMimeDbFilesTypes().contains(af.getType())
+                ? null
+                : af.getMIMEType();
+
+        // create a size mapping if size present in filters
+        FileSizeFilter evtFileSize = TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.equals(af.getType())
+                ? null
+                : Stream.of(FileSizeFilter.values())
+                        .filter(filter -> af.getSize() >= filter.getMinBound() && (filter.getMaxBound() == null || af.getSize() < filter.getMaxBound()))
+                        .findFirst()
+                        .orElse(null);
+
+        if (evtExtFilters.isEmpty() && evtMimeType == null && evtFileSize == null) {
+            return Collections.emptySet();
+        }
+
+        SubDAOUtils.invalidateKeys(this.searchParamsCache,
+                (Predicate<Object>) (searchParams) -> searchParamsMatchEvent(evtExtFilters, evtMimeType, evtFileSize, dsId, searchParams));
+
+        return getDAOEvents(evtExtFilters, evtMimeType, evtFileSize, dsId);
+    }
+
+    private boolean searchParamsMatchEvent(Set<FileExtSearchFilter> evtExtFilters,
+            String evtMimeType,
+            FileSizeFilter evtFileSize,
+            long dsId,
+            Object searchParams) {
+
+        if (searchParams instanceof FileTypeExtensionsSearchParams) {
+            FileTypeExtensionsSearchParams extParams = (FileTypeExtensionsSearchParams) searchParams;
+            return evtExtFilters.contains(extParams.getFilter())
+                    && (extParams.getDataSourceId() == null || Objects.equals(extParams.getDataSourceId(), dsId));
+
+        } else if (searchParams instanceof FileTypeMimeSearchParams) {
+            FileTypeMimeSearchParams mimeParams = (FileTypeMimeSearchParams) searchParams;
+            return evtMimeType != null && evtMimeType.startsWith(mimeParams.getMimeType())
+                    && (mimeParams.getDataSourceId() == null || Objects.equals(mimeParams.getDataSourceId(), dsId));
+
+        } else if (searchParams instanceof FileTypeSizeSearchParams) {
+            FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) searchParams;
+            return Objects.equals(sizeParams.getSizeFilter(), evtFileSize)
+                    && (sizeParams.getDataSourceId() == null || Objects.equals(sizeParams.getDataSourceId(), dsId));
+        } else {
+            return false;
+        }
     }
 
     /**
-     *
      * Clears relevant cache entries from cache based on digest of autopsy
      * events.
      *
-     * @param fileExtensionDsMap Maps the file extension to the data sources
-     *                           where files were found with that extension.
-     * @param mimeTypeDsMap      Maps the mime type to the data sources where
-     *                           files were found with that mime type.
-     * @param fileSizeDsMap      Maps the size to the data sources where files
+     * @param extFilters The set of affected extension filters.
+     * @param mimeType   The affected mime type or null.
+     * @param sizeFilter The affected size filter or null.
+     * @param dsId       The file object id.
      *
      * @return The list of affected dao events.
      */
-    private Set<DAOEvent> getDAOEvents(Map<String, Set<Long>> fileExtensionDsMap,
-            Map<String, Map<String, Set<Long>>> mimeTypeDsMap,
-            Map<FileSizeFilter, Set<Long>> fileSizeDsMap) {
+    private Set<DAOEvent> getDAOEvents(Set<FileExtSearchFilter> extFilters,
+            String mimeType,
+            FileSizeFilter sizeFilter,
+            long dsId) {
 
-        Stream<DAOEvent> fileExtStream = fileExtensionDsMap.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(dsId -> new FileTypeExtensionsEvent(entry.getKey(), dsId)));
+        List<DAOEvent> daoEvents = extFilters.stream()
+                .map(extFilter -> new FileTypeExtensionsEvent(extFilter, dsId))
+                .collect(Collectors.toList());
 
-        Set<DAOEvent> fileMimeList = new HashSet<>();
-        for (Entry<String, Map<String, Set<Long>>> prefixEntry : mimeTypeDsMap.entrySet()) {
-            String mimePrefix = prefixEntry.getKey();
-            for (Entry<String, Set<Long>> suffixEntry : prefixEntry.getValue().entrySet()) {
-                String mimeSuffix = suffixEntry.getKey();
-                for (long dsId : suffixEntry.getValue()) {
-                    String mimeType = mimePrefix + (mimeSuffix == null ? "" : ("/" + mimeSuffix));
-                    fileMimeList.add(new FileTypeMimeEvent(mimeType, dsId));
-                }
-            }
+        if (mimeType != null) {
+            daoEvents.add(new FileTypeMimeEvent(mimeType, dsId));
         }
 
-        Stream<DAOEvent> fileSizeStream = fileSizeDsMap.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(dsId -> new FileTypeSizeEvent(entry.getKey(), dsId)));
+        if (sizeFilter != null) {
+            daoEvents.add(new FileTypeSizeEvent(sizeFilter, dsId));
+        }
 
-        return Stream.of(fileExtStream, fileMimeList.stream(), fileSizeStream)
-                .flatMap(stream -> stream)
+        List<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
+                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt, TreeDisplayCount.INDETERMINATE), false))
+                .collect(Collectors.toList());
+
+        return Stream.of(daoEvents, treeEvents)
+                .flatMap(lst -> lst.stream())
                 .collect(Collectors.toSet());
-    }
-
-    /**
-     * Clears relevant cache entries from cache based on digest of autopsy
-     * events.
-     *
-     * @param fileExtensionDsMap Maps the file extension to the data sources
-     *                           where files were found with that extension.
-     * @param mimeTypeDsMap      Maps the mime type to the data sources where
-     *                           files were found with that mime type.
-     * @param fileSizeDsMap      Maps the size to the data sources where files
-     *                           were found within that size filter.
-     */
-    private void clearRelevantCacheEntries(Map<String, Set<Long>> fileExtensionDsMap,
-            Map<String, Map<String, Set<Long>>> mimeTypeDsMap,
-            Map<FileSizeFilter, Set<Long>> fileSizeDsMap) {
-
-        // invalidate cache entries that are affected by events
-        ConcurrentMap<SearchParams<?>, SearchResultsDTO> concurrentMap = this.searchParamsCache.asMap();
-        concurrentMap.forEach((k, v) -> {
-            Object baseParams = k.getParamData();
-            if (baseParams instanceof FileTypeExtensionsSearchParams) {
-                FileTypeExtensionsSearchParams extParams = (FileTypeExtensionsSearchParams) baseParams;
-                // if search params have a filter where extension is present and the data source id is null or ==
-                boolean isMatch = extParams.getFilter().getFilter().stream().anyMatch((ext) -> {
-                    Set<Long> dsIds = fileExtensionDsMap.get(ext);
-                    return (dsIds != null && (extParams.getDataSourceId() == null || dsIds.contains(extParams.getDataSourceId())));
-                });
-
-                if (isMatch) {
-                    concurrentMap.remove(k);
-                }
-            } else if (baseParams instanceof FileTypeMimeSearchParams) {
-                FileTypeMimeSearchParams mimeParams = (FileTypeMimeSearchParams) baseParams;
-                Pair<String, String> mimePieces = getMimePieces(mimeParams.getMimeType());
-                Map<String, Set<Long>> suffixes = mimeTypeDsMap.get(mimePieces.getKey());
-                if (suffixes == null) {
-                    return;
-                }
-
-                // if search params is top level mime prefix (without suffix) and data source is null or ==.
-                if (mimePieces.getValue() == null
-                        && (mimeParams.getDataSourceId() == null
-                        || suffixes.values().stream().flatMap(set -> set.stream()).anyMatch(ds -> Objects.equals(mimeParams.getDataSourceId(), ds)))) {
-
-                    concurrentMap.remove(k);
-                    // otherwise, see if suffix is present
-                } else {
-                    Set<Long> dataSources = suffixes.get(mimePieces.getValue());
-                    if (dataSources != null && (mimeParams.getDataSourceId() == null || dataSources.contains(mimeParams.getDataSourceId()))) {
-                        concurrentMap.remove(k);
-                    }
-                }
-
-            } else if (baseParams instanceof FileTypeSizeSearchParams) {
-                FileTypeSizeSearchParams sizeParams = (FileTypeSizeSearchParams) baseParams;
-                Set<Long> dataSources = fileSizeDsMap.get(sizeParams.getSizeFilter());
-                if (dataSources != null && (sizeParams.getDataSourceId() == null || dataSources.contains(sizeParams.getDataSourceId()))) {
-                    concurrentMap.remove(k);
-                }
-            }
-        });
     }
 
     /**

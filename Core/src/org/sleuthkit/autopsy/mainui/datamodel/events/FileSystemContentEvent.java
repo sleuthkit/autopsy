@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * An event signaling that children files were added or removed from the given
@@ -26,26 +28,40 @@ import java.util.Objects;
  */
 public class FileSystemContentEvent implements DAOEvent {
 
-    private final Long contentObjectId;
+    private final Content content;
+    private final Long parentObjId;
+    private final Host parentHost;
+
+    public FileSystemContentEvent(Content content, Long parentObjId, Host parentHost) {
+        this.content = content;
+        this.parentObjId = parentObjId;
+        this.parentHost = parentHost;
+    }
+
+    public Long getParentObjId() {
+        return parentObjId;
+    }
+
+    public Host getParentHost() {
+        return parentHost;
+    }
 
     /**
-     * Main constructor.
-     *
-     * @param contentObjectId The parent content object id. If null, performs
-     *                        full refresh of file tree.
+     * @return The content associated with the event, if null, triggers a full
+     *         refresh.
      */
-    public FileSystemContentEvent(Long contentObjectId) {
-        this.contentObjectId = contentObjectId;
+    public Content getContent() {
+        return content;
     }
 
     public Long getContentObjectId() {
-        return contentObjectId;
+        return (content == null) ? null : content.getId();
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 67 * hash + Objects.hashCode(this.contentObjectId);
+        hash = 71 * hash + Objects.hashCode(this.content);
         return hash;
     }
 
@@ -61,7 +77,7 @@ public class FileSystemContentEvent implements DAOEvent {
             return false;
         }
         final FileSystemContentEvent other = (FileSystemContentEvent) obj;
-        if (!Objects.equals(this.contentObjectId, other.contentObjectId)) {
+        if (!Objects.equals(this.content, other.content)) {
             return false;
         }
         return true;

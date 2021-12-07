@@ -26,19 +26,28 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
 
+    private static final String TYPE_ID = "KEYWORD_HIT";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final String keyword;
     private final String regex;
-    
+
     public KeywordHitSearchParam(Long dataSourceId, String setName, String keyword, String regex) {
         super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName);
         this.keyword = keyword;
         this.regex = regex;
     }
-    
+
     public String getRegex() {
         return regex;
     }
-    
+
     public String getKeyword() {
         return keyword;
     }
@@ -72,6 +81,5 @@ public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
         }
         return super.equals(obj);
     }
-    
-    
+
 }

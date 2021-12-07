@@ -160,7 +160,7 @@ public class CommAccountsDAO extends AbstractDAO {
 
     private static TreeResultsDTO.TreeItemDTO<CommAccountsSearchParams> createAccountTreeItem(Account.Type accountType, Long dataSourceId, TreeResultsDTO.TreeDisplayCount count) {
         return new TreeResultsDTO.TreeItemDTO<>(
-                "ACCOUNTS",
+                CommAccountsSearchParams.getTypeId(),
                 new CommAccountsSearchParams(accountType, dataSourceId),
                 accountType.getTypeName(),
                 accountType.getDisplayName(),
@@ -236,7 +236,7 @@ public class CommAccountsDAO extends AbstractDAO {
     Set<? extends DAOEvent> handleIngestComplete() {
         return SubDAOUtils.getIngestCompleteEvents(
                 this.accountCounts,
-                (daoEvt) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.UNSPECIFIED)
+                (daoEvt, count) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), count)
         );
     }
 
@@ -244,7 +244,7 @@ public class CommAccountsDAO extends AbstractDAO {
     Set<TreeEvent> shouldRefreshTree() {
         return SubDAOUtils.getRefreshEvents(
                 this.accountCounts,
-                (daoEvt) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.UNSPECIFIED)
+                (daoEvt, count) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), count)
         );
     }
 

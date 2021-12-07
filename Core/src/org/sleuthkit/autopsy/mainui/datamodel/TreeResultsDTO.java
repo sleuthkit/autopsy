@@ -87,6 +87,7 @@ public class TreeResultsDTO<T> {
                 case INDETERMINATE:
                     return "...";
                 case NOT_SHOWN:
+                case UNSPECIFIED:
                 default:
                     return "";
             }
