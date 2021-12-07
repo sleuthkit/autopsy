@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.ingest;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.Iterator;
@@ -135,43 +134,6 @@ final class IngestTasksScheduler {
      */
     BlockingIngestTaskQueue getAnalysisResultIngestTaskQueue() {
         return resultIngestTasksQueue;
-    }
-
-    /**
-     * Schedules ingest tasks for an ingest job based on the types of ingest
-     * modules that will be used by the ingest job executor.
-     *
-     * Scheduling these tasks atomically means that it is valid to call
-     * currentTasksAreCompleted() immediately after calling this method. An
-     * example of where this is relevant would be an ingest job that only
-     * requires the processing of files, and that has an ingest filter in its
-     * settings that causes the ingest task scheduler to discard all of the file
-     * tasks.
-     *
-     * RJCTODO: Return a count of scheduled tasks or even just a boolean; let
-     * the caller know if file filters, etc., caused no tasks to be scheduled.
-     *
-     * @param executor The ingest job executor that will execute the scheduled
-     *                 tasks. A reference to the executor is added to each task
-     *                 so that when the task is dequeued by an ingest thread,
-     *                 the task can pass its target item to the executor for
-     *                 processing by the executor's ingest module pipelines.
-     */
-    synchronized void scheduleIngestTasks(IngestJobExecutor executor) {
-        if (!executor.isCancelled()) {
-            if (executor.hasDataSourceIngestModules()) {
-                scheduleDataSourceIngestTask(executor);
-            }
-            if (executor.hasFileIngestModules()) {
-                scheduleFileIngestTasks(executor, Collections.emptyList());
-            }
-            if (executor.hasDataArtifactIngestModules()) {
-                scheduleDataArtifactIngestTasks(executor);
-            }
-            if (executor.hasAnalysisResultIngestModules()) {
-                scheduleAnalysisResultIngestTasks(executor);
-            }
-        }
     }
 
     /**
