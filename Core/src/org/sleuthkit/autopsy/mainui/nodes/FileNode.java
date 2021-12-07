@@ -71,14 +71,23 @@ public class FileNode extends AbstractNode implements ActionContext {
      * Sets the icon for the node, based on properties of the AbstractFile.
      */
     void setIcon(FileRowDTO fileData) {
-        if (!fileData.getAllocated()) {
-            if (TSK_DB_FILES_TYPE_ENUM.CARVED.equals(fileData.getFileType())) {
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
+        if (fileData.getAbstractFile().isDir()) {
+            // This is most likely a derived file directory
+            if (fileData.getAllocated()) {
+                this.setIconBaseWithExtension(NodeIconUtil.FOLDER.getPath());
             } else {
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+                this.setIconBaseWithExtension(NodeIconUtil.DELETED_FOLDER.getPath());
             }
         } else {
-            this.setIconBaseWithExtension(MediaTypeUtils.getIconForFileType(fileData.getExtensionMediaType()));
+            if (!fileData.getAllocated()) {
+                if (TSK_DB_FILES_TYPE_ENUM.CARVED.equals(fileData.getFileType())) {
+                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
+                } else {
+                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+                }
+            } else {
+                this.setIconBaseWithExtension(MediaTypeUtils.getIconForFileType(fileData.getExtensionMediaType()));
+            }
         }
     }
 
