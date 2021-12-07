@@ -640,10 +640,12 @@ public class FileSystemColumnUtils {
             }
         }
 
-        // Filter out any files without children
+        // Filter out any files that aren't directories and do not have children
         for (Iterator<Content> iter = treeChildren.listIterator(); iter.hasNext(); ) {
             Content c = iter.next();
-            if (c instanceof AbstractFile && (! hasDisplayableContentChildren((AbstractFile)c))) {
+            if (c instanceof AbstractFile 
+                    && (! ((AbstractFile)c).isDir())
+                    && (! hasDisplayableContentChildren((AbstractFile)c))) {
                 iter.remove();
             }
         }
