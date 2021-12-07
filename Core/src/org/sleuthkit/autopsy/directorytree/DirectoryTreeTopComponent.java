@@ -79,7 +79,6 @@ import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
@@ -90,6 +89,7 @@ import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
+import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.MimeParentNode;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
@@ -878,7 +878,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                     if (originNode instanceof SelectionResponder) {
                         ((SelectionResponder) originNode).respondSelection(dataResult);
-                    } else if (originNode instanceof FileTypesByMimeType.ByMimeTypeNode && 
+                    } else if (originNode instanceof MimeParentNode && 
                             originNode.getChildren().getNodesCount(true) <= 0) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree

@@ -24,8 +24,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType.ByMimeTypeNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
@@ -86,23 +84,8 @@ public class RootContentChildren extends Children.Keys<Object> {
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
 
         @Override
-        public AbstractNode visit(FileTypesByExtension sf) {
-            return new FileTypesByExtNode(sf.filteringDataSourceObjId());
-        }
-
-        @Override
         public AbstractNode visit(RecentFiles rf) {
             return new RecentFilesNode(rf.getSleuthkitCase());
-        }
-
-        @Override
-        public AbstractNode visit(DeletedContent dc) {
-            return new DeletedContent.DeletedContentsNode(dc.getSleuthkitCase(), dc.filteringDataSourceObjId());
-        }
-
-        @Override
-        public AbstractNode visit(FileSize dc) {
-            return new FileSize.FileSizeRootNode(dc.filteringDataSourceObjId());
         }
 
         @Override
@@ -142,12 +125,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(Views v) {
-            return new ViewsNode(v.getSleuthkitCase(), v.filteringDataSourceObjId());
-        }
-
-        @Override
-        public AbstractNode visit(FileTypes ft) {
-            return ft.new FileTypesNode();
+            return new ViewsNode(v.filteringDataSourceObjId());
         }
 
         @Override
@@ -170,11 +148,6 @@ public class RootContentChildren extends Children.Keys<Object> {
             throw new UnsupportedOperationException(
                     NbBundle.getMessage(this.getClass(),
                             "AbstractContentChildren.createAutopsyNodeVisitor.exception.noNodeMsg"));
-        }
-
-        @Override
-        public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
-            return new ByMimeTypeNode(ftByMimeTypeItem.filteringDataSourceObjId());
         }
 
         @Override

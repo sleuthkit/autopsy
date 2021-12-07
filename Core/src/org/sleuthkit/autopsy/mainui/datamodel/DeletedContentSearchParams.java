@@ -25,6 +25,15 @@ import java.util.Objects;
  */
 public class DeletedContentSearchParams {
 
+    private static final String TYPE_ID = "DELETED_CONTENT";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+    
     private final DeletedContentFilter filter;
     private final Long dataSourceId;
 

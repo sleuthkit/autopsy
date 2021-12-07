@@ -25,13 +25,8 @@ import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCaseNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.InstanceDataSourceNode;
-import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
-import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
-import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
-import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.allcasessearch.CorrelationAttributeInstanceNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode;
 
 /**
  * Visitor pattern that goes over all nodes in the directory tree. This includes
@@ -71,14 +66,6 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ViewsNode vn);
 
     T visit(DataSourceGroupingNode dataSourceGroupingNode);
-
-    T visit(DeletedContentNode dcn);
-
-    T visit(DeletedContentsNode dcn);
-
-    T visit(FileSizeRootNode fsrn);
-
-    T visit(FileTypesByExtNode sfn);
 
     T visit(RecentFilesNode rfn);
 
@@ -163,10 +150,6 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(Accounts.BINNode binNode);
 
     T visit(Accounts.DefaultAccountTypeNode node);
-
-    T visit(FileTypes.FileTypesNode fileTypes);
-
-    T visit(FileTypesByMimeType.ByMimeTypeNode ftByMimeTypeNode);
 
     T visit(EmptyNode.MessageNode emptyNode);
 
@@ -293,33 +276,8 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(FileTypesByMimeType.ByMimeTypeNode ftByMimeTypeNode) {
-            return defaultVisit(ftByMimeTypeNode);
-        }
-
-        @Override
         public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
             return defaultVisit(ftByMimeTypeEmptyNode);
-        }
-
-        @Override
-        public T visit(DeletedContentNode dcn) {
-            return defaultVisit(dcn);
-        }
-
-        @Override
-        public T visit(DeletedContentsNode dcn) {
-            return defaultVisit(dcn);
-        }
-
-        @Override
-        public T visit(FileSizeRootNode fsrn) {
-            return defaultVisit(fsrn);
-        }
-
-        @Override
-        public T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode sfn) {
-            return defaultVisit(sfn);
         }
 
         @Override
@@ -360,11 +318,6 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(DataSourceGroupingNode dataSourceGroupingNode) {
             return defaultVisit(dataSourceGroupingNode);
-        }
-
-        @Override
-        public T visit(FileTypesNode ft) {
-            return defaultVisit(ft);
         }
 
         @Override

@@ -770,7 +770,7 @@ public class ViewsDAO extends AbstractDAO {
                 + "(SELECT \n"
                 + switchStatement
                 + "FROM tsk_files \n"
-                + (baseWhereClauses != null ? ("WHERE " + baseWhereClauses) : "") + ") res \n"
+                + (StringUtils.isNotBlank(baseWhereClauses) ? ("WHERE " + baseWhereClauses) : "") + ") res \n"
                 + "WHERE res.type_id >= 0 \n"
                 + "GROUP BY res.type_id";
 
