@@ -554,12 +554,7 @@ public class ViewsDAO extends AbstractDAO {
                     if (resultSet.next()) {
                         for (DeletedContentFilter filter : DeletedContentFilter.values()) {
                             long count = resultSet.getLong(filter.name());
-                            treeList.add(new TreeItemDTO<>(
-                                    "DELETED_CONTENT",
-                                    new DeletedContentSearchParams(filter, dataSourceId),
-                                    filter,
-                                    filter.getDisplayName(),
-                                    TreeDisplayCount.getDeterminate(count)));
+                            treeList.add(createDeletedContentTreeItem(filter, dataSourceId, TreeDisplayCount.getDeterminate(count)));
                         }
                     }
                 } catch (SQLException ex) {
@@ -571,6 +566,15 @@ public class ViewsDAO extends AbstractDAO {
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching file counts with query:\n" + queryStr, ex);
         }
+    }
+
+    private static TreeItemDTO<DeletedContentSearchParams> createDeletedContentTreeItem(DeletedContentFilter filter, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeItemDTO<>(
+                "DELETED_CONTENT",
+                new DeletedContentSearchParams(filter, dataSourceId),
+                filter,
+                filter.getDisplayName(),
+                displayCount);
     }
 
     /**
@@ -900,6 +904,9 @@ public class ViewsDAO extends AbstractDAO {
         } else if (daoEvent instanceof FileTypeSizeEvent) {
             FileTypeSizeEvent sizeEvt = (FileTypeSizeEvent) daoEvent;
             return createSizeTreeItem(sizeEvt.getSizeFilter(), sizeEvt.getDataSourceId(), count);
+        } else if (daoEvent instanceof DeletedContentEvent) {
+            DeletedContentEvent sizeEvt = (DeletedContentEvent) daoEvent;
+            return createDeletedContentTreeItem(sizeEvt.getFilter(), sizeEvt.getDataSourceId(), count);
         } else {
             return null;
         }
@@ -954,7 +961,7 @@ public class ViewsDAO extends AbstractDAO {
                         .findFirst()
                         .orElse(null);
 
-        if (evtExtFilters.isEmpty() && evtMimeType == null && evtFileSize == null) {
+        if (evtExtFilters.isEmpty() && deletedContentFilters.isEmpty() && evtMimeType == null && evtFileSize == null) {
             return Collections.emptySet();
         }
 
@@ -987,7 +994,7 @@ public class ViewsDAO extends AbstractDAO {
                     && (sizeParams.getDataSourceId() == null || Objects.equals(sizeParams.getDataSourceId(), dsId));
         } else if (searchParams instanceof DeletedContentSearchParams) {
             DeletedContentSearchParams deletedParams = (DeletedContentSearchParams) searchParams;
-            return evtExtFilters.contains(deletedParams.getFilter())
+            return deletedContentFilters.contains(deletedParams.getFilter())
                     && (deletedParams.getDataSourceId() == null || Objects.equals(deletedParams.getDataSourceId(), dsId));
         } else {
             return false;
