@@ -899,6 +899,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         }
                     } else if (originNode.getLookup().lookup(String.class) != null) {
                         displayName = originNode.getLookup().lookup(String.class);
+                    } else {
+                        if (originNode.getDisplayName() != null) {
+                            displayName = originNode.getDisplayName().replaceAll("\\([0-9]+\\)", "");
+                        } else {
+                            displayName = originNode.getName();
+                        }
                     }
                     dataResult.setPath(displayName);
                 }

@@ -316,7 +316,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         Pool pool;
 
         PoolTreeNode(Pool pool, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(NodeIconUtil.VOLUME.getPath(),
+            super(NodeIconUtil.POOL.getPath(),
                     itemData,
                     createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
                     ContentNodeUtil.getLookup(pool));
