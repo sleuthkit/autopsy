@@ -46,12 +46,11 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.ContentNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DataSourceFilesNode;
-import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.mainui.nodes.NodeSelectionInfo.ContentNodeSelectionInfo;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -332,17 +331,22 @@ public class ViewContextAction extends AbstractAction {
         * tree view top component responds to the selection of the parent
         * node by pushing it into the results view top component.
          */
-        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) parentTreeViewNode).getOriginal();
-        undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(content));
+        
+        Long childIdToSelect = content.getId();
+
         if (content instanceof BlackboardArtifact) {
             BlackboardArtifact artifact = ((BlackboardArtifact) content);
             long associatedId = artifact.getObjectID();
             try {
                 Content associatedFileContent = artifact.getSleuthkitCase().getContentById(associatedId);
-                undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(associatedFileContent));
+                childIdToSelect = associatedFileContent.getId();
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Could not find associated content from artifact with id %d", artifact.getId());
             }
+        }
+        
+        if(parentTreeViewNode instanceof ContentNodeSelectionInfo) {
+            ((ContentNodeSelectionInfo) parentTreeViewNode).setChildIdToSelect(childIdToSelect);
         }
 
         TreeView treeView = treeViewTopComponent.getTree();
