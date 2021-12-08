@@ -87,7 +87,8 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     protected boolean createKeys(List<Object> toPopulate) {
         List<TreeItemDTO<? extends T>> itemsList;
 
-        // Load data from DAO if we haven't already
+        // Load data from DAO if we haven't already.  
+        // We should have previous data every time except initial run.
         if (curResults == null) {
             try {
                 updateData();
@@ -98,9 +99,9 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
         }
         // make copy to avoid concurrent modification
         synchronized (resultsUpdateLock) {
-            itemsList = new ArrayList<>(curItemsList);    
+            itemsList = new ArrayList<>(curItemsList);
         }
-        
+
         // update existing cached nodes
         List<Object> curResultIds = new ArrayList<>();
         for (TreeItemDTO<? extends T> dto : itemsList) {
@@ -120,9 +121,12 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
         return typeNodeMap.computeIfAbsent(treeItemId, (id) -> {
             TreeItemDTO<? extends T> itemData = idMapping.get(id);
             // create new node if data for node exists.  otherwise, return null.
-            return itemData == null
-                    ? null
-                    : createNewNode(itemData);
+            if (itemData == null) {
+                logger.log(Level.WARNING, "No item data matching key: " + treeItemId + " in factory: " + getClass());
+                return null;
+            } else {
+                return createNewNode(itemData);
+            }
         });
     }
 
@@ -132,9 +136,10 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
      * @param item The added/updated item.
      */
     protected void updateNodeData(TreeItemDTO<? extends T> item) {
-        TreeNode<T> cachedTreeNode = this.typeNodeMap.get(item.getId());
-        if (cachedTreeNode == null) {
-            synchronized (resultsUpdateLock) {
+        synchronized (resultsUpdateLock) {
+            TreeItemDTO<? extends T> cachedTreeItem = this.idMapping.get(item.getId());
+            if (cachedTreeItem == null) {
+
                 // add to id mapping
                 this.idMapping.put(item.getId(), item);
 
@@ -148,10 +153,8 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
                 }
                 this.curItemsList.add(insertIndex, item);
             }
-            this.refresh(false);
-        } else {
-            cachedTreeNode.update(item);
         }
+        this.refresh(false);
     }
 
     /**

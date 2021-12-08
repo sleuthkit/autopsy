@@ -390,7 +390,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
      */
     public static class KeywordFoundMatchFactory extends TreeChildFactory<KeywordHitSearchParam> {
 
-        private final KeywordSearchTermParams setParams;
+        private final KeywordSearchTermParams searchTermParams;
 
         /**
          * Main constructor.
@@ -398,7 +398,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param params The search term parameters.
          */
         public KeywordFoundMatchFactory(KeywordSearchTermParams params) {
-            this.setParams = params;
+            this.searchTermParams = params;
         }
 
         @Override
@@ -409,10 +409,10 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         @Override
         protected TreeResultsDTO<? extends KeywordHitSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
             return MainDAO.getInstance().getAnalysisResultDAO().getKeywordMatchCounts(
-                    this.setParams.getSetName(),
-                    this.setParams.getSearchTerm(),
-                    this.setParams.getSearchType(),
-                    this.setParams.getDataSourceId());
+                    this.searchTermParams.getSetName(),
+                    this.searchTermParams.getSearchTerm(),
+                    this.searchTermParams.getSearchType(),
+                    this.searchTermParams.getDataSourceId());
         }
 
         @Override
@@ -420,20 +420,22 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             TreeResultsDTO.TreeItemDTO<KeywordHitSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, KeywordHitSearchParam.class);
 
             if (originalTreeItem != null
-                    && Objects.equals(originalTreeItem.getSearchParams().getSetName(), this.setParams.getSetName())
-                    && (this.setParams.getDataSourceId() == null
-                    || Objects.equals(this.setParams.getDataSourceId(), originalTreeItem.getSearchParams().getDataSourceId()))) {
+                    && Objects.equals(originalTreeItem.getSearchParams().getRegex(), this.searchTermParams.getSearchTerm())
+                    && Objects.equals(originalTreeItem.getSearchParams().getSearchType(), this.searchTermParams.getSearchType())
+                    && Objects.equals(originalTreeItem.getSearchParams().getSetName(), this.searchTermParams.getSetName())
+                    && (this.searchTermParams.getDataSourceId() == null
+                    || Objects.equals(this.searchTermParams.getDataSourceId(), originalTreeItem.getSearchParams().getDataSourceId()))) {
 
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
                 KeywordHitSearchParam searchParam = originalTreeItem.getSearchParams();
                 return new TreeResultsDTO.TreeItemDTO<>(
                         KeywordHitSearchParam.getTypeId(),
                         new KeywordHitSearchParam(
-                                this.setParams.getDataSourceId(),
-                                this.setParams.getSetName(),
+                                this.searchTermParams.getDataSourceId(),
+                                this.searchTermParams.getSetName(),
                                 searchParam.getKeyword(),
-                                this.setParams.getSearchTerm(),
-                                this.setParams.getSearchType()
+                                this.searchTermParams.getSearchTerm(),
+                                this.searchTermParams.getSearchType()
                         ),
                         searchParam.getKeyword(),
                         searchParam.getKeyword() == null ? "" : searchParam.getKeyword(),
