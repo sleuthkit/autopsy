@@ -21,18 +21,22 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.nodes.NodeSelectionInfo.ContentNodeSelectionInfo;
 
 /**
  * A node whose children will be displayed in the results view and determines
  * children based on a SearchResultDTO.
  */
-public class SearchResultRootNode extends AbstractNode {
+public class SearchResultRootNode extends AbstractNode implements ContentNodeSelectionInfo{
 
     private final SearchResultChildFactory factory;
+    
+    // This param is can change, is not used as part of the search query and
+    // therefore is not included in the equals and hashcode methods.
+    private Long childContentToSelect;
 
     public SearchResultRootNode(SearchResultsDTO initialResults) {
         this(initialResults, new SearchResultChildFactory(initialResults));
@@ -45,7 +49,17 @@ public class SearchResultRootNode extends AbstractNode {
         setName(initialResults.getTypeId());
         setDisplayName(initialResults.getDisplayName());
     }
+    
+    @Override
+    public void setChildIdToSelect(Long contentId) {
+        childContentToSelect = contentId;
+    }
 
+    @Override
+    public Long getChildIdToSelect() {
+        return childContentToSelect;
+    }
+    
     @Messages({
         "SearchResultRootNode_noDesc=No Description",
         "SearchResultRootNode_createSheet_type_name=Name",

@@ -19,11 +19,12 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.mainui.nodes.NodeSelectionInfo.ContentNodeSelectionInfo;
 
 /**
  * Key for content object in order to retrieve data from DAO.
  */
-public class FileSystemContentSearchParam {
+public class FileSystemContentSearchParam implements ContentNodeSelectionInfo {
 
     private static final String TYPE_ID = "FILE_SYSTEM_CONTENT";
 
@@ -35,6 +36,10 @@ public class FileSystemContentSearchParam {
     }
 
     private final Long contentObjectId;
+    
+    // This param is can change, is not used as part of the search query and
+    // therefore is not included in the equals and hashcode methods.
+    private Long childContentToSelect;
 
     public FileSystemContentSearchParam(Long contentObjectId) {
         this.contentObjectId = contentObjectId;
@@ -42,6 +47,16 @@ public class FileSystemContentSearchParam {
 
     public Long getContentObjectId() {
         return contentObjectId;
+    }
+    
+    @Override
+    public void setChildIdToSelect(Long content) {
+        childContentToSelect = content;
+    }
+
+    @Override
+    public Long getChildIdToSelect() {
+        return childContentToSelect;
     }
 
     @Override
