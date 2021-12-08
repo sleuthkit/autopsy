@@ -32,9 +32,9 @@ final class DataSourceIngestTask extends IngestTask {
      *                          task.
      */
     DataSourceIngestTask(IngestJobExecutor ingestJobExecutor) {
-        super(ingestJobExecutor);
+        super(ingestJobExecutor.getDataSource().getName(), ingestJobExecutor);
     }
-
+    
     @Override
     void execute(long threadId) {
         super.setThreadId(threadId);

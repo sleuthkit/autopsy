@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 
@@ -164,6 +165,16 @@ public final class IngestJob {
      */
     void addDataArtifacts(List<DataArtifact> dataArtifacts) {
         ingestModuleExecutor.addDataArtifacts(dataArtifacts);
+    }
+
+    /**
+     * Adds one or more analysis results to this ingest job for processing by
+     * its analysis result ingest modules.
+     *
+     * @param results The analysis results.
+     */
+    void addAnalysisResults(List<AnalysisResult> results) {
+        ingestModuleExecutor.addAnalysisResults(results);
     }
 
     /**
