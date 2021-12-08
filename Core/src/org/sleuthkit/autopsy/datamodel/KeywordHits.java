@@ -62,6 +62,7 @@ import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Keyword hits node support
@@ -304,12 +305,9 @@ public class KeywordHits implements AutopsyVisitableItem {
                         // get or create list entry
                         Map<String, Map<String, Set<Long>>> listMap = listsMap.computeIfAbsent(listName, ln -> new LinkedHashMap<>());
 
-                        if ("1".equals(kwType) || reg == null) {  //literal, substring or exact
+                        if (Integer.parseInt(kwType) == TskData.KeywordSearchQueryType.SUBSTRING.getType() || reg == null) {  //literal, substring or exact
                             /*
-                             * Substring, treated same as exact match. "1" is
-                             * the ordinal value for substring as defined in
-                             * KeywordSearch.java. The original term should be
-                             * stored in reg
+                             * Substring, treated same as exact match. 
                              */
                             word = (reg != null) ? reg : word; //use original term if it there.
                             addNonRegExpMatchToList(listMap, word, id);
@@ -317,12 +315,9 @@ public class KeywordHits implements AutopsyVisitableItem {
                             addRegExpToList(listMap, reg, word, id);
                         }
                     } else {//single term
-                        if ("1".equals(kwType) || reg == null) {  //literal, substring or exact
+                        if (Integer.parseInt(kwType) == TskData.KeywordSearchQueryType.SUBSTRING.getType() || reg == null) {  //literal, substring or exact
                             /*
-                             * Substring, treated same as exact match. "1" is
-                             * the ordinal value for substring as defined in
-                             * KeywordSearch.java. The original term should be
-                             * stored in reg
+                             * Substring, treated same as exact match. 
                              */
                             word = (reg != null) ? reg : word; //use original term if it there.
                             addNonRegExpMatchToList(literalMap, word, id);
@@ -813,7 +808,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         public void respondSelection(DataResultTopComponent dataResultPanel) {
             dataResultPanel.displayKeywordHits(new KeywordHitSearchParam(
                     filteringDSObjId > 0 ? filteringDSObjId : null,
-                    setName, keyword, instance));
+                    setName, keyword, instance, TskData.KeywordSearchQueryType.REGEX));
         }
 
         @Override
