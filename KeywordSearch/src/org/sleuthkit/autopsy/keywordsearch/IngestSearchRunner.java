@@ -586,7 +586,7 @@ final class IngestSearchRunner {
 
                     if (!newResults.getKeywords().isEmpty()) {
                         // Create blackboard artifacts                
-                        newResults.process(this, keywordList.getIngestMessages(), true, finalRun, job.getJobId());
+                        newResults.process(this, keywordList.getIngestMessages(), true, job.getJobId());
                     }
                 }
             } catch (Exception ex) {

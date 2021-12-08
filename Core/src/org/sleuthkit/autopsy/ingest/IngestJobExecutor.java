@@ -508,12 +508,7 @@ final class IngestJobExecutor {
      * @return True or false.
      */
     private boolean hasHighPriorityDataSourceIngestModules() {
-        jobStateLock.readLock().lock();
-        try {
-            return (highPriorityDataSourceIngestPipeline.isEmpty() == false);
-        } finally {
-            jobStateLock.readLock().unlock();
-        }
+        return (highPriorityDataSourceIngestPipeline.isEmpty() == false);
     }
 
     /**
@@ -523,12 +518,7 @@ final class IngestJobExecutor {
      * @return True or false.
      */
     private boolean hasLowPriorityDataSourceIngestModules() {
-        jobStateLock.readLock().lock();
-        try {
-            return (lowPriorityDataSourceIngestPipeline.isEmpty() == false);
-        } finally {
-            jobStateLock.readLock().unlock();
-        }
+        return (lowPriorityDataSourceIngestPipeline.isEmpty() == false);
     }
 
     /**
@@ -537,15 +527,10 @@ final class IngestJobExecutor {
      * @return True or false.
      */
     private boolean hasFileIngestModules() {
-        jobStateLock.readLock().lock();
-        try {
-            if (!fileIngestPipelines.isEmpty()) {
-                return !fileIngestPipelines.get(0).isEmpty();
-            }
-            return false;
-        } finally {
-            jobStateLock.readLock().unlock();
+        if (!fileIngestPipelines.isEmpty()) {
+            return !fileIngestPipelines.get(0).isEmpty();
         }
+        return false;
     }
 
     /**
@@ -555,12 +540,7 @@ final class IngestJobExecutor {
      * @return True or false.
      */
     private boolean hasDataArtifactIngestModules() {
-        jobStateLock.readLock().lock();
-        try {
-            return (dataArtifactIngestPipeline.isEmpty() == false);
-        } finally {
-            jobStateLock.readLock().unlock();
-        }
+        return (dataArtifactIngestPipeline.isEmpty() == false);
     }
 
     /**
@@ -570,12 +550,7 @@ final class IngestJobExecutor {
      * @return True or false.
      */
     private boolean hasAnalysisResultIngestModules() {
-        jobStateLock.readLock().lock();
-        try {
-            return (analysisResultIngestPipeline.isEmpty() == false);
-        } finally {
-            jobStateLock.readLock().unlock();
-        }
+        return (analysisResultIngestPipeline.isEmpty() == false);
     }
 
     /**
@@ -1300,12 +1275,12 @@ final class IngestJobExecutor {
     void execute(AnalysisResultIngestTask task) {
         jobStateLock.readLock().lock();
         try {
-            if (!isCancelled() && !analysisResultIngestPipeline.isEmpty()) {              
+            if (!isCancelled() && !analysisResultIngestPipeline.isEmpty()) {
                 List<IngestModuleError> errors = new ArrayList<>();
                 errors.addAll(analysisResultIngestPipeline.performTask(task));
                 if (!errors.isEmpty()) {
                     logIngestModuleErrors(errors);
-                }             
+                }
             }
         } finally {
             taskScheduler.notifyTaskCompleted(task);

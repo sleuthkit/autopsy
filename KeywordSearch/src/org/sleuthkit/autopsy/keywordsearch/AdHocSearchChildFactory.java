@@ -440,7 +440,7 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
                     });
                 }
                 registerWriter(this); //register (synchronized on class) outside of writerLock to prevent deadlock
-                hits.process(this, false, saveResults, saveResults, null);
+                hits.process(this, false, saveResults, null);
             } finally {
                 deregisterWriter(this);
                 if (RuntimeProperties.runningWithGUI() && progress != null) {

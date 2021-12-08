@@ -138,12 +138,10 @@ class QueryResults {
      *                    messages inbox if there is a keyword hit in the text
      *                    exrtacted from the text source object.
      * @param saveResults Whether or not to create keyword hit analysis results.
-     * @param postResults Whether or not to post any keyword hit analysis
-     *                    results created.
      * @param ingestJobId The numeric identifier of the ingest job within which
      *                    the artifacts are being created, may be null.
      */
-    void process(SwingWorker<?, ?> worker, boolean notifyInbox, boolean saveResults, boolean postResults, Long ingestJobId) {
+    void process(SwingWorker<?, ?> worker, boolean notifyInbox, boolean saveResults, Long ingestJobId) {
         final Collection<BlackboardArtifact> hitArtifacts = new ArrayList<>();
         for (final Keyword keyword : getKeywords()) {
             /*
@@ -219,7 +217,7 @@ class QueryResults {
          * Post the artifacts to the blackboard which will publish an event to
          * notify subscribers of the new artifacts.
          */
-        if (!hitArtifacts.isEmpty() && postResults) {
+        if (!hitArtifacts.isEmpty()) {
             try {
                 SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                 Blackboard blackboard = tskCase.getBlackboard();
