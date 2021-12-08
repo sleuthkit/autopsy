@@ -26,6 +26,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.nodes.ContentNodeUtil;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
@@ -52,13 +53,13 @@ class DataSourceGroupingNode extends DisplayableItemNode {
         if (dataSource instanceof Image) {
             Image image = (Image) dataSource;
 
-            super.setName(image.getName());
+            super.setName(ContentNodeUtil.getContentName(image.getId()));
             super.setDisplayName(image.getName());
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png");
         } else if (dataSource instanceof LocalFilesDataSource) {
             LocalFilesDataSource localFilesDataSource = (LocalFilesDataSource) dataSource;
 
-            super.setName(localFilesDataSource.getName());
+            super.setName(ContentNodeUtil.getContentName(localFilesDataSource.getId()));
             super.setDisplayName(localFilesDataSource.getName());
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png");
         }
