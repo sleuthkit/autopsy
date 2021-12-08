@@ -86,20 +86,21 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     @Override
     protected boolean createKeys(List<Object> toPopulate) {
         List<TreeItemDTO<? extends T>> itemsList;
-        synchronized (resultsUpdateLock) {
-            // Load data from DAO if we haven't already
-            if (curResults == null) {
-                try {
-                    updateData();
-                } catch (IllegalArgumentException | ExecutionException ex) {
-                    logger.log(Level.WARNING, "An error occurred while fetching keys", ex);
-                    return false;
-                }
-            }
-            // make copy to avoid concurrent modification
-            itemsList = new ArrayList<>(curItemsList);
-        }
 
+        // Load data from DAO if we haven't already
+        if (curResults == null) {
+            try {
+                updateData();
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching keys", ex);
+                return false;
+            }
+        }
+        // make copy to avoid concurrent modification
+        synchronized (resultsUpdateLock) {
+            itemsList = new ArrayList<>(curItemsList);    
+        }
+        
         // update existing cached nodes
         List<Object> curResultIds = new ArrayList<>();
         for (TreeItemDTO<? extends T> dto : itemsList) {
@@ -160,8 +161,9 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
      * @throws ExecutionException
      */
     protected void updateData() throws IllegalArgumentException, ExecutionException {
+        TreeResultsDTO<? extends T> newResults = getChildResults();
         synchronized (resultsUpdateLock) {
-            this.curResults = getChildResults();
+            this.curResults = newResults;
             Map<Object, TreeItemDTO<? extends T>> idMapping = new HashMap<>();
             List<TreeItemDTO<? extends T>> curItemsList = new ArrayList<>();
             for (TreeItemDTO<? extends T> item : this.curResults.getItems()) {

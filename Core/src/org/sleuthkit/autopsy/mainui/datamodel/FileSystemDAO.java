@@ -274,7 +274,7 @@ public class FileSystemDAO extends AbstractDAO {
                 rows.add(new FileRowDTO(
                         file,
                         file.getId(),
-                        FileSystemColumnUtils.convertDotDirName(file),
+                        file.getName(),
                         file.getNameExtension(),
                         getExtensionMediaType(file.getNameExtension()),
                         file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.ALLOC),
@@ -580,9 +580,7 @@ public class FileSystemDAO extends AbstractDAO {
      */
     private String getNameForContent(Content content) {
         if (content instanceof Volume) {
-            return FileSystemColumnUtils.getVolumeDisplayName((Volume) content);
-        } else if (content instanceof AbstractFile) {
-            return FileSystemColumnUtils.convertDotDirName((AbstractFile) content);
+            return FileSystemColumnUtils.getVolumeDisplayName((Volume)content);
         }
         return content.getName();
     }

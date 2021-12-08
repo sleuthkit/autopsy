@@ -307,26 +307,9 @@ public class FileSystemColumnUtils {
         } else if (content instanceof Pool) {
             Pool pool = (Pool)content;
             return pool.getType().getName(); // We currently use the type name for both the name and type fields
-        } else if (content instanceof AbstractFile) {
-            AbstractFile file = (AbstractFile)content;
-            return convertDotDirName(file);
         }
         return content.getName();
     }
-    
-    
-    @NbBundle.Messages({
-        "FileSystemColumnUtils.getContentName.dotDir=[current folder]",
-        "FileSystemColumnUtils.getContentName.dotDotDir=[parent folder]",
-    })
-    public static String convertDotDirName(AbstractFile file) {
-        if (file.getName().equals("..")) {
-            return Bundle.FileSystemColumnUtils_getContentName_dotDotDir();
-        } else if (file.getName().equals(".")) {
-            return Bundle.FileSystemColumnUtils_getContentName_dotDir();
-        }
-        return file.getName();
-    }    
     
     /**
      * Get the column keys for an abstract file object.
@@ -640,10 +623,12 @@ public class FileSystemColumnUtils {
             }
         }
 
-        // Filter out any files without children
+        // Filter out any files that aren't directories and do not have children
         for (Iterator<Content> iter = treeChildren.listIterator(); iter.hasNext(); ) {
             Content c = iter.next();
-            if (c instanceof AbstractFile && (! hasDisplayableContentChildren((AbstractFile)c))) {
+            if (c instanceof AbstractFile 
+                    && (! ((AbstractFile)c).isDir())
+                    && (! hasDisplayableContentChildren((AbstractFile)c))) {
                 iter.remove();
             }
         }
@@ -662,6 +647,8 @@ public class FileSystemColumnUtils {
         if (file != null) {
             try {
                 // If the file has no children at all, then it has no displayable children.
+                // NOTE: AbstractContent.hasChildren() uses in-memory data to determine children 
+                // and no DB query is required. 
                 if (!file.hasChildren()) {
                     return false;
                 }

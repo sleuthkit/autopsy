@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,6 +69,8 @@ import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import static org.sleuthkit.datamodel.TskData.KeywordSearchQueryType.REGEX;
+import static org.sleuthkit.datamodel.TskData.KeywordSearchQueryType.SUBSTRING;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -77,7 +80,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     private static Logger logger = Logger.getLogger(AnalysisResultDAO.class.getName());
-
+    
     private static AnalysisResultDAO instance = null;
 
     @NbBundle.Messages({
@@ -174,6 +177,27 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
 
+    private AnalysisResultTableSearchResultsDTO fetchKeywordHitsForTable(SearchParams<? extends AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+
+        SleuthkitCase skCase = getCase();
+        Blackboard blackboard = skCase.getBlackboard();        
+        KeywordHitSearchParam searchParams = (KeywordHitSearchParam) cacheKey.getParamData();
+        Long dataSourceId = searchParams.getDataSourceId();
+        BlackboardArtifact.Type artType = searchParams.getArtifactType();
+        
+        // get all keyword hits for the search params
+        List<BlackboardArtifact> allHits  = blackboard.getKeywordSearchResults(searchParams.getKeyword(), searchParams.getRegex(), searchParams.getSearchType(), searchParams.getSetName(), dataSourceId);
+
+        // populate all attributes in one optimized database call
+        blackboard.loadBlackboardAttributes(allHits);
+
+        // do paging, if necessary
+        List<BlackboardArtifact> pagedArtifacts = getPaged(allHits, cacheKey);
+        TableData tableData = createTableData(artType, pagedArtifacts);
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), allHits.size());
+    }
+    
+    // filters results by TSK_SET_NAME attr and needs a search param with the set name
     private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(SearchParams<? extends AnalysisResultSetSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
@@ -207,7 +231,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
         TableData tableData = createTableData(artType, pagedArtifacts);
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
-    }
+    }    
 
     @Override
     void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
@@ -320,8 +344,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return setHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
-    // TODO - JIRA-8117
-    // This needs to use more than just the set name
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
@@ -330,7 +352,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         SearchParams<KeywordHitSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
-        return keywordHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
+        return keywordHitCache.get(searchParams, () -> fetchKeywordHitsForTable(searchParams));
     }
 
     /**
@@ -541,7 +563,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             throw new IllegalArgumentException("Expected data source id to be > 0");
         }
 
-        Set<Pair<String, Integer>> indeterminateSearchTerms = new HashSet<>();
+        Set<Pair<String, TskData.KeywordSearchQueryType>> indeterminateSearchTerms = new HashSet<>();
         for (AnalysisResultEvent evt : this.treeCounts.getEnqueued()) {
             if (evt instanceof KeywordHitEvent
                     && (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
@@ -624,7 +646,13 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                         long count = resultSet.getLong("count");
                         boolean hasChildren = resultSet.getBoolean("has_children");
 
-                        String searchTermModified = getSearchTermDisplayName(searchTerm, searchType);
+                        TskData.KeywordSearchQueryType searchTypeEnum = 
+                                Stream.of(TskData.KeywordSearchQueryType.values())
+                                        .filter(tp -> tp.getType() == searchType)
+                                        .findFirst()
+                                        .orElse(TskData.KeywordSearchQueryType.LITERAL);
+                        
+                        String searchTermModified = getSearchTermDisplayName(searchTerm, searchTypeEnum);
 
                         TreeDisplayCount displayCount = indeterminateSearchTerms.contains(Pair.of(searchTerm, searchType))
                                 ? TreeDisplayCount.INDETERMINATE
@@ -632,7 +660,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
                         TreeItemDTO<KeywordSearchTermParams> treeItem = new TreeItemDTO<>(
                                 KeywordSearchTermParams.getTypeId(),
-                                new KeywordSearchTermParams(setName, searchTerm, searchType, hasChildren, dataSourceId),
+                                new KeywordSearchTermParams(setName, searchTerm,  TskData.KeywordSearchQueryType.valueOf(searchType), hasChildren, dataSourceId),
                                 searchTermModified,
                                 searchTermModified,
                                 displayCount
@@ -660,16 +688,16 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      *
      * @return The display name.
      */
-    public String getSearchTermDisplayName(String searchTerm, int searchType) {
+    public String getSearchTermDisplayName(String searchTerm, TskData.KeywordSearchQueryType searchType) {
         String searchTermModified;
         switch (searchType) {
-            case 0:
+            case LITERAL:
                 searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch(searchTerm == null ? "" : searchTerm);
                 break;
-            case 1:
+            case SUBSTRING:
                 searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm == null ? "" : searchTerm);
                 break;
-            case 2:
+            case REGEX:
                 searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch(searchTerm == null ? "" : searchTerm);
                 break;
             default:
@@ -694,7 +722,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * @throws IllegalArgumentException
      * @throws ExecutionException
      */
-    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, int searchType, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, TskData.KeywordSearchQueryType searchType, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         if (dataSourceId != null && dataSourceId <= 0) {
             throw new IllegalArgumentException("Expected data source id to be > 0");
         }
@@ -758,7 +786,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             }
 
             preparedStatement.setString(++paramIdx, regexStr);
-            preparedStatement.setInt(++paramIdx, searchType);
+            preparedStatement.setInt(++paramIdx, searchType.getType());
 
             List<TreeItemDTO<KeywordMatchParams>> items = new ArrayList<>();
             getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
