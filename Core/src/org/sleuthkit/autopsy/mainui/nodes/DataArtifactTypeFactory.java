@@ -118,7 +118,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
      * The account node that has nested children of account types.
      */
     @Messages({
-        "DataArtifactTypeFactory_AccountTypeParentNode_displayName=Communcation Accounts"
+        "DataArtifactTypeFactory_AccountTypeParentNode_displayName=Communication Accounts"
     })
     static class AccountTypeParentNode extends TreeNode<DataArtifactSearchParam> {
 

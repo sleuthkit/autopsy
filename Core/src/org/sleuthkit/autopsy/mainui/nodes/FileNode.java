@@ -26,6 +26,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
@@ -71,14 +72,23 @@ public class FileNode extends AbstractNode implements ActionContext {
      * Sets the icon for the node, based on properties of the AbstractFile.
      */
     void setIcon(FileRowDTO fileData) {
-        if (!fileData.getAllocated()) {
-            if (TSK_DB_FILES_TYPE_ENUM.CARVED.equals(fileData.getFileType())) {
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
+        if (fileData.getAbstractFile().isDir()) {
+            // This is most likely a derived file directory
+            if (fileData.getAllocated()) {
+                this.setIconBaseWithExtension(NodeIconUtil.FOLDER.getPath());
             } else {
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+                this.setIconBaseWithExtension(NodeIconUtil.DELETED_FOLDER.getPath());
             }
         } else {
-            this.setIconBaseWithExtension(MediaTypeUtils.getIconForFileType(fileData.getExtensionMediaType()));
+            if (!fileData.getAllocated()) {
+                if (TSK_DB_FILES_TYPE_ENUM.CARVED.equals(fileData.getFileType())) {
+                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
+                } else {
+                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+                }
+            } else {
+                this.setIconBaseWithExtension(MediaTypeUtils.getIconForFileType(fileData.getExtensionMediaType()));
+            }
         }
     }
 
@@ -149,6 +159,11 @@ public class FileNode extends AbstractNode implements ActionContext {
     @Override
     protected Sheet createSheet() {
         return ContentNodeUtil.setSheet(super.createSheet(), this.columns, this.fileData.getCellValues());
+    }
+    
+    @Override
+    public Action getPreferredAction() {
+        return DirectoryTreeTopComponent.getOpenChildAction(getName());
     }
 
     /**

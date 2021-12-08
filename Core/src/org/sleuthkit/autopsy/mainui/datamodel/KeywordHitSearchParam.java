@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Key for keyword hits in order to retrieve data from DAO.
@@ -28,11 +29,13 @@ public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
 
     private final String keyword;
     private final String regex;
+    private final TskData.KeywordSearchQueryType searchType;
     
-    public KeywordHitSearchParam(Long dataSourceId, String setName, String keyword, String regex) {
+    public KeywordHitSearchParam(Long dataSourceId, String setName, String keyword, String regex, TskData.KeywordSearchQueryType searchType) {
         super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName);
         this.keyword = keyword;
         this.regex = regex;
+        this.searchType = searchType;
     }
     
     public String getRegex() {
@@ -42,12 +45,17 @@ public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
     public String getKeyword() {
         return keyword;
     }
+    
+    public TskData.KeywordSearchQueryType getSearchType() {
+        return searchType;
+    } 
 
     @Override
     public int hashCode() {
         int hash = 3;
         hash = 29 * hash + Objects.hashCode(this.keyword);
         hash = 29 * hash + Objects.hashCode(this.regex);
+        hash = 29 * hash + Objects.hashCode(this.searchType);
         hash = 29 * hash + super.hashCode();
         return hash;
     }
@@ -68,6 +76,9 @@ public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
             return false;
         }
         if (!Objects.equals(this.regex, other.regex)) {
+            return false;
+        }
+        if (this.searchType != other.searchType) {
             return false;
         }
         return super.equals(obj);

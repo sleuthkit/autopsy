@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.Optional;
+import javax.swing.Action;
 import org.openide.nodes.Children;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.DirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -40,8 +42,8 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
     public DirectoryNode(SearchResultsDTO results, DirectoryRowDTO row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
         setName(ContentNodeUtil.getContentName(row.getContent().getId()));
-        setDisplayName(row.getContent().getName());
-        setShortDescription(row.getContent().getName());
+        setDisplayName(ContentNodeUtil.getContentDisplayName(row.getContent().getName()));
+        setShortDescription(ContentNodeUtil.getContentDisplayName(row.getContent().getName()));
         setIcon();
     }
 
@@ -82,5 +84,14 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> {
     @Override
     public boolean supportsContentTagAction() {
         return true;
+    }
+    
+    @Override
+    public Action getPreferredAction() {
+        if (getDisplayName().equals(org.sleuthkit.autopsy.datamodel.DirectoryNode.DOTDOTDIR)
+                || getDisplayName().equals("..")) {
+            return DirectoryTreeTopComponent.getOpenParentAction();
+        }
+        return DirectoryTreeTopComponent.getOpenChildAction(getName());
     }
 }
