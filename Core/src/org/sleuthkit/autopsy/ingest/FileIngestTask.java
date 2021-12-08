@@ -41,7 +41,7 @@ final class FileIngestTask extends IngestTask {
      * @param file              The file to be processed.
      */
     FileIngestTask(IngestJobExecutor ingestJobPipeline, AbstractFile file) {
-        super(ingestJobPipeline);
+        super(file.getName(), ingestJobPipeline);
         this.file = file;
         fileId = file.getId();
     }
@@ -57,10 +57,10 @@ final class FileIngestTask extends IngestTask {
      * @param fileId            The object ID of the file to be processed.
      */
     FileIngestTask(IngestJobExecutor ingestJobPipeline, long fileId) {
-        super(ingestJobPipeline);
+        super("", ingestJobPipeline);
         this.fileId = fileId;
     }
-
+    
     /**
      * Gets the object ID of the file for this task.
      *
@@ -81,6 +81,9 @@ final class FileIngestTask extends IngestTask {
     synchronized AbstractFile getFile() throws TskCoreException {
         if (file == null) {
             file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(fileId);
+            if (file != null) {
+                setContentName(file.getName());
+            }
         }
         return file;
     }

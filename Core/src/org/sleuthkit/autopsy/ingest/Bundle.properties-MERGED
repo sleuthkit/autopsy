@@ -1,5 +1,7 @@
 CTL_RunIngestAction=Run Ingest
 FileIngestPipeline_SaveResults_Activity=Saving Results
+# {0} - data source name
+IngestJob_progress_analysisResultIngest_displayName=Analyzing analysis results from {0}
 IngestJobSettingsPanel.IngestModulesTableRenderer.info.message=A previous version of this ingest module has been run before on this data source.
 IngestJobSettingsPanel.IngestModulesTableRenderer.warning.message=This ingest module has been run before on this data source.
 IngestJobSettingsPanel.noPerRunSettings=The selected module has no per-run settings.
@@ -109,6 +111,7 @@ IngestJobTableModel.colName.rootQueued=Roots Queued
 IngestJobTableModel.colName.streamingQueued=Streamed Files Queued
 IngestJobTableModel.colName.dsQueued=DS Queued
 IngestJobTableModel.colName.artifactsQueued=Artifacts Queued
+IngestJobTableModel.colName.resultsQueued=Results Queued
 ModuleTableModel.colName.module=Module
 ModuleTableModel.colName.duration=Duration
 IngestJobSettingsPanel.jButtonSelectAll.text=Select All

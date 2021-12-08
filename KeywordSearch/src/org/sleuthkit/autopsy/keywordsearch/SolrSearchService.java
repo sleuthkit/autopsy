@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2020 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import com.google.common.eventbus.Subscribe;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -36,14 +35,12 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -66,13 +63,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     /**
      * Indexes the given content for keyword search.
      *
-     * IMPORTANT: Currently, there are two correct uses for this code:
-     *
-     * 1) Indexing an artifact created during while either the file level ingest
-     * module pipeline or the first stage data source level ingest module
-     * pipeline of an ingest job is running.
-     *
-     * 2) Indexing a report.
+     * IMPORTANT: This indexes the given content, but does not execute a keyword
+     * search. For the text of the content to be searched, the indexing has to
+     * occur either in the context of an ingest job configured for keyword
+     * search, or in the context of an ad hoc keyword search.
      *
      * @param content The content to index.
      *
@@ -80,19 +74,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @Override
     public void index(Content content) throws TskCoreException {
-        /*
-         * TODO (JIRA-1099): The following code has some issues that need to be
-         * resolved. For artifacts, it is assumed that the posting of artifacts
-         * is only occuring during an ingest job with an enabled keyword search
-         * ingest module handling index commits; it also assumes that the
-         * artifacts are only posted by modules in the either the file level
-         * ingest pipeline or the first stage data source level ingest pipeline,
-         * so that the artifacts will be searched during a periodic or final
-         * keyword search. It also assumes that the only other type of Content
-         * for which this API will be called are Reports generated at a time
-         * when doing a commit is required and desirable, i.e., in a context
-         * other than an ingest job.
-         */
         if (content == null) {
             return;
         }
@@ -152,7 +133,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         if (host == null || host.isEmpty()) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
         }
-        try {         
+        try {
             KeywordSearch.getServer().connectToSolrServer(host, Integer.toString(port));
         } catch (SolrServerException ex) {
             logger.log(Level.SEVERE, "Unable to connect to Solr server. Host: " + host + ", port: " + port, ex);
@@ -232,7 +213,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class,
                     "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class,
-                    "SolrSearchService.exceptionMessage.noCurrentSolrCore"));            
+                    "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
         }
 
         // delete index(es) for this case        
@@ -408,28 +389,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         if (context.getCase().getSleuthkitCase() != null) {
             context.getCase().getSleuthkitCase().unregisterForEvents(this);
-        }
-    }
-
-    /**
-     * Event handler for ArtifactsPostedEvents from SleuthkitCase.
-     *
-     * @param event The ArtifactsPostedEvent to handle.
-     */
-    @NbBundle.Messages("SolrSearchService.indexingError=Unable to index blackboard artifact.")
-    @Subscribe
-    void handleNewArtifacts(Blackboard.ArtifactsPostedEvent event) {
-        for (BlackboardArtifact artifact : event.getArtifacts()) {
-            if ((artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) && // don't index KWH bc it's based on existing indexed text
-                    (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID())){ //don't index AO bc it has only an artifact ID - no useful text 
-                try {
-                    index(artifact);
-                } catch (TskCoreException ex) {
-                    //TODO: is this the right error handling?
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
-                    MessageNotifyUtil.Notify.error(Bundle.SolrSearchService_indexingError(), artifact.getDisplayName());
-                }
-            }
         }
     }
 
