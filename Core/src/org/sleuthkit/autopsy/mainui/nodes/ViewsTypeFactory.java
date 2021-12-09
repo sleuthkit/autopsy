@@ -40,6 +40,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode.StaticTreeNode;
 
@@ -262,11 +264,31 @@ public class ViewsTypeFactory {
         }
 
         @Override
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof TreeEvent) {
+                    TreeResultsDTO.TreeItemDTO<FileTypeSizeSearchParams> treeItem = super.getTypedTreeItem((TreeEvent) evt, FileTypeSizeSearchParams.class);
+                    // if file type size search params has null filter, trigger full refresh
+                    if (treeItem != null && treeItem.getSearchParams().getSizeFilter() == null) {
+                        super.update();
+                        return;
+                    }
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
+        }
+
+        @Override
         protected TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
             TreeResultsDTO.TreeItemDTO<FileTypeSizeSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeSizeSearchParams.class);
 
             if (originalTreeItem != null
-                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+                    // only create child if size filter is present (if null, update should be triggered separately)
+                    && originalTreeItem.getSearchParams().getSizeFilter() != null
+                    && (this.dataSourceId == null
+                    || originalTreeItem.getSearchParams().getDataSourceId() == null
+                    || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
                 FileTypeSizeSearchParams searchParam = originalTreeItem.getSearchParams();
@@ -515,10 +537,28 @@ public class ViewsTypeFactory {
         }
 
         @Override
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof TreeEvent) {
+                    TreeResultsDTO.TreeItemDTO<FileTypeExtensionsSearchParams> treeItem = super.getTypedTreeItem((TreeEvent) evt, FileTypeExtensionsSearchParams.class);
+                    // if search params has null filter, trigger full refresh
+                    if (treeItem != null && treeItem.getSearchParams().getFilter() == null) {
+                        super.update();
+                        return;
+                    }
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
+        }
+
+        @Override
         protected TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
             TreeResultsDTO.TreeItemDTO<FileTypeExtensionsSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeExtensionsSearchParams.class);
 
             if (originalTreeItem != null
+                    // if filter is null, this should trigger a full refresh which should be handled in handleDAOAggregateEvent
+                    && originalTreeItem.getSearchParams().getFilter() != null
                     && this.childFilters.contains(originalTreeItem.getSearchParams().getFilter())
                     && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 

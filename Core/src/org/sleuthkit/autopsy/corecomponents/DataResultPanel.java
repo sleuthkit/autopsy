@@ -878,7 +878,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 7;
+        gridBagConstraints.gridwidth = 8;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
@@ -886,7 +886,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         org.openide.awt.Mnemonics.setLocalizedText(numberOfChildNodesLabel, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.numberOfChildNodesLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 8;
+        gridBagConstraints.gridx = 9;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
@@ -894,7 +894,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         org.openide.awt.Mnemonics.setLocalizedText(matchLabel, org.openide.util.NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.matchLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 9;
+        gridBagConstraints.gridx = 10;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 0);
@@ -1007,7 +1007,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 10;
+        gridBagConstraints.gridwidth = 11;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
@@ -1356,7 +1356,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             this.searchResultManager = new SearchManager(new FileSystemFetcher(fileSystemKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, fileSystemKey.getChildIdToSelect());
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for file system filter: {0}.",
@@ -1417,16 +1417,23 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         "# {1} - pageCount",
         "DataResultPanel_pageIdxOfCount={0} of {1}"
     })
-    private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging) {
+    
+     private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging) {
+         displaySearchResults(searchResults, resetPaging, null);
+     }
+    
+    private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging, Long contentIdToSelect) {
         if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> displaySearchResults(searchResults, resetPaging));
+            SwingUtilities.invokeLater(() -> displaySearchResults(searchResults, resetPaging, contentIdToSelect));
             return;
         }
 
         if (searchResults == null) {
             setNode(null, resetPaging);
         } else {
-            setNode(new SearchResultRootNode(searchResults), resetPaging);
+            SearchResultRootNode node = new SearchResultRootNode(searchResults);
+            node.setChildIdToSelect(contentIdToSelect);
+            setNode(node, resetPaging);
             setNumberOfChildNodes(
                     searchResults.getTotalResultsCount() > Integer.MAX_VALUE
                     ? Integer.MAX_VALUE

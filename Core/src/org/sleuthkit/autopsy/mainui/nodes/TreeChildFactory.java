@@ -48,21 +48,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         if (evt.getNewValue() instanceof DAOAggregateEvent) {
-            DAOAggregateEvent aggEvt = (DAOAggregateEvent) evt.getNewValue();
-            for (DAOEvent daoEvt : aggEvt.getEvents()) {
-                if (daoEvt instanceof TreeEvent) {
-                    TreeEvent treeEvt = (TreeEvent) daoEvt;
-                    TreeItemDTO<? extends T> item = getOrCreateRelevantChild(treeEvt);
-                    if (item != null) {
-                        if (treeEvt.isRefreshRequired()) {
-                            update();
-                            break;
-                        } else {
-                            updateNodeData(item);
-                        }
-                    }
-                }
-            }
+            handleDAOAggregateEvent((DAOAggregateEvent) evt.getNewValue());
         }
     };
 
@@ -83,6 +69,30 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     // maps the Node key (ID) to its DTO
     private Map<Object, TreeItemDTO<? extends T>> idMapping = new HashMap<>();
 
+    /**
+     * Handles processing and updating due to an aggregate event. This method
+     * can be overridden for custom behavior while handling DAO aggregate
+     * events.
+     *
+     * @param aggEvt The aggregate event.
+     */
+    protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+        for (DAOEvent daoEvt : aggEvt.getEvents()) {
+            if (daoEvt instanceof TreeEvent) {
+                TreeEvent treeEvt = (TreeEvent) daoEvt;
+                TreeItemDTO<? extends T> item = getOrCreateRelevantChild(treeEvt);
+                if (item != null) {
+                    if (treeEvt.isRefreshRequired()) {
+                        update();
+                        break;
+                    } else {
+                        updateNodeData(item);
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     protected boolean createKeys(List<Object> toPopulate) {
         List<TreeItemDTO<? extends T>> itemsList;
@@ -98,9 +108,9 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
         }
         // make copy to avoid concurrent modification
         synchronized (resultsUpdateLock) {
-            itemsList = new ArrayList<>(curItemsList);    
+            itemsList = new ArrayList<>(curItemsList);
         }
-        
+
         // update existing cached nodes
         List<Object> curResultIds = new ArrayList<>();
         for (TreeItemDTO<? extends T> dto : itemsList) {

@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.BaseRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
 /**
  * A a simple starting point for nodes.
@@ -68,5 +69,10 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
     @Override
     public Action[] getActions(boolean context) {
         return ActionsFactory.getActions(this);
+    }
+    
+    @Override
+    public Action getPreferredAction() {
+        return DirectoryTreeTopComponent.getOpenChildAction(getName());
     }
 }
