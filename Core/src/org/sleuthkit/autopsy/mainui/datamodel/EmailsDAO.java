@@ -39,11 +39,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
@@ -68,6 +68,11 @@ public class EmailsDAO extends AbstractDAO {
     private static final int CACHE_SIZE = Account.Type.PREDEFINED_ACCOUNT_TYPES.size(); // number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
+
+    public static final String DEFAULT_STR = "[DEFAULT]";
+    private static final String PATH_DELIMITER = "/";
+    private static final Pair<String, String> DEFAULT_ACCOUNT_FOLDER = Pair.of(DEFAULT_STR, DEFAULT_STR);
+
     private final Cache<SearchParams<EmailSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<EmailEvent> emailCounts = new TreeCounts<>();
 
@@ -115,7 +120,7 @@ public class EmailsDAO extends AbstractDAO {
     }
 
     private static String getPathPiece(String s) {
-        return StringUtils.isNotBlank(s) ? s : "[DEFAULT]";
+        return StringUtils.isNotBlank(s) ? s : DEFAULT_STR;
     }
 
     /**
@@ -132,7 +137,31 @@ public class EmailsDAO extends AbstractDAO {
     private static String constructPath(String account, String folder) {
         return Stream.of(account, folder)
                 .map(s -> getPathPiece(s))
-                .collect(Collectors.joining("/"));
+                .collect(Collectors.joining(PATH_DELIMITER));
+    }
+
+    /**
+     * Returns a pair of the email account and folder.
+     *
+     * NOTE: Subject to change; see JIRA-8220.
+     *
+     * @param art The artifact.
+     *
+     * @return The pair of the account and folder or default if undetermined.
+     */
+    private static Pair<String, String> getAccountAndFolder(BlackboardArtifact art) throws TskCoreException {
+        BlackboardAttribute pathAttr = art.getAttribute(BlackboardAttribute.Type.TSK_PATH);
+        if (pathAttr == null) {
+            return DEFAULT_ACCOUNT_FOLDER;
+        }
+
+        String pathVal = pathAttr.getValueString();
+        if (pathVal == null) {
+            return DEFAULT_ACCOUNT_FOLDER;
+        }
+
+        String[] pieces = pathVal.split(PATH_DELIMITER);
+        return Pair.of(pieces[0], pieces.length > 1 ? pieces[1] : DEFAULT_STR);
     }
 
     private SearchResultsDTO fetchEmailMessageDTOs(SearchParams<EmailSearchParams> searchParams) throws NoCurrentCaseException, TskCoreException, SQLException {
@@ -159,9 +188,9 @@ public class EmailsDAO extends AbstractDAO {
                 tableData.rows, searchParams.getStartItem(), allArtifacts.size());
     }
 
-    private static TreeItemDTO<EmailSearchParams> createEmailTreeItem(String account, String folder,
-            Long dataSourceId, TreeResultsDTO.TreeDisplayCount count) {
-        
+    public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String account, String folder,
+            Long dataSourceId, TreeDisplayCount count) {
+
         return new TreeItemDTO<>(
                 EmailSearchParams.getTypeId(),
                 new EmailSearchParams(dataSourceId, account, folder),
@@ -252,23 +281,24 @@ public class EmailsDAO extends AbstractDAO {
 
         List<TreeResultsDTO.TreeItemDTO<EmailSearchParams>> emailParams = new ArrayList<>();
         try {
-            Set<Account.Type> indeterminateTypes = this.emailCounts.getEnqueued().stream()
-                    .filter(evt -> dataSourceId == null || evt.getDataSourceId() == dataSourceId)
-                    .map(evt -> evt.getAccountType())
+            Set<String> indeterminateTypes = this.emailCounts.getEnqueued().stream()
+                    .filter(evt -> (dataSourceId == null || evt.getDataSourceId() == dataSourceId)
+                    && (account == null || account.equals(evt.getAccount())))
+                    .map(evt -> account == null ? getPathPiece(evt.getAccount()) : getPathPiece(evt.getFolder()))
                     .collect(Collectors.toSet());
 
             getCase().getCaseDbAccessManager().select(query, (resultSet) -> {
                 try {
                     while (resultSet.next()) {
-                        String accountTypeName = resultSet.getString("account_type");
-                        String accountDisplayName = resultSet.getString("account_display_name");
-                        Account.Type accountType = new Account.Type(accountTypeName, accountDisplayName);
-                        long count = resultSet.getLong("count");
-                        TreeDisplayCount treeDisplayCount = indeterminateTypes.contains(accountType)
+                        String resultAccount = TBD;
+                        String resultFolder = TBD;
+                        long count = TBD;
+
+                        TreeDisplayCount treeDisplayCount = indeterminateTypes.contains((account == null) ? resultAccount : resultFolder)
                                 ? TreeDisplayCount.INDETERMINATE
                                 : TreeResultsDTO.TreeDisplayCount.getDeterminate(count);
-                        
-                        emailParams.add(createAccountTreeItem(accountType, dataSourceId, treeDisplayCount));
+
+                        emailParams.add(createEmailTreeItem(resultAccount, resultFolder, dataSourceId, treeDisplayCount));
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
@@ -293,7 +323,7 @@ public class EmailsDAO extends AbstractDAO {
     Set<? extends DAOEvent> handleIngestComplete() {
         return SubDAOUtils.getIngestCompleteEvents(
                 this.emailCounts,
-                (daoEvt, count) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), count)
+                (daoEvt, count) -> createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
         );
     }
 
@@ -301,7 +331,7 @@ public class EmailsDAO extends AbstractDAO {
     Set<TreeEvent> shouldRefreshTree() {
         return SubDAOUtils.getRefreshEvents(
                 this.emailCounts,
-                (daoEvt, count) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), count)
+                (daoEvt, count) -> createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
         );
     }
 
@@ -313,30 +343,20 @@ public class EmailsDAO extends AbstractDAO {
             return Collections.emptySet();
         }
 
+        // maps email account => folder => data source id
         Map<String, Map<String, Set<Long>>> emailMap = new HashMap<>();
 
         for (BlackboardArtifact art : dataEvt.getArtifacts()) {
             try {
                 if (art.getType().getTypeID() == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
-                    BlackboardAttribute accountTypeAttribute = art.getAttribute(BlackboardAttribute.Type.TSK_ACCOUNT_TYPE);
-                    if (accountTypeAttribute == null) {
-                        continue;
-                    }
-
-                    String accountTypeName = accountTypeAttribute.getValueString();
-                    if (accountTypeName == null) {
-                        continue;
-                    }
-
-                    Pair<String, String> accountAndFolder = getAccountAndFolder(art);
-
+                    Pair<String, String> accountFolder = getAccountAndFolder(art);
                     emailMap
-                            .computeIfAbsent(accountAndFolder.getLeft(), (k) -> new HashMap<>())
-                            .computeIfAbsent(accountAndFolder.getRight(), (k) -> new HashSet<>())
+                            .computeIfAbsent(accountFolder.getLeft(), (k) -> new HashMap<>())
+                            .computeIfAbsent(accountFolder.getRight(), (k) -> new HashSet<>())
                             .add(art.getDataSourceObjectID());
                 }
-            } catch (NoCurrentCaseException | TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to fetch artifact category for artifact with id: " + art.getId(), ex);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to fetch email message info for: " + art.getId(), ex);
             }
         }
 
@@ -345,22 +365,33 @@ public class EmailsDAO extends AbstractDAO {
             return Collections.emptySet();
         }
 
-        // GVDTODO invalidate keys
+        SubDAOUtils.invalidateKeys(this.searchParamsCache, (searchParams) -> {
+            Map<String, Set<Long>> folders = emailMap.get(searchParams.getAccount());
+            if (folders == null) {
+                return false;
+            }
+
+            Set<Long> dsIds = folders.get(searchParams.getFolder());
+            if (dsIds == null) {
+                return false;
+            }
+            return searchParams.getDataSourceId() == null || dsIds.contains(searchParams.getDataSourceId());
+        });
+
         List<EmailEvent> emailEvents = new ArrayList<>();
         for (Entry<String, Map<String, Set<Long>>> accountEntry : emailMap.entrySet()) {
             String acct = accountEntry.getKey();
             for (Entry<String, Set<Long>> folderEntry : accountEntry.getValue().entrySet()) {
                 String folder = folderEntry.getKey();
-                for (Long dsObjId : entry.getValue()) {
-                    EmailEvent newEmailsEvent = ...;
-                    String.add(newEvt);
+                for (Long dsObjId : folderEntry.getValue()) {
+                    emailEvents.add(new EmailEvent(dsObjId, acct, folder));
                 }
             }
-
         }
 
         Stream<TreeEvent> treeEvents = this.emailCounts.enqueueAll(emailEvents).stream()
-                .map(daoEvt -> new TreeEvent(createAccountTreeItem(TBD, daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
+                .map(daoEvt -> new TreeEvent(createEmailTreeItem(
+                daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
 
         return Stream.of(emailEvents.stream(), treeEvents)
                 .flatMap(s -> s)
@@ -378,17 +409,14 @@ public class EmailsDAO extends AbstractDAO {
      */
     private boolean isEmailInvalidating(EmailSearchParams parameters, DAOEvent evt) {
         if (evt instanceof EmailEvent) {
-            EmailEvent commEvt = (EmailEvent) evt;
-            return (parameters.getType().getTypeName().equals(commEvt.getType()))
-                    && (parameters.getDataSourceId() == null || Objects.equals(parameters.getDataSourceId(), commEvt.getDataSourceId()));
+            EmailEvent emailEvt = (EmailEvent) evt;
+            return (Objects.equals(parameters.getAccount(), emailEvt.getAccount())
+                    && Objects.equals(parameters.getFolder(), emailEvt.getFolder())
+                    && (parameters.getDataSourceId() == null || Objects.equals(parameters.getDataSourceId(), emailEvt.getDataSourceId())));
         } else {
             return false;
 
         }
-    }
-
-    private Pair<String, String> getAccountAndFolder(BlackboardArtifact art) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**
@@ -411,7 +439,7 @@ public class EmailsDAO extends AbstractDAO {
 
         @Override
         public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
-            return getDAO().getEmails(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+            return getDAO().getEmailMessages(this.getParameters(), pageIdx * pageSize, (long) pageSize);
         }
 
         @Override
