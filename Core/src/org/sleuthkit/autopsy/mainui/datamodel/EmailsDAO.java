@@ -247,53 +247,40 @@ public class EmailsDAO extends AbstractDAO {
      *
      * @throws ExecutionException
      */
-    public TreeResultsDTO<CommAccountsSearchParams> getEmailCounts(Long dataSourceId, String account) throws ExecutionException {
-//        String query = "res.account_type AS account_type, MIN(res.account_display_name) AS account_display_name, COUNT(*) AS count\n"
-//                + "FROM (\n"
-//                + "  SELECT MIN(account_types.type_name) AS account_type, MIN(account_types.display_name) AS account_display_name\n"
-//                + "  FROM blackboard_artifacts\n"
-//                + "  LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id\n"
-//                + "  LEFT JOIN account_types ON blackboard_attributes.value_text = account_types.type_name\n"
-//                + "  WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
-//                + "  AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
-//                + (dataSourceId != null && dataSourceId > 0 ? "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId + " " : " ") + "\n"
-//                + "  -- group by artifact_id to ensure only one account type per artifact\n"
-//                + "  GROUP BY blackboard_artifacts.artifact_id\n"
-//                + ") res\n"
-//                + "GROUP BY res.account_type\n"
-//                + "ORDER BY MIN(res.account_display_name)";
-//
-//        List<TreeResultsDTO.TreeItemDTO<CommAccountsSearchParams>> accountParams = new ArrayList<>();
-//        try {
-//            Set<Account.Type> indeterminateTypes = this.accountCounts.getEnqueued().stream()
-//                    .filter(evt -> dataSourceId == null || evt.getDataSourceId() == dataSourceId)
-//                    .map(evt -> evt.getAccountType())
-//                    .collect(Collectors.toSet());
-//
-//            getCase().getCaseDbAccessManager().select(query, (resultSet) -> {
-//                try {
-//                    while (resultSet.next()) {
-//                        String accountTypeName = resultSet.getString("account_type");
-//                        String accountDisplayName = resultSet.getString("account_display_name");
-//                        Account.Type accountType = new Account.Type(accountTypeName, accountDisplayName);
-//                        long count = resultSet.getLong("count");
-//                        TreeDisplayCount treeDisplayCount = indeterminateTypes.contains(accountType)
-//                                ? TreeDisplayCount.INDETERMINATE
-//                                : TreeResultsDTO.TreeDisplayCount.getDeterminate(count);
-//                        
-//                        accountParams.add(createAccountTreeItem(accountType, dataSourceId, treeDisplayCount));
-//                    }
-//                } catch (SQLException ex) {
-//                    logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
-//                }
-//            });
-//
-//            // return results
-//            return new TreeResultsDTO<>(accountParams);
-//
-//        } catch (NoCurrentCaseException | TskCoreException ex) {
-//            throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
-//        }
+    public TreeResultsDTO<EmailSearchParams> getEmailCounts(Long dataSourceId, String account) throws ExecutionException {
+        String query = TBD;
+
+        List<TreeResultsDTO.TreeItemDTO<EmailSearchParams>> emailParams = new ArrayList<>();
+        try {
+            Set<Account.Type> indeterminateTypes = this.emailCounts.getEnqueued().stream()
+                    .filter(evt -> dataSourceId == null || evt.getDataSourceId() == dataSourceId)
+                    .map(evt -> evt.getAccountType())
+                    .collect(Collectors.toSet());
+
+            getCase().getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        String accountTypeName = resultSet.getString("account_type");
+                        String accountDisplayName = resultSet.getString("account_display_name");
+                        Account.Type accountType = new Account.Type(accountTypeName, accountDisplayName);
+                        long count = resultSet.getLong("count");
+                        TreeDisplayCount treeDisplayCount = indeterminateTypes.contains(accountType)
+                                ? TreeDisplayCount.INDETERMINATE
+                                : TreeResultsDTO.TreeDisplayCount.getDeterminate(count);
+                        
+                        emailParams.add(createAccountTreeItem(accountType, dataSourceId, treeDisplayCount));
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
+                }
+            });
+
+            // return results
+            return new TreeResultsDTO<>(emailParams);
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
+        }
     }
 
     @Override
