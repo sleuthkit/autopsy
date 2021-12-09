@@ -33,10 +33,17 @@ public class DeletedContentSearchParams {
     public static String getTypeId() {
         return TYPE_ID;
     }
-    
+
     private final DeletedContentFilter filter;
     private final Long dataSourceId;
 
+    /**
+     * Main constructor.
+     *
+     * @param filter       The filter (if null, indicates full refresh
+     *                     required).
+     * @param dataSourceId The data source id or null.
+     */
     public DeletedContentSearchParams(DeletedContentFilter filter, Long dataSourceId) {
         this.filter = filter;
         this.dataSourceId = dataSourceId;

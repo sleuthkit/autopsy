@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -37,7 +38,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -63,6 +63,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
@@ -200,8 +201,9 @@ public class ViewsDAO extends AbstractDAO {
         }
 
         DeletedContentEvent deletedContentEvt = (DeletedContentEvent) eventData;
-        return deletedContentEvt.getFilter().equals(params.getFilter())
-                && (params.getDataSourceId() == null || Objects.equals(params.getDataSourceId(), deletedContentEvt.getDataSourceId()));
+        return (deletedContentEvt.getFilter() == null || deletedContentEvt.getFilter().equals(params.getFilter()))
+                && (params.getDataSourceId() == null || deletedContentEvt.getDataSourceId() == null
+                || Objects.equals(params.getDataSourceId(), deletedContentEvt.getDataSourceId()));
     }
 
     /**
@@ -546,6 +548,21 @@ public class ViewsDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<DeletedContentSearchParams> getDeletedContentCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        Set<DeletedContentFilter> indeterminateFilters = new HashSet<>();
+        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof DeletedContentEvent) {
+                DeletedContentEvent deletedEvt = (DeletedContentEvent) evt;
+                if (dataSourceId == null || deletedEvt.getDataSourceId() == null || Objects.equals(deletedEvt.getDataSourceId(), dataSourceId)) {
+                    if (deletedEvt.getFilter() == null) {
+                        // if null filter, indicates full refresh and all file sizes need refresh.
+                        indeterminateFilters.addAll(Arrays.asList(DeletedContentFilter.values()));
+                        break;
+                    } else {
+                        indeterminateFilters.add(deletedEvt.getFilter());
+                    }
+                }
+            }
+        }
 
         String queryStr = Stream.of(DeletedContentFilter.values())
                 .map((filter) -> {
@@ -563,14 +580,18 @@ public class ViewsDAO extends AbstractDAO {
                     if (resultSet.next()) {
                         for (DeletedContentFilter filter : DeletedContentFilter.values()) {
                             long count = resultSet.getLong(filter.name());
-                            treeList.add(createDeletedContentTreeItem(filter, dataSourceId, TreeDisplayCount.getDeterminate(count)));
+                            TreeDisplayCount displayCount = indeterminateFilters.contains(filter)
+                                    ? TreeDisplayCount.INDETERMINATE
+                                    : TreeDisplayCount.getDeterminate(count);
+
+                            treeList.add(createDeletedContentTreeItem(filter, dataSourceId, displayCount));
                         }
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching file type counts.", ex);
                 }
             });
-            
+
             return new TreeResultsDTO<>(treeList);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching file counts with query:\n" + queryStr, ex);
@@ -582,7 +603,7 @@ public class ViewsDAO extends AbstractDAO {
                 "DELETED_CONTENT",
                 new DeletedContentSearchParams(filter, dataSourceId),
                 filter,
-                filter.getDisplayName(),
+                filter == null ? "" : filter.getDisplayName(),
                 displayCount);
     }
 
@@ -930,7 +951,7 @@ public class ViewsDAO extends AbstractDAO {
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
         SubDAOUtils.invalidateKeys(this.searchParamsCache,
-                (searchParams) -> searchParamsMatchEvent(null, null, null, null, true, searchParams));
+                (searchParams) -> searchParamsMatchEvent(null, null, null, null, null, true, searchParams));
 
         Set<? extends DAOEvent> treeEvts = SubDAOUtils.getIngestCompleteEvents(this.treeCounts,
                 (daoEvt, count) -> createTreeItem(daoEvt, count));
@@ -957,6 +978,7 @@ public class ViewsDAO extends AbstractDAO {
         Long dsId = null;
         boolean dataSourceAdded = false;
         Set<FileExtSearchFilter> evtExtFilters = null;
+        Set<DeletedContentFilter> deletedContentFilters = null;
         String evtMimeType = null;
         FileSizeFilter evtFileSize = null;
 
@@ -978,7 +1000,7 @@ public class ViewsDAO extends AbstractDAO {
                 evtExtFilters = EXTENSION_FILTER_MAP.getOrDefault("." + af.getNameExtension(), Collections.emptySet());
             }
 
-            Set<DeletedContentFilter> deletedContentFilters = getMatchingDeletedContentFilters(af);
+            deletedContentFilters = getMatchingDeletedContentFilters(af);
 
             // create a mime type mapping if mime type present
             if (StringUtils.isBlank(af.getMIMEType()) || !TSK_FS_NAME_TYPE_ENUM.REG.equals(af.getDirType()) || !getMimeDbFilesTypes().contains(af.getType())) {
@@ -993,26 +1015,29 @@ public class ViewsDAO extends AbstractDAO {
                         .orElse(null);
             }
 
-        if (evtExtFilters == null || evtExtFilters.isEmpty() && deletedContentFilters.isEmpty() && evtMimeType == null && evtFileSize == null) {
-            return Collections.emptySet();
+            if (evtExtFilters == null || evtExtFilters.isEmpty() && deletedContentFilters.isEmpty() && evtMimeType == null && evtFileSize == null) {
+                return Collections.emptySet();
+            }
         }
 
-        return invalidateAndReturnEvents(evtExtFilters, evtMimeType, evtFileSize, dsId, dataSourceAdded);
+        return invalidateAndReturnEvents(evtExtFilters, evtMimeType, evtFileSize, deletedContentFilters, dsId, dataSourceAdded);
     }
 
     /**
      * Handles invalidating caches and returning events based on digest.
      *
-     * @param evtExtFilters   The file extension filters or empty set.
-     * @param evtMimeType     The mime type or null.
-     * @param evtFileSize     The file size filter or null.
-     * @param dsId            The data source id or null.
-     * @param dataSourceAdded Whether or not this is a data source added event.
+     * @param evtExtFilters         The file extension filters or empty set.
+     * @param evtMimeType           The mime type or null.
+     * @param evtFileSize           The file size filter or null.
+     * @param deletedContentFilters The set of affected deleted content filters.
+     * @param dsId                  The data source id or null.
+     * @param dataSourceAdded       Whether or not this is a data source added
+     *                              event.
      *
      * @return The set of dao events to be fired.
      */
     private Set<DAOEvent> invalidateAndReturnEvents(Set<FileExtSearchFilter> evtExtFilters, String evtMimeType,
-            FileSizeFilter evtFileSize, Long dsId, boolean dataSourceAdded) {
+            FileSizeFilter evtFileSize, Set<DeletedContentFilter> deletedContentFilters, Long dsId, boolean dataSourceAdded) {
 
         SubDAOUtils.invalidateKeys(this.searchParamsCache,
                 (searchParams) -> searchParamsMatchEvent(evtExtFilters, deletedContentFilters,
@@ -1049,8 +1074,8 @@ public class ViewsDAO extends AbstractDAO {
                     && (sizeParams.getDataSourceId() == null || dsId == null || Objects.equals(sizeParams.getDataSourceId(), dsId));
         } else if (searchParams instanceof DeletedContentSearchParams) {
             DeletedContentSearchParams deletedParams = (DeletedContentSearchParams) searchParams;
-            return deletedContentFilters.contains(deletedParams.getFilter())
-                    && (deletedParams.getDataSourceId() == null || Objects.equals(deletedParams.getDataSourceId(), dsId));
+            return (dataSourceAdded || (deletedContentFilters != null && deletedContentFilters.contains(deletedParams.getFilter())))
+                    && (deletedParams.getDataSourceId() == null || dsId == null || Objects.equals(deletedParams.getDataSourceId(), dsId));
         } else {
             return false;
         }
@@ -1065,7 +1090,7 @@ public class ViewsDAO extends AbstractDAO {
      * @param mimeType              The affected mime type or null.
      * @param sizeFilter            The affected size filter or null.
      * @param dsId                  The file object id.
-     * @param dataSourceAdded A data source was added.
+     * @param dataSourceAdded       A data source was added.
      *
      * @return The list of affected dao events.
      */
@@ -1073,17 +1098,18 @@ public class ViewsDAO extends AbstractDAO {
             Set<DeletedContentFilter> deletedContentFilters,
             String mimeType,
             FileSizeFilter sizeFilter,
-            long dsId, 
+            Long dsId,
             boolean dataSourceAdded) {
 
-        List<DAOEvent> daoEvents = extFilters == null
-                ? new ArrayList<>()
+        Stream<DAOEvent> extEvents = extFilters == null
+                ? Stream.empty()
                 : extFilters.stream()
-                        .map(extFilter -> new FileTypeExtensionsEvent(extFilter, dsId))
-                        .collect(Collectors.toList());
+                        .map(extFilter -> new FileTypeExtensionsEvent(extFilter, dsId));
 
-        Stream<DAOEvent> deletedEvents = deletedContentFilters.stream()
-                .map(deletedFilter -> new DeletedContentEvent(deletedFilter, dsId));
+        Stream<DAOEvent> deletedEvents = deletedContentFilters == null
+                ? Stream.empty()
+                : deletedContentFilters.stream()
+                        .map(deletedFilter -> new DeletedContentEvent(deletedFilter, dsId));
 
         List<DAOEvent> daoEvents = Stream.concat(extEvents, deletedEvents)
                 .collect(Collectors.toList());
@@ -1101,14 +1127,14 @@ public class ViewsDAO extends AbstractDAO {
                 .collect(Collectors.toList());
 
         // data source added events are not necessarily fired before ingest completed/cancelled, so don't handle dataSourceAdded events with delay.
-        Set<DAOEvent> forceRefreshEvents = (dataSourceAdded) 
+        Set<DAOEvent> forceRefreshEvents = (dataSourceAdded)
                 ? getFileViewRefreshEvents(dsId)
                 : Collections.emptySet();
-        
+
         List<TreeEvent> forceRefreshTreeEvents = forceRefreshEvents.stream()
                 .map(evt -> new TreeEvent(createTreeItem(evt, TreeDisplayCount.UNSPECIFIED), true))
                 .collect(Collectors.toList());
-        
+
         return Stream.of(daoEvents, treeEvents, forceRefreshEvents, forceRefreshTreeEvents)
                 .flatMap(lst -> lst.stream())
                 .collect(Collectors.toSet());
@@ -1147,6 +1173,7 @@ public class ViewsDAO extends AbstractDAO {
      */
     private Set<DAOEvent> getFileViewRefreshEvents(Long dataSourceId) {
         return ImmutableSet.of(
+                new DeletedContentEvent(null, dataSourceId),
                 new FileTypeSizeEvent(null, dataSourceId),
                 new FileTypeExtensionsEvent(null, dataSourceId)
         );

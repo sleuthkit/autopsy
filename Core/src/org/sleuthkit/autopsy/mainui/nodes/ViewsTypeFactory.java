@@ -192,10 +192,28 @@ public class ViewsTypeFactory {
         }
 
         @Override
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof TreeEvent) {
+                    TreeResultsDTO.TreeItemDTO<DeletedContentSearchParams> treeItem = super.getTypedTreeItem((TreeEvent) evt, DeletedContentSearchParams.class);
+                    // if search params has null filter, trigger full refresh
+                    if (treeItem != null && treeItem.getSearchParams().getFilter() == null) {
+                        super.update();
+                        return;
+                    }
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
+        }
+
+        @Override
         protected TreeResultsDTO.TreeItemDTO<? extends DeletedContentSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
             TreeResultsDTO.TreeItemDTO<DeletedContentSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, DeletedContentSearchParams.class);
 
             if (originalTreeItem != null
+                    // only create child if size filter is present (if null, update should be triggered separately)
+                    && originalTreeItem.getSearchParams().getFilter() != null
                     && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
