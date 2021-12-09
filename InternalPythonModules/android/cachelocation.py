@@ -66,7 +66,7 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.__findGeoLocationsInFile(jFile, abstractFile)
+                    self.__findGeoLocationsInFile(jFile, abstractFile, context)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing cached location files", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -74,7 +74,7 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
             # Error finding cached location files.
             pass
 
-    def __findGeoLocationsInFile(self, file, abstractFile):
+    def __findGeoLocationsInFile(self, file, abstractFile, context):
 
         try:
             # code to parse the cache.wifi and cache.cell taken from https://forensics.spreitzenbarth.de/2011/10/28/decoding-cache-cell-and-cache-wifi-files/

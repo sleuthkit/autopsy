@@ -62,7 +62,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.__findGeoLocationsInDB(jFile.toString(), abstractFile)
+                    self.__findGeoLocationsInDB(jFile.toString(), abstractFile, context)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing browser location files", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -70,7 +70,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
             # Error finding browser location files.
             pass
 
-    def __findGeoLocationsInDB(self, databasePath, abstractFile):
+    def __findGeoLocationsInDB(self, databasePath, abstractFile, context):
         if not databasePath:
             return
 
