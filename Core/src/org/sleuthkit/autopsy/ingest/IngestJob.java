@@ -25,11 +25,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.python.google.common.collect.ImmutableList;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.DataSource;
+import sun.security.ec.point.ProjectivePoint;
 
 /**
  * Analyzes a data sources using a set of ingest modules specified via ingest
@@ -71,7 +74,7 @@ public final class IngestJob {
     private static final Logger logger = Logger.getLogger(IngestJob.class.getName());
     private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
-    private final Content dataSource;
+    private final DataSource dataSource;
     private final List<AbstractFile> files = new ArrayList<>();
     private final Mode ingestMode;
     private final IngestJobSettings settings;
@@ -103,8 +106,11 @@ public final class IngestJob {
      * @param settings   The ingest job settings.
      */
     IngestJob(Content dataSource, Mode ingestMode, IngestJobSettings settings) {
+        if (!(dataSource instanceof DataSource)) { // RJCTODO: Push this to ingest manager?
+            throw new IllegalArgumentException("dataSource argument does not implement the DataSource interface"); //NON-NLS
+        }        
         id = IngestJob.nextId.getAndIncrement();
-        this.dataSource = dataSource;
+        this.dataSource = (DataSource) dataSource;
         this.settings = settings;
         this.ingestMode = ingestMode;
         cancellationReason = CancellationReason.NOT_CANCELLED;
@@ -125,8 +131,28 @@ public final class IngestJob {
      *
      * @return The data source.
      */
-    Content getDataSource() {
+    DataSource getDataSource() {
         return dataSource;
+    }
+
+    /**
+     * Gets the subset of files from the data source to be analyzed for this
+     * job.
+     *
+     * @return The subset of files or an empty list if all the files in the data
+     *         source shuld be analyzed.
+     */
+    List<AbstractFile> getFiles() {
+        return ImmutableList.copyOf(files);
+    }
+
+    /**
+     * Gets the ingest job settings.
+     *
+     * @return The settings.
+     */
+    IngestJobSettings getSettings() {
+        return settings;
     }
 
     /**
@@ -198,6 +224,10 @@ public final class IngestJob {
      * scheduling the ingest tasks that make up the job.
      *
      * @return A collection of ingest module start up errors, empty on success.
+     *
+     * @throws InterruptedException The exception is thrown if the current
+     *                              thread is interrupted during the start up
+     *                              process.
      */
     synchronized List<IngestModuleError> start() throws InterruptedException {
         if (ingestModuleExecutor != null) {
@@ -205,7 +235,7 @@ public final class IngestJob {
             return Collections.emptyList();
         }
 
-        ingestModuleExecutor = new IngestJobExecutor(this, dataSource, files, settings);
+        ingestModuleExecutor = new IngestJobExecutor(this);
         List<IngestModuleError> errors = new ArrayList<>();
         errors.addAll(ingestModuleExecutor.startUp());
         if (errors.isEmpty()) {
@@ -255,10 +285,10 @@ public final class IngestJob {
      *
      * @return The snapshot, will be null if the job is not started yet.
      */
-    Snapshot getDiagnosticStatsSnapshot() {
-        Snapshot snapshot = null;
+    IngestJobProgressSnapshot getDiagnosticStatsSnapshot() {
+        IngestJobProgressSnapshot snapshot = null;
         if (ingestModuleExecutor != null) {
-            snapshot = ingestModuleExecutor.getDiagnosticStatsSnapshot(true);
+            snapshot = ingestModuleExecutor.getIngestJobProgressSnapshot(true);
         }
         return snapshot;
     }
@@ -353,7 +383,7 @@ public final class IngestJob {
          */
         public final class DataSourceProcessingSnapshot {
 
-            private final Snapshot snapshot;
+            private final IngestJobProgressSnapshot snapshot;
 
             /**
              * Constructs a snapshot of some basic diagnostic statistics for an
@@ -362,7 +392,7 @@ public final class IngestJob {
              * of multiple data sources, each of which had its own basic
              * diagnostic statistics snapshot.
              */
-            private DataSourceProcessingSnapshot(Snapshot snapshot) {
+            private DataSourceProcessingSnapshot(IngestJobProgressSnapshot snapshot) {
                 this.snapshot = snapshot;
             }
 
@@ -445,7 +475,7 @@ public final class IngestJob {
          *                                   stats part of the snapshot.
          */
         private ProgressSnapshot(boolean includeIngestTasksSnapshot) {
-            Snapshot snapshot = ingestModuleExecutor.getDiagnosticStatsSnapshot(includeIngestTasksSnapshot);
+            IngestJobProgressSnapshot snapshot = ingestModuleExecutor.getIngestJobProgressSnapshot(includeIngestTasksSnapshot);
             dataSourceProcessingSnapshot = new DataSourceProcessingSnapshot(snapshot);
             jobCancellationRequested = IngestJob.this.isCancelled();
             jobCancellationReason = IngestJob.this.getCancellationReason();

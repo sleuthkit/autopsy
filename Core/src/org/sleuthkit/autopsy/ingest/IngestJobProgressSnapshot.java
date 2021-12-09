@@ -24,9 +24,9 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Stores basic diagnostic statistics for an ingest job.
+ * A snapshot of the progress of an ingest job.
  */
-public final class Snapshot implements Serializable {
+public final class IngestJobProgressSnapshot implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -45,10 +45,9 @@ public final class Snapshot implements Serializable {
     transient private final List<String> cancelledDataSourceModules;
 
     /**
-     * Constructs an object to store basic diagnostic statistics for an ingest
-     * job.
+     * Constructs a snapshot of the progress of an ingest job.
      */
-    Snapshot(String dataSourceName, long jobId, long jobStartTime, DataSourceIngestPipeline.DataSourcePipelineModule dataSourceIngestModule,
+    IngestJobProgressSnapshot(String dataSourceName, long jobId, long jobStartTime, DataSourceIngestPipeline.DataSourcePipelineModule dataSourceIngestModule,
             boolean fileIngestRunning, Date fileIngestStartTime,
             boolean jobCancelled, IngestJob.CancellationReason cancellationReason, List<String> cancelledModules,
             long processedFiles, long estimatedFilesToProcess,
@@ -71,7 +70,7 @@ public final class Snapshot implements Serializable {
     }
 
     /**
-     * Gets time these statistics were collected.
+     * Gets the time this snapshot was taken.
      *
      * @return The statistics collection time as number of milliseconds since
      *         January 1, 1970, 00:00:00 GMT.
@@ -81,18 +80,16 @@ public final class Snapshot implements Serializable {
     }
 
     /**
-     * Gets the name of the data source associated with the ingest job that is
-     * the subject of this snapshot.
+     * Gets the name of the data source for the ingest job.
      *
-     * @return A data source name string.
+     * @return The data source name.
      */
     String getDataSource() {
         return dataSource;
     }
 
     /**
-     * Gets the identifier of the ingest job that is the subject of this
-     * snapshot.
+     * Gets the identifier of the ingest job.
      *
      * @return The ingest job id.
      */
@@ -110,68 +107,73 @@ public final class Snapshot implements Serializable {
         return jobStartTime;
     }
 
+    /**
+     * Gets a handle to the currently running data source level ingest module at
+     * the time this snapshot was taken.
+     *
+     * @return The data source ingest module handle, may be null.
+     */
     DataSourceIngestPipeline.DataSourcePipelineModule getDataSourceLevelIngestModule() {
         return this.dataSourceLevelIngestModule;
     }
 
+    /**
+     * Gets whether or not file level analysis was in progress at the time this
+     * snapshot was taken.
+     *
+     * @return True or false.
+     */
     boolean getFileIngestIsRunning() {
         return this.fileIngestRunning;
     }
 
+    /**
+     * Gets the time that file level analysis was started.
+     *
+     * @return The start time.
+     */
+    // RJCTODO: How is this affected by ingest module tiers?
     Date getFileIngestStartTime() {
         return new Date(fileIngestStartTime.getTime());
     }
 
     /**
-     * Gets files per second throughput since the ingest job that is the subject
-     * of this snapshot started.
+     * Gets files per second throughput since the ingest job started.
      *
      * @return Files processed per second (approximate).
      */
-    double getSpeed() {
+    // RJCTODO: How is this affected by ingest module tiers?
+    double getFilesProcessedPerSec() {
         return (double) processedFiles / ((snapShotTime - jobStartTime) / 1000);
     }
 
     /**
-     * Gets the number of files processed for the job so far.
+     * Gets the total number of files processed so far.
      *
      * @return The number of processed files.
      */
+    // RJCTODO: How is this affected by ingest module tiers?
     long getFilesProcessed() {
         return processedFiles;
     }
 
     /**
-     * Gets an estimate of the files that still need to be processed for this
-     * job.
+     * Gets an estimate of the total number files that need to be processed.
      *
      * @return The estimate.
      */
+    // RJCTODO: How is this affected by ingest module tiers?
     long getFilesEstimated() {
         return estimatedFilesToProcess;
     }
 
-    long getRootQueueSize() {
-        if (null == this.tasksSnapshot) {
-            return 0;
-        }
-        return this.tasksSnapshot.getRootQueueSize();
-    }
-
-    long getDirQueueSize() {
-        if (null == this.tasksSnapshot) {
-            return 0;
-        }
-        return this.tasksSnapshot.getDirQueueSize();
-    }
-
-    long getFileQueueSize() {
-        if (null == this.tasksSnapshot) {
-            return 0;
-        }
-        return this.tasksSnapshot.getFileQueueSize();
-    }
-
+    /**
+     * Gets the number of data source level ingest tasks for the ingest job that
+     * are currently in the data source ingest thread queue of the ingest tasks
+     * scheduler.
+     *
+     * @return The number of data source ingest tasks.
+     */
     long getDsQueueSize() {
         if (null == this.tasksSnapshot) {
             return 0;
@@ -179,6 +181,38 @@ public final class Snapshot implements Serializable {
         return this.tasksSnapshot.getDataSourceQueueSize();
     }
 
+    /**
+     * Gets the number of file ingest tasks for the ingest job that are
+     * currently in the root level queue of the ingest tasks scheduler.
+     *
+     * @return The number of file ingest tasks.
+     */
+    long getRootQueueSize() {
+        if (null == this.tasksSnapshot) {
+            return 0;
+        }
+        return this.tasksSnapshot.getRootQueueSize();
+    }
+
+    /**
+     * Gets the number of file ingest tasks for the ingest job that are
+     * currently in the directory level queue of the ingest tasks scheduler.
+     *
+     * @return The number of file ingest tasks.
+     */
+    long getDirQueueSize() {
+        if (null == this.tasksSnapshot) {
+            return 0;
+        }
+        return this.tasksSnapshot.getDirQueueSize();
+    }
+
+    /**
+     * Gets the number of file ingest tasks for the ingest job that are
+     * currently in the streamed files queue of the ingest tasks scheduler.
+     *
+     * @return The number of file ingest tasks.
+     */
     long getStreamingQueueSize() {
         if (null == this.tasksSnapshot) {
             return 0;
@@ -186,6 +220,53 @@ public final class Snapshot implements Serializable {
         return this.tasksSnapshot.getStreamedFilesQueueSize();
     }
 
+    /**
+     * Gets the number of file ingest tasks for the ingest job that are
+     * currently in the file ingest threads queue of the ingest tasks scheduler.
+     *
+     * @return The number of file ingest tasks.
+     */
+    long getFileQueueSize() {
+        if (null == this.tasksSnapshot) {
+            return 0;
+        }
+        return this.tasksSnapshot.getFileQueueSize();
+    }
+
+    /**
+     * Gets the number of data artifact ingest tasks for the ingest job that are
+     * currently in the data artifact ingest thread queue of the ingest tasks
+     * scheduler.
+     *
+     * @return The number of data artifact ingest tasks.
+     */
+    long getDataArtifactTasksQueueSize() {
+        if (tasksSnapshot == null) {
+            return 0;
+        }
+        return tasksSnapshot.getArtifactsQueueSize();
+    }
+
+    /**
+     * Gets the number of analysis result ingest tasks for the ingest job that
+     * are currently in the analysis result ingest thread queue of the ingest
+     * tasks scheduler.
+     *
+     * @return The number of analysis result ingest tasks.
+     */
+    long getAnalysisResultTasksQueueSize() {
+        if (tasksSnapshot == null) {
+            return 0;
+        }
+        return tasksSnapshot.getResultsQueueSize();
+    }
+
+    /**
+     * Gets the number of ingest tasks for the ingest job that are currently in
+     * the tasks in progress list of the ingest tasks scheduler.
+     *
+     * @return The number of file ingest tasks.
+     */
     long getRunningListSize() {
         if (null == this.tasksSnapshot) {
             return 0;
@@ -193,26 +274,17 @@ public final class Snapshot implements Serializable {
         return this.tasksSnapshot.getProgressListSize();
     }
 
-    long getArtifactTasksQueueSize() {
-        if (tasksSnapshot == null) {
-            return 0;
-        }
-        return tasksSnapshot.getArtifactsQueueSize();
-    }
-
-    long getResultTasksQueueSize() {
-        if (tasksSnapshot == null) {
-            return 0;
-        }
-        return tasksSnapshot.getResultsQueueSize();
-    }
-    
+    /**
+     * Gets whether or not the job has been cancelled.
+     *
+     * @return True or false.
+     */
     boolean isCancelled() {
         return this.jobCancelled;
     }
 
     /**
-     * Gets the reason this job was cancelled.
+     * Gets the reason the job was cancelled.
      *
      * @return The cancellation reason, may be not cancelled.
      */
@@ -222,7 +294,7 @@ public final class Snapshot implements Serializable {
 
     /**
      * Gets a list of the display names of any canceled data source level ingest
-     * modules
+     * modules.
      *
      * @return A list of canceled data source level ingest module display names,
      *         possibly empty.

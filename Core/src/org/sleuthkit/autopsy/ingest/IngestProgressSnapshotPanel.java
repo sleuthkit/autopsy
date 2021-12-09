@@ -182,7 +182,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
             NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.artifactsQueued"),
             NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.resultsQueued")};
 
-        private List<Snapshot> jobSnapshots;
+        private List<IngestJobProgressSnapshot> jobSnapshots;
 
         private IngestJobTableModel() {
             refresh();
@@ -210,7 +210,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Snapshot snapShot = jobSnapshots.get(rowIndex);
+            IngestJobProgressSnapshot snapShot = jobSnapshots.get(rowIndex);
             Object cellValue;
             switch (columnIndex) {
                 case 0:
@@ -227,7 +227,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = snapShot.getFilesProcessed();
                     break;
                 case 4:
-                    cellValue = snapShot.getSpeed();
+                    cellValue = snapShot.getFilesProcessedPerSec();
                     break;
                 case 5:
                     cellValue = snapShot.getRunningListSize();
@@ -248,10 +248,10 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = snapShot.getDsQueueSize();
                     break;
                 case 11:
-                    cellValue = snapShot.getArtifactTasksQueueSize();
+                    cellValue = snapShot.getDataArtifactTasksQueueSize();
                     break;
                 case 12:
-                    cellValue = snapShot.getResultTasksQueueSize();
+                    cellValue = snapShot.getAnalysisResultTasksQueueSize();
                     break;
                 default:
                     cellValue = null;

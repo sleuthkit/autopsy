@@ -993,11 +993,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @return A list of ingest job state snapshots.
      */
     @Override
-    public List<Snapshot> getIngestJobSnapshots() {
-        List<Snapshot> snapShots = new ArrayList<>();
+    public List<IngestJobProgressSnapshot> getIngestJobSnapshots() {
+        List<IngestJobProgressSnapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
-                Snapshot snapshot = job.getDiagnosticStatsSnapshot();
+                IngestJobProgressSnapshot snapshot = job.getDiagnosticStatsSnapshot();
                 if (snapshot != null) {
                     snapShots.add(snapshot);
                 }
