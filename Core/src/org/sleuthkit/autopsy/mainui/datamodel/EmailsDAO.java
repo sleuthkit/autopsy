@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,12 +37,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.events.EmailEvent;
@@ -49,6 +52,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -81,22 +85,92 @@ public class EmailsDAO extends AbstractDAO {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
-    public SearchResultsDTO getCommAcounts(EmailSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
+    public SearchResultsDTO getEmailMessages(EmailSearchParams searchParams, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
+        if (searchParams.getDataSourceId() != null && searchParams.getDataSourceId() <= 0) {
+            throw new IllegalArgumentException("Data source id must be greater than 0 or null");
+        }
 
+        SearchParams<EmailSearchParams> emailSearchParams = new SearchParams<>(searchParams, startItem, maxCount);
+        return searchParamsCache.get(emailSearchParams, () -> fetchEmailMessageDTOs(emailSearchParams));
     }
 
-    @NbBundle.Messages({"CommAccounts.name.text=Communication Accounts"})
-    private SearchResultsDTO fetchCommAccountsDTOs(SearchParams<EmailSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException, SQLException {
+    /**
+     * Returns a list of paged artifacts.
+     *
+     * @param arts         The artifacts.
+     * @param searchParams The search parameters including the paging.
+     *
+     * @return The list of paged artifacts.
+     */
+    List<BlackboardArtifact> getPaged(List<? extends BlackboardArtifact> arts, SearchParams<?> searchParams) {
+        Stream<? extends BlackboardArtifact> pagedArtsStream = arts.stream()
+                .sorted(Comparator.comparing((art) -> art.getId()))
+                .skip(searchParams.getStartItem());
 
+        if (searchParams.getMaxResultsCount() != null) {
+            pagedArtsStream = pagedArtsStream.limit(searchParams.getMaxResultsCount());
+        }
+
+        return pagedArtsStream.collect(Collectors.toList());
     }
 
-    private static TreeResultsDTO.TreeItemDTO<EmailSearchParams> createEmailTreeItem(String account, String folder, Long dataSourceId, TreeResultsDTO.TreeDisplayCount count) {
-
+    private static String getPathPiece(String s) {
+        return StringUtils.isNotBlank(s) ? s : "[DEFAULT]";
     }
-    
-    
-    
-    
+
+    /**
+     * Constructs the value for the TSK_PATH attribute based on email message
+     * account and folder.
+     *
+     * NOTE: Subject to change; see JIRA-8220.
+     *
+     * @param account The email message account.
+     * @param folder  The email message folder.
+     *
+     * @return The constructed path.
+     */
+    private static String constructPath(String account, String folder) {
+        return Stream.of(account, folder)
+                .map(s -> getPathPiece(s))
+                .collect(Collectors.joining("/"));
+    }
+
+    private SearchResultsDTO fetchEmailMessageDTOs(SearchParams<EmailSearchParams> searchParams) throws NoCurrentCaseException, TskCoreException, SQLException {
+
+        // get current page of communication accounts results
+        SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        Blackboard blackboard = skCase.getBlackboard();
+
+        String constructedPath = constructPath(searchParams.getParamData().getAccount(), searchParams.getParamData().getFolder());
+        List<BlackboardArtifact> allArtifacts = blackboard.getArtifacts(BlackboardArtifact.Type.TSK_EMAIL_MSG,
+                BlackboardAttribute.Type.TSK_PATH, constructedPath, searchParams.getParamData().getDataSourceId(),
+                false);
+
+        // get current page of artifacts
+        List<BlackboardArtifact> pagedArtifacts = getPaged(allArtifacts, searchParams);
+
+        // Populate the attributes for paged artifacts in the list. This is done using one database call as an efficient way to
+        // load many artifacts/attributes at once.
+        blackboard.loadBlackboardAttributes(pagedArtifacts);
+
+        DataArtifactDAO dataArtDAO = MainDAO.getInstance().getDataArtifactsDAO();
+        BlackboardArtifactDAO.TableData tableData = dataArtDAO.createTableData(BlackboardArtifact.Type.TSK_EMAIL_MSG, pagedArtifacts);
+        return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_EMAIL_MSG, tableData.columnKeys,
+                tableData.rows, searchParams.getStartItem(), allArtifacts.size());
+    }
+
+    private static TreeItemDTO<EmailSearchParams> createEmailTreeItem(String account, String folder,
+            Long dataSourceId, TreeResultsDTO.TreeDisplayCount count) {
+        
+        return new TreeItemDTO<>(
+                EmailSearchParams.getTypeId(),
+                new EmailSearchParams(dataSourceId, account, folder),
+                folder == null ? getPathPiece(account) : constructPath(account, folder),
+                folder == null ? getPathPiece(account) : getPathPiece(folder),
+                count
+        );
+    }
+
 //        switch (skCase.getDatabaseType()) {
 //        case POSTGRESQL:
 //            mimeType = "SPLIT_PART(mime_type, '/', 1)";
@@ -107,9 +181,7 @@ public class EmailsDAO extends AbstractDAO {
 //        default:
 //            throw new IllegalArgumentException("Unknown database type: " + skCase.getDatabaseType());
 //    }
-                            
-    
-        /**
+    /**
      * Parse the path of the email msg to get the account name and folder in
      * which the email is contained.
      *
@@ -131,7 +203,6 @@ public class EmailsDAO extends AbstractDAO {
 //        return parsed;
 //    }
 //    private static final String MAIL_PATH_SEPARATOR = "/";
-    
 //    public TreeResultsDTO<EmailsSearchParams> getEmailCounts(EmailsSearchParams searchParams) throws ExecutionException {
 //        private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
 //
@@ -156,8 +227,6 @@ public class EmailsDAO extends AbstractDAO {
 //                return accounts.get(account).get(folder);
 //            }
 //        }
-        
-        
 //        String query = "SELECT \n"
 //                + "	art.artifact_obj_id AS artifact_obj_id,\n"
 //                + "	(SELECT value_text FROM blackboard_attributes attr\n"
@@ -168,9 +237,6 @@ public class EmailsDAO extends AbstractDAO {
 //                + "	WHERE art.artifact_type_id = " + emailArtifactId + "\n"
 //                + ((filteringDSObjId > 0) ? "	AND art.data_source_obj_id = " + filteringDSObjId : "");
 //    }
-    
-    
-
     /**
      * Returns the accounts and their counts in the current data source if a
      * data source id is provided or all accounts if data source id is null.
