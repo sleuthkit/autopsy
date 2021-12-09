@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.events.EmailEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
@@ -131,7 +132,7 @@ public class EmailsDAO extends AbstractDAO {
 //    }
 //    private static final String MAIL_PATH_SEPARATOR = "/";
     
-//    public TreeResultsDTO<EmailSearchParams> getEmailCounts(EmailSearchParams searchParams) throws ExecutionException {
+//    public TreeResultsDTO<EmailsSearchParams> getEmailCounts(EmailsSearchParams searchParams) throws ExecutionException {
 //        private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
 //
 //        EmailResults() {
@@ -292,13 +293,13 @@ public class EmailsDAO extends AbstractDAO {
         }
 
         // GVDTODO invalidate keys
-        List<Evt> emailEvents = new ArrayList<>();
+        List<EmailEvent> emailEvents = new ArrayList<>();
         for (Entry<String, Map<String, Set<Long>>> accountEntry : emailMap.entrySet()) {
             String acct = accountEntry.getKey();
             for (Entry<String, Set<Long>> folderEntry : accountEntry.getValue().entrySet()) {
                 String folder = folderEntry.getKey();
                 for (Long dsObjId : entry.getValue()) {
-                    Evt newEvt = new Evt...;
+                    EmailEvent newEmailsEvent = ...;
                     String.add(newEvt);
                 }
             }
