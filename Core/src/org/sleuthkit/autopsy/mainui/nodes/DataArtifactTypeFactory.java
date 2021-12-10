@@ -61,7 +61,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     @Override
     protected TreeNode<DataArtifactSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> rowData) {
         if (rowData.getSearchParams().getArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
-            return new AccountTypeParentNode(rowData, this.dataSourceId);
+            return new AccountTypeParentNode(rowData);
+        } else if (rowData.getSearchParams().getArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
+            return new EmailTypeParentNode(rowData);
         } else {
             return new DataArtifactTypeTreeNode(rowData);
         }
@@ -116,6 +118,21 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     }
 
     /**
+     * Display name and count of email messages in the tree.
+     */
+    public static class EmailTypeParentNode extends TreeNode<DataArtifactSearchParam> {
+
+        public EmailTypeParentNode(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> itemData) {
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
+                    itemData,
+                    Children.create(new EmailAccountTypeFactory(itemData.getSearchParams().getDataSourceId()), true),
+                    getDefaultLookup(itemData)
+            );
+        }
+    }
+
+    /**
      * The account node that has nested children of account types.
      */
     @Messages({
@@ -147,11 +164,11 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
          * @param dataSourceId The data source id to filter on or null if no
          *                     data source filter.
          */
-        public AccountTypeParentNode(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> itemData, Long dataSourceId) {
+        public AccountTypeParentNode(TreeResultsDTO.TreeItemDTO<? extends DataArtifactSearchParam> itemData) {
             super(itemData.getSearchParams().getArtifactType().getTypeName(),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     createTitledData(itemData),
-                    Children.create(new AccountTypeFactory(dataSourceId), true),
+                    Children.create(new AccountTypeFactory(itemData.getSearchParams().getDataSourceId()), true),
                     getDefaultLookup(itemData)
             );
         }
@@ -309,7 +326,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
          */
         public EmailAccountTypeNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
             super(itemData.getSearchParams().getAccount(),
-                    EMAIL_ICON,
+                    "org/sleuthkit/autopsy/images/account-icon-16.png",
                     itemData,
                     Children.create(new EmailFolderTypeFactory(itemData.getSearchParams().getAccount(), itemData.getSearchParams().getDataSourceId()), true),
                     getDefaultLookup(itemData)
@@ -384,8 +401,8 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
             }
         }
     }
-    
-        /**
+
+    /**
      * A node representing a single account type in the tree.
      */
     static class EmailFolderTypeNode extends TreeNode<EmailSearchParams> {
@@ -397,7 +414,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
          */
         public EmailFolderTypeNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
             super(itemData.getSearchParams().getFolder(),
-                    EMAIL_ICON,
+                    "org/sleuthkit/autopsy/images/folder-icon-16.png",
                     itemData);
         }
 
