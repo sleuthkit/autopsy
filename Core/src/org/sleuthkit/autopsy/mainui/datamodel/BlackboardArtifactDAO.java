@@ -212,9 +212,9 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
             if (artType.getCategory().equals(BlackboardArtifact.Category.DATA_ARTIFACT)) {
                 // Note that we need to get the attribute from the original artifact since it is not displayed.
                 if (artifact.getAttribute(BlackboardAttribute.Type.TSK_PATH_ID) != null) {
-                    Object linkedId = artifact.getAttribute(BlackboardAttribute.Type.TSK_PATH_ID);
-                    linkedFile = linkedId instanceof Long && ((Long) linkedId) >= 0
-                            ? getCase().getAbstractFileById((Long) linkedId)
+                    long linkedId = artifact.getAttribute(BlackboardAttribute.Type.TSK_PATH_ID).getValueLong();
+                    linkedFile = linkedId >= 0
+                            ? getCase().getAbstractFileById(linkedId)
                             : null;
                 }
             }
