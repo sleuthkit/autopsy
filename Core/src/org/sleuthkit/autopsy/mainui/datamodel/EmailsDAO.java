@@ -71,7 +71,8 @@ public class EmailsDAO extends AbstractDAO {
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
 
-    public static final String DEFAULT_STR = "[DEFAULT]";
+    // TODO this should be corrected based on outcome of JIRA-8220 and put in bundle string
+    public static final String DEFAULT_STR = "Default";
     private static final String PATH_DELIMITER = "/";
     private static final Pair<String, String> DEFAULT_ACCOUNT_FOLDER = Pair.of(DEFAULT_STR, DEFAULT_STR);
 
@@ -165,9 +166,18 @@ public class EmailsDAO extends AbstractDAO {
         return getPathAccountFolder(pathVal);
     }
 
+    /**
+     * Returns a pair of the email account and folder.
+     *
+     * NOTE: Subject to change; see JIRA-8220.
+     *
+     * @param art The path value.
+     *
+     * @return The pair of the account and folder or default if undetermined.
+     */
     private static Pair<String, String> getPathAccountFolder(String pathVal) {
         String[] pieces = pathVal.split(PATH_DELIMITER);
-        return Pair.of(getPathPiece(pieces[0]), getPathPiece(pieces.length > 1 ? pieces[1] : null));
+        return Pair.of(getPathPiece(pieces.length > 1 ? pieces[1] : null), getPathPiece(pieces.length > 2 ? pieces[2] : null));
     }
 
     private SearchResultsDTO fetchEmailMessageDTOs(SearchParams<EmailSearchParams> searchParams) throws NoCurrentCaseException, TskCoreException, SQLException {
@@ -255,13 +265,12 @@ public class EmailsDAO extends AbstractDAO {
                     + "  FROM (\n"
                     + "    SELECT\n"
                     + "      MIN(" + pathField + ") AS path, \n"
-                    + "      -- MIN(attr.value_text) AS path,\n"
                     + "      attr.artifact_id\n"
                     + "    FROM blackboard_attributes attr\n"
                     + "    LEFT JOIN blackboard_artifacts art ON attr.artifact_id = art.artifact_id\n"
                     + "    WHERE\n"
                     + "      attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + "\n" // may change due to JIRA-8220
-                    + "      AND artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + "\n"
+                    + "      AND attr.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + "\n"
                     + andClauses
                     + "    GROUP BY attr.artifact_id\n"
                     + "  ) p\n"
@@ -272,7 +281,9 @@ public class EmailsDAO extends AbstractDAO {
                 int paramIdx = 0;
                 if (account != null) {
                     preparedStatement.setString(++paramIdx,
-                            account
+                            // add initial slash
+                            "/"
+                            + account
                                     .replaceAll("%", escapeChar + "%")
                                     .replaceAll("_", escapeChar + "_")
                             + "%");
@@ -282,27 +293,39 @@ public class EmailsDAO extends AbstractDAO {
                     preparedStatement.setLong(++paramIdx, dataSourceId);
                 }
 
-                List<TreeResultsDTO.TreeItemDTO<EmailSearchParams>> emailParams = new ArrayList<>();
-
-                getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
+                Map<String, Long> options = new HashMap<>();
+                skCase.getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
                     try {
                         while (resultSet.next()) {
                             String path = resultSet.getString("path");
                             long count = resultSet.getLong("count");
-                            Pair<String, String> accountFolderPair = getPathAccountFolder(path);
-                            String resultAccount = accountFolderPair.getLeft();
-                            String resultFolder = accountFolderPair.getRight();
 
-                            TreeDisplayCount treeDisplayCount = indeterminateTypes.contains((account == null) ? resultAccount : resultFolder)
-                                    ? TreeDisplayCount.INDETERMINATE
-                                    : TreeResultsDTO.TreeDisplayCount.getDeterminate(count);
-
-                            emailParams.add(createEmailTreeItem(resultAccount, resultFolder, dataSourceId, treeDisplayCount));
+                            if (account == null) {
+                                options.compute(path, (k,v) -> v == null ? count : v + count);
+                            } else {
+                                options.compute(getPathAccountFolder(path).getRight(), (k,v) -> v == null ? count : v + count);
+                            }
                         }
                     } catch (SQLException ex) {
                         logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
                     }
                 });
+
+                List<TreeResultsDTO.TreeItemDTO<EmailSearchParams>> emailParams = options.entrySet().stream()
+                        .map(entry -> {
+                            String entryAccount = (account == null) ? entry.getKey() : account;
+                            String entryFolder = (account == null) ? null : entry.getKey();
+                            Long count = entry.getValue();
+
+                            TreeDisplayCount treeDisplayCount = indeterminateTypes.contains((account == null) ? entryAccount : entryFolder)
+                                    ? TreeDisplayCount.INDETERMINATE
+                                    : TreeResultsDTO.TreeDisplayCount.getDeterminate(count);
+
+                            return createEmailTreeItem(entryAccount, entryFolder, dataSourceId, treeDisplayCount);
+
+                        })
+                        .sorted(Comparator.comparing(item -> item.getDisplayName()))
+                        .collect(Collectors.toList());
 
                 // return results
                 return new TreeResultsDTO<>(emailParams);
