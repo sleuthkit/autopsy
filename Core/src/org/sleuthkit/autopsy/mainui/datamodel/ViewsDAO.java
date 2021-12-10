@@ -996,19 +996,19 @@ public class ViewsDAO extends AbstractDAO {
             dsId = af.getDataSourceObjectId();
 
             // create an extension mapping if extension present
-            if (StringUtils.isBlank(af.getNameExtension()) || !TSK_FS_NAME_TYPE_ENUM.REG.equals(af.getDirType())) {
+            if (!StringUtils.isBlank(af.getNameExtension()) && TSK_FS_NAME_TYPE_ENUM.REG.equals(af.getDirType())) {
                 evtExtFilters = EXTENSION_FILTER_MAP.getOrDefault("." + af.getNameExtension(), Collections.emptySet());
             }
 
             deletedContentFilters = getMatchingDeletedContentFilters(af);
 
             // create a mime type mapping if mime type present
-            if (StringUtils.isBlank(af.getMIMEType()) || !TSK_FS_NAME_TYPE_ENUM.REG.equals(af.getDirType()) || !getMimeDbFilesTypes().contains(af.getType())) {
+            if (!StringUtils.isBlank(af.getMIMEType()) && TSK_FS_NAME_TYPE_ENUM.REG.equals(af.getDirType()) && getMimeDbFilesTypes().contains(af.getType())) {
                 evtMimeType = af.getMIMEType();
             }
 
             // create a size mapping if size present in filters
-            if (TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.equals(af.getType())) {
+            if (!TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.equals(af.getType())) {
                 evtFileSize = Stream.of(FileSizeFilter.values())
                         .filter(filter -> af.getSize() >= filter.getMinBound() && (filter.getMaxBound() == null || af.getSize() < filter.getMaxBound()))
                         .findFirst()

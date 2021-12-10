@@ -92,7 +92,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 helper = CommunicationArtifactsHelper(
                         current_case.getSleuthkitCase(), self._PARSER_NAME, 
                         contact_and_calllog_db.getDBFile(), Account.Type.VIBER, context.getJobId()) 
-                self.parse_contacts(contact_and_calllog_db, helper)
+                self.parse_contacts(contact_and_calllog_db, helper, context)
                 self.parse_calllogs(contact_and_calllog_db, helper)
 
             #Extract TSK_MESSAGE information
@@ -113,7 +113,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
         for contact_and_calllog_db in contact_and_calllog_dbs:
             contact_and_calllog_db.close()
 
-    def parse_contacts(self, contacts_db, helper):
+    def parse_contacts(self, contacts_db, helper, context):
         try:
             contacts_parser = ViberContactsParser(contacts_db)
             while contacts_parser.next():

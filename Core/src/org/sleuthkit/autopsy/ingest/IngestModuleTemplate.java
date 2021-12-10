@@ -93,6 +93,14 @@ public final class IngestModuleTemplate {
         return moduleFactory.createDataArtifactIngestModule(settings);
     }
     
+    public boolean isAnalysisResultIngestModuleTemplate() {
+        return moduleFactory.isAnalysisResultIngestModuleFactory();
+    }
+    
+    public AnalysisResultIngestModule createAnalysisResultIngestModule() {
+        return moduleFactory.createAnalysisResultIngestModule(settings);
+    }    
+    
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }

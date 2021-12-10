@@ -18,42 +18,42 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
- * A data artifact ingest task that will be executed by an ingest thread using a
- * given ingest job executor.
+ * An analysis result ingest task that will be executed by an ingest thread
+ * using a given ingest job executor.
  */
-final class DataArtifactIngestTask extends IngestTask {
+final class AnalysisResultIngestTask extends IngestTask {
 
-    private final DataArtifact artifact;
+    private final AnalysisResult analysisResult;
 
     /**
-     * Constructs a data artifact ingest task that will be executed by an ingest
-     * thread using a given ingest job executor.
+     * Constructs an analysis result ingest task that will be executed by an
+     * ingest thread using a given ingest job executor.
      *
      * @param ingestJobExecutor The ingest job executor to use to execute the
      *                          task.
-     * @param artifact          The data artifact to be processed.
+     * @param analysisResult    The analysis result to be processed.
      */
-    DataArtifactIngestTask(IngestJobExecutor ingestJobExecutor, DataArtifact artifact) {
-        super(artifact.getName(), ingestJobExecutor);
-        this.artifact = artifact;
+    AnalysisResultIngestTask(IngestJobExecutor ingestJobExecutor, AnalysisResult analysisResult) {
+        super(analysisResult.getName(), ingestJobExecutor);
+        this.analysisResult = analysisResult;
     }
-    
+
     /**
-     * Gets the data artifact for this task.
+     * Gets the analysis result for this task.
      *
-     * @return The data artifact.
+     * @return The analysis result.
      */
-    DataArtifact getDataArtifact() {
-        return artifact;
+    AnalysisResult getAnalysisResult() {
+        return analysisResult;
     }
 
     @Override
     void execute(long threadId) {
         super.setThreadId(threadId);
         getIngestJobExecutor().execute(this);
-    }    
-    
+    }
+
 }

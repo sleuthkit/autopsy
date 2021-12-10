@@ -18,16 +18,16 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
- * Interface that must be implemented by all ingest modules that process data
- * artifacts.
+ * Interface that must be implemented by all ingest modules that process
+ * analysis results.
  */
-public interface DataArtifactIngestModule extends IngestModule {
+public interface AnalysisResultIngestModule extends IngestModule {
 
     /**
-     * Processes a data artifact.
+     * Processes an analysis result.
      *
      * IMPORTANT: In addition to returning ProcessResult.OK or
      * ProcessResult.ERROR, modules should log all errors using methods provided
@@ -37,10 +37,10 @@ public interface DataArtifactIngestModule extends IngestModule {
      * the Logger along with the log message so that a stack trace will appear
      * in the application log.
      *
-     * @param artifact The artifact to process.
+     * @param result The analysis result to process.
      *
      * @return A result code indicating success or failure of the processing.
      */
-    ProcessResult process(DataArtifact artifact);
+    ProcessResult process(AnalysisResult result);
 
 }
