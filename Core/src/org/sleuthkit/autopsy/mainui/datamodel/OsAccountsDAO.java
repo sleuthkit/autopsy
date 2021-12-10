@@ -24,7 +24,6 @@ import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -187,13 +186,11 @@ public class OsAccountsDAO extends AbstractDAO {
 
     @Override
     Set<DAOEvent> handleIngestComplete() {
-        // GVDTODO
         return Collections.emptySet();
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        // GVDTODO
         return Collections.emptySet();
     }
 
@@ -202,9 +199,9 @@ public class OsAccountsDAO extends AbstractDAO {
         if (!OS_EVENTS.contains(evt.getPropertyName())) {
             return Collections.emptySet();
         }
-        
-            this.searchParamsCache.invalidateAll();
-        
+
+        this.searchParamsCache.invalidateAll();
+
         return Collections.singleton(new OsAccountEvent());
     }
 

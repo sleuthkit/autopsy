@@ -24,6 +24,16 @@ import java.util.Objects;
  * Key for content object in order to retrieve data from DAO.
  */
 public class FileSystemHostSearchParam {
+
+    private static final String TYPE_ID = "FILE_SYSTEM_HOST";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final Long hostObjectId;
 
     public FileSystemHostSearchParam(Long hostObjectId) {
@@ -59,4 +69,3 @@ public class FileSystemHostSearchParam {
         return true;
     }
 }
-

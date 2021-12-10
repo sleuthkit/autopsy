@@ -77,7 +77,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
             
             DataArtifactSearchParam searchParam = originalTreeItem.getSearchParams();
             return new TreeItemDTO<>(
-                    BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                    DataArtifactSearchParam.getTypeId(),
                     new DataArtifactSearchParam(searchParam.getArtifactType(), this.dataSourceId),
                     searchParam.getArtifactType().getTypeID(),
                     MainDAO.getInstance().getDataArtifactsDAO().getDisplayName(searchParam.getArtifactType()),
@@ -87,9 +87,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     }
     
     @Override
-    public int compare(DataArtifactSearchParam o1, DataArtifactSearchParam o2) {
+    public int compare(TreeItemDTO<? extends DataArtifactSearchParam> o1, TreeItemDTO<? extends DataArtifactSearchParam> o2) {
         DataArtifactDAO dao = MainDAO.getInstance().getDataArtifactsDAO();
-        return dao.getDisplayName(o1.getArtifactType()).compareToIgnoreCase(dao.getDisplayName(o2.getArtifactType()));
+        return dao.getDisplayName(o1.getSearchParams().getArtifactType()).compareToIgnoreCase(dao.getDisplayName(o2.getSearchParams().getArtifactType()));
     }
     
     private static String getIconPath(BlackboardArtifact.Type artType) {
@@ -206,8 +206,8 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
         
         @Override
-        public int compare(CommAccountsSearchParams o1, CommAccountsSearchParams o2) {
-            return o1.getType().getDisplayName().compareToIgnoreCase(o2.getType().getDisplayName());
+        public int compare(TreeItemDTO<? extends CommAccountsSearchParams> o1, TreeItemDTO<? extends CommAccountsSearchParams> o2) {
+            return o1.getSearchParams().getType().getDisplayName().compareToIgnoreCase(o2.getSearchParams().getType().getDisplayName());
         }
     }
 

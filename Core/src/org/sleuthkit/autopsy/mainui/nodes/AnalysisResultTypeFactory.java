@@ -22,6 +22,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.KeywordSearchTermParams;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordMatchParams;
 import com.google.common.collect.ImmutableSet;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.openide.nodes.ChildFactory;
@@ -29,11 +30,13 @@ import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -50,7 +53,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     private static Set<Integer> SET_TREE_ARTIFACTS = ImmutableSet.of(
             BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID(),
             BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
-            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()
+            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID(),
+            BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()
     );
 
     /**
@@ -93,14 +97,29 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     }
 
     @Override
-    protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
-        // GVDTODO
+    protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
+
+        TreeResultsDTO.TreeItemDTO<AnalysisResultSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, AnalysisResultSearchParam.class);
+
+        if (originalTreeItem != null
+                && !AnalysisResultDAO.getIgnoredTreeTypes().contains(originalTreeItem.getSearchParams().getArtifactType())
+                && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+            // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+            AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
+            return new TreeResultsDTO.TreeItemDTO<>(
+                    AnalysisResultSearchParam.getTypeId(),
+                    new AnalysisResultSearchParam(searchParam.getArtifactType(), this.dataSourceId),
+                    searchParam.getArtifactType().getTypeID(),
+                    searchParam.getArtifactType().getDisplayName(),
+                    originalTreeItem.getDisplayCount());
+        }
         return null;
     }
 
     @Override
-    public int compare(AnalysisResultSearchParam o1, AnalysisResultSearchParam o2) {
-        return o1.getArtifactType().getDisplayName().compareTo(o2.getArtifactType().getDisplayName());
+    public int compare(TreeItemDTO<? extends AnalysisResultSearchParam> o1, TreeItemDTO<? extends AnalysisResultSearchParam> o2) {
+        return o1.getSearchParams().getArtifactType().getDisplayName().compareTo(o2.getSearchParams().getArtifactType().getDisplayName());
     }
 
     /**
@@ -180,14 +199,28 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<AnalysisResultSetSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, AnalysisResultSetSearchParam.class);
+
+            if (originalTreeItem != null
+                    && originalTreeItem.getSearchParams().getArtifactType().equals(this.artifactType)
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                AnalysisResultSetSearchParam searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        AnalysisResultSetSearchParam.getTypeId(),
+                        new AnalysisResultSetSearchParam(this.artifactType, this.dataSourceId, searchParam.getSetName()),
+                        searchParam.getSetName(),
+                        searchParam.getSetName() == null ? nullSetName : searchParam.getSetName(),
+                        originalTreeItem.getDisplayCount());
+            }
             return null;
         }
 
         @Override
-        public int compare(AnalysisResultSetSearchParam o1, AnalysisResultSetSearchParam o2) {
-            return STRING_COMPARATOR.compare(o1.getSetName(), o2.getSetName());
+        public int compare(TreeItemDTO<? extends AnalysisResultSetSearchParam> o1, TreeItemDTO<? extends AnalysisResultSetSearchParam> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getSetName(), o2.getSearchParams().getSetName());
         }
     }
 
@@ -277,14 +310,38 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<KeywordSearchTermParams> originalTreeItem = super.getTypedTreeItem(treeEvt, KeywordSearchTermParams.class);
+
+            if (originalTreeItem != null
+                    && Objects.equals(originalTreeItem.getSearchParams().getSetName(), this.setParams.getSetName())
+                    && (this.setParams.getDataSourceId() == null
+                    || Objects.equals(this.setParams.getDataSourceId(), originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                KeywordSearchTermParams searchParam = originalTreeItem.getSearchParams();
+                String searchTermDisplayName = MainDAO.getInstance().getAnalysisResultDAO()
+                        .getSearchTermDisplayName(searchParam.getSearchTerm(), searchParam.getSearchType());
+
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        KeywordSearchTermParams.getTypeId(),
+                        new KeywordSearchTermParams(
+                                this.setParams.getSetName(),
+                                searchParam.getSearchTerm(),
+                                searchParam.getSearchType(),
+                                searchParam.hasChildren(),
+                                this.setParams.getDataSourceId()
+                        ),
+                        searchTermDisplayName,
+                        searchTermDisplayName,
+                        originalTreeItem.getDisplayCount()
+                );
+            }
             return null;
         }
 
         @Override
-        public int compare(KeywordSearchTermParams o1, KeywordSearchTermParams o2) {
-            return STRING_COMPARATOR.compare(o1.getSearchTerm(), o2.getSearchTerm());
+        public int compare(TreeItemDTO<? extends KeywordSearchTermParams> o1, TreeItemDTO<? extends KeywordSearchTermParams> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getSearchTerm(), o2.getSearchParams().getSearchTerm());
         }
 
     }
@@ -360,14 +417,36 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<KeywordMatchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, KeywordMatchParams.class);
+
+            if (originalTreeItem != null
+                    && Objects.equals(originalTreeItem.getSearchParams().getSetName(), this.setParams.getSetName())
+                    && (this.setParams.getDataSourceId() == null
+                    || Objects.equals(this.setParams.getDataSourceId(), originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                KeywordMatchParams searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        KeywordMatchParams.getTypeId(),
+                        new KeywordMatchParams(
+                                this.setParams.getSetName(),
+                                this.setParams.getSearchTerm(),
+                                searchParam.getKeywordMatch(),
+                                this.setParams.getSearchType(),
+                                this.setParams.getDataSourceId()
+                        ),
+                        searchParam.getKeywordMatch(),
+                        searchParam.getKeywordMatch() == null ? "" : searchParam.getKeywordMatch(),
+                        originalTreeItem.getDisplayCount()
+                );
+            }
             return null;
         }
 
         @Override
-        public int compare(KeywordMatchParams o1, KeywordMatchParams o2) {
-            return STRING_COMPARATOR.compare(o1.getKeywordMatch(), o2.getKeywordMatch());
+        public int compare(TreeItemDTO<? extends KeywordMatchParams> o1, TreeItemDTO<? extends KeywordMatchParams> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getKeywordMatch(), o2.getSearchParams().getKeywordMatch());
         }
     }
 

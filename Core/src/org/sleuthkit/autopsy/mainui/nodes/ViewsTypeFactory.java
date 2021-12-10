@@ -18,15 +18,15 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.beans.PropertyChangeEvent;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtDocumentFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtExecutableFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtRootFilter;
@@ -36,8 +36,10 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  *
@@ -74,14 +76,47 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof TreeEvent) {
+                    TreeResultsDTO.TreeItemDTO<FileTypeSizeSearchParams> treeItem = super.getTypedTreeItem((TreeEvent) evt, FileTypeSizeSearchParams.class);
+                    // if file type size search params has null filter, trigger full refresh
+                    if (treeItem != null && treeItem.getSearchParams().getSizeFilter() == null) {
+                        super.update();
+                        return;
+                    }
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
+        }
+
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<FileTypeSizeSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeSizeSearchParams.class);
+
+            if (originalTreeItem != null
+                    // only create child if size filter is present (if null, update should be triggered separately)
+                    && originalTreeItem.getSearchParams().getSizeFilter() != null
+                    && (this.dataSourceId == null
+                    || originalTreeItem.getSearchParams().getDataSourceId() == null
+                    || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                FileTypeSizeSearchParams searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        AnalysisResultSearchParam.getTypeId(),
+                        new FileTypeSizeSearchParams(searchParam.getSizeFilter(), this.dataSourceId),
+                        searchParam.getSizeFilter(),
+                        searchParam.getSizeFilter().getDisplayName(),
+                        originalTreeItem.getDisplayCount());
+            }
             return null;
         }
 
         @Override
-        public int compare(FileTypeSizeSearchParams o1, FileTypeSizeSearchParams o2) {
-            return Integer.compare(o1.getSizeFilter().getId(), o2.getSizeFilter().getId());
+        public int compare(TreeItemDTO<? extends FileTypeSizeSearchParams> o1, TreeItemDTO<? extends FileTypeSizeSearchParams> o2) {
+            return Integer.compare(o1.getSearchParams().getSizeFilter().getId(), o2.getSearchParams().getSizeFilter().getId());
         }
 
         /**
@@ -133,14 +168,34 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<FileTypeMimeSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeMimeSearchParams.class);
+
+            if (originalTreeItem != null
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                FileTypeMimeSearchParams searchParam = originalTreeItem.getSearchParams();
+                String mimePrefix = searchParam.getMimeType() == null ? "" : searchParam.getMimeType();
+                int indexOfSlash = mimePrefix.indexOf("/");
+                if (indexOfSlash >= 0) {
+                    mimePrefix = mimePrefix.substring(0, indexOfSlash);
+                }
+
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        AnalysisResultSearchParam.getTypeId(),
+                        new FileTypeMimeSearchParams(mimePrefix, this.dataSourceId),
+                        mimePrefix,
+                        mimePrefix,
+                        originalTreeItem.getDisplayCount());
+            }
             return null;
+
         }
 
         @Override
-        public int compare(FileTypeMimeSearchParams o1, FileTypeMimeSearchParams o2) {
-            return STRING_COMPARATOR.compare(o1.getMimeType(), o2.getMimeType());
+        public int compare(TreeItemDTO<? extends FileTypeMimeSearchParams> o1, TreeItemDTO<? extends FileTypeMimeSearchParams> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getMimeType(), o2.getSearchParams().getMimeType());
         }
 
         static class FileMimePrefixNode extends TreeNode<FileTypeMimeSearchParams> {
@@ -193,14 +248,30 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            // GVDTODO
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<FileTypeMimeSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeMimeSearchParams.class);
+
+            String prefixWithSlash = this.mimeTypePrefix + "/";
+            if (originalTreeItem != null
+                    && (originalTreeItem.getSearchParams().getMimeType().startsWith(prefixWithSlash))
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                FileTypeMimeSearchParams searchParam = originalTreeItem.getSearchParams();
+                String mimeSuffix = searchParam.getMimeType().substring(prefixWithSlash.length());
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        AnalysisResultSearchParam.getTypeId(),
+                        new FileTypeMimeSearchParams(searchParam.getMimeType(), this.dataSourceId),
+                        mimeSuffix,
+                        mimeSuffix,
+                        originalTreeItem.getDisplayCount());
+            }
             return null;
         }
 
         @Override
-        public int compare(FileTypeMimeSearchParams o1, FileTypeMimeSearchParams o2) {
-            return STRING_COMPARATOR.compare(o1.getMimeType(), o2.getMimeType());
+        public int compare(TreeItemDTO<? extends FileTypeMimeSearchParams> o1, TreeItemDTO<? extends FileTypeMimeSearchParams> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getMimeType(), o2.getSearchParams().getMimeType());
         }
 
         /**
@@ -278,14 +349,46 @@ public class ViewsTypeFactory {
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> getOrCreateRelevantChild(TreeEvent daoEvt) {
-            //GVDTODO
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof TreeEvent) {
+                    TreeResultsDTO.TreeItemDTO<FileTypeExtensionsSearchParams> treeItem = super.getTypedTreeItem((TreeEvent) evt, FileTypeExtensionsSearchParams.class);
+                    // if search params has null filter, trigger full refresh
+                    if (treeItem != null && treeItem.getSearchParams().getFilter() == null) {
+                        super.update();
+                        return;
+                    }
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
+        }
+
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<FileTypeExtensionsSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, FileTypeExtensionsSearchParams.class);
+
+            if (originalTreeItem != null
+                    // if filter is null, this should trigger a full refresh which should be handled in handleDAOAggregateEvent
+                    && originalTreeItem.getSearchParams().getFilter() != null
+                    && this.childFilters.contains(originalTreeItem.getSearchParams().getFilter())
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                FileTypeExtensionsSearchParams searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        AnalysisResultSearchParam.getTypeId(),
+                        new FileTypeExtensionsSearchParams(searchParam.getFilter(), this.dataSourceId),
+                        searchParam.getFilter(),
+                        searchParam.getFilter().getDisplayName(),
+                        originalTreeItem.getDisplayCount());
+            }
             return null;
         }
 
         @Override
-        public int compare(FileTypeExtensionsSearchParams o1, FileTypeExtensionsSearchParams o2) {
-            return STRING_COMPARATOR.compare(o1.getFilter().getDisplayName(), o2.getFilter().getDisplayName());
+        public int compare(TreeItemDTO<? extends FileTypeExtensionsSearchParams> o1, TreeItemDTO<? extends FileTypeExtensionsSearchParams> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getFilter().getDisplayName(), o2.getSearchParams().getFilter().getDisplayName());
         }
 
         /**

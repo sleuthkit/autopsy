@@ -24,12 +24,23 @@ import java.util.Objects;
  * Key for person object in order to retrieve data from DAO.
  */
 public class FileSystemPersonSearchParam {
+
+    private static final String TYPE_ID = "FILE_SYSTEM_PERSON";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final Long personObjectId;
 
     /**
      * Create search param.
-     * 
-     * @param personObjectId May be null to fetch hosts not associated with a Person
+     *
+     * @param personObjectId May be null to fetch hosts not associated with a
+     *                       Person
      */
     public FileSystemPersonSearchParam(Long personObjectId) {
         this.personObjectId = personObjectId;
