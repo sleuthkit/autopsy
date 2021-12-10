@@ -177,6 +177,7 @@ public class EmailsDAO extends AbstractDAO {
      */
     private static Pair<String, String> getPathAccountFolder(String pathVal) {
         String[] pieces = pathVal.split(PATH_DELIMITER);
+
         return Pair.of(getPathPiece(pieces.length > 1 ? pieces[1] : null), getPathPiece(pieces.length > 2 ? pieces[2] : null));
     }
 
@@ -187,19 +188,21 @@ public class EmailsDAO extends AbstractDAO {
         Blackboard blackboard = skCase.getBlackboard();
 
         String constructedPath = constructPath(searchParams.getParamData().getAccount(), searchParams.getParamData().getFolder());
-        List<BlackboardArtifact> allArtifacts = blackboard.getArtifacts(BlackboardArtifact.Type.TSK_EMAIL_MSG,
-                BlackboardAttribute.Type.TSK_PATH, constructedPath, searchParams.getParamData().getDataSourceId(),
-                false);
+        List<Long> matchingIds = TBD;
+        // TODO load paged matching ids; this could be done as one query with new API
 
-        // get current page of artifacts
-        List<BlackboardArtifact> pagedArtifacts = getPaged(allArtifacts, searchParams);
+        List<BlackboardArtifact> allArtifacts = Collections.emptyList();
+        if (!matchingIds.isEmpty()) {
+            String whereClause = "artifacts.artifact_id IN (" + matchingIds.stream().map(l -> Long.toString(l)).collect(Collectors.joining(", ")) + ")";
+            allArtifacts = (List<BlackboardArtifact>) (List<? extends BlackboardArtifact>) blackboard.getDataArtifactsWhere(whereClause).stream();
 
-        // Populate the attributes for paged artifacts in the list. This is done using one database call as an efficient way to
-        // load many artifacts/attributes at once.
-        blackboard.loadBlackboardAttributes(pagedArtifacts);
+            // Populate the attributes for paged artifacts in the list. This is done using one database call as an efficient way to
+            // load many artifacts/attributes at once.
+            blackboard.loadBlackboardAttributes(allArtifacts);
+        }
 
         DataArtifactDAO dataArtDAO = MainDAO.getInstance().getDataArtifactsDAO();
-        BlackboardArtifactDAO.TableData tableData = dataArtDAO.createTableData(BlackboardArtifact.Type.TSK_EMAIL_MSG, pagedArtifacts);
+        BlackboardArtifactDAO.TableData tableData = dataArtDAO.createTableData(BlackboardArtifact.Type.TSK_EMAIL_MSG, allArtifacts);
         return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_EMAIL_MSG, tableData.columnKeys,
                 tableData.rows, searchParams.getStartItem(), allArtifacts.size());
     }
@@ -238,7 +241,7 @@ public class EmailsDAO extends AbstractDAO {
 
         try {
             SleuthkitCase skCase = getCase();
-
+            TBD;
             String pathField;
             if (account == null) {
                 switch (skCase.getDatabaseType()) {
@@ -301,9 +304,9 @@ public class EmailsDAO extends AbstractDAO {
                             long count = resultSet.getLong("count");
 
                             if (account == null) {
-                                options.compute(path, (k,v) -> v == null ? count : v + count);
+                                options.compute(path, (k, v) -> v == null ? count : v + count);
                             } else {
-                                options.compute(getPathAccountFolder(path).getRight(), (k,v) -> v == null ? count : v + count);
+                                options.compute(getPathAccountFolder(path).getRight(), (k, v) -> v == null ? count : v + count);
                             }
                         }
                     } catch (SQLException ex) {
