@@ -1102,16 +1102,21 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         goToPage(parsedIdx);
     }//GEN-LAST:event_gotoPageTextFieldActionPerformed
     
-    void goToPage(int pageIdxToSet) {
+    /**
+     * Triggers an update to get and display a page of results.
+     * 
+     * @param uiPageToSet UI page index (between 1 and "total number of pages")
+     */
+    void goToPage(int uiPageToSet) {
         try {
-            // ensure index is [0, pageNumber)
             if (this.searchResultManager != null) {
+                // UI pages go from 1 to "number of pages"
+                int uiPageIdx = Math.max(1, Math.min(this.searchResultManager.getTotalPages(), uiPageToSet));
                 // NOTE: SearchManager uses page indexes that start at 0, not 1. 
-                int pageToSet = pageIdxToSet > 0 ? pageIdxToSet - 1 : 0;
-                int pageIdx = Math.max(0, Math.min(this.searchResultManager.getTotalPages() - 1, pageToSet));
-                displaySearchResults(this.searchResultManager.updatePageIdx(pageIdx), false);
+                // ensure index is [0, number of pages - 1)
+                displaySearchResults(this.searchResultManager.updatePageIdx(uiPageIdx - 1), false);
             } else {
-                setBaseChildFactoryPageIdx(pageIdxToSet);
+                setBaseChildFactoryPageIdx(uiPageToSet);
             }
         } catch (IllegalArgumentException | ExecutionException ex) {
             logger.log(Level.WARNING, "Go to page index failed", ex);

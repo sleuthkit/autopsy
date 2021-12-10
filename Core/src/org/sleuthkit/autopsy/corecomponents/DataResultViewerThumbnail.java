@@ -594,9 +594,12 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 ExplorerManager explorerManager = DataResultViewerThumbnail.this.getExplorerManager();
                 Node root = explorerManager.getRootContext();
                 Node pageNode = root.getChildren().getNodeAt(currentPage - 1);
-                explorerManager.setExploredContext(pageNode);
-                currentPageImages = pageNode.getChildren().getNodesCount();
-                
+                if (pageNode == null) {
+                    int a = 5; // ELTODO
+                } else {
+                    explorerManager.setExploredContext(pageNode);
+                    currentPageImages = pageNode.getChildren().getNodesCount();
+                }
                 progress.finish();
             } catch (Exception ex) {
                 NotifyDescriptor d
@@ -606,6 +609,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                                 NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(d);
                 logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
+                logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex); // ELTODO
             } finally {
                 setCursor(null);
                 updateControls();
