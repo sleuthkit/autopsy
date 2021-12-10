@@ -71,10 +71,8 @@ public class EmailsDAO extends AbstractDAO {
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
 
-    // TODO this should be corrected based on outcome of JIRA-8220 and put in bundle string
-    public static final String DEFAULT_STR = "Default";
     private static final String PATH_DELIMITER = "/";
-    private static final Pair<String, String> DEFAULT_ACCOUNT_FOLDER = Pair.of(DEFAULT_STR, DEFAULT_STR);
+    private static final String ESCAPE_CHAR = "\\";
 
     private final Cache<SearchParams<EmailSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<EmailEvent> emailCounts = new TreeCounts<>();
@@ -96,51 +94,16 @@ public class EmailsDAO extends AbstractDAO {
     public SearchResultsDTO getEmailMessages(EmailSearchParams searchParams, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (searchParams.getDataSourceId() != null && searchParams.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
+        } else if ((searchParams.getAccount() == null) != (searchParams.getFolder() == null)) {
+            throw new IllegalArgumentException(
+                    MessageFormat.format(
+                            "Either folder and account are null or they are both non-null.  Received [account: {0}, folder: {1}]",
+                            StringUtils.defaultIfBlank(searchParams.getAccount(), "<null>"),
+                            StringUtils.defaultIfBlank(searchParams.getFolder(), "<null>")));
         }
 
         SearchParams<EmailSearchParams> emailSearchParams = new SearchParams<>(searchParams, startItem, maxCount);
         return searchParamsCache.get(emailSearchParams, () -> fetchEmailMessageDTOs(emailSearchParams));
-    }
-
-    /**
-     * Returns a list of paged artifacts.
-     *
-     * @param arts         The artifacts.
-     * @param searchParams The search parameters including the paging.
-     *
-     * @return The list of paged artifacts.
-     */
-    List<BlackboardArtifact> getPaged(List<? extends BlackboardArtifact> arts, SearchParams<?> searchParams) {
-        Stream<? extends BlackboardArtifact> pagedArtsStream = arts.stream()
-                .sorted(Comparator.comparing((art) -> art.getId()))
-                .skip(searchParams.getStartItem());
-
-        if (searchParams.getMaxResultsCount() != null) {
-            pagedArtsStream = pagedArtsStream.limit(searchParams.getMaxResultsCount());
-        }
-
-        return pagedArtsStream.collect(Collectors.toList());
-    }
-
-    private static String getPathPiece(String s) {
-        return StringUtils.isNotBlank(s) ? s : DEFAULT_STR;
-    }
-
-    /**
-     * Constructs the value for the TSK_PATH attribute based on email message
-     * account and folder.
-     *
-     * NOTE: Subject to change; see JIRA-8220.
-     *
-     * @param account The email message account.
-     * @param folder  The email message folder.
-     *
-     * @return The constructed path.
-     */
-    private static String constructPath(String account, String folder) {
-        return Stream.of(account, folder)
-                .map(s -> getPathPiece(s))
-                .collect(Collectors.joining(PATH_DELIMITER));
     }
 
     /**
@@ -150,17 +113,17 @@ public class EmailsDAO extends AbstractDAO {
      *
      * @param art The artifact.
      *
-     * @return The pair of the account and folder or default if undetermined.
+     * @return The pair of the account and folder or null if undetermined.
      */
     private static Pair<String, String> getAccountAndFolder(BlackboardArtifact art) throws TskCoreException {
         BlackboardAttribute pathAttr = art.getAttribute(BlackboardAttribute.Type.TSK_PATH);
         if (pathAttr == null) {
-            return DEFAULT_ACCOUNT_FOLDER;
+            return null;
         }
 
         String pathVal = pathAttr.getValueString();
         if (pathVal == null) {
-            return DEFAULT_ACCOUNT_FOLDER;
+            return null;
         }
 
         return getPathAccountFolder(pathVal);
@@ -173,12 +136,23 @@ public class EmailsDAO extends AbstractDAO {
      *
      * @param art The path value.
      *
-     * @return The pair of the account and folder or default if undetermined.
+     * @return The pair of the account and folder or null if undetermined.
      */
     private static Pair<String, String> getPathAccountFolder(String pathVal) {
         String[] pieces = pathVal.split(PATH_DELIMITER);
+        return pieces.length < 4
+                ? null
+                : Pair.of(pieces[2], pieces[3]);
+    }
 
-        return Pair.of(getPathPiece(pieces.length > 1 ? pieces[1] : null), getPathPiece(pieces.length > 2 ? pieces[2] : null));
+    private static String likeEscape(String toBeEscaped, String escapeChar) {
+        if (toBeEscaped == null) {
+            return "";
+        }
+
+        return toBeEscaped
+                .replaceAll("%", escapeChar + "%")
+                .replaceAll("_", escapeChar + "_");
     }
 
     private SearchResultsDTO fetchEmailMessageDTOs(SearchParams<EmailSearchParams> searchParams) throws NoCurrentCaseException, TskCoreException, SQLException {
@@ -187,9 +161,56 @@ public class EmailsDAO extends AbstractDAO {
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         Blackboard blackboard = skCase.getBlackboard();
 
-        String constructedPath = constructPath(searchParams.getParamData().getAccount(), searchParams.getParamData().getFolder());
-        List<Long> matchingIds = TBD;
+        boolean unknownPath = searchParams.getParamData().getAccount() == null;
+
+        String query = "SELECT art.artifact_id AS artifact_id \n"
+                + "FROM blackboard_attributes attr\n"
+                + "LEFT JOIN blackboard_artifacts art ON attr.artifact_id = art.artifact_id \n"
+                + "WHERE attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + " \n"
+                + "AND art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + " \n"
+                + (unknownPath
+                        ? "AND attr.value_text NOT LIKE '/%/%/%' ESCAPE '" + ESCAPE_CHAR + "' \n"
+                        : "AND attr.value_text LIKE ? ESCAPE '" + ESCAPE_CHAR + "' \n")
+                + (searchParams.getParamData().getDataSourceId() == null ? "" : "AND art.data_source_obj_id = ? \n")
+                + "GROUP BY art.artifact_id \n"
+                + "ORDER BY art.artifact_id \n"
+                + "OFFSET ? \n"
+                + (searchParams.getMaxResultsCount() == null ? "" : "LIMIT ?");
+
+        List<Long> matchingIds = new ArrayList<>();
+        
         // TODO load paged matching ids; this could be done as one query with new API
+        try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(query)) {
+
+            int paramIdx = 0;
+            if (!unknownPath) {
+                preparedStatement.setString(++paramIdx, MessageFormat.format("/%/{0}/{1}%",
+                        likeEscape(searchParams.getParamData().getAccount(), ESCAPE_CHAR),
+                        likeEscape(searchParams.getParamData().getFolder(), ESCAPE_CHAR)
+                ));
+            }
+
+            if (searchParams.getParamData().getDataSourceId() != null) {
+                preparedStatement.setLong(++paramIdx, searchParams.getParamData().getDataSourceId());
+            }
+            
+            preparedStatement.setLong(++paramIdx, searchParams.getStartItem());
+
+            if (searchParams.getMaxResultsCount() != null) {
+                preparedStatement.setLong(++paramIdx, searchParams.getMaxResultsCount());
+            }
+            
+            getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        matchingIds.add(resultSet.getLong("artifact_id"));
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "There was an error fetching emails for ");
+                }
+
+            });
+        }
 
         List<BlackboardArtifact> allArtifacts = Collections.emptyList();
         if (!matchingIds.isEmpty()) {
@@ -213,8 +234,8 @@ public class EmailsDAO extends AbstractDAO {
         return new TreeItemDTO<>(
                 EmailSearchParams.getTypeId(),
                 new EmailSearchParams(dataSourceId, account, folder),
-                folder == null ? getPathPiece(account) : constructPath(account, folder),
-                folder == null ? getPathPiece(account) : getPathPiece(folder),
+                account,
+                folder,
                 count
         );
     }
