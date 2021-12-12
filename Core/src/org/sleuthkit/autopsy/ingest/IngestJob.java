@@ -29,10 +29,8 @@ import org.python.google.common.collect.ImmutableList;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
-import sun.security.ec.point.ProjectivePoint;
 
 /**
  * Analyzes a data sources using a set of ingest modules specified via ingest
@@ -91,7 +89,7 @@ public final class IngestJob {
      *                   analyzed.
      * @param settings   The ingest job settings.
      */
-    IngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
+    IngestJob(DataSource dataSource, List<AbstractFile> files, IngestJobSettings settings) {
         this(dataSource, Mode.BATCH, settings);
         this.files.addAll(files);
     }
@@ -105,12 +103,9 @@ public final class IngestJob {
      * @param ingestMode The ingest job mode.
      * @param settings   The ingest job settings.
      */
-    IngestJob(Content dataSource, Mode ingestMode, IngestJobSettings settings) {
-        if (!(dataSource instanceof DataSource)) { // RJCTODO: Push this to ingest manager?
-            throw new IllegalArgumentException("dataSource argument does not implement the DataSource interface"); //NON-NLS
-        }        
+    IngestJob(DataSource dataSource, Mode ingestMode, IngestJobSettings settings) {
         id = IngestJob.nextId.getAndIncrement();
-        this.dataSource = (DataSource) dataSource;
+        this.dataSource = dataSource;
         this.settings = settings;
         this.ingestMode = ingestMode;
         cancellationReason = CancellationReason.NOT_CANCELLED;

@@ -19,14 +19,12 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
@@ -34,6 +32,7 @@ import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
@@ -71,11 +70,11 @@ final class IngestJobExecutor {
     private final long createTime;
     private final boolean usingNetBeansGUI;
     private final IngestTasksScheduler taskScheduler = IngestTasksScheduler.getInstance();
-    private final ReentrantReadWriteLock jobStateLock = new ReentrantReadWriteLock();
     private final Object threadRegistrationLock = new Object();
     @GuardedBy("threadRegistrationLock")
     private final Set<Thread> pausedIngestThreads = new HashSet<>();
     private final List<String> cancelledDataSourceIngestModules = new CopyOnWriteArrayList<>();
+    private final Object tierTransitionLock = new Object();
     private final List<IngestModuleTier> ingestModuleTiers = new ArrayList<>();
     private volatile int moduleTierIndex = 0;
     private volatile IngestJobState jobState = IngestJobExecutor.IngestJobState.PIPELINES_STARTING_UP;
@@ -188,29 +187,24 @@ final class IngestJobExecutor {
      *                              process.
      */
     List<IngestModuleError> startUp() throws InterruptedException {
-        jobStateLock.writeLock().lock();
-        try {
-            jobState = IngestJobState.PIPELINES_STARTING_UP;
-            ingestModuleTiers.addAll(IngestModuleTierBuilder.buildIngestModuleTiers(ingestJob.getSettings(), this));
-            List<IngestModuleError> errors = startUpIngestModulePipelines();
-            if (errors.isEmpty()) {
-                recordIngestJobStartUpInfo();
-                /*
-                 * Start up and execution of the first ingest module tier
-                 * requires some special treatment due to the differences
-                 * between streaming and batch mode ingest jobs. Subsequent
-                 * tiers can be handled generically.
-                 */
-                if (ingestJob.getIngestMode() == IngestJob.Mode.STREAMING) {
-                    startStreamingModeAnalysis();
-                } else {
-                    startBatchModeAnalysis();
-                }
+        jobState = IngestJobState.PIPELINES_STARTING_UP;
+        ingestModuleTiers.addAll(IngestModuleTierBuilder.buildIngestModuleTiers(ingestJob.getSettings(), this));
+        List<IngestModuleError> errors = startUpIngestModulePipelines();
+        if (errors.isEmpty()) {
+            recordIngestJobStartUpInfo();
+            /*
+             * Start up and execution of the first ingest module tier requires
+             * some special treatment due to the differences between streaming
+             * and batch mode ingest jobs. Subsequent tiers can be handled
+             * generically.
+             */
+            if (ingestJob.getIngestMode() == IngestJob.Mode.STREAMING) {
+                startStreamingModeAnalysis();
+            } else {
+                startBatchModeAnalysis();
             }
-            return errors;
-        } finally {
-            jobStateLock.writeLock().unlock();
         }
+        return errors;
     }
 
     /**
@@ -328,9 +322,8 @@ final class IngestJobExecutor {
      * (DSP).
      */
     private void startBatchModeAnalysis() {
-        jobStateLock.writeLock().lock();
-        try {
-            logInfoMessage("Starting analysis in file batch mode"); //NON-NLS            
+        synchronized (tierTransitionLock) {
+            logInfoMessage("Starting ingest job in file batch mode"); //NON-NLS            
             jobState = IngestJobState.ANALYZING;
             IngestModuleTier currentTier = ingestModuleTiers.get(moduleTierIndex);
 
@@ -340,35 +333,12 @@ final class IngestJobExecutor {
             }
 
             if (currentTier.hasFileIngestModules()) {
-                /*
-                 * Do an estimate of the total number of files to be analyzed.
-                 * This will be used to estimate of how many files remain to be
-                 * analyzed as each file ingest task is completed. The numbers
-                 * are estimates because analysis can add carved and/or derived
-                 * files to the job.
-                 */
-                List<AbstractFile> files = ingestJob.getFiles();
-                if (files.isEmpty()) {
-                    /*
-                     * Do a count of the files from the data source that the
-                     * data source processor (DSP) has added to the case
-                     * database.
-                     */
-                    estimatedFilesToProcess = ingestJob.getDataSource().accept(new GetFilesCountVisitor());
-                    startFileIngestProgressBar();
-                    taskScheduler.scheduleFileIngestTasks(this, files);
-                } else {
-                    /*
-                     * Otherwise, this job is analyzing a user-specified subset
-                     * of the files in the data source.
-                     */
-                    estimatedFilesToProcess = files.size();
-                    startFileIngestProgressBar();
-                    taskScheduler.scheduleFileIngestTasks(this, Collections.emptyList());
-                }
+                estimateFilesToProcess();
+                startFileIngestProgressBar(true);
+                taskScheduler.scheduleFileIngestTasks(this, ingestJob.getFiles());
             }
 
-            if (ingestModuleTiers.get(moduleTierIndex).hasDataArtifactIngestModules()) {
+            if (currentTier.hasDataArtifactIngestModules()) {
                 /*
                  * Analysis of any data artifacts already in the case database
                  * (possibly added by the DSP) will be performed.
@@ -377,7 +347,7 @@ final class IngestJobExecutor {
                 taskScheduler.scheduleDataArtifactIngestTasks(this);
             }
 
-            if (ingestModuleTiers.get(moduleTierIndex).hasAnalysisResultIngestModules()) {
+            if (currentTier.hasAnalysisResultIngestModules()) {
                 /*
                  * Analysis of any analysis results already in the case database
                  * (possibly added by the DSP) will be performed.
@@ -396,9 +366,36 @@ final class IngestJobExecutor {
              * doing nothing, without a check here.
              */
             checkForTierCompleted();
+        }
+    }
 
-        } finally {
-            jobStateLock.writeLock().unlock();
+    /**
+     * Estimates the files to be prcessed in the current tier.
+     */
+    private void estimateFilesToProcess() {
+        estimatedFilesToProcess = 0;
+        processedFiles = 0;
+        if (ingestModuleTiers.get(moduleTierIndex).hasFileIngestModules()) {
+            /*
+             * Do an estimate of the total number of files to be analyzed. This
+             * will be used to estimate of how many files remain to be analyzed
+             * as each file ingest task is completed. The numbers are estimates
+             * because analysis can add carved and/or derived files to the job.
+             */
+            List<AbstractFile> files = ingestJob.getFiles();
+            if (files.isEmpty()) {
+                /*
+                 * Do a count of the files from the data source that the data
+                 * source processor (DSP) has added to the case database.
+                 */
+                estimatedFilesToProcess = ingestJob.getDataSource().accept(new GetFilesCountVisitor());
+            } else {
+                /*
+                 * Otherwise, this job is analyzing a user-specified subset of
+                 * the files in the data source.
+                 */
+                estimatedFilesToProcess = files.size();
+            }
         }
     }
 
@@ -410,9 +407,8 @@ final class IngestJobExecutor {
      * level analysis to begin before data source level analysis.
      */
     private void startStreamingModeAnalysis() {
-        jobStateLock.writeLock().lock();
-        try {
-            logInfoMessage("Starting analysis in file streaming mode"); //NON-NLS
+        synchronized (tierTransitionLock) {
+            logInfoMessage("Starting ingest job in file streaming mode"); //NON-NLS
             jobState = IngestJobState.ACCEPTING_STREAMED_CONTENT_AND_ANALYZING;
             IngestModuleTier currentTier = ingestModuleTiers.get(moduleTierIndex);
 
@@ -423,17 +419,8 @@ final class IngestJobExecutor {
                  * instead be scheduled as files are streamed in via
                  * addStreamedFiles(), and a data source ingest task will be
                  * scheduled later, via addStreamedDataSource().
-                 *
-                 * Note that because estimated files remaining to process still
-                 * has its initial value of zero, the file ingest progress bar
-                 * will start in the "indeterminate" state. A rough estimate of
-                 * the files to be processed will be computed later, when all of
-                 * the files have been added to the case database, as signalled
-                 * by a call to the addStreamedDataSource().
                  */
-                // RJCTODO: Do what the comment says with the progress bar
-                estimatedFilesToProcess = 0;
-                startFileIngestProgressBar();
+                startFileIngestProgressBar(false);
             }
 
             if (currentTier.hasDataArtifactIngestModules()) {
@@ -466,8 +453,6 @@ final class IngestJobExecutor {
                 startAnalysisResultIngestProgressBar();
                 taskScheduler.scheduleAnalysisResultIngestTasks(this);
             }
-        } finally {
-            jobStateLock.writeLock().unlock();
         }
     }
 
@@ -477,20 +462,15 @@ final class IngestJobExecutor {
      * source is now ready for analysis.
      */
     void addStreamedDataSource() {
-        jobStateLock.writeLock().lock();
-        try {
-            logInfoMessage("Data source received in streaming mode"); //NON-NLS
+        synchronized (tierTransitionLock) {
+            logInfoMessage("Data source received in streaming mode ingest job"); //NON-NLS
             jobState = IngestJobExecutor.IngestJobState.ANALYZING;
             IngestModuleTier currentTier = ingestModuleTiers.get(moduleTierIndex);
 
             if (currentTier.hasFileIngestModules()) {
-                /*
-                 * For ingest job progress reporting purposes, do a count of the
-                 * files the data source processor has added to the case
-                 * database.
-                 */
-                estimatedFilesToProcess = ingestJob.getDataSource().accept(new GetFilesCountVisitor());
+                estimateFilesToProcess();
                 switchFileIngestProgressBarToDeterminate();
+                taskScheduler.scheduleFileIngestTasks(this, ingestJob.getFiles());
             }
 
             if (currentTier.hasDataSourceIngestModules()) {
@@ -508,8 +488,6 @@ final class IngestJobExecutor {
                  */
                 checkForTierCompleted();
             }
-        } finally {
-            jobStateLock.writeLock().unlock();
         }
     }
 
@@ -519,8 +497,7 @@ final class IngestJobExecutor {
      * they are.
      */
     private void checkForTierCompleted() {
-        jobStateLock.writeLock().lock();
-        try {
+        synchronized (tierTransitionLock) {
             if (jobState.equals(IngestJobState.ACCEPTING_STREAMED_CONTENT_AND_ANALYZING)) {
                 return;
             }
@@ -536,8 +513,6 @@ final class IngestJobExecutor {
                     }
                 } while (taskScheduler.currentTasksAreCompleted(getIngestJobId()));
             }
-        } finally {
-            jobStateLock.writeLock().unlock();
         }
     }
 
@@ -546,39 +521,27 @@ final class IngestJobExecutor {
      * tier of ingest modules.
      */
     private void startAnalysisForCurrentTier() {
-        jobStateLock.writeLock().lock();
-        try {
-            logInfoMessage(String.format("Scheduling ingest tasks for tier %s", moduleTierIndex)); //NON-NLS        
-            jobState = IngestJobExecutor.IngestJobState.ANALYZING;
-            IngestModuleTier currentTier = ingestModuleTiers.get(moduleTierIndex);
+        logInfoMessage(String.format("Scheduling ingest tasks for tier %s of ingest job", moduleTierIndex)); //NON-NLS        
+        jobState = IngestJobExecutor.IngestJobState.ANALYZING;
+        IngestModuleTier currentTier = ingestModuleTiers.get(moduleTierIndex);
 
-            if (currentTier.hasDataSourceIngestModules()) {
-                startDataSourceIngestProgressBar();
-                taskScheduler.scheduleDataSourceIngestTask(this);
-            }
+        if (currentTier.hasDataSourceIngestModules()) {
+            startDataSourceIngestProgressBar();
+            taskScheduler.scheduleDataSourceIngestTask(this);
+        }
 
-            if (currentTier.hasFileIngestModules()) {
-                List<AbstractFile> files = ingestJob.getFiles();
-                if (files.isEmpty()) {
-                    estimatedFilesToProcess = ingestJob.getDataSource().accept(new GetFilesCountVisitor());
-                    startFileIngestProgressBar();
-                    taskScheduler.scheduleFileIngestTasks(this, files);
-                } else {
-                    estimatedFilesToProcess = files.size();
-                    startFileIngestProgressBar();
-                    taskScheduler.scheduleFileIngestTasks(this, Collections.emptyList());
-                }
-            }
+        if (currentTier.hasFileIngestModules()) {
+            estimateFilesToProcess();
+            startFileIngestProgressBar(true);
+            taskScheduler.scheduleFileIngestTasks(this, ingestJob.getFiles());
+        }
 
-            if (currentTier.hasDataArtifactIngestModules()) {
-                startDataArtifactIngestProgressBar();
-            }
+        if (currentTier.hasDataArtifactIngestModules()) {
+            startDataArtifactIngestProgressBar();
+        }
 
-            if (currentTier.hasAnalysisResultIngestModules()) {
-                startDataArtifactIngestProgressBar();
-            }
-        } finally {
-            jobStateLock.writeLock().unlock();
+        if (currentTier.hasAnalysisResultIngestModules()) {
+            startDataArtifactIngestProgressBar();
         }
     }
 
@@ -590,7 +553,6 @@ final class IngestJobExecutor {
      *             the data source ingest pipeline.
      */
     void execute(DataSourceIngestTask task) {
-        jobStateLock.readLock().lock();
         try {
             if (!isCancelled()) {
                 Optional<DataSourceIngestPipeline> pipeline = ingestModuleTiers.get(moduleTierIndex).getDataSourceIngestPipeline();
@@ -604,7 +566,6 @@ final class IngestJobExecutor {
             }
         } finally {
             taskScheduler.notifyTaskCompleted(task);
-            jobStateLock.readLock().unlock();
             checkForTierCompleted();
         }
     }
@@ -617,7 +578,6 @@ final class IngestJobExecutor {
      *             pipeline.
      */
     void execute(FileIngestTask task) {
-        jobStateLock.readLock().lock();
         try {
             if (!isCancelled()) {
                 FileIngestPipeline pipeline = ingestModuleTiers.get(moduleTierIndex).takeFileIngestPipeline();
@@ -659,7 +619,6 @@ final class IngestJobExecutor {
             Thread.currentThread().interrupt();
         } finally {
             taskScheduler.notifyTaskCompleted(task);
-            jobStateLock.readLock().unlock();
             checkForTierCompleted();
         }
     }
@@ -672,7 +631,6 @@ final class IngestJobExecutor {
      *             and the data artifact ingest pipeline.
      */
     void execute(DataArtifactIngestTask task) {
-        jobStateLock.readLock().lock();
         try {
             if (!isCancelled()) {
                 Optional<DataArtifactIngestPipeline> pipeline = ingestModuleTiers.get(moduleTierIndex).getDataArtifactIngestPipeline();
@@ -686,7 +644,6 @@ final class IngestJobExecutor {
             }
         } finally {
             taskScheduler.notifyTaskCompleted(task);
-            jobStateLock.readLock().unlock();
             checkForTierCompleted();
         }
     }
@@ -699,7 +656,6 @@ final class IngestJobExecutor {
      *             result and the analysis result ingest pipeline.
      */
     void execute(AnalysisResultIngestTask task) {
-        jobStateLock.readLock().lock();
         try {
             if (!isCancelled()) {
                 Optional<AnalysisResultIngestPipeline> pipeline = ingestModuleTiers.get(moduleTierIndex).getAnalysisResultIngestPipeline();
@@ -713,7 +669,6 @@ final class IngestJobExecutor {
             }
         } finally {
             taskScheduler.notifyTaskCompleted(task);
-            jobStateLock.readLock().unlock();
             checkForTierCompleted();
         }
     }
@@ -816,7 +771,7 @@ final class IngestJobExecutor {
      * Shuts down the ingest module pipelines in the current module tier.
      */
     private void shutDownCurrentTier() {
-        logInfoMessage(String.format("Finished all ingest tasks for tier %s", moduleTierIndex)); //NON-NLS        
+        logInfoMessage(String.format("Finished all ingest tasks for tier %s of ingest job", moduleTierIndex)); //NON-NLS        
         jobState = IngestJobExecutor.IngestJobState.PIPELINES_SHUTTING_DOWN;
         IngestModuleTier moduleTier = ingestModuleTiers.get(moduleTierIndex);
 
@@ -861,26 +816,21 @@ final class IngestJobExecutor {
      * Shuts down the ingest module pipelines and ingest job progress bars.
      */
     private void shutDown() {
-        jobStateLock.writeLock().lock();
+        logInfoMessage("Finished all ingest tasks for ingest job"); //NON-NLS        
         try {
-            logInfoMessage("Finished all ingest tasks for ingest job"); //NON-NLS        
-            try {
-                if (casDbingestJobInfo != null) {
-                    if (jobCancelled) {
-                        casDbingestJobInfo.setIngestJobStatus(IngestJobStatusType.CANCELLED);
-                    } else {
-                        casDbingestJobInfo.setIngestJobStatus(IngestJobStatusType.COMPLETED);
-                    }
-                    casDbingestJobInfo.setEndDateTime(new Date());
+            if (casDbingestJobInfo != null) {
+                if (jobCancelled) {
+                    casDbingestJobInfo.setIngestJobStatus(IngestJobStatusType.CANCELLED);
+                } else {
+                    casDbingestJobInfo.setIngestJobStatus(IngestJobStatusType.COMPLETED);
                 }
-            } catch (TskCoreException ex) {
-                logErrorMessage(Level.WARNING, "Failed to set job end date in case database", ex);
+                casDbingestJobInfo.setEndDateTime(new Date());
             }
-
-            ingestJob.notifyIngestPipelinesShutDown();
-        } finally {
-            jobStateLock.writeLock().unlock();
+        } catch (TskCoreException ex) {
+            logErrorMessage(Level.WARNING, "Failed to set job end date in case database", ex);
         }
+
+        ingestJob.notifyIngestPipelinesShutDown();
     }
 
     /**
@@ -1173,8 +1123,13 @@ final class IngestJobExecutor {
      * corner of the main application window. The progress bar provides the user
      * with a task cancellation button. Pressing it cancels the entire ingest
      * job.
+     *
+     * @param useDeterminateMode Whether or not to start the progress bar in
+     *                           determinate mode with the number of work units
+     *                           to be completed set to the estimated number of
+     *                           files to process.
      */
-    private void startFileIngestProgressBar() {
+    private void startFileIngestProgressBar(boolean useDeterminateMode) {
         if (usingNetBeansGUI) {
             SwingUtilities.invokeLater(() -> {
                 fileIngestProgressBar = ProgressHandle.createHandle(NbBundle.getMessage(getClass(), "IngestJob.progress.fileIngest.displayName", ingestJob.getDataSource().getName()), new Cancellable() {
@@ -1186,8 +1141,11 @@ final class IngestJobExecutor {
                         return true;
                     }
                 });
-                fileIngestProgressBar.start();
-                fileIngestProgressBar.switchToDeterminate((int) estimatedFilesToProcess);
+                if (useDeterminateMode) {
+                    fileIngestProgressBar.start((int) estimatedFilesToProcess);
+                } else {
+                    fileIngestProgressBar.start();
+                }
             });
         }
     }
@@ -1437,6 +1395,12 @@ final class IngestJobExecutor {
      *
      * @return The snapshot.
      */
+    @Messages({
+        "IngestJobExecutor_progress_snapshot_currentTier_shutDown_modifier=shut down",
+        "# {0} - tier number",
+        "# {1} - job state modifer",
+        "IngestJobExecutor_progress_snapshot_currentTier=Tier {0} {1}"
+    })
     IngestJobProgressSnapshot getIngestJobProgressSnapshot(boolean includeIngestTasksSnapshot) {
         /*
          * Determine whether file ingest is running at the time of this snapshot
@@ -1469,6 +1433,7 @@ final class IngestJobExecutor {
                 ingestJob.getDataSource().getName(),
                 getIngestJobId(),
                 createTime,
+                Bundle.IngestJobExecutor_progress_snapshot_currentTier(moduleTierIndex, jobState.equals(IngestJobState.PIPELINES_SHUTTING_DOWN) ? Bundle.IngestJobExecutor_progress_snapshot_currentTier_shutDown_modifier() : ""),
                 getCurrentDataSourceIngestModule(),
                 fileIngestRunning,
                 fileIngestStartTime,

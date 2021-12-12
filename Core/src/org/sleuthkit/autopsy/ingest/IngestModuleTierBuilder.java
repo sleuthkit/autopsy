@@ -127,6 +127,14 @@ class IngestModuleTierBuilder {
         moduleTiers.add(firstTier);
         IngestModuleTier secondTier = new IngestModuleTier();
         secondTier.setDataSourceIngestPipeline(new DataSourceIngestPipeline(executor, secondStageDataSourcePipelineTemplate));
+        
+        // RJCTODO: Remove test
+//        List<FileIngestPipeline> fileIngestPipelines2 = new ArrayList<>();
+//        for (int i = 0; i < numberOfFileIngestThreads; ++i) {
+//            fileIngestPipelines2.add(new FileIngestPipeline(executor, filePipelineTemplate));
+//        }
+//        secondTier.setsFileIngestPipelines(fileIngestPipelines2); 
+        
         moduleTiers.add(secondTier);
         return moduleTiers;
     }

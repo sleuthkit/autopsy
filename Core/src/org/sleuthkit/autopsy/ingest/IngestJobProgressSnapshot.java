@@ -34,6 +34,7 @@ public final class IngestJobProgressSnapshot implements Serializable {
     private final long jobId;
     private final long jobStartTime;
     private final long snapShotTime;
+    private final String currentIngestModuleTier;
     transient private final DataSourceIngestPipeline.DataSourcePipelineModule dataSourceLevelIngestModule;
     private final boolean fileIngestRunning;
     private final Date fileIngestStartTime;
@@ -47,22 +48,31 @@ public final class IngestJobProgressSnapshot implements Serializable {
     /**
      * Constructs a snapshot of the progress of an ingest job.
      */
-    IngestJobProgressSnapshot(String dataSourceName, long jobId, long jobStartTime, DataSourceIngestPipeline.DataSourcePipelineModule dataSourceIngestModule,
-            boolean fileIngestRunning, Date fileIngestStartTime,
-            boolean jobCancelled, IngestJob.CancellationReason cancellationReason, List<String> cancelledModules,
-            long processedFiles, long estimatedFilesToProcess,
-            long snapshotTime, IngestTasksScheduler.IngestTasksSnapshot tasksSnapshot) {
+    IngestJobProgressSnapshot(
+            String dataSourceName,
+            long jobId,
+            long jobStartTime,
+            String currentIngestModuleTier,
+            DataSourceIngestPipeline.DataSourcePipelineModule dataSourceIngestModule,
+            boolean fileIngestRunning,
+            Date fileIngestStartTime,
+            boolean jobCancelled,
+            IngestJob.CancellationReason cancellationReason,
+            List<String> cancelledModules,
+            long processedFiles,
+            long estimatedFilesToProcess,
+            long snapshotTime,
+            IngestTasksScheduler.IngestTasksSnapshot tasksSnapshot) {
         this.dataSource = dataSourceName;
         this.jobId = jobId;
         this.jobStartTime = jobStartTime;
+        this.currentIngestModuleTier = currentIngestModuleTier;
         this.dataSourceLevelIngestModule = dataSourceIngestModule;
-
         this.fileIngestRunning = fileIngestRunning;
         this.fileIngestStartTime = fileIngestStartTime;
         this.jobCancelled = jobCancelled;
         this.jobCancellationReason = cancellationReason;
         this.cancelledDataSourceModules = cancelledModules;
-
         this.processedFiles = processedFiles;
         this.estimatedFilesToProcess = estimatedFilesToProcess;
         this.snapShotTime = snapshotTime;
@@ -105,6 +115,15 @@ public final class IngestJobProgressSnapshot implements Serializable {
      */
     long getJobStartTime() {
         return jobStartTime;
+    }
+
+    /**
+     * Get the current ingest module tier.
+     *
+     * @return The current ingest module tier.
+     */
+    String getCurrentIngestModuleTier() {
+        return currentIngestModuleTier;
     }
 
     /**
