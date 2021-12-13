@@ -123,12 +123,12 @@ public class EmailsDAO extends AbstractDAO {
     private static Pair<String, String> getAccountAndFolder(BlackboardArtifact art) throws TskCoreException {
         BlackboardAttribute pathAttr = art.getAttribute(BlackboardAttribute.Type.TSK_PATH);
         if (pathAttr == null) {
-            return null;
+            return Pair.of("", "");
         }
 
         String pathVal = pathAttr.getValueString();
         if (pathVal == null) {
-            return null;
+            return Pair.of("", "");
         }
 
         return getPathAccountFolder(pathVal);
@@ -146,7 +146,7 @@ public class EmailsDAO extends AbstractDAO {
     private static Pair<String, String> getPathAccountFolder(String pathVal) {
         String[] pieces = pathVal.split(PATH_DELIMITER);
         return pieces.length < 4
-                ? null
+                ? Pair.of("", "")
                 : Pair.of(pieces[2], pieces[3]);
     }
 
@@ -307,8 +307,8 @@ public class EmailsDAO extends AbstractDAO {
                 + "    WHERE\n"
                 + "      attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + "\n" // may change due to JIRA-8220
                 + "      AND art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + "\n"
-                + dataSourceClause
                 + accountClause
+                + dataSourceClause
                 + "    GROUP BY art.artifact_id\n";
 
         // get index 2 (account) and index 3 (folder) after splitting on delimiter
@@ -377,7 +377,7 @@ public class EmailsDAO extends AbstractDAO {
 
         // track indeterminate types by key (account if account is null, account folders if account parameter is non-null)
         Set<String> indeterminateTypes = this.emailCounts.getEnqueued().stream()
-                .filter(evt -> (dataSourceId == null || evt.getDataSourceId() == dataSourceId)
+                .filter(evt -> (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
                 && (account == null || account.equals(evt.getAccount())))
                 .map(evt -> account == null ? evt.getAccount() : evt.getFolder())
                 .collect(Collectors.toSet());
@@ -416,7 +416,16 @@ public class EmailsDAO extends AbstractDAO {
                             return createEmailTreeItem(entry.getAccount(), entry.getFolder(), entry.getDisplayName(), dataSourceId, treeDisplayCount);
 
                         })
-                        .sorted(Comparator.comparing(item -> item.getDisplayName()))
+                        .sorted((a,b) -> {
+                            boolean keyADown = StringUtils.isBlank((account == null ? a.getSearchParams().getAccount() : a.getSearchParams().getFolder()));
+                            boolean keyBDown = StringUtils.isBlank((account == null ? b.getSearchParams().getAccount() : b.getSearchParams().getFolder()));
+                                   
+                            if (keyADown != keyBDown) {
+                                return Boolean.compare(keyADown, keyBDown);
+                            } else {
+                                return a.getDisplayName().compareToIgnoreCase(b.getDisplayName());
+                            }
+                        })
                         .collect(Collectors.toList());
 
                 // return results
