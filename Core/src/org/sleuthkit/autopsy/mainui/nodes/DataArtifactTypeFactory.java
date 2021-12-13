@@ -294,6 +294,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
                 return getDAO().createEmailTreeItem(
                         originalSearchParam.getAccount(),
                         null,
+                        getDAO().getAccountDisplayName(originalSearchParam.getAccount(), null),
                         dataSourceId,
                         originalTreeItem.getDisplayCount());
             }
@@ -303,14 +304,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public int compare(TreeItemDTO<? extends EmailSearchParams> o1, TreeItemDTO<? extends EmailSearchParams> o2) {
-            boolean firstUp = o1.getSearchParams().getAccount() == null || EmailsDAO.DEFAULT_STR.equals(o1.getSearchParams().getAccount());
-            boolean secondUp = o2.getSearchParams().getAccount() == null || EmailsDAO.DEFAULT_STR.equals(o2.getSearchParams().getAccount());
-
-            if (firstUp == secondUp) {
-                return o1.getSearchParams().getAccount().compareToIgnoreCase(o2.getSearchParams().getAccount());
-            } else {
-                return Boolean.compare(firstUp, secondUp);
-            }
+            return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
         }
     }
 
@@ -382,6 +376,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
                 return getDAO().createEmailTreeItem(
                         originalSearchParam.getAccount(),
                         originalSearchParam.getFolder(),
+                        getDAO().getFolderDisplayName(originalSearchParam.getFolder()),
                         dataSourceId,
                         originalTreeItem.getDisplayCount());
             }
@@ -391,14 +386,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public int compare(TreeItemDTO<? extends EmailSearchParams> o1, TreeItemDTO<? extends EmailSearchParams> o2) {
-            boolean firstUp = o1.getSearchParams().getFolder() == null || EmailsDAO.DEFAULT_STR.equals(o1.getSearchParams().getFolder());
-            boolean secondUp = o2.getSearchParams().getFolder() == null || EmailsDAO.DEFAULT_STR.equals(o2.getSearchParams().getFolder());
-
-            if (firstUp == secondUp) {
-                return o1.getSearchParams().getFolder().compareToIgnoreCase(o2.getSearchParams().getFolder());
-            } else {
-                return Boolean.compare(firstUp, secondUp);
-            }
+            return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
         }
     }
 

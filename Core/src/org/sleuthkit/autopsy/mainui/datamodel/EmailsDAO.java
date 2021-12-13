@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,8 +38,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.openide.util.NbBundle.Messages;
 import org.python.icu.text.MessageFormat;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -76,6 +79,7 @@ public class EmailsDAO extends AbstractDAO {
     private static final String ESCAPE_CHAR = "\\";
 
     private final Cache<SearchParams<EmailSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+
     private final TreeCounts<EmailEvent> emailCounts = new TreeCounts<>();
 
     private static EmailsDAO instance = null;
@@ -228,13 +232,26 @@ public class EmailsDAO extends AbstractDAO {
         return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_EMAIL_MSG, tableData.columnKeys,
                 tableData.rows, searchParams.getStartItem(), allArtifacts.size());
     }
-    
-    private String getAccountDisplayName(String account, Set<String> folder) {
-        
+
+    @Messages("EmailsDAO_getAccountDisplayName_defaultName=Default")
+    public String getAccountDisplayName(String account, Set<String> folders) {
+        String accountName = account == null ? Bundle.EmailsDAO_getAccountDisplayName_defaultName() : account;
+        if (CollectionUtils.isEmpty(folders)) {
+            return accountName;
+        } else {
+            String folderDisplay = folders.stream()
+                    .map(f -> f == null ? Bundle.EmailsDAO_getFolderDisplayName_defaultName() : f)
+                    .sorted((a, b) -> a.compareToIgnoreCase(b))
+                    .collect(Collectors.joining(", "));
+
+            return MessageFormat.format("[{0}] ([{1}])", accountName, folderDisplay);
+        }
+
     }
-    
-    private String getFolderDisplayName(String folder) {
-        
+
+    @Messages({"EmailsDAO_getFolderDisplayName_defaultName=Default"})
+    public String getFolderDisplayName(String folder) {
+        return folder == null ? Bundle.EmailsDAO_getFolderDisplayName_defaultName() : folder;
     }
 
     public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String account, String folder, String displayName,
@@ -244,18 +261,34 @@ public class EmailsDAO extends AbstractDAO {
                 EmailSearchParams.getTypeId(),
                 new EmailSearchParams(dataSourceId, account, folder),
                 Stream.of(account, folder)
-                    .map(s -> s == null ? "" : s)
-                    .collect(Collectors.joining(PATH_DELIMITER)),
+                        .map(s -> s == null ? "" : s)
+                        .collect(Collectors.joining(PATH_DELIMITER)),
                 displayName,
                 count
         );
     }
 
+    /**
+     * Returns sql to query for email counts.
+     *
+     * @param dbType       The db type (postgres/sqlite).
+     * @param hasAccount   Whether or not an account parameter will be provided.
+     *                     If an account parameter is not provided, all accounts
+     *                     will be queried. If true, a prepared statement
+     *                     parameter will need to be provided at index 1.
+     * @param dataSourceId The data source id to filter on or null for no
+     *                     filter. If non-null, a prepared statement parameter
+     *                     will need to be provided at index 2.
+     *
+     * @return The sql.
+     */
     private static String getAccountFolderSql(TskData.DbType dbType, boolean hasAccount, Long dataSourceId) {
+        // possible and claused depending on whether or not there is an account to filter on and a data source object id to filter on.
         String andClauses
                 = (hasAccount ? "      AND attr.value_text LIKE ? ESCAPE '" + ESCAPE_CHAR + "'\n" : "")
                 + (dataSourceId == null ? "" : "      AND art.data_source_obj_id = ?\n");
 
+        // get path attribute value for emails 
         String innerQuery = "SELECT\n"
                 + "      MIN(attr.value_text) AS path, \n"
                 + "      attr.artifact_id\n"
@@ -266,12 +299,13 @@ public class EmailsDAO extends AbstractDAO {
                 + "      AND attr.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + "\n"
                 + andClauses;
 
+        // get index 2 (account) and index 3 (folder) after splitting on delimiter
         String accountFolderQuery;
         switch (dbType) {
             case POSTGRESQL:
                 accountFolderQuery = "SELECT\n"
-                        + (hasAccount ? "" : "  SPLIT_PART(email_paths.path, '/', 2) AS account,\n")
-                        + "  SPLIT_PART(email_paths.path, '/', 3) AS folder\n"
+                        + (hasAccount ? "" : "  SPLIT_PART(email_paths.path, '" + PATH_DELIMITER + "', 2) AS account,\n")
+                        + "  SPLIT_PART(email_paths.path, '" + PATH_DELIMITER + "', 3) AS folder\n"
                         + "FROM (\n"
                         + innerQuery
                         + "\n)";
@@ -280,15 +314,15 @@ public class EmailsDAO extends AbstractDAO {
                 accountFolderQuery = "SELECT\n"
                         + (hasAccount ? "" : "  a.account AS account,\n")
                         + "  (CASE \n"
-                        + "    WHEN INSTR(a.remaining, '/') > 0 THEN SUBSTR(a.remaining, 1, INSTR(a.remaining, '/') - 1) \n"
+                        + "    WHEN INSTR(a.remaining, '" + PATH_DELIMITER + "') > 0 THEN SUBSTR(a.remaining, 1, INSTR(a.remaining, '" + PATH_DELIMITER + "') - 1) \n"
                         + "    ELSE a.remaining\n"
                         + "  END) AS folder\n"
                         + "FROM (\n"
                         + "  SELECT \n"
-                        + "    SUBSTR(l.ltrimmed, 1, INSTR(l.ltrimmed, '/') - 1) AS account,\n"
-                        + "    SUBSTR(l.ltrimmed, INSTR(l.ltrimmed, '/') + 1) AS remaining\n"
+                        + "    SUBSTR(l.ltrimmed, 1, INSTR(l.ltrimmed, '" + PATH_DELIMITER + "') - 1) AS account,\n"
+                        + "    SUBSTR(l.ltrimmed, INSTR(l.ltrimmed, '" + PATH_DELIMITER + "') + 1) AS remaining\n"
                         + "  FROM (\n"
-                        + "      SELECT SUBSTR(attr.value_text, INSTR(SUBSTR(email_paths.path, 2), '/') + 2) AS ltrimmed\n"
+                        + "      SELECT SUBSTR(attr.value_text, INSTR(SUBSTR(email_paths.path, 2), '" + PATH_DELIMITER + "') + 2) AS ltrimmed\n"
                         + "      FROM (\n"
                         + innerQuery
                         + "      ) email_paths"
@@ -300,6 +334,7 @@ public class EmailsDAO extends AbstractDAO {
                 throw new IllegalArgumentException("Unknown db type: " + dbType);
         }
 
+        // group and get counts
         return "SELECT \n"
                 + "  COUNT(*) AS count,\n "
                 + (hasAccount ? "" : "  account_folder.account,\n")
@@ -324,15 +359,17 @@ public class EmailsDAO extends AbstractDAO {
      */
     public TreeResultsDTO<EmailSearchParams> getEmailCounts(Long dataSourceId, String account) throws ExecutionException {
 
+        // track indeterminate types by key (account if account is null, account folders if account parameter is non-null)
         Set<String> indeterminateTypes = this.emailCounts.getEnqueued().stream()
                 .filter(evt -> (dataSourceId == null || evt.getDataSourceId() == dataSourceId)
                 && (account == null || account.equals(evt.getAccount())))
                 .map(evt -> account == null ? evt.getAccount() : evt.getFolder())
                 .collect(Collectors.toSet());
 
+        String query = null;
         try {
             SleuthkitCase skCase = getCase();
-            String query = getAccountFolderSql(skCase.getDatabaseType(), account != null, dataSourceId);
+            query = getAccountFolderSql(skCase.getDatabaseType(), account != null, dataSourceId);
             try (CaseDbPreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query)) {
 
                 int paramIdx = 0;
@@ -344,42 +381,20 @@ public class EmailsDAO extends AbstractDAO {
                     preparedStatement.setLong(++paramIdx, dataSourceId);
                 }
 
-                Map<String, Long> counts = new HashMap<>();
-                // maps accounts to folders if at account level
-                Map<String, Set<String>> accountFolders = new HashMap<>();
-
+                // query for data
+                List<EmailCountsData> accumulatedData = new ArrayList<>();
                 skCase.getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
-                    try {
-                        while (resultSet.next()) {
-                            long count = resultSet.getLong("count");
-                            String resultFolder = resultSet.getString("folder");
-
-                            if (account == null) {
-                                String resultAccount = resultSet.getString("account");
-                                counts.compute(resultAccount, (k, v) -> v == null ? count : v + count);
-                                accountFolders
-                                        .computeIfAbsent(resultAccount, (k) -> new HashSet<>())
-                                        .add(resultFolder);
-                            } else {
-                                counts.compute(resultFolder, (k, v) -> v == null ? count : v + count);
-                            }
-                        }
-                    } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
-                    }
+                    accumulatedData.addAll(processCountsResultSet(resultSet, account));
                 });
 
-                List<TreeResultsDTO.TreeItemDTO<EmailSearchParams>> emailParams = counts.entrySet().stream()
+                // create tree data from that
+                List<TreeResultsDTO.TreeItemDTO<EmailSearchParams>> emailParams = accumulatedData.stream()
                         .map(entry -> {
-                            String entryAccount = (account == null) ? entry.getKey() : account;
-                            String entryFolder = (account == null) ? null : entry.getKey();
-                            Long count = entry.getValue();
-
-                            TreeDisplayCount treeDisplayCount = indeterminateTypes.contains((account == null) ? entryAccount : entryFolder)
+                            TreeDisplayCount treeDisplayCount = indeterminateTypes.contains(entry.getKey())
                                     ? TreeDisplayCount.INDETERMINATE
-                                    : TreeResultsDTO.TreeDisplayCount.getDeterminate(count);
+                                    : TreeResultsDTO.TreeDisplayCount.getDeterminate(entry.getCount());
 
-                            return createEmailTreeItem(entryAccount, entryFolder, dataSourceId, treeDisplayCount);
+                            return createEmailTreeItem(entry.getAccount(), entry.getFolder(), entry.getDisplayName(), dataSourceId, treeDisplayCount);
 
                         })
                         .sorted(Comparator.comparing(item -> item.getDisplayName()))
@@ -398,6 +413,56 @@ public class EmailsDAO extends AbstractDAO {
         }
     }
 
+    /**
+     * Processes a result querying for email counts.
+     *
+     * @param resultSet The result set.
+     * @param account   The account for which results apply. If null, email
+     *                  counts data is returned for an account level.
+     *
+     * @return The email counts data.
+     */
+    private List<EmailCountsData> processCountsResultSet(ResultSet resultSet, String account) {
+        try {
+            if (account == null) {
+                Map<String, Set<String>> accountFolders = new HashMap<>();
+                Map<String, Long> counts = new HashMap<>();
+                while (resultSet.next()) {
+                    long count = resultSet.getLong("count");
+                    String resultFolder = resultSet.getString("folder");
+                    String resultAccount = resultSet.getString("account");
+                    counts.compute(resultAccount, (k, v) -> v == null ? count : v + count);
+                    accountFolders
+                            .computeIfAbsent(resultAccount, (k) -> new HashSet<>())
+                            .add(resultFolder);
+                }
+
+                return counts.entrySet().stream()
+                        .map(e -> {
+                            String thisAccount = e.getKey();
+                            String displayName = getAccountDisplayName(account, accountFolders.get(account));
+                            Long count = e.getValue();
+
+                            return new EmailCountsData(thisAccount, null, thisAccount, displayName, count);
+                        })
+                        .collect(Collectors.toList());
+            } else {
+
+                List<EmailCountsData> toRet = new ArrayList<>();
+                while (resultSet.next()) {
+                    long count = resultSet.getLong("count");
+                    String resultFolder = resultSet.getString("folder");
+                    toRet.add(new EmailCountsData(account, resultFolder, resultFolder, getFolderDisplayName(resultFolder), count));
+                }
+                return toRet;
+            }
+
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
+            return Collections.emptyList();
+        }
+    }
+
     @Override
     void clearCaches() {
         this.searchParamsCache.invalidateAll();
@@ -408,7 +473,7 @@ public class EmailsDAO extends AbstractDAO {
     Set<? extends DAOEvent> handleIngestComplete() {
         return SubDAOUtils.getIngestCompleteEvents(
                 this.emailCounts,
-                (daoEvt, count) -> createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
+                (daoEvt, count) -> createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
         );
     }
 
@@ -416,7 +481,7 @@ public class EmailsDAO extends AbstractDAO {
     Set<TreeEvent> shouldRefreshTree() {
         return SubDAOUtils.getRefreshEvents(
                 this.emailCounts,
-                (daoEvt, count) -> createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
+                (daoEvt, count) -> createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
         );
     }
 
@@ -475,8 +540,8 @@ public class EmailsDAO extends AbstractDAO {
         }
 
         Stream<TreeEvent> treeEvents = this.emailCounts.enqueueAll(emailEvents).stream()
-                .map(daoEvt -> new TreeEvent(createEmailTreeItem(
-                daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
+                .map(daoEvt -> new TreeEvent(createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getFolder(),
+                daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
 
         return Stream.of(emailEvents.stream(), treeEvents)
                 .flatMap(s -> s)
@@ -502,6 +567,58 @@ public class EmailsDAO extends AbstractDAO {
             return false;
 
         }
+    }
+
+    /**
+     * Holds data for email counts.
+     */
+    private static final class EmailCountsData {
+
+        private final String displayName;
+        private final String account;
+        private final String folder;
+        private final String key;
+        private final Long count;
+
+        /**
+         * Main constructor.
+         *
+         * @param account     The relevant email account.
+         * @param folder      The relevant email folder.
+         * @param key         The key when querying for what should be
+         *                    indeterminate folders (account if no account
+         *                    parameter; otherwise, folder).
+         * @param displayName The display name.
+         * @param count
+         */
+        public EmailCountsData(String account, String folder, String key, String displayName, Long count) {
+            this.displayName = displayName;
+            this.account = account;
+            this.folder = folder;
+            this.key = key;
+            this.count = count;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public String getAccount() {
+            return account;
+        }
+
+        public String getFolder() {
+            return folder;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public Long getCount() {
+            return count;
+        }
+
     }
 
     /**
