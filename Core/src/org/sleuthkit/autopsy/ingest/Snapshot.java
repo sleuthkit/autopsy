@@ -39,7 +39,7 @@ public final class Snapshot implements Serializable {
     private final Date fileIngestStartTime;
     private final long processedFiles;
     private final long estimatedFilesToProcess;
-    private final IngestTasksScheduler.IngestJobTasksSnapshot tasksSnapshot;
+    private final IngestTasksScheduler.IngestTasksSnapshot tasksSnapshot;
     transient private final boolean jobCancelled;
     transient private final IngestJob.CancellationReason jobCancellationReason;
     transient private final List<String> cancelledDataSourceModules;
@@ -52,7 +52,7 @@ public final class Snapshot implements Serializable {
             boolean fileIngestRunning, Date fileIngestStartTime,
             boolean jobCancelled, IngestJob.CancellationReason cancellationReason, List<String> cancelledModules,
             long processedFiles, long estimatedFilesToProcess,
-            long snapshotTime, IngestTasksScheduler.IngestJobTasksSnapshot tasksSnapshot) {
+            long snapshotTime, IngestTasksScheduler.IngestTasksSnapshot tasksSnapshot) {
         this.dataSource = dataSourceName;
         this.jobId = jobId;
         this.jobStartTime = jobStartTime;
@@ -162,7 +162,7 @@ public final class Snapshot implements Serializable {
         if (null == this.tasksSnapshot) {
             return 0;
         }
-        return this.tasksSnapshot.getDirectoryTasksQueueSize();
+        return this.tasksSnapshot.getDirQueueSize();
     }
 
     long getFileQueueSize() {
@@ -176,21 +176,21 @@ public final class Snapshot implements Serializable {
         if (null == this.tasksSnapshot) {
             return 0;
         }
-        return this.tasksSnapshot.getDsQueueSize();
+        return this.tasksSnapshot.getDataSourceQueueSize();
     }
 
     long getStreamingQueueSize() {
         if (null == this.tasksSnapshot) {
             return 0;
         }
-        return this.tasksSnapshot.getStreamingQueueSize();
+        return this.tasksSnapshot.getStreamedFilesQueueSize();
     }
 
     long getRunningListSize() {
         if (null == this.tasksSnapshot) {
             return 0;
         }
-        return this.tasksSnapshot.getRunningListSize();
+        return this.tasksSnapshot.getProgressListSize();
     }
 
     long getArtifactTasksQueueSize() {
@@ -200,6 +200,13 @@ public final class Snapshot implements Serializable {
         return tasksSnapshot.getArtifactsQueueSize();
     }
 
+    long getResultTasksQueueSize() {
+        if (tasksSnapshot == null) {
+            return 0;
+        }
+        return tasksSnapshot.getResultsQueueSize();
+    }
+    
     boolean isCancelled() {
         return this.jobCancelled;
     }

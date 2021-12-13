@@ -20,17 +20,17 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.List;
 import java.util.Optional;
-import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
- * A pipeline of data artifact ingest modules used to perform data artifact
+ * A pipeline of analysis result ingest modules used to perform analysis result
  * ingest tasks for an ingest job.
  */
-final class DataArtifactIngestPipeline extends IngestPipeline<DataArtifactIngestTask> {
+public class AnalysisResultIngestPipeline extends IngestPipeline<AnalysisResultIngestTask> {
 
     /**
-     * Constructs a pipeline of data artifact ingest modules used to perform
-     * data artifact ingest tasks for an ingest job.
+     * Constructs a pipeline of analysis result ingest modules used to perform
+     * analysis result ingest tasks for an ingest job.
      *
      * @param ingestJobExecutor The ingest job executor for this pipeline.
      * @param moduleTemplates   The ingest module templates to be used to
@@ -38,56 +38,56 @@ final class DataArtifactIngestPipeline extends IngestPipeline<DataArtifactIngest
      *                          May be an empty list if this type of pipeline is
      *                          not needed for the ingest job.
      */
-    DataArtifactIngestPipeline(IngestJobExecutor ingestJobExecutor, List<IngestModuleTemplate> moduleTemplates) {
+    AnalysisResultIngestPipeline(IngestJobExecutor ingestJobExecutor, List<IngestModuleTemplate> moduleTemplates) {
         super(ingestJobExecutor, moduleTemplates);
     }
 
     @Override
-    Optional<PipelineModule<DataArtifactIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
-        Optional<IngestPipeline.PipelineModule<DataArtifactIngestTask>> module = Optional.empty();
-        if (template.isDataArtifactIngestModuleTemplate()) {
-            DataArtifactIngestModule ingestModule = template.createDataArtifactIngestModule();
-            module = Optional.of(new DataArtifactIngestPipelineModule(ingestModule, template.getModuleName()));
+    Optional<PipelineModule<AnalysisResultIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
+        Optional<IngestPipeline.PipelineModule<AnalysisResultIngestTask>> module = Optional.empty();
+        if (template.isAnalysisResultIngestModuleTemplate()) {
+            AnalysisResultIngestModule ingestModule = template.createAnalysisResultIngestModule();
+            module = Optional.of(new AnalysisResultIngestPipelineModule(ingestModule, template.getModuleName()));
         }
         return module;
     }
 
     @Override
-    void prepareForTask(DataArtifactIngestTask task) throws IngestPipelineException {
+    void prepareForTask(AnalysisResultIngestTask task) throws IngestPipelineException {
     }
 
     @Override
-    void cleanUpAfterTask(DataArtifactIngestTask task) throws IngestPipelineException {
+    void cleanUpAfterTask(AnalysisResultIngestTask task) throws IngestPipelineException {
         IngestManager.getInstance().setIngestTaskProgressCompleted(task);
     }
 
     /**
-     * A decorator that adds ingest infrastructure operations to a data artifact
-     * ingest module.
+     * A decorator that adds ingest infrastructure operations to an analysis
+     * result ingest module.
      */
-    static final class DataArtifactIngestPipelineModule extends IngestPipeline.PipelineModule<DataArtifactIngestTask> {
+    static final class AnalysisResultIngestPipelineModule extends IngestPipeline.PipelineModule<AnalysisResultIngestTask> {
 
-        private final DataArtifactIngestModule module;
+        private final AnalysisResultIngestModule module;
 
         /**
          * Constructs a decorator that adds ingest infrastructure operations to
-         * a data artifact ingest module.
+         * an analysis result ingest module.
          *
          * @param module      The module.
          * @param displayName The display name of the module.
          */
-        DataArtifactIngestPipelineModule(DataArtifactIngestModule module, String displayName) {
+        AnalysisResultIngestPipelineModule(AnalysisResultIngestModule module, String displayName) {
             super(module, displayName);
             this.module = module;
         }
 
         @Override
-        void process(IngestJobExecutor ingestJobExecutor, DataArtifactIngestTask task) throws IngestModuleException {
-            DataArtifact artifact = task.getDataArtifact();
+        void process(IngestJobExecutor ingestJobExecutor, AnalysisResultIngestTask task) throws IngestModule.IngestModuleException {
+            AnalysisResult result = task.getAnalysisResult();
             IngestManager.getInstance().setIngestTaskProgress(task, getDisplayName());
-            module.process(artifact);
+            module.process(result);
         }
 
     }
-
+    
 }
