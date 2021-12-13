@@ -33,17 +33,9 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(Views v);
 
-    T visit(FileTypesByExtension sf);
-
     T visit(RecentFiles rf);
 
     T visit(RecentFiles.RecentFilesFilter rff);
-
-    T visit(DeletedContent dc);
-
-    T visit(DeletedContent.DeletedContentFilter dcf);
-
-    T visit(FileSize fs);
 
     T visit(KeywordHits kh);
 
@@ -58,10 +50,6 @@ public interface AutopsyItemVisitor<T> {
     T visit(Reports reportsItem);
 
     T visit(Accounts accountsItem);
-
-    T visit(FileTypes fileTypesItem);
-
-    T visit(FileTypesByMimeType aThis);
     
     T visit(OsAccounts osAccoutItem);
 
@@ -81,31 +69,6 @@ public interface AutopsyItemVisitor<T> {
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
-
-        @Override
-        public T visit(FileTypesByExtension sf) {
-            return defaultVisit(sf);
-        }
-
-        @Override
-        public T visit(FileTypesByMimeType ftByMimeType) {
-            return defaultVisit(ftByMimeType);
-        }
-
-        @Override
-        public T visit(DeletedContent dc) {
-            return defaultVisit(dc);
-        }
-
-        @Override
-        public T visit(DeletedContent.DeletedContentFilter dcf) {
-            return defaultVisit(dcf);
-        }
-
-        @Override
-        public T visit(FileSize fs) {
-            return defaultVisit(fs);
-        }
         
         @Override
         public T visit(RecentFiles rf) {
@@ -165,11 +128,6 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(PersonGrouping personGrouping) {
             return defaultVisit(personGrouping);
-        }
-
-        @Override
-        public T visit(FileTypes ft) {
-            return defaultVisit(ft);
         }
 
         @Override

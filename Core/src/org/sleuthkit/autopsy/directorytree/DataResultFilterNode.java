@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCountNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCaseNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.InstanceDataSourceNode;
@@ -254,11 +253,6 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public List<Action> visit(FileTypesNode fileTypes) {
-            return defaultVisit(fileTypes);
-        }
-
-        @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             return Arrays.asList(ditem.getActions(true));
         }
@@ -359,11 +353,6 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
             return openChild(c);
-        }
-
-        @Override
-        public AbstractAction visit(FileTypesNode fileTypes) {
-            return openChild(fileTypes);
         }
 
         /**
