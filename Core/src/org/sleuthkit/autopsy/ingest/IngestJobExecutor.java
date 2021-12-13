@@ -470,7 +470,8 @@ final class IngestJobExecutor {
             if (currentTier.hasFileIngestModules()) {
                 estimateFilesToProcess();
                 switchFileIngestProgressBarToDeterminate();
-                taskScheduler.scheduleFileIngestTasks(this, ingestJob.getFiles());
+                // We don't need to schedule file tasks here because they've already been
+                // added as the data source was being processed
             }
 
             if (currentTier.hasDataSourceIngestModules()) {
