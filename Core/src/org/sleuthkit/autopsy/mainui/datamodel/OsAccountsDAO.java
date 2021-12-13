@@ -159,16 +159,13 @@ public class OsAccountsDAO extends AbstractDAO {
                     = creationTimeValue.isPresent() ? TimeZoneUtils.getFormattedTime(creationTimeValue.get()) : "";
             List<Object> cellValues = Arrays.asList(
                     account.getName() != null ? account.getName() : "",
-                    // GVDTODO handle SCO
-                    // GVDTODO only show if (!UserPreferences.getHideSCOColumns())
                     null,
                     null,
-                    // GVDTODO only show if central repository enabled
                     null,
                     optional.isPresent() ? optional.get() : "",
                     "",
                     "",
-                    "", // GVDTODO this is filled by a background GetOsAccountRealmTask task 
+                    "",
                     timeDisplayStr);
 
             fileRows.add(new OsAccountRowDTO(

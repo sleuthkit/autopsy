@@ -332,7 +332,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 && Objects.equals(key.getSetName(), setEvent.getSetName());
     }
 
-    // GVDTODO handle keyword hits
     public AnalysisResultTableSearchResultsDTO getAnalysisResultSetHits(AnalysisResultSetSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
@@ -838,7 +837,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             for (BlackboardArtifact art : dataEvt.getArtifacts()) {
                 try {
                     if (art.getArtifactTypeID() == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
-                        // GVDTODO handle keyword hits
+
                     } else if (STANDARD_SET_TYPES.contains(art.getArtifactTypeID())) {
                         BlackboardAttribute setAttr = art.getAttribute(BlackboardAttribute.Type.TSK_SET_NAME);
                         String setName = setAttr == null ? null : setAttr.getValueString();
@@ -863,7 +862,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         SubDAOUtils.invalidateKeys(this.analysisResultCache, ar -> Pair.of(ar.getArtifactType(), ar.getDataSourceId()), analysisResultMap);
         SubDAOUtils.invalidateKeys(this.setHitCache, ar -> Pair.of(Pair.of(ar.getArtifactType(), ar.getSetName()), ar.getDataSourceId()), setMap);
 
-        // GVDTODO handle keyword hits
         return getResultViewEvents(analysisResultMap, setMap);
     }
 
@@ -887,7 +885,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         Stream<AnalysisResultEvent> analysisResultSetEvts = resultsWithSetMap.entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new AnalysisResultSetEvent(entry.getKey().getRight(), entry.getKey().getLeft(), dsId)));
 
-        // GVDTODO handle keyword hits
         
         List<AnalysisResultEvent> daoEvents = Stream.of(analysisResultEvts, analysisResultSetEvts)
                 .flatMap(s -> s)
@@ -912,7 +909,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * @return The tree event.
      */
     private TreeItemDTO<?> getTreeItem(AnalysisResultEvent arEvt, TreeDisplayCount displayCount) {
-        // GVDTODO handle keyword items when integrated
+
         if (arEvt instanceof AnalysisResultSetEvent) {
             AnalysisResultSetEvent setEvt = (AnalysisResultSetEvent) arEvt;
             return getSetTreeItem(setEvt.getArtifactType(), setEvt.getDataSourceId(),
@@ -1016,8 +1013,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         @Override
-        public boolean isRefreshRequired(DAOEvent evt) {
-            // GVDTODO
+        public boolean isRefreshRequired(DAOEvent evt) {     
             return true;
         }
     }

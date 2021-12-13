@@ -357,7 +357,6 @@ public class FileSystemColumnUtils {
         // Make sure to update nColumns if the number of columns here changes
         AbstractFile file = (AbstractFile) content;
         return Arrays.asList(
-            // GVDTODO translation column
             null,
             //GVDTDO replace nulls with SCO
             null,

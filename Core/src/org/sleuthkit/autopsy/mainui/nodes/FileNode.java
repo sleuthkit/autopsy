@@ -57,7 +57,6 @@ public class FileNode extends AbstractNode implements ActionContext {
     }
 
     public FileNode(SearchResultsDTO results, FileRowDTO file, boolean directoryBrowseMode) {
-        // GVDTODO: at some point, this leaf will need to allow for children
         super(Children.LEAF, ContentNodeUtil.getLookup(file.getAbstractFile()));
         setIcon(file);
         setName(ContentNodeUtil.getContentName(file.getId()));

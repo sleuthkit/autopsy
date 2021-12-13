@@ -74,7 +74,6 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
 
     private static Logger logger = Logger.getLogger(BlackboardArtifactDAO.class.getName());
 
-    // GVDTODO there is a different standard for normal attr strings and email attr strings
     static final int STRING_LENGTH_MAX = 160;
     static final String ELLIPSIS = "...";
 
@@ -169,9 +168,7 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
 
         List<ColumnKey> columnKeys = new ArrayList<>();
         columnKeys.add(SRC_FILE_COL);
-        // GVDTODO translated file name
         columnKeys.add(S_COL);
-        // GVDTODO only show if central repository enabled
         columnKeys.add(C_COL);
         columnKeys.add(O_COL);
         addAnalysisResultColumnKeys(columnKeys);
@@ -188,8 +185,6 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
 
             Content srcContent = artifact.getParent();
             cellValues.add(srcContent.getName());
-            // GVDTODO handle translated filename here
-            // GVDTODO handle SCO
             cellValues.add(null);
             cellValues.add(null);
             cellValues.add(null);

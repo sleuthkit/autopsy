@@ -456,8 +456,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     @Override
     public void setNode(Node givenNode, SearchResultsDTO searchResults) {
-        // GVDTODO givenNode cannot be assumed to be a table filter node and search results needs to be captured.
-        
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (selectionListener == null) {
             this.getExplorerManager().addPropertyChangeListener(new NodeSelectionListener());
@@ -474,11 +472,9 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             // DataResultViewer.  See DataResultViewer setNode for more information.
             if (givenNode != null && givenNode.getChildren().getNodesCount() > 0) {
                 
-                // GVDTODO this should be handled more elegantly
                 rootNode = (givenNode instanceof TableFilterNode) 
                         ? (TableFilterNode) givenNode 
                         : new TableFilterNode(givenNode, true);
-                
                 
                 /*
                  * Wrap the given node in a ThumbnailViewChildren that will
