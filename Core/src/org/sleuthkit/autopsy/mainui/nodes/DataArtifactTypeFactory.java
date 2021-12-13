@@ -304,7 +304,14 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public int compare(TreeItemDTO<? extends EmailSearchParams> o1, TreeItemDTO<? extends EmailSearchParams> o2) {
-            return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+            boolean firstDown = o1.getSearchParams().getAccount() == null;
+            boolean secondDown = o2.getSearchParams().getAccount() == null;
+
+            if (firstDown == secondDown) {
+                return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+            } else {
+                return Boolean.compare(firstDown, secondDown);
+            }
         }
     }
 
@@ -386,7 +393,14 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public int compare(TreeItemDTO<? extends EmailSearchParams> o1, TreeItemDTO<? extends EmailSearchParams> o2) {
-            return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+            boolean firstDown = o1.getSearchParams().getFolder() == null;
+            boolean secondDown = o2.getSearchParams().getFolder() == null;
+
+            if (firstDown == secondDown) {
+                return o1.getSearchParams().getFolder().compareToIgnoreCase(o2.getSearchParams().getFolder());
+            } else {
+                return Boolean.compare(firstDown, secondDown);
+            }
         }
     }
 
