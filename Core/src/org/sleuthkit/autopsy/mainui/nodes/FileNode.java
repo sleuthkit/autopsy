@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
@@ -88,14 +89,23 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
      * Sets the icon for the node, based on properties of the AbstractFile.
      */
     void setIcon(FileRowDTO fileData) {
-        if (!fileData.getAllocated()) {
-            if (TSK_DB_FILES_TYPE_ENUM.CARVED.equals(fileData.getFileType())) {
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
+        if (fileData.getAbstractFile().isDir()) {
+            // This is most likely a derived file directory
+            if (fileData.getAllocated()) {
+                this.setIconBaseWithExtension(NodeIconUtil.FOLDER.getPath());
             } else {
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+                this.setIconBaseWithExtension(NodeIconUtil.DELETED_FOLDER.getPath());
             }
         } else {
-            this.setIconBaseWithExtension(MediaTypeUtils.getIconForFileType(fileData.getExtensionMediaType()));
+            if (!fileData.getAllocated()) {
+                if (TSK_DB_FILES_TYPE_ENUM.CARVED.equals(fileData.getFileType())) {
+                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-x-icon-16.png"); //NON-NLS
+                } else {
+                    this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+                }
+            } else {
+                this.setIconBaseWithExtension(MediaTypeUtils.getIconForFileType(fileData.getExtensionMediaType()));
+            }
         }
     }
 
@@ -242,6 +252,11 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
             logger.log(Level.SEVERE, "Attempted to Query CR for presence of comments in a file node and was unable to perform query, comment column will only reflect caseDB", ex);
         }
         return status;
+    }
+    
+    @Override
+    public Action getPreferredAction() {
+        return DirectoryTreeTopComponent.getOpenChildAction(getName());
     }
 
     /**

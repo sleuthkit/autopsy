@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType;
+import org.sleuthkit.datamodel.TagName;
 
 /**
  * An event to signal that tags have been added or removed on the 
@@ -28,21 +29,22 @@ import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType;
 public class TagsEvent implements DAOEvent {
 
     private final TagType type;
-    private final Long tagNameId;
+    private final TagName tagName;
     private final Long dataSourceId;
 
-    public TagsEvent(TagType type, Long tagNameId, Long dataSourceId) {
+    public TagsEvent(TagType type, TagName tagName, Long dataSourceId) {
         this.type = type;
-        this.tagNameId = tagNameId;
+        this.tagName = tagName;
         this.dataSourceId = dataSourceId;
     }
 
+    
     public TagType getTagType() {
         return type;
     }
 
-    public Long getTagNameId() {
-        return tagNameId;
+    public TagName getTagName() {
+        return tagName;
     }
 
     /**
@@ -57,7 +59,7 @@ public class TagsEvent implements DAOEvent {
     public int hashCode() {
         int hash = 7;
         hash = 97 * hash + Objects.hashCode(this.type);
-        hash = 97 * hash + Objects.hashCode(this.tagNameId);
+        hash = 97 * hash + Objects.hashCode(this.tagName);
         hash = 97 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
@@ -77,7 +79,7 @@ public class TagsEvent implements DAOEvent {
         if (this.type != other.type) {
             return false;
         }
-        if (!Objects.equals(this.tagNameId, other.tagNameId)) {
+        if (!Objects.equals(this.tagName, other.tagName)) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
@@ -85,6 +87,8 @@ public class TagsEvent implements DAOEvent {
         }
         return true;
     }
+
+    
 
     @Override
     public Type getType() {

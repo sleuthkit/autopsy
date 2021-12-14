@@ -25,6 +25,15 @@ import java.util.Objects;
  */
 public class FileTypeExtensionsSearchParams {
 
+    private static final String TYPE_ID = "FILE_VIEWS_EXTENSION";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final FileExtSearchFilter filter;
     private final Long dataSourceId;
 

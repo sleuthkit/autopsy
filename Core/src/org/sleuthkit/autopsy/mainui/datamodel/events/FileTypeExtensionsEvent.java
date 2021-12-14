@@ -19,34 +19,42 @@
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.mainui.datamodel.FileExtSearchFilter;
 
 /**
- * An event to signal that files have been added or removed 
- * with the given extension on the given data source. 
+ * An event to signal that files have been added or removed with the given
+ * extension on the given data source.
  */
 public class FileTypeExtensionsEvent implements DAOEvent {
 
-    private final String extension;
-    private final long dataSourceId;
+    private final FileExtSearchFilter extensionFilter;
+    private final Long dataSourceId;
 
-    public FileTypeExtensionsEvent(String extension, long dataSourceId) {
-        this.extension = extension;
+    /**
+     * Main constructor.
+     *
+     * @param extensionFilter The extension filter. If null, indicates full
+     *                        refresh necessary.
+     * @param dataSourceId    The data source id.
+     */
+    public FileTypeExtensionsEvent(FileExtSearchFilter extensionFilter, Long dataSourceId) {
+        this.extensionFilter = extensionFilter;
         this.dataSourceId = dataSourceId;
     }
 
-    public String getExtension() {
-        return extension;
+    public FileExtSearchFilter getExtensionFilter() {
+        return extensionFilter;
     }
 
-    public long getDataSourceId() {
+    public Long getDataSourceId() {
         return dataSourceId;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 59 * hash + Objects.hashCode(this.extension);
-        hash = 59 * hash + (int) (this.dataSourceId ^ (this.dataSourceId >>> 32));
+        int hash = 3;
+        hash = 89 * hash + Objects.hashCode(this.extensionFilter);
+        hash = 89 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -62,10 +70,10 @@ public class FileTypeExtensionsEvent implements DAOEvent {
             return false;
         }
         final FileTypeExtensionsEvent other = (FileTypeExtensionsEvent) obj;
-        if (this.dataSourceId != other.dataSourceId) {
+        if (!Objects.equals(this.extensionFilter, other.extensionFilter)) {
             return false;
         }
-        if (!Objects.equals(this.extension, other.extension)) {
+        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
             return false;
         }
         return true;

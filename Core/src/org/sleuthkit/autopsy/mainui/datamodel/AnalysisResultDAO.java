@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.events.KeywordHitEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
@@ -68,6 +69,8 @@ import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import static org.sleuthkit.datamodel.TskData.KeywordSearchQueryType.REGEX;
+import static org.sleuthkit.datamodel.TskData.KeywordSearchQueryType.SUBSTRING;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -77,7 +80,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     private static Logger logger = Logger.getLogger(AnalysisResultDAO.class.getName());
-
+    
     private static AnalysisResultDAO instance = null;
 
     @NbBundle.Messages({
@@ -174,6 +177,27 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
     }
 
+    private AnalysisResultTableSearchResultsDTO fetchKeywordHitsForTable(SearchParams<? extends AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+
+        SleuthkitCase skCase = getCase();
+        Blackboard blackboard = skCase.getBlackboard();        
+        KeywordHitSearchParam searchParams = (KeywordHitSearchParam) cacheKey.getParamData();
+        Long dataSourceId = searchParams.getDataSourceId();
+        BlackboardArtifact.Type artType = searchParams.getArtifactType();
+        
+        // get all keyword hits for the search params
+        List<BlackboardArtifact> allHits  = blackboard.getKeywordSearchResults(searchParams.getKeyword(), searchParams.getRegex(), searchParams.getSearchType(), searchParams.getSetName(), dataSourceId);
+
+        // populate all attributes in one optimized database call
+        blackboard.loadBlackboardAttributes(allHits);
+
+        // do paging, if necessary
+        List<BlackboardArtifact> pagedArtifacts = getPaged(allHits, cacheKey);
+        TableData tableData = createTableData(artType, pagedArtifacts);
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), allHits.size());
+    }
+    
+    // filters results by TSK_SET_NAME attr and needs a search param with the set name
     private AnalysisResultTableSearchResultsDTO fetchSetNameHitsForTable(SearchParams<? extends AnalysisResultSetSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
@@ -207,7 +231,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
         TableData tableData = createTableData(artType, pagedArtifacts);
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
-    }
+    }    
 
     @Override
     void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
@@ -320,8 +344,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return setHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
     }
 
-    // TODO - JIRA-8117
-    // This needs to use more than just the set name
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
@@ -330,19 +352,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         SearchParams<KeywordHitSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
-        return keywordHitCache.get(searchParams, () -> fetchSetNameHitsForTable(searchParams));
-    }
-
-    public void dropAnalysisResultCache() {
-        analysisResultCache.invalidateAll();
-    }
-
-    public void dropHashHitCache() {
-        setHitCache.invalidateAll();
-    }
-
-    public void dropKeywordHitCache() {
-        keywordHitCache.invalidateAll();
+        return keywordHitCache.get(searchParams, () -> fetchKeywordHitsForTable(searchParams));
     }
 
     /**
@@ -358,10 +368,22 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      */
     public TreeResultsDTO<AnalysisResultSearchParam> getAnalysisResultCounts(Long dataSourceId) throws ExecutionException {
         try {
+
+            Set<BlackboardArtifact.Type> indeterminateTypes = this.treeCounts.getEnqueued().stream()
+                    .filter(evt -> dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
+                    .map(evt -> evt.getArtifactType())
+                    .collect(Collectors.toSet());
+
             // get row dto's sorted by display name
             Map<BlackboardArtifact.Type, Long> typeCounts = getCounts(BlackboardArtifact.Category.ANALYSIS_RESULT, dataSourceId);
             List<TreeResultsDTO.TreeItemDTO<AnalysisResultSearchParam>> treeItemRows = typeCounts.entrySet().stream()
-                    .map(entry -> getTreeItem(entry.getKey(), dataSourceId, TreeDisplayCount.getDeterminate(entry.getValue())))
+                    .map(entry -> {
+                        TreeDisplayCount displayCount = indeterminateTypes.contains(entry.getKey())
+                                ? TreeDisplayCount.INDETERMINATE
+                                : TreeDisplayCount.getDeterminate(entry.getValue());
+
+                        return getTreeItem(entry.getKey(), dataSourceId, displayCount);
+                    })
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
                     .collect(Collectors.toList());
 
@@ -375,7 +397,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     private TreeItemDTO<AnalysisResultSearchParam> getTreeItem(BlackboardArtifact.Type type, Long dataSourceId, TreeDisplayCount displayCount) {
         return new TreeItemDTO<>(
-                BlackboardArtifact.Category.ANALYSIS_RESULT.name(),
+                AnalysisResultSearchParam.getTypeId(),
                 new AnalysisResultSearchParam(type, dataSourceId),
                 type.getTypeID(),
                 type.getDisplayName(),
@@ -458,16 +480,29 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             Long dataSourceId,
             String nullSetName) throws IllegalArgumentException, ExecutionException {
 
+        Set<String> indeterminateSetNames = new HashSet<>();
+        for (AnalysisResultEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof AnalysisResultSetEvent
+                    && (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
+                    && evt.getArtifactType().equals(type)) {
+                indeterminateSetNames.add(((AnalysisResultSetEvent) evt).getSetName());
+            }
+        }
+
         List<TreeItemDTO<AnalysisResultSetSearchParam>> allSets
                 = getSetCountsMap(type, BlackboardAttribute.Type.TSK_SET_NAME, dataSourceId).entrySet().stream()
                         .filter(entry -> nullSetName != null || entry.getKey() != null)
                         .sorted((a, b) -> compareSetStrings(a.getKey(), b.getKey()))
                         .map(entry -> {
+                            TreeDisplayCount displayCount = indeterminateSetNames.contains(entry.getKey())
+                                    ? TreeDisplayCount.INDETERMINATE
+                                    : TreeDisplayCount.getDeterminate(entry.getValue());
+
                             return getSetTreeItem(type,
                                     dataSourceId,
                                     entry.getKey(),
                                     entry.getKey() == null ? nullSetName : entry.getKey(),
-                                    TreeDisplayCount.getDeterminate(entry.getValue()));
+                                    displayCount);
                         })
                         .collect(Collectors.toList());
 
@@ -478,7 +513,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             Long dataSourceId, String setName, String displayName, TreeDisplayCount displayCount) {
 
         return new TreeItemDTO<>(
-                type.getTypeName(),
+                AnalysisResultSetSearchParam.getTypeId(),
                 new AnalysisResultSetSearchParam(type, dataSourceId, setName),
                 setName == null ? 0 : setName,
                 displayName,
@@ -526,6 +561,18 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     public TreeResultsDTO<? extends KeywordSearchTermParams> getKeywordSearchTermCounts(String setName, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         if (dataSourceId != null && dataSourceId <= 0) {
             throw new IllegalArgumentException("Expected data source id to be > 0");
+        }
+
+        Set<Pair<String, TskData.KeywordSearchQueryType>> indeterminateSearchTerms = new HashSet<>();
+        for (AnalysisResultEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof KeywordHitEvent
+                    && (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
+                    && evt.getArtifactType().equals(BlackboardArtifact.Type.TSK_KEYWORD_HIT)
+                    && Objects.equals(((KeywordHitEvent) evt).getSetName(), setName)) {
+
+                KeywordHitEvent keywordEvt = (KeywordHitEvent) evt;
+                indeterminateSearchTerms.add(Pair.of(keywordEvt.getSearchString(), keywordEvt.getSearchType()));
+            }
         }
 
         String dataSourceClause = dataSourceId == null
@@ -599,29 +646,24 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                         long count = resultSet.getLong("count");
                         boolean hasChildren = resultSet.getBoolean("has_children");
 
-                        String searchTermModified;
-                        switch (searchType) {
-                            case 0:
-                                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch(searchTerm == null ? "" : searchTerm);
-                                break;
-                            case 1:
-                                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm == null ? "" : searchTerm);
-                                break;
-                            case 2:
-                                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch(searchTerm == null ? "" : searchTerm);
-                                break;
-                            default:
-                                logger.log(Level.WARNING, MessageFormat.format("Non-standard search type value: {0}.", searchType));
-                                searchTermModified = searchTerm;
-                                break;
-                        }
+                        TskData.KeywordSearchQueryType searchTypeEnum = 
+                                Stream.of(TskData.KeywordSearchQueryType.values())
+                                        .filter(tp -> tp.getType() == searchType)
+                                        .findFirst()
+                                        .orElse(TskData.KeywordSearchQueryType.LITERAL);
+                        
+                        String searchTermModified = getSearchTermDisplayName(searchTerm, searchTypeEnum);
+
+                        TreeDisplayCount displayCount = indeterminateSearchTerms.contains(Pair.of(searchTerm, searchType))
+                                ? TreeDisplayCount.INDETERMINATE
+                                : TreeDisplayCount.getDeterminate(count);
 
                         TreeItemDTO<KeywordSearchTermParams> treeItem = new TreeItemDTO<>(
-                                "KEYWORD_SEARCH_TERMS",
-                                new KeywordSearchTermParams(setName, searchTerm, searchType, hasChildren, dataSourceId),
+                                KeywordSearchTermParams.getTypeId(),
+                                new KeywordSearchTermParams(setName, searchTerm,  TskData.KeywordSearchQueryType.valueOf(searchType), hasChildren, dataSourceId),
                                 searchTermModified,
                                 searchTermModified,
-                                TreeDisplayCount.getDeterminate(count)
+                                displayCount
                         );
 
                         items.add(treeItem);
@@ -639,6 +681,34 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     /**
+     * Returns the UI display name for a search term.
+     *
+     * @param searchTerm The search term.
+     * @param searchType The search type enum value.
+     *
+     * @return The display name.
+     */
+    public String getSearchTermDisplayName(String searchTerm, TskData.KeywordSearchQueryType searchType) {
+        String searchTermModified;
+        switch (searchType) {
+            case LITERAL:
+                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_exactMatch(searchTerm == null ? "" : searchTerm);
+                break;
+            case SUBSTRING:
+                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_substringMatch(searchTerm == null ? "" : searchTerm);
+                break;
+            case REGEX:
+                searchTermModified = Bundle.AnalysisResultDAO_getKeywordSearchTermCounts_regexMatch(searchTerm == null ? "" : searchTerm);
+                break;
+            default:
+                logger.log(Level.WARNING, MessageFormat.format("Non-standard search type value: {0}.", searchType));
+                searchTermModified = searchTerm;
+                break;
+        }
+        return searchTermModified;
+    }
+
+    /**
      * Get counts for string matches of a particular regex/substring search
      * term.
      *
@@ -652,7 +722,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * @throws IllegalArgumentException
      * @throws ExecutionException
      */
-    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, int searchType, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+    public TreeResultsDTO<? extends KeywordMatchParams> getKeywordMatchCounts(String setName, String regexStr, TskData.KeywordSearchQueryType searchType, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
         if (dataSourceId != null && dataSourceId <= 0) {
             throw new IllegalArgumentException("Expected data source id to be > 0");
         }
@@ -687,6 +757,23 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + "AND res.search_type = ?\n"
                 + "GROUP BY keyword";
 
+        Set<String> indeterminateMatches = new HashSet<>();
+        for (AnalysisResultEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof KeywordHitEvent
+                    && (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
+                    && evt.getArtifactType().equals(BlackboardArtifact.Type.TSK_KEYWORD_HIT)) {
+
+                KeywordHitEvent keywordEvt = (KeywordHitEvent) evt;
+                if (Objects.equals(keywordEvt.getSetName(), setName)
+                        && Objects.equals(keywordEvt.getSearchString(), regexStr)
+                        && keywordEvt.getSearchType() == searchType) {
+
+                    indeterminateMatches.add(keywordEvt.getMatch());
+                }
+
+            }
+        }
+
         try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(query)) {
             // get artifact types and counts
             int paramIdx = 0;
@@ -699,7 +786,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             }
 
             preparedStatement.setString(++paramIdx, regexStr);
-            preparedStatement.setInt(++paramIdx, searchType);
+            preparedStatement.setInt(++paramIdx, searchType.getType());
 
             List<TreeItemDTO<KeywordMatchParams>> items = new ArrayList<>();
             getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
@@ -708,12 +795,17 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                         String keyword = resultSet.getString("keyword");
                         long count = resultSet.getLong("count");
 
+                        TreeDisplayCount displayCount = indeterminateMatches.contains(keyword)
+                                ? TreeDisplayCount.INDETERMINATE
+                                : TreeDisplayCount.getDeterminate(count);
+
                         items.add(new TreeItemDTO<>(
-                                "KEYWORD_MATCH",
+                                KeywordMatchParams.getTypeId(),
                                 new KeywordMatchParams(setName, regexStr, keyword, searchType, dataSourceId),
                                 keyword,
                                 keyword == null ? "" : keyword,
-                                TreeDisplayCount.getDeterminate(count)));
+                                displayCount
+                        ));
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
@@ -735,7 +827,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     @Override
-    Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
+    Set<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
         // get a grouping of artifacts mapping the artifact type id to data source id.
         Map<BlackboardArtifact.Type, Set<Long>> analysisResultMap = new HashMap<>();
         Map<Pair<BlackboardArtifact.Type, String>, Set<Long>> setMap = new HashMap<>();
@@ -768,16 +860,11 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             return Collections.emptySet();
         }
 
-        clearRelevantCacheEntries(analysisResultMap, setMap);
+        SubDAOUtils.invalidateKeys(this.analysisResultCache, ar -> Pair.of(ar.getArtifactType(), ar.getDataSourceId()), analysisResultMap);
+        SubDAOUtils.invalidateKeys(this.setHitCache, ar -> Pair.of(Pair.of(ar.getArtifactType(), ar.getSetName()), ar.getDataSourceId()), setMap);
 
-        List<AnalysisResultEvent> daoEvents = getResultViewEvents(analysisResultMap, setMap);
-        Collection<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
-                .map(arEvt -> getTreeEvent(arEvt, false))
-                .collect(Collectors.toList());
-
-        return Stream.of(daoEvents, treeEvents)
-                .flatMap(lst -> lst.stream())
-                .collect(Collectors.toSet());
+        // GVDTODO handle keyword hits
+        return getResultViewEvents(analysisResultMap, setMap);
     }
 
     /**
@@ -793,7 +880,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      *
      * @return The list of dao events.
      */
-    private List<AnalysisResultEvent> getResultViewEvents(Map<BlackboardArtifact.Type, Set<Long>> analysisResultMap, Map<Pair<BlackboardArtifact.Type, String>, Set<Long>> resultsWithSetMap) {
+    private Set<? extends DAOEvent> getResultViewEvents(Map<BlackboardArtifact.Type, Set<Long>> analysisResultMap, Map<Pair<BlackboardArtifact.Type, String>, Set<Long>> resultsWithSetMap) {
         Stream<AnalysisResultEvent> analysisResultEvts = analysisResultMap.entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new AnalysisResultEvent(entry.getKey(), dsId)));
 
@@ -801,82 +888,50 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new AnalysisResultSetEvent(entry.getKey().getRight(), entry.getKey().getLeft(), dsId)));
 
         // GVDTODO handle keyword hits
-        return Stream.of(analysisResultEvts, analysisResultSetEvts)
+        
+        List<AnalysisResultEvent> daoEvents = Stream.of(analysisResultEvts, analysisResultSetEvts)
                 .flatMap(s -> s)
                 .collect(Collectors.toList());
+
+        Collection<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
+                .map(arEvt -> new TreeEvent(getTreeItem(arEvt, TreeDisplayCount.INDETERMINATE), false))
+                .collect(Collectors.toList());
+
+        return Stream.of(daoEvents, treeEvents)
+                .flatMap(lst -> lst.stream())
+                .collect(Collectors.toSet());
     }
 
     /**
-     * Clears cache entries given the provided digests of autopsy events.
-     *
-     * @param analysisResultMap Contains the analysis results that do not use a
-     *                          set name. A mapping of analysis result type ids
-     *                          to data sources where the results were created.
-     * @param resultsWithSetMap Contains the anlaysis results that do use a set
-     *                          name. A mapping of (analysis result type id, set
-     *                          name) to data sources where results were
-     *                          created.
-     */
-    private void clearRelevantCacheEntries(Map<BlackboardArtifact.Type, Set<Long>> analysisResultMap, Map<Pair<BlackboardArtifact.Type, String>, Set<Long>> resultsWithSetMap) {
-        ConcurrentMap<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> arConcurrentMap = this.analysisResultCache.asMap();
-        arConcurrentMap.forEach((k, v) -> {
-            BlackboardArtifactSearchParam searchParam = k.getParamData();
-            Set<Long> dsIds = analysisResultMap.get(searchParam.getArtifactType());
-            if (dsIds != null && (searchParam.getDataSourceId() == null || dsIds.contains(searchParam.getDataSourceId()))) {
-                arConcurrentMap.remove(k);
-            }
-        });
-
-        ConcurrentMap<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setConcurrentMap = this.setHitCache.asMap();
-        setConcurrentMap.forEach((k, v) -> {
-            AnalysisResultSetSearchParam searchParam = k.getParamData();
-            Set<Long> dsIds = resultsWithSetMap.get(Pair.of(searchParam.getArtifactType(), searchParam.getSetName()));
-            if (dsIds != null && (searchParam.getDataSourceId() == null || dsIds.contains(searchParam.getDataSourceId()))) {
-                arConcurrentMap.remove(k);
-            }
-        });
-
-        // GVDTODO handle clearing cache for keyword search hits
-        // private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    }
-
-    /**
-     * Creates a TreeEvent instance based on the analysis result event and
+     * Creates a TreeItemDTO instance based on the analysis result event and
      * whether or not this event should trigger a full refresh of counts.
      *
-     * @param arEvt         The analysis result event.
-     * @param shouldRefresh Whether or not this tree event should trigger a full
-     *                      refresh of counts.
+     * @param arEvt        The analysis result event.
+     * @param displayCount The count to display.
      *
      * @return The tree event.
      */
-    private TreeEvent getTreeEvent(AnalysisResultEvent arEvt, boolean shouldRefresh) {
+    private TreeItemDTO<?> getTreeItem(AnalysisResultEvent arEvt, TreeDisplayCount displayCount) {
         // GVDTODO handle keyword items when integrated
         if (arEvt instanceof AnalysisResultSetEvent) {
             AnalysisResultSetEvent setEvt = (AnalysisResultSetEvent) arEvt;
-            return new TreeEvent(getSetTreeItem(setEvt.getArtifactType(), setEvt.getDataSourceId(),
+            return getSetTreeItem(setEvt.getArtifactType(), setEvt.getDataSourceId(),
                     setEvt.getSetName(), setEvt.getSetName() == null ? "" : setEvt.getSetName(),
-                    shouldRefresh ? TreeDisplayCount.UNSPECIFIED : TreeDisplayCount.INDETERMINATE), 
-                    shouldRefresh);
+                    displayCount);
         } else {
-            return new TreeEvent(getTreeItem(arEvt.getArtifactType(), arEvt.getDataSourceId(), 
-                    shouldRefresh ? TreeDisplayCount.UNSPECIFIED : TreeDisplayCount.INDETERMINATE), 
-                    shouldRefresh);
+            return getTreeItem(arEvt.getArtifactType(), arEvt.getDataSourceId(), displayCount);
         }
     }
 
     @Override
-    Set<DAOEvent> handleIngestComplete() {
-        return this.treeCounts.flushEvents().stream()
-                .map(arEvt -> getTreeEvent(arEvt, true))
-                .collect(Collectors.toSet());
+    Set<? extends DAOEvent> handleIngestComplete() {
+        return SubDAOUtils.getIngestCompleteEvents(this.treeCounts, (arEvt, count) -> getTreeItem(arEvt, count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        return this.treeCounts.getEventTimeouts().stream()
-                .map(arEvt -> getTreeEvent(arEvt, true))
-                .collect(Collectors.toSet());
+        return SubDAOUtils.getRefreshEvents(this.treeCounts, (arEvt, count) -> getTreeItem(arEvt, count));
+
     }
 
     /**

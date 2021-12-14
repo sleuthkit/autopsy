@@ -22,14 +22,21 @@ import java.util.Objects;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSizeFilter;
 
 /**
- * An event to signal that files have been added or removed 
- * within the given size range on the given data source. 
+ * An event to signal that files have been added or removed within the given
+ * size range on the given data source.
  */
 public class FileTypeSizeEvent implements DAOEvent {
 
     private final FileSizeFilter sizeFilter;
     private final Long dataSourceId;
 
+    /**
+     * Main constructor.
+     *
+     * @param sizeFilter   The size filter. If null, indicates full refresh is
+     *                     necessary.
+     * @param dataSourceId The data source id or null.
+     */
     public FileTypeSizeEvent(FileSizeFilter sizeFilter, Long dataSourceId) {
         this.sizeFilter = sizeFilter;
         this.dataSourceId = dataSourceId;
@@ -45,9 +52,9 @@ public class FileTypeSizeEvent implements DAOEvent {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 53 * hash + Objects.hashCode(this.sizeFilter);
-        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        int hash = 5;
+        hash = 73 * hash + Objects.hashCode(this.sizeFilter);
+        hash = 73 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -71,6 +78,8 @@ public class FileTypeSizeEvent implements DAOEvent {
         }
         return true;
     }
+
+
 
     @Override
     public Type getType() {

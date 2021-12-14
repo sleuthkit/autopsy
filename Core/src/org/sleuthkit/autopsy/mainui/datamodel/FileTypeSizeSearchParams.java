@@ -25,6 +25,14 @@ import java.util.Objects;
  */
 public class FileTypeSizeSearchParams {
 
+    private static final String TYPE_ID = "FILE_VIEWS_SIZE";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
 
     private final FileSizeFilter sizeFilter;
     private final Long dataSourceId;

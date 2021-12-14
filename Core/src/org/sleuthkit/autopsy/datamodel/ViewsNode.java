@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.Arrays;
+import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.ViewsChildren;
 
 /**
  *
@@ -32,30 +32,25 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class ViewsNode extends DisplayableItemNode {
 
     public static final String NAME = NbBundle.getMessage(ViewsNode.class, "ViewsNode.name.text");
+    private final long dsObjId;
 
-    public ViewsNode(SleuthkitCase sleuthkitCase) {
-        this(sleuthkitCase, 0);
+    public ViewsNode() {
+        this(0);
     }
-    
-    public ViewsNode(SleuthkitCase sleuthkitCase, long dsObjId) {
-        
-        super(  
-                new RootContentChildren(Arrays.asList(
-                    new FileTypes(dsObjId),
-                    // June '15: Recent Files was removed because it was not useful w/out filtering
-                    // add it back in if we can filter the results to a more managable size. 
-                    // new RecentFiles(sleuthkitCase),
-                    new DeletedContent(sleuthkitCase, dsObjId),
-                    new FileSize(dsObjId))
-                ),
-                Lookups.singleton(NAME)
-            );
+
+    public ViewsNode(long dsObjId) {
+
+        super(new ViewsChildren(dsObjId > 0 ? dsObjId : null), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/views.png"); //NON-NLS
+        this.dsObjId = dsObjId;
+    }
+    
+    public Node clone() {
+        return new ViewsNode(dsObjId);
     }
 
-    
     @Override
     public boolean isLeafTypeNode() {
         return false;

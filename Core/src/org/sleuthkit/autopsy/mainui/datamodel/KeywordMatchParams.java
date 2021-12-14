@@ -18,16 +18,27 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import org.sleuthkit.datamodel.TskData;
+
 /**
  * Parameters for a keyword match found in files.
  */
 public class KeywordMatchParams {
 
+    private static final String TYPE_ID = "KEYWORD_MATCH";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final String setName;
     private final String searchTerm;
     private final String keywordMatch;
     private final Long dataSourceId;
-    private final int searchType;
+    private final TskData.KeywordSearchQueryType searchType;
 
     /**
      * Main constructor.
@@ -38,7 +49,7 @@ public class KeywordMatchParams {
      * @param searchType   The keyword search type.
      * @param dataSourceId The data source id or null.
      */
-    public KeywordMatchParams(String setName, String searchTerm, String keywordMatch, int searchType, Long dataSourceId) {
+    public KeywordMatchParams(String setName, String searchTerm, String keywordMatch, TskData.KeywordSearchQueryType searchType, Long dataSourceId) {
         this.setName = setName;
         this.searchTerm = searchTerm;
         this.keywordMatch = keywordMatch;
@@ -77,7 +88,7 @@ public class KeywordMatchParams {
     /**
      * @return The type of keyword search performed.
      */
-    public int getSearchType() {
+    public TskData.KeywordSearchQueryType getSearchType() {
         return searchType;
     }
 }

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An ingest task that will be executed by an ingest thread using a given ingest
@@ -31,17 +32,45 @@ abstract class IngestTask {
     private final static long NOT_SET = Long.MIN_VALUE;
     private final IngestJobExecutor ingestJobExecutor;
     private long threadId;
+    private String contentName;
 
     /**
      * Constructs an ingest task that will be executed by an ingest thread using
      * a given ingest job executor.
      *
-     * @param ingestJobExecutor The ingest job executor to use to execute the
+     * @param contentName       The name of the content that is the subject of
+     *                          this task. May be the empty string, in which
+     *                          case setContentName() can be called later.
+     * @param ingestJobExecutor The ingest job executor to use to execute this
      *                          task.
      */
-    IngestTask(IngestJobExecutor ingestJobExecutor) {
+    IngestTask(String contentName, IngestJobExecutor ingestJobExecutor) {
+        this.contentName = contentName;
         this.ingestJobExecutor = ingestJobExecutor;
         threadId = NOT_SET;
+    }
+
+    /**
+     * Gets the name of the content that is the subject content of the ingest
+     * task.
+     *
+     * @return The content name.
+     *
+     * @throws TskCoreException This exception is thrown if there is a problem
+     *                          providing the subject content.
+     */
+    String getContentName() {
+        return contentName;
+    }
+
+    /**
+     * Gets the name of the content that is the subject content of the ingest
+     * task.
+     *
+     * @param contentName
+     */
+    void setContentName(String contentName) {
+        this.contentName = contentName;
     }
 
     /**

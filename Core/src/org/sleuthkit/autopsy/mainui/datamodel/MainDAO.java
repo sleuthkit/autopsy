@@ -68,7 +68,8 @@ public class MainDAO extends AbstractDAO {
             Case.Events.OS_ACCOUNTS_ADDED.toString(),
             Case.Events.OS_ACCOUNTS_UPDATED.toString(),
             Case.Events.OS_ACCOUNTS_DELETED.toString(),
-            Case.Events.OS_ACCT_INSTANCES_ADDED.toString()
+            Case.Events.OS_ACCT_INSTANCES_ADDED.toString(),
+            Case.Events.DATA_SOURCE_ADDED.toString()
     );
 
     private static final long WATCH_RESOLUTION_MILLIS = 30 * 1000;
@@ -259,6 +260,7 @@ public class MainDAO extends AbstractDAO {
         return allDAOs.stream()
                 .map(subDAO -> subDAO.processEvent(evt))
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
+                .filter(e -> e != null)
                 .collect(Collectors.toSet());
     }
 
@@ -267,6 +269,7 @@ public class MainDAO extends AbstractDAO {
         return allDAOs.stream()
                 .map((subDAO) -> subDAO.shouldRefreshTree())
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
+                .filter(e -> e != null)
                 .collect(Collectors.toSet());
     }
 
@@ -280,6 +283,7 @@ public class MainDAO extends AbstractDAO {
 
         return daoStreamEvts.stream()
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
+                .filter(evt -> evt != null)
                 .collect(Collectors.toSet());
     }
 

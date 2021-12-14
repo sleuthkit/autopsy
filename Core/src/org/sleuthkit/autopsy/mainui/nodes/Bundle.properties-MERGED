@@ -1,8 +1,8 @@
-AnalysisResultTypeFactory_adHocName=Adhoc Results
+AnalysisResultTypeFactory_adHocName=Ad Hoc Results
 ArtifactNode_columnKeys_srcFile_description=Source Name
 ArtifactNode_columnKeys_srcFile_displayName=Source Name
 ArtifactNode_columnKeys_srcFile_name=Source Name
-DataArtifactTypeFactory_AccountTypeParentNode_displayName=Communcation Accounts
+DataArtifactTypeFactory_AccountTypeParentNode_displayName=Communication Accounts
 FileNode.createSheet.comment.displayName=C
 # {0} - occurrenceCount
 FileNode_createSheet_count.description=There were {0} datasource(s) found with occurrences of the MD5 correlation value
@@ -16,4 +16,9 @@ SearchResultRootNode_createSheet_childCount_name=Child Count
 SearchResultRootNode_createSheet_type_displayName=Name
 SearchResultRootNode_createSheet_type_name=Name
 SearchResultRootNode_noDesc=No Description
+ViewsTypeFactory_DeletedParentNode_displayName=Deleted Files
+ViewsTypeFactory_ExtensionParentNode_displayName=By Extension
+ViewsTypeFactory_FileTypesParentNode_displayName=File Types
+ViewsTypeFactory_MimeParentNode_displayName=By MIME Type
+ViewsTypeFactory_SizeParentNode_displayName=File Size
 VolumnNode_ExtractUnallocAction_text=Extract Unallocated Space to Single Files

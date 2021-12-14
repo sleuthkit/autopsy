@@ -18,16 +18,27 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import org.sleuthkit.datamodel.TskData;
+
 /**
  * Parameters for a keyword search term.
  */
 public class KeywordSearchTermParams {
 
+    private static final String TYPE_ID = "KEYWORD_SEARCH_TERMS";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final String setName;
     private final String searchTerm;
     private final boolean hasChildren;
     private final Long dataSourceId;
-    private final int searchType;
+    private final TskData.KeywordSearchQueryType searchType;
 
     /**
      * Main constructor.
@@ -40,7 +51,7 @@ public class KeywordSearchTermParams {
      *                     into different urls).
      * @param dataSourceId The data source id or null.
      */
-    public KeywordSearchTermParams(String setName, String searchTerm, int searchType, boolean hasChildren, Long dataSourceId) {
+    public KeywordSearchTermParams(String setName, String searchTerm, TskData.KeywordSearchQueryType searchType, boolean hasChildren, Long dataSourceId) {
         this.setName = setName;
         this.searchTerm = searchTerm;
         this.searchType = searchType;
@@ -80,7 +91,7 @@ public class KeywordSearchTermParams {
     /**
      * @return The keyword search type value.
      */
-    public int getSearchType() {
+    public TskData.KeywordSearchQueryType getSearchType() {
         return searchType;
     }
 }

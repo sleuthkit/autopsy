@@ -80,13 +80,25 @@ public class TreeResultsDTO<T> {
             return count;
         }
 
+        /**
+         * Returns the suffix to be added to a display string when displaying
+         * this count.
+         *
+         * NOTE: If this code changes, regex code in
+         * DirectoryTreeTopComponent.respondSelection will need to be updated as
+         * well.
+         *
+         * @return The suffix to be added to a display string when displaying
+         *         this count.
+         */
         public String getDisplaySuffix() {
             switch (this.type) {
                 case DETERMINATE:
                     return " (" + count + ")";
                 case INDETERMINATE:
-                    return "...";
+                    return " (...)";
                 case NOT_SHOWN:
+                case UNSPECIFIED:
                 default:
                     return "";
             }

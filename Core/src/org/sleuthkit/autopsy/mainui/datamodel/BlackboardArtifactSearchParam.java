@@ -25,6 +25,16 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Key for data artifact in order to retrieve data from DAO.
  */
 public class BlackboardArtifactSearchParam {
+
+    private static final String TYPE_ID = "BLACKBOARD_ARTIFACT";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final BlackboardArtifact.Type artifactType;
     private final Long dataSourceId;
 

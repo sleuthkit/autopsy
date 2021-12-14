@@ -21,10 +21,12 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
-import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import javax.swing.Action;
+import org.openide.nodes.Children;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.DirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
@@ -48,8 +50,8 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> i
     public DirectoryNode(SearchResultsDTO results, DirectoryRowDTO row) {
         super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
         setName(ContentNodeUtil.getContentName(row.getContent().getId()));
-        setDisplayName(row.getContent().getName());
-        setShortDescription(row.getContent().getName());
+        setDisplayName(ContentNodeUtil.getContentDisplayName(row.getContent().getName()));
+        setShortDescription(ContentNodeUtil.getContentDisplayName(row.getContent().getName()));
         setIcon();
     }
 
@@ -110,5 +112,14 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> i
     @Override
     public DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
         return SCOUtils.getCommentProperty(tags, attributes);
+    }
+    
+    @Override
+    public Action getPreferredAction() {
+        if (getDisplayName().equals(org.sleuthkit.autopsy.datamodel.DirectoryNode.DOTDOTDIR)
+                || getDisplayName().equals("..")) {
+            return DirectoryTreeTopComponent.getOpenParentAction();
+        }
+        return DirectoryTreeTopComponent.getOpenChildAction(getName());
     }
 }

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.Cursor;
 import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
@@ -41,6 +42,7 @@ import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -79,7 +81,6 @@ import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
@@ -90,6 +91,7 @@ import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
+import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.MimeParentNode;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
@@ -878,7 +880,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                     if (originNode instanceof SelectionResponder) {
                         ((SelectionResponder) originNode).respondSelection(dataResult);
-                    } else if (originNode instanceof FileTypesByMimeType.ByMimeTypeNode && 
+                    } else if (originNode instanceof MimeParentNode && 
                             originNode.getChildren().getNodesCount(true) <= 0) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree
@@ -899,6 +901,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         }
                     } else if (originNode.getLookup().lookup(String.class) != null) {
                         displayName = originNode.getLookup().lookup(String.class);
+                    } else {
+                        if (originNode.getDisplayName() != null) {
+                            // Remove node count from name if present
+                            displayName = originNode.getDisplayName().replaceAll("\\(([0-9]+|\\.\\.\\.)\\)$", "");
+                        } else {
+                            displayName = originNode.getName();
+                        }
                     }
                     dataResult.setPath(displayName);
                 }
@@ -1677,5 +1686,114 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public void addOnFinishedListener(PropertyChangeListener l) {
         DirectoryTreeTopComponent.this.addPropertyChangeListener(l);
     }
+    
+    /**
+     * Gets the open child action for the given node name. Will return
+     * null if the nodeName matches the currently selected tree node.
+     * 
+     * @param nodeName The child node to open.
+     * 
+     * @return The openChild action or null if not valid.
+     */
+    public static AbstractAction getOpenChildAction(String nodeName) {
+        DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
+        ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
+        return getOpenChildAction(nodeName, treeViewExplorerMgr);
+    }
+    
+    /**
+     * Gets the open child action for the given node name. Will return
+     * null if the nodeName matches the currently selected tree node.
+     * 
+     * @param nodeName The child node to open.
+     * @param explorerManager The explorer manager for the tree.
+     * 
+     * @return The openChild action or null if not valid.
+     */
+    static AbstractAction getOpenChildAction(String nodeName, ExplorerManager explorerManager) {
+        // get the current selection from the directory tree explorer manager,
+        // which is a DirectoryTreeFilterNode. One of that node's children
+        // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
+        // to set that wrapped node as the selection and root context of the 
+        // directory tree explorer manager (sourceEm)
+        if (explorerManager == null || explorerManager.getSelectedNodes().length == 0 || nodeName == null) {
+            return null;
+        }
+        final Node currentSelectionInDirectoryTree = explorerManager.getSelectedNodes()[0];
+        
+        // We have several node types that are used in both the tree and the result viewer.
+        // For tree nodes, we don't want to do the open child action.
+        // When double-clicking on a tree node, the nodeName to open will be the same
+        // as the currently seleted node, so don't return an action if this is the case.
+        if (nodeName.equals(currentSelectionInDirectoryTree.getName())) {
+            return null;
+        }
 
+        return new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentSelectionInDirectoryTree != null) {
+                    // Find the filter version of the passed in dataModelNode. 
+                    final org.openide.nodes.Children children = currentSelectionInDirectoryTree.getChildren();
+                    // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
+                    Node newSelection = children.findChild(nodeName);
+
+                    /*
+                     * We got null here when we were viewing a ZIP file in
+                     * the Views -> Archives area and double clicking on it
+                     * got to this code. It tried to find the child in the
+                     * tree and didn't find it. An exception was then thrown
+                     * from setting the selected node to be null.
+                     */
+                    if (newSelection != null) {
+                        try {
+                            explorerManager.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                        } catch (PropertyVetoException ex) {
+                            Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                            logger.log(Level.WARNING, "Error: can't open the selected directory.", ex); //NON-NLS
+                        }
+                    }
+                }
+            }
+        };
+    }
+    
+    /**
+     * Gets the open parent action for the currently selected node.
+     * 
+     * @return The openChild action.
+     */
+    public static AbstractAction getOpenParentAction() {
+        DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
+        ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
+        return getOpenParentAction(treeViewExplorerMgr);
+    }
+
+    /**
+     * Gets the open parent action for the currently selected node.
+     * 
+     * @param explorerManager The explorer manager for the tree.
+     * 
+     * @return The open parent action or null if given an invalid ExplorerManager.
+     */
+    static AbstractAction getOpenParentAction(ExplorerManager explorerManager) {
+        if (explorerManager == null) {
+            return null;
+        }
+        Node[] selectedFilterNodes = explorerManager.getSelectedNodes();
+        Node selectedFilterNode = selectedFilterNodes[0];
+        final Node parentNode = selectedFilterNode.getParentNode();
+
+        return new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    explorerManager.setSelectedNodes(new Node[]{parentNode});
+                } catch (PropertyVetoException ex) {
+                    Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                    logger.log(Level.WARNING, "Error: can't open the parent directory.", ex); //NON-NLS
+                }
+            }
+        };
+    }
 }

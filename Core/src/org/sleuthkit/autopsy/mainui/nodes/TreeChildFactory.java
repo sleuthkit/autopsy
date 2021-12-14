@@ -42,27 +42,13 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 /**
  * Factory for populating child nodes in a tree based on TreeResultsDTO
  */
-public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object> implements Comparator<T> {
+public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object> implements Comparator<TreeItemDTO<? extends T>> {
 
     private static final Logger logger = Logger.getLogger(TreeChildFactory.class.getName());
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         if (evt.getNewValue() instanceof DAOAggregateEvent) {
-            DAOAggregateEvent aggEvt = (DAOAggregateEvent) evt.getNewValue();
-            for (DAOEvent daoEvt : aggEvt.getEvents()) {
-                if (daoEvt instanceof TreeEvent) {
-                    TreeEvent treeEvt = (TreeEvent) daoEvt;
-                    TreeItemDTO<? extends T> item = getOrCreateRelevantChild(treeEvt);
-                    if (item != null) {
-                        if (treeEvt.isRefreshRequired()) {
-                            update();
-                            break;
-                        } else {
-                            updateNodeData(item);
-                        }
-                    }
-                }
-            }
+            handleDAOAggregateEvent((DAOAggregateEvent) evt.getNewValue());
         }
     };
 
@@ -83,20 +69,45 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     // maps the Node key (ID) to its DTO
     private Map<Object, TreeItemDTO<? extends T>> idMapping = new HashMap<>();
 
+    /**
+     * Handles processing and updating due to an aggregate event. This method
+     * can be overridden for custom behavior while handling DAO aggregate
+     * events.
+     *
+     * @param aggEvt The aggregate event.
+     */
+    protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+        for (DAOEvent daoEvt : aggEvt.getEvents()) {
+            if (daoEvt instanceof TreeEvent) {
+                TreeEvent treeEvt = (TreeEvent) daoEvt;
+                TreeItemDTO<? extends T> item = getOrCreateRelevantChild(treeEvt);
+                if (item != null) {
+                    if (treeEvt.isRefreshRequired()) {
+                        update();
+                        break;
+                    } else {
+                        updateNodeData(item);
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     protected boolean createKeys(List<Object> toPopulate) {
         List<TreeItemDTO<? extends T>> itemsList;
-        synchronized (resultsUpdateLock) {
-            // Load data from DAO if we haven't already
-            if (curResults == null) {
-                try {
-                    updateData();
-                } catch (IllegalArgumentException | ExecutionException ex) {
-                    logger.log(Level.WARNING, "An error occurred while fetching keys", ex);
-                    return false;
-                }
+
+        // Load data from DAO if we haven't already
+        if (curResults == null) {
+            try {
+                updateData();
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching keys", ex);
+                return false;
             }
-            // make copy to avoid concurrent modification
+        }
+        // make copy to avoid concurrent modification
+        synchronized (resultsUpdateLock) {
             itemsList = new ArrayList<>(curItemsList);
         }
 
@@ -140,7 +151,8 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
                 // insert in sorted position
                 int insertIndex = 0;
                 for (; insertIndex < this.curItemsList.size(); insertIndex++) {
-                    if (this.compare(item.getSearchParams(), this.curItemsList.get(insertIndex).getSearchParams()) < 0) {
+                    TreeItemDTO<? extends T> curItem = this.curItemsList.get(insertIndex);
+                    if (this.compare(item, curItem) < 0) {
                         break;
                     }
                 }
@@ -159,8 +171,9 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
      * @throws ExecutionException
      */
     protected void updateData() throws IllegalArgumentException, ExecutionException {
+        TreeResultsDTO<? extends T> newResults = getChildResults();
         synchronized (resultsUpdateLock) {
-            this.curResults = getChildResults();
+            this.curResults = newResults;
             Map<Object, TreeItemDTO<? extends T>> idMapping = new HashMap<>();
             List<TreeItemDTO<? extends T>> curItemsList = new ArrayList<>();
             for (TreeItemDTO<? extends T> item : this.curResults.getItems()) {

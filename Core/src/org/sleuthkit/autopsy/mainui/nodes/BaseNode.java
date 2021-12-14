@@ -32,6 +32,7 @@ import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import javax.ws.rs.HEAD;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
@@ -53,6 +54,7 @@ import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.autopsy.mainui.sco.SCOUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 
 /**
  * A a simple starting point for nodes.
@@ -186,7 +188,7 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
     public Action[] getActions(boolean context) {
         return ActionsFactory.getActions(this);
     }
-
+    
     private void updateSCOColumns() {
         if (scoFutureTask != null && !scoFutureTask.isDone()) {
             scoFutureTask.cancel(true);
@@ -234,5 +236,10 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
             //setSheet() will notify Netbeans to update this node in the UI.
             this.setSheet(visibleSheet);
         });
+    }
+
+    @Override
+    public Action getPreferredAction() {
+        return DirectoryTreeTopComponent.getOpenChildAction(getName());
     }
 }
