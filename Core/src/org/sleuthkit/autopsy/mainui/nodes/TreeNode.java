@@ -24,11 +24,13 @@ import java.util.Objects;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 
@@ -140,6 +142,7 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
         dataResultPanel.setNode(this);
     }
     
+     
     @Override
     public Action getPreferredAction() {
         // TreeNodes are used for both the result viewer and the tree viewer. For the result viewer,
@@ -152,4 +155,25 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
         }
         return openChildAction;
     }
+    
+    /**
+     * Tree node for displaying static content in the tree.
+     */
+    public static class StaticTreeNode extends TreeNode<String> {
+        public StaticTreeNode(String nodeName, String displayName, String icon) {
+            this(nodeName, displayName, icon, Children.LEAF);
+        }
+        
+        public StaticTreeNode(String nodeName, String displayName, String icon, ChildFactory<?> childFactory) {
+            this(nodeName, displayName, icon, Children.create(childFactory, true), null);
+        }
+                
+        public StaticTreeNode(String nodeName, String displayName, String icon, Children children) {
+            this(nodeName, displayName, icon, children, null);
+        }
+        
+        public StaticTreeNode(String nodeName, String displayName, String icon, Children children, Lookup lookup) {
+            super(nodeName, icon, new TreeItemDTO<String>(nodeName, nodeName, nodeName, displayName, TreeDisplayCount.NOT_SHOWN), children, lookup);
+        }   
+    }    
 }

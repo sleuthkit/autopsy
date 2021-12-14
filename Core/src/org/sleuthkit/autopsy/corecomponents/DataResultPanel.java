@@ -92,6 +92,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeExtFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeMimeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeSizeFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.DeletedFileFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
 
 /**
@@ -1223,6 +1225,24 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}]",
                             analysisResultParams.getArtifactType(),
                             analysisResultParams.getDataSourceId() == null ? "<null>" : analysisResultParams.getDataSourceId()),
+                    ex);
+        }
+    }
+
+    /**
+     * Displays deleted content in the file views section.
+     * @param deletedSearchParams The deleted content search params.
+     */
+    void displayDeletedContent(DeletedContentSearchParams deletedSearchParams) {
+        try {
+            this.searchResultManager = new SearchManager(new DeletedFileFetcher(deletedSearchParams), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING,
+                    MessageFormat.format("There was an error displaying search results for [filter: {0}, data source id: {1}]",
+                            deletedSearchParams.getFilter() == null ? "<null>" : deletedSearchParams.getFilter(),
+                            deletedSearchParams.getDataSourceId() == null ? "<null>" : deletedSearchParams.getDataSourceId()),
                     ex);
         }
     }
