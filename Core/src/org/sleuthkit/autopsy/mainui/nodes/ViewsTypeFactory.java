@@ -54,7 +54,6 @@ public class ViewsTypeFactory {
     private static final Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
 
     private static final String FILE_TYPES_ICON = "org/sleuthkit/autopsy/images/file_types.png";
-    private static final String DELETED_ICON = "org/sleuthkit/autopsy/images/file-icon-deleted.png";
     private static final String SIZE_ICON = "org/sleuthkit/autopsy/images/file-size-16.png";
 
     /**
@@ -99,7 +98,7 @@ public class ViewsTypeFactory {
             super(
                     "FILE_VIEW_DELETED_PARENT",
                     Bundle.ViewsTypeFactory_DeletedParentNode_displayName(),
-                    DELETED_ICON,
+                    NodeIconUtil.DELETED_FILE.getPath(),
                     new DeletedContentFactory(dataSourceId)
             );
         }
@@ -244,7 +243,7 @@ public class ViewsTypeFactory {
              * @param itemData The data for the node.
              */
             DeletedContentTypeNode(TreeResultsDTO.TreeItemDTO<? extends DeletedContentSearchParams> itemData) {
-                super("DELETED_CONTENT_" + itemData.getSearchParams().getFilter().getName(), DELETED_ICON, itemData);
+                super("DELETED_CONTENT_" + itemData.getSearchParams().getFilter().getName(), NodeIconUtil.DELETED_FILE.getPath(), itemData);
             }
 
             @Override
