@@ -25,8 +25,50 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class CreditCardSearchParams extends DataArtifactSearchParam {
 
-    public CreditCardSearchParams(Long dataSourceId) {
-        super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
+    private static final String TYPE_ID = "CREDIT_CARD";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
     }
 
+    private final boolean includeRejected;
+
+    public CreditCardSearchParams(boolean includeRejected, Long dataSourceId) {
+        super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
+        this.includeRejected = includeRejected;
+    }
+
+    public boolean isIncludeRejected() {
+        return includeRejected;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 79 * hash + (this.includeRejected ? 1 : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CreditCardSearchParams other = (CreditCardSearchParams) obj;
+        if (this.includeRejected != other.includeRejected) {
+            return false;
+        }
+        return true;
+    }
+
+    
 }
