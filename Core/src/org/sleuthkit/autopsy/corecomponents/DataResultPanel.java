@@ -72,6 +72,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsDAO.CommAccountFetcher
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.EmailSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.EmailsDAO.EmailFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemHostFetcher;
@@ -1192,6 +1194,27 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
     }
 
+    /**
+     * Display results for querying the DAO for email messages matching the
+     * search parameters query.
+     *
+     * @param searchParams The search parameter query.
+     */
+    void displayEmailMessages(EmailSearchParams searchParams) {
+        try {
+            this.searchResultManager = new SearchManager(new EmailFetcher(searchParams), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING,
+                    MessageFormat.format("There was an error displaying search results for [data source id: {0}, account: {1}, folder: {2}]",
+                            searchParams.getDataSourceId() == null ? "<null>" : searchParams.getDataSourceId(),
+                            searchParams.getAccount() == null ? "<null>" : searchParams.getAccount(),
+                            searchParams.getFolder() == null ? "<null>" : searchParams.getFolder()),
+                    ex);
+        }
+    }
+
     void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
         try {
             this.searchResultManager = new SearchManager(new AnalysisResultFetcher(analysisResultParams), getPageSize());
@@ -1417,11 +1440,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         "# {1} - pageCount",
         "DataResultPanel_pageIdxOfCount={0} of {1}"
     })
-    
-     private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging) {
-         displaySearchResults(searchResults, resetPaging, null);
-     }
-    
+
+    private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging) {
+        displaySearchResults(searchResults, resetPaging, null);
+    }
+
     private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging, Long contentIdToSelect) {
         if (!SwingUtilities.isEventDispatchThread()) {
             SwingUtilities.invokeLater(() -> displaySearchResults(searchResults, resetPaging, contentIdToSelect));
