@@ -21,10 +21,14 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
+import java.sql.SQLException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -34,7 +38,10 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
  * DAO for fetching credit card information.
@@ -74,31 +81,81 @@ public class CreditCardDAO extends AbstractDAO {
         return searchParamsCache.get(pagedSearchParams, () -> fetchCreditCardByFile(pagedSearchParams));
     }
 
-    private SearchResultsDTO fetchCreditCardByFile(SearchParams<CreditCardFileSearchParams> searchParams) {
+    private static String getConcatAggregate(DbType dbType, String field) {
+        switch (dbType) {
+            case POSTGRESQL:
+                return MessageFormat.format("STRING_AGG({0}::character varying, ',')", field);
+            case SQLITE:
+                return MessageFormat.format("GROUP_CONCAT({0})", field);
+            default:
+                throw new IllegalStateException("Unknown database type: " + dbType);
+        }
+    }
+
+    private SearchResultsDTO fetchCreditCardByFile(SearchParams<CreditCardFileSearchParams> searchParams) throws IllegalStateException, TskCoreException, NoCurrentCaseException, SQLException {
         boolean includeRejected = searchParams.getParamData().isIncludeRejected();
-        
-        String countQuery = "";
-        
-        String query = "SELECT \n"
-                + "  art.obj_id file_id, \n"
-                + "  solr_doc.value_text AS solr_document_id,\n"
-                + "  GROUP_CONCAT(art.artifact_id) AS art_ids,\n"
-                + "  GROUP_CONCAT(DISTINCT(art.review_status_id)) AS review_status_ids,\n"
-                + "  COUNT(*) AS accounts\n"
-                + "FROM blackboard_artifacts art\n"
+        Long dataSourceId = searchParams.getParamData().getDataSourceId();
+
+        String baseFromAndGroupSql = "FROM blackboard_artifacts art\n"
                 + "INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id \n"
                 + "  AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
-                + "  AND acct.value_text = " +  Account.Type.CREDIT_CARD.getTypeName()+ "\n"
+                + "  AND acct.value_text = " + Account.Type.CREDIT_CARD.getTypeName() + "\n"
                 + "LEFT JOIN blackboard_attributes solr_doc ON art.artifact_id = solr_doc.artifact_id \n"
                 + "  AND solr_doc.attribute_type_id = " + BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() + "\n"
                 + "LEFT JOIN tsk_files f ON art.obj_id = f.obj_id\n"
                 + "WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
-                + "-- AND art.data_source_obj_id = ?\n"
+                + (dataSourceId == null ? "" : "AND art.data_source_obj_id = " + dataSourceId + "\n")
+                + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n")
+                + "GROUP BY art.obj_id, solr_doc.value_text\n";
 
-                + "--AND art.review_status_id <> 2 -- BlackboardArtifact.ReviewStatus.REJECTED.getID()\n"
-                + "GROUP BY art.obj_id, solr_doc.value_text\n"
-                + "LIMIT ?\n"
-                + "OFFSET ?";
+        String countQuery = "COUNT(*) AS count\n "
+                + baseFromAndGroupSql;
+
+        AtomicLong atomicCount = new AtomicLong(0);
+        getCase().getCaseDbAccessManager().select(countQuery, (resultSet) -> {
+            try {
+                if (resultSet.next()) {
+                    atomicCount.set(resultSet.getLong("count"));
+                }
+            } catch (SQLException ex) {
+                throw new IllegalStateException("An exception occurred while fetching the count.", ex);
+            }
+        });
+
+        List<TBD> items = new ArrayList<>();
+        long count = atomicCount.get();
+        if (count > 0) {
+            String itemQuery = "  art.obj_id AS file_id, \n"
+                    + "  solr_doc.value_text AS solr_document_id,\n"
+                    + "  " + getConcatAggregate(getCase().getDatabaseType(), "art.artifact_id") + " AS artifact_ids,\n"
+                    + "  " + getConcatAggregate(getCase().getDatabaseType(), "DISTINCT(art.review_status_id)") + " AS review_status_ids,\n"
+                    + "  COUNT(*) AS count\n"
+                    + baseFromAndGroupSql
+                    + (searchParams.getMaxResultsCount() == null ? "" : "LIMIT " + searchParams.getMaxResultsCount() + "\n")
+                    + "OFFSET " + searchParams.getStartItem();
+
+            
+            getCase().getCaseDbAccessManager().select(itemQuery, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        Long fileId = resultSet.getLong("file_id");
+                        if (resultSet.wasNull()) {
+                            fileId = null;
+                        }
+                        
+                        String solrDocId = resultSet.getString("solr_document_id");
+                        String artifactIds = resultSet.getString("artifact_ids");
+                        String reviewStatusIds = resultSet.getString("review_status_ids");
+                        long itemCount = resultSet.getLong("count");
+                        
+                        TBD
+                    }
+                } catch (SQLException ex) {
+                    throw new IllegalStateException("An exception occurred while fetching items.", ex);
+                }
+            });
+        }
+
     }
 
     public TreeResultsDTO<CreditCardFileSearchParams> getCreditCardCounts(Long dataSourceId) {
