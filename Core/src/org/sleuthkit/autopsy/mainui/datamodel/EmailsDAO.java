@@ -25,7 +25,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,7 +54,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.EmailEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -66,12 +64,12 @@ import org.sleuthkit.datamodel.TskData;
 
 /**
  * Provides information to populate the results viewer for data in the
- * Communication Accounts section.
+ * Emails section.
  */
 public class EmailsDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(EmailsDAO.class.getName());
-    private static final int CACHE_SIZE = Account.Type.PREDEFINED_ACCOUNT_TYPES.size(); // number of cached SearchParams sub-types
+    private static final int CACHE_SIZE = 15;
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
 
