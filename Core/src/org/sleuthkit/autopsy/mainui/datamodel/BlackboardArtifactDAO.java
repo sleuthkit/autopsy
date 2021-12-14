@@ -242,11 +242,15 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
     }
 
     boolean isRenderedAttr(BlackboardArtifact.Type artType, BlackboardAttribute.Type attrType) {
+        // JSON attributes are always hidden
+        if (BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON.equals(attrType.getValueType())) {
+            return false;
+        }
+        
         if (BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() == artType.getTypeID()) {
             return !HIDDEN_EMAIL_ATTR_TYPES.contains(attrType.getTypeID());
         } else {
-            return !HIDDEN_ATTR_TYPES.contains(attrType.getTypeID())
-                    && !BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON.equals(attrType.getValueType());
+            return !HIDDEN_ATTR_TYPES.contains(attrType.getTypeID());
         }
     }
 
