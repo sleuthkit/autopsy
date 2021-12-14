@@ -75,36 +75,46 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
             if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())) {
-                BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
-                Optional<BlackboardArtifact> optional = getArtifact();
-                if (optional.isPresent()
-                        && event.getAddedTag().getArtifact().equals(optional.get())) {
-                    updateSCOColumns();
+                if(BaseNode.this instanceof SCOSupporter) {
+                    BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
+                    Optional<BlackboardArtifact> optional = getArtifact();
+                    if (optional.isPresent()
+                            && event.getAddedTag().getArtifact().equals(optional.get())) {
+                        updateSCOColumns();
+                    }
                 }
             } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())) {
-                BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
-                Optional<BlackboardArtifact> optional = getArtifact();
-                if (optional.isPresent() && event.getDeletedTagInfo().getArtifactID() == optional.get().getArtifactID()) {
-                    updateSCOColumns();
+                if(BaseNode.this instanceof SCOSupporter) {
+                    BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
+                    Optional<BlackboardArtifact> optional = getArtifact();
+                    if (optional.isPresent() && event.getDeletedTagInfo().getArtifactID() == optional.get().getArtifactID()) {
+                        updateSCOColumns();
+                    }
                 }
             } else if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())) {
-                ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
-                Optional<Content> optional = getSourceContent();
-                if (optional.isPresent() && event.getAddedTag().getContent().equals(optional.get())) {
-                    updateSCOColumns();
+                if(BaseNode.this instanceof SCOSupporter) {
+                    ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
+                    Optional<Content> optional = ((SCOSupporter)BaseNode.this).getContent();
+                    if (optional.isPresent() && event.getAddedTag().getContent().equals(optional.get())) {
+                        updateSCOColumns();
+                    }
                 }
 
             } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-                ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
-                Optional<Content> optional = getSourceContent();
-                if (optional.isPresent() && event.getDeletedTagInfo().getContentID() == optional.get().getId()) {
-                    updateSCOColumns();
+                if(BaseNode.this instanceof SCOSupporter) {
+                    ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
+                    Optional<Content> optional = ((SCOSupporter)BaseNode.this).getContent();
+                    if (optional.isPresent() && event.getDeletedTagInfo().getContentID() == optional.get().getId()) {
+                        updateSCOColumns();
+                    }
                 }
             } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
-                CommentChangedEvent event = (CommentChangedEvent) evt;
-                Optional<Content> optional = getSourceContent();
-                if (optional.isPresent() && event.getContentID() == optional.get().getId()) {
-                    updateSCOColumns();
+                if(BaseNode.this instanceof SCOSupporter) {
+                    CommentChangedEvent event = (CommentChangedEvent) evt;
+                    Optional<Content> optional = ((SCOSupporter)BaseNode.this).getContent();
+                    if (optional.isPresent() && event.getContentID() == optional.get().getId()) {
+                        updateSCOColumns();
+                    }
                 }
             } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                 if (evt.getNewValue() == null) {

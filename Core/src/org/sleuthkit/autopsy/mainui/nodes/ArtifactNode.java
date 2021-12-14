@@ -176,7 +176,7 @@ public abstract class ArtifactNode<T extends BlackboardArtifact, R extends Artif
 
     @Override
     public Optional<Content> getContent() {
-        return Optional.of(rowData.getArtifact());
+        return Optional.of(rowData.getSrcContent());
     }
 
     @Override
