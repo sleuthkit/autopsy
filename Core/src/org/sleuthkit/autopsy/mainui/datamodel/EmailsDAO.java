@@ -176,13 +176,12 @@ public class EmailsDAO extends AbstractDAO {
                         : "AND attr.value_text LIKE ? ESCAPE '" + ESCAPE_CHAR + "' \n")
                 + (searchParams.getParamData().getDataSourceId() == null ? "" : "AND art.data_source_obj_id = ? \n")
                 + "GROUP BY art.artifact_id \n"
-                + "ORDER BY art.artifact_id \n"
-                + (searchParams.getMaxResultsCount() == null ? "" : "LIMIT ?\n")
-                + "OFFSET ? \n";
+                + "ORDER BY art.artifact_id";
 
-        List<Long> matchingIds = new ArrayList<>();
+        List<Long> allMatchingIds = new ArrayList<>();
 
-        // TODO load paged matching ids; this could be done as one query with new API
+        // TODO load paged artifacts; 
+        // this could potentially be done in a query obtaining the artifacts and another retrieving the total count.
         try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(query)) {
 
             int paramIdx = 0;
@@ -195,16 +194,10 @@ public class EmailsDAO extends AbstractDAO {
                 preparedStatement.setLong(++paramIdx, searchParams.getParamData().getDataSourceId());
             }
 
-            if (searchParams.getMaxResultsCount() != null) {
-                preparedStatement.setLong(++paramIdx, searchParams.getMaxResultsCount());
-            }
-
-            preparedStatement.setLong(++paramIdx, searchParams.getStartItem());
-
             getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
                 try {
                     while (resultSet.next()) {
-                        matchingIds.add(resultSet.getLong("artifact_id"));
+                        allMatchingIds.add(resultSet.getLong("artifact_id"));
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "There was an error fetching emails for ");
@@ -212,10 +205,19 @@ public class EmailsDAO extends AbstractDAO {
 
             });
         }
+        
+        Stream<Long> pagedIdStream = allMatchingIds.stream()
+                .skip(searchParams.getStartItem());
+        
+        if (searchParams.getMaxResultsCount() != null && searchParams.getMaxResultsCount() > 0) {
+            pagedIdStream = pagedIdStream.limit(searchParams.getMaxResultsCount());
+        }
+        
+        List<Long> pagedIds = pagedIdStream.collect(Collectors.toList());
 
         List<BlackboardArtifact> allArtifacts = Collections.emptyList();
-        if (!matchingIds.isEmpty()) {
-            String whereClause = "artifacts.artifact_id IN (" + matchingIds.stream().map(l -> Long.toString(l)).collect(Collectors.joining(", ")) + ")";
+        if (!allMatchingIds.isEmpty()) {
+            String whereClause = "artifacts.artifact_id IN (" + pagedIds.stream().map(l -> Long.toString(l)).collect(Collectors.joining(", ")) + ")";
             allArtifacts = getDataArtifactsAsBBA(blackboard, whereClause);
 
             // Populate the attributes for paged artifacts in the list. This is done using one database call as an efficient way to
@@ -226,7 +228,7 @@ public class EmailsDAO extends AbstractDAO {
         DataArtifactDAO dataArtDAO = MainDAO.getInstance().getDataArtifactsDAO();
         BlackboardArtifactDAO.TableData tableData = dataArtDAO.createTableData(BlackboardArtifact.Type.TSK_EMAIL_MSG, allArtifacts);
         return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_EMAIL_MSG, tableData.columnKeys,
-                tableData.rows, searchParams.getStartItem(), allArtifacts.size());
+                tableData.rows, searchParams.getStartItem(), allMatchingIds.size());
     }
 
     @SuppressWarnings("unchecked")
