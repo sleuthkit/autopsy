@@ -252,7 +252,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
      * A factory that shows all sets in keyword hits.
      */
     @Messages({
-        "AnalysisResultTypeFactory_adHocName=Adhoc Results"
+        "AnalysisResultTypeFactory_adHocName=Ad Hoc Results"
     })
     static class KeywordSetFactory extends TreeSetFactory {
 

@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
@@ -393,6 +394,14 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      */
     public void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
         dataResultPanel.displayDataArtifact(dataArtifactParams);
+    }
+    
+    /**
+     * Displays deleted content in the file views section.
+     * @param deletedSearchParams The deleted content search params.
+     */
+    public void displayDeletedContent(DeletedContentSearchParams deletedSearchParams) {
+        dataResultPanel.displayDeletedContent(deletedSearchParams);
     }
 
     /**
