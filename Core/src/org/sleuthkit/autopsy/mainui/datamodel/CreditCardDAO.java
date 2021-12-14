@@ -77,36 +77,33 @@ public class CreditCardDAO extends AbstractDAO {
     }
     
     private SearchResultsDTO fetchCreditCardByFile(CreditCardFileSearchParams searchParams) {
-
-            String query
-                    = "SELECT blackboard_artifacts.obj_id," //NON-NLS
-                    + "      solr_attribute.value_text AS solr_document_id, "; //NON-NLS
-            if (skCase.getDatabaseType().equals(TskData.DbType.POSTGRESQL)) {
-                query += "      string_agg(blackboard_artifacts.artifact_id::character varying, ',') AS artifact_IDs, " //NON-NLS
-                        + "      string_agg(blackboard_artifacts.review_status_id::character varying, ',') AS review_status_ids, ";
-            } else {
-                query += "      GROUP_CONCAT(blackboard_artifacts.artifact_id) AS artifact_IDs, " //NON-NLS
-                        + "      GROUP_CONCAT(blackboard_artifacts.review_status_id) AS review_status_ids, ";
-            }
-            query += "      COUNT( blackboard_artifacts.artifact_id) AS hits  " //NON-NLS
-                    + " FROM blackboard_artifacts " //NON-NLS
-                    + " LEFT JOIN blackboard_attributes as solr_attribute ON blackboard_artifacts.artifact_id = solr_attribute.artifact_id " //NON-NLS
-                    + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() //NON-NLS
-                    + " LEFT JOIN blackboard_attributes as account_type ON blackboard_artifacts.artifact_id = account_type.artifact_id " //NON-NLS
-                    + "                                AND account_type.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID() //NON-NLS
-                    + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.getTypeName() + "'" //NON-NLS
-                    + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() //NON-NLS
-                    + getFilterByDataSourceClause()
-                    + getRejectedArtifactFilterClause()
-                    + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
-                    + " ORDER BY hits DESC ";  //NON-NLS
+//SELECT 
+//	f.name, 
+//	art.obj_id, 
+//	solr_doc.value_text AS solr_document_id,
+//	GROUP_CONCAT(art.artifact_id) AS art_ids,
+//	GROUP_CONCAT(DISTINCT(art.review_status_id)) AS review_status_ids,
+//	COUNT(*) AS accounts
+//FROM blackboard_artifacts art
+//INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id 
+//	AND acct.attribute_type_id = 121 -- TSK_ACCOUNT_TYPE
+//	AND acct.value_text = 'CREDIT_CARD' -- Account.Type.CREDIT_CARD.getTypeName()
+//LEFT JOIN blackboard_attributes solr_doc ON art.artifact_id = solr_doc.artifact_id 
+//	AND solr_doc.attribute_type_id = 114 -- TSK_KEYWORD_SEARCH_DOCUMENT_ID
+//LEFT JOIN tsk_files f ON art.obj_id = f.obj_id
+//WHERE art.artifact_type_id = 39 -- TSK_ACCOUNT
+//-- AND art.data_source_obj_id = ?
+//-- include if showRejected status
+//--AND art.review_status_id <> 2 -- BlackboardArtifact.ReviewStatus.REJECTED.getID()
+//GROUP BY art.obj_id, solr_doc.value_text
+//LIMIT 3
+//OFFSET 0
     }
     
         
     public TreeResultsDTO<CreditCardFileSearchParams> getCreditCardCounts(Long dataSourceId) {
         // file counts
 // SELECT art.obj_id
-// 	--(SELECT attr.value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = 121 LIMIT 1) AS account, -- TSK_ACCOUNT_TYPE
 // FROM blackboard_artifacts art
 // INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id
 // WHERE art.artifact_type_id = 39 -- TSK_ACCOUNT
