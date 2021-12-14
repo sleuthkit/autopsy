@@ -169,10 +169,10 @@ public class EmailsDAO extends AbstractDAO {
         String query = " art.artifact_id AS artifact_id \n"
                 + "FROM blackboard_artifacts art \n"
                 + "LEFT JOIN blackboard_attributes attr ON attr.artifact_id = art.artifact_id \n"
-                + "WHERE attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + " \n"
-                + "AND art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + " \n"
+                + "  AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + " \n"
+                + "WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + " \n"
                 + (unknownPath
-                        ? "AND (attr.value_text NOT LIKE '%/%/%/%' ESCAPE '" + ESCAPE_CHAR + "' OR attr.value_text LIKE ?) \n"
+                        ? "AND (attr.value_text IS NULL OR attr.value_text NOT LIKE '%/%/%/%' ESCAPE '" + ESCAPE_CHAR + "' OR attr.value_text LIKE ?) \n"
                         : "AND attr.value_text LIKE ? ESCAPE '" + ESCAPE_CHAR + "' \n")
                 + (searchParams.getParamData().getDataSourceId() == null ? "" : "AND art.data_source_obj_id = ? \n")
                 + "GROUP BY art.artifact_id \n"
@@ -290,7 +290,7 @@ public class EmailsDAO extends AbstractDAO {
         String accountClause = "";
         if (account != null) {
             if (StringUtils.isBlank(account)) {
-                accountClause = "      AND (attr.value_text NOT LIKE '%/%/%/%' OR attr.value_text LIKE ?)\n";
+                accountClause = "      AND (attr.value_text IS NULL OR attr.value_text NOT LIKE '%/%/%/%' OR attr.value_text LIKE ?)\n";
             } else {
                 accountClause = "      AND attr.value_text LIKE ? ESCAPE '" + ESCAPE_CHAR + "'\n";
             }
@@ -304,9 +304,9 @@ public class EmailsDAO extends AbstractDAO {
                 + "      art.artifact_id\n"
                 + "    FROM blackboard_artifacts art\n"
                 + "    LEFT JOIN blackboard_attributes attr ON attr.artifact_id = art.artifact_id\n"
+                + "      AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + "\n" // may change due to JIRA-8220
                 + "    WHERE\n"
-                + "      attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + "\n" // may change due to JIRA-8220
-                + "      AND art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + "\n"
+                + " art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + "\n"
                 + accountClause
                 + dataSourceClause
                 + "    GROUP BY art.artifact_id\n";
