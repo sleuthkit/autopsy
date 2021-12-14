@@ -110,6 +110,16 @@ public class CreditCardDAO extends AbstractDAO {
 // AND acct.attribute_type_id = 121 -- TSK_ACCOUNT_TYPE
 // AND acct.value_text = 'CREDIT_CARD' -- Account.Type.CREDIT_CARD.getTypeName()
 // GROUP BY art.obj_id
+
+// bin counts
+//SELECT COUNT(DISTINCT(art.artifact_id)) AS count
+//FROM blackboard_artifacts art
+//LEFT JOIN blackboard_attributes attr ON art.artifact_id = attr.artifact_id
+//WHERE art.artifact_type_id = 39 -- TSK_ACCOUNT
+//AND attr.attribute_type_id = 109 -- TSK_CARD_NUMBER
+//-- AND art.data_source_obj_id = ?
+//-- include if showRejected status
+//AND art.review_status_id <> 2 -- BlackboardArtifact.ReviewStatus.REJECTED.getID()
     }
     
     public SearchResultsDTO getCreditCardByBin(CreditCardBinSearchParams searchParams) {
