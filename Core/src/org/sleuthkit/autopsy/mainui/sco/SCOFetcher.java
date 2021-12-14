@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.sco;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.RunnableFuture;
@@ -167,11 +168,7 @@ public class SCOFetcher<T extends Content> implements Runnable {
         
         Optional<List<Tag>> optionalList = scoSupporter.getAllTagsFromDatabase();
         
-        DataResultViewerTable.HasCommentStatus commentStatus = DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-        
-        if (optionalList.isPresent()) {
-            commentStatus = scoSupporter.getCommentProperty(optionalList.get(), listOfPossibleAttributes);
-        }
+        DataResultViewerTable.HasCommentStatus commentStatus = scoSupporter.getCommentProperty(optionalList.isPresent()? optionalList.get() : Collections.emptyList(), listOfPossibleAttributes);
         
         CorrelationAttributeInstance corInstance = null;
         if (CentralRepository.isEnabled()) {
