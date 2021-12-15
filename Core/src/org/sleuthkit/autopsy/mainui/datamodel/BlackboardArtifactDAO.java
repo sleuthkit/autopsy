@@ -75,7 +75,8 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
     private static Logger logger = Logger.getLogger(BlackboardArtifactDAO.class.getName());
 
     // GVDTODO there is a different standard for normal attr strings and email attr strings
-    static final int STRING_LENGTH_MAX = 160;
+    static final int EMAIL_CONTENT_MAX_LEN = 160;
+    static final int TOOL_TEXT_MAX_LEN = 512;
     static final String ELLIPSIS = "...";
 
     @SuppressWarnings("deprecation")
@@ -83,7 +84,8 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID(),
             BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT.getTypeID(),
             BlackboardAttribute.Type.TSK_SET_NAME.getTypeID(),
-            BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
+            BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID(),
+            BlackboardAttribute.Type.TSK_PATH_ID.getTypeID()
     );
     static final Set<Integer> HIDDEN_EMAIL_ATTR_TYPES = ImmutableSet.of(
             BlackboardAttribute.Type.TSK_DATETIME_SENT.getTypeID(),
@@ -155,7 +157,7 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
         for (BlackboardArtifact art : arts) {
             Map<BlackboardAttribute.Type, Object> attrs = art.getAttributes().stream()
                     .filter(attr -> isRenderedAttr(artType, attr.getAttributeType()))
-                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(attr), (attr1, attr2) -> attr1));
+                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(artType, attr), (attr1, attr2) -> attr1));
 
             artifactAttributes.put(art.getId(), attrs);
         }
@@ -208,16 +210,18 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
 
             AbstractFile linkedFile = null;
             if (artType.getCategory().equals(BlackboardArtifact.Category.DATA_ARTIFACT)) {
-                Object linkedId = attrValues.get(BlackboardAttribute.Type.TSK_PATH_ID);
-                linkedFile = linkedId instanceof Long && ((Long) linkedId) >= 0
-                        ? getCase().getAbstractFileById((Long) linkedId)
-                        : null;
+                // Note that we need to get the attribute from the original artifact since it is not displayed.
+                if (artifact.getAttribute(BlackboardAttribute.Type.TSK_PATH_ID) != null) {
+                    long linkedId = artifact.getAttribute(BlackboardAttribute.Type.TSK_PATH_ID).getValueLong();
+                    linkedFile = linkedId >= 0
+                            ? getCase().getAbstractFileById(linkedId)
+                            : null;
+                }
             }
 
             boolean isTimelineSupported = isTimelineSupported(attrValues.keySet());
 
             rows.add(createRow(artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id));
-            //rows.add(new AnalysisResultRowDTO(artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id));
         }
 
         return new TableData(columnKeys, rows);
@@ -238,17 +242,21 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
     }
 
     boolean isRenderedAttr(BlackboardArtifact.Type artType, BlackboardAttribute.Type attrType) {
+        // JSON attributes are always hidden
+        if (BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON.equals(attrType.getValueType())) {
+            return false;
+        }
+        
         if (BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() == artType.getTypeID()) {
             return !HIDDEN_EMAIL_ATTR_TYPES.contains(attrType.getTypeID());
         } else {
-            return !HIDDEN_ATTR_TYPES.contains(attrType.getTypeID())
-                    && !BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON.equals(attrType.getValueType());
+            return !HIDDEN_ATTR_TYPES.contains(attrType.getTypeID());
         }
     }
 
-    private String getTruncated(String str) {
-        return str.length() > STRING_LENGTH_MAX
-                ? str.substring(0, STRING_LENGTH_MAX) + ELLIPSIS
+    private String getTruncated(String str, int maxLen) {
+        return str.length() > maxLen
+                ? str.substring(0, maxLen) + ELLIPSIS
                 : str;
     }
 
@@ -349,7 +357,26 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
 //        }
 //        return "";
 //    }
-    Object getAttrValue(BlackboardAttribute attr) {
+    @SuppressWarnings("deprecation")
+    Object getAttrValue(BlackboardArtifact.Type artType, BlackboardAttribute attr) {
+        
+        // Handle the special cases
+        if (artType.equals(BlackboardArtifact.Type.TSK_EMAIL_MSG) &&
+                attr.getAttributeType().equals(BlackboardAttribute.Type.TSK_EMAIL_CONTENT_PLAIN)) {
+            return getTruncated(attr.getValueString(), EMAIL_CONTENT_MAX_LEN);
+        }
+        
+        /* From BlackboardArtifactNode:
+         * The truncation of text attributes appears to have been
+         * motivated by the statement that "RegRipper output would
+         * often cause the UI to get a black line accross it and
+         * hang if you hovered over large output or selected it.
+         */
+        if ((BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID() == artType.getTypeID())
+                && attr.getAttributeType().equals(BlackboardAttribute.Type.TSK_TEXT)) {
+            return getTruncated(attr.getValueString(), TOOL_TEXT_MAX_LEN);
+        }
+        
         switch (attr.getAttributeType().getValueType()) {
             case BYTE:
                 return attr.getValueBytes();
@@ -360,11 +387,12 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
             case INTEGER:
                 return attr.getValueInt();
             case JSON:
-                return getTruncated(attr.getValueString());
+                // We shouldn't get here since JSON attribute are not displayed in the table
+                return attr.getValueString();
             case LONG:
                 return attr.getValueLong();
             case STRING:
-                return getTruncated(attr.getValueString());
+                return attr.getValueString();
             default:
                 throw new IllegalArgumentException("Unknown attribute type value type: " + attr.getAttributeType().getValueType());
         }

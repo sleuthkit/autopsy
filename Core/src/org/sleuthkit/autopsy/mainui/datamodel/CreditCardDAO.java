@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.CaseDbAccessManager;
+import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
@@ -103,8 +103,7 @@ public class CreditCardDAO extends AbstractDAO {
         "# {0} - raw file name",
         "# {1} - solr chunk id",
         "CreditCardDAO_fetchCreditCardByFile_file_displayName={0}_chunk_{1}",
-        "CreditCardDAO_fetchCreditCardByFile_results_displayName=By File",
-    })
+        "CreditCardDAO_fetchCreditCardByFile_results_displayName=By File",})
     private SearchResultsDTO fetchCreditCardByFile(SearchParams<CreditCardFileSearchParams> searchParams) throws IllegalStateException, TskCoreException, NoCurrentCaseException, SQLException {
         boolean includeRejected = searchParams.getParamData().isIncludeRejected();
         Long dataSourceId = searchParams.getParamData().getDataSourceId();
@@ -171,7 +170,7 @@ public class CreditCardDAO extends AbstractDAO {
                         String fileName = StringUtils.isBlank(solrDocId)
                                 ? file.getName()
                                 : Bundle.CreditCardDAO_fetchCreditCardByFile_file_displayName(file.getName(), StringUtils.substringAfter(solrDocId, "_"));
-                                
+
                         Set<BlackboardArtifact.ReviewStatus> reviewStatuses = StringUtils.isBlank(reviewStatusIds)
                                 ? Collections.emptySet()
                                 : Stream.of(reviewStatusIds.split(","))
@@ -200,7 +199,7 @@ public class CreditCardDAO extends AbstractDAO {
             });
         }
 
-        return new BaseSearchResultsDTO(CreditCardByFileRow.getRowType(), Bundle.CreditCardDAO_fetchCreditCardByFile_results_displayName(), 
+        return new BaseSearchResultsDTO(CreditCardByFileRow.getRowType(), Bundle.CreditCardDAO_fetchCreditCardByFile_results_displayName(),
                 CreditCardByFileRow.COLUMNS, rows, CreditCardByFileRow.getRowType(), searchParams.getStartItem(), totalResultCount);
     }
 
@@ -237,19 +236,36 @@ public class CreditCardDAO extends AbstractDAO {
     }
 
     public SearchResultsDTO fetchCreditCardByBin(SearchParams<CreditCardBinSearchParams> searchParams) {
-//SELECT art.artifact_id
-//FROM blackboard_artifacts art
-//LEFT JOIN blackboard_attributes attr ON art.artifact_id = attr.artifact_id
-//WHERE art.artifact_type_id = 39 -- TSK_ACCOUNT
-//AND attr.attribute_type_id = 109 -- TSK_CARD_NUMBER
-//-- AND art.data_source_obj_id = ?
-//-- include if showRejected status
-//AND art.review_status_id <> 2 -- BlackboardArtifact.ReviewStatus.REJECTED.getID()
-//AND attr.value_text LIKE '20140106%'
-//GROUP BY art.artifact_id
-//ORDER BY art.artifact_id
-//LIMIT 1
-//OFFSET 0
+
+        String baseQuery = "FROM blackboard_artifacts art\n"
+                + "LEFT JOIN blackboard_attributes attr ON art.artifact_id = attr.artifact_id\n"
+                + "WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
+                + "AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_TYPE.getTypeID() + "\n"
+                + (dataSourceId == null ? "" : "AND art.data_source_obj_id = ?\n")
+                + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n")
+                + "AND attr.value_text LIKE ?\n"
+                + "ORDER BY art.artifact_id\n";
+
+        String countQuery = "COUNT(DISTINCT(art.artifact_id))\n"
+                + baseQuery;
+
+        String pagedIdQuery = "SELECT art.artifact_id\n"
+                + baseQuery
+                + "GROUP BY art.artifact_id\n"
+                + "LIMIT ?\n"
+                + "OFFSET ?\n";
+        
+        String binLikeStatement = likeE
+        
+        try (CaseDbPreparedStatement statement = getCase().getCaseDbAccessManager().prepareSelect(countQuery)) {
+            int parameterIdx = 0;
+            if (dataSourceId != null) {
+                statement.setLong(++parameterIdx, dataSourceId);
+            }
+            
+            
+            
+        }
     }
 
     public TreeResultsDTO<CreditCardBinSearchParams> getCreditCardBinCounts(Long dataSourceId) {

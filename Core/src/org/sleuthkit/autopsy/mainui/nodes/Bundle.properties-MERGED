@@ -1,4 +1,4 @@
-AnalysisResultTypeFactory_adHocName=Adhoc Results
+AnalysisResultTypeFactory_adHocName=Ad Hoc Results
 DataArtifactTypeFactory_AccountTypeParentNode_displayName=Communication Accounts
 FileSystemFactory.FileSystemTreeNode.ExtractUnallocAction.text=Extract Unallocated Space to Single Files
 FileSystemFactory.UnsupportedTreeNode.displayName=Unsupported Content
