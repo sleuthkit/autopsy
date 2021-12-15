@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +29,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle;
@@ -63,11 +61,9 @@ import org.sleuthkit.datamodel.TskCoreException;
     "OsAccountsDAO.fileColumns.noDescription=No Description",})
 public class OsAccountsDAO extends AbstractDAO {
 
-    private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
-    private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-
+    private static final int SEARCH_SUBTYPE_COUNT = 1;
+    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = createCache(SEARCH_SUBTYPE_COUNT);
+    
     private static final String OS_ACCOUNTS_TYPE_ID = "OS_ACCOUNTS";
 
     private static final List<ColumnKey> OS_ACCOUNTS_WITH_SCO_COLUMNS = Arrays.asList(

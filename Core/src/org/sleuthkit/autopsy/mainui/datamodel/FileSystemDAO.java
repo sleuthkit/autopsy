@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
@@ -31,7 +30,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,7 +62,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.FileSystemPersonEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
-import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
@@ -94,8 +91,6 @@ public class FileSystemDAO extends AbstractDAO {
     private static final Logger logger = Logger.getLogger(FileSystemDAO.class.getName());
 
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
-    private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
 
     private static final Set<String> HOST_LEVEL_EVTS = ImmutableSet.of(
             Case.Events.DATA_SOURCE_ADDED.toString(),
@@ -112,8 +107,7 @@ public class FileSystemDAO extends AbstractDAO {
             Case.Events.HOSTS_REMOVED_FROM_PERSON.toString()
     );
 
-    private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache
-            = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = createCache(CACHE_SIZE);
 
     private final TreeCounts<DAOEvent> treeCounts = new TreeCounts<>();
 

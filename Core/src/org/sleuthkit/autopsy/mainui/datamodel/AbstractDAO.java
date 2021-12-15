@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
@@ -28,6 +31,14 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
  */
 abstract class AbstractDAO {
 
+    private static final int CACHE_ENTRIES_PER_SUBTYPE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
+    private static final long CACHE_DURATION = 2;
+    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
+    
+    static final Cache createCache(int subtypeCount) {
+        return CacheBuilder.newBuilder().maximumSize(2).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    }
+    
     /**
      * Clear any cached data (Due to change in view).
      */

@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,7 +32,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -70,14 +68,12 @@ public class EmailsDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(EmailsDAO.class.getName());
     private static final int CACHE_SIZE = 15;
-    private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
 
     private static final String PATH_DELIMITER = "/";
     private static final String ESCAPE_CHAR = "\\";
 
-    private final Cache<SearchParams<EmailSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-
+    private final Cache<SearchParams<EmailSearchParams>, SearchResultsDTO> searchParamsCache = createCache(CACHE_SIZE);
+    
     private final TreeCounts<EmailEvent> emailCounts = new TreeCounts<>();
 
     private static EmailsDAO instance = null;

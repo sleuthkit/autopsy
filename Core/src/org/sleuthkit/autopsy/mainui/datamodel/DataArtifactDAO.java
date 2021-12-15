@@ -22,7 +22,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DataArtifactEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -82,11 +81,11 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return BlackboardArtifactDAO.getIgnoredTreeTypes();
     }
 
-    private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = CacheBuilder.newBuilder().maximumSize(1000).build();
+    private final Cache<SearchParams<BlackboardArtifactSearchParam>, DataArtifactTableSearchResultsDTO> dataArtifactCache = createCache(BlackboardArtifact.ARTIFACT_TYPE.values().length);
     private final TreeCounts<DataArtifactEvent> treeCounts = new TreeCounts<>();
 
     private DataArtifactTableSearchResultsDTO fetchDataArtifactsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
-
+        
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
@@ -111,7 +110,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
         return new DataArtifactRowDTO((DataArtifact) artifact, srcContent, linkedFile, isTimelineSupported, cellValues, id);
     }
 
-    public DataArtifactTableSearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
+    public SearchResultsDTO getDataArtifactsForTable(DataArtifactSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         BlackboardArtifact.Type artType = artifactKey.getArtifactType();
 
         if (artType == null || artType.getCategory() != BlackboardArtifact.Category.DATA_ARTIFACT

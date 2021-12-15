@@ -22,7 +22,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultSetEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -37,7 +36,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -152,11 +150,11 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID()
     );
 
-    // TODO We can probably combine all the caches at some point
-    private final Cache<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-    private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(1000).build();
-
+    private static final int SEARCH_SUBTYPE_COUNT = 3; // BlackboardArtifactSearchParam, AnalysisResultSetSearchParam, KeywordHitSearchParam
+    private final Cache<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = createCache(SEARCH_SUBTYPE_COUNT);
+    private final Cache<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setHitCache = createCache(SEARCH_SUBTYPE_COUNT);
+    private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = createCache(SEARCH_SUBTYPE_COUNT);
+    
     private final TreeCounts<AnalysisResultEvent> treeCounts = new TreeCounts<>();
 
     private AnalysisResultTableSearchResultsDTO fetchAnalysisResultsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {

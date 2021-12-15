@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -32,7 +31,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -66,9 +64,7 @@ public class CommAccountsDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(CommAccountsDAO.class.getName());
     private static final int CACHE_SIZE = Account.Type.PREDEFINED_ACCOUNT_TYPES.size(); // number of cached SearchParams sub-types
-    private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<SearchParams<CommAccountsSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<CommAccountsSearchParams>, SearchResultsDTO> searchParamsCache = createCache(CACHE_SIZE);
     private final TreeCounts<CommAccountsEvent> accountCounts = new TreeCounts<>();
 
     private static CommAccountsDAO instance = null;
