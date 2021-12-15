@@ -27,6 +27,15 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
 
+    private static final String TYPE_ID = "KEYWORD_HIT";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final String keyword;
     private final String regex;
     private final TskData.KeywordSearchQueryType searchType;
@@ -37,11 +46,11 @@ public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
         this.regex = regex;
         this.searchType = searchType;
     }
-    
+
     public String getRegex() {
         return regex;
     }
-    
+
     public String getKeyword() {
         return keyword;
     }
@@ -83,6 +92,5 @@ public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
         }
         return super.equals(obj);
     }
-    
-    
+
 }

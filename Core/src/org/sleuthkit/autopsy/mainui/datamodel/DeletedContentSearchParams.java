@@ -21,11 +21,11 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import java.util.Objects;
 
 /**
- * Key for accessing data about file MIME type from the DAO.
+ * Search params for accessing data about deleted content.
  */
-public class FileTypeMimeSearchParams {
+public class DeletedContentSearchParams {
 
-    private static final String TYPE_ID = "FILE_VIEWS_MIME";
+    private static final String TYPE_ID = "DELETED_CONTENT";
 
     /**
      * @return The type id for this search parameter.
@@ -34,16 +34,23 @@ public class FileTypeMimeSearchParams {
         return TYPE_ID;
     }
 
-    private final String mimeType;
+    private final DeletedContentFilter filter;
     private final Long dataSourceId;
 
-    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId) {
-        this.mimeType = mimeType;
+    /**
+     * Main constructor.
+     *
+     * @param filter       The filter (if null, indicates full refresh
+     *                     required).
+     * @param dataSourceId The data source id or null.
+     */
+    public DeletedContentSearchParams(DeletedContentFilter filter, Long dataSourceId) {
+        this.filter = filter;
         this.dataSourceId = dataSourceId;
     }
 
-    public String getMimeType() {
-        return mimeType;
+    public DeletedContentFilter getFilter() {
+        return filter;
     }
 
     public Long getDataSourceId() {
@@ -53,8 +60,8 @@ public class FileTypeMimeSearchParams {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 29 * hash + Objects.hashCode(this.mimeType);
-        hash = 29 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 71 * hash + Objects.hashCode(this.filter);
+        hash = 71 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -69,8 +76,8 @@ public class FileTypeMimeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeMimeSearchParams other = (FileTypeMimeSearchParams) obj;
-        if (!Objects.equals(this.mimeType, other.mimeType)) {
+        final DeletedContentSearchParams other = (DeletedContentSearchParams) obj;
+        if (this.filter != other.filter) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {

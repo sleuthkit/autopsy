@@ -24,7 +24,17 @@ import org.sleuthkit.autopsy.mainui.nodes.NodeSelectionInfo.ContentNodeSelection
 /**
  * Key for content object in order to retrieve data from DAO.
  */
-public class FileSystemContentSearchParam implements ContentNodeSelectionInfo{
+public class FileSystemContentSearchParam implements ContentNodeSelectionInfo {
+
+    private static final String TYPE_ID = "FILE_SYSTEM_CONTENT";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final Long contentObjectId;
     
     // This param is can change, is not used as part of the search query and

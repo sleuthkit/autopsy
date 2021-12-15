@@ -56,7 +56,7 @@ public class DataSourceIngestModuleProgress {
      * @param workUnits Number of work units performed so far by the module.
      */
     public void progress(int workUnits) {
-        ingestJobExecutor.advanceDataSourceIngestProgressBar("", workUnits);
+        ingestJobExecutor.updateDataSourceIngestProgressBar("", workUnits);
     }
 
     /**
@@ -65,7 +65,7 @@ public class DataSourceIngestModuleProgress {
      * @param message Message to display
      */
     public void progress(String message) {
-        ingestJobExecutor.advanceDataSourceIngestProgressBar(message);
+        ingestJobExecutor.updateDataSourceIngestProgressBarText(message);
     }
 
     /**
@@ -76,7 +76,7 @@ public class DataSourceIngestModuleProgress {
      * @param workUnits   Number of work units performed so far by the module.
      */
     public void progress(String currentTask, int workUnits) {
-        ingestJobExecutor.advanceDataSourceIngestProgressBar(currentTask, workUnits);
+        ingestJobExecutor.updateDataSourceIngestProgressBar(currentTask, workUnits);
     }
 
 }

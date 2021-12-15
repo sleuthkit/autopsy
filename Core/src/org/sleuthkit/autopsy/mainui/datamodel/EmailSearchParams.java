@@ -19,42 +19,43 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Key for accessing data about file MIME type from the DAO.
+ * Search parameters for email messages.
  */
-public class FileTypeMimeSearchParams {
+public class EmailSearchParams extends DataArtifactSearchParam {
 
-    private static final String TYPE_ID = "FILE_VIEWS_MIME";
+    private final String account;
+    private final String folder;
 
     /**
-     * @return The type id for this search parameter.
+     * Main constructor.
+     *
+     * @param dataSourceId The data source id or null if no data source
+     *                     filtering should occur.
+     * @param account      The email account.
+     * @param folder       The folder within the email account.
      */
-    public static String getTypeId() {
-        return TYPE_ID;
+    public EmailSearchParams(Long dataSourceId, String account, String folder) {
+        super(BlackboardArtifact.Type.TSK_EMAIL_MSG, dataSourceId);
+        this.account = account;
+        this.folder = folder;
     }
 
-    private final String mimeType;
-    private final Long dataSourceId;
-
-    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId) {
-        this.mimeType = mimeType;
-        this.dataSourceId = dataSourceId;
+    public String getAccount() {
+        return account;
     }
 
-    public String getMimeType() {
-        return mimeType;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
+    public String getFolder() {
+        return folder;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 29 * hash + Objects.hashCode(this.mimeType);
-        hash = 29 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 23 * hash + Objects.hashCode(this.account);
+        hash = 23 * hash + Objects.hashCode(this.folder);
         return hash;
     }
 
@@ -69,11 +70,11 @@ public class FileTypeMimeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeMimeSearchParams other = (FileTypeMimeSearchParams) obj;
-        if (!Objects.equals(this.mimeType, other.mimeType)) {
+        final EmailSearchParams other = (EmailSearchParams) obj;
+        if (!Objects.equals(this.account, other.account)) {
             return false;
         }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        if (!Objects.equals(this.folder, other.folder)) {
             return false;
         }
         return true;

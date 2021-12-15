@@ -16,34 +16,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentFilter;
 
 /**
- * Key for accessing data about file MIME type from the DAO.
+ * An event to signal that deleted files have been added to the given case on
+ * the given data source.
  */
-public class FileTypeMimeSearchParams {
+public class DeletedContentEvent implements DAOEvent {
 
-    private static final String TYPE_ID = "FILE_VIEWS_MIME";
-
-    /**
-     * @return The type id for this search parameter.
-     */
-    public static String getTypeId() {
-        return TYPE_ID;
-    }
-
-    private final String mimeType;
+    private final DeletedContentFilter filter;
     private final Long dataSourceId;
 
-    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId) {
-        this.mimeType = mimeType;
+    public DeletedContentEvent(DeletedContentFilter filter, Long dataSourceId) {
+        this.filter = filter;
         this.dataSourceId = dataSourceId;
     }
 
-    public String getMimeType() {
-        return mimeType;
+    public DeletedContentFilter getFilter() {
+        return filter;
     }
 
     public Long getDataSourceId() {
@@ -52,9 +45,9 @@ public class FileTypeMimeSearchParams {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 29 * hash + Objects.hashCode(this.mimeType);
-        hash = 29 * hash + Objects.hashCode(this.dataSourceId);
+        int hash = 3;
+        hash = 41 * hash + Objects.hashCode(this.filter);
+        hash = 41 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -69,8 +62,8 @@ public class FileTypeMimeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeMimeSearchParams other = (FileTypeMimeSearchParams) obj;
-        if (!Objects.equals(this.mimeType, other.mimeType)) {
+        final DeletedContentEvent other = (DeletedContentEvent) obj;
+        if (this.filter != other.filter) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
@@ -79,4 +72,10 @@ public class FileTypeMimeSearchParams {
         return true;
     }
 
+
+    
+    @Override
+    public Type getType() {
+        return Type.RESULT;
+    }
 }

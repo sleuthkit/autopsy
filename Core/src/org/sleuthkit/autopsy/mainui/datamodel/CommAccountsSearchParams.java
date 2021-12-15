@@ -27,9 +27,18 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class CommAccountsSearchParams extends DataArtifactSearchParam {
 
+    private static final String TYPE_ID = "DATA_ARTIFACT_ACCOUNT";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final Account.Type type;
     private final Long dataSourceId;
- 
+
     public CommAccountsSearchParams(Account.Type type, Long dataSourceId) {
         super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
         this.type = type;

@@ -2,6 +2,10 @@ CTL_RunIngestAction=Run Ingest
 FileIngestPipeline_SaveResults_Activity=Saving Results
 # {0} - data source name
 IngestJob_progress_analysisResultIngest_displayName=Analyzing analysis results from {0}
+# {0} - tier number
+# {1} - job state modifer
+IngestJobExecutor_progress_snapshot_currentTier=Tier {0} {1}
+IngestJobExecutor_progress_snapshot_currentTier_shutDown_modifier=shut down
 IngestJobSettingsPanel.IngestModulesTableRenderer.info.message=A previous version of this ingest module has been run before on this data source.
 IngestJobSettingsPanel.IngestModulesTableRenderer.warning.message=This ingest module has been run before on this data source.
 IngestJobSettingsPanel.noPerRunSettings=The selected module has no per-run settings.
@@ -102,6 +106,7 @@ IngestProgressSnapshotPanel.SnapshotsTableModel.colNames.jobID=Job ID
 IngestJobTableModel.colName.jobID=Job ID
 IngestJobTableModel.colName.dataSource=Data Source
 IngestJobTableModel.colName.start=Start
+IngestJobTableModel.colName.tier=Tier
 IngestJobTableModel.colName.numProcessed=Files Processed
 IngestJobTableModel.colName.filesPerSec=Files/Sec
 IngestJobTableModel.colName.inProgress=In Progress

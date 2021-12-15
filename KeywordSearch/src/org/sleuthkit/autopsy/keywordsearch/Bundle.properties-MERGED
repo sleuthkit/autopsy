@@ -371,6 +371,7 @@ SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not conta
 SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from case directory: {0}
 # {0} - collection name
 SolrSearchService.exceptionMessage.unableToDeleteCollection=Unable to delete collection {0}
+SolrSearchService.indexingError=Unable to index blackboard artifact.
 SolrSearchService.ServiceName=Solr Keyword Search Service
 SolrSearchService.DeleteDataSource.msg=Error Deleting Solr data for data source id {0}
 DropdownSingleTermSearchPanel.dataSourceCheckBox.text=Restrict search to the selected data sources:

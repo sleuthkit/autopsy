@@ -68,7 +68,8 @@ public class MainDAO extends AbstractDAO {
             Case.Events.OS_ACCOUNTS_ADDED.toString(),
             Case.Events.OS_ACCOUNTS_UPDATED.toString(),
             Case.Events.OS_ACCOUNTS_DELETED.toString(),
-            Case.Events.OS_ACCT_INSTANCES_ADDED.toString()
+            Case.Events.OS_ACCT_INSTANCES_ADDED.toString(),
+            Case.Events.DATA_SOURCE_ADDED.toString()
     );
 
     private static final long WATCH_RESOLUTION_MILLIS = 30 * 1000;
@@ -168,6 +169,7 @@ public class MainDAO extends AbstractDAO {
     private final TagsDAO tagsDAO = TagsDAO.getInstance();
     private final OsAccountsDAO osAccountsDAO = OsAccountsDAO.getInstance();
     private final CommAccountsDAO commAccountsDAO = CommAccountsDAO.getInstance();
+    private final EmailsDAO emailsDAO = EmailsDAO.getInstance();
 
     // NOTE: whenever adding a new sub-dao, it should be added to this list for event updates.
     private final List<AbstractDAO> allDAOs = ImmutableList.of(
@@ -177,7 +179,8 @@ public class MainDAO extends AbstractDAO {
             fileSystemDAO,
             tagsDAO,
             osAccountsDAO,
-            commAccountsDAO);
+            commAccountsDAO,
+            emailsDAO);
 
     /**
      * Registers listeners with autopsy event publishers and starts internal
@@ -240,6 +243,10 @@ public class MainDAO extends AbstractDAO {
     public CommAccountsDAO getCommAccountsDAO() {
         return commAccountsDAO;
     }
+    
+    public EmailsDAO getEmailsDAO() {
+        return emailsDAO;
+    }
 
     public PropertyChangeManager getResultEventsManager() {
         return this.resultEventsManager;
@@ -259,6 +266,7 @@ public class MainDAO extends AbstractDAO {
         return allDAOs.stream()
                 .map(subDAO -> subDAO.processEvent(evt))
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
+                .filter(e -> e != null)
                 .collect(Collectors.toSet());
     }
 
@@ -267,6 +275,7 @@ public class MainDAO extends AbstractDAO {
         return allDAOs.stream()
                 .map((subDAO) -> subDAO.shouldRefreshTree())
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
+                .filter(e -> e != null)
                 .collect(Collectors.toSet());
     }
 
@@ -280,6 +289,7 @@ public class MainDAO extends AbstractDAO {
 
         return daoStreamEvts.stream()
                 .flatMap(evts -> evts == null ? Stream.empty() : evts.stream())
+                .filter(evt -> evt != null)
                 .collect(Collectors.toSet());
     }
 

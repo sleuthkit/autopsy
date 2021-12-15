@@ -245,7 +245,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
 
     private TreeItemDTO<DataArtifactSearchParam> createDataArtifactTreeItem(BlackboardArtifact.Type artifactType, Long dataSourceId, TreeDisplayCount displayCount) {
         return new TreeResultsDTO.TreeItemDTO<>(
-                BlackboardArtifact.Category.DATA_ARTIFACT.name(),
+                DataArtifactSearchParam.getTypeId(),
                 new DataArtifactSearchParam(artifactType, dataSourceId),
                 artifactType.getTypeID(),
                 getDisplayName(artifactType),
@@ -255,13 +255,13 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
         return SubDAOUtils.getIngestCompleteEvents(this.treeCounts,
-                (daoEvt) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED));
+                (daoEvt, count) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
         return SubDAOUtils.getRefreshEvents(this.treeCounts,
-                (daoEvt) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED));
+                (daoEvt, count) -> createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), count));
     }
 
 

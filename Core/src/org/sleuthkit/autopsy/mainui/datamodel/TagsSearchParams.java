@@ -25,7 +25,16 @@ import org.sleuthkit.datamodel.TagName;
  * Key for accessing data about tags from the DAO.
  */
 public class TagsSearchParams {
-    
+
+    private static final String TYPE_ID = "TAG";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     public enum TagType {
         FILE,
         RESULT;
@@ -34,7 +43,7 @@ public class TagsSearchParams {
     private final TagType type;
     private final TagName tagName;
     private final Long dataSourceId;
- 
+
     public TagsSearchParams(TagName tagName, TagType type, Long dataSourceId) {
         this.tagName = tagName;
         this.type = type;

@@ -25,14 +25,23 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Base class for search params for analysis results that filter by set name.
  */
 public class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
-    
+
+    private static final String TYPE_ID = "ANALYSIS_RESULT_SET";
+
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
+    }
+
     private final String setName;
 
     public AnalysisResultSetSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, String setName) {
         super(artifactType, dataSourceId);
         this.setName = setName;
     }
-    
+
     public String getSetName() {
         return setName;
     }
@@ -63,5 +72,4 @@ public class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
         return super.equals(obj);
     }
 
-    
 }

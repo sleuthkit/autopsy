@@ -16,45 +16,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Key for accessing data about file MIME type from the DAO.
+ * Event for new email messages.
  */
-public class FileTypeMimeSearchParams {
+public class EmailEvent extends DataArtifactEvent {
 
-    private static final String TYPE_ID = "FILE_VIEWS_MIME";
+    private final String account;
+    private final String folder;
 
     /**
-     * @return The type id for this search parameter.
+     * Main constructor.
+     *
+     * @param dataSourceId The data source id that the email message belongs to.
+     * @param account      The email message account.
+     * @param folder       The folder within that account of the email message.
      */
-    public static String getTypeId() {
-        return TYPE_ID;
+    public EmailEvent(long dataSourceId, String account, String folder) {
+        super(BlackboardArtifact.Type.TSK_EMAIL_MSG, dataSourceId);
+        this.account = account;
+        this.folder = folder;
     }
 
-    private final String mimeType;
-    private final Long dataSourceId;
-
-    public FileTypeMimeSearchParams(String mimeType, Long dataSourceId) {
-        this.mimeType = mimeType;
-        this.dataSourceId = dataSourceId;
+    public String getAccount() {
+        return account;
     }
 
-    public String getMimeType() {
-        return mimeType;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
+    public String getFolder() {
+        return folder;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 29 * hash + Objects.hashCode(this.mimeType);
-        hash = 29 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 89 * hash + Objects.hashCode(this.account);
+        hash = 89 * hash + Objects.hashCode(this.folder);
         return hash;
     }
 
@@ -69,14 +69,15 @@ public class FileTypeMimeSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final FileTypeMimeSearchParams other = (FileTypeMimeSearchParams) obj;
-        if (!Objects.equals(this.mimeType, other.mimeType)) {
+        final EmailEvent other = (EmailEvent) obj;
+        if (!Objects.equals(this.account, other.account)) {
             return false;
         }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        if (!Objects.equals(this.folder, other.folder)) {
             return false;
         }
         return true;
     }
-
+    
+    
 }
