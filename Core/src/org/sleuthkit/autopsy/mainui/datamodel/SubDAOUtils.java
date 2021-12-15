@@ -105,4 +105,23 @@ public class SubDAOUtils {
                 .map(daoEvt -> new TreeEvent(converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED), true))
                 .collect(Collectors.toSet());
     }
+
+    /**
+     * Escape a string literal to be used in a like statement with a prepared
+     * statement.
+     *
+     * @param toBeEscaped The string to be escaped.
+     * @param escapeChar  The like escape character.
+     *
+     * @return The escaped string.
+     */
+    static String likeEscape(String toBeEscaped, String escapeChar) {
+        if (toBeEscaped == null) {
+            return "";
+        }
+
+        return toBeEscaped
+                .replaceAll("%", escapeChar + "%")
+                .replaceAll("_", escapeChar + "_");
+    }
 }

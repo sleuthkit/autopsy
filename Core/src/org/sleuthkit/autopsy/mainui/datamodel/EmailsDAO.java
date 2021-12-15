@@ -148,16 +148,6 @@ public class EmailsDAO extends AbstractDAO {
                 : Pair.of(pieces[2], pieces[3]);
     }
 
-    private static String likeEscape(String toBeEscaped, String escapeChar) {
-        if (toBeEscaped == null) {
-            return "";
-        }
-
-        return toBeEscaped
-                .replaceAll("%", escapeChar + "%")
-                .replaceAll("_", escapeChar + "_");
-    }
-
     private SearchResultsDTO fetchEmailMessageDTOs(SearchParams<EmailSearchParams> searchParams) throws NoCurrentCaseException, TskCoreException, SQLException {
 
         // get current page of communication accounts results
@@ -186,8 +176,8 @@ public class EmailsDAO extends AbstractDAO {
 
             int paramIdx = 0;
             preparedStatement.setString(++paramIdx, MessageFormat.format("%/%/{0}/{1}%",
-                    likeEscape(searchParams.getParamData().getAccount(), ESCAPE_CHAR),
-                    likeEscape(searchParams.getParamData().getFolder(), ESCAPE_CHAR)
+                    SubDAOUtils.likeEscape(searchParams.getParamData().getAccount(), ESCAPE_CHAR),
+                    SubDAOUtils.likeEscape(searchParams.getParamData().getFolder(), ESCAPE_CHAR)
             ));
 
             if (searchParams.getParamData().getDataSourceId() != null) {
@@ -358,7 +348,7 @@ public class EmailsDAO extends AbstractDAO {
 
         String accountLikeStr = (account == null)
                 ? null
-                : "%/%/" + likeEscape(account, ESCAPE_CHAR) + "/%";
+                : "%/%/" + SubDAOUtils.likeEscape(account, ESCAPE_CHAR) + "/%";
 
         return Pair.of(sql, accountLikeStr);
     }

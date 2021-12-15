@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -38,11 +39,12 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
@@ -56,12 +58,16 @@ import org.sleuthkit.datamodel.TskData.DbType;
 public class CreditCardDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(CreditCardDAO.class.getName());
+    private static final String LIKE_ESCAPE_CHAR = "\\";
     private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
     private static final long CACHE_DURATION = 2;
     private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
 
+    // number of digits to include in bin prefix
+    private static final int BIN_PREFIX_NUM = 8;
+
     private final Cache<SearchParams<? extends CreditCardSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-    private final TreeCounts<CreditCardSearchParams> creditCardTree = new TreeCounts<>();
+    private final TreeCounts<CreditCardSearchParams> creditCardTreeCounts = new TreeCounts<>();
 
     private static CreditCardDAO instance = null;
 
@@ -110,8 +116,7 @@ public class CreditCardDAO extends AbstractDAO {
 
         String baseFromAndGroupSql = "FROM blackboard_artifacts art\n"
                 + "INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id \n"
-                + "  AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
-                + "  AND acct.value_text = " + Account.Type.CREDIT_CARD.getTypeName() + "\n"
+                + "  AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_TYPE.getTypeID() + "\n"
                 + "LEFT JOIN blackboard_attributes solr_doc ON art.artifact_id = solr_doc.artifact_id \n"
                 + "  AND solr_doc.attribute_type_id = " + BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() + "\n"
                 + "LEFT JOIN tsk_files f ON art.obj_id = f.obj_id\n"
@@ -203,25 +208,44 @@ public class CreditCardDAO extends AbstractDAO {
                 CreditCardByFileRow.COLUMNS, rows, CreditCardByFileRow.getRowType(), searchParams.getStartItem(), totalResultCount);
     }
 
-    public TreeResultsDTO<CreditCardFileSearchParams> getCreditCardCounts(Long dataSourceId) {
-        // file counts
-// SELECT art.obj_id
-// FROM blackboard_artifacts art
-// INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id
-// WHERE art.artifact_type_id = 39 -- TSK_ACCOUNT
-// AND acct.attribute_type_id = 121 -- TSK_ACCOUNT_TYPE
-// AND acct.value_text = 'CREDIT_CARD' -- Account.Type.CREDIT_CARD.getTypeName()
-// GROUP BY art.obj_id
+    @Messages({
+        "CreditCardDAO_getCreditCardCounts_byFile_displayName=By File",
+        "CreditCardDAO_getCreditCardCounts_byBIN_displayName=By BIN",})
+    public TreeResultsDTO<CreditCardSearchParams> getCreditCardCounts(Long dataSourceId, boolean includeRejected) throws NoCurrentCaseException, TskCoreException, IllegalStateException {
+        String countsQuery = "\n  COUNT(DISTINCT(art.obj_id)) AS file_count,\n"
+                + "  COUNT(DISTINCT(art.artifact_id)) AS bin_count\n"
+                + " FROM blackboard_artifacts art\n"
+                + " INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id\n"
+                + "   AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_TYPE + "\n"
+                + " WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT + "\n"
+                + (dataSourceId == null ? "" : "AND art.data_source_obj_id = " + dataSourceId + "\n")
+                + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n");
 
-// bin counts
-//SELECT COUNT(DISTINCT(art.artifact_id)) AS count
-//FROM blackboard_artifacts art
-//LEFT JOIN blackboard_attributes attr ON art.artifact_id = attr.artifact_id
-//WHERE art.artifact_type_id = 39 -- TSK_ACCOUNT
-//AND attr.attribute_type_id = 109 -- TSK_CARD_NUMBER
-//-- AND art.data_source_obj_id = ?
-//-- include if showRejected status
-//AND art.review_status_id <> 2 -- BlackboardArtifact.ReviewStatus.REJECTED.getID()
+        List<TreeItemDTO<CreditCardSearchParams>> items = new ArrayList<>();
+        getCase().getCaseDbAccessManager().select(countsQuery, (resultSet) -> {
+            try {
+                if (resultSet.next()) {
+                    items.add(new TreeItemDTO<>(
+                            CreditCardSearchParams.getTypeId(),
+                            new CreditCardFileSearchParams(includeRejected, dataSourceId),
+                            CreditCardFileSearchParams.getTypeId(),
+                            Bundle.CreditCardDAO_getCreditCardCounts_byFile_displayName(),
+                            isFileIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("file_count"))));
+
+                    items.add(new TreeItemDTO<>(
+                            CreditCardSearchParams.getTypeId(),
+                            new CreditCardBinSearchParams(null, includeRejected, dataSourceId),
+                            CreditCardBinSearchParams.getTypeId(),
+                            Bundle.CreditCardDAO_getCreditCardCounts_byBIN_displayName(),
+                            isBinIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("bin_count"))));
+
+                }
+            } catch (SQLException ex) {
+                throw new IllegalStateException("An Exception occurred while fetching counts.", ex);
+            }
+        });
+
+        return new TreeResultsDTO<>(items);
     }
 
     public SearchResultsDTO getCreditCardByBin(CreditCardBinSearchParams searchParams, long startItem, Long maxCount) throws IllegalArgumentException, ExecutionException {
@@ -235,7 +259,9 @@ public class CreditCardDAO extends AbstractDAO {
         return searchParamsCache.get(pagedSearchParams, () -> fetchCreditCardByBin(pagedSearchParams));
     }
 
-    public SearchResultsDTO fetchCreditCardByBin(SearchParams<CreditCardBinSearchParams> searchParams) {
+    public SearchResultsDTO fetchCreditCardByBin(SearchParams<CreditCardBinSearchParams> searchParams) throws TskCoreException, NoCurrentCaseException, IllegalStateException, SQLException {
+        Long dataSourceId = searchParams.getParamData().getDataSourceId();
+        boolean includeRejected = searchParams.getParamData().isIncludeRejected();
 
         String baseQuery = "FROM blackboard_artifacts art\n"
                 + "LEFT JOIN blackboard_attributes attr ON art.artifact_id = attr.artifact_id\n"
@@ -243,54 +269,155 @@ public class CreditCardDAO extends AbstractDAO {
                 + "AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_TYPE.getTypeID() + "\n"
                 + (dataSourceId == null ? "" : "AND art.data_source_obj_id = ?\n")
                 + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n")
-                + "AND attr.value_text LIKE ?\n"
+                + "AND attr.value_text LIKE ? ESCAPE " + LIKE_ESCAPE_CHAR + "\n"
                 + "ORDER BY art.artifact_id\n";
 
         String countQuery = "COUNT(DISTINCT(art.artifact_id))\n"
                 + baseQuery;
 
-        String pagedIdQuery = "SELECT art.artifact_id\n"
-                + baseQuery
-                + "GROUP BY art.artifact_id\n"
-                + "LIMIT ?\n"
-                + "OFFSET ?\n";
-        
-        String binLikeStatement = likeE
-        
-        try (CaseDbPreparedStatement statement = getCase().getCaseDbAccessManager().prepareSelect(countQuery)) {
+        String binLikeStatement = SubDAOUtils.likeEscape(searchParams.getParamData().getBinPrefix(), LIKE_ESCAPE_CHAR) + "%";
+
+        AtomicLong atomicCount = new AtomicLong(0);
+        try (CaseDbPreparedStatement countStatement = getCase().getCaseDbAccessManager().prepareSelect(countQuery)) {
             int parameterIdx = 0;
             if (dataSourceId != null) {
-                statement.setLong(++parameterIdx, dataSourceId);
+                countStatement.setLong(++parameterIdx, dataSourceId);
             }
-            
-            
-            
+
+            countStatement.setString(++parameterIdx, binLikeStatement);
+
+            getCase().getCaseDbAccessManager().select(countStatement, (resultSet) -> {
+                try {
+                    if (resultSet.next()) {
+                        atomicCount.set(resultSet.getLong("count"));
+                    }
+                } catch (SQLException ex) {
+                    throw new IllegalStateException("Unable to retrieve count.", ex);
+                }
+            });
         }
+
+        long totalCount = atomicCount.get();
+        List<BlackboardArtifact> artifacts = new ArrayList<>();
+        if (totalCount > 0) {
+            String pagedIdQuery = "art.artifact_id AS artifact_id\n"
+                    + baseQuery
+                    + "GROUP BY art.artifact_id\n"
+                    + (searchParams.getMaxResultsCount() == null ? "" : "LIMIT ?\n")
+                    + "OFFSET ?\n";
+
+            List<Long> artifactIds = new ArrayList<>();
+            try (CaseDbPreparedStatement queryStatement = getCase().getCaseDbAccessManager().prepareSelect(pagedIdQuery)) {
+                int parameterIdx = 0;
+                if (dataSourceId != null) {
+                    queryStatement.setLong(++parameterIdx, dataSourceId);
+                }
+
+                queryStatement.setString(++parameterIdx, binLikeStatement);
+
+                if (searchParams.getMaxResultsCount() != null) {
+                    queryStatement.setLong(++parameterIdx, searchParams.getMaxResultsCount());
+                }
+
+                queryStatement.setLong(++parameterIdx, searchParams.getStartItem());
+
+                getCase().getCaseDbAccessManager().select(queryStatement, (resultSet) -> {
+                    try {
+                        while (resultSet.next()) {
+                            artifactIds.add(resultSet.getLong("artifact_id"));
+                        }
+                    } catch (SQLException ex) {
+                        throw new IllegalStateException("Unable to retrieve artifact ids.", ex);
+                    }
+                });
+            }
+
+            if (!artifactIds.isEmpty()) {
+                String artifactIdsStr = artifactIds.stream()
+                        .filter(id -> id != null)
+                        .map(id -> Long.toString(id))
+                        .collect(Collectors.joining(", "));
+
+                artifacts.addAll(getCase().getBlackboard().getDataArtifactsWhere("artifact_id IN (" + artifactIdsStr + ")"));
+            }
+        }
+
+        getCase().getBlackboard().loadBlackboardAttributes(artifacts);
+        BlackboardArtifactDAO.TableData tableData = MainDAO.getInstance().getDataArtifactsDAO().createTableData(BlackboardArtifact.Type.TSK_ACCOUNT, artifacts);
+        return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_ACCOUNT, tableData.columnKeys, tableData.rows, searchParams.getStartItem(), totalCount);
     }
 
-    public TreeResultsDTO<CreditCardBinSearchParams> getCreditCardBinCounts(Long dataSourceId) {
+    public TreeResultsDTO<CreditCardBinSearchParams> getCreditCardBinCounts(Long dataSourceId, boolean includeRejected) throws TskCoreException, IllegalStateException, NoCurrentCaseException {
 
+        Set<String> indeterminatePrefixes = this.creditCardTreeCounts.getEnqueued().stream()
+                .map(params -> params instanceof CreditCardBinSearchParams ? (CreditCardBinSearchParams) params : null)
+                .filter(params -> params != null
+                && params.isIncludeRejected() == includeRejected
+                && params.getBinPrefix() != null
+                && (dataSourceId == null || Objects.equals(params.getDataSourceId(), dataSourceId)))
+                .map(params -> params.getBinPrefix())
+                .collect(Collectors.toSet());
+
+        String countsQuery = "\n  COUNT(*) as count,\n"
+                + "  SUBSTR(acct.value_text, 1, " + BIN_PREFIX_NUM + ") AS bin_prefix\n"
+                + "  COUNT(DISTINCT(art.artifact_id)) AS bin_count\n"
+                + " FROM blackboard_artifacts art\n"
+                + " INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id\n"
+                + "   AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_TYPE + "\n"
+                + " WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT + "\n"
+                + (dataSourceId == null ? "" : "AND art.data_source_obj_id = " + dataSourceId + "\n")
+                + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n")
+                + "GROUP BY SUBSTR(acct.value_text, 1, " + BIN_PREFIX_NUM + ")\n"
+                + "ORDER BY SUBSTR(acct.value_text, 1, " + BIN_PREFIX_NUM + ")\n";
+
+        List<TreeItemDTO<CreditCardBinSearchParams>> items = new ArrayList<>();
+        getCase().getCaseDbAccessManager().select(countsQuery, (resultSet) -> {
+            try {
+                while (resultSet.next()) {
+                    String binPrefix = resultSet.getString("bin_prefix");
+                    items.add(new TreeItemDTO<>(
+                            CreditCardBinSearchParams.getTypeId(),
+                            new CreditCardBinSearchParams(binPrefix, includeRejected, dataSourceId),
+                            CreditCardFileSearchParams.getTypeId(),
+                            binPrefix,
+                            indeterminatePrefixes.contains(binPrefix) ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("count"))));
+
+                }
+            } catch (SQLException ex) {
+                throw new IllegalStateException("An Exception occurred while fetching counts.", ex);
+            }
+        });
+
+        return new TreeResultsDTO<>(items);
     }
 
     // is account invalidating
+    
     @Override
     void clearCaches() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    Set<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        this.searchParamsCache.invalidateAll();
+        this.handleIngestComplete();
     }
 
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return SubDAOUtils.getIngestCompleteEvents(
+                this.creditCardTreeCounts,
+                (daoEvt, count) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), count)
+        );
     }
 
     @Override
-    Set<? extends TreeEvent> shouldRefreshTree() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    Set<TreeEvent> shouldRefreshTree() {
+        return SubDAOUtils.getRefreshEvents(
+                this.creditCardTreeCounts,
+                (daoEvt, count) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), count)
+        );
     }
 
+    @Override
+    Set<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
+        TBD
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }
