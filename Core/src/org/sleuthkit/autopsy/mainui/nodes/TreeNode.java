@@ -40,6 +40,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 public abstract class TreeNode<T> extends AbstractNode implements SelectionResponder {
 
     private static final Logger logger = Logger.getLogger(TreeNode.class.getName());
+    
+    private ChildNodeSelectionInfo childNodeSelectionInfo;
 
     /**
      * Returns the default lookup based on the item dto.
@@ -154,6 +156,14 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
             return super.getPreferredAction();
         }
         return openChildAction;
+    }
+    
+    public ChildNodeSelectionInfo getNodeSelectionInfo() {
+        return childNodeSelectionInfo;
+    }
+    
+    public void setNodeSelectionInfo(ChildNodeSelectionInfo info) {
+        childNodeSelectionInfo = info;
     }
     
     /**

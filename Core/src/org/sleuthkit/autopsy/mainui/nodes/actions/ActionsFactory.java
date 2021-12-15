@@ -352,7 +352,9 @@ public final class ActionsFactory {
 
     @Messages({
         "# {0} - contentType",
-        "ArtifactFactory_getViewSrcContentAction_displayName=View Source {0} in Directory"
+        "ArtifactFactory_getViewSrcContentAction_displayName=View Source {0} in Directory",
+        "# {0} - contentType",
+        "ArtifactFactory_getViewSrcContentAction_displayName2=View Source {0}"
     })
     /**
      * Create an action to navigate to source content in tree hierarchy.
@@ -369,12 +371,12 @@ public final class ActionsFactory {
             if (sourceContent.get() instanceof DataArtifact) {
                 return Optional.of(new ViewArtifactAction(
                         (BlackboardArtifact) sourceContent.get(),
-                        Bundle.ArtifactFactory_getViewSrcContentAction_displayName(
+                        Bundle.ArtifactFactory_getViewSrcContentAction_displayName2(
                                 getContentTypeStr(sourceContent.get()))));
             } else if (sourceContent.get() instanceof OsAccount) {
                 return Optional.of(new ViewOsAccountAction(
                         (OsAccount) sourceContent.get(),
-                        Bundle.ArtifactFactory_getViewSrcContentAction_displayName(
+                        Bundle.ArtifactFactory_getViewSrcContentAction_displayName2(
                                 getContentTypeStr(sourceContent.get()))));
             } else if (sourceContent.get() instanceof AbstractFile || (artifact.isPresent() && artifact.get() instanceof DataArtifact)) {
                 return Optional.of(new ViewContextAction(

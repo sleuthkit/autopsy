@@ -24,19 +24,19 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import org.sleuthkit.autopsy.mainui.nodes.NodeSelectionInfo.ContentNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 
 /**
  * A node whose children will be displayed in the results view and determines
  * children based on a SearchResultDTO.
  */
-public class SearchResultRootNode extends AbstractNode implements ContentNodeSelectionInfo{
+public class SearchResultRootNode extends AbstractNode {
 
     private final SearchResultChildFactory factory;
     
     // This param is can change, is not used as part of the search query and
     // therefore is not included in the equals and hashcode methods.
-    private Long childContentToSelect;
+    private ChildNodeSelectionInfo childNodeSelectionInfo;
 
     public SearchResultRootNode(SearchResultsDTO initialResults) {
         this(initialResults, new SearchResultChildFactory(initialResults));
@@ -50,14 +50,12 @@ public class SearchResultRootNode extends AbstractNode implements ContentNodeSel
         setDisplayName(initialResults.getDisplayName());
     }
     
-    @Override
-    public void setChildIdToSelect(Long contentId) {
-        childContentToSelect = contentId;
+    public ChildNodeSelectionInfo getNodeSelectionInfo() {
+        return childNodeSelectionInfo;
     }
-
-    @Override
-    public Long getChildIdToSelect() {
-        return childContentToSelect;
+    
+    public void setNodeSelectionInfo(ChildNodeSelectionInfo info) {
+        childNodeSelectionInfo = info;
     }
     
     @Messages({
