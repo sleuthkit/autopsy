@@ -140,6 +140,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private BaseChildFactoryPager pagingSupport = null;
     private SearchManager searchResultManager = null;
     private final PagingControls pagingControls = new PagingControls();
+    private boolean pagingControlsEnabled = true;
 
     private final PreferenceChangeListener pageSizeListener = (PreferenceChangeEvent evt) -> {
         if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
@@ -876,7 +877,10 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
 
         void setPageControlsEnabled(boolean enabled) {
-            // ELTODO
+            if (pagingControlsEnabled != enabled){
+                pagingControlsEnabled = enabled;
+                updatePagingComponents();
+            }
         }
     }
 
@@ -1075,30 +1079,26 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private void pagePrevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pagePrevButtonActionPerformed
         if (this.searchResultManager != null) {
-            try {
-                displaySearchResults(this.searchResultManager.decrementPageIdx(), false);
-            } catch (IllegalArgumentException | ExecutionException ex) {
-                logger.log(Level.WARNING, "Decrementing page index failed", ex);
-            }
+            // NOTE: SearchManager uses page indexes that start at 0, not 1. 
+            // So SearchManager page 1 is UI page 2.
+            goToPage(this.searchResultManager.getPageIdx());
         } else if (this.pagingSupport != null) {
-            setBaseChildFactoryPageIdx(this.pagingSupport.getCurrentPageIdx() - 1);
+            goToPage(this.pagingSupport.getCurrentPageIdx() - 1);
         }
     }//GEN-LAST:event_pagePrevButtonActionPerformed
 
     private void pageNextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pageNextButtonActionPerformed
         if (this.searchResultManager != null) {
-            try {
-                displaySearchResults(this.searchResultManager.incrementPageIdx(), false);
-            } catch (IllegalArgumentException | ExecutionException ex) {
-                logger.log(Level.WARNING, "Decrementing page index failed", ex);
-            }
+            // NOTE: SearchManager uses page indexes that start at 0, not 1. 
+            // So SearchManager page 1 is UI page 2.
+            goToPage(this.searchResultManager.getPageIdx() + 2);
         } else if (this.pagingSupport != null) {
-            setBaseChildFactoryPageIdx(this.pagingSupport.getCurrentPageIdx() + 1);
+            goToPage(this.pagingSupport.getCurrentPageIdx() + 1);
         }
     }//GEN-LAST:event_pageNextButtonActionPerformed
 
     private void gotoPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoPageTextFieldActionPerformed
-        int parsedIdx = Integer.parseInt(this.gotoPageTextField.getText()) - 1;
+        int parsedIdx = Integer.parseInt(this.gotoPageTextField.getText());
         goToPage(parsedIdx);
     }//GEN-LAST:event_gotoPageTextFieldActionPerformed
     
@@ -1109,6 +1109,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     void goToPage(int uiPageToSet) {
         try {
+            // Switching a top level page. Reset the DataResultViewer paging so that 
+            // we start at page 1.
+            resultViewers.forEach((resultViewer) -> resultViewer.resetComponent());
             if (this.searchResultManager != null) {
                 // UI pages go from 1 to "number of pages"
                 int uiPageIdx = Math.max(1, Math.min(this.searchResultManager.getTotalPages(), uiPageToSet));
@@ -1517,8 +1520,20 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             updatePagingComponents();
         }
     }
+    
+    void enablePagingControls(boolean enable) {
+        this.pagePrevButton.setEnabled(false);
+        this.pageNextButton.setEnabled(false);
+        this.pageNumLabel.setText("");
+        this.gotoPageTextField.setText("");
+    }
 
     private void updatePagingComponents() {
+        if (!pagingControlsEnabled) {
+            enablePagingControls(false);
+            return;
+        }
+        
         if (this.searchResultManager != null) {
             this.pagePrevButton.setEnabled(this.searchResultManager.hasPrevPage());
             this.pageNextButton.setEnabled(this.searchResultManager.hasNextPage());
@@ -1534,11 +1549,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     Math.max(this.pagingSupport.getLastKnownPageCount(), 1)));
             this.gotoPageTextField.setText(Integer.toString(this.pagingSupport.getCurrentPageIdx() + 1));
         } else {
-            this.pagePrevButton.setEnabled(false);
-            this.pageNextButton.setEnabled(false);
-            this.pageNumLabel.setText("");
-            this.gotoPageTextField.setText("");
-
+            enablePagingControls(false);
         }
     }
 
