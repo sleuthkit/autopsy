@@ -24,17 +24,24 @@ import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.commons.lang.StringUtils;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -92,6 +99,12 @@ public class CreditCardDAO extends AbstractDAO {
         }
     }
 
+    @Messages({
+        "# {0} - raw file name",
+        "# {1} - solr chunk id",
+        "CreditCardDAO_fetchCreditCardByFile_file_displayName={0}_chunk_{1}",
+        "CreditCardDAO_fetchCreditCardByFile_results_displayName=By File",
+    })
     private SearchResultsDTO fetchCreditCardByFile(SearchParams<CreditCardFileSearchParams> searchParams) throws IllegalStateException, TskCoreException, NoCurrentCaseException, SQLException {
         boolean includeRejected = searchParams.getParamData().isIncludeRejected();
         Long dataSourceId = searchParams.getParamData().getDataSourceId();
@@ -122,9 +135,9 @@ public class CreditCardDAO extends AbstractDAO {
             }
         });
 
-        List<TBD> items = new ArrayList<>();
-        long count = atomicCount.get();
-        if (count > 0) {
+        List<RowDTO> rows = new ArrayList<>();
+        long totalResultCount = atomicCount.get();
+        if (totalResultCount > 0) {
             String itemQuery = "  art.obj_id AS file_id, \n"
                     + "  solr_doc.value_text AS solr_document_id,\n"
                     + "  " + getConcatAggregate(getCase().getDatabaseType(), "art.artifact_id") + " AS artifact_ids,\n"
@@ -134,28 +147,61 @@ public class CreditCardDAO extends AbstractDAO {
                     + (searchParams.getMaxResultsCount() == null ? "" : "LIMIT " + searchParams.getMaxResultsCount() + "\n")
                     + "OFFSET " + searchParams.getStartItem();
 
-            
             getCase().getCaseDbAccessManager().select(itemQuery, (resultSet) -> {
                 try {
                     while (resultSet.next()) {
                         Long fileId = resultSet.getLong("file_id");
                         if (resultSet.wasNull()) {
-                            fileId = null;
+                            continue;
                         }
-                        
+
                         String solrDocId = resultSet.getString("solr_document_id");
                         String artifactIds = resultSet.getString("artifact_ids");
                         String reviewStatusIds = resultSet.getString("review_status_ids");
                         long itemCount = resultSet.getLong("count");
-                        
-                        TBD
+
+                        Set<BlackboardArtifact> associatedArtifacts = StringUtils.isBlank(artifactIds)
+                                ? Collections.emptySet()
+                                : getCase().getBlackboard().getDataArtifactsWhere("artifacts.artifact_id IN (" + artifactIds + ")")
+                                        .stream()
+                                        .collect(Collectors.toSet());
+
+                        AbstractFile file = getCase().getAbstractFileById(fileId);
+
+                        String fileName = StringUtils.isBlank(solrDocId)
+                                ? file.getName()
+                                : Bundle.CreditCardDAO_fetchCreditCardByFile_file_displayName(file.getName(), StringUtils.substringAfter(solrDocId, "_"));
+                                
+                        Set<BlackboardArtifact.ReviewStatus> reviewStatuses = StringUtils.isBlank(reviewStatusIds)
+                                ? Collections.emptySet()
+                                : Stream.of(reviewStatusIds.split(","))
+                                        .map(id -> {
+                                            try {
+                                                String trimmed = id.trim();
+                                                int reviewStatusId = Integer.parseInt(trimmed);
+                                                return BlackboardArtifact.ReviewStatus.withID(reviewStatusId);
+                                            } catch (NumberFormatException ex) {
+                                                return null;
+                                            }
+                                        })
+                                        .filter(rs -> rs != null)
+                                        .collect(Collectors.toSet());
+
+                        String reviewStatusString = reviewStatuses.stream()
+                                .sorted(Comparator.comparing(rs -> rs.getID()))
+                                .map(rs -> rs.getDisplayName())
+                                .collect(Collectors.joining(", "));
+
+                        rows.add(new CreditCardByFileRow(file, associatedArtifacts, fileName, itemCount, reviewStatuses, reviewStatusString));
                     }
-                } catch (SQLException ex) {
+                } catch (SQLException | NoCurrentCaseException | TskCoreException ex) {
                     throw new IllegalStateException("An exception occurred while fetching items.", ex);
                 }
             });
         }
 
+        return new BaseSearchResultsDTO(CreditCardByFileRow.getRowType(), Bundle.CreditCardDAO_fetchCreditCardByFile_results_displayName(), 
+                CreditCardByFileRow.COLUMNS, rows, CreditCardByFileRow.getRowType(), searchParams.getStartItem(), totalResultCount);
     }
 
     public TreeResultsDTO<CreditCardFileSearchParams> getCreditCardCounts(Long dataSourceId) {
