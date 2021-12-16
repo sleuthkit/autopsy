@@ -210,7 +210,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                 return new TreeResultsDTO.TreeItemDTO<>(
                         AnalysisResultSetSearchParam.getTypeId(),
                         new AnalysisResultSetSearchParam(this.artifactType, this.dataSourceId, searchParam.getSetName()),
-                        searchParam.getSetName(),
+                        searchParam.getSetName() == null ? 0 : searchParam.getSetName(),
                         searchParam.getSetName() == null ? nullSetName : searchParam.getSetName(),
                         originalTreeItem.getDisplayCount());
             }
@@ -437,7 +437,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                                 this.searchTermParams.getRegex(),
                                 this.searchTermParams.getSearchType()
                         ),
-                        searchParam.getKeyword(),
+                        searchParam.getKeyword() == null ? "" : searchParam.getKeyword(),
                         searchParam.getKeyword() == null ? "" : searchParam.getKeyword(),
                         originalTreeItem.getDisplayCount()
                 );

@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -713,7 +714,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 break;
             default:
                 logger.log(Level.WARNING, MessageFormat.format("Non-standard search type value: {0}.", searchType));
-                searchTermModified = searchTerm;
+                searchTermModified = searchTerm == null ? "" : searchTerm;
                 break;
         }
         return searchTermModified;
@@ -830,7 +831,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new TreeItemDTO<>(
                 KeywordHitSearchParam.getTypeId(),
                 new KeywordHitSearchParam(dataSourceId, setName, keyword, regexStr, searchType),
-                keyword,
+                keyword == null ? "" : keyword,
                 keyword == null ? "" : keyword,
                 displayCount
         );
@@ -961,7 +962,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 .flatMap(entry -> entry.getValue().stream().map(dsId -> new AnalysisResultSetEvent(entry.getKey().getRight(), entry.getKey().getLeft(), dsId)))
                 .collect(Collectors.toList());
 
-        List<AnalysisResultEvent> keywordHitEvts = keywordHitsMap.entrySet().stream()
+        // divide into ad hoc searches (null set name) and the rest
+        Map<Boolean, List<KeywordHitEvent>> keywordHitEvts = keywordHitsMap.entrySet().stream()
                 .flatMap(entry -> { 
                     KeywordHitSearchParam params = entry.getKey();
                     String setName = params.getSetName();
@@ -970,9 +972,11 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     String match = params.getKeyword();
                     return entry.getValue().stream().map(dsId -> new KeywordHitEvent(setName, searchString, queryType, match, dsId)); 
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.partitioningBy(kwe -> kwe.getSetName() == null));
         
-        List<AnalysisResultEvent> daoEvents = Stream.of(analysisResultEvts, analysisResultSetEvts, keywordHitEvts)
+        // include set name results in regular events.
+        List<AnalysisResultEvent> daoEvents = Stream.of(analysisResultEvts, analysisResultSetEvts, keywordHitEvts.get(false))
+                .filter(lst -> lst != null)
                 .flatMap(s -> s.stream())
                 .collect(Collectors.toList());
 
@@ -980,7 +984,16 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 .map(arEvt -> new TreeEvent(getTreeItem(arEvt, TreeDisplayCount.INDETERMINATE), false))
                 .collect(Collectors.toList());
 
-        return Stream.of(daoEvents, treeEvents)
+        List<KeywordHitEvent> adHocEvts = keywordHitEvts.get(true);
+        if (CollectionUtils.isEmpty(adHocEvts)) {
+            adHocEvts = Collections.emptyList();
+        }
+        
+        Collection<TreeEvent> adHocTreeEvents = adHocEvts.stream()
+                .map(kwEvt -> new TreeEvent(getTreeItem(kwEvt, TreeDisplayCount.UNSPECIFIED), true))
+                .collect(Collectors.toList());
+                
+        return Stream.of(daoEvents, treeEvents, adHocEvts, adHocTreeEvents)
                 .flatMap(lst -> lst.stream())
                 .collect(Collectors.toSet());
     }
