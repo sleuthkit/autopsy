@@ -47,6 +47,9 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardBinSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardFileSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.EmailSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
@@ -385,6 +388,22 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      */
     public void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
         dataResultPanel.displayAnalysisResult(analysisResultParams);
+    }
+    
+    /**
+     * Displays credit cards by bin number prefix.
+     * @param searchParams The search parameters.
+     */
+    public void displayCreditCardsByBin(CreditCardBinSearchParams searchParams) {
+        dataResultPanel.displayCreditCardsByBin(searchParams);
+    }
+
+    /**
+     * Displays credit cards by file name.
+     * @param searchParams The search parameters.
+     */
+    public void displayCreditCardsByFile(CreditCardFileSearchParams searchParams) {
+        dataResultPanel.displayCreditCardsByFile(searchParams);
     }
 
     /**

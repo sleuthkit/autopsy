@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
     "CreditCardByFileRow_accounts_displayName=Accounts",
     "CreditCardByFileRow_status_displayName=Status"
 })
-public class CreditCardByFileRow extends BaseRowDTO {
+public class CreditCardByFileRowDTO extends BaseRowDTO {
 
     private static ColumnKey getColumnKey(String displayName) {
         return new ColumnKey(displayName, displayName.toUpperCase().replaceAll("\\s", "_"), "");
@@ -47,7 +47,7 @@ public class CreditCardByFileRow extends BaseRowDTO {
 
     private static final String TYPE_ID = "CREDIT_CARD_BY_FILE";
 
-    public static String getRowType() {
+    public static String getTypeIdForClass() {
         return TYPE_ID;
     }
 
@@ -59,7 +59,7 @@ public class CreditCardByFileRow extends BaseRowDTO {
     private final Set<BlackboardArtifact.ReviewStatus> statuses;
     private final String reviewStatusString;
 
-    CreditCardByFileRow(AbstractFile file, Set<BlackboardArtifact> associatedArtifacts, String fileName, long accounts,
+    CreditCardByFileRowDTO(AbstractFile file, Set<BlackboardArtifact> associatedArtifacts, String fileName, long accounts,
             Set<BlackboardArtifact.ReviewStatus> statuses, String reviewStatusString) {
         super(ImmutableList.of(fileName, accounts, reviewStatusString), TYPE_ID, file.getId());
         this.file = file;

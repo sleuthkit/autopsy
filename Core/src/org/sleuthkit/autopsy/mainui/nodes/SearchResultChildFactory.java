@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.mainui.nodes.SearchResultChildFactory.ChildKey;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VolumeRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardByFileRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.FileNode.LayoutFileNode;
 import org.sleuthkit.autopsy.mainui.nodes.FileNode.SlackFileNode;
 import org.sleuthkit.autopsy.mainui.nodes.SpecialDirectoryNode.LocalDirectoryNode;
@@ -113,6 +114,8 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
                 return new SlackFileNode(key.getSearchResults(), (SlackFileRowDTO) key.getRow());
             } else if (OsAccountRowDTO.getTypeIdForClass().equals(typeId)) {
                 return new OsAccountNode(key.getSearchResults(), (OsAccountRowDTO) key.getRow());
+            } else if (CreditCardByFileRowDTO.getTypeIdForClass().equals(typeId)) {
+                return new CreditCardByFileNode(key.getSearchResults(), (CreditCardByFileRowDTO) key.getRow());
             }else {
                 logger.log(Level.WARNING, MessageFormat.format("No known node for type id: {0} provided by row result: {1}", typeId, key.getRow()));
             }

@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -41,7 +42,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -208,7 +208,7 @@ public class CreditCardDAO extends AbstractDAO {
                                 .map(rs -> rs.getDisplayName())
                                 .collect(Collectors.joining(", "));
 
-                        rows.add(new CreditCardByFileRow(file, associatedArtifacts, fileName, itemCount, reviewStatuses, reviewStatusString));
+                        rows.add(new CreditCardByFileRowDTO(file, associatedArtifacts, fileName, itemCount, reviewStatuses, reviewStatusString));
                     }
                 } catch (SQLException | NoCurrentCaseException | TskCoreException ex) {
                     throw new IllegalStateException("An exception occurred while fetching items.", ex);
@@ -216,13 +216,14 @@ public class CreditCardDAO extends AbstractDAO {
             });
         }
 
-        return new BaseSearchResultsDTO(CreditCardByFileRow.getRowType(), Bundle.CreditCardDAO_fetchCreditCardByFile_results_displayName(),
-                CreditCardByFileRow.COLUMNS, rows, CreditCardByFileRow.getRowType(), startItem, totalResultCount);
+        return new BaseSearchResultsDTO(CreditCardByFileRowDTO.getTypeIdForClass(), Bundle.CreditCardDAO_fetchCreditCardByFile_results_displayName(),
+                CreditCardByFileRowDTO.COLUMNS, rows, CreditCardByFileRowDTO.getTypeIdForClass(), startItem, totalResultCount);
     }
 
     @Messages({
         "CreditCardDAO_getCreditCardCounts_byFile_displayName=By File",
         "CreditCardDAO_getCreditCardCounts_byBIN_displayName=By BIN",})
+    @SuppressWarnings("unchecked")
     public TreeResultsDTO<CreditCardSearchParams> getCreditCardCounts(Long dataSourceId, boolean includeRejected) throws IllegalArgumentException, ExecutionException {
         String countsQuery = "\n  COUNT(DISTINCT(art.obj_id)) AS file_count,\n"
                 + "  COUNT(DISTINCT(art.artifact_id)) AS bin_count\n"
@@ -240,20 +241,19 @@ public class CreditCardDAO extends AbstractDAO {
             getCase().getCaseDbAccessManager().select(countsQuery, (resultSet) -> {
                 try {
                     if (resultSet.next()) {
-                        items.add(new TreeItemDTO<>(
-                                CreditCardSearchParams.getTypeId(),
-                                new CreditCardFileSearchParams(includeRejected, dataSourceId),
-                                CreditCardFileSearchParams.getTypeId(),
-                                Bundle.CreditCardDAO_getCreditCardCounts_byFile_displayName(),
-                                isIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("file_count"))));
-                        
-                        items.add(new TreeItemDTO<>(
-                                CreditCardSearchParams.getTypeId(),
-                                new CreditCardBinSearchParams(null, includeRejected, dataSourceId),
-                                CreditCardBinSearchParams.getTypeId(),
-                                Bundle.CreditCardDAO_getCreditCardCounts_byBIN_displayName(),
-                                isIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("bin_count"))));
-                        
+                        TreeDisplayCount fileDisplayCount = isIndeterminate
+                                ? TreeDisplayCount.INDETERMINATE
+                                : TreeDisplayCount.getDeterminate(resultSet.getLong("file_count"));
+
+                        items.add(createFileTreeItem(includeRejected, dataSourceId, fileDisplayCount));
+
+                        TreeDisplayCount binDisplayCount = isIndeterminate
+                                ? TreeDisplayCount.INDETERMINATE
+                                : TreeDisplayCount.getDeterminate(resultSet.getLong("file_count"));
+
+                        items.add((TreeItemDTO<CreditCardSearchParams>) (TreeItemDTO<? extends CreditCardSearchParams>) 
+                                createBinTreeItem(includeRejected, null, dataSourceId, binDisplayCount));
+
                     }
                 } catch (SQLException ex) {
                     throw new IllegalStateException("An exception occurred while fetching counts.", ex);
@@ -264,6 +264,24 @@ public class CreditCardDAO extends AbstractDAO {
         }
 
         return new TreeResultsDTO<>(items);
+    }
+
+    public TreeItemDTO<CreditCardSearchParams> createFileTreeItem(boolean includeRejected, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeItemDTO<>(
+                CreditCardFileSearchParams.getTypeId(),
+                new CreditCardFileSearchParams(includeRejected, dataSourceId),
+                CreditCardFileSearchParams.getTypeId(),
+                Bundle.CreditCardDAO_getCreditCardCounts_byFile_displayName(),
+                displayCount);
+    }
+
+    public TreeItemDTO<CreditCardBinSearchParams> createBinTreeItem(boolean includeRejected, String binPrefix, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeItemDTO<>(
+                CreditCardBinSearchParams.getTypeId(),
+                new CreditCardBinSearchParams(binPrefix, includeRejected, dataSourceId),
+                CreditCardBinSearchParams.getTypeId(),
+                Bundle.CreditCardDAO_getCreditCardCounts_byBIN_displayName(),
+                displayCount);
     }
 
     public SearchResultsDTO getCreditCardByBin(CreditCardBinSearchParams searchParams, long startItem, Long maxCount) throws IllegalArgumentException, ExecutionException {
@@ -366,7 +384,7 @@ public class CreditCardDAO extends AbstractDAO {
         return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_ACCOUNT, tableData.columnKeys, tableData.rows, startItem, totalCount);
     }
 
-    public TreeResultsDTO<CreditCardBinSearchParams> getCreditCardBinCounts(Long dataSourceId, boolean includeRejected) throws TskCoreException, IllegalStateException, NoCurrentCaseException {
+    public TreeResultsDTO<CreditCardBinSearchParams> getCreditCardBinCounts(Long dataSourceId, boolean includeRejected) throws ExecutionException {
 
         Set<String> indeterminatePrefixes = this.creditCardTreeCounts.getEnqueued().stream()
                 .filter(evts -> evts != null
@@ -389,24 +407,28 @@ public class CreditCardDAO extends AbstractDAO {
                 + "ORDER BY SUBSTR(acct.value_text, 1, " + BIN_PREFIX_NUM + ")\n";
 
         List<TreeItemDTO<CreditCardBinSearchParams>> items = new ArrayList<>();
-        getCase().getCaseDbAccessManager().select(countsQuery, (resultSet) -> {
-            try {
-                while (resultSet.next()) {
-                    String binPrefix = resultSet.getString("bin_prefix");
-                    items.add(new TreeItemDTO<>(
-                            CreditCardBinSearchParams.getTypeId(),
-                            new CreditCardBinSearchParams(binPrefix, includeRejected, dataSourceId),
-                            CreditCardFileSearchParams.getTypeId(),
-                            binPrefix,
-                            indeterminatePrefixes.contains(binPrefix) ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("count"))));
+        try {
+            getCase().getCaseDbAccessManager().select(countsQuery, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        String binPrefix = resultSet.getString("bin_prefix");
+                        items.add(new TreeItemDTO<>(
+                                CreditCardBinSearchParams.getTypeId(),
+                                new CreditCardBinSearchParams(binPrefix, includeRejected, dataSourceId),
+                                CreditCardFileSearchParams.getTypeId(),
+                                binPrefix,
+                                indeterminatePrefixes.contains(binPrefix) ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("count"))));
 
+                    }
+                } catch (SQLException ex) {
+                    throw new IllegalStateException("An Exception occurred while fetching counts.", ex);
                 }
-            } catch (SQLException ex) {
-                throw new IllegalStateException("An Exception occurred while fetching counts.", ex);
-            }
-        });
+            });
 
-        return new TreeResultsDTO<>(items);
+            return new TreeResultsDTO<>(items);
+        } catch (TskCoreException | IllegalStateException | NoCurrentCaseException ex) {
+            throw new ExecutionException("There was an error while fetching bin counts", ex);
+        }
     }
 
     // is account invalidating
@@ -418,18 +440,16 @@ public class CreditCardDAO extends AbstractDAO {
 
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
-        return SubDAOUtils.getIngestCompleteEvents(
+        return SubDAOUtils.getIngestCompleteEventsFromList(
                 this.creditCardTreeCounts,
-                (daoEvt, count) -> createTreeItem(daoEvt, count)
-        );
+                (daoEvt, count) -> createTreeItems(daoEvt, count));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
-        return SubDAOUtils.getRefreshEvents(
+        return SubDAOUtils.getRefreshEventsFromList(
                 this.creditCardTreeCounts,
-                (daoEvt, count) -> createTreeItem(daoEvt, count)
-        );
+                (daoEvt, count) -> createTreeItems(daoEvt, count));
     }
 
     @Override
@@ -505,19 +525,22 @@ public class CreditCardDAO extends AbstractDAO {
         }
 
         Stream<TreeEvent> treeEvents = this.creditCardTreeCounts.enqueueAll(events).stream()
-                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt, TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
+                .flatMap(daoEvt -> {
+                    List<TreeItemDTO<CreditCardSearchParams>> treeItems = createTreeItems(daoEvt, TreeDisplayCount.INDETERMINATE);
+                    return treeItems.stream().map(item -> new TreeEvent(item, false));
+                });
 
         return Stream.of(events.stream(), treeEvents)
                 .flatMap(s -> s)
                 .collect(Collectors.toSet());
     }
 
-    private TreeItemDTO<CreditCardBinSearchParams> createTreeItem(CreditCardEvent daoEvt, TreeDisplayCount count) {
-        return new TreeItemDTO<>(CreditCardBinSearchParams.getTypeId(),
-                new CreditCardBinSearchParams(daoEvt.getBinPrefix(), daoEvt.isRejectedStatus(), daoEvt.getDataSourceId()),
-                daoEvt.getBinPrefix(),
-                daoEvt.getBinPrefix(),
-                count);
+    @SuppressWarnings("unchecked")
+    private List<TreeItemDTO<CreditCardSearchParams>> createTreeItems(CreditCardEvent daoEvt, TreeDisplayCount count) {
+        return Arrays.asList(
+                createFileTreeItem(daoEvt.isRejectedStatus(), daoEvt.getDataSourceId(), count),
+                (TreeItemDTO<CreditCardSearchParams>) (TreeItemDTO<? extends CreditCardSearchParams>) createBinTreeItem(daoEvt.isRejectedStatus(), daoEvt.getBinPrefix(), daoEvt.getDataSourceId(), count)
+        );
     }
 
     private boolean isRefreshRequired(CreditCardBinSearchParams parameters, DAOEvent evt) {
