@@ -19,18 +19,13 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
-import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Key for data artifact in order to retrieve data from DAO.
+ * Search params for accessing data about deleted content.
  */
-public class BlackboardArtifactSearchParam {
+public class DeletedContentSearchParams {
 
-    private static final String TYPE_ID = "BLACKBOARD_ARTIFACT";
-    
-    private ChildNodeSelectionInfo nodeSelectionInfo;
+    private static final String TYPE_ID = "DELETED_CONTENT";
 
     /**
      * @return The type id for this search parameter.
@@ -39,16 +34,23 @@ public class BlackboardArtifactSearchParam {
         return TYPE_ID;
     }
 
-    private final BlackboardArtifact.Type artifactType;
+    private final DeletedContentFilter filter;
     private final Long dataSourceId;
 
-    public BlackboardArtifactSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        this.artifactType = artifactType;
+    /**
+     * Main constructor.
+     *
+     * @param filter       The filter (if null, indicates full refresh
+     *                     required).
+     * @param dataSourceId The data source id or null.
+     */
+    public DeletedContentSearchParams(DeletedContentFilter filter, Long dataSourceId) {
+        this.filter = filter;
         this.dataSourceId = dataSourceId;
     }
 
-    public BlackboardArtifact.Type getArtifactType() {
-        return artifactType;
+    public DeletedContentFilter getFilter() {
+        return filter;
     }
 
     public Long getDataSourceId() {
@@ -58,8 +60,8 @@ public class BlackboardArtifactSearchParam {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 67 * hash + Objects.hashCode(this.artifactType);
-        hash = 67 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 71 * hash + Objects.hashCode(this.filter);
+        hash = 71 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -74,8 +76,8 @@ public class BlackboardArtifactSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final BlackboardArtifactSearchParam other = (BlackboardArtifactSearchParam) obj;
-        if (!Objects.equals(this.artifactType, other.artifactType)) {
+        final DeletedContentSearchParams other = (DeletedContentSearchParams) obj;
+        if (this.filter != other.filter) {
             return false;
         }
         if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
@@ -83,12 +85,5 @@ public class BlackboardArtifactSearchParam {
         }
         return true;
     }
-    
-    public ChildNodeSelectionInfo getNodeSelectionInfo() {
-        return nodeSelectionInfo;
-    }
-    
-    public void setNodeSelectionInfo(ChildNodeSelectionInfo info) {
-        nodeSelectionInfo = info;
-    }
+
 }

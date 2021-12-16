@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Objects;
@@ -25,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.nodes.Children;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtDocumentFilter;
@@ -33,6 +35,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileExtRootFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtSearchFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
@@ -40,6 +43,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
+import org.sleuthkit.autopsy.mainui.nodes.TreeNode.StaticTreeNode;
 
 /**
  *
@@ -48,6 +52,207 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 public class ViewsTypeFactory {
 
     private static final Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
+
+    private static final String FILE_TYPES_ICON = "org/sleuthkit/autopsy/images/file_types.png";
+    private static final String SIZE_ICON = "org/sleuthkit/autopsy/images/file-size-16.png";
+
+    /**
+     * Node for file extensions parent in the tree.
+     */
+    @Messages({"ViewsTypeFactory_ExtensionParentNode_displayName=By Extension"})
+    private static class ExtensionParentNode extends StaticTreeNode {
+
+        ExtensionParentNode(Long dataSourceId) {
+            super(
+                    "FILE_VIEW_EXTENSIONS_PARENT",
+                    Bundle.ViewsTypeFactory_ExtensionParentNode_displayName(),
+                    FILE_TYPES_ICON,
+                    new FileExtFactory(dataSourceId)
+            );
+        }
+    }
+
+    /**
+     * Parent mime types node in the tree.
+     */
+    @Messages({"ViewsTypeFactory_MimeParentNode_displayName=By MIME Type"})
+    public static class MimeParentNode extends StaticTreeNode {
+
+        MimeParentNode(Long dataSourceId) {
+            super(
+                    "FILE_VIEW_MIME_TYPE_PARENT",
+                    Bundle.ViewsTypeFactory_MimeParentNode_displayName(),
+                    FILE_TYPES_ICON,
+                    new FileMimePrefixFactory(dataSourceId)
+            );
+        }
+    }
+
+    /**
+     * Parent of deleted content nodes in the tree.
+     */
+    @Messages({"ViewsTypeFactory_DeletedParentNode_displayName=Deleted Files"})
+    private static class DeletedParentNode extends StaticTreeNode {
+
+        DeletedParentNode(Long dataSourceId) {
+            super(
+                    "FILE_VIEW_DELETED_PARENT",
+                    Bundle.ViewsTypeFactory_DeletedParentNode_displayName(),
+                    NodeIconUtil.DELETED_FILE.getPath(),
+                    new DeletedContentFactory(dataSourceId)
+            );
+        }
+    }
+
+    /**
+     * Parent of file size nodes in the tree.
+     */
+    @Messages({"ViewsTypeFactory_SizeParentNode_displayName=File Size"})
+    private static class SizeParentNode extends StaticTreeNode {
+
+        SizeParentNode(Long dataSourceId) {
+            super(
+                    "FILE_VIEW_SIZE_PARENT",
+                    Bundle.ViewsTypeFactory_SizeParentNode_displayName(),
+                    SIZE_ICON,
+                    new FileSizeTypeFactory(dataSourceId)
+            );
+        }
+    }
+
+    /**
+     * 'File Types' children in the tree.
+     */
+    public static class FileTypesChildren extends Children.Array {
+
+        FileTypesChildren(Long dataSourceId) {
+            super(ImmutableList.of(
+                    new ExtensionParentNode(dataSourceId),
+                    new MimeParentNode(dataSourceId)
+            ));
+        }
+    }
+
+    /**
+     * 'File Types' parent node in the tree.
+     */
+    @Messages({"ViewsTypeFactory_FileTypesParentNode_displayName=File Types"})
+    private static class FileTypesParentNode extends StaticTreeNode {
+
+        public FileTypesParentNode(Long dataSourceId) {
+            super(
+                    "FILE_TYPES_PARENT",
+                    Bundle.ViewsTypeFactory_FileTypesParentNode_displayName(),
+                    FILE_TYPES_ICON,
+                    new FileTypesChildren(dataSourceId)
+            );
+        }
+
+    }
+
+    /**
+     * Children of 'File Views' in the tree.
+     */
+    public static class ViewsChildren extends Children.Array {
+
+        public ViewsChildren(Long dataSourceId) {
+            super(ImmutableList.of(
+                    new FileTypesParentNode(dataSourceId),
+                    new DeletedParentNode(dataSourceId),
+                    new SizeParentNode(dataSourceId)
+            ));
+        }
+    }
+
+    /**
+     * The factory for creating deleted content tree nodes.
+     */
+    public static class DeletedContentFactory extends TreeChildFactory<DeletedContentSearchParams> {
+
+        private final Long dataSourceId;
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceId The data source to filter files to or null.
+         */
+        public DeletedContentFactory(Long dataSourceId) {
+            this.dataSourceId = dataSourceId;
+        }
+
+        @Override
+        protected TreeNode<DeletedContentSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends DeletedContentSearchParams> rowData) {
+            return new DeletedContentTypeNode(rowData);
+        }
+
+        @Override
+        protected TreeResultsDTO<? extends DeletedContentSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
+            return MainDAO.getInstance().getViewsDAO().getDeletedContentCounts(dataSourceId);
+        }
+
+        @Override
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof TreeEvent) {
+                    TreeResultsDTO.TreeItemDTO<DeletedContentSearchParams> treeItem = super.getTypedTreeItem((TreeEvent) evt, DeletedContentSearchParams.class);
+                    // if search params has null filter, trigger full refresh
+                    if (treeItem != null && treeItem.getSearchParams().getFilter() == null) {
+                        super.update();
+                        return;
+                    }
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
+        }
+
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends DeletedContentSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<DeletedContentSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, DeletedContentSearchParams.class);
+
+            if (originalTreeItem != null
+                    // only create child if size filter is present (if null, update should be triggered separately)
+                    && originalTreeItem.getSearchParams().getFilter() != null
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                DeletedContentSearchParams searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        DeletedContentSearchParams.getTypeId(),
+                        new DeletedContentSearchParams(searchParam.getFilter(), this.dataSourceId),
+                        searchParam.getFilter(),
+                        searchParam.getFilter().getDisplayName(),
+                        originalTreeItem.getDisplayCount());
+            }
+            return null;
+        }
+
+        @Override
+        public int compare(TreeItemDTO<? extends DeletedContentSearchParams> o1, TreeItemDTO<? extends DeletedContentSearchParams> o2) {
+            return Integer.compare(o1.getSearchParams().getFilter().getId(), o2.getSearchParams().getFilter().getId());
+        }
+
+        /**
+         * Shows a deleted content tree node.
+         */
+        static class DeletedContentTypeNode extends TreeNode<DeletedContentSearchParams> {
+
+            /**
+             * Main constructor.
+             *
+             * @param itemData The data for the node.
+             */
+            DeletedContentTypeNode(TreeResultsDTO.TreeItemDTO<? extends DeletedContentSearchParams> itemData) {
+                super("DELETED_CONTENT_" + itemData.getSearchParams().getFilter().getName(), NodeIconUtil.DELETED_FILE.getPath(), itemData);
+            }
+
+            @Override
+            public void respondSelection(DataResultTopComponent dataResultPanel) {
+                dataResultPanel.displayDeletedContent(this.getItemData().getSearchParams());
+            }
+
+        }
+    }
 
     /**
      * The factory for creating file size tree nodes.
@@ -130,7 +335,7 @@ public class ViewsTypeFactory {
              * @param itemData The data for the node.
              */
             FileSizeTypeNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeSizeSearchParams> itemData) {
-                super("FILE_SIZE_" + itemData.getSearchParams().getSizeFilter().getName(), "org/sleuthkit/autopsy/images/file-size-16.png", itemData);
+                super("FILE_SIZE_" + itemData.getSearchParams().getSizeFilter().getName(), SIZE_ICON, itemData);
             }
 
             @Override
@@ -208,7 +413,7 @@ public class ViewsTypeFactory {
             public FileMimePrefixNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeMimeSearchParams> itemData) {
                 super(
                         "FILE_MIME_" + itemData.getSearchParams().getMimeType(),
-                        "org/sleuthkit/autopsy/images/file_types.png",
+                        FILE_TYPES_ICON,
                         itemData,
                         Children.create(new FileMimeSuffixFactory(itemData.getSearchParams().getDataSourceId(), itemData.getSearchParams().getMimeType()), true),
                         getDefaultLookup(itemData));
