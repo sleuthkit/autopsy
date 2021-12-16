@@ -156,4 +156,9 @@ public final class BlackboardArtifactTagNode extends BaseNode<SearchResultsDTO, 
     public boolean supportsContentTagAction() {
         return rowData.getTag().getContent() instanceof AbstractFile;
     }
+    
+    @Override
+    public boolean supportsResultArtifactAction() {
+        return true;
+    }
 }
