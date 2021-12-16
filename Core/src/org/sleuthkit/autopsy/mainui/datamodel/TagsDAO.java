@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +44,9 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_SIZE;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TagsEvent;
@@ -81,8 +85,6 @@ import org.sleuthkit.datamodel.TskCoreException;
     "TagsDAO.tagColumns.userNameColLbl=User Name"})
 public class TagsDAO extends AbstractDAO {
 
-    private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
-
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
 
     private static final List<ColumnKey> FILE_TAG_COLUMNS = Arrays.asList(
@@ -120,7 +122,8 @@ public class TagsDAO extends AbstractDAO {
         return new ColumnKey(name, name, Bundle.TagsDAO_fileColumns_noDescription());
     }
 
-    private final Cache<SearchParams<TagsSearchParams>, SearchResultsDTO> searchParamsCache = createCache(CACHE_SIZE);
+    private final Cache<SearchParams<TagsSearchParams>, SearchResultsDTO> searchParamsCache = 
+            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<TagsEvent> treeCounts = new TreeCounts<>();
 
     public SearchResultsDTO getTags(TagsSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {

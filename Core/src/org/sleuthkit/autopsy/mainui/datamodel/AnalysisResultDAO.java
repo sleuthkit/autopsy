@@ -22,6 +22,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultSetEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -150,10 +151,9 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID()
     );
 
-    private static final int SEARCH_SUBTYPE_COUNT = 3; // BlackboardArtifactSearchParam, AnalysisResultSetSearchParam, KeywordHitSearchParam
-    private final Cache<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = createCache(SEARCH_SUBTYPE_COUNT);
-    private final Cache<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setHitCache = createCache(SEARCH_SUBTYPE_COUNT);
-    private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = createCache(SEARCH_SUBTYPE_COUNT);
+    private final Cache<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<AnalysisResultSetSearchParam>, AnalysisResultTableSearchResultsDTO> setHitCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     
     private final TreeCounts<AnalysisResultEvent> treeCounts = new TreeCounts<>();
 

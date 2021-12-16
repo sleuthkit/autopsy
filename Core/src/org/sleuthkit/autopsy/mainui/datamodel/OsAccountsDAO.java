@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,6 +38,9 @@ import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_SIZE;
 import org.sleuthkit.autopsy.mainui.datamodel.events.OsAccountEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.OsAccountRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
@@ -61,8 +65,8 @@ import org.sleuthkit.datamodel.TskCoreException;
     "OsAccountsDAO.fileColumns.noDescription=No Description",})
 public class OsAccountsDAO extends AbstractDAO {
 
-    private static final int SEARCH_SUBTYPE_COUNT = 1;
-    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = createCache(SEARCH_SUBTYPE_COUNT);
+    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = 
+            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     
     private static final String OS_ACCOUNTS_TYPE_ID = "OS_ACCOUNTS";
 

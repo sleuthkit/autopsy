@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
@@ -42,6 +43,9 @@ import org.sleuthkit.autopsy.casemodule.events.HostsAddedToPersonEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsRemovedFromPersonEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_SIZE;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import static org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils.getExtensionMediaType;
@@ -90,8 +94,6 @@ public class FileSystemDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(FileSystemDAO.class.getName());
 
-    private static final int CACHE_SIZE = 15; // rule of thumb: 5 entries times number of cached SearchParams sub-types
-
     private static final Set<String> HOST_LEVEL_EVTS = ImmutableSet.of(
             Case.Events.DATA_SOURCE_ADDED.toString(),
             // this should trigger the case to be reopened
@@ -107,7 +109,8 @@ public class FileSystemDAO extends AbstractDAO {
             Case.Events.HOSTS_REMOVED_FROM_PERSON.toString()
     );
 
-    private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = createCache(CACHE_SIZE);
+    private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = 
+            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
     private final TreeCounts<DAOEvent> treeCounts = new TreeCounts<>();
 

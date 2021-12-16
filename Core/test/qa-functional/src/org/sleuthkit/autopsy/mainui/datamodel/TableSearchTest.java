@@ -520,13 +520,13 @@ public class TableSearchTest extends NbTestCase {
             accountMgr.newOsAccountInstance(osAccount1, dataSource2, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
             
             // Add communication accounts
-            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_A, "Test Module", fileA1);
-            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_B, "Test Module", fileA2);
-            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, "devId1", "Test Module", fileA2);
-            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, PHONENUM_1, "Test Module", fileA2);
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_A, "Test Module", fileA1, null);
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_B, "Test Module", fileA2, null);
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, "devId1", "Test Module", fileA2, null);
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, PHONENUM_1, "Test Module", fileA2, null);
             
-            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_C, "Test Module", customFile);
-            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, PHONENUM_2, "Test Module", customFile);
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, EMAIL_C, "Test Module", customFile, null);
+            openCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, PHONENUM_2, "Test Module", customFile, null);
 
         } catch (TestUtilsException | TskCoreException | BlackboardException | TagsManager.TagNameAlreadyExistsException | OsAccountManager.NotUserSIDException ex) {
             if (trans != null) {
