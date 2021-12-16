@@ -26,12 +26,16 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
@@ -39,13 +43,16 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ReviewStatus;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -116,7 +123,7 @@ public class CreditCardDAO extends AbstractDAO {
 
         String baseFromAndGroupSql = "FROM blackboard_artifacts art\n"
                 + "INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id \n"
-                + "  AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_TYPE.getTypeID() + "\n"
+                + "  AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_NUMBER.getTypeID() + "\n"
                 + "LEFT JOIN blackboard_attributes solr_doc ON art.artifact_id = solr_doc.artifact_id \n"
                 + "  AND solr_doc.attribute_type_id = " + BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() + "\n"
                 + "LEFT JOIN tsk_files f ON art.obj_id = f.obj_id\n"
@@ -216,7 +223,7 @@ public class CreditCardDAO extends AbstractDAO {
                 + "  COUNT(DISTINCT(art.artifact_id)) AS bin_count\n"
                 + " FROM blackboard_artifacts art\n"
                 + " INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id\n"
-                + "   AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_TYPE + "\n"
+                + "   AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_NUMBER + "\n"
                 + " WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT + "\n"
                 + (dataSourceId == null ? "" : "AND art.data_source_obj_id = " + dataSourceId + "\n")
                 + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n");
@@ -266,7 +273,7 @@ public class CreditCardDAO extends AbstractDAO {
         String baseQuery = "FROM blackboard_artifacts art\n"
                 + "LEFT JOIN blackboard_attributes attr ON art.artifact_id = attr.artifact_id\n"
                 + "WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
-                + "AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_TYPE.getTypeID() + "\n"
+                + "AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_NUMBER.getTypeID() + "\n"
                 + (dataSourceId == null ? "" : "AND art.data_source_obj_id = ?\n")
                 + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n")
                 + "AND attr.value_text LIKE ? ESCAPE " + LIKE_ESCAPE_CHAR + "\n"
@@ -363,7 +370,7 @@ public class CreditCardDAO extends AbstractDAO {
                 + "  COUNT(DISTINCT(art.artifact_id)) AS bin_count\n"
                 + " FROM blackboard_artifacts art\n"
                 + " INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id\n"
-                + "   AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_TYPE + "\n"
+                + "   AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_NUMBER + "\n"
                 + " WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT + "\n"
                 + (dataSourceId == null ? "" : "AND art.data_source_obj_id = " + dataSourceId + "\n")
                 + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n")
@@ -392,7 +399,6 @@ public class CreditCardDAO extends AbstractDAO {
     }
 
     // is account invalidating
-    
     @Override
     void clearCaches() {
         this.searchParamsCache.invalidateAll();
@@ -417,7 +423,36 @@ public class CreditCardDAO extends AbstractDAO {
 
     @Override
     Set<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
-        TBD
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        ModuleDataEvent dataEvt = DAOEventUtils.getModuelDataFromArtifactEvent(evt);
+        if (dataEvt == null) {
+            return Collections.emptySet();
+        }
+
+        // maps bin prefix => isRejected => Data source ids
+        Map<String, Map<Boolean, Set<Long>>> creditCardBinPrefixMap = new HashMap<>();
+
+        for (BlackboardArtifact art : dataEvt.getArtifacts()) {
+            try {
+                if (art.getType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
+                    BlackboardAttribute attr = art.getAttribute(BlackboardAttribute.Type.TSK_CARD_NUMBER);
+                    if (attr != null && attr.getValueString() != null) {
+
+                        String cardNumber = attr.getValueString().trim();
+                        String cardPrefix = cardNumber.substring(0, Math.min(cardNumber.length(), BIN_PREFIX_NUM));
+
+                        ReviewStatus reviewStatus = art.getReviewStatus();
+
+                        creditCardBinPrefixMap
+                                .computeIfAbsent(cardPrefix, (k) -> new HashMap<>())
+                                .computeIfAbsent(ReviewStatus.REJECTED.equals(reviewStatus), (k) -> new HashSet<>())
+                                .add(art.getDataSourceObjectID());
+                    }
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "There was an error determining events from artifact with id: " + art.getId(), ex);
+            }
+        }
+        
+        
     }
 }

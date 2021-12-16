@@ -24,38 +24,31 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Event for new email messages.
  */
-public class EmailEvent extends DataArtifactEvent {
+public class CreditCardEvent extends DataArtifactEvent {
 
-    private final String account;
-    private final String folder;
+    private final String binPrefix;
+    private final boolean rejectedStatus;
 
-    /**
-     * Main constructor.
-     *
-     * @param dataSourceId The data source id that the email message belongs to.
-     * @param account      The email message account.
-     * @param folder       The folder within that account of the email message.
-     */
-    public EmailEvent(long dataSourceId, String account, String folder) {
-        super(BlackboardArtifact.Type.TSK_EMAIL_MSG, dataSourceId);
-        this.account = account;
-        this.folder = folder;
+    public CreditCardEvent(String binPrefix, boolean rejectedStatus, long dataSourceId) {
+        super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
+        this.binPrefix = binPrefix;
+        this.rejectedStatus = rejectedStatus;
     }
 
-    public String getAccount() {
-        return account;
+    public String getBinPrefix() {
+        return binPrefix;
     }
 
-    public String getFolder() {
-        return folder;
+    public boolean isRejectedStatus() {
+        return rejectedStatus;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 89 * hash + Objects.hashCode(this.account);
-        hash = 89 * hash + Objects.hashCode(this.folder);
-        hash = 89 * hash + super.hashCode();
+        hash = 61 * hash + Objects.hashCode(this.binPrefix);
+        hash = 61 * hash + (this.rejectedStatus ? 1 : 0);
+        hash = 61 * hash + super.hashCode();
         return hash;
     }
 
@@ -70,15 +63,13 @@ public class EmailEvent extends DataArtifactEvent {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final EmailEvent other = (EmailEvent) obj;
-        if (!Objects.equals(this.account, other.account)) {
+        final CreditCardEvent other = (CreditCardEvent) obj;
+        if (this.rejectedStatus != other.rejectedStatus) {
             return false;
         }
-        if (!Objects.equals(this.folder, other.folder)) {
+        if (!Objects.equals(this.binPrefix, other.binPrefix)) {
             return false;
         }
         return super.equals(obj);
     }
-    
-    
 }

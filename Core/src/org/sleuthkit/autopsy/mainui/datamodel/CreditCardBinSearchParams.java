@@ -49,6 +49,7 @@ public class CreditCardBinSearchParams extends CreditCardSearchParams {
     public int hashCode() {
         int hash = 7;
         hash = 47 * hash + Objects.hashCode(this.binPrefix);
+        hash = 47 * hash + super.hashCode();
         return hash;
     }
 
@@ -67,7 +68,7 @@ public class CreditCardBinSearchParams extends CreditCardSearchParams {
         if (!Objects.equals(this.binPrefix, other.binPrefix)) {
             return false;
         }
-        return true;
+        return super.equals(obj);
     }
 
     

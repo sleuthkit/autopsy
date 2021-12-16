@@ -58,6 +58,7 @@ public class CommAccountsSearchParams extends DataArtifactSearchParam {
         int hash = 7;
         hash = 23 * hash + Objects.hashCode(this.type);
         hash = 23 * hash + Objects.hashCode(this.dataSourceId);
+        hash = 23 * hash + super.hashCode();
         return hash;
     }
 
@@ -79,7 +80,7 @@ public class CommAccountsSearchParams extends DataArtifactSearchParam {
         if (!Objects.equals(this.type, other.type)) {
             return false;
         }
-        return true;
+        return super.equals(obj);
     }
 
 }
