@@ -147,7 +147,7 @@ public class CreditCardDAO extends AbstractDAO {
                     atomicCount.set(resultSet.getLong("count"));
                 }
             } catch (SQLException ex) {
-                throw new IllegalStateException("An exception occurred while fetching the count.", ex);
+                throw new IllegalStateException("An exception occurred while fetching the count with query\n:" + countQuery, ex);
             }
         });
 
@@ -211,7 +211,7 @@ public class CreditCardDAO extends AbstractDAO {
                         rows.add(new CreditCardByFileRowDTO(file, associatedArtifacts, fileName, itemCount, reviewStatuses, reviewStatusString));
                     }
                 } catch (SQLException | NoCurrentCaseException | TskCoreException ex) {
-                    throw new IllegalStateException("An exception occurred while fetching items.", ex);
+                    throw new IllegalStateException("An exception occurred while fetching items while running query:\n" + itemQuery, ex);
                 }
             });
         }
@@ -229,8 +229,8 @@ public class CreditCardDAO extends AbstractDAO {
                 + "  COUNT(DISTINCT(art.artifact_id)) AS bin_count\n"
                 + " FROM blackboard_artifacts art\n"
                 + " INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id\n"
-                + "   AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_NUMBER + "\n"
-                + " WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT + "\n"
+                + "   AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_NUMBER.getTypeID() + "\n"
+                + " WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
                 + (dataSourceId == null ? "" : "AND art.data_source_obj_id = " + dataSourceId + "\n")
                 + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n");
 
@@ -249,18 +249,17 @@ public class CreditCardDAO extends AbstractDAO {
 
                         TreeDisplayCount binDisplayCount = isIndeterminate
                                 ? TreeDisplayCount.INDETERMINATE
-                                : TreeDisplayCount.getDeterminate(resultSet.getLong("file_count"));
+                                : TreeDisplayCount.getDeterminate(resultSet.getLong("bin_count"));
 
-                        items.add((TreeItemDTO<CreditCardSearchParams>) (TreeItemDTO<? extends CreditCardSearchParams>) 
-                                createBinTreeItem(includeRejected, null, dataSourceId, binDisplayCount));
+                        items.add((TreeItemDTO<CreditCardSearchParams>) (TreeItemDTO<? extends CreditCardSearchParams>) createBinTreeItem(includeRejected, null, dataSourceId, binDisplayCount));
 
                     }
                 } catch (SQLException ex) {
-                    throw new IllegalStateException("An exception occurred while fetching counts.", ex);
+                    throw new IllegalStateException("An exception occurred while fetching counts:\n" + countsQuery, ex);
                 }
             });
         } catch (NoCurrentCaseException | TskCoreException | IllegalStateException ex) {
-            throw new ExecutionException("An error occurred while fetching counts.", ex);
+            throw new ExecutionException("An error occurred while fetching counts while running count query:\n" + countsQuery, ex);
         }
 
         return new TreeResultsDTO<>(items);
@@ -306,10 +305,10 @@ public class CreditCardDAO extends AbstractDAO {
                 + "AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_NUMBER.getTypeID() + "\n"
                 + (dataSourceId == null ? "" : "AND art.data_source_obj_id = ?\n")
                 + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n")
-                + "AND attr.value_text LIKE ? ESCAPE " + LIKE_ESCAPE_CHAR + "\n"
+                + "AND attr.value_text LIKE ? ESCAPE '" + LIKE_ESCAPE_CHAR + "'\n"
                 + "ORDER BY art.artifact_id\n";
 
-        String countQuery = "COUNT(DISTINCT(art.artifact_id))\n"
+        String countQuery = "COUNT(DISTINCT(art.artifact_id)) AS count\n"
                 + baseQuery;
 
         String binLikeStatement = SubDAOUtils.likeEscape(searchParams.getBinPrefix(), LIKE_ESCAPE_CHAR) + "%";
@@ -329,7 +328,7 @@ public class CreditCardDAO extends AbstractDAO {
                         atomicCount.set(resultSet.getLong("count"));
                     }
                 } catch (SQLException ex) {
-                    throw new IllegalStateException("Unable to retrieve count.", ex);
+                    throw new IllegalStateException("Unable to retrieve count with query:\n" + countQuery, ex);
                 }
             });
         }
@@ -364,7 +363,7 @@ public class CreditCardDAO extends AbstractDAO {
                             artifactIds.add(resultSet.getLong("artifact_id"));
                         }
                     } catch (SQLException ex) {
-                        throw new IllegalStateException("Unable to retrieve artifact ids.", ex);
+                        throw new IllegalStateException("Unable to retrieve artifact ids with query:\n" + pagedIdQuery, ex);
                     }
                 });
             }
@@ -394,13 +393,13 @@ public class CreditCardDAO extends AbstractDAO {
                 .map(params -> params.getBinPrefix())
                 .collect(Collectors.toSet());
 
-        String countsQuery = "\n  COUNT(*) as count,\n"
-                + "  SUBSTR(acct.value_text, 1, " + BIN_PREFIX_NUM + ") AS bin_prefix\n"
+        String countsQuery = "\n"
+                + "  SUBSTR(acct.value_text, 1, " + BIN_PREFIX_NUM + ") AS bin_prefix,\n"
                 + "  COUNT(DISTINCT(art.artifact_id)) AS bin_count\n"
                 + " FROM blackboard_artifacts art\n"
                 + " INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id\n"
-                + "   AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_NUMBER + "\n"
-                + " WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT + "\n"
+                + "   AND acct.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_NUMBER.getTypeID() + "\n"
+                + " WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
                 + (dataSourceId == null ? "" : "AND art.data_source_obj_id = " + dataSourceId + "\n")
                 + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n")
                 + "GROUP BY SUBSTR(acct.value_text, 1, " + BIN_PREFIX_NUM + ")\n"
@@ -415,19 +414,19 @@ public class CreditCardDAO extends AbstractDAO {
                         items.add(new TreeItemDTO<>(
                                 CreditCardBinSearchParams.getTypeId(),
                                 new CreditCardBinSearchParams(binPrefix, includeRejected, dataSourceId),
-                                CreditCardFileSearchParams.getTypeId(),
-                                binPrefix,
-                                indeterminatePrefixes.contains(binPrefix) ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("count"))));
+                                StringUtils.defaultString(binPrefix),
+                                StringUtils.defaultString(binPrefix),
+                                indeterminatePrefixes.contains(binPrefix) ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("bin_count"))));
 
                     }
                 } catch (SQLException ex) {
-                    throw new IllegalStateException("An Exception occurred while fetching counts.", ex);
+                    throw new IllegalStateException("An Exception occurred while fetching counts with query\n:" + countsQuery, ex);
                 }
             });
 
             return new TreeResultsDTO<>(items);
         } catch (TskCoreException | IllegalStateException | NoCurrentCaseException ex) {
-            throw new ExecutionException("There was an error while fetching bin counts", ex);
+            throw new ExecutionException("There was an error while fetching bin counts with query:\n" + countsQuery, ex);
         }
     }
 

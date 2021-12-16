@@ -215,7 +215,12 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         protected TreeNode<CommAccountsSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends CommAccountsSearchParams> rowData) {
-            return new AccountTypeNode(rowData);
+            if (Objects.equals(Account.Type.CREDIT_CARD, rowData.getSearchParams().getType())) {
+                return new CreditCardRootNode(rowData);
+            } else {
+                return new AccountTypeNode(rowData);    
+            }
+            
         }
 
         @Override
