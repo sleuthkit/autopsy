@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskData;
 
@@ -81,4 +82,36 @@ public class KeywordSearchTermParams extends AnalysisResultSetSearchParam {
     public TskData.KeywordSearchQueryType getSearchType() {
         return searchType;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 47 * hash + Objects.hashCode(this.searchTerm);
+        hash = 47 * hash + Objects.hashCode(this.searchType);
+        hash = 47 * hash + super.hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final KeywordSearchTermParams other = (KeywordSearchTermParams) obj;
+        if (!Objects.equals(this.searchTerm, other.searchTerm)) {
+            return false;
+        }
+        if (this.searchType != other.searchType) {
+            return false;
+        }
+        return super.equals(obj);
+    }
+    
+    
 }

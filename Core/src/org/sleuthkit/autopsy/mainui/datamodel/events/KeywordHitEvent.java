@@ -66,6 +66,7 @@ public class KeywordHitEvent extends AnalysisResultSetEvent {
         hash = 67 * hash + Objects.hashCode(this.searchString);
         hash = 67 * hash + Objects.hashCode(this.match);
         hash = 67 * hash + Objects.hashCode(this.searchType);
+        hash = 67 * hash + super.hashCode();
         return hash;
     }
 
@@ -90,7 +91,7 @@ public class KeywordHitEvent extends AnalysisResultSetEvent {
         if (this.searchType != other.searchType) {
             return false;
         }
-        return true;
+        return super.equals(obj);
     }
 
 }
