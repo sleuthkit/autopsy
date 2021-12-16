@@ -359,10 +359,10 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             super(itemData.getSearchParams().getRegex(),
                     getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT),
                     itemData,
-                    (itemData.getSearchParams().hasChildren() || itemData.getSearchParams().getSearchType() == TskData.KeywordSearchQueryType.REGEX 
-                            // for regex queries always create a subtree, even if there is only one child
-                            ? Children.create(new KeywordFoundMatchFactory(itemData.getSearchParams()), true) 
-                            : Children.LEAF),
+                    (itemData.getSearchParams().hasChildren() || itemData.getSearchParams().getSearchType() == TskData.KeywordSearchQueryType.REGEX
+                    // for regex queries always create a subtree, even if there is only one child
+                    ? Children.create(new KeywordFoundMatchFactory(itemData.getSearchParams()), true)
+                    : Children.LEAF),
                     getDefaultLookup(itemData));
         }
 
@@ -372,10 +372,12 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
             if (!searchTermParams.hasChildren()) {
                 KeywordHitSearchParam searchParams = new KeywordHitSearchParam(searchTermParams.getDataSourceId(),
-                            searchTermParams.getSetName(),
-                            searchTermParams.getRegex(),
-                            null,
-                            searchTermParams.getSearchType());
+                        searchTermParams.getSetName(),
+                        // if literal, keyword is regex
+                        TskData.KeywordSearchQueryType.LITERAL.equals(searchTermParams.getSearchType()) ? searchTermParams.getRegex() : null,
+                        // if literal, no regex
+                        TskData.KeywordSearchQueryType.LITERAL.equals(searchTermParams.getSearchType()) ? null : searchTermParams.getRegex(),
+                        searchTermParams.getSearchType());
                 dataResultPanel.displayKeywordHits(searchParams);
             } else {
                 super.respondSelection(dataResultPanel);
