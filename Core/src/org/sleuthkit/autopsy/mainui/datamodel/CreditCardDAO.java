@@ -24,12 +24,14 @@ import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -39,6 +41,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -46,6 +49,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.CreditCardEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
@@ -74,7 +78,7 @@ public class CreditCardDAO extends AbstractDAO {
     private static final int BIN_PREFIX_NUM = 8;
 
     private final Cache<SearchParams<? extends CreditCardSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-    private final TreeCounts<CreditCardSearchParams> creditCardTreeCounts = new TreeCounts<>();
+    private final TreeCounts<CreditCardEvent> creditCardTreeCounts = new TreeCounts<>();
 
     private static CreditCardDAO instance = null;
 
@@ -357,11 +361,10 @@ public class CreditCardDAO extends AbstractDAO {
     public TreeResultsDTO<CreditCardBinSearchParams> getCreditCardBinCounts(Long dataSourceId, boolean includeRejected) throws TskCoreException, IllegalStateException, NoCurrentCaseException {
 
         Set<String> indeterminatePrefixes = this.creditCardTreeCounts.getEnqueued().stream()
-                .map(params -> params instanceof CreditCardBinSearchParams ? (CreditCardBinSearchParams) params : null)
-                .filter(params -> params != null
-                && params.isIncludeRejected() == includeRejected
-                && params.getBinPrefix() != null
-                && (dataSourceId == null || Objects.equals(params.getDataSourceId(), dataSourceId)))
+                .filter(evts -> evts != null
+                && evts.isRejectedStatus() == includeRejected
+                && evts.getBinPrefix() != null
+                && (dataSourceId == null || Objects.equals(evts.getDataSourceId(), dataSourceId)))
                 .map(params -> params.getBinPrefix())
                 .collect(Collectors.toSet());
 
@@ -409,7 +412,7 @@ public class CreditCardDAO extends AbstractDAO {
     Set<? extends DAOEvent> handleIngestComplete() {
         return SubDAOUtils.getIngestCompleteEvents(
                 this.creditCardTreeCounts,
-                (daoEvt, count) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), count)
+                (daoEvt, count) -> createTreeItem(daoEvt, count)
         );
     }
 
@@ -417,7 +420,7 @@ public class CreditCardDAO extends AbstractDAO {
     Set<TreeEvent> shouldRefreshTree() {
         return SubDAOUtils.getRefreshEvents(
                 this.creditCardTreeCounts,
-                (daoEvt, count) -> createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), count)
+                (daoEvt, count) -> createTreeItem(daoEvt, count)
         );
     }
 
@@ -430,7 +433,8 @@ public class CreditCardDAO extends AbstractDAO {
 
         // maps bin prefix => isRejected => Data source ids
         Map<String, Map<Boolean, Set<Long>>> creditCardBinPrefixMap = new HashMap<>();
-
+        Set<Pair<Long, Boolean>> affectedDataSources = new HashSet<>();
+        
         for (BlackboardArtifact art : dataEvt.getArtifacts()) {
             try {
                 if (art.getType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
@@ -446,6 +450,8 @@ public class CreditCardDAO extends AbstractDAO {
                                 .computeIfAbsent(cardPrefix, (k) -> new HashMap<>())
                                 .computeIfAbsent(ReviewStatus.REJECTED.equals(reviewStatus), (k) -> new HashSet<>())
                                 .add(art.getDataSourceObjectID());
+                        
+                        affectedDataSources.add(Pair.of(art.getDataSourceObjectID(), ReviewStatus.REJECTED.equals(reviewStatus)));
                     }
                 }
             } catch (TskCoreException ex) {
@@ -453,6 +459,55 @@ public class CreditCardDAO extends AbstractDAO {
             }
         }
         
+        if (creditCardBinPrefixMap.isEmpty()) {
+            return Collections.emptySet();
+        }
         
+        SubDAOUtils.invalidateKeys(this.searchParamsCache, (paramKey) -> {
+            if (paramKey instanceof CreditCardBinSearchParams) {
+                CreditCardBinSearchParams binKey = ((CreditCardBinSearchParams) paramKey);
+                Map<Boolean, Set<Long>> reviewStatuses = creditCardBinPrefixMap.get(binKey.getBinPrefix());
+                if (reviewStatuses != null) {
+                    return (binKey.isIncludeRejected() ? 
+                            Stream.of(reviewStatuses.get(true), reviewStatuses.get(false)) :
+                            Stream.of(reviewStatuses.get(false)))
+                            .filter(dsIds -> dsIds != null)
+                            .flatMap(dsIds -> dsIds.stream())
+                            .anyMatch(dsId -> binKey.getDataSourceId() == null || Objects.equals(binKey.getDataSourceId(), dsId));
+                }    
+            } else if (paramKey instanceof CreditCardFileSearchParams) {
+                CreditCardFileSearchParams fileKey = ((CreditCardFileSearchParams) paramKey);
+                return affectedDataSources.stream()
+                            .anyMatch(pr -> (fileKey.isIncludeRejected() || !pr.getRight()) && 
+                                    (fileKey.getDataSourceId() == null || Objects.equals(fileKey.getDataSourceId(), pr.getLeft())));
+                                
+            }
+            return false;
+        });
+        
+        
+        // Map<String, Map<Boolean, Set<Long>>>
+        Set<CreditCardEvent> events = new HashSet<>();
+        for (Entry<String, Map<Boolean, Set<Long>>> binEntry : creditCardBinPrefixMap.entrySet()) {
+            String binPrefix = binEntry.getKey();
+            for (Entry<Boolean, Set<Long>> isRejectedEntry : binEntry.getValue().entrySet()) {
+                boolean isRejected = isRejectedEntry.getKey();
+                for (Long dsId : isRejectedEntry.getValue()) {
+                    events.add(new CreditCardEvent(binPrefix, isRejected, dsId));
+                }
+            } 
+        }
+        
+        
+        Stream<TreeEvent> treeEvents = this.creditCardTreeCounts.enqueueAll(events).stream()
+                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt, TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
+
+        return Stream.of(events.stream(), treeEvents)
+                .flatMap(s -> s)
+                .collect(Collectors.toSet());
+    }
+
+    private TreeItemDTO<CreditCardBinSearchParams> createTreeItem(CreditCardEvent daoEvt, TreeDisplayCount count) {
+        TBD
     }
 }
