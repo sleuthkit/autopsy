@@ -94,6 +94,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeMimeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeSizeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.DeletedFileFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
+import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
 
 /**
@@ -1214,7 +1215,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             this.searchResultManager = new SearchManager(new DataArtifactFetcher(dataArtifactParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, dataArtifactParams.getNodeSelectionInfo());
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
                     MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}]",
@@ -1430,7 +1431,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             this.searchResultManager = new SearchManager(new FileSystemFetcher(fileSystemKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true, fileSystemKey.getChildIdToSelect());
+            displaySearchResults(results, true, fileSystemKey.getNodeSelectionInfo());
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for file system filter: {0}.",
@@ -1491,14 +1492,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         "# {1} - pageCount",
         "DataResultPanel_pageIdxOfCount={0} of {1}"
     })
-
+    
     private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging) {
-        displaySearchResults(searchResults, resetPaging, null);
+         displaySearchResults(searchResults, resetPaging, null);
     }
 
-    private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging, Long contentIdToSelect) {
+    private void displaySearchResults(SearchResultsDTO searchResults, boolean resetPaging, ChildNodeSelectionInfo childSelectionInfo) {
         if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> displaySearchResults(searchResults, resetPaging, contentIdToSelect));
+            SwingUtilities.invokeLater(() -> displaySearchResults(searchResults, resetPaging, childSelectionInfo));
             return;
         }
 
@@ -1506,7 +1507,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             setNode(null, resetPaging);
         } else {
             SearchResultRootNode node = new SearchResultRootNode(searchResults);
-            node.setChildIdToSelect(contentIdToSelect);
+            node.setNodeSelectionInfo(childSelectionInfo);
             setNode(node, resetPaging);
             setNumberOfChildNodes(
                     searchResults.getTotalResultsCount() > Integer.MAX_VALUE

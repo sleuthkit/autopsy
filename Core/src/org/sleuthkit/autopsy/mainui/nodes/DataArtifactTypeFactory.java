@@ -113,6 +113,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayDataArtifact(this.getItemData().getSearchParams());
         }
     }
