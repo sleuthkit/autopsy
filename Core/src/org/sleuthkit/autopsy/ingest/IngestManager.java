@@ -359,21 +359,30 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                  * artifact will be analyzed. It also might be analyzed by a
                  * subsequent ingest job for the data source. This is an
                  * acceptable edge case.
+                 * 
+                 * 5. The user can manually run ad hoc keyword searches,
+                 * which post TSK_KEYWORD_HIT analysis results. Ingest
+                 * of that data source might be running, in which case the analysis
+                 * results will be analyzed. They also might be analyzed by a
+                 * subsequent ingest job for the data source. This is an
+                 * acceptable edge case.
                  */
-                DataArtifact dataArtifact = newDataArtifacts.get(0);
-                try {
-                    Content artifactDataSource = dataArtifact.getDataSource();
-                    synchronized (ingestJobsById) {
-                        for (IngestJob job : ingestJobsById.values()) {
-                            Content dataSource = job.getDataSource();
-                            if (artifactDataSource.getId() == dataSource.getId()) {
-                                ingestJob = job;
-                                break;
+                BlackboardArtifact artifact = newArtifacts.iterator().next();
+                if (artifact != null) {
+                    try {
+                        Content artifactDataSource = artifact.getDataSource();
+                        synchronized (ingestJobsById) {
+                            for (IngestJob job : ingestJobsById.values()) {
+                                Content dataSource = job.getDataSource();
+                                if (artifactDataSource.getId() == dataSource.getId()) {
+                                    ingestJob = job;
+                                    break;
+                                }
                             }
                         }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Failed to get data source for blackboard artifact (object ID = %d)", artifact.getId()), ex); //NON-NLS
                     }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to get data source for data artifact (object ID = %d)", dataArtifact.getId()), ex); //NON-NLS
                 }
             }
             if (ingestJob != null) {
