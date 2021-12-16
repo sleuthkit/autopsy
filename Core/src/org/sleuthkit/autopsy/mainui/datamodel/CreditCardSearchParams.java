@@ -34,21 +34,21 @@ public class CreditCardSearchParams extends DataArtifactSearchParam {
         return TYPE_ID;
     }
 
-    private final boolean includeRejected;
+    private final boolean rejectedIncluded;
 
-    public CreditCardSearchParams(boolean includeRejected, Long dataSourceId) {
+    public CreditCardSearchParams(boolean rejectedIncluded, Long dataSourceId) {
         super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
-        this.includeRejected = includeRejected;
+        this.rejectedIncluded = rejectedIncluded;
     }
 
-    public boolean isIncludeRejected() {
-        return includeRejected;
+    public boolean isRejectedIncluded() {
+        return rejectedIncluded;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 79 * hash + (this.includeRejected ? 1 : 0);
+        hash = 79 * hash + (this.rejectedIncluded ? 1 : 0);
         return hash;
     }
 
@@ -64,7 +64,7 @@ public class CreditCardSearchParams extends DataArtifactSearchParam {
             return false;
         }
         final CreditCardSearchParams other = (CreditCardSearchParams) obj;
-        if (this.includeRejected != other.includeRejected) {
+        if (this.rejectedIncluded != other.rejectedIncluded) {
             return false;
         }
         return true;

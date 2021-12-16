@@ -24,7 +24,6 @@ import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -54,6 +53,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
+import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ReviewStatus;
@@ -77,7 +77,7 @@ public class CreditCardDAO extends AbstractDAO {
     // number of digits to include in bin prefix
     private static final int BIN_PREFIX_NUM = 8;
 
-    private final Cache<SearchParams<? extends CreditCardSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<CreditCardSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<CreditCardEvent> creditCardTreeCounts = new TreeCounts<>();
 
     private static CreditCardDAO instance = null;
@@ -101,8 +101,8 @@ public class CreditCardDAO extends AbstractDAO {
                     maxCount == null ? "<null>" : maxCount));
         }
 
-        SearchParams<CreditCardFileSearchParams> pagedSearchParams = new SearchParams<>(searchParams, startItem, maxCount);
-        return searchParamsCache.get(pagedSearchParams, () -> fetchCreditCardByFile(pagedSearchParams));
+        SearchParams<CreditCardSearchParams> pagedSearchParams = new SearchParams<>(searchParams, startItem, maxCount);
+        return searchParamsCache.get(pagedSearchParams, () -> fetchCreditCardByFile(searchParams, startItem, maxCount));
     }
 
     private static String getConcatAggregate(DbType dbType, String field) {
@@ -121,9 +121,9 @@ public class CreditCardDAO extends AbstractDAO {
         "# {1} - solr chunk id",
         "CreditCardDAO_fetchCreditCardByFile_file_displayName={0}_chunk_{1}",
         "CreditCardDAO_fetchCreditCardByFile_results_displayName=By File",})
-    private SearchResultsDTO fetchCreditCardByFile(SearchParams<CreditCardFileSearchParams> searchParams) throws IllegalStateException, TskCoreException, NoCurrentCaseException, SQLException {
-        boolean includeRejected = searchParams.getParamData().isIncludeRejected();
-        Long dataSourceId = searchParams.getParamData().getDataSourceId();
+    private SearchResultsDTO fetchCreditCardByFile(CreditCardFileSearchParams searchParams, long startItem, Long maxCount) throws IllegalStateException, TskCoreException, NoCurrentCaseException, SQLException {
+        boolean includeRejected = searchParams.isRejectedIncluded();
+        Long dataSourceId = searchParams.getDataSourceId();
 
         String baseFromAndGroupSql = "FROM blackboard_artifacts art\n"
                 + "INNER JOIN blackboard_attributes acct ON art.artifact_id = acct.artifact_id \n"
@@ -159,8 +159,8 @@ public class CreditCardDAO extends AbstractDAO {
                     + "  " + getConcatAggregate(getCase().getDatabaseType(), "DISTINCT(art.review_status_id)") + " AS review_status_ids,\n"
                     + "  COUNT(*) AS count\n"
                     + baseFromAndGroupSql
-                    + (searchParams.getMaxResultsCount() == null ? "" : "LIMIT " + searchParams.getMaxResultsCount() + "\n")
-                    + "OFFSET " + searchParams.getStartItem();
+                    + (maxCount == null ? "" : "LIMIT " + maxCount + "\n")
+                    + "OFFSET " + startItem;
 
             getCase().getCaseDbAccessManager().select(itemQuery, (resultSet) -> {
                 try {
@@ -216,7 +216,7 @@ public class CreditCardDAO extends AbstractDAO {
         }
 
         return new BaseSearchResultsDTO(CreditCardByFileRow.getRowType(), Bundle.CreditCardDAO_fetchCreditCardByFile_results_displayName(),
-                CreditCardByFileRow.COLUMNS, rows, CreditCardByFileRow.getRowType(), searchParams.getStartItem(), totalResultCount);
+                CreditCardByFileRow.COLUMNS, rows, CreditCardByFileRow.getRowType(), startItem, totalResultCount);
     }
 
     @Messages({
@@ -232,6 +232,8 @@ public class CreditCardDAO extends AbstractDAO {
                 + (dataSourceId == null ? "" : "AND art.data_source_obj_id = " + dataSourceId + "\n")
                 + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n");
 
+        boolean isIndeterminate = !this.creditCardTreeCounts.getEnqueued().isEmpty();
+
         List<TreeItemDTO<CreditCardSearchParams>> items = new ArrayList<>();
         getCase().getCaseDbAccessManager().select(countsQuery, (resultSet) -> {
             try {
@@ -241,14 +243,14 @@ public class CreditCardDAO extends AbstractDAO {
                             new CreditCardFileSearchParams(includeRejected, dataSourceId),
                             CreditCardFileSearchParams.getTypeId(),
                             Bundle.CreditCardDAO_getCreditCardCounts_byFile_displayName(),
-                            isFileIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("file_count"))));
+                            isIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("file_count"))));
 
                     items.add(new TreeItemDTO<>(
                             CreditCardSearchParams.getTypeId(),
                             new CreditCardBinSearchParams(null, includeRejected, dataSourceId),
                             CreditCardBinSearchParams.getTypeId(),
                             Bundle.CreditCardDAO_getCreditCardCounts_byBIN_displayName(),
-                            isBinIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("bin_count"))));
+                            isIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("bin_count"))));
 
                 }
             } catch (SQLException ex) {
@@ -266,13 +268,14 @@ public class CreditCardDAO extends AbstractDAO {
                     maxCount == null ? "<null>" : maxCount));
         }
 
-        SearchParams<CreditCardBinSearchParams> pagedSearchParams = new SearchParams<>(searchParams, startItem, maxCount);
-        return searchParamsCache.get(pagedSearchParams, () -> fetchCreditCardByBin(pagedSearchParams));
+        SearchParams<CreditCardSearchParams> pagedSearchParams = new SearchParams<>(searchParams, startItem, maxCount);
+
+        return searchParamsCache.get(pagedSearchParams, () -> fetchCreditCardByBin(searchParams, startItem, maxCount));
     }
 
-    public SearchResultsDTO fetchCreditCardByBin(SearchParams<CreditCardBinSearchParams> searchParams) throws TskCoreException, NoCurrentCaseException, IllegalStateException, SQLException {
-        Long dataSourceId = searchParams.getParamData().getDataSourceId();
-        boolean includeRejected = searchParams.getParamData().isIncludeRejected();
+    public SearchResultsDTO fetchCreditCardByBin(CreditCardBinSearchParams searchParams, long startItem, Long maxCount) throws TskCoreException, NoCurrentCaseException, IllegalStateException, SQLException {
+        Long dataSourceId = searchParams.getDataSourceId();
+        boolean includeRejected = searchParams.isRejectedIncluded();
 
         String baseQuery = "FROM blackboard_artifacts art\n"
                 + "LEFT JOIN blackboard_attributes attr ON art.artifact_id = attr.artifact_id\n"
@@ -286,7 +289,7 @@ public class CreditCardDAO extends AbstractDAO {
         String countQuery = "COUNT(DISTINCT(art.artifact_id))\n"
                 + baseQuery;
 
-        String binLikeStatement = SubDAOUtils.likeEscape(searchParams.getParamData().getBinPrefix(), LIKE_ESCAPE_CHAR) + "%";
+        String binLikeStatement = SubDAOUtils.likeEscape(searchParams.getBinPrefix(), LIKE_ESCAPE_CHAR) + "%";
 
         AtomicLong atomicCount = new AtomicLong(0);
         try (CaseDbPreparedStatement countStatement = getCase().getCaseDbAccessManager().prepareSelect(countQuery)) {
@@ -314,7 +317,7 @@ public class CreditCardDAO extends AbstractDAO {
             String pagedIdQuery = "art.artifact_id AS artifact_id\n"
                     + baseQuery
                     + "GROUP BY art.artifact_id\n"
-                    + (searchParams.getMaxResultsCount() == null ? "" : "LIMIT ?\n")
+                    + (maxCount == null ? "" : "LIMIT ?\n")
                     + "OFFSET ?\n";
 
             List<Long> artifactIds = new ArrayList<>();
@@ -326,11 +329,11 @@ public class CreditCardDAO extends AbstractDAO {
 
                 queryStatement.setString(++parameterIdx, binLikeStatement);
 
-                if (searchParams.getMaxResultsCount() != null) {
-                    queryStatement.setLong(++parameterIdx, searchParams.getMaxResultsCount());
+                if (maxCount != null) {
+                    queryStatement.setLong(++parameterIdx, maxCount);
                 }
 
-                queryStatement.setLong(++parameterIdx, searchParams.getStartItem());
+                queryStatement.setLong(++parameterIdx, startItem);
 
                 getCase().getCaseDbAccessManager().select(queryStatement, (resultSet) -> {
                     try {
@@ -355,7 +358,7 @@ public class CreditCardDAO extends AbstractDAO {
 
         getCase().getBlackboard().loadBlackboardAttributes(artifacts);
         BlackboardArtifactDAO.TableData tableData = MainDAO.getInstance().getDataArtifactsDAO().createTableData(BlackboardArtifact.Type.TSK_ACCOUNT, artifacts);
-        return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_ACCOUNT, tableData.columnKeys, tableData.rows, searchParams.getStartItem(), totalCount);
+        return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_ACCOUNT, tableData.columnKeys, tableData.rows, startItem, totalCount);
     }
 
     public TreeResultsDTO<CreditCardBinSearchParams> getCreditCardBinCounts(Long dataSourceId, boolean includeRejected) throws TskCoreException, IllegalStateException, NoCurrentCaseException {
@@ -434,7 +437,7 @@ public class CreditCardDAO extends AbstractDAO {
         // maps bin prefix => isRejected => Data source ids
         Map<String, Map<Boolean, Set<Long>>> creditCardBinPrefixMap = new HashMap<>();
         Set<Pair<Long, Boolean>> affectedDataSources = new HashSet<>();
-        
+
         for (BlackboardArtifact art : dataEvt.getArtifacts()) {
             try {
                 if (art.getType().getTypeID() == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
@@ -450,7 +453,7 @@ public class CreditCardDAO extends AbstractDAO {
                                 .computeIfAbsent(cardPrefix, (k) -> new HashMap<>())
                                 .computeIfAbsent(ReviewStatus.REJECTED.equals(reviewStatus), (k) -> new HashSet<>())
                                 .add(art.getDataSourceObjectID());
-                        
+
                         affectedDataSources.add(Pair.of(art.getDataSourceObjectID(), ReviewStatus.REJECTED.equals(reviewStatus)));
                     }
                 }
@@ -458,35 +461,33 @@ public class CreditCardDAO extends AbstractDAO {
                 logger.log(Level.WARNING, "There was an error determining events from artifact with id: " + art.getId(), ex);
             }
         }
-        
+
         if (creditCardBinPrefixMap.isEmpty()) {
             return Collections.emptySet();
         }
-        
+
         SubDAOUtils.invalidateKeys(this.searchParamsCache, (paramKey) -> {
             if (paramKey instanceof CreditCardBinSearchParams) {
                 CreditCardBinSearchParams binKey = ((CreditCardBinSearchParams) paramKey);
                 Map<Boolean, Set<Long>> reviewStatuses = creditCardBinPrefixMap.get(binKey.getBinPrefix());
                 if (reviewStatuses != null) {
-                    return (binKey.isIncludeRejected() ? 
-                            Stream.of(reviewStatuses.get(true), reviewStatuses.get(false)) :
-                            Stream.of(reviewStatuses.get(false)))
+                    return (binKey.isRejectedIncluded()
+                            ? Stream.of(reviewStatuses.get(true), reviewStatuses.get(false))
+                            : Stream.of(reviewStatuses.get(false)))
                             .filter(dsIds -> dsIds != null)
                             .flatMap(dsIds -> dsIds.stream())
                             .anyMatch(dsId -> binKey.getDataSourceId() == null || Objects.equals(binKey.getDataSourceId(), dsId));
-                }    
+                }
             } else if (paramKey instanceof CreditCardFileSearchParams) {
                 CreditCardFileSearchParams fileKey = ((CreditCardFileSearchParams) paramKey);
                 return affectedDataSources.stream()
-                            .anyMatch(pr -> (fileKey.isIncludeRejected() || !pr.getRight()) && 
-                                    (fileKey.getDataSourceId() == null || Objects.equals(fileKey.getDataSourceId(), pr.getLeft())));
-                                
+                        .anyMatch(pr -> (fileKey.isRejectedIncluded() || !pr.getRight())
+                        && (fileKey.getDataSourceId() == null || Objects.equals(fileKey.getDataSourceId(), pr.getLeft())));
+
             }
             return false;
         });
-        
-        
-        // Map<String, Map<Boolean, Set<Long>>>
+
         Set<CreditCardEvent> events = new HashSet<>();
         for (Entry<String, Map<Boolean, Set<Long>>> binEntry : creditCardBinPrefixMap.entrySet()) {
             String binPrefix = binEntry.getKey();
@@ -495,10 +496,9 @@ public class CreditCardDAO extends AbstractDAO {
                 for (Long dsId : isRejectedEntry.getValue()) {
                     events.add(new CreditCardEvent(binPrefix, isRejected, dsId));
                 }
-            } 
+            }
         }
-        
-        
+
         Stream<TreeEvent> treeEvents = this.creditCardTreeCounts.enqueueAll(events).stream()
                 .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt, TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
 
@@ -508,6 +508,89 @@ public class CreditCardDAO extends AbstractDAO {
     }
 
     private TreeItemDTO<CreditCardBinSearchParams> createTreeItem(CreditCardEvent daoEvt, TreeDisplayCount count) {
-        TBD
+        return new TreeItemDTO<>(CreditCardBinSearchParams.getTypeId(),
+                new CreditCardBinSearchParams(daoEvt.getBinPrefix(), daoEvt.isRejectedStatus(), daoEvt.getDataSourceId()),
+                daoEvt.getBinPrefix(),
+                daoEvt.getBinPrefix(),
+                count);
+    }
+
+    private boolean isRefreshRequired(CreditCardBinSearchParams parameters, DAOEvent evt) {
+        if (!(evt instanceof CreditCardEvent)) {
+            return false;
+        }
+
+        CreditCardEvent ccEvt = (CreditCardEvent) evt;
+        return (parameters.isRejectedIncluded() || !ccEvt.isRejectedStatus())
+                && (parameters.getDataSourceId() == null || Objects.equals(parameters.getDataSourceId(), ccEvt.getDataSourceId()))
+                && Objects.equals(parameters.getBinPrefix(), ccEvt.getBinPrefix());
+    }
+
+    private boolean isRefreshRequired(CreditCardFileSearchParams parameters, DAOEvent evt) {
+        if (!(evt instanceof CreditCardEvent)) {
+            return false;
+        }
+
+        CreditCardEvent ccEvt = (CreditCardEvent) evt;
+        return (parameters.isRejectedIncluded() || !ccEvt.isRejectedStatus())
+                && (parameters.getDataSourceId() == null || Objects.equals(parameters.getDataSourceId(), ccEvt.getDataSourceId()));
+    }
+
+    /**
+     * Handles fetching and paging of credit cards by bin.
+     */
+    public static class CreditCardByBinFetcher extends DAOFetcher<CreditCardBinSearchParams> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public CreditCardByBinFetcher(CreditCardBinSearchParams params) {
+            super(params);
+        }
+
+        protected CreditCardDAO getDAO() {
+            return MainDAO.getInstance().getCreditCardDAO();
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getCreditCardByBin(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        }
+
+        @Override
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return getDAO().isRefreshRequired(this.getParameters(), evt);
+        }
+    }
+
+    /**
+     * Handles fetching and paging of credit cards by file.
+     */
+    public static class CreditCardByFileFetcher extends DAOFetcher<CreditCardFileSearchParams> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public CreditCardByFileFetcher(CreditCardFileSearchParams params) {
+            super(params);
+        }
+
+        protected CreditCardDAO getDAO() {
+            return MainDAO.getInstance().getCreditCardDAO();
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getCreditCardByFile(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        }
+
+        @Override
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return getDAO().isRefreshRequired(this.getParameters(), evt);
+        }
     }
 }
