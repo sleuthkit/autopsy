@@ -268,7 +268,33 @@ public final class ActionsFactory {
                     Bundle.ActionsFactory_getTimelineSrcContentAction_actionDisplayName(
                             getContentTypeStr(srcContentOptional.get()))));
         }
+        
+        Optional<ActionGroup> optionalGroup = getViewResultArtifactActions(actionContext);
+        if(optionalGroup.isPresent()) {
+            group.addAll(optionalGroup.get());
+        }
 
+        return group.isEmpty() ? Optional.empty() : Optional.of(group);
+    }
+    
+    @Messages({
+        "ActionFactory_getViewResultArtifactActions_result_text=View Source Result",
+        "ActionFactory_getViewResultArtifactActions_timeline_text=View Source Result in Timeline..."
+    })
+    private static Optional<ActionGroup> getViewResultArtifactActions(ActionContext actionContext) {
+        ActionGroup group = new ActionGroup();
+        
+        if(actionContext.supportsResultArtifactAction()) {
+            Optional<BlackboardArtifact> optional = actionContext.getArtifact();
+            if(optional.isPresent()) {
+                group.add(new ViewArtifactAction(
+                        optional.get(),
+                        Bundle.ActionFactory_getViewResultArtifactActions_result_text()));
+                
+                group.add(new ViewArtifactInTimelineAction(optional.get(), Bundle.ActionFactory_getViewResultArtifactActions_timeline_text()));
+            }
+        }
+        
         return group.isEmpty() ? Optional.empty() : Optional.of(group);
     }
 
@@ -385,7 +411,7 @@ public final class ActionsFactory {
                         sourceContent.get()));
             }
         }
-
+    
         return Optional.empty();
     }
 

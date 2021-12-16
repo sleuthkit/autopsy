@@ -1,3 +1,5 @@
+ActionFactory_getViewResultArtifactActions_result_text=View Source Result
+ActionFactory_getViewResultArtifactActions_timeline_text=View Source Result in Timeline...
 ActionFactory_getViewSrcContentAction_type_DataArtifact=Data Artifact
 ActionFactory_getViewSrcContentAction_type_File=File
 ActionFactory_getViewSrcContentAction_type_OSAccount=OS Account
@@ -18,3 +20,5 @@ ActionsFactory_getTimelineSrcContentAction_actionDisplayName=View Source {0} in 
 ActionsFactory_viewFileInDir_text=View File in Directory
 # {0} - contentType
 ArtifactFactory_getViewSrcContentAction_displayName=View Source {0} in Directory
+# {0} - contentType
+ArtifactFactory_getViewSrcContentAction_displayName2=View Source {0}
