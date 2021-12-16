@@ -18,14 +18,19 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import com.google.common.collect.ImmutableList;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardBinSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.EmailSearchParams;
@@ -35,6 +40,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -426,4 +432,92 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
     }
 
+    /**
+     * A node for the root credit card node.
+     */
+    static class CreditCardRootNode extends TreeNode<CommAccountsSearchParams> {
+
+        public CreditCardRootNode(TreeResultsDTO.TreeItemDTO<? extends CommAccountsSearchParams> itemData) {
+            super(Account.Type.CREDIT_CARD.getDisplayName(),
+                    Accounts.getIconFilePath(Account.Type.CREDIT_CARD),
+                    itemData,
+                    Children.create(new CreditCardTypeChildren(itemData.getSearchParams().getDataSourceId()), true),
+                    getDefaultLookup(itemData));
+        }
+
+    }
+//
+//        /**
+//         * Main constructor.
+//         *
+//         * @param itemData The data to display.
+//         */
+//        public EmailAccountTypeNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
+//            super(itemData.getSearchParams().getAccount(),
+//                    "org/sleuthkit/autopsy/images/account-icon-16.png",
+//                    itemData,
+//                    Children.create(new EmailFolderTypeFactory(itemData.getSearchParams().getAccount(), itemData.getSearchParams().getDataSourceId()), true),
+//                    getDefaultLookup(itemData)
+//            );
+//
+//        }
+//    }
+
+    /**
+     * 'File Types' children in the tree.
+     */
+    public static class CreditCardTypeChildren extends TreeChildFactory<CreditCardSearchParams> {
+
+        private final Long dataSourceId;
+
+        CreditCardTypeChildren(Long dataSourceId) {
+            this.dataSourceId = dataSourceId;
+        }
+
+        private CreditCardDAO getDAO() {
+            return MainDAO.getInstance().getCreditCardDAO();
+        }
+
+        @Override
+        protected TreeResultsDTO<? extends CreditCardSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
+            return getDAO().getCreditCardCounts(dataSourceId, true);
+        }
+
+        @Override
+        protected TreeNode<CreditCardSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends CreditCardSearchParams> rowData) {
+            return new EmailFolderTypeNode(rowData);
+        }
+
+        @Override
+        protected TreeItemDTO<? extends CreditCardSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+
+            TreeItemDTO<EmailSearchParams> originalTreeItem = getTypedTreeItem(treeEvt, EmailSearchParams.class);
+
+            if (originalTreeItem != null
+                    && Objects.equals(this.account, originalTreeItem.getSearchParams().getAccount())
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+                EmailSearchParams originalSearchParam = originalTreeItem.getSearchParams();
+                return getDAO().createEmailTreeItem(
+                        originalSearchParam.getAccount(),
+                        originalSearchParam.getFolder(),
+                        getDAO().getFolderDisplayName(originalSearchParam.getFolder()),
+                        dataSourceId,
+                        originalTreeItem.getDisplayCount());
+            }
+
+            return null;
+        }
+
+        @Override
+        public int compare(TreeItemDTO<? extends CreditCardSearchParams> o1, TreeItemDTO<? extends CreditCardSearchParams> o2) {
+            boolean firstDown = o1.getSearchParams().getFolder() == null;
+            boolean secondDown = o2.getSearchParams().getFolder() == null;
+
+            if (firstDown == secondDown) {
+                return o1.getSearchParams().getFolder().compareToIgnoreCase(o2.getSearchParams().getFolder());
+            } else {
+                return Boolean.compare(firstDown, secondDown);
+            }
+        }
+    }
 }

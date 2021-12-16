@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -222,7 +223,7 @@ public class CreditCardDAO extends AbstractDAO {
     @Messages({
         "CreditCardDAO_getCreditCardCounts_byFile_displayName=By File",
         "CreditCardDAO_getCreditCardCounts_byBIN_displayName=By BIN",})
-    public TreeResultsDTO<CreditCardSearchParams> getCreditCardCounts(Long dataSourceId, boolean includeRejected) throws NoCurrentCaseException, TskCoreException, IllegalStateException {
+    public TreeResultsDTO<CreditCardSearchParams> getCreditCardCounts(Long dataSourceId, boolean includeRejected) throws IllegalArgumentException, ExecutionException {
         String countsQuery = "\n  COUNT(DISTINCT(art.obj_id)) AS file_count,\n"
                 + "  COUNT(DISTINCT(art.artifact_id)) AS bin_count\n"
                 + " FROM blackboard_artifacts art\n"
@@ -235,28 +236,32 @@ public class CreditCardDAO extends AbstractDAO {
         boolean isIndeterminate = !this.creditCardTreeCounts.getEnqueued().isEmpty();
 
         List<TreeItemDTO<CreditCardSearchParams>> items = new ArrayList<>();
-        getCase().getCaseDbAccessManager().select(countsQuery, (resultSet) -> {
-            try {
-                if (resultSet.next()) {
-                    items.add(new TreeItemDTO<>(
-                            CreditCardSearchParams.getTypeId(),
-                            new CreditCardFileSearchParams(includeRejected, dataSourceId),
-                            CreditCardFileSearchParams.getTypeId(),
-                            Bundle.CreditCardDAO_getCreditCardCounts_byFile_displayName(),
-                            isIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("file_count"))));
-
-                    items.add(new TreeItemDTO<>(
-                            CreditCardSearchParams.getTypeId(),
-                            new CreditCardBinSearchParams(null, includeRejected, dataSourceId),
-                            CreditCardBinSearchParams.getTypeId(),
-                            Bundle.CreditCardDAO_getCreditCardCounts_byBIN_displayName(),
-                            isIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("bin_count"))));
-
+        try {
+            getCase().getCaseDbAccessManager().select(countsQuery, (resultSet) -> {
+                try {
+                    if (resultSet.next()) {
+                        items.add(new TreeItemDTO<>(
+                                CreditCardSearchParams.getTypeId(),
+                                new CreditCardFileSearchParams(includeRejected, dataSourceId),
+                                CreditCardFileSearchParams.getTypeId(),
+                                Bundle.CreditCardDAO_getCreditCardCounts_byFile_displayName(),
+                                isIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("file_count"))));
+                        
+                        items.add(new TreeItemDTO<>(
+                                CreditCardSearchParams.getTypeId(),
+                                new CreditCardBinSearchParams(null, includeRejected, dataSourceId),
+                                CreditCardBinSearchParams.getTypeId(),
+                                Bundle.CreditCardDAO_getCreditCardCounts_byBIN_displayName(),
+                                isIndeterminate ? TreeDisplayCount.INDETERMINATE : TreeDisplayCount.getDeterminate(resultSet.getLong("bin_count"))));
+                        
+                    }
+                } catch (SQLException ex) {
+                    throw new IllegalStateException("An exception occurred while fetching counts.", ex);
                 }
-            } catch (SQLException ex) {
-                throw new IllegalStateException("An Exception occurred while fetching counts.", ex);
-            }
-        });
+            });
+        } catch (NoCurrentCaseException | TskCoreException | IllegalStateException ex) {
+            throw new ExecutionException("An error occurred while fetching counts.", ex);
+        }
 
         return new TreeResultsDTO<>(items);
     }
