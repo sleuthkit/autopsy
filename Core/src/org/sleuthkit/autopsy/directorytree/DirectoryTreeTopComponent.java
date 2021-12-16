@@ -91,6 +91,8 @@ import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
+import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.MimeParentNode;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -1394,8 +1396,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             return;
         }
 
-        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
-        undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
+//        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
+//        undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
+
+        if(treeNode instanceof TreeNode) {
+            ((TreeNode)treeNode).setNodeSelectionInfo(new BlackboardArtifactNodeSelectionInfo(art));
+        }
+
         getTree().expandNode(treeNode);
         if (this.getSelectedNode().equals(treeNode)) {
             this.setDirectoryListingActive();
