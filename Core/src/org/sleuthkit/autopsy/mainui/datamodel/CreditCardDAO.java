@@ -109,7 +109,7 @@ public class CreditCardDAO extends AbstractDAO {
     private static String getConcatAggregate(DbType dbType, String field) {
         switch (dbType) {
             case POSTGRESQL:
-                return MessageFormat.format("STRING_AGG({0}::character varying, ',')", field);
+                return MessageFormat.format("STRING_AGG({0}::character varying, '','')", field);
             case SQLITE:
                 return MessageFormat.format("GROUP_CONCAT({0})", field);
             default:
@@ -137,8 +137,8 @@ public class CreditCardDAO extends AbstractDAO {
                 + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n")
                 + "GROUP BY art.obj_id, solr_doc.value_text\n";
 
-        String countQuery = "COUNT(*) AS count\n "
-                + baseFromAndGroupSql;
+        String countQuery = "COUNT(*) AS count FROM (SELECT COUNT(*)\n "
+                + baseFromAndGroupSql + ") q";
 
         AtomicLong atomicCount = new AtomicLong(0);
         getCase().getCaseDbAccessManager().select(countQuery, (resultSet) -> {
@@ -278,8 +278,8 @@ public class CreditCardDAO extends AbstractDAO {
         return new TreeItemDTO<>(
                 CreditCardBinSearchParams.getTypeId(),
                 new CreditCardBinSearchParams(binPrefix, includeRejected, dataSourceId),
-                CreditCardBinSearchParams.getTypeId(),
-                Bundle.CreditCardDAO_getCreditCardCounts_byBIN_displayName(),
+                StringUtils.isBlank(binPrefix) ? CreditCardBinSearchParams.getTypeId() : binPrefix,
+                StringUtils.isBlank(binPrefix) ? Bundle.CreditCardDAO_getCreditCardCounts_byBIN_displayName() : binPrefix,
                 displayCount);
     }
 
@@ -305,8 +305,7 @@ public class CreditCardDAO extends AbstractDAO {
                 + "AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_CARD_NUMBER.getTypeID() + "\n"
                 + (dataSourceId == null ? "" : "AND art.data_source_obj_id = ?\n")
                 + (includeRejected ? "" : "AND art.review_status_id <> " + BlackboardArtifact.ReviewStatus.REJECTED.getID() + "\n")
-                + "AND attr.value_text LIKE ? ESCAPE '" + LIKE_ESCAPE_CHAR + "'\n"
-                + "ORDER BY art.artifact_id\n";
+                + "AND attr.value_text LIKE ? ESCAPE '" + LIKE_ESCAPE_CHAR + "'\n";
 
         String countQuery = "COUNT(DISTINCT(art.artifact_id)) AS count\n"
                 + baseQuery;
@@ -339,6 +338,7 @@ public class CreditCardDAO extends AbstractDAO {
             String pagedIdQuery = "art.artifact_id AS artifact_id\n"
                     + baseQuery
                     + "GROUP BY art.artifact_id\n"
+                    + "ORDER BY art.artifact_id\n"
                     + (maxCount == null ? "" : "LIMIT ?\n")
                     + "OFFSET ?\n";
 
@@ -523,14 +523,15 @@ public class CreditCardDAO extends AbstractDAO {
             }
         }
 
-        Stream<TreeEvent> treeEvents = this.creditCardTreeCounts.enqueueAll(events).stream()
+        List<TreeEvent> treeEvents = this.creditCardTreeCounts.enqueueAll(events).stream()
                 .flatMap(daoEvt -> {
                     List<TreeItemDTO<CreditCardSearchParams>> treeItems = createTreeItems(daoEvt, TreeDisplayCount.INDETERMINATE);
                     return treeItems.stream().map(item -> new TreeEvent(item, false));
-                });
+                })
+                .collect(Collectors.toList());
 
-        return Stream.of(events.stream(), treeEvents)
-                .flatMap(s -> s)
+        return Stream.of(events, treeEvents)
+                .flatMap(s -> s.stream())
                 .collect(Collectors.toSet());
     }
 

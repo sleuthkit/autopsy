@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public class CreditCardByFileRowDTO extends BaseRowDTO {
 
     private static ColumnKey getColumnKey(String displayName) {
-        return new ColumnKey(displayName, displayName.toUpperCase().replaceAll("\\s", "_"), "");
+        return new ColumnKey(displayName.toUpperCase().replaceAll("\\s", "_"), displayName, "");
     }
 
     static List<ColumnKey> COLUMNS = ImmutableList.of(
