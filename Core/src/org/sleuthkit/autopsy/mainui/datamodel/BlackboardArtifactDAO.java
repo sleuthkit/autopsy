@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -157,7 +158,7 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
         for (BlackboardArtifact art : arts) {
             Map<BlackboardAttribute.Type, Object> attrs = art.getAttributes().stream()
                     .filter(attr -> isRenderedAttr(artType, attr.getAttributeType()))
-                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(artType, attr), (attr1, attr2) -> attr1));
+                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(artType, attr), (attr1, attr2) -> attr1, LinkedHashMap::new));
 
             artifactAttributes.put(art.getId(), attrs);
         }
@@ -166,7 +167,6 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
         List<BlackboardAttribute.Type> attributeTypeKeys = artifactAttributes.values().stream()
                 .flatMap(attrs -> attrs.keySet().stream())
                 .distinct()
-                .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
 
         List<ColumnKey> columnKeys = new ArrayList<>();
