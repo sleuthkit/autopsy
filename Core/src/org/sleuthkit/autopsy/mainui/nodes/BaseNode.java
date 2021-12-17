@@ -123,7 +123,7 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
                     /*
                      * The case has been closed.
                      */
-//                    unregisterListener();
+                    unregisterListeners();
                 }
             }
         }
@@ -157,6 +157,10 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
             weakListener = WeakListeners.propertyChange(listener, null);
             Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
         }
+    }
+    
+    private void unregisterListeners() {
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakListener);
     }
 
     /**
