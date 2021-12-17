@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordSearchTermParams;
-import org.sleuthkit.autopsy.mainui.datamodel.KeywordMatchParams;
 import com.google.common.collect.ImmutableSet;
 import java.util.Comparator;
 import java.util.Objects;
@@ -211,7 +210,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                 return new TreeResultsDTO.TreeItemDTO<>(
                         AnalysisResultSetSearchParam.getTypeId(),
                         new AnalysisResultSetSearchParam(this.artifactType, this.dataSourceId, searchParam.getSetName()),
-                        searchParam.getSetName(),
+                        searchParam.getSetName() == null ? 0 : searchParam.getSetName(),
                         searchParam.getSetName() == null ? nullSetName : searchParam.getSetName(),
                         originalTreeItem.getDisplayCount());
             }
@@ -320,13 +319,13 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
                 KeywordSearchTermParams searchParam = originalTreeItem.getSearchParams();
                 String searchTermDisplayName = MainDAO.getInstance().getAnalysisResultDAO()
-                        .getSearchTermDisplayName(searchParam.getSearchTerm(), searchParam.getSearchType());
+                        .getSearchTermDisplayName(searchParam.getRegex(), searchParam.getSearchType());
 
                 return new TreeResultsDTO.TreeItemDTO<>(
                         KeywordSearchTermParams.getTypeId(),
                         new KeywordSearchTermParams(
                                 this.setParams.getSetName(),
-                                searchParam.getSearchTerm(),
+                                searchParam.getRegex(),
                                 searchParam.getSearchType(),
                                 searchParam.hasChildren(),
                                 this.setParams.getDataSourceId()
@@ -341,7 +340,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public int compare(TreeItemDTO<? extends KeywordSearchTermParams> o1, TreeItemDTO<? extends KeywordSearchTermParams> o2) {
-            return STRING_COMPARATOR.compare(o1.getSearchParams().getSearchTerm(), o2.getSearchParams().getSearchTerm());
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getRegex(), o2.getSearchParams().getRegex());
         }
 
     }
@@ -357,13 +356,13 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param itemData The data for the search term.
          */
         public KeywordSearchTermNode(TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> itemData) {
-            super(itemData.getSearchParams().getSearchTerm(),
+            super(itemData.getSearchParams().getRegex(),
                     getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT),
                     itemData,
-                    (itemData.getSearchParams().hasChildren() || itemData.getSearchParams().getSearchType() == TskData.KeywordSearchQueryType.REGEX 
-                            // for regex queries always create a subtree, even if there is only one child
-                            ? Children.create(new KeywordFoundMatchFactory(itemData.getSearchParams()), true) 
-                            : Children.LEAF),
+                    (itemData.getSearchParams().hasChildren() || itemData.getSearchParams().getSearchType() == TskData.KeywordSearchQueryType.REGEX
+                    // for regex queries always create a subtree, even if there is only one child
+                    ? Children.create(new KeywordFoundMatchFactory(itemData.getSearchParams()), true)
+                    : Children.LEAF),
                     getDefaultLookup(itemData));
         }
 
@@ -373,10 +372,12 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
             if (!searchTermParams.hasChildren()) {
                 KeywordHitSearchParam searchParams = new KeywordHitSearchParam(searchTermParams.getDataSourceId(),
-                            searchTermParams.getSetName(),
-                            searchTermParams.getSearchTerm(),
-                            null,
-                            searchTermParams.getSearchType());
+                        searchTermParams.getSetName(),
+                        // if literal, keyword is regex
+                        TskData.KeywordSearchQueryType.LITERAL.equals(searchTermParams.getSearchType()) ? searchTermParams.getRegex() : null,
+                        // if literal, no regex
+                        TskData.KeywordSearchQueryType.LITERAL.equals(searchTermParams.getSearchType()) ? null : searchTermParams.getRegex(),
+                        searchTermParams.getSearchType());
                 dataResultPanel.displayKeywordHits(searchParams);
             } else {
                 super.respondSelection(dataResultPanel);
@@ -389,9 +390,9 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
      * A factory for found keyword matches based on the search term (for
      * regex/substring).
      */
-    public static class KeywordFoundMatchFactory extends TreeChildFactory<KeywordMatchParams> {
+    public static class KeywordFoundMatchFactory extends TreeChildFactory<KeywordHitSearchParam> {
 
-        private final KeywordSearchTermParams setParams;
+        private final KeywordSearchTermParams searchTermParams;
 
         /**
          * Main constructor.
@@ -399,45 +400,47 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param params The search term parameters.
          */
         public KeywordFoundMatchFactory(KeywordSearchTermParams params) {
-            this.setParams = params;
+            this.searchTermParams = params;
         }
 
         @Override
-        protected TreeNode<KeywordMatchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> rowData) {
+        protected TreeNode<KeywordHitSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends KeywordHitSearchParam> rowData) {
             return new KeywordFoundMatchNode(rowData);
         }
 
         @Override
-        protected TreeResultsDTO<? extends KeywordMatchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
+        protected TreeResultsDTO<? extends KeywordHitSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
             return MainDAO.getInstance().getAnalysisResultDAO().getKeywordMatchCounts(
-                    this.setParams.getSetName(),
-                    this.setParams.getSearchTerm(),
-                    this.setParams.getSearchType(),
-                    this.setParams.getDataSourceId());
+                    this.searchTermParams.getSetName(),
+                    this.searchTermParams.getRegex(),
+                    this.searchTermParams.getSearchType(),
+                    this.searchTermParams.getDataSourceId());
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
-            TreeResultsDTO.TreeItemDTO<KeywordMatchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, KeywordMatchParams.class);
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordHitSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<KeywordHitSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, KeywordHitSearchParam.class);
 
             if (originalTreeItem != null
-                    && Objects.equals(originalTreeItem.getSearchParams().getSetName(), this.setParams.getSetName())
-                    && (this.setParams.getDataSourceId() == null
-                    || Objects.equals(this.setParams.getDataSourceId(), originalTreeItem.getSearchParams().getDataSourceId()))) {
+                    && Objects.equals(originalTreeItem.getSearchParams().getRegex(), this.searchTermParams.getRegex())
+                    && Objects.equals(originalTreeItem.getSearchParams().getSearchType(), this.searchTermParams.getSearchType())
+                    && Objects.equals(originalTreeItem.getSearchParams().getSetName(), this.searchTermParams.getSetName())
+                    && (this.searchTermParams.getDataSourceId() == null
+                    || Objects.equals(this.searchTermParams.getDataSourceId(), originalTreeItem.getSearchParams().getDataSourceId()))) {
 
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
-                KeywordMatchParams searchParam = originalTreeItem.getSearchParams();
+                KeywordHitSearchParam searchParam = originalTreeItem.getSearchParams();
                 return new TreeResultsDTO.TreeItemDTO<>(
-                        KeywordMatchParams.getTypeId(),
-                        new KeywordMatchParams(
-                                this.setParams.getSetName(),
-                                this.setParams.getSearchTerm(),
-                                searchParam.getKeywordMatch(),
-                                this.setParams.getSearchType(),
-                                this.setParams.getDataSourceId()
+                        KeywordHitSearchParam.getTypeId(),
+                        new KeywordHitSearchParam(
+                                this.searchTermParams.getDataSourceId(),
+                                this.searchTermParams.getSetName(),
+                                searchParam.getKeyword(),
+                                this.searchTermParams.getRegex(),
+                                this.searchTermParams.getSearchType()
                         ),
-                        searchParam.getKeywordMatch(),
-                        searchParam.getKeywordMatch() == null ? "" : searchParam.getKeywordMatch(),
+                        searchParam.getKeyword() == null ? "" : searchParam.getKeyword(),
+                        searchParam.getKeyword() == null ? "" : searchParam.getKeyword(),
                         originalTreeItem.getDisplayCount()
                 );
             }
@@ -445,8 +448,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        public int compare(TreeItemDTO<? extends KeywordMatchParams> o1, TreeItemDTO<? extends KeywordMatchParams> o2) {
-            return STRING_COMPARATOR.compare(o1.getSearchParams().getKeywordMatch(), o2.getSearchParams().getKeywordMatch());
+        public int compare(TreeItemDTO<? extends KeywordHitSearchParam> o1, TreeItemDTO<? extends KeywordHitSearchParam> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getKeyword(), o2.getSearchParams().getKeyword());
         }
     }
 
@@ -454,15 +457,15 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
      * A node signifying a match for a specific keyword given a regex/substring
      * search term.
      */
-    static class KeywordFoundMatchNode extends TreeNode<KeywordMatchParams> {
+    static class KeywordFoundMatchNode extends TreeNode<KeywordHitSearchParam> {
 
         /**
          * Main constructor.
          *
          * @param itemData The data for the match parameters.
          */
-        public KeywordFoundMatchNode(TreeResultsDTO.TreeItemDTO<? extends KeywordMatchParams> itemData) {
-            super(itemData.getSearchParams().getKeywordMatch(),
+        public KeywordFoundMatchNode(TreeResultsDTO.TreeItemDTO<? extends KeywordHitSearchParam> itemData) {
+            super(itemData.getSearchParams().getKeyword(),
                     getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT),
                     itemData,
                     Children.LEAF,
@@ -471,13 +474,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            KeywordMatchParams searchParams = this.getItemData().getSearchParams();
-            dataResultPanel.displayKeywordHits(new KeywordHitSearchParam(
-                    searchParams.getDataSourceId(),
-                    searchParams.getSetName(),
-                    searchParams.getKeywordMatch(),
-                    searchParams.getSearchTerm(),
-                    searchParams.getSearchType()));
+            dataResultPanel.displayKeywordHits(this.getItemData().getSearchParams());
         }
 
     }

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
@@ -28,6 +29,10 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
  */
 abstract class AbstractDAO {
 
+    static final int CACHE_SIZE = 5;
+    static final long CACHE_DURATION = 5;
+    static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
+    
     /**
      * Clear any cached data (Due to change in view).
      */

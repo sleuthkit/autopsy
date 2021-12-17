@@ -33,7 +33,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,6 +45,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_SIZE;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
@@ -69,15 +71,13 @@ import org.sleuthkit.datamodel.TskData;
 public class EmailsDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(EmailsDAO.class.getName());
-    private static final int CACHE_SIZE = 15;
-    private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
 
     private static final String PATH_DELIMITER = "/";
     private static final String ESCAPE_CHAR = "\\";
 
-    private final Cache<SearchParams<EmailSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-
+    private final Cache<SearchParams<EmailSearchParams>, SearchResultsDTO> searchParamsCache = 
+            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    
     private final TreeCounts<EmailEvent> emailCounts = new TreeCounts<>();
 
     private static EmailsDAO instance = null;
