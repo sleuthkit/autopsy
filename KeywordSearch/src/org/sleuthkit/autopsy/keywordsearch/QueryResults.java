@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -194,7 +193,7 @@ class QueryResults {
                     /*
                      * Post an artifact for the hit to the blackboard.
                      */
-                    BlackboardArtifact artifact = query.createKeywordHitArtifact(content, keyword, hit, snippet, query.getKeywordList().getName());
+                    BlackboardArtifact artifact = query.createKeywordHitArtifact(content, keyword, hit, snippet, query.getKeywordList().getName(), ingestJobId);
 
                     /*
                      * Send an ingest inbox message for the hit.
