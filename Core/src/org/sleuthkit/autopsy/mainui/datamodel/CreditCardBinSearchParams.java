@@ -36,6 +36,15 @@ public class CreditCardBinSearchParams extends CreditCardSearchParams {
 
     private final String binPrefix;
 
+    /**
+     * Main constructor.
+     *
+     * @param binPrefix       The bin prefix of the credit card.
+     * @param includeRejected Whether or not to include rejected items in search
+     *                        results.
+     * @param dataSourceId    The data source id or null for no data source
+     *                        filtering.
+     */
     public CreditCardBinSearchParams(String binPrefix, boolean includeRejected, Long dataSourceId) {
         super(includeRejected, dataSourceId);
         this.binPrefix = binPrefix;

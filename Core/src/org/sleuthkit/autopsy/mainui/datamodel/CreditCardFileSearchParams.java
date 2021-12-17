@@ -31,8 +31,16 @@ public class CreditCardFileSearchParams extends CreditCardSearchParams {
     public static String getTypeId() {
         return TYPE_ID;
     }
-    
+
+    /**
+     * Main constructor.
+     *
+     * @param includeRejected Whether or not to include rejected items in search
+     *                        results.
+     * @param dataSourceId    The data source id or null for no data source
+     *                        filtering.
+     */
     public CreditCardFileSearchParams(boolean includeRejected, Long dataSourceId) {
         super(includeRejected, dataSourceId);
-    }   
+    }
 }

@@ -36,6 +36,14 @@ public class CreditCardSearchParams extends DataArtifactSearchParam {
 
     private final boolean rejectedIncluded;
 
+    /**
+     * Main constructor.
+     *
+     * @param includeRejected Whether or not to include rejected items in search
+     *                        results.
+     * @param dataSourceId    The data source id or null for no data source
+     *                        filtering.
+     */
     public CreditCardSearchParams(boolean rejectedIncluded, Long dataSourceId) {
         super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
         this.rejectedIncluded = rejectedIncluded;
@@ -70,5 +78,4 @@ public class CreditCardSearchParams extends DataArtifactSearchParam {
         return true;
     }
 
-    
 }

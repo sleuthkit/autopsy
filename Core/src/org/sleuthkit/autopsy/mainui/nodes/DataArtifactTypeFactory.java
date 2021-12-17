@@ -18,11 +18,9 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import com.google.common.collect.ImmutableList;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
@@ -219,9 +217,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
             if (Objects.equals(Account.Type.CREDIT_CARD, rowData.getSearchParams().getType())) {
                 return new CreditCardRootNode(rowData);
             } else {
-                return new AccountTypeNode(rowData);    
+                return new AccountTypeNode(rowData);
             }
-            
+
         }
 
         @Override
@@ -443,7 +441,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     }
 
     /**
-     * A node for the root credit card node.
+     * The root credit card node.
      */
     static class CreditCardRootNode extends TreeNode<CommAccountsSearchParams> {
 
@@ -457,7 +455,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
     }
 
-    
+    /**
+     * The children underneath the root credit card node (By File, By Bin).
+     */
     static class CreditCardTypeChildren extends TreeChildFactory<CreditCardSearchParams> {
 
         private final Long dataSourceId;
@@ -515,6 +515,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
     }
 
+    /**
+     * The tree credit card by file node.
+     */
     static class CreditCardByFileNode extends TreeNode<CreditCardSearchParams> {
 
         CreditCardByFileNode(TreeItemDTO<? extends CreditCardSearchParams> rowData) {
@@ -530,6 +533,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
     }
 
+    /**
+     * The root node for credit cards by bin.
+     */
     static class CreditCardByBinParentNode extends TreeNode<CreditCardSearchParams> {
 
         CreditCardByBinParentNode(TreeResultsDTO.TreeItemDTO<? extends CreditCardSearchParams> rowData) {
@@ -541,6 +547,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
     }
 
+    /**
+     * Factory for credit card bin prefixes.
+     */
     static class CreditCardByBinFactory extends TreeChildFactory<CreditCardBinSearchParams> {
 
         private final Long dataSourceId;
@@ -590,6 +599,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
     }
 
+    /**
+     * A bin prefix credit card node.
+     */
     static class CreditCardByBinNode extends TreeNode<CreditCardBinSearchParams> {
 
         CreditCardByBinNode(TreeResultsDTO.TreeItemDTO<? extends CreditCardBinSearchParams> rowData) {

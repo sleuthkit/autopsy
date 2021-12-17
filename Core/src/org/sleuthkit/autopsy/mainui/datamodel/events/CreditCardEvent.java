@@ -29,6 +29,15 @@ public class CreditCardEvent extends DataArtifactEvent {
     private final String binPrefix;
     private final boolean rejectedStatus;
 
+    /**
+     * Main constructor.
+     *
+     * @param binPrefix       The bin prefix of the credit card.
+     * @param includeRejected Whether or not to include rejected items in search
+     *                        results.
+     * @param dataSourceId    The data source id or null for no data source
+     *                        filtering.
+     */
     public CreditCardEvent(String binPrefix, boolean rejectedStatus, long dataSourceId) {
         super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
         this.binPrefix = binPrefix;

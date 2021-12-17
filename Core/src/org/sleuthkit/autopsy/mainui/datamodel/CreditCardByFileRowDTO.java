@@ -51,7 +51,6 @@ public class CreditCardByFileRowDTO extends BaseRowDTO {
         return TYPE_ID;
     }
 
-    
     private final AbstractFile file;
     private final Set<BlackboardArtifact> associatedArtifacts;
     private final String fileName;
@@ -59,6 +58,16 @@ public class CreditCardByFileRowDTO extends BaseRowDTO {
     private final Set<BlackboardArtifact.ReviewStatus> statuses;
     private final String reviewStatusString;
 
+    /**
+     * Main constructor.
+     *
+     * @param file                The file where credit cards were found.
+     * @param associatedArtifacts The associated artifacts.
+     * @param fileName            The name of the file to display in columns.
+     * @param accounts            The number of accounts to display in columns.
+     * @param statuses            The associated statuses.
+     * @param reviewStatusString  The review status string to display.
+     */
     CreditCardByFileRowDTO(AbstractFile file, Set<BlackboardArtifact> associatedArtifacts, String fileName, long accounts,
             Set<BlackboardArtifact.ReviewStatus> statuses, String reviewStatusString) {
         super(ImmutableList.of(fileName, accounts, reviewStatusString), TYPE_ID, file.getId());
