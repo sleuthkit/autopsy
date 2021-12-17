@@ -572,7 +572,7 @@ final class RegexQuery implements KeywordSearchQuery {
      *         creating it.
      */
     @Override
-    public BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         if (content == null) {
@@ -584,7 +584,7 @@ final class RegexQuery implements KeywordSearchQuery {
          * Credit Card number hits are handled differently
          */
         if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-            createCCNAccount(content, foundKeyword, hit, snippet, listName);
+            createCCNAccount(content, foundKeyword, hit, snippet, listName, ingestJobId);
             return null;
         }
 
@@ -625,7 +625,7 @@ final class RegexQuery implements KeywordSearchQuery {
         }
     }
 
-    private void createCCNAccount(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    private void createCCNAccount(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
 
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
@@ -720,7 +720,7 @@ final class RegexQuery implements KeywordSearchQuery {
          * Create an account instance.
          */
         try {
-            AccountFileInstance ccAccountInstance = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString(), MODULE_NAME, content);
+            AccountFileInstance ccAccountInstance = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString(), MODULE_NAME, content, ingestJobId);
 
             ccAccountInstance.addAttributes(attributes);
 
