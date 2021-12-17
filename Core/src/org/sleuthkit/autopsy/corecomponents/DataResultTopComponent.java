@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.EmailSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
@@ -402,6 +403,16 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      */
     public void displayDeletedContent(DeletedContentSearchParams deletedSearchParams) {
         dataResultPanel.displayDeletedContent(deletedSearchParams);
+    }
+
+    /**
+     * Displays results of querying the DAO for demails matching the
+     * search parameters query.
+     *
+     * @param dataArtifactParams The search parameter query.
+     */    
+    public void displayEmailMessages(EmailSearchParams searchParams) {
+        dataResultPanel.displayEmailMessages(searchParams);
     }
 
     /**

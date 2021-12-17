@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -152,11 +153,14 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
       
 
     TableData createTableData(BlackboardArtifact.Type artType, List<BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
-        Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();
+        // A linked hashmap is being used for artifactAttributes to ensure that artifact order 
+        // as well as attribute orders within those artifacts are preserved.  This is to maintain
+        // a consistent ordering of attribute columns as received from BlackboardArtifact.getAttributes
+        Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new LinkedHashMap<>();
         for (BlackboardArtifact art : arts) {
             Map<BlackboardAttribute.Type, Object> attrs = art.getAttributes().stream()
                     .filter(attr -> isRenderedAttr(artType, attr.getAttributeType()))
-                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(artType, attr), (attr1, attr2) -> attr1));
+                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(artType, attr), (attr1, attr2) -> attr1, LinkedHashMap::new));
 
             artifactAttributes.put(art.getId(), attrs);
         }
@@ -165,7 +169,6 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
         List<BlackboardAttribute.Type> attributeTypeKeys = artifactAttributes.values().stream()
                 .flatMap(attrs -> attrs.keySet().stream())
                 .distinct()
-                .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
 
         List<ColumnKey> columnKeys = new ArrayList<>();

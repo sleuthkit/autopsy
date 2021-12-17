@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public class ViewArtifactAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(ViewArtifactAction.class.getName());
+    private static final long serialVersionUID = 1L;
     private final BlackboardArtifact artifact;
 
     /**
@@ -50,12 +51,15 @@ public class ViewArtifactAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        // Moved this call outside the swingworker to prevent exceptions.
+        final DirectoryTreeTopComponent comp = DirectoryTreeTopComponent.findInstance();
+        
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         new SwingWorker<Void, Void>() {
 
             @Override
             protected Void doInBackground() throws Exception {
-                DirectoryTreeTopComponent.findInstance().viewArtifact(artifact);
+                comp.viewArtifact(artifact);
                 return null;
             }
 

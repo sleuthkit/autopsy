@@ -37,4 +37,6 @@ public class AnalysisResultSearchParam extends BlackboardArtifactSearchParam {
     public AnalysisResultSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
         super(artifactType, dataSourceId);
     }
+    
+    
 }

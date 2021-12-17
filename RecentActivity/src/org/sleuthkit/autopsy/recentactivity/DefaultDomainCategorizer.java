@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.url.analytics.DomainCategory;
 @SuppressWarnings("try")
 public class DefaultDomainCategorizer implements DomainCategorizer {
 
+    private static final String COMMENT_PREFIX = "#";
     private static final String CSV_DELIMITER = ",";
     private static final String DOMAIN_TYPE_CSV = "default_domain_categories.csv"; //NON-NLS
     private static final Logger logger = Logger.getLogger(DefaultDomainCategorizer.class.getName());
@@ -76,7 +77,7 @@ public class DefaultDomainCategorizer implements DomainCategorizer {
             int lineNum = 1;
             while (reader.ready()) {
                 String line = reader.readLine();
-                if (!StringUtils.isBlank(line)) {
+                if (!StringUtils.isBlank(line) && !line.startsWith(COMMENT_PREFIX)) {
                     addItem(mapping, line.trim(), lineNum);
                     lineNum++;
                 }
