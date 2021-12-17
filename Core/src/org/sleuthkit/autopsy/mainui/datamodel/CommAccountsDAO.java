@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,6 +42,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_SIZE;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.events.CommAccountsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
@@ -65,10 +67,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class CommAccountsDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(CommAccountsDAO.class.getName());
-    private static final int CACHE_SIZE = Account.Type.PREDEFINED_ACCOUNT_TYPES.size(); // number of cached SearchParams sub-types
-    private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<SearchParams<CommAccountsSearchParams>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<CommAccountsSearchParams>, SearchResultsDTO> searchParamsCache = 
+            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<CommAccountsEvent> accountCounts = new TreeCounts<>();
 
     private static CommAccountsDAO instance = null;
