@@ -154,7 +154,7 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
       
 
     TableData createTableData(BlackboardArtifact.Type artType, List<BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
-        Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();
+        Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new LinkedHashMap<>();
         for (BlackboardArtifact art : arts) {
             Map<BlackboardAttribute.Type, Object> attrs = art.getAttributes().stream()
                     .filter(attr -> isRenderedAttr(artType, attr.getAttributeType()))
