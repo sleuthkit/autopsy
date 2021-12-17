@@ -22,6 +22,7 @@ import com.google.common.annotations.Beta;
 import java.awt.Component;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.corecomponents.DataResultPanel.PagingControls;
 
 /**
  * An interface for result viewers. A result viewer uses a Swing Component to
@@ -126,6 +127,16 @@ public interface DataResultViewer {
      * preparation for permanently disposing of it.
      */
     default public void clearComponent() {
+    }
+    
+    /**
+     * Controls top level result paging in DataResultPanel. Allows result
+     * viewers to access and configure top level result paging.
+     *
+     * @param pagingControls
+     */
+    @Beta
+    default public void setPagingControls(PagingControls pagingControls) {
     }
 
     /**
