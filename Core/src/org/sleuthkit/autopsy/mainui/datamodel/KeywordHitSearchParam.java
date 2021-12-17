@@ -19,13 +19,13 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.datamodel.TskData;
 
 /**
  * Key for keyword hits in order to retrieve data from DAO.
  */
-public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
+public class KeywordHitSearchParam extends KeywordSearchTermParams {
 
     private static final String TYPE_ID = "KEYWORD_HIT";
 
@@ -41,7 +41,7 @@ public class KeywordHitSearchParam extends AnalysisResultSetSearchParam {
     private final TskData.KeywordSearchQueryType searchType;
     
     public KeywordHitSearchParam(Long dataSourceId, String setName, String keyword, String regex, TskData.KeywordSearchQueryType searchType) {
-        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName);
+        super(setName, regex, searchType, StringUtils.isNotBlank(keyword) && !Objects.equals(regex, keyword), dataSourceId);
         this.keyword = keyword;
         this.regex = regex;
         this.searchType = searchType;

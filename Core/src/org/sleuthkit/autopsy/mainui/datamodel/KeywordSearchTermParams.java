@@ -18,12 +18,14 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import java.util.Objects;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskData;
 
 /**
  * Parameters for a keyword search term.
  */
-public class KeywordSearchTermParams {
+public class KeywordSearchTermParams extends AnalysisResultSetSearchParam {
 
     private static final String TYPE_ID = "KEYWORD_SEARCH_TERMS";
 
@@ -34,10 +36,9 @@ public class KeywordSearchTermParams {
         return TYPE_ID;
     }
 
-    private final String setName;
+
     private final String searchTerm;
-    private final boolean hasChildren;
-    private final Long dataSourceId;
+    private final Boolean hasChildren;
     private final TskData.KeywordSearchQueryType searchType;
 
     /**
@@ -52,24 +53,19 @@ public class KeywordSearchTermParams {
      * @param dataSourceId The data source id or null.
      */
     public KeywordSearchTermParams(String setName, String searchTerm, TskData.KeywordSearchQueryType searchType, boolean hasChildren, Long dataSourceId) {
-        this.setName = setName;
+        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName);
         this.searchTerm = searchTerm;
-        this.searchType = searchType;
         this.hasChildren = hasChildren;
-        this.dataSourceId = dataSourceId;
+        this.searchType = searchType;
     }
 
-    /**
-     * @return The set name.
-     */
-    public String getSetName() {
-        return setName;
-    }
 
+    
+    
     /**
      * @return The search term (determined from regex or keyword).
      */
-    public String getSearchTerm() {
+    public String getRegex() {
         return searchTerm;
     }
 
@@ -80,18 +76,42 @@ public class KeywordSearchTermParams {
     public boolean hasChildren() {
         return hasChildren;
     }
-
-    /**
-     * @return The data source id or null.
-     */
-    public Long getDataSourceId() {
-        return dataSourceId;
-    }
-
     /**
      * @return The keyword search type value.
      */
     public TskData.KeywordSearchQueryType getSearchType() {
         return searchType;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 47 * hash + Objects.hashCode(this.searchTerm);
+        hash = 47 * hash + Objects.hashCode(this.searchType);
+        hash = 47 * hash + super.hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final KeywordSearchTermParams other = (KeywordSearchTermParams) obj;
+        if (!Objects.equals(this.searchTerm, other.searchTerm)) {
+            return false;
+        }
+        if (this.searchType != other.searchType) {
+            return false;
+        }
+        return super.equals(obj);
+    }
+    
+    
 }
