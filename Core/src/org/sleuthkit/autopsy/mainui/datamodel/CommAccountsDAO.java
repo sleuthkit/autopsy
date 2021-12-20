@@ -144,7 +144,7 @@ public class CommAccountsDAO extends AbstractDAO {
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         List<BlackboardArtifact> allArtifacts = blackboard.getArtifacts(BlackboardArtifact.Type.TSK_ACCOUNT,
                 BlackboardAttribute.Type.TSK_ACCOUNT_TYPE, type.getTypeName(), dataSourceId,
-                false); // GVDTODO handle approved/rejected account actions
+                false);
 
         // get current page of artifacts
         List<BlackboardArtifact> pagedArtifacts = getPaged(allArtifacts, cacheKey);

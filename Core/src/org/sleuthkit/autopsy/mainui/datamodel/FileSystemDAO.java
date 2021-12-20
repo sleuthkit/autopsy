@@ -360,8 +360,6 @@ public class FileSystemDAO extends AbstractDAO {
         Content affectedParentContent = null;
         Host affectedParentHost = null;
 
-        // GVDTODO person parents and parent of persons not handled yet
-        // optional present but null indicates no person parent
         Optional<Person> affectedParentPerson = Optional.empty();
 
         boolean refreshAllContent = false;
@@ -391,9 +389,9 @@ public class FileSystemDAO extends AbstractDAO {
             affectedParentHost = host;
 
         } else if (evt instanceof HostsAddedEvent) {
-            // GVDTODO how best to handle host added?
+
         } else if (evt instanceof HostsUpdatedEvent) {
-            // GVDTODO how best to handle host updated?
+
         } else if (evt instanceof HostsAddedToPersonEvent) {
             Person person = ((HostsAddedToPersonEvent) evt).getPerson();
             affectedParentPerson = Optional.of(person);
@@ -594,9 +592,9 @@ public class FileSystemDAO extends AbstractDAO {
                     fullRefresh);
 
         } else if (daoEvent instanceof FileSystemHostEvent) {
-            // GVDTODO not currently integrated into tree
+
         } else if (daoEvent instanceof FileSystemPersonEvent) {
-            // GVDTODO not currently integrated into tree
+
         }
 
         return null;

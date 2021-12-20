@@ -226,7 +226,6 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
      * Unregister listeners for DAO events.
      */
     private void unregisterListeners() {
-        // GVDTODO this may not be necessary due to the weak listener's ability to unregister itself
         MainDAO.getInstance().getTreeEventsManager().removePropertyChangeListener(weakPcl);
     }
 

@@ -89,7 +89,7 @@ public class TagsDAO extends AbstractDAO {
 
     private static final List<ColumnKey> FILE_TAG_COLUMNS = Arrays.asList(
             getFileColumnKey(Bundle.TagsDAO_fileColumns_nameColLbl()),
-            getFileColumnKey(Bundle.TagsDAO_fileColumns_originalName()), // GVDTODO handle translation
+            getFileColumnKey(Bundle.TagsDAO_fileColumns_originalName()),
             getFileColumnKey(Bundle.TagsDAO_fileColumns_filePathColLbl()),
             getFileColumnKey(Bundle.TagsDAO_fileColumns_commentColLbl()),
             getFileColumnKey(Bundle.TagsDAO_fileColumns_modifiedTimeColLbl()),
@@ -215,7 +215,7 @@ public class TagsDAO extends AbstractDAO {
             }
 
             List<Object> cellValues = Arrays.asList(name,
-                    null, // GVDTODO translation column
+                    null,
                     contentPath,
                     blackboardTag.getArtifact().getDisplayName(),
                     blackboardTag.getComment(),
@@ -263,7 +263,7 @@ public class TagsDAO extends AbstractDAO {
 
             List<Object> cellValues = Arrays.asList(
                     content.getName(),
-                    null, // GVDTODO translation column
+                    null,
                     contentPath,
                     contentTag.getComment(),
                     file != null ? TimeZoneUtils.getFormattedTime(file.getMtime()) : "",
