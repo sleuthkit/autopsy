@@ -169,6 +169,7 @@ public class MainDAO extends AbstractDAO {
     private final TagsDAO tagsDAO = TagsDAO.getInstance();
     private final OsAccountsDAO osAccountsDAO = OsAccountsDAO.getInstance();
     private final CommAccountsDAO commAccountsDAO = CommAccountsDAO.getInstance();
+    private final CreditCardDAO creditCardDAO = CreditCardDAO.getInstance();
     private final EmailsDAO emailsDAO = EmailsDAO.getInstance();
 
     // NOTE: whenever adding a new sub-dao, it should be added to this list for event updates.
@@ -180,6 +181,7 @@ public class MainDAO extends AbstractDAO {
             tagsDAO,
             osAccountsDAO,
             commAccountsDAO,
+            creditCardDAO,
             emailsDAO);
 
     /**
@@ -246,6 +248,10 @@ public class MainDAO extends AbstractDAO {
     
     public EmailsDAO getEmailsDAO() {
         return emailsDAO;
+    }
+
+    public CreditCardDAO getCreditCardDAO() {
+        return creditCardDAO;
     }
 
     public PropertyChangeManager getResultEventsManager() {

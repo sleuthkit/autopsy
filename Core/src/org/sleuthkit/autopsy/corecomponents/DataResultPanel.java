@@ -39,6 +39,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
@@ -69,6 +70,11 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResult
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsDAO.CommAccountFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardBinSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardDAO.CreditCardByBinFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardDAO.CreditCardByFileFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardFileSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.CreditCardSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
@@ -1247,6 +1253,45 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
+     * Displays credit cards by bin number prefix.
+     *
+     * @param searchParams The search parameters.
+     */
+    void displayCreditCardsByBin(CreditCardBinSearchParams searchParams) {
+        try {
+            this.searchResultManager = new SearchManager(new CreditCardByBinFetcher(searchParams), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING,
+                    MessageFormat.format("There was an error displaying search results for [credit cards, data source id: {0}, bin prefix: {1}, show rejected: {2}]",
+                            searchParams.getDataSourceId() == null ? "<null>" : searchParams.getDataSourceId(),
+                            StringUtils.defaultString(searchParams.getBinPrefix(), "<null>"),
+                            searchParams.isRejectedIncluded()),
+                    ex);
+        }
+    }
+
+    /**
+     * Displays credit cards by file name.
+     *
+     * @param searchParams The search parameters.
+     */
+    void displayCreditCardsByFile(CreditCardFileSearchParams searchParams) {
+        try {
+            this.searchResultManager = new SearchManager(new CreditCardByFileFetcher(searchParams), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING,
+                    MessageFormat.format("There was an error displaying search results for [credit cards, data source id: {0}, show rejected: {1}]",
+                            searchParams.getDataSourceId() == null ? "<null>" : searchParams.getDataSourceId(),
+                            searchParams.isRejectedIncluded()),
+                    ex);
+        }
+    }
+
+    /**
      * Display results for querying the DAO for email messages matching the
      * search parameters query.
      *
@@ -1283,6 +1328,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     /**
      * Displays deleted content in the file views section.
+     *
      * @param deletedSearchParams The deleted content search params.
      */
     void displayDeletedContent(DeletedContentSearchParams deletedSearchParams) {

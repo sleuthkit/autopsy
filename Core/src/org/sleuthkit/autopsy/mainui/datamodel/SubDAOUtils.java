@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import com.google.common.cache.Cache;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -92,6 +93,22 @@ public class SubDAOUtils {
 
     /**
      * Returns a set of tree events gathered from the TreeCounts instance after
+     * calling flushEvents.
+     *
+     * @param treeCounts The tree counts instance.
+     * @param converter  The means of acquiring a list of tree item dtos to be placed in
+     *                   the TreeEvents.
+     *
+     * @return The generated tree events.
+     */
+    static <E, T> Set<TreeEvent> getIngestCompleteEventsFromList(TreeCounts<E> treeCounts, BiFunction<E, TreeDisplayCount, List<TreeItemDTO<T>>> converter) {
+        return treeCounts.flushEvents().stream()
+                .flatMap(daoEvt -> converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED).stream().map(item -> new TreeEvent(item, true)))
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns a set of tree events gathered from the TreeCounts instance after
      * calling getEventTimeouts.
      *
      * @param treeCounts The tree counts instance.
@@ -104,5 +121,40 @@ public class SubDAOUtils {
         return treeCounts.getEventTimeouts().stream()
                 .map(daoEvt -> new TreeEvent(converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED), true))
                 .collect(Collectors.toSet());
+    }
+    
+    /**
+     * Returns a set of tree events gathered from the TreeCounts instance after
+     * calling getEventTimeouts.
+     *
+     * @param treeCounts The tree counts instance.
+     * @param converter  The means of acquiring a tree item dtos to be placed in
+     *                   the TreeEvent.
+     *
+     * @return The generated tree events.
+     */
+    static <E, T> Set<TreeEvent> getRefreshEventsFromList(TreeCounts<E> treeCounts, BiFunction<E, TreeDisplayCount, List<TreeItemDTO<T>>> converter) {
+        return treeCounts.getEventTimeouts().stream()
+                .flatMap(daoEvt -> converter.apply(daoEvt, TreeDisplayCount.UNSPECIFIED).stream().map(item -> new TreeEvent(item , true)))
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Escape a string literal to be used in a like statement with a prepared
+     * statement.
+     *
+     * @param toBeEscaped The string to be escaped.
+     * @param escapeChar  The like escape character.
+     *
+     * @return The escaped string.
+     */
+    static String likeEscape(String toBeEscaped, String escapeChar) {
+        if (toBeEscaped == null) {
+            return "";
+        }
+
+        return toBeEscaped
+                .replaceAll("%", escapeChar + "%")
+                .replaceAll("_", escapeChar + "_");
     }
 }
