@@ -318,7 +318,7 @@ final class XRYMessagesFileParser implements XRYFileParser {
                         } else {
                             try {
                                 currentCase.getCommunicationsManager().createAccountFileInstance(
-                                        Account.Type.PHONE, pair.getValue(), PARSER_NAME, parent, null);
+                                        Account.Type.PHONE, pair.getValue(), PARSER_NAME, parent, null, null);
                             } catch (InvalidAccountIDException ex) {
                                 logger.log(Level.WARNING, String.format("Invalid account identifier %s", pair.getValue()), ex);
                             }
