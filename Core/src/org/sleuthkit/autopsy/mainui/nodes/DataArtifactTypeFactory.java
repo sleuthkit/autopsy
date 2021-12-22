@@ -255,7 +255,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
          */
         public AccountTypeNode(TreeResultsDTO.TreeItemDTO<? extends CommAccountsSearchParams> itemData) {
             super(itemData.getSearchParams().getType().getTypeName(),
-                    Accounts.getIconFilePath(itemData.getSearchParams().getType()),
+                    IconsUtil.getIconFilePath(itemData.getSearchParams().getType()),
                     itemData);
         }
 

@@ -25,6 +25,7 @@ import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.datamodel.DataArtifactItem;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO.CommAccoutTableSearchResultsDTO;
 import org.sleuthkit.datamodel.DataArtifact;
 
 /**
@@ -44,10 +45,18 @@ public class DataArtifactNode extends ArtifactNode<DataArtifact, DataArtifactRow
     }
 
     public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow) {
-        this(tableData, artifactRow, IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID()));
+        this(tableData, artifactRow, getIconFilePath(tableData));
     }
 
     public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow, String iconPath) {
         super(artifactRow, tableData.getColumns(), tableData.getArtifactType(), createLookup(artifactRow), iconPath);
+    }
+    
+    private static String getIconFilePath(DataArtifactTableSearchResultsDTO tableData) {
+        if(!(tableData instanceof CommAccoutTableSearchResultsDTO)) {
+            return IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID());
+        }
+        
+        return IconsUtil.getIconFilePath(((CommAccoutTableSearchResultsDTO)tableData).getAccountType());  
     }
 }

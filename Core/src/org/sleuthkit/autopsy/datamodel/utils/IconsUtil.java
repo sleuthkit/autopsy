@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel.utils;
 
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
@@ -25,6 +26,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
  * Utility methods for handling icons
  */
 public final class IconsUtil {
+    
+    private static final String ICON_BASE_PATH = "/org/sleuthkit/autopsy/images/"; //NON-NLS
 
     private IconsUtil() {
 
@@ -149,5 +152,39 @@ public final class IconsUtil {
             imageFile = "artifact-icon.png"; //NON-NLS
         }
         return "/org/sleuthkit/autopsy/images/" + imageFile;
+    }
+    
+    /**
+     * Get the path of the icon for the given Account Type.
+     *
+     * @return The path of the icon for the given Account Type.
+     */
+    public static String getIconFilePath(Account.Type type) {
+
+        if (type.equals(Account.Type.CREDIT_CARD)) {
+            return ICON_BASE_PATH + "credit-card.png";
+        } else if (type.equals(Account.Type.DEVICE)) {
+            return ICON_BASE_PATH + "image.png";
+        } else if (type.equals(Account.Type.EMAIL)) {
+            return ICON_BASE_PATH + "email.png";
+        } else if (type.equals(Account.Type.FACEBOOK)) {
+            return ICON_BASE_PATH + "facebook.png";
+        } else if (type.equals(Account.Type.INSTAGRAM)) {
+            return ICON_BASE_PATH + "instagram.png";
+        } else if (type.equals(Account.Type.MESSAGING_APP)) {
+            return ICON_BASE_PATH + "messaging.png";
+        } else if (type.equals(Account.Type.PHONE)) {
+            return ICON_BASE_PATH + "phone.png";
+        } else if (type.equals(Account.Type.TWITTER)) {
+            return ICON_BASE_PATH + "twitter.png";
+        } else if (type.equals(Account.Type.WEBSITE)) {
+            return ICON_BASE_PATH + "web-file.png";
+        } else if (type.equals(Account.Type.WHATSAPP)) {
+            return ICON_BASE_PATH + "WhatsApp.png";
+        } else {
+            //there could be a default icon instead...
+            return ICON_BASE_PATH + "face.png";
+//            throw new IllegalArgumentException("Unknown Account.Type: " + type.getTypeName());
+        }
     }
 }

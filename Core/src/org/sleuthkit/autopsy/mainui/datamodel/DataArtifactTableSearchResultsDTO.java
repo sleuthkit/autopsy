@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -38,5 +39,20 @@ public class DataArtifactTableSearchResultsDTO extends BaseSearchResultsDTO {
 
     public BlackboardArtifact.Type getArtifactType() {
         return artifactType;
+    }
+    
+    public static class CommAccoutTableSearchResultsDTO extends DataArtifactTableSearchResultsDTO {
+        
+        private final Account.Type accountType;
+        
+        public CommAccoutTableSearchResultsDTO(Account.Type accountType, BlackboardArtifact.Type artifactType, List<ColumnKey> columns, List<RowDTO> items, long startItem, long totalResultsCount) {
+            super(artifactType, columns, items, startItem, totalResultsCount);
+            this.accountType = accountType;
+        }
+        
+        public Account.Type getAccountType() {
+            return accountType;
+        }
+        
     }
 }
