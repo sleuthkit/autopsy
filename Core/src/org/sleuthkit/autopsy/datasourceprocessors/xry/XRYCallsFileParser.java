@@ -287,7 +287,7 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             if (callerId != null) {
                 try {
                     currentCase.getCommunicationsManager().createAccountFileInstance(
-                            Account.Type.PHONE, callerId, PARSER_NAME, parent, null);
+                            Account.Type.PHONE, callerId, PARSER_NAME, parent, null, null);
                 } catch (InvalidAccountIDException ex) {
                     logger.log(Level.WARNING, String.format("Invalid account identifier %s", callerId), ex);
                 }
@@ -300,7 +300,7 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             for (String phone : calleeList) {
                 try {
                     currentCase.getCommunicationsManager().createAccountFileInstance(
-                            Account.Type.PHONE, phone, PARSER_NAME, parent, null);
+                            Account.Type.PHONE, phone, PARSER_NAME, parent, null, null);
                 } catch (InvalidAccountIDException ex) {
                     logger.log(Level.WARNING, String.format("Invalid account identifier %s", phone), ex);
                 }
