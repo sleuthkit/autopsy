@@ -638,7 +638,7 @@ final class RegexQuery implements KeywordSearchQuery {
          * for the hit and looked up based on the parsed bank identifcation
          * number.
          */
-        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+        List<BlackboardAttribute> attributes = new ArrayList<>();
 
         Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
         Matcher matcher = CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
@@ -720,13 +720,10 @@ final class RegexQuery implements KeywordSearchQuery {
          * Create an account instance.
          */
         try {
-            AccountFileInstance ccAccountInstance = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString(), MODULE_NAME, content, ingestJobId);
-
-            ccAccountInstance.addAttributes(attributes);
-
+            Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, 
+                    ccnAttribute.getValueString(), MODULE_NAME, content, attributes, ingestJobId);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Error creating CCN account instance", ex); //NON-NLS
-
         }
 
     }

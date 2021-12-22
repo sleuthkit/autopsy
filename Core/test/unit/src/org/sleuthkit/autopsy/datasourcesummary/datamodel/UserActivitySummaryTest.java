@@ -1047,9 +1047,9 @@ public class UserActivitySummaryTest {
         UserActivitySummary summary = getTestClass(tskPair.getLeft(), false, null);
 
         for (Entry<String, String> path : expected.entrySet()) {
-            Assert.assertTrue(path.getValue().equalsIgnoreCase(summary.getShortFolderName(path.getKey(), "Item.exe")));
-            Assert.assertTrue(path.getValue().equalsIgnoreCase(summary.getShortFolderName(path.getKey().toUpperCase(), "Item.exe".toUpperCase())));
-            Assert.assertTrue(path.getValue().equalsIgnoreCase(summary.getShortFolderName(path.getKey().toLowerCase(), "Item.exe".toLowerCase())));
+            Assert.assertTrue(path.getValue().equalsIgnoreCase(UserActivitySummary.getShortFolderName(path.getKey(), "Item.exe")));
+            Assert.assertTrue(path.getValue().equalsIgnoreCase(UserActivitySummary.getShortFolderName(path.getKey().toUpperCase(), "Item.exe".toUpperCase())));
+            Assert.assertTrue(path.getValue().equalsIgnoreCase(UserActivitySummary.getShortFolderName(path.getKey().toLowerCase(), "Item.exe".toLowerCase())));
         }
     }
 
