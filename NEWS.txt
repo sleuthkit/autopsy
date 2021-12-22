@@ -1,3 +1,9 @@
+---------------- VERSION 4.19.3  --------------
+Bug Fixes:
+- Updates for log4j vulnerabilities. 
+-- Solr 8.11.1 (with log4j 2.16.0)
+-- NOTE: This installer was created with some manual work because Solr was not on maven at the time of building. 
+
 ---------------- VERSION 4.19.2  --------------
 GUI Updates:
 - Special handling of Interesting Files and Interesting Results analysis results was removed from the tree and they are now shown as individual nodes. 
