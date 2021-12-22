@@ -509,8 +509,9 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public int compare(TreeItemDTO<? extends CreditCardSearchParams> o1, TreeItemDTO<? extends CreditCardSearchParams> o2) {
+            // Push the 'By Bin' node lower than the 'By File' node.
             boolean isBin1 = o1.getSearchParams() instanceof CreditCardBinSearchParams;
-            boolean isBin2 = o2.getSearchParams() instanceof CreditCardFileSearchParams;
+            boolean isBin2 = o2.getSearchParams() instanceof CreditCardBinSearchParams;
             return Boolean.compare(isBin1, isBin2);
         }
     }
