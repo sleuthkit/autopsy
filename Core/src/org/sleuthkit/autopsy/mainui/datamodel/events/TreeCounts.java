@@ -110,7 +110,9 @@ public class TreeCounts<T> {
      * @return The events that are being tracked for timeout.
      */
     public Set<T> getEnqueued() {
-        return new HashSet<>(eventTimeouts.keySet());
+        synchronized (this.timeoutLock) {
+            return new HashSet<>(eventTimeouts.keySet());
+        }
     }
 
     /**
