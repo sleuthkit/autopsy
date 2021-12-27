@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-2018 Basis Technology Corp.
+Copyright 2016-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +62,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.__findGeoLocationsInDB(jFile.toString(), abstractFile)
+                    self.__findGeoLocationsInDB(jFile.toString(), abstractFile, context)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing browser location files", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -70,7 +70,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
             # Error finding browser location files.
             pass
 
-    def __findGeoLocationsInDB(self, databasePath, abstractFile):
+    def __findGeoLocationsInDB(self, databasePath, abstractFile, context):
         if not databasePath:
             return
 
@@ -104,9 +104,8 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                 # NOTE: originally commented out
 
                 try:
-                    # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
-                    blackboard.postArtifact(artifact, general.MODULE_NAME)
+                    blackboard.postArtifact(artifact, general.MODULE_NAME, context.getJobId())
                 except Blackboard.BlackboardException as ex:
                     self._logger.log(Level.SEVERE, "Unable to index blackboard artifact " + str(artifact.getArtifactTypeName()), ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())

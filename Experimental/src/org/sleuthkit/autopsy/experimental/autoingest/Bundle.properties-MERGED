@@ -78,7 +78,8 @@ AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath=\ Manifest F
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.OCR=OCR
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.Priority=Prioritized
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.Stage=Stage
-AutoIngestControlPanel.JobsTableModel.ColumnHeader.StageTime=Time in Stage
+# {0} - unitSeparator
+AutoIngestControlPanel.JobsTableModel.ColumnHeader.StageTime=Time in Stage (dd{0}hh{0}mm{0}ss)
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.StartedTime=Stage Started
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.Status=Status
 AutoIngestControlPanel.OK=OK
@@ -140,7 +141,8 @@ AutoIngestJobsNode.prioritized.false=No
 AutoIngestJobsNode.prioritized.true=Yes
 AutoIngestJobsNode.priority.text=Prioritized
 AutoIngestJobsNode.stage.text=Stage
-AutoIngestJobsNode.stageTime.text=Time in Stage
+# {0} - unitSeparator
+AutoIngestJobsNode.stageTime.text=Time in Stage (dd{0}hh{0}mm{0}ss)
 AutoIngestJobsNode.status.text=Status
 AutoIngestJobsPanel.waitNode.text=Please Wait...
 AutoIngestMetricsDialog.initReportText=Select a date above and click the 'Generate Metrics Report' button to generate\na metrics report.

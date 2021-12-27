@@ -258,6 +258,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 nodeNameToPagingSupportMap.values().forEach((ps) -> {
                     ps.postPageSizeChangeEvent();
                 });
+                
+                setCursor(null);
             }
         });
     }
@@ -331,50 +333,52 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                  * Check to see if we have previously created a paging support
                  * class for this node.
                  */
-                String nodeName = rootNode.getName();
-                pagingSupport = nodeNameToPagingSupportMap.get(nodeName);
-                if (pagingSupport == null) {
-                    pagingSupport = new PagingSupport(nodeName);
-                    nodeNameToPagingSupportMap.put(nodeName, pagingSupport);
+                if (!Node.EMPTY.equals(rootNode)) {
+                    String nodeName = rootNode.getName();
+                    pagingSupport = nodeNameToPagingSupportMap.get(nodeName);
+                    if (pagingSupport == null) {
+                        pagingSupport = new PagingSupport(nodeName);
+                        nodeNameToPagingSupportMap.put(nodeName, pagingSupport);
+                    }
+                    pagingSupport.updateControls();
+
+                    rootNode.addNodeListener(new NodeListener() {
+                        @Override
+                        public void childrenAdded(NodeMemberEvent nme) {
+                            /**
+                             * This is the only somewhat reliable way I could
+                             * find to reset the cursor after a page change.
+                             * When you change page the old children nodes will
+                             * be removed and new ones added.
+                             */
+                            SwingUtilities.invokeLater(() -> {
+                                setCursor(null);
+                            });
+                        }
+
+                        @Override
+                        public void childrenRemoved(NodeMemberEvent nme) {
+                            SwingUtilities.invokeLater(() -> {
+                                setCursor(null);
+                            });
+                        }
+
+                        @Override
+                        public void childrenReordered(NodeReorderEvent nre) {
+                            // No-op
+                        }
+
+                        @Override
+                        public void nodeDestroyed(NodeEvent ne) {
+                            // No-op
+                        }
+
+                        @Override
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            // No-op
+                        }
+                    });
                 }
-                pagingSupport.updateControls();
-
-                rootNode.addNodeListener(new NodeListener() {
-                    @Override
-                    public void childrenAdded(NodeMemberEvent nme) {
-                        /**
-                         * This is the only somewhat reliable way I could find
-                         * to reset the cursor after a page change. When you
-                         * change page the old children nodes will be removed
-                         * and new ones added.
-                         */
-                        SwingUtilities.invokeLater(() -> {
-                            setCursor(null);
-                        });
-                    }
-
-                    @Override
-                    public void childrenRemoved(NodeMemberEvent nme) {
-                        SwingUtilities.invokeLater(() -> {
-                            setCursor(null);
-                        });
-                    }
-
-                    @Override
-                    public void childrenReordered(NodeReorderEvent nre) {
-                        // No-op
-                    }
-
-                    @Override
-                    public void nodeDestroyed(NodeEvent ne) {
-                        // No-op
-                    }
-
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                        // No-op
-                    }
-                });
             }
 
             /*
@@ -474,8 +478,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * and then uses the first one hundred nodes to determine which columns
          * to display, including their header text.
          */
-        setColumnWidths();        
-        
+        setColumnWidths();
+
         /*
          * If one of the child nodes of the root node is to be selected, select
          * it.

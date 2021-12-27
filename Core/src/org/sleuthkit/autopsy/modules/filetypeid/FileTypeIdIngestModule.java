@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,6 @@ import org.sleuthkit.autopsy.modules.filetypeid.CustomFileTypesManager.CustomFil
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
@@ -194,9 +193,9 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
             Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
             // Create artifact if it doesn't already exist.
-            if (!tskBlackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
+            if (!tskBlackboard.artifactExists(file, BlackboardArtifact.Type.TSK_INTERESTING_ITEM, attributes)) {
                 BlackboardArtifact artifact = file.newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                        BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE, 
                         null, fileType.getInterestingFilesSetName(), null, 
                         attributes)
                         .getAnalysisResult();
@@ -206,14 +205,14 @@ public class FileTypeIdIngestModule implements FileIngestModule {
                      * keyword search, and fire an event to notify UI of this
                      * new artifact
                      */
-                    tskBlackboard.postArtifact(artifact, FileTypeIdModuleFactory.getModuleName());
+                    tskBlackboard.postArtifact(artifact, FileTypeIdModuleFactory.getModuleName(), jobId);
                 } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_ITEM blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
                 }
             }
 
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Unable to create TSK_INTERESTING_FILE_HIT artifact for file (obj_id=%d)", file.getId()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Unable to create TSK_INTERESTING_ITEM artifact for file (obj_id=%d)", file.getId()), ex); //NON-NLS
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }

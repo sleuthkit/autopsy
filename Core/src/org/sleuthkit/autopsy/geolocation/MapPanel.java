@@ -150,7 +150,9 @@ final public class MapPanel extends javax.swing.JPanel {
         this.addComponentListener(new ComponentResizeEndListener() {
             @Override
             public void resizeTimedOut() {
-                showDetailsPopup();
+                if(currentPopup != null) {
+                    showDetailsPopup();
+                }
             }
         });
 

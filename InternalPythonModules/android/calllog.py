@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-2020 Basis Technology Corp.
+Copyright 2016-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -83,12 +83,12 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                         callLogDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                                         self._PARSER_NAME,
                                                         callLogDb.getDBFile(),
-                                                        Account.Type.PHONE, Account.Type.PHONE, selfAccountId )
+                                                        Account.Type.PHONE, Account.Type.PHONE, selfAccountId, context.getJobId())
                     else:
                         callLogDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                                         self._PARSER_NAME,
                                                         callLogDb.getDBFile(),
-                                                        Account.Type.PHONE )
+                                                        Account.Type.PHONE, context.getJobId())
                         
                     for tableName in CallLogAnalyzer._tableNames:
                         try:

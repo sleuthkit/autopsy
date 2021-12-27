@@ -451,9 +451,9 @@ public final class OsAccounts implements AutopsyVisitableItem {
         @Override
         public Action[] getActions(boolean popup) {
             List<Action> actionsList = new ArrayList<>();
-            actionsList.addAll(Arrays.asList(super.getActions(popup)));
             actionsList.addAll(DataModelActionsFactory.getActions(account));
-
+            actionsList.add(null);
+            actionsList.addAll(Arrays.asList(super.getActions(popup)));
             return actionsList.toArray(new Action[actionsList.size()]);
         }
 
@@ -533,9 +533,9 @@ public final class OsAccounts implements AutopsyVisitableItem {
                     description = Bundle.OsAccounts_createSheet_count_hashLookupNotRun_description();
                 }
             } catch (CentralRepoException ex) {
-                logger.log(Level.SEVERE, "Error getting count of datasources with correlation attribute", ex);
+                logger.log(Level.SEVERE, String.format("Error getting count of data sources with %s correlation attribute %s", attributeInstance.getCorrelationType().getDisplayName(), attributeInstance.getCorrelationValue()), ex);
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.SEVERE, "Unable to normalize data to get count of datasources with correlation attribute", ex);
+                logger.log(Level.WARNING, String.format("Unable to normalize %s correlation attribute %s", attributeInstance.getCorrelationType().getDisplayName(), attributeInstance.getCorrelationValue()), ex);
             }
             return Pair.of(count, description);
         }

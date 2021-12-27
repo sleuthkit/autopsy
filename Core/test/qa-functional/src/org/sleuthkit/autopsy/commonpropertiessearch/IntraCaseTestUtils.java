@@ -180,6 +180,37 @@ class IntraCaseTestUtils {
     }
 
     /**
+     * Verify that the given file appears a precise number times in the given
+     * data source.
+     *
+     * @param searchDomain search domain
+     * @param objectIdToDataSourceMap mapping of file ids to data source names
+     * @param fileName name of file to search for
+     * @param dataSource name of data source where file should appear
+     * @param instanceCount number of appearances of the given file
+     * @return The count of items found.
+     */
+    static int getInstanceCount(List<AbstractFile> searchDomain, Map<Long, String> objectIdToDataSourceMap, String fileName, String dataSource) {
+
+        int tally = 0;
+
+        for (AbstractFile file : searchDomain) {
+
+            Long objectId = file.getId();
+
+            String name = file.getName();
+
+            String dataSourceName = objectIdToDataSourceMap.get(objectId);
+
+            if (name.equalsIgnoreCase(fileName) && dataSourceName.equalsIgnoreCase(dataSource)) {
+                tally++;
+            }
+        }
+
+        return tally;
+    }
+
+    /**
      * Convenience method which verifies that a file exists within a given data
      * source exactly once.
      *

@@ -116,5 +116,5 @@ interface KeywordSearchQuery {
      * @return The newly created artifact or null if there was a problem
      *         creating it.
      */
-    BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName);
+    BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId);
 }

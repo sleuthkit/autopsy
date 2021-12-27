@@ -310,18 +310,25 @@ public interface CentralRepository {
     List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
+     * Retrieves correlation attribute instances from the central repository
+     * that match a given attribute type and value.
      *
-     * @param aType The type of the artifact
-     * @param value The correlation value
+     * @param type  The correlation attribute type.
+     * @param value The correlation attribute value.
      *
-     * @return List of artifact instances for a given type/value
+     * @return The matching correlation attribute instances.
      *
-     * @throws CorrelationAttributeNormalizationException
-     * @throws CentralRepoException
+     * @throws CorrelationAttributeNormalizationException The exception is
+     *                                                    thrown if the supplied
+     *                                                    correlation attribute
+     *                                                    value cannot be
+     *                                                    normlaized.
+     * @throws CentralRepoException                       The exception is
+     *                                                    thrown if there is an
+     *                                                    error querying the
+     *                                                    central repository.
      */
-    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type type, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated

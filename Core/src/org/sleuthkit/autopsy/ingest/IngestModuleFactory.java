@@ -228,7 +228,7 @@ public interface IngestModuleFactory {
      *
      * @return A file ingest module instance.
      */
-    default FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
+    default FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         throw new UnsupportedOperationException();
     }
 
@@ -238,9 +238,9 @@ public interface IngestModuleFactory {
      *
      * @return True or false.
      */
-//    default boolean isDataArtifactIngestModuleFactory() {
-//        return false;
-//    }
+    default boolean isDataArtifactIngestModuleFactory() {
+        return false;
+    }
 
     /**
      * Creates a data artifact ingest module instance.
@@ -267,8 +267,47 @@ public interface IngestModuleFactory {
      *
      * @return A file ingest module instance.
      */
-//    default DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
-//        throw new UnsupportedOperationException();
-//    }
+    default DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Queries the factory to determine if it is capable of creating analysis
+     * result ingest modules.
+     *
+     * @return True or false.
+     */
+    default boolean isAnalysisResultIngestModuleFactory() {
+        return false;
+    }
+
+    /**
+     * Creates an analysis result ingest module instance.
+     * <p>
+     * Autopsy will generally use the factory to several instances of each type
+     * of module for each ingest job it performs. Completing an ingest job
+     * entails processing a single data source (e.g., a disk image) and all of
+     * the files from the data source, including files extracted from archives
+     * and any unallocated space (made to look like a series of files). The data
+     * source is passed through one or more pipelines of data source ingest
+     * modules. The files are passed through one or more pipelines of file
+     * ingest modules.
+     * <p>
+     * The ingest framework may use multiple threads to complete an ingest job,
+     * but it is guaranteed that there will be no more than one module instance
+     * per thread. However, if the module instances must share resources, the
+     * modules are responsible for synchronizing access to the shared resources
+     * and doing reference counting as required to release those resources
+     * correctly. Also, more than one ingest job may be in progress at any given
+     * time. This must also be taken into consideration when sharing resources
+     * between module instances. modules.
+     *
+     * @param settings The settings for the ingest job.
+     *
+     * @return A file ingest module instance.
+     */
+    default AnalysisResultIngestModule createAnalysisResultIngestModule(IngestModuleIngestJobSettings settings) {
+        throw new UnsupportedOperationException();
+    }
 
 }

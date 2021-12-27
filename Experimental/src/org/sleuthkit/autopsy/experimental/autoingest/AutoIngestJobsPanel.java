@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent;
+import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
 /**
@@ -63,6 +64,8 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
         outline = outlineView.getOutline();
         customize();
     }
+
+    
 
     /**
      * Set up the AutoIngestJobsPanel's so that its outlineView is displaying
@@ -99,7 +102,8 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                 outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
                         Bundle.AutoIngestJobsNode_hostName_text(), Bundle.AutoIngestJobsNode_hostName_text(),
                         Bundle.AutoIngestJobsNode_stage_text(), Bundle.AutoIngestJobsNode_stage_text(),
-                        Bundle.AutoIngestJobsNode_stageTime_text(), Bundle.AutoIngestJobsNode_stageTime_text());
+                        Bundle.AutoIngestJobsNode_stageTime_text(DurationCellRenderer.getUnitSeperator()),
+                        Bundle.AutoIngestJobsNode_stageTime_text(DurationCellRenderer.getUnitSeperator()));
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_caseName_text());
                 if (indexOfColumn != INVALID_INDEX) {
                     outline.setColumnSorted(indexOfColumn, true, 1);
@@ -124,7 +128,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                 if (indexOfColumn != INVALID_INDEX) {
                     outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_OCR_WIDTH);
                     outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new OcrIconCellRenderer());
-                }                
+                }
                 break;
             default:
         }
@@ -177,8 +181,8 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
      * Update the contents of this AutoIngestJobsPanel while retaining currently
      * selected node.
      *
-     * @param refreshEvent - the AutoIngestRefreshEvent which will provide the new
-     *                     contents
+     * @param refreshEvent - the AutoIngestRefreshEvent which will provide the
+     *                     new contents
      */
     void refresh(AutoIngestRefreshEvent refreshEvent) {
         synchronized (this) {
@@ -191,7 +195,6 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
             }
             outline.setRowSelectionAllowed(true);
             outline.setFocusable(true);
-
         }
     }
 

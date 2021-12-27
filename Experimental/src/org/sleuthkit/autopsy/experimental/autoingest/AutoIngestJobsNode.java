@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.Stage;
 import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
-import org.sleuthkit.autopsy.ingest.Snapshot;
+import org.sleuthkit.autopsy.ingest.IngestJobProgressSnapshot;
 
 /**
  * A node which represents all AutoIngestJobs of a given AutoIngestJobStatus.
@@ -53,7 +53,8 @@ final class AutoIngestJobsNode extends AbstractNode {
         "AutoIngestJobsNode.dataSource.text=Data Source",
         "AutoIngestJobsNode.hostName.text=Host Name",
         "AutoIngestJobsNode.stage.text=Stage",
-        "AutoIngestJobsNode.stageTime.text=Time in Stage",
+        "# {0} - unitSeparator",
+        "AutoIngestJobsNode.stageTime.text=Time in Stage (dd{0}hh{0}mm{0}ss)",
         "AutoIngestJobsNode.jobCreated.text=Job Created",
         "AutoIngestJobsNode.jobCompleted.text=Job Completed",
         "AutoIngestJobsNode.priority.text=Prioritized",
@@ -97,7 +98,7 @@ final class AutoIngestJobsNode extends AbstractNode {
          * they can be changed by events in other threads which
          */
         private final Stage jobStage;
-        private final List<Snapshot> jobSnapshot;
+        private final List<IngestJobProgressSnapshot> jobSnapshot;
         private final Integer jobPriority;
         private final Boolean ocrFlag;
 
@@ -345,8 +346,10 @@ final class AutoIngestJobsNode extends AbstractNode {
                             jobWrapper.getProcessingHostName()));
                     ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_stage_text(), Bundle.AutoIngestJobsNode_stage_text(), Bundle.AutoIngestJobsNode_stage_text(),
                             status.getDescription()));
-                    ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_stageTime_text(), Bundle.AutoIngestJobsNode_stageTime_text(), Bundle.AutoIngestJobsNode_stageTime_text(),
-                            DurationCellRenderer.longToDurationString((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime()))));
+                    ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_stageTime_text(DurationCellRenderer.getUnitSeperator()),
+                            Bundle.AutoIngestJobsNode_stageTime_text(DurationCellRenderer.getUnitSeperator()),
+                            Bundle.AutoIngestJobsNode_stageTime_text(DurationCellRenderer.getUnitSeperator()),
+                            DurationCellRenderer.longToDurationString(Date.from(Instant.now()).getTime() - status.getStartDate().getTime())));
                     break;
                 case COMPLETED_JOB:
                     ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
@@ -356,7 +359,7 @@ final class AutoIngestJobsNode extends AbstractNode {
                     ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text(),
                             jobWrapper.getErrorsOccurred() ? StatusIconCellRenderer.Status.WARNING : StatusIconCellRenderer.Status.OK));
                     ss.put(new NodeProperty<>(Bundle.AutoIngestJobsNode_ocr_text(), Bundle.AutoIngestJobsNode_ocr_text(), Bundle.AutoIngestJobsNode_ocr_text(),
-                            jobWrapper.getOcrEnabled()));                    
+                            jobWrapper.getOcrEnabled()));
                     break;
                 default:
             }
@@ -377,7 +380,7 @@ final class AutoIngestJobsNode extends AbstractNode {
                         PrioritizationAction.DeprioritizeCaseAction deprioritizeCaseAction = new PrioritizationAction.DeprioritizeCaseAction(jobWrapper.getJob());
                         deprioritizeCaseAction.setEnabled(jobWrapper.getPriority() > 0);
                         actions.add(deprioritizeCaseAction);
-                        
+
                         actions.add(new AutoIngestAdminActions.EnableOCR(jobWrapper.getJob()));
                         AutoIngestAdminActions.DisableOCR disableOCRAction = new AutoIngestAdminActions.DisableOCR(jobWrapper.getJob());
                         disableOCRAction.setEnabled(jobWrapper.getOcrEnabled() == true);

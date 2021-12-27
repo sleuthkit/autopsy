@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -129,13 +129,13 @@ class SkypeAnalyzer(general.AndroidComponentAnalyzer):
                 if user_account_instance is None:
                     helper = CommunicationArtifactsHelper(
                                 current_case.getSleuthkitCase(), self._PARSER_NAME, 
-                                skype_db.getDBFile(), Account.Type.SKYPE
+                                skype_db.getDBFile(), Account.Type.SKYPE, context.getJobId()
                              ) 
                 else:
                     helper = CommunicationArtifactsHelper(
                                 current_case.getSleuthkitCase(), self._PARSER_NAME,
                                 skype_db.getDBFile(), Account.Type.SKYPE,
-                                Account.Type.SKYPE, user_account_instance
+                                Account.Type.SKYPE, user_account_instance, context.getJobId()
                              )
                 self.parse_contacts(skype_db, helper)
                 self.parse_calllogs(skype_db, helper)
