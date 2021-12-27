@@ -73,8 +73,8 @@ class SampleFileIngestModule implements FileIngestModule {
 
         // Skip anything other than actual file system files.
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-            || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-            || (file.isFile() == false)) {
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                || (file.isFile() == false)) {
             return IngestModule.ProcessResult.OK;
         }
 
@@ -111,10 +111,13 @@ class SampleFileIngestModule implements FileIngestModule {
             addToBlackboardPostCount(context.getJobId(), 1L);
 
             /*
-             * post the artifact which will index the artifact for keyword
-             * search, and fire an event to notify UI of this new artifact
+             * Post the artifact to the blackboard. Doing so will cause events
+             * to be published that will trigger additional analysis, if
+             * applicable. For example, the creation of timeline events,
+             * indexing of the artifact for keyword search, and analysis by the
+             * data artifact ingest modules if the artifact is a data artifact.
              */
-            file.getSleuthkitCase().getBlackboard().postArtifact(art, SampleIngestModuleFactory.getModuleName());
+            file.getSleuthkitCase().getBlackboard().postArtifact(art, SampleIngestModuleFactory.getModuleName(), context.getJobId());
 
             return IngestModule.ProcessResult.OK;
 

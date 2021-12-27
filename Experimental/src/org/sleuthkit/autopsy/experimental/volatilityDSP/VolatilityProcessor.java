@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -381,16 +381,16 @@ class VolatilityProcessor {
                         Collection<BlackboardAttribute> attributes = singleton(new BlackboardAttribute(TSK_SET_NAME, VOLATILITY, setName));
 
                         // Create artifact if it doesn't already exist.
-                        if (!blackboard.artifactExists(resolvedFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
+                        if (!blackboard.artifactExists(resolvedFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM, attributes)) {
                             BlackboardArtifact volArtifact = resolvedFile.newAnalysisResult(
-                                    BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                                    BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE, 
                                     null, setName, null, 
                                     attributes)
                                     .getAnalysisResult();
 
                             try {
                                 // index the artifact for keyword search
-                                blackboard.postArtifact(volArtifact, VOLATILITY);
+                                blackboard.postArtifact(volArtifact, VOLATILITY, null);
                             } catch (Blackboard.BlackboardException ex) {
                                 errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
                                 /*

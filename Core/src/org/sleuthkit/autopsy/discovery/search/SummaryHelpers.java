@@ -195,7 +195,7 @@ class SummaryHelpers {
         }
     }
 
-    @NbBundle.Messages({"SummaryHelper.documentSummary.unable.to.read=Unable to extract text from file."})
+    @NbBundle.Messages({"SummaryHelper.documentSummary.unable.to.read=Error trying to extract text from file."})
     /**
      * Get the beginning of text from the specified AbstractFile.
      *

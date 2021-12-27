@@ -870,13 +870,19 @@ public class SearchFiltering {
             this.setNames = setNames;
         }
 
+        /**
+         * @SuppressWarnings("deprecation") - we need to support already
+         * existing interesting file and artifact hits.
+         */
+        @SuppressWarnings("deprecation")
         @Override
         public String getWhereClause() {
             String intItemSetPart = concatenateNamesForSQL(setNames);
 
             String queryStr = "(obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_id IN "
-                    + "(SELECT artifact_id FROM blackboard_attributes WHERE artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
-                    + " AND attribute_type_ID = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " "
+                    + "(SELECT artifact_id FROM blackboard_attributes WHERE (artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
+                    + " OR artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID()
+                    + ") AND attribute_type_ID = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " "
                     + "AND (" + intItemSetPart + "))))";  // NON-NLS
 
             return queryStr;
@@ -946,6 +952,11 @@ public class SearchFiltering {
             this.scores = scores;
         }
 
+        /**
+         * @SuppressWarnings("deprecation") - we need to support already
+         * existing interesting file and artifact hits.
+         */
+        @SuppressWarnings("deprecation")
         @Override
         public String getWhereClause() {
 
@@ -964,6 +975,7 @@ public class SearchFiltering {
             if (scores.contains(Score.INTERESTING)) {
                 // Matches interesting item artifact
                 intItemQueryPart = " (obj_id IN (SELECT obj_id from blackboard_artifacts WHERE artifact_type_id = "
+                        + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID() + " OR artifact_type_id = "
                         + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() + ")) ";
             }
 

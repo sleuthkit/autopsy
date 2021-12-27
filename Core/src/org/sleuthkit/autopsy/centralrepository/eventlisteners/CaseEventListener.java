@@ -22,18 +22,13 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -43,7 +38,6 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
-import org.sleuthkit.autopsy.casemodule.events.OsAcctInstancesAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -61,34 +55,20 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.Blackboard;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OTHER_CASES;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_TYPE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CORRELATION_VALUE;
 import org.sleuthkit.datamodel.DataArtifact;
-import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.OsAccountInstance;
-import org.sleuthkit.datamodel.Score;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Listen for case events and update entries in the Central Repository database
- * accordingly
+ * An Autopsy events listener for case events relevant to the central
+ * repository.
  */
 @Messages({"caseeventlistener.evidencetag=Evidence"})
 public final class CaseEventListener implements PropertyChangeListener {
 
     private static final Logger LOGGER = Logger.getLogger(CaseEventListener.class.getName());
-    private final ExecutorService jobProcessingExecutor;
-    private static final String CASE_EVENT_THREAD_NAME = "Case-Event-Listener-%d";
-
+    private static final String CASE_EVENT_THREAD_NAME = "CR-Case-Event-Listener-%d";
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(
             Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED,
             Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED, Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
@@ -96,14 +76,29 @@ public final class CaseEventListener implements PropertyChangeListener {
             Case.Events.DATA_SOURCE_ADDED,
             Case.Events.TAG_DEFINITION_CHANGED,
             Case.Events.CURRENT_CASE,
-            Case.Events.DATA_SOURCE_NAME_CHANGED,
-            Case.Events.OS_ACCT_INSTANCES_ADDED);
+            Case.Events.DATA_SOURCE_NAME_CHANGED);
+    private final ExecutorService jobProcessingExecutor;
 
+    /**
+     * Contructs an Autopsy events listener for case events relevant to the
+     * central repository.
+     */
     public CaseEventListener() {
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(CASE_EVENT_THREAD_NAME).build());
     }
 
+    /**
+     * Starts up the listener.
+     */
+    public void startUp() {
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this);
+    }
+
+    /**
+     * Shuts down the listener.
+     */
     public void shutdown() {
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this);
         ThreadUtils.shutDownTaskExecutor(jobProcessingExecutor);
     }
 
@@ -113,92 +108,73 @@ public final class CaseEventListener implements PropertyChangeListener {
             return;
         }
 
-        CentralRepository dbManager;
-        try {
-            dbManager = CentralRepository.getInstance();
-        } catch (CentralRepoException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get instance of db manager.", ex);
+        if (!CentralRepository.isEnabled()) {
             return;
         }
 
-        // If any changes are made to which event types are handled the change 
-        // must also be made to CASE_EVENTS_OF_INTEREST.
+        CentralRepository centralRepo;
+        try {
+            centralRepo = CentralRepository.getInstance();
+        } catch (CentralRepoException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to access central repository", ex);
+            return;
+        }
+
+        /*
+         * IMPORTANT: If any changes are made to which event types are handled,
+         * the change must also be made to the contents of the
+         * CASE_EVENTS_OF_INTEREST set.
+         */
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case CONTENT_TAG_ADDED:
-            case CONTENT_TAG_DELETED: {
-                jobProcessingExecutor.submit(new ContentTagTask(dbManager, evt));
-            }
-            break;
-
+            case CONTENT_TAG_DELETED:
+                jobProcessingExecutor.submit(new ContentTagTask(centralRepo, evt));
+                break;
             case BLACKBOARD_ARTIFACT_TAG_DELETED:
-            case BLACKBOARD_ARTIFACT_TAG_ADDED: {
-                jobProcessingExecutor.submit(new BlackboardTagTask(dbManager, evt));
-            }
-            break;
-
-            case DATA_SOURCE_ADDED: {
-                jobProcessingExecutor.submit(new DataSourceAddedTask(dbManager, evt));
-            }
-            break;
-            case TAG_DEFINITION_CHANGED: {
+            case BLACKBOARD_ARTIFACT_TAG_ADDED:
+                jobProcessingExecutor.submit(new ArtifactTagTask(centralRepo, evt));
+                break;
+            case DATA_SOURCE_ADDED:
+                jobProcessingExecutor.submit(new DataSourceAddedTask(centralRepo, evt));
+                break;
+            case TAG_DEFINITION_CHANGED:
                 jobProcessingExecutor.submit(new TagDefinitionChangeTask(evt));
-            }
-            break;
-            case CURRENT_CASE: {
-                jobProcessingExecutor.submit(new CurrentCaseTask(dbManager, evt));
-            }
-            break;
-            case DATA_SOURCE_NAME_CHANGED: {
-                jobProcessingExecutor.submit(new DataSourceNameChangedTask(dbManager, evt));
-            }
-            break;
-            case OS_ACCT_INSTANCES_ADDED: {
-                if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
-                    jobProcessingExecutor.submit(new OsAccountInstancesAddedTask(dbManager, evt));
-                }
-            }
-            break;
+                break;
+            case CURRENT_CASE:
+                jobProcessingExecutor.submit(new CurrentCaseTask(centralRepo, evt));
+                break;
+            case DATA_SOURCE_NAME_CHANGED:
+                jobProcessingExecutor.submit(new DataSourceNameChangedTask(centralRepo, evt));
+                break;
+            default:
+                break;
         }
     }
 
-    /*
-     * Add all of our Case Event Listeners to the case.
+    /**
+     * Determines whether or not a tag has notable status.
+     *
+     * @param tag The tag.
+     *
+     * @return True or false.
      */
-    public void installListeners() {
-        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this);
-    }
-
-    /*
-     * Remove all of our Case Event Listeners from the case.
-     */
-    public void uninstallListeners() {
-        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this);
+    private static boolean isNotableTag(Tag tag) {
+        return (tag != null && isNotableTagDefinition(tag.getName()));
     }
 
     /**
-     * Returns true if the tag has a notable status.
+     * Determines whether or not a tag definition calls for notable status.
      *
-     * @param t The tag to use in determination.
+     * @param tagDef The tag definition.
      *
-     * @return Whether or not it is a notable tag.
+     * @return True or false.
      */
-    private static boolean isNotableTag(Tag t) {
-        return (t != null && isNotableTagName(t.getName()));
+    private static boolean isNotableTagDefinition(TagName tagDef) {
+        return (tagDef != null && TagsManager.getNotableTagDisplayNames().contains(tagDef.getDisplayName()));
     }
 
     /**
-     * Returns true if the tag name has a notable status.
-     *
-     * @param t The tag name to use in determination.
-     *
-     * @return Whether or not it is a notable tag name.
-     */
-    private static boolean isNotableTagName(TagName t) {
-        return (t != null && TagsManager.getNotableTagDisplayNames().contains(t.getDisplayName()));
-    }
-
-    /**
-     * Searches a list of tags for a tag with a notable status.
+     * Searches a list of tags for a tag with notable status.
      *
      * @param tags The tags to search.
      *
@@ -208,7 +184,6 @@ public final class CaseEventListener implements PropertyChangeListener {
         if (tags == null) {
             return false;
         }
-
         return tags.stream()
                 .filter(CaseEventListener::isNotableTag)
                 .findFirst()
@@ -216,24 +191,25 @@ public final class CaseEventListener implements PropertyChangeListener {
     }
 
     /**
-     * Sets the known status of a blackboard artifact in the central repository.
+     * Sets the notable (known) status of a central repository correlation
+     * attribute corresponding to an artifact.
      *
-     * @param dbManager   The central repo database.
-     * @param bbArtifact  The blackboard artifact to set known status.
-     * @param knownStatus The new known status.
+     * @param centralRepo   The central repository.
+     * @param artifact      The artifact.
+     * @param notableStatus The new notable status.
      */
-    private static void setArtifactKnownStatus(CentralRepository dbManager, BlackboardArtifact bbArtifact, TskData.FileKnown knownStatus) {
-        List<CorrelationAttributeInstance> convertedArtifacts = new ArrayList<>();
-        if (bbArtifact instanceof DataArtifact) {
-            convertedArtifacts.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) bbArtifact));
-        } else if (bbArtifact instanceof AnalysisResult) {
-            convertedArtifacts.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) bbArtifact));
+    private static void setArtifactKnownStatus(CentralRepository centralRepo, BlackboardArtifact artifact, TskData.FileKnown notableStatus) {
+        List<CorrelationAttributeInstance> corrAttrInstances = new ArrayList<>();
+        if (artifact instanceof DataArtifact) {
+            corrAttrInstances.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((DataArtifact) artifact));
+        } else if (artifact instanceof AnalysisResult) {
+            corrAttrInstances.addAll(CorrelationAttributeUtil.makeCorrAttrsForSearch((AnalysisResult) artifact));
         }
-        for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
+        for (CorrelationAttributeInstance corrAttrInstance : corrAttrInstances) {
             try {
-                dbManager.setAttributeInstanceKnownStatus(eamArtifact, knownStatus);
+                centralRepo.setAttributeInstanceKnownStatus(corrAttrInstance, notableStatus);
             } catch (CentralRepoException ex) {
-                LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database while setting artifact known status.", ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, String.format("Error setting correlation attribute instance known status", corrAttrInstance), ex); //NON-NLS
             }
         }
     }
@@ -359,12 +335,12 @@ public final class CaseEventListener implements PropertyChangeListener {
         }
     }
 
-    private final class BlackboardTagTask implements Runnable {
+    private final class ArtifactTagTask implements Runnable {
 
         private final CentralRepository dbManager;
         private final PropertyChangeEvent event;
 
-        private BlackboardTagTask(CentralRepository db, PropertyChangeEvent evt) {
+        private ArtifactTagTask(CentralRepository db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
         }
@@ -644,7 +620,6 @@ public final class CaseEventListener implements PropertyChangeListener {
              */
             if ((null == event.getOldValue()) && (event.getNewValue() instanceof Case)) {
                 Case curCase = (Case) event.getNewValue();
-                IngestEventsListener.resetCeModuleInstanceCount();
 
                 if (!CentralRepository.isEnabled()) {
                     return;
@@ -661,127 +636,6 @@ public final class CaseEventListener implements PropertyChangeListener {
                 }
             }
         } // CURRENT_CASE
-    }
-
-    @NbBundle.Messages({"CaseEventsListener.module.name=Central Repository",
-        "CaseEventsListener.prevCaseComment.text=Users seen in previous cases",
-        "CaseEventsListener.prevExists.text=Previously Seen Users (Central Repository)"})
-    /**
-     * Add OsAccount Instance to CR and find interesting items based on the
-     * OsAccount
-     */
-    private final class OsAccountInstancesAddedTask implements Runnable {
-
-        private final CentralRepository dbManager;
-        private final PropertyChangeEvent event;
-        private final String MODULE_NAME = Bundle.CaseEventsListener_module_name();
-
-        private OsAccountInstancesAddedTask(CentralRepository db, PropertyChangeEvent evt) {
-            dbManager = db;
-            event = evt;
-        }
-
-        @Override
-        public void run() {
-            //Nothing to do here if the central repo is not enabled or if ingest is running but is set to not save data/make artifacts
-            if (!CentralRepository.isEnabled()
-                    || (IngestManager.getInstance().isIngestRunning() && !(IngestEventsListener.isFlagSeenDevices() || IngestEventsListener.shouldCreateCrProperties()))) {
-                return;
-            }
-
-            final OsAcctInstancesAddedEvent osAcctInstancesAddedEvent = (OsAcctInstancesAddedEvent) event;
-            List<OsAccountInstance> addedOsAccountNew = osAcctInstancesAddedEvent.getOsAccountInstances();
-            for (OsAccountInstance osAccountInstance : addedOsAccountNew) {
-                try {
-                    OsAccount osAccount = osAccountInstance.getOsAccount();
-                    List<CorrelationAttributeInstance> correlationAttributeInstances = CorrelationAttributeUtil.makeCorrAttrsToSave(osAccountInstance);
-                    if (correlationAttributeInstances.isEmpty()) {
-                        return;
-                    }
-
-                    Optional<String> accountAddr = osAccount.getAddr();
-                    try {
-                        // Save to the database if requested
-                        if (IngestEventsListener.shouldCreateCrProperties()) {
-                            for (CorrelationAttributeInstance correlationAttributeInstance : correlationAttributeInstances) {
-                                dbManager.addArtifactInstance(correlationAttributeInstance);
-                            }
-                        }
-
-                        // Look up and create artifacts for previously seen accounts if requested
-                        if (IngestEventsListener.isFlagSeenDevices()) {
-
-                            CorrelationAttributeInstance instanceWithTypeValue = null;
-                            for (CorrelationAttributeInstance instance : correlationAttributeInstances) {
-                                if (instance.getCorrelationType().getId() == CorrelationAttributeInstance.OSACCOUNT_TYPE_ID) {
-                                    instanceWithTypeValue = instance;
-                                    break;
-                                }
-                            }
-
-                            if (instanceWithTypeValue != null) {
-                                List<CorrelationAttributeInstance> previousOccurences = dbManager.getArtifactInstancesByTypeValue(instanceWithTypeValue.getCorrelationType(), instanceWithTypeValue.getCorrelationValue());
-
-                                for (CorrelationAttributeInstance instance : previousOccurences) {
-                                    //we can get the first instance here since the case for all attributes will be the same
-                                    if (!instance.getCorrelationCase().getCaseUUID().equals(instanceWithTypeValue.getCorrelationCase().getCaseUUID())) {
-                                        SleuthkitCase tskCase = osAccount.getSleuthkitCase();
-                                        Blackboard blackboard = tskCase.getBlackboard();
-
-                                        List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstances(instanceWithTypeValue.getCorrelationType(), instanceWithTypeValue.getCorrelationValue());
-
-                                        // calculate score
-                                        Score score;
-                                        int numCases = caseDisplayNames.size();
-                                        if (numCases <= IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE) {
-                                            score = Score.SCORE_LIKELY_NOTABLE;
-                                        } else if (numCases > IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_LIKELY_NOTABLE_SCORE && numCases <= IngestEventsListener.MAX_NUM_PREVIOUS_CASES_FOR_PREV_SEEN_ARTIFACT_CREATION) {
-                                            score = Score.SCORE_NONE;
-                                        } else {
-                                            // don't make an Analysis Result, the artifact is too common.
-                                            continue;
-                                        }
-
-                                        String prevCases = caseDisplayNames.stream().distinct().collect(Collectors.joining(","));
-                                        String justification = "Previously seen in cases " + prevCases;
-                                        Collection<BlackboardAttribute> attributesForNewArtifact = Arrays.asList(
-                                                new BlackboardAttribute(
-                                                        TSK_SET_NAME, MODULE_NAME,
-                                                        Bundle.CaseEventsListener_prevExists_text()),
-                                                new BlackboardAttribute(
-                                                        TSK_CORRELATION_TYPE, MODULE_NAME,
-                                                        instance.getCorrelationType().getDisplayName()),
-                                                new BlackboardAttribute(
-                                                        TSK_CORRELATION_VALUE, MODULE_NAME,
-                                                        instanceWithTypeValue.getCorrelationValue()),
-                                                new BlackboardAttribute(
-                                                        TSK_OTHER_CASES, MODULE_NAME,
-                                                        prevCases));
-                                        BlackboardArtifact newAnalysisResult = osAccount.newAnalysisResult(
-                                                BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN, score,
-                                                null, Bundle.CaseEventsListener_prevExists_text(), justification, attributesForNewArtifact, osAccountInstance.getDataSource().getId()).getAnalysisResult();
-                                        try {
-                                            // index the artifact for keyword search
-                                            blackboard.postArtifact(newAnalysisResult, MODULE_NAME);
-                                            break;
-                                        } catch (Blackboard.BlackboardException ex) {
-                                            LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + newAnalysisResult.getArtifactID(), ex); //NON-NLS
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                    } catch (CorrelationAttributeNormalizationException ex) {
-                        LOGGER.log(Level.SEVERE, "Exception with Correlation Attribute Normalization.", ex);  //NON-NLS
-                    } catch (CentralRepoException ex) {
-                        LOGGER.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", accountAddr.get()), ex);  //NON-NLS
-                    }
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Cannot get central repository for OsAccount: " + "OsAccount", ex);
-                }
-            }
-        }
     }
 
     private final class DataSourceNameChangedTask implements Runnable {
@@ -817,6 +671,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                     LOGGER.log(Level.SEVERE, "No open case", ex);
                 }
             }
-        } // DATA_SOURCE_NAME_CHANGED
+        }
     }
+
 }

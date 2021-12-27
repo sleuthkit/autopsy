@@ -33,7 +33,7 @@ import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.ingest.Snapshot;
+import org.sleuthkit.autopsy.ingest.IngestJobProgressSnapshot;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestThreadActivitySnapshot;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotProvider;
@@ -98,7 +98,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
      * Version 3 fields.
      */
     private List<IngestThreadActivitySnapshot> ingestThreadsSnapshot;
-    private List<Snapshot> ingestJobsSnapshot;
+    private List<IngestJobProgressSnapshot> ingestJobsSnapshot;
     private Map<String, Long> moduleRunTimesSnapshot;
     
     /*
@@ -409,7 +409,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
      *
      * @param snapshot
      */
-    synchronized void setIngestJobsSnapshot(List<Snapshot> snapshot) {
+    synchronized void setIngestJobsSnapshot(List<IngestJobProgressSnapshot> snapshot) {
         this.ingestJobsSnapshot = snapshot;
     }
 
@@ -643,7 +643,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
     }
 
     @Override
-    public List<Snapshot> getIngestJobSnapshots() {
+    public List<IngestJobProgressSnapshot> getIngestJobSnapshots() {
         return this.ingestJobsSnapshot;
     }
 

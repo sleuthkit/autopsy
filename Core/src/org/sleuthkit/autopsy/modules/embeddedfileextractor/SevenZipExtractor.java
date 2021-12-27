@@ -69,7 +69,6 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION;
@@ -327,10 +326,9 @@ class SevenZipExtractor {
                             TSK_COMMENT, MODULE_NAME,
                             details));
 
-            if (!blackboard.artifactExists(archiveFile, TSK_INTERESTING_FILE_HIT, attributes)) {
- 
+            if (!blackboard.artifactExists(archiveFile, BlackboardArtifact.Type.TSK_INTERESTING_ITEM, attributes)) {
                 BlackboardArtifact artifact = rootArchive.getArchiveFile().newAnalysisResult(
-                        BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                        BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE, 
                         null, setName, null, 
                         attributes)
                         .getAnalysisResult();
@@ -341,7 +339,7 @@ class SevenZipExtractor {
                      * keyword search, and fire an event to notify UI of this
                      * new artifact
                      */
-                    blackboard.postArtifact(artifact, MODULE_NAME);
+                    blackboard.postArtifact(artifact, MODULE_NAME, context.getJobId());
 
                     String msg = NbBundle.getMessage(SevenZipExtractor.class,
                             "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnMsg", archiveFile.getName(), escapedFilePath);//NON-NLS
@@ -870,7 +868,7 @@ class SevenZipExtractor {
                      * keyword search, and fire an event to notify UI of this
                      * new artifact
                      */
-                    blackboard.postArtifact(artifact, MODULE_NAME);
+                    blackboard.postArtifact(artifact, MODULE_NAME, context.getJobId());
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to post blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(
@@ -954,7 +952,7 @@ class SevenZipExtractor {
         }
         charsetDetector.setText(allBytes);
         CharsetMatch cm = charsetDetector.detect();
-        if (cm.getConfidence() >= 90 && Charset.isSupported(cm.getName())) {
+        if (cm != null && cm.getConfidence() >= 90 && Charset.isSupported(cm.getName())) {
             detectedCharset = Charset.forName(cm.getName());
         }
         return detectedCharset;

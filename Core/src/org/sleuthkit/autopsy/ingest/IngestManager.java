@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,11 +70,12 @@ import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
 import org.sleuthkit.autopsy.ingest.events.FileAnalyzedEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -135,7 +137,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     private final Map<Long, IngestJob> ingestJobsById = new HashMap<>();
     private final ExecutorService dataSourceLevelIngestJobTasksExecutor;
     private final ExecutorService fileLevelIngestJobTasksExecutor;
-    private final ExecutorService resultIngestTasksExecutor;
+    private final ExecutorService dataArtifactIngestTasksExecutor;
+    private final ExecutorService analysisResultIngestTasksExecutor;
     private final ExecutorService eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS;
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     private final ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
@@ -168,21 +171,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * the processing of data sources by ingest modules.
      */
     private IngestManager() {
-        /*
-         * Submit a single Runnable ingest manager task for processing data
-         * source level ingest job tasks to the data source level ingest job
-         * tasks executor.
-         */
         dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;        
         long threadId = nextIngestManagerTaskId.incrementAndGet();
         dataSourceLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
         ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
 
-        /*
-         * Submit a configurable number of Runnable ingest manager tasks for
-         * processing file level ingest job tasks to the file level ingest job
-         * tasks executor.
-         */
         numberOfFileIngestThreads = UserPreferences.numberOfFileIngestThreads();
         fileLevelIngestJobTasksExecutor = Executors.newFixedThreadPool(numberOfFileIngestThreads, new ThreadFactoryBuilder().setNameFormat("IM-file-ingest-%d").build()); //NON-NLS
         for (int i = 0; i < numberOfFileIngestThreads; ++i) {
@@ -191,12 +184,15 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
         }
 
-        resultIngestTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-results-ingest-%d").build()); //NON-NLS;        
+        dataArtifactIngestTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-artifact-ingest-%d").build()); //NON-NLS;        
         threadId = nextIngestManagerTaskId.incrementAndGet();
-        resultIngestTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getResultIngestTaskQueue()));
-        // RJCTODO
-        // ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
-        // RJCTODO: Where is the shut down code?
+        dataArtifactIngestTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getDataArtifactIngestTaskQueue()));
+        ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
+
+        analysisResultIngestTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-analysis-result-ingest-%d").build()); //NON-NLS;        
+        threadId = nextIngestManagerTaskId.incrementAndGet();
+        analysisResultIngestTasksExecutor.submit(new ExecuteIngestJobTasksTask(threadId, IngestTasksScheduler.getInstance().getAnalysisResultIngestTaskQueue()));
+        ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
     }
 
     /**
@@ -289,13 +285,120 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
     /**
      * Handles artifacts posted events published by the Sleuth Kit layer
-     * blackboard via the event bus for the case database.
+     * blackboard via the Sleuth Kit event bus.
      *
-     * @param tskEvent A Sleuth Kit data model ArtifactsPostedEvent from the
-     *                 case database event bus.
+     * @param tskEvent The event.
      */
     @Subscribe
     void handleArtifactsPosted(Blackboard.ArtifactsPostedEvent tskEvent) {
+        /*
+         * Add any new data artifacts included in the event to the source ingest
+         * job for possible analysis.
+         */
+        List<DataArtifact> newDataArtifacts = new ArrayList<>();
+        List<AnalysisResult> newAnalysisResults = new ArrayList<>();
+        Collection<BlackboardArtifact> newArtifacts = tskEvent.getArtifacts();
+        for (BlackboardArtifact artifact : newArtifacts) {
+            if (artifact instanceof DataArtifact) {
+                newDataArtifacts.add((DataArtifact) artifact);
+            } else {
+                newAnalysisResults.add((AnalysisResult) artifact);
+            }
+        }
+        if (!newDataArtifacts.isEmpty() || !newAnalysisResults.isEmpty()) {
+            IngestJob ingestJob = null;
+            Optional<Long> ingestJobId = tskEvent.getIngestJobId();
+            if (ingestJobId.isPresent()) {
+                synchronized (ingestJobsById) {
+                    ingestJob = ingestJobsById.get(ingestJobId.get());
+                }
+            } else {
+                /*
+                 * There are four use cases where the ingest job ID returned by
+                 * the event is expected be null:
+                 *
+                 * 1. The artifacts are being posted by a data source proccessor
+                 * (DSP) module that runs before the ingest job is created,
+                 * i.e., a DSP that does not support streaming ingest and has no
+                 * noton of an ingest job ID. In this use case, the event is
+                 * handled synchronously. The DSP calls
+                 * Blackboard.postArtifacts(), which puts the event on the event
+                 * bus to which this method subscribes, so the event will be
+                 * handled here before the DSP completes and calls
+                 * DataSourceProcessorCallback.done(). This means the code below
+                 * will execute before the ingest job is created, so it will not
+                 * find an ingest job to which to add the artifacts. However,
+                 * the artifacts WILL be analyzed after the ingest job is
+                 * started, when the ingest job executor, working in batch mode,
+                 * schedules ingest tasks for all of the data artifacts in the
+                 * case database. There is a slight risk that the wrong ingest
+                 * job will be selected if multiple ingests of the same data
+                 * source are in progress.
+                 *
+                 * 2. The artifacts were posted by an ingest module that either
+                 * has not been updated to use the current
+                 * Blackboard.postArtifacts() API, or is using it incorrectly.
+                 * In this use case, the code below should be able to find the
+                 * ingest job to which to add the artifacts via their data
+                 * source. There is a slight risk that the wrong ingest job will
+                 * be selected if multiple ingests of the same data source are
+                 * in progress.
+                 *
+                 * 3. The portable case generator uses a
+                 * CommunicationArtifactsHelper constructed with a null ingest
+                 * job ID, and the CommunicatonsArtifactHelper posts artifacts.
+                 * Ingest of that data source might be running, in which case
+                 * the data artifact will be analyzed. It also might be analyzed
+                 * by a subsequent ingest job for the data source. This is an
+                 * acceptable edge case.
+                 *
+                 * 4. The user can manually create timeline events with the
+                 * timeline tool, which posts the TSK_TL_EVENT data artifacts.
+                 * The user selects the data source for these artifacts. Ingest
+                 * of that data source might be running, in which case the data
+                 * artifact will be analyzed. It also might be analyzed by a
+                 * subsequent ingest job for the data source. This is an
+                 * acceptable edge case.
+                 * 
+                 * 5. The user can manually run ad hoc keyword searches,
+                 * which post TSK_KEYWORD_HIT analysis results. Ingest
+                 * of that data source might be running, in which case the analysis
+                 * results will be analyzed. They also might be analyzed by a
+                 * subsequent ingest job for the data source. This is an
+                 * acceptable edge case.
+                 */
+                BlackboardArtifact artifact = newArtifacts.iterator().next();
+                if (artifact != null) {
+                    try {
+                        Content artifactDataSource = artifact.getDataSource();
+                        synchronized (ingestJobsById) {
+                            for (IngestJob job : ingestJobsById.values()) {
+                                Content dataSource = job.getDataSource();
+                                if (artifactDataSource.getId() == dataSource.getId()) {
+                                    ingestJob = job;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Failed to get data source for blackboard artifact (object ID = %d)", artifact.getId()), ex); //NON-NLS
+                    }
+                }
+            }
+            if (ingestJob != null) {
+                if (!newDataArtifacts.isEmpty()) {
+                    ingestJob.addDataArtifacts(newDataArtifacts);
+                }
+                if (!newAnalysisResults.isEmpty()) {
+                    ingestJob.addAnalysisResults(newAnalysisResults);
+                }
+            }
+        }
+
+        /*
+         * Publish Autopsy events for the new artifacts, one event per artifact
+         * type.
+         */
         for (BlackboardArtifact.Type artifactType : tskEvent.getArtifactTypes()) {
             ModuleDataEvent legacyEvent = new ModuleDataEvent(tskEvent.getModuleName(), artifactType, tskEvent.getArtifacts(artifactType));
             AutopsyEvent autopsyEvent = new BlackboardPostEvent(legacyEvent);
@@ -337,6 +440,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @throws TskCoreException if there was an error starting the ingest job.
      */
     public IngestStream openIngestStream(DataSource dataSource, IngestJobSettings settings) throws TskCoreException {
+        if (!(dataSource instanceof DataSource)) {
+            throw new IllegalArgumentException("dataSource argument does not implement the DataSource interface"); //NON-NLS
+        }
         IngestJob job = new IngestJob(dataSource, IngestJob.Mode.STREAMING, settings);
         IngestJobInputStream stream = new IngestJobInputStream(job);
         if (stream.getIngestJobStartResult().getJob() != null) {
@@ -362,35 +468,35 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Queues an ingest job for for one or more data sources.
+     * Queues batch mode ingest jobs for one or more data sources.
      *
      * @param dataSources The data sources to analyze.
-     * @param settings    The settings for the ingest job.
+     * @param settings    The settings for the ingest jobs.
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings);
-            if (job.hasIngestPipeline()) {
-                long taskId = nextIngestManagerTaskId.incrementAndGet();
-                Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
-                synchronized (startIngestJobFutures) {
-                    startIngestJobFutures.put(taskId, task);
-                }
+            List<AbstractFile> emptyFilesSubset = new ArrayList<>();
+            for (Content dataSource : dataSources) {
+                queueIngestJob(dataSource, emptyFilesSubset, settings);
             }
         }
     }
 
     /**
-     * Queues an ingest job for for a data source. Either all of the files in
-     * the data source or a given subset of the files will be analyzed.
+     * Queues a batch mode ingest job for a data source. Either all of the files
+     * in the data source or a given subset of the files will be analyzed.
      *
      * @param dataSource The data source to analyze.
-     * @param files      A subset of the files for the data source.
+     * @param files      A subset of the files for the data source. May be
+     *                   empty.
      * @param settings   The settings for the ingest job.
      */
     public void queueIngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
+        if (!(dataSource instanceof DataSource)) {
+            throw new IllegalArgumentException("dataSource argument does not implement the DataSource interface"); //NON-NLS
+        }
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSource, files, settings);
+            IngestJob job = new IngestJob((DataSource) dataSource, files, settings);
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
@@ -402,23 +508,52 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Immediately starts an ingest job for one or more data sources.
+     * Immediately starts batch mode ingest jobs for one or more data sources.
+     * If any of the jobs fail to start, any jobs already started are cancelled
+     * and any remaining jobs are not attempted. The idea behind this is that
+     * since all of the jobs have the same settings, if the ingest modules fail
+     * to start up for one job (presumably the first job), all of the jobs will
+     * encounter problems.
      *
      * @param dataSources The data sources to process.
-     * @param settings    The settings for the ingest job.
+     * @param settings    The settings for the ingest jobs.
      *
-     * @return The IngestJobStartResult describing the results of attempting to
-     *         start the ingest job.
+     * @return An IngestJobStartResult object describing the results of
+     *         attempting to start the ingest jobs.
      */
     public IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
-        if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSources, settings);
-            if (job.hasIngestPipeline()) {
-                return startIngestJob(job);
+        List<DataSource> verifiedDataSources = new ArrayList<>();
+        for (Content content : dataSources) {
+            if (!(content instanceof DataSource)) {
+                throw new IllegalArgumentException("Content object in dataSources argument does not implement the DataSource interface"); //NON-NLS
             }
-            return new IngestJobStartResult(null, new IngestManagerException("No ingest pipeline created, likely due to no ingest modules being enabled"), null); //NON-NLS
+            DataSource verifiedDataSource = (DataSource) content;
+            verifiedDataSources.add(verifiedDataSource);
         }
-        return new IngestJobStartResult(null, new IngestManagerException("No case open"), null); //NON-NLS
+        IngestJobStartResult startResult = null;
+        if (caseIsOpen) {
+            for (DataSource dataSource : verifiedDataSources) {
+                List<IngestJob> startedJobs = new ArrayList<>();
+                IngestJob job = new IngestJob(dataSource, IngestJob.Mode.BATCH, settings);
+                if (job.hasIngestPipeline()) {
+                    startResult = startIngestJob(job);
+                    if (startResult.getModuleErrors().isEmpty() && startResult.getStartupException() == null) {
+                        startedJobs.add(job);
+                    } else {
+                        for (IngestJob jobToCancel : startedJobs) {
+                            jobToCancel.cancel(IngestJob.CancellationReason.INGEST_MODULES_STARTUP_FAILED);
+                        }
+                        break;
+                    }
+                } else {
+                    startResult = new IngestJobStartResult(null, new IngestManagerException("No ingest pipeline created, likely due to no ingest modules being enabled"), null); //NON-NLS
+                    break;
+                }
+            }
+        } else {
+            startResult = new IngestJobStartResult(null, new IngestManagerException("No case open"), null); //NON-NLS
+        }
+        return startResult;
     }
 
     /**
@@ -487,7 +622,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         synchronized (ingestJobsById) {
             ingestJobsById.put(job.getId(), job);
         }
-        IngestManager.logger.log(Level.INFO, "Starting ingest job {0}", job.getId()); //NON-NLS
+        IngestManager.logger.log(Level.INFO, String.format("Starting ingest job %d at %s", job.getId(), new Date().getTime())); //NON-NLS
         try {
             errors = job.start();
         } catch (InterruptedException ex) {
@@ -529,17 +664,16 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *
      * @param job The completed job.
      */
-    void finishIngestJob(IngestJob job
-    ) {
+    void finishIngestJob(IngestJob job) {
         long jobId = job.getId();
         synchronized (ingestJobsById) {
             ingestJobsById.remove(jobId);
         }
         if (!job.isCancelled()) {
-            IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
+            IngestManager.logger.log(Level.INFO, String.format("Ingest job %d completed at %s", job.getId(), new Date().getTime())); //NON-NLS            
             fireIngestJobCompleted(jobId);
         } else {
-            IngestManager.logger.log(Level.INFO, "Ingest job {0} cancelled", jobId); //NON-NLS
+            IngestManager.logger.log(Level.INFO, String.format("Ingest job %d cancelled at %s", job.getId(), new Date().getTime())); //NON-NLS
             fireIngestJobCancelled(jobId);
         }
     }
@@ -692,12 +826,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * Publishes an ingest job event signifying analysis of a data source
      * started.
      *
-     * @param ingestJobId           The ingest job id.
-     * @param dataSourceIngestJobId The data source ingest job id.
-     * @param dataSource            The data source.
+     * @param ingestJobId The ingest job id.
+     * @param dataSource  The data source.
      */
-    void fireDataSourceAnalysisStarted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisStartedEvent(ingestJobId, dataSourceIngestJobId, dataSource);
+    void fireDataSourceAnalysisStarted(long ingestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisStartedEvent(ingestJobId, dataSource);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -705,12 +838,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * Publishes an ingest job event signifying analysis of a data source
      * finished.
      *
-     * @param ingestJobId           The ingest job id.
-     * @param dataSourceIngestJobId The data source ingest job id.
-     * @param dataSource            The data source.
+     * @param ingestJobId The ingest job id.
+     * @param dataSource  The data source.
      */
-    void fireDataSourceAnalysisCompleted(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
+    void fireDataSourceAnalysisCompleted(long ingestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_COMPLETED);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -718,12 +850,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * Publishes an ingest job event signifying analysis of a data source was
      * canceled.
      *
-     * @param ingestJobId           The ingest job id.
-     * @param dataSourceIngestJobId The data source ingest job id.
-     * @param dataSource            The data source.
+     * @param ingestJobId The ingest job id.
+     * @param dataSource  The data source.
      */
-    void fireDataSourceAnalysisCancelled(long ingestJobId, long dataSourceIngestJobId, Content dataSource) {
-        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSourceIngestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
+    void fireDataSourceAnalysisCancelled(long ingestJobId, Content dataSource) {
+        AutopsyEvent event = new DataSourceAnalysisCompletedEvent(ingestJobId, dataSource, DataSourceAnalysisCompletedEvent.Reason.ANALYSIS_CANCELLED);
         eventPublishingExecutor.submit(new PublishEventTask(event, jobEventPublisher));
     }
 
@@ -804,52 +935,25 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
     /**
      * Updates the ingest progress snapshot when a new ingest module starts
-     * working on a data source level ingest task.
+     * working on an ingest task. This includes incrementing the total run time
+     * for the PREVIOUS ingest module in the pipeline, which has now finished
+     * its processing for the task.
      *
      * @param task              The data source ingest task.
      * @param currentModuleName The display name of the currently processing
      *                          module.
      */
-    void setIngestTaskProgress(DataSourceIngestTask task, String currentModuleName) {
+    void setIngestTaskProgress(IngestTask task, String currentModuleName) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
-        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
+        IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobExecutor().getIngestJobId(), currentModuleName, task.getDataSource(), task.getContentName());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
-
-        /*
-         * Update the total run time for the PREVIOUS ingest module in the
-         * pipeline, which has now finished its processing for the task.
-         */
-        incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
-    }
-
-    /**
-     * Updates the ingest progress snapshot when a new ingest module starts
-     * working on a file ingest task.
-     *
-     * @param task              The file ingest task.
-     * @param currentModuleName The display name of the currently processing
-     *                          module.
-     */
-    void setIngestTaskProgress(FileIngestTask task, String currentModuleName) {
-        IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
-        IngestThreadActivitySnapshot newSnap;
-        try {
-            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource(), task.getFile());
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting file from file ingest task", ex);
-            newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJobPipeline().getId(), currentModuleName, task.getDataSource());
-        }
-        ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
-
-        /*
-         * Update the total run time for the PREVIOUS ingest module in the
-         * pipeline, which has now finished its processing for the task.
-         */
-        incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
+        incrementModuleRunTime(prevSnap.getModuleDisplayName(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     /**
      * Updates the ingest progress snapshot when an ingest task is completed.
+     * This includes incrementing the total run time for the ingest module,
+     * which is the LAST ingest module in the pipeline.
      *
      * @param task The ingest task.
      */
@@ -857,12 +961,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
-
-        /*
-         * Update the total run time for the LAST ingest module in the pipeline,
-         * which has now finished its processing for the task.
-         */
-        incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
+        incrementModuleRunTime(prevSnap.getModuleDisplayName(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     /**
@@ -917,11 +1016,14 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @return A list of ingest job state snapshots.
      */
     @Override
-    public List<Snapshot> getIngestJobSnapshots() {
-        List<Snapshot> snapShots = new ArrayList<>();
+    public List<IngestJobProgressSnapshot> getIngestJobSnapshots() {
+        List<IngestJobProgressSnapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
-                snapShots.addAll(job.getDataSourceIngestJobSnapshots());
+                IngestJobProgressSnapshot snapshot = job.getDiagnosticStatsSnapshot();
+                if (snapshot != null) {
+                    snapShots.add(snapshot);
+                }
             });
         }
         return snapShots;
@@ -942,7 +1044,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * Creates and starts an ingest job for a collection of data sources.
+     * Creates and starts an ingest job.
      */
     private final class StartIngestJobTask implements Callable<Void> {
 
@@ -1055,8 +1157,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
     }
 
     /**
-     * A snapshot of the current activity of an ingest job task execution task
-     * running in an ingest thread.
+     * A snapshot of the current activity of an ingest thread.
      */
     @Immutable
     public static final class IngestThreadActivitySnapshot implements Serializable {
@@ -1065,107 +1166,111 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
         private final long threadId;
         private final Date startTime;
-        private final String activity;
+        private final String moduleDisplayName;
         private final String dataSourceName;
         private final String fileName;
         private final long jobId;
 
         /**
-         * A snapshot of the current activity of an idle ingest job task
-         * execution task running in an ingest thread.
+         * A snapshot of the current activity of an idle ingest thread.
          *
-         * @param threadId The ingest manager task/thread id for the
-         *                 task/thread.
+         * @param threadId The ID assigned to the thread by the ingest manager.
          */
         IngestThreadActivitySnapshot(long threadId) {
             this.threadId = threadId;
             startTime = new Date();
-            this.activity = NbBundle.getMessage(this.getClass(), "IngestManager.IngestThreadActivitySnapshot.idleThread");
+            this.moduleDisplayName = NbBundle.getMessage(this.getClass(), "IngestManager.IngestThreadActivitySnapshot.idleThread");
             this.dataSourceName = "";
             this.fileName = "";
             this.jobId = 0;
         }
 
         /**
-         * A snapshot of the current activity of an ingest job data source level
-         * task execution task running in an ingest thread.
+         * A snapshot of the current activity of an ingest thread executing a
+         * data source, data artifact, or analysis result ingest task.
          *
-         * @param threadId   The ingest manager task/thread id for the
-         *                   task/thread.
-         * @param jobId      The ingest job id.
-         * @param activity   A short description of the current activity.
-         * @param dataSource The data source that is the subject of the task.
+         * @param threadId          The ID assigned to the thread by the ingest
+         *                          manager.
+         * @param jobId             The ID of the ingest job of which the
+         *                          current ingest task is a part.
+         * @param moduleDisplayName The display name of the ingest module
+         *                          currently working on the task.
+         * @param dataSource        The data source that is the subject of the
+         *                          current ingest job.
          */
-        IngestThreadActivitySnapshot(long threadId, long jobId, String activity, Content dataSource) {
+        IngestThreadActivitySnapshot(long threadId, long jobId, String moduleDisplayName, Content dataSource) {
             this.threadId = threadId;
             this.jobId = jobId;
             startTime = new Date();
-            this.activity = activity;
+            this.moduleDisplayName = moduleDisplayName;
             this.dataSourceName = dataSource.getName();
             this.fileName = "";
         }
 
         /**
-         * A snapshot of the current activity of an ingest job file level task
-         * execution task running in an ingest thread.
+         * A snapshot of the current activity of an ingest thread executing a
+         * file ingest task.
          *
-         * @param threadId   The ingest manager task/thread id for the
-         *                   task/thread.
-         * @param jobId      The ingest job id.
-         * @param activity   A short description of the current activity.
-         * @param dataSource The data source that is the source of the file that
-         *                   is the subject of the task.
-         * @param file       The file that is the subject of the task.
+         * @param threadId          The ID assigned to the thread by the ingest
+         *                          manager.
+         * @param jobId             The ID of the ingest job of which the
+         *                          current ingest task is a part.
+         * @param moduleDisplayName The display name of the ingest module
+         *                          currently working on the task.
+         * @param dataSource        The data source that is the subject of the
+         *                          current ingest job.
+         * @param file              The name of the file that is the subject of
+         *                          the current ingest task.
          */
-        IngestThreadActivitySnapshot(long threadId, long jobId, String activity, Content dataSource, AbstractFile file) {
+        IngestThreadActivitySnapshot(long threadId, long jobId, String moduleDisplayName, Content dataSource, String fileName) {
             this.threadId = threadId;
             this.jobId = jobId;
             startTime = new Date();
-            this.activity = activity;
+            this.moduleDisplayName = moduleDisplayName;
             this.dataSourceName = dataSource.getName();
-            this.fileName = file.getName();
+            this.fileName = fileName;
         }
 
         /**
-         * Gets the ingest job id.
+         * Gets the ID of the ingest job of which the current ingest task is a
+         * part.
          *
-         * @return The ingest job id.
+         * @return The ingest job ID.
          */
         long getIngestJobId() {
             return jobId;
         }
 
         /**
-         * Gets the ingest manager task/thread id for the task/thread.
+         * Gets the thread ID assigned to the thread by the ingest manager.
          *
-         * @return The task/thread id.
+         * @return The thread ID.
          */
         long getThreadId() {
             return threadId;
         }
 
         /**
-         * Gets the start date and time for the current activity.
+         * Gets the start date and time for the current ingest task.
          *
          * @return The start date and time.
          */
         Date getStartTime() {
-            return startTime;
+            return new Date(startTime.getTime());
         }
 
         /**
-         * Gets the THE short description of the current activity.
+         * Gets display name of the ingest module currently working on the task.
          *
-         * @return The short description of the current activity.
+         * @return The module display name.
          */
-        String getActivity() {
-            return activity;
+        String getModuleDisplayName() {
+            return moduleDisplayName;
         }
 
         /**
-         * Gets the display name of the data source that is either the subject
-         * of the task or is the source of the file that is the subject of the
-         * task.
+         * Gets the display name of the data source that is the subject of the
+         * ingest job.
          *
          * @return The data source display name.
          */
@@ -1174,9 +1279,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         }
 
         /**
-         * Gets the file, if any, that is the subject of the task.
+         * Gets the name of file that is the subject of the current ingest task.
          *
-         * @return The fiel name, may be the empty string.
+         * @return The file name, may be the empty string.
          */
         String getFileName() {
             return fileName;

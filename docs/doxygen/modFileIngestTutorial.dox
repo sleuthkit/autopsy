@@ -82,9 +82,9 @@ Now that we have found the files, we want to do something with them. In our situ
 
 A list of standard artifact types can be found in the <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest/artifact_catalog_page.html">artifact catalog</a>. It is important to note the catagory for the artifact you want to since this affects which method you will use to create the artifact.
 
-For our example, we are going to make an artifact of type "TSK_INTERESTING_FILE", which is an analysis result, whenever we find a big and round file. These are one of the most generic artifact types and are simply a way of alerting the user that a file is interesting for some reason. Once you make the artifact, it will be shown in the UI. The below code makes an artifact for the file and puts it into the set of "Big and Round Files". You can create whatever set names you want. The Autopsy GUI organizes Interesting Files by their set name.
+For our example, we are going to make an artifact of type "TSK_INTERESTING_ITEM", which is an analysis result, whenever we find a big and round file. These are one of the most generic artifact types and are simply a way of alerting the user that a file is interesting for some reason. Once you make the artifact, it will be shown in the UI. The below code makes an artifact for the file and puts it into the set of "Big and Round Files". You can create whatever set names you want. The Autopsy GUI organizes Interesting Files by their set name.
 \verbatim            
-    art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE,
+    art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE,
         None, "Big and Round Files", None,
         Arrays.asList(
             BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
@@ -111,9 +111,9 @@ That's it. Your process() method should look something like this:
         # Look for files bigger than 10MB that are a multiple of 4096            
         if ((file.getSize() > 10485760) and ((file.getSize() % 4096) == 0)):
 
-            # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
+            # Make an artifact on the blackboard.  TSK_INTERESTING_ITEM is a generic type of
             # artifact.  Refer to the developer docs for other examples.
-            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE,
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE,
                                          None, "Big and Round Files", None,
                                          Arrays.asList(
                                              BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,

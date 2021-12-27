@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -75,9 +76,6 @@ public class SlackFileNode extends AbstractFsContentNode<AbstractFile> {
     @Override
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<>();
-        for (Action a : super.getActions(true)) {
-            actionsList.add(a);
-        }
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "SlackFileNode.getActions.viewFileInDir.text"), this.content));
             actionsList.add(null); // creates a menu separator
@@ -97,6 +95,8 @@ public class SlackFileNode extends AbstractFsContentNode<AbstractFile> {
         }
         
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
+        actionsList.add(null);
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 

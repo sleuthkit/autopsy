@@ -92,11 +92,15 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
     def log(self, level, msg):
         self._logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
 
+    def __init__(self):
+        self.context = None
+
     # Where any setup and configuration is done
     # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
     # See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
+        self.context = context
         self.filesFound = 0
 
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
@@ -120,9 +124,9 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
         # Look for files bigger than 10MB that are a multiple of 4096            
         if ((file.getSize() > 10485760) and ((file.getSize() % 4096) == 0)):
 
-            # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
+            # Make an artifact on the blackboard.  TSK_INTERESTING_ITEM is a generic type of
             # artifact.  Refer to the developer docs for other examples.
-            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE,
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE,
                                          None, "Big and Round Files", None,
                                          Arrays.asList(
                                              BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
@@ -130,8 +134,7 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
                                                                  "Big and Round Files"))).getAnalysisResult()
 
             try:
-                # post the artifact for listeners of artifact events
-                blackboard.postArtifact(art, FindBigRoundFilesIngestModuleFactory.moduleName)
+                blackboard.postArtifact(art, FindBigRoundFilesIngestModuleFactory.moduleName, context.getJobId())
             except Blackboard.BlackboardException as e:
                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 
