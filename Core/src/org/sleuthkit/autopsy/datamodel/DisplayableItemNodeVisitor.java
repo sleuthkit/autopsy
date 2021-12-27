@@ -25,7 +25,6 @@ import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCaseNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.InstanceDataSourceNode;
-import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.allcasessearch.CorrelationAttributeInstanceNode;
 
 /**
@@ -133,23 +132,6 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(Reports.ReportsListNode reportsNode);
 
     T visit(Reports.ReportNode reportNode);
-
-    /*
-     * Accounts
-     */
-    T visit(Accounts.AccountsRootNode accountRootNode);
-
-    T visit(Accounts.CreditCardNumberAccountTypeNode accountTypeNode);
-
-    T visit(Accounts.ByBINNode byArtifactNode);
-
-    T visit(Accounts.ByFileNode byFileNode);
-
-    T visit(Accounts.FileWithCCNNode byFileNode);
-
-    T visit(Accounts.BINNode binNode);
-
-    T visit(Accounts.DefaultAccountTypeNode node);
 
     T visit(EmptyNode.MessageNode emptyNode);
 
@@ -407,41 +389,6 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(Reports.ReportNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.CreditCardNumberAccountTypeNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.AccountsRootNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.ByBINNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.ByFileNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.FileWithCCNNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.BINNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.DefaultAccountTypeNode node) {
             return defaultVisit(node);
         }
 

@@ -134,11 +134,6 @@ public class RootContentChildren extends Children.Keys<Object> {
         }
 
         @Override
-        public AbstractNode visit(Accounts accountsItem) {
-            return accountsItem.new AccountsRootNode();
-        }
-
-        @Override
         public AbstractNode visit(OsAccounts osAccountsItem) {
             return osAccountsItem.new OsAccountListNode();
         }

@@ -251,10 +251,6 @@ public class Artifacts {
                 EmailExtracted.RootNode emailNode = new EmailExtracted(skCase, dsObjId).new RootNode();
                 return new TypeNodeKey(emailNode, TSK_EMAIL_MSG);
 
-            } else if (TSK_ACCOUNT.getTypeID() == typeId) {
-                Accounts.AccountsRootNode accountsNode = new Accounts(skCase, dsObjId).new AccountsRootNode();
-                return new TypeNodeKey(accountsNode, TSK_ACCOUNT);
-
             } else if (TSK_KEYWORD_HIT.getTypeID() == typeId) {
                 KeywordHits.RootNode keywordsNode = new KeywordHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeKey(keywordsNode, TSK_KEYWORD_HIT);

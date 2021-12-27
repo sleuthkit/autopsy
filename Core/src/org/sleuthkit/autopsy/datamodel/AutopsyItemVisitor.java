@@ -48,8 +48,6 @@ public interface AutopsyItemVisitor<T> {
     T visit(Tags tagsNodeKey);
 
     T visit(Reports reportsItem);
-
-    T visit(Accounts accountsItem);
     
     T visit(OsAccounts osAccoutItem);
 
@@ -133,11 +131,6 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(Reports reportsItem) {
             return defaultVisit(reportsItem);
-        }
-
-        @Override
-        public T visit(Accounts accountsItem) {
-            return defaultVisit(accountsItem);
         }
 
         @Override

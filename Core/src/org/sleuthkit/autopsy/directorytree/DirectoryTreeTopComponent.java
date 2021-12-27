@@ -75,9 +75,7 @@ import org.sleuthkit.autopsy.corecomponents.ViewPreferencesPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.datamodel.AnalysisResults;
-import org.sleuthkit.autopsy.datamodel.ArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmailExtracted;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
@@ -89,8 +87,9 @@ import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
-import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
+import org.sleuthkit.autopsy.datamodel.CreditCards;
+import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.MimeParentNode;
@@ -287,18 +286,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return showRejectedResults;
     }
 
-    /**
-     * Setter to determine if rejected results should be shown or not.
-     *
-     * @param showRejectedResults True if showing rejected results; otherwise
-     *                            false.
-     */
-    public void setShowRejectedResults(boolean showRejectedResults) {
-        this.showRejectedResults = showRejectedResults;
-        if (accounts != null) {
-            accounts.setShowRejected(showRejectedResults);
-        }
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.

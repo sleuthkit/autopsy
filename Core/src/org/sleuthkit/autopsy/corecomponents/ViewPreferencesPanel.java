@@ -129,8 +129,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setResultsTablePageSize((int) maxResultsSpinner.getValue());
 
         storeGroupItemsInTreeByDataSource();
-
-        DirectoryTreeTopComponent.getDefault().setShowRejectedResults(hideRejectedResultsCheckbox.isSelected() == false);
     }
 
     /**
@@ -510,9 +508,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void hideRejectedResultsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hideRejectedResultsCheckboxActionPerformed
-        if (immediateUpdates) {
-            DirectoryTreeTopComponent.getDefault().setShowRejectedResults(hideRejectedResultsCheckbox.isSelected() == false);
-        } else {
+        if (!immediateUpdates) {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_hideRejectedResultsCheckboxActionPerformed
