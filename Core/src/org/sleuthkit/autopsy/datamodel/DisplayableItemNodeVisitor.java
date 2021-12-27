@@ -66,37 +66,9 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(DataSourceGroupingNode dataSourceGroupingNode);
 
-    T visit(RecentFilesNode rfn);
-
-    T visit(RecentFilesFilterNode rffn);
-
     T visit(BlackboardArtifactNode ban);
 
-    T visit(Artifacts.TypeNode atn);
-
     T visit(Artifacts.BaseArtifactNode ecn);
-
-    T visit(KeywordHits.RootNode khrn);
-
-    T visit(KeywordHits.ListNode khsn);
-
-    T visit(KeywordHits.TermNode khmln);
-
-    T visit(KeywordHits.RegExpInstanceNode khmln);
-
-    T visit(HashsetHits.RootNode hhrn);
-
-    T visit(HashsetHits.HashsetNameNode hhsn);
-
-    T visit(EmailExtracted.RootNode eern);
-
-    T visit(EmailExtracted.AccountNode eean);
-
-    T visit(EmailExtracted.FolderNode eefn);
-
-    T visit(InterestingHits.RootNode ihrn);
-
-    T visit(InterestingHits.SetNameNode ihsn);
 
     T visit(CommonAttributeValueNode cavn);
 
@@ -248,11 +220,6 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(Artifacts.TypeNode atn) {
-            return defaultVisit(atn);
-        }
-
-        @Override
         public T visit(Artifacts.BaseArtifactNode ecn) {
             return defaultVisit(ecn);
         }
@@ -260,36 +227,6 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
             return defaultVisit(ftByMimeTypeEmptyNode);
-        }
-
-        @Override
-        public T visit(RecentFilesNode rfn) {
-            return defaultVisit(rfn);
-        }
-
-        @Override
-        public T visit(RecentFilesFilterNode rffn) {
-            return defaultVisit(rffn);
-        }
-
-        @Override
-        public T visit(KeywordHits.RootNode khrn) {
-            return defaultVisit(khrn);
-        }
-
-        @Override
-        public T visit(KeywordHits.ListNode khsn) {
-            return defaultVisit(khsn);
-        }
-
-        @Override
-        public T visit(KeywordHits.RegExpInstanceNode khsn) {
-            return defaultVisit(khsn);
-        }
-
-        @Override
-        public T visit(KeywordHits.TermNode khmln) {
-            return defaultVisit(khmln);
         }
 
         @Override
@@ -305,41 +242,6 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(DataSourceFilesNode in) {
             return defaultVisit(in);
-        }
-
-        @Override
-        public T visit(HashsetHits.RootNode hhrn) {
-            return defaultVisit(hhrn);
-        }
-
-        @Override
-        public T visit(HashsetHits.HashsetNameNode hhsn) {
-            return defaultVisit(hhsn);
-        }
-
-        @Override
-        public T visit(InterestingHits.RootNode ihrn) {
-            return defaultVisit(ihrn);
-        }
-
-        @Override
-        public T visit(InterestingHits.SetNameNode ihsn) {
-            return defaultVisit(ihsn);
-        }
-
-        @Override
-        public T visit(EmailExtracted.RootNode eern) {
-            return defaultVisit(eern);
-        }
-
-        @Override
-        public T visit(EmailExtracted.AccountNode eean) {
-            return defaultVisit(eean);
-        }
-
-        @Override
-        public T visit(EmailExtracted.FolderNode eefn) {
-            return defaultVisit(eefn);
         }
 
         @Override

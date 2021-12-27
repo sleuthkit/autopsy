@@ -253,7 +253,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     @Messages({
         "AnalysisResultTypeFactory_adHocName=Ad Hoc Results"
     })
-    static class KeywordSetFactory extends TreeSetFactory {
+    public static class KeywordSetFactory extends TreeSetFactory {
 
         public KeywordSetFactory(Long dataSourceId) {
             super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, Bundle.AnalysisResultTypeFactory_adHocName());

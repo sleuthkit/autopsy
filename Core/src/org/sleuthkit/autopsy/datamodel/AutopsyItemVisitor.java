@@ -33,18 +33,6 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(Views v);
 
-    T visit(RecentFiles rf);
-
-    T visit(RecentFiles.RecentFilesFilter rff);
-
-    T visit(KeywordHits kh);
-
-    T visit(HashsetHits hh);
-
-    T visit(EmailExtracted ee);
-
-    T visit(InterestingHits ih);
-
     T visit(Tags tagsNodeKey);
 
     T visit(Reports reportsItem);
@@ -68,36 +56,6 @@ public interface AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
         
-        @Override
-        public T visit(RecentFiles rf) {
-            return defaultVisit(rf);
-        }
-
-        @Override
-        public T visit(RecentFiles.RecentFilesFilter rff) {
-            return defaultVisit(rff);
-        }
-
-        @Override
-        public T visit(KeywordHits kh) {
-            return defaultVisit(kh);
-        }
-
-        @Override
-        public T visit(HashsetHits hh) {
-            return defaultVisit(hh);
-        }
-
-        @Override
-        public T visit(InterestingHits ih) {
-            return defaultVisit(ih);
-        }
-
-        @Override
-        public T visit(EmailExtracted ee) {
-            return defaultVisit(ee);
-        }
-
         @Override
         public T visit(Tags tagsNodeKey) {
             return defaultVisit(tagsNodeKey);

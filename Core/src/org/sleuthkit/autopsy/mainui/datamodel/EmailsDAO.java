@@ -141,7 +141,7 @@ public class EmailsDAO extends AbstractDAO {
      *
      * @return The pair of the account and folder or null if undetermined.
      */
-    private static Pair<String, String> getPathAccountFolder(String pathVal) {
+    public static Pair<String, String> getPathAccountFolder(String pathVal) {
         String[] pieces = pathVal.split(PATH_DELIMITER);
         return pieces.length < 4
                 ? Pair.of("", "")

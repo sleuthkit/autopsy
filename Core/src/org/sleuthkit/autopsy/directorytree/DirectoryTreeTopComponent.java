@@ -50,6 +50,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.explorer.view.BeanTreeView;
@@ -77,9 +78,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.datamodel.AnalysisResults;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
 import org.sleuthkit.autopsy.datamodel.DataArtifacts;
 import org.sleuthkit.autopsy.datamodel.OsAccounts;
@@ -90,6 +89,9 @@ import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
+import org.sleuthkit.autopsy.mainui.datamodel.EmailsDAO;
+import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory;
+import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetFactory;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.MimeParentNode;
@@ -1464,11 +1466,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }
             if (listName == null) {
-                if (regex == null) {  //using same labels used for creation 
-                    listName = NbBundle.getMessage(KeywordHits.class, "KeywordHits.simpleLiteralSearch.text");
-                } else {
-                    listName = NbBundle.getMessage(KeywordHits.class, "KeywordHits.singleRegexSearch.text");
-                }
+                listName = NbBundle.getMessage(KeywordSetFactory.class, "AnalysisResultTypeFactory_adHocName");
             }
             Node listNode = keywordRootChilds.findChild(listName);
             if (listNode == null) {
@@ -1556,22 +1554,22 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private Node getEmailNode(Children typesChildren, BlackboardArtifact art) {
         Node emailMsgRootNode = typesChildren.findChild(art.getArtifactTypeName());
         Children emailMsgRootChilds = emailMsgRootNode.getChildren();
-        Map<String, String> parsedPath = null;
+        Pair<String, String> parsedPath = null;
         try {
             List<BlackboardAttribute> attributes = art.getAttributes();
             for (BlackboardAttribute att : attributes) {
                 int typeId = att.getAttributeType().getTypeID();
                 if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()) {
-                    parsedPath = EmailExtracted.parsePath(att.getValueString());
+                    parsedPath = EmailsDAO.getPathAccountFolder(att.getValueString());
                     break;
                 }
             }
             if (parsedPath == null) {
                 return null;
             }
-            Node defaultNode = emailMsgRootChilds.findChild(parsedPath.get(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text")));
+            Node defaultNode = emailMsgRootChilds.findChild(parsedPath.getLeft());
             Children defaultChildren = defaultNode.getChildren();
-            return defaultChildren.findChild(parsedPath.get(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text")));
+            return defaultChildren.findChild(parsedPath.getRight());
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;
