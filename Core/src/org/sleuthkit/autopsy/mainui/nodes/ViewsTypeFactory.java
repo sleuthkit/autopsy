@@ -310,7 +310,7 @@ public class ViewsTypeFactory {
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
                 FileTypeSizeSearchParams searchParam = originalTreeItem.getSearchParams();
                 return new TreeResultsDTO.TreeItemDTO<>(
-                        AnalysisResultSearchParam.getTypeId(),
+                        FileTypeSizeSearchParams.getTypeId(),
                         new FileTypeSizeSearchParams(searchParam.getSizeFilter(), this.dataSourceId),
                         searchParam.getSizeFilter(),
                         searchParam.getSizeFilter().getDisplayName(),
@@ -388,7 +388,7 @@ public class ViewsTypeFactory {
                 }
 
                 return new TreeResultsDTO.TreeItemDTO<>(
-                        AnalysisResultSearchParam.getTypeId(),
+                        FileTypeMimeSearchParams.getTypeId(),
                         new FileTypeMimeSearchParams(mimePrefix, this.dataSourceId),
                         mimePrefix,
                         mimePrefix,
@@ -465,7 +465,7 @@ public class ViewsTypeFactory {
                 FileTypeMimeSearchParams searchParam = originalTreeItem.getSearchParams();
                 String mimeSuffix = searchParam.getMimeType().substring(prefixWithSlash.length());
                 return new TreeResultsDTO.TreeItemDTO<>(
-                        AnalysisResultSearchParam.getTypeId(),
+                        FileTypeMimeSearchParams.getTypeId(),
                         new FileTypeMimeSearchParams(searchParam.getMimeType(), this.dataSourceId),
                         mimeSuffix,
                         mimeSuffix,
@@ -582,7 +582,7 @@ public class ViewsTypeFactory {
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
                 FileTypeExtensionsSearchParams searchParam = originalTreeItem.getSearchParams();
                 return new TreeResultsDTO.TreeItemDTO<>(
-                        AnalysisResultSearchParam.getTypeId(),
+                        FileTypeExtensionsSearchParams.getTypeId(),
                         new FileTypeExtensionsSearchParams(searchParam.getFilter(), this.dataSourceId),
                         searchParam.getFilter(),
                         searchParam.getFilter().getDisplayName(),

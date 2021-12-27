@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
+import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -27,6 +29,8 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public class BlackboardArtifactSearchParam {
 
     private static final String TYPE_ID = "BLACKBOARD_ARTIFACT";
+    
+    private ChildNodeSelectionInfo nodeSelectionInfo;
 
     /**
      * @return The type id for this search parameter.
@@ -78,5 +82,13 @@ public class BlackboardArtifactSearchParam {
             return false;
         }
         return true;
+    }
+    
+    public ChildNodeSelectionInfo getNodeSelectionInfo() {
+        return nodeSelectionInfo;
+    }
+    
+    public void setNodeSelectionInfo(ChildNodeSelectionInfo info) {
+        nodeSelectionInfo = info;
     }
 }

@@ -27,9 +27,20 @@ BlackboardArtifactDAO.columnKeys.srcFile.displayName=Source Name
 BlackboardArtifactDAO.columnKeys.srcFile.name=Source Name
 CommAccounts.name.text=Communication Accounts
 CommAccountsDAO.fileColumns.noDescription=No Description
+CreditCardByFileRow_accounts_displayName=Accounts
+CreditCardByFileRow_file_displayName=File
+CreditCardByFileRow_status_displayName=Status
+# {0} - raw file name
+# {1} - solr chunk id
+CreditCardDAO_fetchCreditCardByFile_file_displayName={0}_chunk_{1}
+CreditCardDAO_fetchCreditCardByFile_results_displayName=By File
+CreditCardDAO_getCreditCardCounts_byBIN_displayName=By BIN
+CreditCardDAO_getCreditCardCounts_byFile_displayName=By File
 DataArtifactDAO_Accounts_displayName=Communication Accounts
 DeletedContent.allDelFilter.text=All
 DeletedContent.fsDelFilter.text=File System
+EmailsDAO_getAccountDisplayName_defaultName=Default
+EmailsDAO_getFolderDisplayName_defaultName=Default
 FileExtDocumentFilter_html_displayName=HTML
 FileExtDocumentFilter_office_displayName=Office
 FileExtDocumentFilter_pdf_displayName=PDF

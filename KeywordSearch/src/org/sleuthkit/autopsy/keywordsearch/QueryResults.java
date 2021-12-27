@@ -193,7 +193,7 @@ class QueryResults {
                     /*
                      * Post an artifact for the hit to the blackboard.
                      */
-                    BlackboardArtifact artifact = query.createKeywordHitArtifact(content, keyword, hit, snippet, query.getKeywordList().getName());
+                    BlackboardArtifact artifact = query.createKeywordHitArtifact(content, keyword, hit, snippet, query.getKeywordList().getName(), ingestJobId);
 
                     /*
                      * Send an ingest inbox message for the hit.

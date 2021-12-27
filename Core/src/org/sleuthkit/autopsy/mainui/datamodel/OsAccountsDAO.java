@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openide.util.NbBundle;
@@ -39,6 +38,9 @@ import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_SIZE;
 import org.sleuthkit.autopsy.mainui.datamodel.events.OsAccountEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.OsAccountRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
@@ -61,11 +63,9 @@ import org.sleuthkit.datamodel.TskCoreException;
     "OsAccountsDAO.fileColumns.noDescription=No Description",})
 public class OsAccountsDAO extends AbstractDAO {
 
-    private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
-    private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-
+    private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = 
+            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    
     private static final String OS_ACCOUNTS_TYPE_ID = "OS_ACCOUNTS";
 
     private static final List<ColumnKey> OS_ACCOUNTS_WITH_SCO_COLUMNS = Arrays.asList(
@@ -157,16 +157,13 @@ public class OsAccountsDAO extends AbstractDAO {
                     = creationTimeValue.isPresent() ? TimeZoneUtils.getFormattedTime(creationTimeValue.get()) : "";
             List<Object> cellValues = Arrays.asList(
                     account.getName() != null ? account.getName() : "",
-                    // GVDTODO handle SCO
-                    // GVDTODO only show if (!UserPreferences.getHideSCOColumns())
                     null,
                     null,
-                    // GVDTODO only show if central repository enabled
                     null,
                     optional.isPresent() ? optional.get() : "",
                     "",
                     "",
-                    "", // GVDTODO this is filled by a background GetOsAccountRealmTask task 
+                    "",
                     timeDisplayStr);
 
             fileRows.add(new OsAccountRowDTO(

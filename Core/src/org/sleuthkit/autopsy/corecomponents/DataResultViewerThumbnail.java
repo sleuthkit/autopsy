@@ -84,6 +84,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int totalPages;
     private int currentPageImages;
     private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
+    private DataResultPanel.PagingControls pagingControls = null;
 
     /**
      * Constructs a thumbnail result viewer, with paging support, that displays
@@ -127,6 +128,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         // impact on the initally designed layout.  This change will just effect
         // how the components are laid out as size of the window changes.
         buttonBarPanel.setLayout(new WrapLayout());
+    }
+    
+    public void setPagingControls(DataResultPanel.PagingControls pagingControls) {
+        this.pagingControls = pagingControls;
     }
 
     /**
@@ -456,8 +461,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     @Override
     public void setNode(Node givenNode, SearchResultsDTO searchResults) {
-        // GVDTODO givenNode cannot be assumed to be a table filter node and search results needs to be captured.
-        
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (selectionListener == null) {
             this.getExplorerManager().addPropertyChangeListener(new NodeSelectionListener());
@@ -474,11 +477,9 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             // DataResultViewer.  See DataResultViewer setNode for more information.
             if (givenNode != null && givenNode.getChildren().getNodesCount() > 0) {
                 
-                // GVDTODO this should be handled more elegantly
                 rootNode = (givenNode instanceof TableFilterNode) 
                         ? (TableFilterNode) givenNode 
                         : new TableFilterNode(givenNode, true);
-                
                 
                 /*
                  * Wrap the given node in a ThumbnailViewChildren that will
@@ -533,6 +534,16 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         if (currentPage < totalPages) {
             currentPage++;
             switchPage();
+        } else {
+            // current page was the last thumbnail subpage. advance to the next top level
+            // page and go to first thumbnail subpage. For example, if we were on
+            // top level page 3 and thumbnail subpage 5 of 5, then go to top level 
+            // page 4 and thumbnail sub-page 1 of 5.
+            if (pagingControls.getCurrentPage() < pagingControls.getTotalPages()) {
+                pagingControls.gotoPage( pagingControls.getCurrentPage() + 1 );
+                currentPage = 1;
+                switchPage();
+            }
         }
     }
 
@@ -579,9 +590,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 ExplorerManager explorerManager = DataResultViewerThumbnail.this.getExplorerManager();
                 Node root = explorerManager.getRootContext();
                 Node pageNode = root.getChildren().getNodeAt(currentPage - 1);
-                explorerManager.setExploredContext(pageNode);
-                currentPageImages = pageNode.getChildren().getNodesCount();
-                
+                if (pageNode != null) {
+                    explorerManager.setExploredContext(pageNode);
+                    currentPageImages = pageNode.getChildren().getNodesCount();
+                }
                 progress.finish();
             } catch (Exception ex) {
                 NotifyDescriptor d
@@ -590,7 +602,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                                         ex.getMessage()),
                                 NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(d);
-                logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
+                logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex); //NON-NLS
             } finally {
                 setCursor(null);
                 updateControls();
@@ -618,8 +630,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             final int imagesFrom = (currentPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
             final int imagesTo = currentPageImages + (currentPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
             imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);
-
-            pageNextButton.setEnabled(!(currentPage == totalPages));
+            
+            // enable "next page" button if there is either next thumbnail subpage or next top level page
+            pageNextButton.setEnabled(!(currentPage == totalPages && pagingControls.getCurrentPage() == pagingControls.getTotalPages()));
+            
             pagePrevButton.setEnabled(!(currentPage == 1));
             goToPageField.setEnabled(totalPages > 1);
             sortButton.setEnabled(true);

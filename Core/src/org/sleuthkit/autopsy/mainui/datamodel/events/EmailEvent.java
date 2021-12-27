@@ -16,49 +16,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Key for accessing data about communication accounts from the DAO.
+ * Event for new email messages.
  */
-public class CommAccountsSearchParams extends DataArtifactSearchParam {
+public class EmailEvent extends DataArtifactEvent {
 
-    private static final String TYPE_ID = "DATA_ARTIFACT_ACCOUNT";
+    private final String account;
+    private final String folder;
 
     /**
-     * @return The type id for this search parameter.
+     * Main constructor.
+     *
+     * @param dataSourceId The data source id that the email message belongs to.
+     * @param account      The email message account.
+     * @param folder       The folder within that account of the email message.
      */
-    public static String getTypeId() {
-        return TYPE_ID;
+    public EmailEvent(long dataSourceId, String account, String folder) {
+        super(BlackboardArtifact.Type.TSK_EMAIL_MSG, dataSourceId);
+        this.account = account;
+        this.folder = folder;
     }
 
-    private final Account.Type type;
-    private final Long dataSourceId;
-
-    public CommAccountsSearchParams(Account.Type type, Long dataSourceId) {
-        super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
-        this.type = type;
-        this.dataSourceId = dataSourceId;
+    public String getAccount() {
+        return account;
     }
 
-    public Account.Type getType() {
-        return type;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
+    public String getFolder() {
+        return folder;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.type);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 23 * hash + super.hashCode();
+        hash = 89 * hash + Objects.hashCode(this.account);
+        hash = 89 * hash + Objects.hashCode(this.folder);
+        hash = 89 * hash + super.hashCode();
         return hash;
     }
 
@@ -73,14 +70,15 @@ public class CommAccountsSearchParams extends DataArtifactSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final CommAccountsSearchParams other = (CommAccountsSearchParams) obj;
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        final EmailEvent other = (EmailEvent) obj;
+        if (!Objects.equals(this.account, other.account)) {
             return false;
         }
-        if (!Objects.equals(this.type, other.type)) {
+        if (!Objects.equals(this.folder, other.folder)) {
             return false;
         }
         return super.equals(obj);
     }
-
+    
+    
 }

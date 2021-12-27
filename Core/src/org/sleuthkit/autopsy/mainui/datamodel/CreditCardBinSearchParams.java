@@ -19,15 +19,13 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.datamodel.Account;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Key for accessing data about communication accounts from the DAO.
+ * Search params to fetch credit cards by bin prefix.
  */
-public class CommAccountsSearchParams extends DataArtifactSearchParam {
+public class CreditCardBinSearchParams extends CreditCardSearchParams {
 
-    private static final String TYPE_ID = "DATA_ARTIFACT_ACCOUNT";
+    private static final String TYPE_ID = "CREDIT_CARD_BY_BIN";
 
     /**
      * @return The type id for this search parameter.
@@ -36,29 +34,31 @@ public class CommAccountsSearchParams extends DataArtifactSearchParam {
         return TYPE_ID;
     }
 
-    private final Account.Type type;
-    private final Long dataSourceId;
+    private final String binPrefix;
 
-    public CommAccountsSearchParams(Account.Type type, Long dataSourceId) {
-        super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
-        this.type = type;
-        this.dataSourceId = dataSourceId;
+    /**
+     * Main constructor.
+     *
+     * @param binPrefix       The bin prefix of the credit card.
+     * @param includeRejected Whether or not to include rejected items in search
+     *                        results.
+     * @param dataSourceId    The data source id or null for no data source
+     *                        filtering.
+     */
+    public CreditCardBinSearchParams(String binPrefix, boolean includeRejected, Long dataSourceId) {
+        super(includeRejected, dataSourceId);
+        this.binPrefix = binPrefix;
     }
 
-    public Account.Type getType() {
-        return type;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
+    public String getBinPrefix() {
+        return binPrefix;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.type);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 23 * hash + super.hashCode();
+        hash = 47 * hash + Objects.hashCode(this.binPrefix);
+        hash = 47 * hash + super.hashCode();
         return hash;
     }
 
@@ -73,14 +73,12 @@ public class CommAccountsSearchParams extends DataArtifactSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final CommAccountsSearchParams other = (CommAccountsSearchParams) obj;
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
-            return false;
-        }
-        if (!Objects.equals(this.type, other.type)) {
+        final CreditCardBinSearchParams other = (CreditCardBinSearchParams) obj;
+        if (!Objects.equals(this.binPrefix, other.binPrefix)) {
             return false;
         }
         return super.equals(obj);
     }
 
+    
 }

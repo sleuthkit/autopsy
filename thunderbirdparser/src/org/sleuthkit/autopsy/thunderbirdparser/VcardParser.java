@@ -521,7 +521,7 @@ final class VcardParser {
         // Add phone number as a TSK_ACCOUNT.
         try {
             AccountFileInstance phoneAccountInstance = tskCase.getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE,
-                    telephoneText, EmailParserModuleFactory.getModuleName(), abstractFile);
+                    telephoneText, EmailParserModuleFactory.getModuleName(), abstractFile, null, context.getJobId());
             accountInstances.add(phoneAccountInstance);
         }
         catch(TskCoreException ex) {
@@ -549,7 +549,7 @@ final class VcardParser {
         // Add e-mail as a TSK_ACCOUNT.
         try {
             AccountFileInstance emailAccountInstance = tskCase.getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL,
-                    emailValue, EmailParserModuleFactory.getModuleName(), abstractFile);
+                    emailValue, EmailParserModuleFactory.getModuleName(), abstractFile, null, context.getJobId());
             accountInstances.add(emailAccountInstance);
         }
         catch(TskCoreException ex) {
@@ -575,7 +575,7 @@ final class VcardParser {
             DataSource dataSource = tskCase.getDataSource(dataSourceObjId);
             deviceId = dataSource.getDeviceId();
             deviceAccountInstance = tskCase.getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE,
-                    deviceId, EmailParserModuleFactory.getModuleName(), abstractFile);
+                    deviceId, EmailParserModuleFactory.getModuleName(), abstractFile, null, context.getJobId());
         }
         catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format(

@@ -19,46 +19,43 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Key for accessing data about communication accounts from the DAO.
+ * Search parameters for email messages.
  */
-public class CommAccountsSearchParams extends DataArtifactSearchParam {
+public class EmailSearchParams extends DataArtifactSearchParam {
 
-    private static final String TYPE_ID = "DATA_ARTIFACT_ACCOUNT";
+    private final String account;
+    private final String folder;
 
     /**
-     * @return The type id for this search parameter.
+     * Main constructor.
+     *
+     * @param dataSourceId The data source id or null if no data source
+     *                     filtering should occur.
+     * @param account      The email account.
+     * @param folder       The folder within the email account.
      */
-    public static String getTypeId() {
-        return TYPE_ID;
+    public EmailSearchParams(Long dataSourceId, String account, String folder) {
+        super(BlackboardArtifact.Type.TSK_EMAIL_MSG, dataSourceId);
+        this.account = account;
+        this.folder = folder;
     }
 
-    private final Account.Type type;
-    private final Long dataSourceId;
-
-    public CommAccountsSearchParams(Account.Type type, Long dataSourceId) {
-        super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
-        this.type = type;
-        this.dataSourceId = dataSourceId;
+    public String getAccount() {
+        return account;
     }
 
-    public Account.Type getType() {
-        return type;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
+    public String getFolder() {
+        return folder;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.type);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 23 * hash + super.hashCode();
+        hash = 23 * hash + Objects.hashCode(this.account);
+        hash = 23 * hash + Objects.hashCode(this.folder);
         return hash;
     }
 
@@ -73,14 +70,14 @@ public class CommAccountsSearchParams extends DataArtifactSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final CommAccountsSearchParams other = (CommAccountsSearchParams) obj;
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        final EmailSearchParams other = (EmailSearchParams) obj;
+        if (!Objects.equals(this.account, other.account)) {
             return false;
         }
-        if (!Objects.equals(this.type, other.type)) {
+        if (!Objects.equals(this.folder, other.folder)) {
             return false;
         }
-        return super.equals(obj);
+        return true;
     }
 
 }

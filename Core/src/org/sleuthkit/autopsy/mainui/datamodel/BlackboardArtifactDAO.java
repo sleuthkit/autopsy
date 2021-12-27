@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,7 +67,6 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
 
     private static Logger logger = Logger.getLogger(BlackboardArtifactDAO.class.getName());
 
-    // GVDTODO there is a different standard for normal attr strings and email attr strings
     static final int EMAIL_CONTENT_MAX_LEN = 160;
     static final int TOOL_TEXT_MAX_LEN = 512;
     static final String ELLIPSIS = "...";
@@ -145,11 +145,14 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
       
 
     TableData createTableData(BlackboardArtifact.Type artType, List<BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
-        Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new HashMap<>();
+        // A linked hashmap is being used for artifactAttributes to ensure that artifact order 
+        // as well as attribute orders within those artifacts are preserved.  This is to maintain
+        // a consistent ordering of attribute columns as received from BlackboardArtifact.getAttributes
+        Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new LinkedHashMap<>();
         for (BlackboardArtifact art : arts) {
             Map<BlackboardAttribute.Type, Object> attrs = art.getAttributes().stream()
                     .filter(attr -> isRenderedAttr(artType, attr.getAttributeType()))
-                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(artType, attr), (attr1, attr2) -> attr1));
+                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(artType, attr), (attr1, attr2) -> attr1, LinkedHashMap::new));
 
             artifactAttributes.put(art.getId(), attrs);
         }
@@ -158,14 +161,11 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
         List<BlackboardAttribute.Type> attributeTypeKeys = artifactAttributes.values().stream()
                 .flatMap(attrs -> attrs.keySet().stream())
                 .distinct()
-                .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
                 .collect(Collectors.toList());
 
         List<ColumnKey> columnKeys = new ArrayList<>();
         columnKeys.add(SRC_FILE_COL);
-        // GVDTODO translated file name
         columnKeys.add(S_COL);
-        // GVDTODO only show if central repository enabled
         columnKeys.add(C_COL);
         columnKeys.add(O_COL);
         addAnalysisResultColumnKeys(columnKeys);
@@ -182,8 +182,6 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
 
             Content srcContent = artifact.getParent();
             cellValues.add(srcContent.getName());
-            // GVDTODO handle translated filename here
-            // GVDTODO handle SCO
             cellValues.add(null);
             cellValues.add(null);
             cellValues.add(null);

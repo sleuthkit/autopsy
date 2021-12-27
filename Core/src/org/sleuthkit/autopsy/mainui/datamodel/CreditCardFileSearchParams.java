@@ -18,14 +18,12 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import org.sleuthkit.datamodel.BlackboardArtifact;
-
 /**
- * Key for analysis result in order to retrieve data from DAO.
+ * Search params to fetch credit cards by file.
  */
-public class AnalysisResultSearchParam extends BlackboardArtifactSearchParam {
+public class CreditCardFileSearchParams extends CreditCardSearchParams {
 
-    private static final String TYPE_ID = BlackboardArtifact.Category.ANALYSIS_RESULT.name();
+    private static final String TYPE_ID = "CREDIT_CARD_BY_FILE";
 
     /**
      * @return The type id for this search parameter.
@@ -34,9 +32,15 @@ public class AnalysisResultSearchParam extends BlackboardArtifactSearchParam {
         return TYPE_ID;
     }
 
-    public AnalysisResultSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
-        super(artifactType, dataSourceId);
+    /**
+     * Main constructor.
+     *
+     * @param includeRejected Whether or not to include rejected items in search
+     *                        results.
+     * @param dataSourceId    The data source id or null for no data source
+     *                        filtering.
+     */
+    public CreditCardFileSearchParams(boolean includeRejected, Long dataSourceId) {
+        super(includeRejected, dataSourceId);
     }
-    
-    
 }

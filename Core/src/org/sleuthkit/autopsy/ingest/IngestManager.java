@@ -359,21 +359,30 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                  * artifact will be analyzed. It also might be analyzed by a
                  * subsequent ingest job for the data source. This is an
                  * acceptable edge case.
+                 * 
+                 * 5. The user can manually run ad hoc keyword searches,
+                 * which post TSK_KEYWORD_HIT analysis results. Ingest
+                 * of that data source might be running, in which case the analysis
+                 * results will be analyzed. They also might be analyzed by a
+                 * subsequent ingest job for the data source. This is an
+                 * acceptable edge case.
                  */
-                DataArtifact dataArtifact = newDataArtifacts.get(0);
-                try {
-                    Content artifactDataSource = dataArtifact.getDataSource();
-                    synchronized (ingestJobsById) {
-                        for (IngestJob job : ingestJobsById.values()) {
-                            Content dataSource = job.getDataSource();
-                            if (artifactDataSource.getId() == dataSource.getId()) {
-                                ingestJob = job;
-                                break;
+                BlackboardArtifact artifact = newArtifacts.iterator().next();
+                if (artifact != null) {
+                    try {
+                        Content artifactDataSource = artifact.getDataSource();
+                        synchronized (ingestJobsById) {
+                            for (IngestJob job : ingestJobsById.values()) {
+                                Content dataSource = job.getDataSource();
+                                if (artifactDataSource.getId() == dataSource.getId()) {
+                                    ingestJob = job;
+                                    break;
+                                }
                             }
                         }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Failed to get data source for blackboard artifact (object ID = %d)", artifact.getId()), ex); //NON-NLS
                     }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to get data source for data artifact (object ID = %d)", dataArtifact.getId()), ex); //NON-NLS
                 }
             }
             if (ingestJob != null) {
@@ -431,6 +440,9 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @throws TskCoreException if there was an error starting the ingest job.
      */
     public IngestStream openIngestStream(DataSource dataSource, IngestJobSettings settings) throws TskCoreException {
+        if (!(dataSource instanceof DataSource)) {
+            throw new IllegalArgumentException("dataSource argument does not implement the DataSource interface"); //NON-NLS
+        }
         IngestJob job = new IngestJob(dataSource, IngestJob.Mode.STREAMING, settings);
         IngestJobInputStream stream = new IngestJobInputStream(job);
         if (stream.getIngestJobStartResult().getJob() != null) {
@@ -480,8 +492,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @param settings   The settings for the ingest job.
      */
     public void queueIngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
+        if (!(dataSource instanceof DataSource)) {
+            throw new IllegalArgumentException("dataSource argument does not implement the DataSource interface"); //NON-NLS
+        }
         if (caseIsOpen) {
-            IngestJob job = new IngestJob(dataSource, files, settings);
+            IngestJob job = new IngestJob((DataSource) dataSource, files, settings);
             if (job.hasIngestPipeline()) {
                 long taskId = nextIngestManagerTaskId.incrementAndGet();
                 Future<Void> task = startIngestJobsExecutor.submit(new StartIngestJobTask(taskId, job));
@@ -507,9 +522,17 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      *         attempting to start the ingest jobs.
      */
     public IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
+        List<DataSource> verifiedDataSources = new ArrayList<>();
+        for (Content content : dataSources) {
+            if (!(content instanceof DataSource)) {
+                throw new IllegalArgumentException("Content object in dataSources argument does not implement the DataSource interface"); //NON-NLS
+            }
+            DataSource verifiedDataSource = (DataSource) content;
+            verifiedDataSources.add(verifiedDataSource);
+        }
         IngestJobStartResult startResult = null;
         if (caseIsOpen) {
-            for (Content dataSource : dataSources) {
+            for (DataSource dataSource : verifiedDataSources) {
                 List<IngestJob> startedJobs = new ArrayList<>();
                 IngestJob job = new IngestJob(dataSource, IngestJob.Mode.BATCH, settings);
                 if (job.hasIngestPipeline()) {
@@ -599,7 +622,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         synchronized (ingestJobsById) {
             ingestJobsById.put(job.getId(), job);
         }
-        IngestManager.logger.log(Level.INFO, "Starting ingest job {0}", job.getId()); //NON-NLS
+        IngestManager.logger.log(Level.INFO, String.format("Starting ingest job %d at %s", job.getId(), new Date().getTime())); //NON-NLS
         try {
             errors = job.start();
         } catch (InterruptedException ex) {
@@ -647,10 +670,10 @@ public class IngestManager implements IngestProgressSnapshotProvider {
             ingestJobsById.remove(jobId);
         }
         if (!job.isCancelled()) {
-            IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
+            IngestManager.logger.log(Level.INFO, String.format("Ingest job %d completed at %s", job.getId(), new Date().getTime())); //NON-NLS            
             fireIngestJobCompleted(jobId);
         } else {
-            IngestManager.logger.log(Level.INFO, "Ingest job {0} cancelled", jobId); //NON-NLS
+            IngestManager.logger.log(Level.INFO, String.format("Ingest job %d cancelled at %s", job.getId(), new Date().getTime())); //NON-NLS
             fireIngestJobCancelled(jobId);
         }
     }
@@ -993,11 +1016,11 @@ public class IngestManager implements IngestProgressSnapshotProvider {
      * @return A list of ingest job state snapshots.
      */
     @Override
-    public List<Snapshot> getIngestJobSnapshots() {
-        List<Snapshot> snapShots = new ArrayList<>();
+    public List<IngestJobProgressSnapshot> getIngestJobSnapshots() {
+        List<IngestJobProgressSnapshot> snapShots = new ArrayList<>();
         synchronized (ingestJobsById) {
             ingestJobsById.values().forEach((job) -> {
-                Snapshot snapshot = job.getDiagnosticStatsSnapshot();
+                IngestJobProgressSnapshot snapshot = job.getDiagnosticStatsSnapshot();
                 if (snapshot != null) {
                     snapShots.add(snapshot);
                 }

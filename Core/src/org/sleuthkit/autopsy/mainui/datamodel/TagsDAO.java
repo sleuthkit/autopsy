@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -45,6 +44,9 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
+import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_SIZE;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TagsEvent;
@@ -83,15 +85,11 @@ import org.sleuthkit.datamodel.TskCoreException;
     "TagsDAO.tagColumns.userNameColLbl=User Name"})
 public class TagsDAO extends AbstractDAO {
 
-    private static final int CACHE_SIZE = 5; // rule of thumb: 5 entries times number of cached SearchParams sub-types
-    private static final long CACHE_DURATION = 2;
-    private static final TimeUnit CACHE_DURATION_UNITS = TimeUnit.MINUTES;
-
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
 
     private static final List<ColumnKey> FILE_TAG_COLUMNS = Arrays.asList(
             getFileColumnKey(Bundle.TagsDAO_fileColumns_nameColLbl()),
-            getFileColumnKey(Bundle.TagsDAO_fileColumns_originalName()), // GVDTODO handle translation
+            getFileColumnKey(Bundle.TagsDAO_fileColumns_originalName()),
             getFileColumnKey(Bundle.TagsDAO_fileColumns_filePathColLbl()),
             getFileColumnKey(Bundle.TagsDAO_fileColumns_commentColLbl()),
             getFileColumnKey(Bundle.TagsDAO_fileColumns_modifiedTimeColLbl()),
@@ -124,9 +122,8 @@ public class TagsDAO extends AbstractDAO {
         return new ColumnKey(name, name, Bundle.TagsDAO_fileColumns_noDescription());
     }
 
-    private final Cache<SearchParams<TagsSearchParams>, SearchResultsDTO> searchParamsCache
-            = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-
+    private final Cache<SearchParams<TagsSearchParams>, SearchResultsDTO> searchParamsCache = 
+            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<TagsEvent> treeCounts = new TreeCounts<>();
 
     public SearchResultsDTO getTags(TagsSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
@@ -218,7 +215,7 @@ public class TagsDAO extends AbstractDAO {
             }
 
             List<Object> cellValues = Arrays.asList(name,
-                    null, // GVDTODO translation column
+                    null,
                     contentPath,
                     blackboardTag.getArtifact().getDisplayName(),
                     blackboardTag.getComment(),
@@ -266,7 +263,7 @@ public class TagsDAO extends AbstractDAO {
 
             List<Object> cellValues = Arrays.asList(
                     content.getName(),
-                    null, // GVDTODO translation column
+                    null,
                     contentPath,
                     contentTag.getComment(),
                     file != null ? TimeZoneUtils.getFormattedTime(file.getMtime()) : "",

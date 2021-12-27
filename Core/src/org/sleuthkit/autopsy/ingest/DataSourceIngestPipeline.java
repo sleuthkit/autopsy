@@ -88,7 +88,7 @@ final class DataSourceIngestPipeline extends IngestPipeline<DataSourceIngestTask
         void process(IngestJobExecutor ingestJobExecutor, DataSourceIngestTask task) throws IngestModuleException {
             Content dataSource = task.getDataSource();
             String progressBarDisplayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.displayName", getDisplayName(), dataSource.getName());
-            ingestJobExecutor.updateDataSourceIngestProgressBarDisplayName(progressBarDisplayName);
+            ingestJobExecutor.changeDataSourceIngestProgressBarTitle(progressBarDisplayName);
             ingestJobExecutor.switchDataSourceIngestProgressBarToIndeterminate();
             ingestManager.setIngestTaskProgress(task, getDisplayName());
             logger.log(Level.INFO, "{0} analysis of {1} starting", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS

@@ -18,16 +18,14 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import java.util.Objects;
-import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Key for accessing data about communication accounts from the DAO.
+ * Base credit card search params.
  */
-public class CommAccountsSearchParams extends DataArtifactSearchParam {
+public class CreditCardSearchParams extends DataArtifactSearchParam {
 
-    private static final String TYPE_ID = "DATA_ARTIFACT_ACCOUNT";
+    private static final String TYPE_ID = "CREDIT_CARD";
 
     /**
      * @return The type id for this search parameter.
@@ -36,29 +34,29 @@ public class CommAccountsSearchParams extends DataArtifactSearchParam {
         return TYPE_ID;
     }
 
-    private final Account.Type type;
-    private final Long dataSourceId;
+    private final boolean rejectedIncluded;
 
-    public CommAccountsSearchParams(Account.Type type, Long dataSourceId) {
+    /**
+     * Main constructor.
+     *
+     * @param includeRejected Whether or not to include rejected items in search
+     *                        results.
+     * @param dataSourceId    The data source id or null for no data source
+     *                        filtering.
+     */
+    public CreditCardSearchParams(boolean rejectedIncluded, Long dataSourceId) {
         super(BlackboardArtifact.Type.TSK_ACCOUNT, dataSourceId);
-        this.type = type;
-        this.dataSourceId = dataSourceId;
+        this.rejectedIncluded = rejectedIncluded;
     }
 
-    public Account.Type getType() {
-        return type;
-    }
-
-    public Long getDataSourceId() {
-        return dataSourceId;
+    public boolean isRejectedIncluded() {
+        return rejectedIncluded;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.type);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
-        hash = 23 * hash + super.hashCode();
+        hash = 79 * hash + (this.rejectedIncluded ? 1 : 0);
         return hash;
     }
 
@@ -73,14 +71,11 @@ public class CommAccountsSearchParams extends DataArtifactSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final CommAccountsSearchParams other = (CommAccountsSearchParams) obj;
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+        final CreditCardSearchParams other = (CreditCardSearchParams) obj;
+        if (this.rejectedIncluded != other.rejectedIncluded) {
             return false;
         }
-        if (!Objects.equals(this.type, other.type)) {
-            return false;
-        }
-        return super.equals(obj);
+        return true;
     }
 
 }

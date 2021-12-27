@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.datamodel.DataArtifactItem;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO.CommAccoutTableSearchResultsDTO;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -52,7 +53,7 @@ public class DataArtifactNode extends ArtifactNode<DataArtifact, DataArtifactRow
     }
 
     public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow) {
-        this(tableData, artifactRow, IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID()));
+        this(tableData, artifactRow, getIconFilePath(tableData));
     }
 
     public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow, String iconPath) {
@@ -73,5 +74,13 @@ public class DataArtifactNode extends ArtifactNode<DataArtifact, DataArtifactRow
             logger.log(Level.SEVERE, "Failed to get content tags from database for Artifact id=" + getRowDTO().getArtifact().getId(), ex);
         }
         return Optional.empty();
+    }
+    
+    private static String getIconFilePath(DataArtifactTableSearchResultsDTO tableData) {
+        if(!(tableData instanceof CommAccoutTableSearchResultsDTO)) {
+            return IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID());
+        }
+        
+        return IconsUtil.getIconFilePath(((CommAccoutTableSearchResultsDTO)tableData).getAccountType());  
     }
 }
