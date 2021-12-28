@@ -258,38 +258,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         cells.add(analysisResult.getJustification());
     }
 
-    /**
-     * Returns a displayable type string for the given content object.
-     *
-     * If the content object is a artifact of a custom type then this method may
-     * cause a DB call BlackboardArtifact.getType
-     *
-     * @param source The object to determine the type of.
-     *
-     * @return A string representing the content type.
-     */
-    private String getSourceObjType(Content source) throws TskCoreException {
-        if (source instanceof BlackboardArtifact) {
-            BlackboardArtifact srcArtifact = (BlackboardArtifact) source;
-            return srcArtifact.getType().getDisplayName();
-        } else if (source instanceof Volume) {
-            return TskData.ObjectType.VOL.toString();
-        } else if (source instanceof AbstractFile) {
-            return TskData.ObjectType.ABSTRACTFILE.toString();
-        } else if (source instanceof Image) {
-            return TskData.ObjectType.IMG.toString();
-        } else if (source instanceof VolumeSystem) {
-            return TskData.ObjectType.VS.toString();
-        } else if (source instanceof OsAccount) {
-            return TskData.ObjectType.OS_ACCOUNT.toString();
-        } else if (source instanceof HostAddress) {
-            return TskData.ObjectType.HOST_ADDRESS.toString();
-        } else if (source instanceof Pool) {
-            return TskData.ObjectType.POOL.toString();
-        }
-        return "";
-    }
-
     @Override
     RowDTO createRow(BlackboardArtifact artifact, Content srcContent, Content linkedFile, boolean isTimelineSupported, List<Object> cellValues, long id) throws IllegalArgumentException {
         if (!(artifact instanceof AnalysisResult)) {
