@@ -18,14 +18,26 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import javax.swing.Action;
-import org.openide.nodes.AbstractNode;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO;
@@ -33,11 +45,14 @@ import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
 import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.LayoutFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileRowDTO.SlackFileRowDTO;
-import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
+import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -46,7 +61,9 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 /**
  * A node for representing an AbstractFile.
  */
-public class FileNode extends AbstractNode implements ActionContext {
+public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements SCOSupporter {
+
+    private static final Logger logger = Logger.getLogger(FileNode.class.getName());
 
     private final boolean directoryBrowseMode;
     private final FileRowDTO fileData;
@@ -57,7 +74,8 @@ public class FileNode extends AbstractNode implements ActionContext {
     }
 
     public FileNode(SearchResultsDTO results, FileRowDTO file, boolean directoryBrowseMode) {
-        super(Children.LEAF, ContentNodeUtil.getLookup(file.getAbstractFile()));
+        // GVDTODO: at some point, this leaf will need to allow for children
+        super(Children.LEAF, ContentNodeUtil.getLookup(file.getAbstractFile()), results, file);
         setIcon(file);
         setName(ContentNodeUtil.getContentName(file.getId()));
         setDisplayName(ContentNodeUtil.getContentDisplayName(file.getFileName()));
@@ -156,8 +174,84 @@ public class FileNode extends AbstractNode implements ActionContext {
     }
 
     @Override
-    protected Sheet createSheet() {
-        return ContentNodeUtil.setSheet(super.createSheet(), this.columns, this.fileData.getCellValues());
+    public Optional<Content> getContent() {
+        return Optional.ofNullable(fileData.getAbstractFile());
+    }
+
+    @Override
+    public void updateSheet(List<NodeProperty<?>> newProps) {
+        super.updateSheet(newProps);
+    }
+
+    @Override
+    public Optional<List<Tag>> getAllTagsFromDatabase() {
+        try {
+            List<ContentTag> contentTags = ContentNodeUtil.getContentTagsFromDatabase(fileData.getAbstractFile());
+            if (!contentTags.isEmpty()) {
+                List<Tag> tags = new ArrayList<>();
+                tags.addAll(contentTags);
+                return Optional.of(tags);
+            }
+
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to get content tags from database for AbstractFile id=" + fileData.getAbstractFile().getId(), ex);
+        }
+        return Optional.empty();
+    }
+    
+    @NbBundle.Messages({
+        "FileNode_createSheet_count.displayName=O",
+        "FileNode_createSheet_count_hashLookupNotRun_description=Hash lookup had not been run on this file when the column was populated",
+        "# {0} - occurrenceCount",
+        "FileNode_createSheet_count.description=There were {0} datasource(s) found with occurrences of the MD5 correlation value"})
+    @Override
+    public Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attributeInstance, String defaultDescription) {
+        Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
+        String description = defaultDescription;
+        try {
+            //don't perform the query if there is no correlation value
+            if (attributeInstance != null && StringUtils.isNotBlank(attributeInstance.getCorrelationValue())) {
+                count = CentralRepository.getInstance().getCountCasesWithOtherInstances(attributeInstance);
+                description = Bundle.FileNode_createSheet_count_description(count);
+            } else if (attributeInstance != null) {
+                description = Bundle.FileNode_createSheet_count_hashLookupNotRun_description();
+            }
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, "Error getting count of datasources with correlation attribute", ex);
+        } catch (CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.SEVERE, "Unable to normalize data to get count of datasources with correlation attribute", ex);
+        }
+        return Pair.of(count, description);
+    }
+
+    @NbBundle.Messages({
+        "FileNode.createSheet.comment.displayName=C"})
+    @Override
+    public DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
+        DataResultViewerTable.HasCommentStatus status = !tags.isEmpty() ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
+        for (Tag tag : tags) {
+            if (!StringUtils.isBlank(tag.getComment())) {
+                //if the tag is null or empty or contains just white space it will indicate there is not a comment
+                status = DataResultViewerTable.HasCommentStatus.TAG_COMMENT;
+                break;
+            }
+        }
+        /*
+         * Is there a comment in the CR for anything that matches the value and
+         * type of the specified attributes.
+         */
+        try {
+            if (CentralRepoDbUtil.commentExistsOnAttributes(attributes)) {
+                if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
+                    status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
+                } else {
+                    status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
+                }
+            }
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, "Attempted to Query CR for presence of comments in a file node and was unable to perform query, comment column will only reflect caseDB", ex);
+        }
+        return status;
     }
     
     @Override

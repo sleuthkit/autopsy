@@ -18,15 +18,23 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.logging.Level;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.datamodel.DataArtifactItem;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO.CommAccoutTableSearchResultsDTO;
 import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.Tag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * node to display a data artifact.
@@ -49,7 +57,23 @@ public class DataArtifactNode extends ArtifactNode<DataArtifact, DataArtifactRow
     }
 
     public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow, String iconPath) {
-        super(artifactRow, tableData.getColumns(), tableData.getArtifactType(), createLookup(artifactRow), iconPath);
+        super(tableData, artifactRow, tableData.getColumns(), createLookup(artifactRow), iconPath);
+    }
+
+    @Override
+    public Optional<List<Tag>> getAllTagsFromDatabase() {
+        try {
+            List<BlackboardArtifactTag> artifactTags = ContentNodeUtil.getArtifactTagsFromDatabase(getRowDTO().getArtifact());
+            if (!artifactTags.isEmpty()) {
+                List<Tag> tags = new ArrayList<>();
+                tags.addAll(artifactTags);
+                return Optional.of(tags);
+            }
+
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to get content tags from database for Artifact id=" + getRowDTO().getArtifact().getId(), ex);
+        }
+        return Optional.empty();
     }
     
     private static String getIconFilePath(DataArtifactTableSearchResultsDTO tableData) {

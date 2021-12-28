@@ -30,7 +30,7 @@ public class NodeProperty<T> extends PropertySupport.ReadOnly<T> {
     private T value;
 
     @SuppressWarnings("unchecked")
-    public NodeProperty(String name, String displayName, String desc, T value) {
+        public NodeProperty(String name, String displayName, String desc, T value) {
         super(name, (Class<T>) value.getClass(), displayName, desc);
         setValue("suppressCustomEditor", Boolean.TRUE); // remove the "..." (editing) button NON-NLS
         this.value = value;

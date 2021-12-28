@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.OsAccountEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.OsAccountRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
+import org.sleuthkit.autopsy.mainui.sco.SCOUtils;
 import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -59,9 +60,6 @@ import org.sleuthkit.datamodel.TskCoreException;
     "OsAccountsDAO_accountScopeNameProperty_displayName=Scope",
     "OsAccountsDAO_createdTimeProperty_displayName=Creation Time",
     "OsAccountsDAO_loginNameProperty_displayName=Login Name",
-    "OsAccountsDAO.createSheet.score.displayName=S",
-    "OsAccountsDAO.createSheet.comment.displayName=C",
-    "OsAccountsDAO.createSheet.count.displayName=O",
     "OsAccountsDAO.fileColumns.noDescription=No Description",})
 public class OsAccountsDAO extends AbstractDAO {
 
@@ -72,9 +70,9 @@ public class OsAccountsDAO extends AbstractDAO {
 
     private static final List<ColumnKey> OS_ACCOUNTS_WITH_SCO_COLUMNS = Arrays.asList(
             getFileColumnKey(Bundle.OsAccountsDAO_accountNameProperty_displayName()),
-            getFileColumnKey(Bundle.OsAccountsDAO_createSheet_score_displayName()),
-            getFileColumnKey(Bundle.OsAccountsDAO_createSheet_comment_displayName()),
-            getFileColumnKey(Bundle.OsAccountsDAO_createSheet_count_displayName()),
+            getFileColumnKey(SCOUtils.SCORE_COLUMN_NAME),
+            getFileColumnKey(SCOUtils.COMMENT_COLUMN_NAME),
+            getFileColumnKey(SCOUtils.OCCURANCES_COLUMN_NAME),
             getFileColumnKey(Bundle.OsAccountsDAO_loginNameProperty_displayName()),
             getFileColumnKey(Bundle.OsAccountsDAO_accountHostNameProperty_displayName()),
             getFileColumnKey(Bundle.OsAccountsDAO_accountScopeNameProperty_displayName()),

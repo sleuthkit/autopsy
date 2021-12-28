@@ -18,17 +18,24 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.autopsy.mainui.datamodel.ColumnKey;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Utilities for setting up nodes that handle content.
@@ -68,6 +75,12 @@ public class ContentNodeUtil {
             Object cellValue = values.get(i);
 
             if (cellValue == null) {
+                sheetSet.put(new NodeProperty<>(
+                    columnKey.getFieldName(),
+                    columnKey.getDisplayName(),
+                    columnKey.getDescription(),
+                    ""
+                ));
                 continue;
             }
 
@@ -84,5 +97,23 @@ public class ContentNodeUtil {
         }
 
         return sheet;
+    }
+    
+    /**
+     * Get all tags from the case database that are associated with the file
+     *
+     * @return a list of tags that are associated with the file
+     */
+    public static List<ContentTag> getContentTagsFromDatabase(Content content) throws TskCoreException, NoCurrentCaseException{
+        List<ContentTag> tags = new ArrayList<>();
+        tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(content));
+       
+        return tags;
+    }
+    
+    public static List<BlackboardArtifactTag> getArtifactTagsFromDatabase(BlackboardArtifact artifact)  throws TskCoreException, NoCurrentCaseException{
+        List<BlackboardArtifactTag> tags = new ArrayList<>();
+        tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
+        return tags;
     }
 }

@@ -20,6 +20,7 @@ import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.sco.SCOUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -65,15 +66,6 @@ import org.sleuthkit.datamodel.VolumeSystem;
     "BlackboardArtifactDAO.columnKeys.srcFile.name=Source Name",
     "BlackboardArtifactDAO.columnKeys.srcFile.displayName=Source Name",
     "BlackboardArtifactDAO.columnKeys.srcFile.description=Source Name",
-    "BlackboardArtifactDAO.columnKeys.score.name=Score",
-    "BlackboardArtifactDAO.columnKeys.score.displayName=S",
-    "BlackboardArtifactDAO.columnKeys.score.description=Score",
-    "BlackboardArtifactDAO.columnKeys.comment.name=Comment",
-    "BlackboardArtifactDAO.columnKeys.comment.displayName=C",
-    "BlackboardArtifactDAO.columnKeys.comment.description=Comment",
-    "BlackboardArtifactDAO.columnKeys.occurrences.name=Occurrences",
-    "BlackboardArtifactDAO.columnKeys.occurrences.displayName=O",
-    "BlackboardArtifactDAO.columnKeys.occurrences.description=Occurrences",
     "BlackboardArtifactDAO.columnKeys.dataSource.name=Data Source",
     "BlackboardArtifactDAO.columnKeys.dataSource.displayName=Data Source",
     "BlackboardArtifactDAO.columnKeys.dataSource.description=Data Source"
@@ -110,21 +102,21 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
     );
 
     static final ColumnKey S_COL = new ColumnKey(
-            Bundle.BlackboardArtifactDAO_columnKeys_score_name(),
-            Bundle.BlackboardArtifactDAO_columnKeys_score_displayName(),
-            Bundle.BlackboardArtifactDAO_columnKeys_score_description()
+            SCOUtils.SCORE_COLUMN_NAME,
+            SCOUtils.SCORE_COLUMN_NAME,
+            SCOUtils.SCORE_COLUMN_NAME
     );
 
     static final ColumnKey C_COL = new ColumnKey(
-            Bundle.BlackboardArtifactDAO_columnKeys_comment_name(),
-            Bundle.BlackboardArtifactDAO_columnKeys_comment_displayName(),
-            Bundle.BlackboardArtifactDAO_columnKeys_comment_description()
+            SCOUtils.COMMENT_COLUMN_NAME,
+            SCOUtils.COMMENT_COLUMN_NAME,
+            SCOUtils.COMMENT_COLUMN_NAME
     );
 
     static final ColumnKey O_COL = new ColumnKey(
-            Bundle.BlackboardArtifactDAO_columnKeys_occurrences_name(),
-            Bundle.BlackboardArtifactDAO_columnKeys_occurrences_displayName(),
-            Bundle.BlackboardArtifactDAO_columnKeys_occurrences_description()
+            SCOUtils.OCCURANCES_COLUMN_NAME,
+            SCOUtils.OCCURANCES_COLUMN_NAME,
+            SCOUtils.OCCURANCES_COLUMN_NAME
     );
 
     static final ColumnKey DATASOURCE_COL = new ColumnKey(

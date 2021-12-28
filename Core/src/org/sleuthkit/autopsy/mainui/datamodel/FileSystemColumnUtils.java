@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.mainui.sco.SCOUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -66,9 +67,6 @@ public class FileSystemColumnUtils {
     
     @Messages({"FileSystemColumnUtils.nameColumn.name=Name",
     "FileSystemColumnUtils.abstractFileColumns.originalName=Original Name",
-    "FileSystemColumnUtils.abstractFileColumns.scoreName=S",
-    "FileSystemColumnUtils.abstractFileColumns.commentName=C",
-    "FileSystemColumnUtils.abstractFileColumns.countName=O",
     "FileSystemColumnUtils.abstractFileColumns.locationColLbl=Location",
     "FileSystemColumnUtils.abstractFileColumns.modifiedTimeColLbl=Modified Time",
     "FileSystemColumnUtils.abstractFileColumns.changeTimeColLbl=Change Time",
@@ -109,9 +107,9 @@ public class FileSystemColumnUtils {
     
     private static final List<ColumnKey> ABSTRACT_FILE_COLUMNS = Arrays.asList(
         getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_originalName()),
-        getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_scoreName()),
-        getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_commentName()),
-        getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_countName()),
+        getColumnKey(SCOUtils.SCORE_COLUMN_NAME),
+        getColumnKey(SCOUtils.COMMENT_COLUMN_NAME),
+        getColumnKey(SCOUtils.OCCURANCES_COLUMN_NAME),
         getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_locationColLbl()),
         getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_modifiedTimeColLbl()),
         getColumnKey(Bundle.FileSystemColumnUtils_abstractFileColumns_changeTimeColLbl()),
@@ -157,6 +155,11 @@ public class FileSystemColumnUtils {
     private static final List<ColumnKey> POOL_COLUMNS = Arrays.asList(
         getColumnKey(Bundle.FileSystemColumnUtils_poolColumns_type())
     );
+    
+    /**
+     * Private constructor for utility class.
+     */
+    private FileSystemColumnUtils() {}
     
     /**
      * Convert a given Content object to an enum.

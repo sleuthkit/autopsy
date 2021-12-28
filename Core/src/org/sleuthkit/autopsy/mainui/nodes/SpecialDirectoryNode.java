@@ -18,21 +18,25 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.Optional;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.LocalFileDataSourceRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.LocalDirectoryRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VirtualDirectoryRowDTO;
+import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SpecialDirectory;
 
 /**
  * Abstract Node class for SpecialDirectory row results.
  */
-abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRowDTO<? extends SpecialDirectory>> {
+abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRowDTO<? extends SpecialDirectory>> implements SCOSupporter {
 
     /**
      * An abstract base class for FileSystem objects that are subclasses of
@@ -73,6 +77,16 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
         return getRowDTO().getContent().isDataSource()
                 ? Optional.of(getRowDTO().getContent())
                 : Optional.empty();
+    }
+
+    @Override
+    public Optional<Content> getContent() {
+        return Optional.ofNullable(getRowDTO().getContent());
+    }
+
+    @Override
+    public void updateSheet(List<NodeProperty<?>> newProps) {
+        super.updateSheet(newProps);
     }
 
     /**

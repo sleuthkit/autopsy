@@ -18,21 +18,25 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.List;
 import java.util.Optional;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
 import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VolumeRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
+import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * A node representing a Volume.
  */
-public class VolumeNode extends BaseNode<SearchResultsDTO, VolumeRowDTO> {
+public class VolumeNode extends BaseNode<SearchResultsDTO, VolumeRowDTO> implements SCOSupporter {
 
     /**
      * Simple node constructor.
@@ -75,5 +79,15 @@ public class VolumeNode extends BaseNode<SearchResultsDTO, VolumeRowDTO> {
     @Override
     public boolean supportsSourceContentViewerActions() {
         return true;
+    }
+
+    @Override
+    public Optional<Content> getContent() {
+        return Optional.ofNullable(getRowDTO().getContent());
+    }
+
+    @Override
+    public void updateSheet(List<NodeProperty<?>> newProps) {
+        super.updateSheet(newProps);
     }
 }
