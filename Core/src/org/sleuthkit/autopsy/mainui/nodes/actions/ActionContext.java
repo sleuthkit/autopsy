@@ -225,4 +225,8 @@ public interface ActionContext {
     default Optional<AbstractFile> getFileForDirectoryBrowseMode() {
         return Optional.empty();
     }
+    
+    default boolean supportsResultArtifactAction() {
+        return false;
+    }
 }
