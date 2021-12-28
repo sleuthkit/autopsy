@@ -89,7 +89,7 @@ public class ViewsDAO extends AbstractDAO {
                             Collectors.mapping(pair -> pair.getValue(),
                                     Collectors.toSet())));
 
-    private static final int NODE_COUNT_FILE_TABLE_THRESHOLD = 1_000;
+    private static final int NODE_COUNT_FILE_TABLE_THRESHOLD = 1_000_000;
 
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
