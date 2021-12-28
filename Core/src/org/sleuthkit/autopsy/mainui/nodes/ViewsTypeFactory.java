@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -29,6 +28,7 @@ import java.util.stream.Stream;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtDocumentFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtExecutableFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtRootFilter;
@@ -39,7 +39,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
-import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
@@ -551,19 +550,7 @@ public class ViewsTypeFactory {
 
         @Override
         protected TreeResultsDTO<? extends FileTypeExtensionsSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeItems = this.childFilters.stream()
-                    .map(filter -> {
-                        return new TreeItemDTO<>(
-                                FileTypeExtensionsSearchParams.getTypeId(),
-                                new FileTypeExtensionsSearchParams(filter, this.dataSourceId),
-                                filter,
-                                filter == null ? "" : filter.getDisplayName(),
-                                TreeDisplayCount.NOT_SHOWN);
-                    })
-                    .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
-                    .collect(Collectors.toList());
-
-            return new TreeResultsDTO<>(treeItems);
+            return MainDAO.getInstance().getViewsDAO().getFileExtCounts(this.childFilters, this.dataSourceId);
         }
 
         @Override
