@@ -90,6 +90,8 @@ public class ViewsDAO extends AbstractDAO {
                             Collectors.mapping(pair -> pair.getValue(),
                                     Collectors.toSet())));
 
+    private static final int NODE_COUNT_FILE_TABLE_THRESHOLD = 1_000_000;
+
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
     private static ViewsDAO instance = null;
@@ -102,9 +104,11 @@ public class ViewsDAO extends AbstractDAO {
         return instance;
     }
 
-    private final Cache<SearchParams<Object>, SearchResultsDTO> searchParamsCache = 
-            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<Object>, SearchResultsDTO> searchParamsCache
+            = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<DAOEvent> treeCounts = new TreeCounts<>();
+
+    private boolean exceededFileThreshold = false;
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -433,41 +437,54 @@ public class ViewsDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<FileTypeExtensionsSearchParams> getFileExtCounts(Collection<FileExtSearchFilter> filters, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        Set<FileExtSearchFilter> indeterminateFilters = new HashSet<>();
-        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
-            if (evt instanceof FileTypeExtensionsEvent) {
-                FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) evt;
-                if (dataSourceId == null || extEvt.getDataSourceId() == null || Objects.equals(extEvt.getDataSourceId(), dataSourceId)) {
-                    if (extEvt.getExtensionFilter() == null) {
-                        // add all filters if extension filter is null and keep going
-                        indeterminateFilters.addAll(filters);
-                        break;
-                    } else if (filters.contains(extEvt.getExtensionFilter())) {
-                        indeterminateFilters.add(extEvt.getExtensionFilter());
+        Map<FileExtSearchFilter, TreeDisplayCount> countsByFilter;
+        try {
+            if (this.exceededFileThreshold || getCase().countFilesWhere("1=1") > NODE_COUNT_FILE_TABLE_THRESHOLD) {
+                this.exceededFileThreshold = true;
+                countsByFilter = filters.stream().collect(Collectors.toMap(f -> f, f -> TreeDisplayCount.NOT_SHOWN, (f1, f2) -> f1));
+
+            } else {
+                Set<FileExtSearchFilter> indeterminateFilters = new HashSet<>();
+                for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+                    if (evt instanceof FileTypeExtensionsEvent) {
+                        FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) evt;
+                        if (dataSourceId == null || extEvt.getDataSourceId() == null || Objects.equals(extEvt.getDataSourceId(), dataSourceId)) {
+                            if (extEvt.getExtensionFilter() == null) {
+                                // add all filters if extension filter is null and keep going
+                                indeterminateFilters.addAll(filters);
+                                break;
+                            } else if (filters.contains(extEvt.getExtensionFilter())) {
+                                indeterminateFilters.add(extEvt.getExtensionFilter());
+                            }
+                        }
                     }
                 }
+
+                Map<FileExtSearchFilter, String> whereClauses = filters.stream()
+                        .collect(Collectors.toMap(
+                                filter -> filter,
+                                filter -> getFileExtensionClause(filter)));
+
+                countsByFilter = getFilesCounts(whereClauses, getBaseFileExtensionFilter(), dataSourceId, true).entrySet().stream()
+                        .collect(Collectors.toMap(
+                                e -> e.getKey(),
+                                e -> {
+                                    return indeterminateFilters.contains(e.getKey())
+                                    ? TreeDisplayCount.INDETERMINATE
+                                    : TreeDisplayCount.getDeterminate(e.getValue());
+                                },
+                                (v1, v2) -> v1));
             }
+
+            List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
+                    .map(entry -> createExtensionTreeItem(entry.getKey(), dataSourceId, entry.getValue()))
+                    .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
+                    .collect(Collectors.toList());
+
+            return new TreeResultsDTO<>(treeList);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            throw new ExecutionException("An error occurred while fetching file extension counts.", ex);
         }
-
-        Map<FileExtSearchFilter, String> whereClauses = filters.stream()
-                .collect(Collectors.toMap(
-                        filter -> filter,
-                        filter -> getFileExtensionClause(filter)));
-
-        Map<FileExtSearchFilter, Long> countsByFilter = getFilesCounts(whereClauses, getBaseFileExtensionFilter(), dataSourceId, true);
-
-        List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
-                .map(entry -> {
-                    TreeDisplayCount displayCount = indeterminateFilters.contains(entry.getKey())
-                            ? TreeDisplayCount.INDETERMINATE
-                            : TreeDisplayCount.getDeterminate(entry.getValue());
-
-                    return createExtensionTreeItem(entry.getKey(), dataSourceId, displayCount);
-                })
-                .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
-                .collect(Collectors.toList());
-
-        return new TreeResultsDTO<>(treeList);
     }
 
     /**
@@ -946,6 +963,7 @@ public class ViewsDAO extends AbstractDAO {
     @Override
     void clearCaches() {
         this.searchParamsCache.invalidateAll();
+        this.exceededFileThreshold = false;
         handleIngestComplete();
     }
 
