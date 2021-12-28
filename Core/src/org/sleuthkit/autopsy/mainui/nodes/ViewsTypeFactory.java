@@ -593,7 +593,7 @@ public class ViewsTypeFactory {
 
         @Override
         public int compare(TreeItemDTO<? extends FileTypeExtensionsSearchParams> o1, TreeItemDTO<? extends FileTypeExtensionsSearchParams> o2) {
-            return STRING_COMPARATOR.compare(o1.getSearchParams().getFilter().getDisplayName(), o2.getSearchParams().getFilter().getDisplayName());
+            return Integer.compare(o1.getSearchParams().getFilter().getId(), o1.getSearchParams().getFilter().getId());
         }
 
         /**

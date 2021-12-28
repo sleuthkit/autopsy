@@ -476,8 +476,8 @@ public class ViewsDAO extends AbstractDAO {
             }
 
             List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
-                    .sorted((a, b) -> Integer.compare(a.getKey().getId(), b.getKey().getId()))
                     .map(entry -> createExtensionTreeItem(entry.getKey(), dataSourceId, entry.getValue()))
+                    .sorted((a, b) -> Integer.compare(a.getSearchParams().getFilter().getId(), b.getSearchParams().getFilter().getId()))
                     .collect(Collectors.toList());
 
             return new TreeResultsDTO<>(treeList);
