@@ -72,7 +72,6 @@ public abstract class ArtifactNode<T extends BlackboardArtifact, R extends Artif
     private final R rowData;
     private final List<ColumnKey> columns;
     private Node parentFileNode;
-    private String translatedSourceName;
 
     ArtifactNode(SearchResultsDTO searchResults, R rowData, List<ColumnKey> columns, Lookup lookup, String iconPath) {
         super(Children.LEAF, lookup, searchResults, rowData);
@@ -197,58 +196,7 @@ public abstract class ArtifactNode<T extends BlackboardArtifact, R extends Artif
     @Override
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
-        startTranslationTask();
         return sheet;
-    }
-    
-    private void startTranslationTask() {
-        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
-            /*
-             * If machine translation is configured, add the original name of
-             * the of the source content of the artifact represented by this
-             * node to the sheet.
-             */
-
-            if (translatedSourceName == null) {
-                PropertyChangeListener listener = new PropertyChangeListener() {
-                    @Override
-                    public void propertyChange(PropertyChangeEvent evt) {
-                         String eventType = evt.getPropertyName();
-                        if (eventType.equals(FileNameTransTask.getPropertyName())) {
-                            displayTranslation(evt.getOldValue().toString(), evt.getNewValue().toString());
-                        }
-                    }
-                };
-                /*
-                 * NOTE: The task makes its own weak reference to the listener.
-                 */
-                new FileNameTransTask(rowData.getSrcContent().getName(), this, listener).submit();
-            }
-        }
-    }
-    
-    // These strings need to be consistent with what is in
-    // BlackboardArtifactDAO
-    @Messages({
-        "ArtifactNode_columnKeys_srcFile_name=Source Name",
-        "ArtifactNode_columnKeys_srcFile_displayName=Source Name",
-        "ArtifactNode_columnKeys_srcFile_description=Source Name",
-    })
-    private void displayTranslation(String originalName, String translatedSourceName) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                ArtifactNode.this.translatedSourceName = translatedSourceName;
-                setDisplayName(translatedSourceName);
-                setShortDescription(originalName);
-                updateSheet(Collections.singletonList(new NodeProperty<>(
-                    Bundle.ArtifactNode_columnKeys_srcFile_name(),
-                    Bundle.ArtifactNode_columnKeys_srcFile_displayName(),
-                    Bundle.ArtifactNode_columnKeys_srcFile_description(),
-                    originalName)));
-            }
-        });
-        
     }
 
     /**
