@@ -67,6 +67,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslationUtil;
 import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * An abstract node that encapsulates AbstractFile data
@@ -94,6 +95,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
                 IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             }
+        }
+        
+        // Add listener if this is the carved files base directory.
+        if (VirtualDirectory.NAME_CARVED.equals(abstractFile.getName())) {
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
         }
 
         try {
@@ -158,7 +164,13 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     // data sources branch of the tree. The parent nodes in other
                     // branches of the tree (e.g. File Types and Deleted Files) do
                     // not need to be refreshed.
-                    BaseChildFactory.post(getParentNode().getName(), new RefreshKeysEvent());
+                    if (VirtualDirectory.NAME_CARVED.equals(getContent().getName())) {
+                        // If the current node is the carved files directory, we need to refresh it
+                        BaseChildFactory.post(getName(), new RefreshKeysEvent());
+                    } else {
+                        // Otherwise we need to refresh the parent node
+                        BaseChildFactory.post(getParentNode().getName(), new RefreshKeysEvent());
+                    }
                 } catch (NullPointerException ex) {
                     // Skip
                 } catch (NoSuchEventBusException ex) {
