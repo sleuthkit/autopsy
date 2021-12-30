@@ -238,7 +238,6 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
                         ? rowData.getCellValues().get(0).toString()
                         : "";
                 new FileNameTransTask(displayName, this, listener).submit();
-                //new FileNameTransTask(rowData.getSrcContent().getName(), this, listener).submit();
             }
         }
     }
