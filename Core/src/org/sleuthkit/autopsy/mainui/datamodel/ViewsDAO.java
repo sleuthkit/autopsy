@@ -451,7 +451,7 @@ public class ViewsDAO extends AbstractDAO {
 
         String filterSums = filters.stream()
                 // no point in getting a count for filters that will not display count
-                .filter(f -> indeterminateFilters.contains(f))
+                .filter(f -> !indeterminateFilters.contains(f))
                 // this assumes that filter enum names are safe to use as sql identifiers
                 .map(f -> MessageFormat.format("\n  SUM(CASE WHEN {0} THEN 1 ELSE 0 END) AS {1}", getFileExtensionClause(f), f.getName()))
                 .collect(Collectors.joining(","));
