@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import org.openide.nodes.Children;
@@ -25,13 +28,17 @@ import org.openide.nodes.Node;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.Action;
+import javax.swing.SwingUtilities;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
 import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
@@ -50,6 +57,7 @@ import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.FOLDER;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -254,8 +262,13 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         "FileSystemFactory.FileSystemTreeNode.ExtractUnallocAction.text=Extract Unallocated Space to Single Files"})
     public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> implements ActionContext {
 
+        private String translatedSourceName;
+        private TreeResultsDTO.TreeItemDTO itemData;
+        
         protected FileSystemTreeNode(String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children, Lookup lookup) {
             super(ContentNodeUtil.getContentName(itemData.getSearchParams().getContentObjectId()), icon, itemData, children, lookup);
+            this.itemData = itemData;
+            startTranslationTask();
         }
 
         protected static Children createChildrenForContent(Long contentId) {
@@ -284,6 +297,48 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         @Override
         public Action[] getActions(boolean context) {
             return ActionsFactory.getActions(this);
+        }
+        
+        private void startTranslationTask() {
+            if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
+                /*
+                 * If machine translation is configured, add the original name
+                 * of the of the source content of the artifact represented by
+                 * this node to the sheet.
+                 */
+
+                if (translatedSourceName == null) {
+                    PropertyChangeListener listener = new PropertyChangeListener() {
+                        @Override
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            String eventType = evt.getPropertyName();
+                            if (eventType.equals(FileNameTransTask.getPropertyName())) {
+                                // update translated display name and include count of the item.
+                                String translatedNameWithCount = itemData.getDisplayCount() == null
+                                        ? evt.getNewValue().toString()
+                                        : evt.getNewValue().toString() + itemData.getDisplayCount().getDisplaySuffix();
+                                displayTranslation(evt.getOldValue().toString(), translatedNameWithCount);
+                            }
+                        }
+                    };
+                    /*
+                     * NOTE: The task makes its own weak reference to the
+                     * listener.
+                     */
+                    new FileNameTransTask(itemData.getDisplayName(), this, listener).submit();
+                }
+            }
+        }
+
+        private void displayTranslation(String originalName, String translatedSourceName) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    setDisplayName(translatedSourceName);
+                    setShortDescription(originalName);
+                }
+            });
+
         }
     }
 
