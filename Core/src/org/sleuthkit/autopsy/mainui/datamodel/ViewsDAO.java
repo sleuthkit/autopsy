@@ -37,7 +37,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -90,6 +89,8 @@ public class ViewsDAO extends AbstractDAO {
                             Collectors.mapping(pair -> pair.getValue(),
                                     Collectors.toSet())));
 
+    private static final int NODE_COUNT_FILE_TABLE_THRESHOLD = 1_000_000;
+
     private static final String FILE_VIEW_EXT_TYPE_ID = "FILE_VIEW_BY_EXT";
 
     private static ViewsDAO instance = null;
@@ -102,9 +103,11 @@ public class ViewsDAO extends AbstractDAO {
         return instance;
     }
 
-    private final Cache<SearchParams<Object>, SearchResultsDTO> searchParamsCache = 
-            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<Object>, SearchResultsDTO> searchParamsCache
+            = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<DAOEvent> treeCounts = new TreeCounts<>();
+
+    private boolean exceededFileThreshold = false;
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -433,41 +436,54 @@ public class ViewsDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<FileTypeExtensionsSearchParams> getFileExtCounts(Collection<FileExtSearchFilter> filters, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        Set<FileExtSearchFilter> indeterminateFilters = new HashSet<>();
-        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
-            if (evt instanceof FileTypeExtensionsEvent) {
-                FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) evt;
-                if (dataSourceId == null || extEvt.getDataSourceId() == null || Objects.equals(extEvt.getDataSourceId(), dataSourceId)) {
-                    if (extEvt.getExtensionFilter() == null) {
-                        // add all filters if extension filter is null and keep going
-                        indeterminateFilters.addAll(filters);
-                        break;
-                    } else if (filters.contains(extEvt.getExtensionFilter())) {
-                        indeterminateFilters.add(extEvt.getExtensionFilter());
+        Map<FileExtSearchFilter, TreeDisplayCount> countsByFilter;
+        try {
+            if (this.exceededFileThreshold || getCase().countFilesWhere("1=1") > NODE_COUNT_FILE_TABLE_THRESHOLD) {
+                this.exceededFileThreshold = true;
+                countsByFilter = filters.stream().collect(Collectors.toMap(f -> f, f -> TreeDisplayCount.NOT_SHOWN, (f1, f2) -> f1));
+
+            } else {
+                Set<FileExtSearchFilter> indeterminateFilters = new HashSet<>();
+                for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+                    if (evt instanceof FileTypeExtensionsEvent) {
+                        FileTypeExtensionsEvent extEvt = (FileTypeExtensionsEvent) evt;
+                        if (dataSourceId == null || extEvt.getDataSourceId() == null || Objects.equals(extEvt.getDataSourceId(), dataSourceId)) {
+                            if (extEvt.getExtensionFilter() == null) {
+                                // add all filters if extension filter is null and keep going
+                                indeterminateFilters.addAll(filters);
+                                break;
+                            } else if (filters.contains(extEvt.getExtensionFilter())) {
+                                indeterminateFilters.add(extEvt.getExtensionFilter());
+                            }
+                        }
                     }
                 }
+
+                Map<FileExtSearchFilter, String> whereClauses = filters.stream()
+                        .collect(Collectors.toMap(
+                                filter -> filter,
+                                filter -> getFileExtensionClause(filter)));
+
+                countsByFilter = getFilesCounts(whereClauses, getBaseFileExtensionFilter(), dataSourceId, true).entrySet().stream()
+                        .collect(Collectors.toMap(
+                                e -> e.getKey(),
+                                e -> {
+                                    return indeterminateFilters.contains(e.getKey())
+                                    ? TreeDisplayCount.INDETERMINATE
+                                    : TreeDisplayCount.getDeterminate(e.getValue());
+                                },
+                                (v1, v2) -> v1));
             }
+
+            List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
+                    .map(entry -> createExtensionTreeItem(entry.getKey(), dataSourceId, entry.getValue()))
+                    .sorted((a, b) -> Integer.compare(a.getSearchParams().getFilter().getId(), b.getSearchParams().getFilter().getId()))
+                    .collect(Collectors.toList());
+
+            return new TreeResultsDTO<>(treeList);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            throw new ExecutionException("An error occurred while fetching file extension counts.", ex);
         }
-
-        Map<FileExtSearchFilter, String> whereClauses = filters.stream()
-                .collect(Collectors.toMap(
-                        filter -> filter,
-                        filter -> getFileExtensionClause(filter)));
-
-        Map<FileExtSearchFilter, Long> countsByFilter = getFilesCounts(whereClauses, getBaseFileExtensionFilter(), dataSourceId, true);
-
-        List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
-                .map(entry -> {
-                    TreeDisplayCount displayCount = indeterminateFilters.contains(entry.getKey())
-                            ? TreeDisplayCount.INDETERMINATE
-                            : TreeDisplayCount.getDeterminate(entry.getValue());
-
-                    return createExtensionTreeItem(entry.getKey(), dataSourceId, displayCount);
-                })
-                .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
-                .collect(Collectors.toList());
-
-        return new TreeResultsDTO<>(treeList);
     }
 
     /**
@@ -643,92 +659,135 @@ public class ViewsDAO extends AbstractDAO {
         String prefixWithSlash = StringUtils.isNotBlank(prefix) ? prefix.replaceAll("/", "") + "/" : null;
         String likeItem = StringUtils.isNotBlank(prefixWithSlash) ? prefixWithSlash.replaceAll("%", "") + "%" : null;
 
-        Set<String> indeterminateMimeTypes = new HashSet<>();
-        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
-            if (evt instanceof FileTypeMimeEvent) {
-                FileTypeMimeEvent mimeEvt = (FileTypeMimeEvent) evt;
-                if ((dataSourceId == null || Objects.equals(mimeEvt.getDataSourceId(), dataSourceId))
-                        && (prefixWithSlash == null || mimeEvt.getMimeType().startsWith(prefixWithSlash))) {
-
-                    String mimePortion = prefixWithSlash != null
-                            ? mimeEvt.getMimeType().substring(prefixWithSlash.length())
-                            : mimeEvt.getMimeType().substring(0, mimeEvt.getMimeType().indexOf("/"));
-
-                    indeterminateMimeTypes.add(mimePortion);
-                }
-            }
-        }
-
         String baseFilter = "WHERE " + getBaseFileMimeFilter()
                 + getDataSourceAndClause(dataSourceId)
                 + (StringUtils.isNotBlank(prefix) ? " AND mime_type LIKE ? " : " AND mime_type IS NOT NULL ");
 
+        String mimeTypeSql;
+        SleuthkitCase skCase;
         try {
-            SleuthkitCase skCase = getCase();
-            String mimeType;
-            if (StringUtils.isNotBlank(prefix)) {
-                mimeType = "mime_type";
-            } else {
-                switch (skCase.getDatabaseType()) {
-                    case POSTGRESQL:
-                        mimeType = "SPLIT_PART(mime_type, '/', 1)";
-                        break;
-                    case SQLITE:
-                        mimeType = "SUBSTR(mime_type, 0, instr(mime_type, '/'))";
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unknown database type: " + skCase.getDatabaseType());
-                }
-            }
-
-            String query = mimeType + " AS mime_type, COUNT(*) AS count\n"
-                    + "FROM tsk_files\n"
-                    + baseFilter + "\n"
-                    + "GROUP BY " + mimeType;
-
-            Map<String, Long> typeCounts = new HashMap<>();
-
-            try (CaseDbPreparedStatement casePreparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query)) {
-
-                if (likeItem != null) {
-                    casePreparedStatement.setString(1, likeItem);
-                }
-
-                skCase.getCaseDbAccessManager().select(casePreparedStatement, (resultSet) -> {
-                    try {
-                        while (resultSet.next()) {
-                            String mimeTypeId = resultSet.getString("mime_type");
-                            if (mimeTypeId != null) {
-                                long count = resultSet.getLong("count");
-                                typeCounts.put(mimeTypeId, count);
-                            }
-                        }
-                    } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "An error occurred while fetching file mime type counts.", ex);
-                    }
-                });
-
-                List<TreeItemDTO<FileTypeMimeSearchParams>> treeList = typeCounts.entrySet().stream()
-                        .map(entry -> {
-                            String name = prefixWithSlash != null && entry.getKey().startsWith(prefixWithSlash)
-                                    ? entry.getKey().substring(prefixWithSlash.length())
-                                    : entry.getKey();
-
-                            TreeDisplayCount displayCount = indeterminateMimeTypes.contains(name)
-                                    ? TreeDisplayCount.INDETERMINATE
-                                    : TreeDisplayCount.getDeterminate(entry.getValue());
-
-                            return createMimeTreeItem(entry.getKey(), name, dataSourceId, displayCount);
-                        })
-                        .sorted((a, b) -> stringCompare(a.getSearchParams().getMimeType(), b.getSearchParams().getMimeType()))
-                        .collect(Collectors.toList());
-
-                return new TreeResultsDTO<>(treeList);
-            } catch (TskCoreException | SQLException ex) {
-                throw new ExecutionException("An error occurred while fetching file counts with query:\n" + query, ex);
-            }
+            skCase = getCase();
         } catch (NoCurrentCaseException ex) {
-            throw new ExecutionException("An error occurred while fetching file counts.", ex);
+            throw new ExecutionException("An error occurred while getting the current case.", ex);
+        }
+
+        // get the sql identifier for the mime type segment to find
+        if (StringUtils.isNotBlank(prefix)) {
+            mimeTypeSql = "mime_type";
+        } else {
+            switch (skCase.getDatabaseType()) {
+                case POSTGRESQL:
+                    mimeTypeSql = "SPLIT_PART(mime_type, '/', 1)";
+                    break;
+                case SQLITE:
+                    mimeTypeSql = "SUBSTR(mime_type, 0, instr(mime_type, '/'))";
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown database type: " + skCase.getDatabaseType());
+            }
+        }
+
+        Map<String, TreeDisplayCount> typeCounts = new HashMap<>();
+        try {
+            // if exceeded file count threshold, only show different mime types
+            if (this.exceededFileThreshold || skCase.countFilesWhere("1=1") > NODE_COUNT_FILE_TABLE_THRESHOLD) {
+                this.exceededFileThreshold = true;
+                String query = "DISTINCT(" + mimeTypeSql + ") AS mime_type\n"
+                        + "FROM tsk_files\n"
+                        + baseFilter;
+
+                typeCounts = fetchMimeTypeData(query, likeItem, Collections.emptySet(), false);
+            } else {
+                String query = mimeTypeSql + " AS mime_type, COUNT(*) AS count\n"
+                        + "FROM tsk_files\n"
+                        + baseFilter + "\n"
+                        + "GROUP BY " + mimeTypeSql;
+
+                // get types that should be shown as indeterminate 
+                Set<String> indeterminateMimeTypes = new HashSet<>();
+                for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+                    if (evt instanceof FileTypeMimeEvent) {
+                        FileTypeMimeEvent mimeEvt = (FileTypeMimeEvent) evt;
+                        if ((dataSourceId == null || Objects.equals(mimeEvt.getDataSourceId(), dataSourceId))
+                                && (prefixWithSlash == null || mimeEvt.getMimeType().startsWith(prefixWithSlash))) {
+
+                            String mimePortion = prefixWithSlash != null
+                                    ? mimeEvt.getMimeType().substring(prefixWithSlash.length())
+                                    : mimeEvt.getMimeType().substring(0, mimeEvt.getMimeType().indexOf("/"));
+
+                            indeterminateMimeTypes.add(mimePortion);
+                        }
+                    }
+                }
+
+                typeCounts = fetchMimeTypeData(query, likeItem, indeterminateMimeTypes, true);
+            }
+        } catch (TskCoreException ex) {
+            throw new ExecutionException("An error occurred while determining file counts.", ex);
+        }
+
+        // get tree count items to return
+        List<TreeItemDTO<FileTypeMimeSearchParams>> treeList = typeCounts.entrySet().stream()
+                .map(entry -> {
+                    String name = prefixWithSlash != null && entry.getKey().startsWith(prefixWithSlash)
+                            ? entry.getKey().substring(prefixWithSlash.length())
+                            : entry.getKey();
+
+                    return createMimeTreeItem(entry.getKey(), name, dataSourceId, entry.getValue());
+                })
+                .sorted((a, b) -> stringCompare(a.getSearchParams().getMimeType(), b.getSearchParams().getMimeType()))
+                .collect(Collectors.toList());
+
+        return new TreeResultsDTO<>(treeList);
+    }
+
+    /**
+     * Helper method that fetches data with a prepared statement specifically
+     * for mime types.
+     *
+     * @param query                  The sql query.
+     * @param likeItem               The String to be used in the prepared
+     *                               statement for a like item or null.
+     * @param indeterminateMimeTypes The items that should be indeterminate or
+     *                               empty.
+     * @param countShown             Whether or not a count should be shown.
+     *
+     * @return The map of mime types to counts to display.
+     *
+     * @throws ExecutionException
+     */
+    private Map<String, TreeDisplayCount> fetchMimeTypeData(String query, String likeItem, Set<String> indeterminateMimeTypes, boolean countShown) throws ExecutionException {
+        try (CaseDbPreparedStatement casePreparedStatement = getCase().getCaseDbAccessManager().prepareSelect(query)) {
+
+            if (likeItem != null) {
+                casePreparedStatement.setString(1, likeItem);
+            }
+
+            Map<String, TreeDisplayCount> typeCounts = new HashMap<>();
+            getCase().getCaseDbAccessManager().select(casePreparedStatement, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        String mimeTypeId = resultSet.getString("mime_type");
+                        if (mimeTypeId != null) {
+                            TreeDisplayCount displayCount;
+                            if (!countShown) {
+                                displayCount = TreeDisplayCount.NOT_SHOWN;
+                            } else if (indeterminateMimeTypes != null && indeterminateMimeTypes.contains(mimeTypeId)) {
+                                displayCount = TreeDisplayCount.INDETERMINATE;
+                            } else {
+                                displayCount = TreeDisplayCount.getDeterminate(resultSet.getLong("count"));
+                            }
+
+                            typeCounts.put(mimeTypeId, displayCount);
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching file mime type counts.", ex);
+                }
+            });
+            return typeCounts;
+        } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
+            throw new ExecutionException("An error occurred while fetching file counts with query:\n" + query, ex);
         }
     }
 
@@ -946,6 +1005,7 @@ public class ViewsDAO extends AbstractDAO {
     @Override
     void clearCaches() {
         this.searchParamsCache.invalidateAll();
+        this.exceededFileThreshold = false;
         handleIngestComplete();
     }
 
