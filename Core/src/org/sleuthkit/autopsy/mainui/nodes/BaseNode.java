@@ -33,7 +33,6 @@ import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import javax.ws.rs.HEAD;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
