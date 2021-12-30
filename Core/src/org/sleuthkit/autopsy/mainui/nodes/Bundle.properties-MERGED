@@ -1,5 +1,13 @@
 AnalysisResultTypeFactory_adHocName=Ad Hoc Results
+ArtifactNode_columnKeys_srcFile_description=Source Name
+ArtifactNode_columnKeys_srcFile_displayName=Source Name
+ArtifactNode_columnKeys_srcFile_name=Source Name
 DataArtifactTypeFactory_AccountTypeParentNode_displayName=Communication Accounts
+FileNode.createSheet.comment.displayName=C
+# {0} - occurrenceCount
+FileNode_createSheet_count.description=There were {0} datasource(s) found with occurrences of the MD5 correlation value
+FileNode_createSheet_count.displayName=O
+FileNode_createSheet_count_hashLookupNotRun_description=Hash lookup had not been run on this file when the column was populated
 FileSystemFactory.FileSystemTreeNode.ExtractUnallocAction.text=Extract Unallocated Space to Single Files
 FileSystemFactory.UnsupportedTreeNode.displayName=Unsupported Content
 ImageNode_ExtractUnallocAction_text=Extract Unallocated Space to Single Files

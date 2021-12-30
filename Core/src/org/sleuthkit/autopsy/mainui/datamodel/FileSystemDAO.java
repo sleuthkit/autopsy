@@ -338,7 +338,7 @@ public class FileSystemDAO extends AbstractDAO {
      * @return True if full tree should be refreshed.
      */
     private boolean invalidatesAllFileSystem(Content parentContent) {
-        if (parentContent instanceof VolumeSystem || parentContent instanceof FileSystem) {
+        if (parentContent instanceof VolumeSystem || parentContent instanceof FileSystem || parentContent instanceof Image) {
             return true;
         }
 

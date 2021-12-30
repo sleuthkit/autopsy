@@ -52,6 +52,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeTableFilterNode;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
@@ -507,9 +508,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             listeningToTabbedPane = true;
         }
 
-        // if search result root node, it's fine; otherwise, wrap in result 
+        // If search result root node it's fine. 
+        // CommonAttributeTableFilterNodes are intended to have grandchildren.
+        // Otherwise, wrap in result 
         // viewer filter node to make sure there are no grandchildren
-        this.currentRootNode = (rootNode instanceof SearchResultRootNode)
+        this.currentRootNode = ((rootNode instanceof SearchResultRootNode) || (rootNode instanceof CommonAttributeTableFilterNode))
                 ? rootNode
                 : new ResultViewerFilterParentNode(rootNode);
 

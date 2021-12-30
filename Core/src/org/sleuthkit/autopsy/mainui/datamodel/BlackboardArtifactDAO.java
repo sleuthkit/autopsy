@@ -20,6 +20,7 @@ import org.python.google.common.collect.Sets;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.sco.SCOUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -30,8 +31,15 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_GEN_INFO;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_TL_EVENT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.HostAddress;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 /*
  * Autopsy Forensic Browser
@@ -58,15 +66,6 @@ import org.sleuthkit.datamodel.TskCoreException;
     "BlackboardArtifactDAO.columnKeys.srcFile.name=Source Name",
     "BlackboardArtifactDAO.columnKeys.srcFile.displayName=Source Name",
     "BlackboardArtifactDAO.columnKeys.srcFile.description=Source Name",
-    "BlackboardArtifactDAO.columnKeys.score.name=Score",
-    "BlackboardArtifactDAO.columnKeys.score.displayName=S",
-    "BlackboardArtifactDAO.columnKeys.score.description=Score",
-    "BlackboardArtifactDAO.columnKeys.comment.name=Comment",
-    "BlackboardArtifactDAO.columnKeys.comment.displayName=C",
-    "BlackboardArtifactDAO.columnKeys.comment.description=Comment",
-    "BlackboardArtifactDAO.columnKeys.occurrences.name=Occurrences",
-    "BlackboardArtifactDAO.columnKeys.occurrences.displayName=O",
-    "BlackboardArtifactDAO.columnKeys.occurrences.description=Occurrences",
     "BlackboardArtifactDAO.columnKeys.dataSource.name=Data Source",
     "BlackboardArtifactDAO.columnKeys.dataSource.displayName=Data Source",
     "BlackboardArtifactDAO.columnKeys.dataSource.description=Data Source"
@@ -103,21 +102,21 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
     );
 
     static final ColumnKey S_COL = new ColumnKey(
-            Bundle.BlackboardArtifactDAO_columnKeys_score_name(),
-            Bundle.BlackboardArtifactDAO_columnKeys_score_displayName(),
-            Bundle.BlackboardArtifactDAO_columnKeys_score_description()
+            SCOUtils.SCORE_COLUMN_NAME,
+            SCOUtils.SCORE_COLUMN_NAME,
+            SCOUtils.SCORE_COLUMN_NAME
     );
 
     static final ColumnKey C_COL = new ColumnKey(
-            Bundle.BlackboardArtifactDAO_columnKeys_comment_name(),
-            Bundle.BlackboardArtifactDAO_columnKeys_comment_displayName(),
-            Bundle.BlackboardArtifactDAO_columnKeys_comment_description()
+            SCOUtils.COMMENT_COLUMN_NAME,
+            SCOUtils.COMMENT_COLUMN_NAME,
+            SCOUtils.COMMENT_COLUMN_NAME
     );
 
     static final ColumnKey O_COL = new ColumnKey(
-            Bundle.BlackboardArtifactDAO_columnKeys_occurrences_name(),
-            Bundle.BlackboardArtifactDAO_columnKeys_occurrences_displayName(),
-            Bundle.BlackboardArtifactDAO_columnKeys_occurrences_description()
+            SCOUtils.OCCURANCES_COLUMN_NAME,
+            SCOUtils.OCCURANCES_COLUMN_NAME,
+            SCOUtils.OCCURANCES_COLUMN_NAME
     );
 
     static final ColumnKey DATASOURCE_COL = new ColumnKey(
@@ -150,7 +149,6 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
     protected static Set<BlackboardArtifact.Type> getIgnoredTreeTypes() {
         return IGNORED_TYPES;
     }
-      
 
     TableData createTableData(BlackboardArtifact.Type artType, List<BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
         // A linked hashmap is being used for artifactAttributes to ensure that artifact order 
@@ -189,7 +187,7 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
             List<Object> cellValues = new ArrayList<>();
 
             Content srcContent = artifact.getParent();
-            cellValues.add(srcContent.getName());
+            cellValues.add(getDisplayNameBySourceContent(srcContent));
             cellValues.add(null);
             cellValues.add(null);
             cellValues.add(null);
@@ -244,7 +242,7 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
         if (BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON.equals(attrType.getValueType())) {
             return false;
         }
-        
+
         if (BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() == artType.getTypeID()) {
             return !HIDDEN_EMAIL_ATTR_TYPES.contains(attrType.getTypeID());
         } else {
@@ -262,7 +260,7 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
         return attrTypes.stream()
                 .anyMatch(tp -> BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME.equals(tp.getValueType()));
     }
-    
+
     String getWhereClause(SearchParams<BlackboardArtifactSearchParam> cacheKey) {
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
@@ -271,22 +269,22 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
         if (dataSourceId != null) {
             originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
         }
-        
+
         String pagedWhereClause = originalWhereClause
-            + " ORDER BY artifacts.obj_id ASC"                
-            + (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0 ? " LIMIT " + cacheKey.getMaxResultsCount() : "")
-            + (cacheKey.getStartItem() > 0 ? " OFFSET " + cacheKey.getStartItem() : "");
+                + " ORDER BY artifacts.obj_id ASC"
+                + (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0 ? " LIMIT " + cacheKey.getMaxResultsCount() : "")
+                + (cacheKey.getStartItem() > 0 ? " OFFSET " + cacheKey.getStartItem() : "");
         return pagedWhereClause;
     }
-    
+
     long getTotalResultsCount(SearchParams<BlackboardArtifactSearchParam> cacheKey, long currentPageSize) throws TskCoreException, NoCurrentCaseException {
         Blackboard blackboard = getCase().getBlackboard();
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
-        
-        if ( (cacheKey.getStartItem() == 0) // offset is zero AND
-            && ( (cacheKey.getMaxResultsCount() != null && currentPageSize < cacheKey.getMaxResultsCount()) // number of results is less than max
-                || (cacheKey.getMaxResultsCount() == null)) ) { // OR max number of results was not specified
+
+        if ((cacheKey.getStartItem() == 0) // offset is zero AND
+                && ((cacheKey.getMaxResultsCount() != null && currentPageSize < cacheKey.getMaxResultsCount()) // number of results is less than max
+                || (cacheKey.getMaxResultsCount() == null))) { // OR max number of results was not specified
             return currentPageSize;
         } else {
             if (dataSourceId != null) {
@@ -294,7 +292,62 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
             } else {
                 return blackboard.getArtifactsCount(artType.getTypeID());
             }
-        }  
+        }
+    }
+
+    /**
+     * Returns the display name to use based on the source content.
+     *
+     * @param srcContent The source content.
+     *
+     * @return The display name.
+     */
+    String getDisplayNameBySourceContent(Content srcContent) {
+        if (srcContent instanceof BlackboardArtifact) {
+            try {
+                return ((BlackboardArtifact) srcContent).getShortDescription();
+            } catch (TskCoreException ex) {
+                // Log the error, but set the display name to
+                // Content.getName so there is something visible to the user.
+                logger.log(Level.WARNING, "Failed to get short description for artifact id = " + srcContent.getId(), ex);
+            }
+        } else if (srcContent instanceof OsAccount) {
+            return ((OsAccount) srcContent).getAddr().orElse(srcContent.getName());
+        }
+
+        return srcContent.getName();
+    }
+
+    /**
+     * Returns a displayable type string for the given content object.
+     *
+     * If the content object is a artifact of a custom type then this method may
+     * cause a DB call BlackboardArtifact.getType
+     *
+     * @param source The object to determine the type of.
+     *
+     * @return A string representing the content type.
+     */
+    String getSourceObjType(Content source) throws TskCoreException {
+        if (source instanceof BlackboardArtifact) {
+            BlackboardArtifact srcArtifact = (BlackboardArtifact) source;
+            return srcArtifact.getType().getDisplayName();
+        } else if (source instanceof Volume) {
+            return TskData.ObjectType.VOL.toString();
+        } else if (source instanceof AbstractFile) {
+            return TskData.ObjectType.ABSTRACTFILE.toString();
+        } else if (source instanceof Image) {
+            return TskData.ObjectType.IMG.toString();
+        } else if (source instanceof VolumeSystem) {
+            return TskData.ObjectType.VS.toString();
+        } else if (source instanceof OsAccount) {
+            return TskData.ObjectType.OS_ACCOUNT.toString();
+        } else if (source instanceof HostAddress) {
+            return TskData.ObjectType.HOST_ADDRESS.toString();
+        } else if (source instanceof Pool) {
+            return TskData.ObjectType.POOL.toString();
+        }
+        return "";
     }
 
     String getDataSourceName(Content srcContent) throws TskCoreException {
@@ -357,13 +410,13 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
 //    }
     @SuppressWarnings("deprecation")
     Object getAttrValue(BlackboardArtifact.Type artType, BlackboardAttribute attr) {
-        
+
         // Handle the special cases
-        if (artType.equals(BlackboardArtifact.Type.TSK_EMAIL_MSG) &&
-                attr.getAttributeType().equals(BlackboardAttribute.Type.TSK_EMAIL_CONTENT_PLAIN)) {
+        if (artType.equals(BlackboardArtifact.Type.TSK_EMAIL_MSG)
+                && attr.getAttributeType().equals(BlackboardAttribute.Type.TSK_EMAIL_CONTENT_PLAIN)) {
             return getTruncated(attr.getValueString(), EMAIL_CONTENT_MAX_LEN);
         }
-        
+
         /* From BlackboardArtifactNode:
          * The truncation of text attributes appears to have been
          * motivated by the statement that "RegRipper output would
@@ -374,7 +427,7 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
                 && attr.getAttributeType().equals(BlackboardAttribute.Type.TSK_TEXT)) {
             return getTruncated(attr.getValueString(), TOOL_TEXT_MAX_LEN);
         }
-        
+
         switch (attr.getAttributeType().getValueType()) {
             case BYTE:
                 return attr.getValueBytes();

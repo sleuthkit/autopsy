@@ -18,16 +18,21 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.List;
+import java.util.Optional;
 import org.openide.nodes.Children;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.PoolRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * A node representing a Pool.
  */
-public class PoolNode extends BaseNode<SearchResultsDTO, PoolRowDTO> {
+public class PoolNode extends BaseNode<SearchResultsDTO, PoolRowDTO> implements SCOSupporter {
 
     /**
      * Pool node constructor.
@@ -45,5 +50,15 @@ public class PoolNode extends BaseNode<SearchResultsDTO, PoolRowDTO> {
         setDisplayName(name);
         setShortDescription(name);
         setIconBaseWithExtension(NodeIconUtil.POOL.getPath());
+    }
+
+    @Override
+    public Optional<Content> getContent() {
+        return Optional.ofNullable(getRowDTO().getContent());
+    }
+
+    @Override
+    public void updateSheet(List<NodeProperty<?>> newProps) {
+        super.updateSheet(newProps);
     }
 }

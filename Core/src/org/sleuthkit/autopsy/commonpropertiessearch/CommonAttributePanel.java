@@ -300,7 +300,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         }
                         Node commonFilesNode = new CommonAttributeSearchResultRootNode(metadata, correlationType);
                         DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonAttributePanel.this));
-                        TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);
+                        CommonAttributeTableFilterNode tableFilterWithDescendantsNode = new CommonAttributeTableFilterNode(dataResultFilterNode, 3);
                         DataResultViewerTable table = new CommonAttributesSearchResultsViewerTable();
                         Collection<DataResultViewer> viewers = new ArrayList<>(1);
                         viewers.add(table);
@@ -402,7 +402,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         // -3969
                         Node commonFilesNode = new CommonAttributeSearchResultRootNode(metadata);
                         DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonAttributePanel.this));
-                        TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);
+                        CommonAttributeTableFilterNode tableFilterWithDescendantsNode = new CommonAttributeTableFilterNode(dataResultFilterNode, 3);
                         DataResultViewerTable table = new CommonAttributesSearchResultsViewerTable();
                         Collection<DataResultViewer> viewers = new ArrayList<>(1);
                         viewers.add(table);
