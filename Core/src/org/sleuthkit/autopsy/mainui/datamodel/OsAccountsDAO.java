@@ -62,6 +62,10 @@ import org.sleuthkit.datamodel.TskCoreException;
     "OsAccountsDAO_loginNameProperty_displayName=Login Name",
     "OsAccountsDAO.fileColumns.noDescription=No Description",})
 public class OsAccountsDAO extends AbstractDAO {
+    
+    public static String HOST_COLUMN_NAME = Bundle.OsAccountsDAO_accountHostNameProperty_displayName();
+    public static String SCOPE_COLUMN_NAME = Bundle.OsAccountsDAO_accountScopeNameProperty_displayName();
+    public static String REALM_COLUMN_NAME = Bundle.OsAccountsDAO_accountRealmNameProperty_displayName();
 
     private final Cache<SearchParams<?>, SearchResultsDTO> searchParamsCache = 
             CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
