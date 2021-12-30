@@ -24,7 +24,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 /**
@@ -82,32 +81,6 @@ public class RootContentChildren extends Children.Keys<Object> {
      * Set Hits, etc.).
      */
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
-
-        @Override
-        public AbstractNode visit(RecentFiles rf) {
-            return new RecentFilesNode(rf.getSleuthkitCase());
-        }
-
-        @Override
-        public AbstractNode visit(KeywordHits kh) {
-            return kh.new RootNode();
-        }
-
-        @Override
-        public AbstractNode visit(HashsetHits hh) {
-            return hh.new RootNode();
-        }
-
-        @Override
-        public AbstractNode visit(InterestingHits ih) {
-            return ih.new RootNode();
-        }
-
-        @Override
-        public AbstractNode visit(EmailExtracted ee) {
-            return ee.new RootNode();
-        }
-
         @Override
         public AbstractNode visit(Tags tagsNodeKey) {
             return tagsNodeKey.new RootNode(tagsNodeKey.filteringDataSourceObjId());
@@ -131,11 +104,6 @@ public class RootContentChildren extends Children.Keys<Object> {
         @Override
         public AbstractNode visit(Reports reportsItem) {
             return new Reports.ReportsListNode();
-        }
-
-        @Override
-        public AbstractNode visit(Accounts accountsItem) {
-            return accountsItem.new AccountsRootNode();
         }
 
         @Override
