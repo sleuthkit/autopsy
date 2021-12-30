@@ -385,8 +385,8 @@
                 <binary-origin>release/modules/ext/httpclient-4.5.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-8.6.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-8.6.3.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-8.11.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-8.11.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-tika-0.8.jar</runtime-relative-path>
