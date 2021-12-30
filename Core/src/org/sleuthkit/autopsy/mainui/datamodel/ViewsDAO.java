@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +38,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -102,8 +102,8 @@ public class ViewsDAO extends AbstractDAO {
         return instance;
     }
 
-    private final Cache<SearchParams<Object>, SearchResultsDTO> searchParamsCache = 
-            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<Object>, SearchResultsDTO> searchParamsCache
+            = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<DAOEvent> treeCounts = new TreeCounts<>();
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
@@ -449,23 +449,40 @@ public class ViewsDAO extends AbstractDAO {
             }
         }
 
-        Map<FileExtSearchFilter, String> whereClauses = filters.stream()
-                .collect(Collectors.toMap(
-                        filter -> filter,
-                        filter -> getFileExtensionClause(filter)));
+        String filterSums = filters.stream()
+                // no point in getting a count for filters that will not display count
+                .filter(f -> indeterminateFilters.contains(f))
+                // this assumes that filter enum names are safe to use as sql identifiers
+                .map(f -> MessageFormat.format("\n  SUM(CASE WHEN {0} THEN 1 ELSE 0 END) AS {1}", getFileExtensionClause(f), f.getName()))
+                .collect(Collectors.joining(","));
 
-        Map<FileExtSearchFilter, Long> countsByFilter = getFilesCounts(whereClauses, getBaseFileExtensionFilter(), dataSourceId, true);
+        String query = filterSums
+                + "\nFROM tsk_files\nWHERE "
+                + getBaseFileExtensionFilter()
+                + getDataSourceAndClause(dataSourceId);
 
-        List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
-                .map(entry -> {
-                    TreeDisplayCount displayCount = indeterminateFilters.contains(entry.getKey())
-                            ? TreeDisplayCount.INDETERMINATE
-                            : TreeDisplayCount.getDeterminate(entry.getValue());
+        List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = new ArrayList<>();
+        try {
+            getCase().getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    if (resultSet.next()) {
+                        for (FileExtSearchFilter filter : filters) {
+                            if (indeterminateFilters.contains(filter)) {
+                                treeList.add(createExtensionTreeItem(filter, dataSourceId, TreeDisplayCount.INDETERMINATE));
+                            } else {
+                                treeList.add(createExtensionTreeItem(filter, dataSourceId, TreeDisplayCount.getDeterminate(resultSet.getLong(filter.getName()))));
+                            }
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching file type counts.", ex);
+                }
+            });
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching file counts with query:\n" + query, ex);
+        }
 
-                    return createExtensionTreeItem(entry.getKey(), dataSourceId, displayCount);
-                })
-                .sorted((a, b) -> a.getDisplayName().compareToIgnoreCase(b.getDisplayName()))
-                .collect(Collectors.toList());
+        treeList.sort(Comparator.comparing(item -> item.getSearchParams().getFilter().getId()));
 
         return new TreeResultsDTO<>(treeList);
     }
