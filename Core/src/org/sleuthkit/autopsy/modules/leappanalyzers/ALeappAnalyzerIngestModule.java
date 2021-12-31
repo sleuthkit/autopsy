@@ -201,6 +201,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
      */
     private void processALeappFile(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, int filesProcessedCount,
             AbstractFile aLeappFile) {
+        statusHelper.progress(NbBundle.getMessage(this.getClass(), "ALeappAnalyzerIngestModule.processing.file", aLeappFile.getName()), filesProcessedCount);
         String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
         Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ALEAPP, currentTime);
         try {
@@ -210,7 +211,6 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        statusHelper.progress(NbBundle.getMessage(this.getClass(), "ALeappAnalyzerIngestModule.processing.file", aLeappFile.getName()), filesProcessedCount);
         ProcessBuilder aLeappCommand = buildaLeappCommand(moduleOutputPath, aLeappFile.getLocalAbsPath(), aLeappFile.getNameExtension());
         try {
             int result = ExecUtil.execute(aLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
@@ -244,6 +244,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
      * @param directoryToProcess directory to run aLeapp against
      */
     private void processALeappFs(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, String directoryToProcess) {
+        statusHelper.progress(NbBundle.getMessage(this.getClass(), "ALeappAnalyzerIngestModule.processing.filesystem"));
         String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
         Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ALEAPP, currentTime);
         try {
@@ -253,7 +254,6 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        statusHelper.progress(NbBundle.getMessage(this.getClass(), "ALeappAnalyzerIngestModule.processing.filesystem"));
         ProcessBuilder aLeappCommand = buildaLeappCommand(moduleOutputPath, directoryToProcess, "fs");
         try {
             int result = ExecUtil.execute(aLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
