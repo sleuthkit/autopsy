@@ -1,7 +1,7 @@
 AnalysisResultTypeFactory_adHocName=Ad Hoc Results
-ArtifactNode_columnKeys_srcFile_description=Source Name
-ArtifactNode_columnKeys_srcFile_displayName=Source Name
-ArtifactNode_columnKeys_srcFile_name=Source Name
+BaseNode_columnKeys_originalName_description=Original Name
+BaseNode_columnKeys_originalName_displayName=Original Name
+BaseNode_columnKeys_originalName_name=Original Name
 DataArtifactTypeFactory_AccountTypeParentNode_displayName=Communication Accounts
 FileNode.createSheet.comment.displayName=C
 # {0} - occurrenceCount

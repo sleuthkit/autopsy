@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.lang.ref.WeakReference;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -32,11 +33,11 @@ import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
-import javax.ws.rs.HEAD;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -44,7 +45,9 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.autopsy.mainui.datamodel.BaseRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
@@ -55,6 +58,7 @@ import org.sleuthkit.autopsy.mainui.sco.SCOUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 
 /**
  * A a simple starting point for nodes.
@@ -63,6 +67,7 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
 
     private final S results;
     private final R rowData;
+    private String translatedSourceName;
 
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(
             Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
@@ -185,6 +190,7 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
     protected Sheet createSheet() {
         Sheet sheet = ContentNodeUtil.setSheet(super.createSheet(), results.getColumns(), rowData.getCellValues());
         updateSCOColumns();
+        startTranslationTask();
         return sheet;
     }
 
@@ -204,6 +210,59 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
             backgroundTasksPool.submit(scoFutureTask);
         }
     }
+    
+    private void startTranslationTask() {
+        if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
+            /*
+             * If machine translation is configured, add the original name of
+             * the of the source content of the artifact represented by this
+             * node to the sheet.
+             */
+
+            if (translatedSourceName == null) {
+                PropertyChangeListener listener = new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                         String eventType = evt.getPropertyName();
+                        if (eventType.equals(FileNameTransTask.getPropertyName())) {
+                            displayTranslation(evt.getOldValue().toString(), evt.getNewValue().toString());
+                        }
+                    }
+                };
+                /*
+                 * NOTE: The task makes its own weak reference to the listener.
+                 */
+                // use first cell value for display name
+                String displayName = rowData.getCellValues().size() > 0
+                        ? rowData.getCellValues().get(0).toString()
+                        : "";
+                new FileNameTransTask(displayName, this, listener).submit();
+            }
+        }
+    }
+    
+    // These strings need to be consistent with what is in FileSystemColumnUtils
+    @NbBundle.Messages({
+        "BaseNode_columnKeys_originalName_name=Original Name",
+        "BaseNode_columnKeys_originalName_displayName=Original Name",
+        "BaseNode_columnKeys_originalName_description=Original Name",
+    })
+    private void displayTranslation(String originalName, String translatedSourceName) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                BaseNode.this.translatedSourceName = translatedSourceName;
+                setDisplayName(translatedSourceName);
+                setShortDescription(originalName);
+                updateSheet(Collections.singletonList(new NodeProperty<>(
+                    Bundle.BaseNode_columnKeys_originalName_name(),
+                    Bundle.BaseNode_columnKeys_originalName_displayName(),
+                    Bundle.BaseNode_columnKeys_originalName_description(),
+                    originalName)));
+            }
+        });
+        
+    }    
 
     /**
      * Updates the values of the properties in the current property sheet with
