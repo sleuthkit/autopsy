@@ -70,9 +70,8 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     private static final String ALEAPP_FS = "fs_"; //NON-NLS
     private static final String ALEAPP_EXECUTABLE = "aleapp.exe";//NON-NLS
     private static final String ALEAPP_PATHS_FILE = "aLeapp_paths.txt"; //NON-NLS
-    
-    private static final String XMLFILE = "aleap-artifact-attribute-reference.xml"; //NON-NLS
 
+    private static final String XMLFILE = "aleap-artifact-attribute-reference.xml"; //NON-NLS
 
     private File aLeappExecutable;
 
@@ -118,8 +117,8 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     @NbBundle.Messages({
         "ALeappAnalyzerIngestModule.error.running.aLeapp=Error running aLeapp, see log file.",
         "ALeappAnalyzerIngestModule.error.creating.output.dir=Error creating aLeapp module output directory.",
-        "ALeappAnalyzerIngestModule.starting.aLeapp=Starting aLeapp",
         "ALeappAnalyzerIngestModule.running.aLeapp=Running aLeapp",
+        "ALeappAnalyzerIngestModule_processing_aLeapp_results=Processing aLeapp results",
         "ALeappAnalyzerIngestModule.has.run=aLeapp",
         "ALeappAnalyzerIngestModule.aLeapp.cancelled=aLeapp run was canceled",
         "ALeappAnalyzerIngestModule.completed=aLeapp Processing Completed",
@@ -127,50 +126,61 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
 
+        statusHelper.switchToIndeterminate();
+        statusHelper.progress(Bundle.ALeappAnalyzerIngestModule_running_aLeapp());
+
         Case currentCase = Case.getCurrentCase();
         Path tempOutputPath = Paths.get(currentCase.getTempDirectory(), ALEAPP, ALEAPP_FS + dataSource.getId());
         try {
             Files.createDirectories(tempOutputPath);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Error creating aLeapp output directory %s", tempOutputPath.toString()), ex);
+            writeErrorMsgToIngestInbox();
             return ProcessResult.ERROR;
         }
 
-        List<String> aLeappPathsToProcess = new ArrayList<>();
+        List<String> aLeappPathsToProcess;
         ProcessBuilder aLeappCommand = buildaLeappListCommand(tempOutputPath);
         try {
             int result = ExecUtil.execute(aLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
             if (result != 0) {
                 logger.log(Level.SEVERE, String.format("Error when trying to execute aLeapp program getting file paths to search for result is %d", result));
+                writeErrorMsgToIngestInbox();
                 return ProcessResult.ERROR;
             }
             aLeappPathsToProcess = loadIleappPathFile(tempOutputPath);
+            if (aLeappPathsToProcess.isEmpty()) {
+                logger.log(Level.SEVERE, String.format("Error getting file paths to search, list is empty"));
+                writeErrorMsgToIngestInbox();
+                return ProcessResult.ERROR;
+            }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Error when trying to execute aLeapp program getting file paths to search"), ex);
+            writeErrorMsgToIngestInbox();
             return ProcessResult.ERROR;
         }
 
-        statusHelper.progress(Bundle.ALeappAnalyzerIngestModule_starting_aLeapp(), 0);
-
-        List<AbstractFile> aLeappFilesToProcess = new ArrayList<>();
-
-        if (!(context.getDataSource() instanceof LocalFilesDataSource)) {
-            extractFilesFromImage(dataSource, aLeappPathsToProcess, tempOutputPath);
-            statusHelper.switchToDeterminate(aLeappFilesToProcess.size());
-            processALeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
-        } else {
-            aLeappFilesToProcess = LeappFileProcessor.findLeappFilesToProcess(dataSource);
-            statusHelper.switchToDeterminate(aLeappFilesToProcess.size());
-
-            Integer filesProcessedCount = 0;
-            for (AbstractFile aLeappFile : aLeappFilesToProcess) {
-                processALeappFile(dataSource, currentCase, statusHelper, filesProcessedCount, aLeappFile);
-                filesProcessedCount++;
+        if ((context.getDataSource() instanceof LocalFilesDataSource)) {
+            /*
+             * The data source may be local files from an iOS file system, or it
+             * may be a tarred/ZIP of an iOS file system. If it is the latter,
+             * extract the files we need to process.
+             */
+            List<AbstractFile> aLeappFilesToProcess = LeappFileProcessor.findLeappFilesToProcess(dataSource);
+            if (!aLeappFilesToProcess.isEmpty()) {
+                statusHelper.switchToDeterminate(aLeappFilesToProcess.size());
+                Integer filesProcessedCount = 0;
+                for (AbstractFile aLeappFile : aLeappFilesToProcess) {
+                    processALeappFile(dataSource, currentCase, statusHelper, filesProcessedCount, aLeappFile);
+                    filesProcessedCount++;
+                }
             }
-            // Process the logical image as a fs in aLeapp to make sure this is not a logical fs that was added
-            extractFilesFromImage(dataSource, aLeappPathsToProcess, tempOutputPath);
-            processALeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
         }
+
+        statusHelper.switchToIndeterminate();
+        statusHelper.progress(Bundle.ILeappAnalyzerIngestModule_processing_iLeapp_results());
+        extractFilesFromDataSource(dataSource, aLeappPathsToProcess, tempOutputPath);
+        processALeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
 
         IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
                 Bundle.ALeappAnalyzerIngestModule_has_run(),
@@ -181,11 +191,13 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
 
     /**
      * Process a file from a logical image using the aLeapp program
-     * @param dataSource datasource to process
-     * @param currentCase current case that is being worked on
-     * @param statusHelper show progress and update what is being processed
+     *
+     * @param dataSource          datasource to process
+     * @param currentCase         current case that is being worked on
+     * @param statusHelper        show progress and update what is being
+     *                            processed
      * @param filesProcessedCount number of files that have been processed
-     * @param aLeappFile the abstract file to process
+     * @param aLeappFile          the abstract file to process
      */
     private void processALeappFile(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, int filesProcessedCount,
             AbstractFile aLeappFile) {
@@ -219,18 +231,16 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        ProcessResult fileProcessorResult = aLeappFileProcessor.processFiles(dataSource, moduleOutputPath, aLeappFile);
-
-        if (fileProcessorResult == ProcessResult.ERROR) {
-            return;
-        }
+        aLeappFileProcessor.processFiles(dataSource, moduleOutputPath, aLeappFile);
     }
 
     /**
      * Process a image/directory using the aLeapp program
-     * @param dataSource datasource to process
-     * @param currentCase current case being procesed
-     * @param statusHelper show progress and update what is being processed
+     *
+     * @param dataSource         datasource to process
+     * @param currentCase        current case being procesed
+     * @param statusHelper       show progress and update what is being
+     *                           processed
      * @param directoryToProcess directory to run aLeapp against
      */
     private void processALeappFs(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, String directoryToProcess) {
@@ -264,23 +274,16 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        ProcessResult fileProcessorResult = aLeappFileProcessor.processFileSystem(dataSource, moduleOutputPath);
-
-        if (fileProcessorResult == ProcessResult.ERROR) {
-            return;
-        }
-
+        aLeappFileProcessor.processFileSystem(dataSource, moduleOutputPath);
     }
-
-
 
     /**
      * Build the aLeapp command to run
-     * 
-     * @param moduleOutputPath output path for the aLeapp program.
-     * @param sourceFilePath where the source files to process reside.
+     *
+     * @param moduleOutputPath     output path for the aLeapp program.
+     * @param sourceFilePath       where the source files to process reside.
      * @param aLeappFileSystemType the filesystem type to process
-     * 
+     *
      * @return the command to execute
      */
     private ProcessBuilder buildaLeappCommand(Path moduleOutputPath, String sourceFilePath, String aLeappFileSystemType) {
@@ -311,8 +314,8 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     static private ProcessBuilder buildProcessWithRunAsInvoker(String... commandLine) {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
-         * Add an environment variable to force aLeapp to run with
-         * the same permissions Autopsy uses.
+         * Add an environment variable to force aLeapp to run with the same
+         * permissions Autopsy uses.
          */
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
         return processBuilder;
@@ -335,7 +338,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     private void addILeappReportToReports(Path aLeappOutputDir, Case currentCase) {
         List<String> allIndexFiles = new ArrayList<>();
 
-        try (Stream<Path> walk = Files.walk(aLeappOutputDir)) { 
+        try (Stream<Path> walk = Files.walk(aLeappOutputDir)) {
 
             allIndexFiles = walk.map(x -> x.toString())
                     .filter(f -> f.toLowerCase().endsWith("index.html")).collect(Collectors.toList());
@@ -380,7 +383,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         return aLeappPathsToProcess;
     }
 
-    private void extractFilesFromImage(Content dataSource, List<String> aLeappPathsToProcess, Path moduleOutputPath) {
+    private void extractFilesFromDataSource(Content dataSource, List<String> aLeappPathsToProcess, Path moduleOutputPath) {
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
         for (String fullFilePath : aLeappPathsToProcess) {
@@ -418,33 +421,33 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
 
     private void extractFileToOutput(Content dataSource, AbstractFile aLeappFile, File fileParentPath, Path parentPath) {
         if (fileParentPath.exists()) {
-                    if (!aLeappFile.isDir()) {
-                        writeaLeappFile(dataSource, aLeappFile, fileParentPath.toString());
-                    } else {
-                        try {
-                            Files.createDirectories(Paths.get(parentPath.toString(), aLeappFile.getName()));
-                        } catch (IOException ex) {
-                            logger.log(Level.INFO, String.format("Error creating aLeapp output directory %s", parentPath.toString()), ex);
-                        }
-                    }
-                } else {
-                    try {
-                        Files.createDirectories(parentPath);
-                    } catch (IOException ex) {
-                        logger.log(Level.INFO, String.format("Error creating aLeapp output directory %s", parentPath.toString()), ex);
-                    }
-                    if (!aLeappFile.isDir()) {
-                        writeaLeappFile(dataSource, aLeappFile, fileParentPath.toString());
-                    } else {
-                        try {
-                            Files.createDirectories(Paths.get(parentPath.toString(), aLeappFile.getName()));
-                        } catch (IOException ex) {
-                            logger.log(Level.INFO, String.format("Error creating aLeapp output directory %s", parentPath.toString()), ex);
-                        }
-                    }
+            if (!aLeappFile.isDir()) {
+                writeaLeappFile(dataSource, aLeappFile, fileParentPath.toString());
+            } else {
+                try {
+                    Files.createDirectories(Paths.get(parentPath.toString(), aLeappFile.getName()));
+                } catch (IOException ex) {
+                    logger.log(Level.INFO, String.format("Error creating aLeapp output directory %s", parentPath.toString()), ex);
                 }
+            }
+        } else {
+            try {
+                Files.createDirectories(parentPath);
+            } catch (IOException ex) {
+                logger.log(Level.INFO, String.format("Error creating aLeapp output directory %s", parentPath.toString()), ex);
+            }
+            if (!aLeappFile.isDir()) {
+                writeaLeappFile(dataSource, aLeappFile, fileParentPath.toString());
+            } else {
+                try {
+                    Files.createDirectories(Paths.get(parentPath.toString(), aLeappFile.getName()));
+                } catch (IOException ex) {
+                    logger.log(Level.INFO, String.format("Error creating aLeapp output directory %s", parentPath.toString()), ex);
+                }
+            }
+        }
     }
-    
+
     private void writeaLeappFile(Content dataSource, AbstractFile aLeappFile, String parentPath) {
         String fileName = aLeappFile.getName().replace(":", "-");
         if (!fileName.matches(".") && !fileName.matches("..") && !fileName.toLowerCase().endsWith("-slack")) {
@@ -461,4 +464,16 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
             }
         }
     }
+
+    /**
+     * Writes a generic error message to the ingest inbox, directing the user to
+     * consult the application log fpor more details.
+     */
+    private void writeErrorMsgToIngestInbox() {
+        IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.ERROR,
+                MODULE_NAME,
+                Bundle.ALeappAnalyzerIngestModule_error_running_aLeapp());
+        IngestServices.getInstance().postMessage(message);
+    }
+
 }
