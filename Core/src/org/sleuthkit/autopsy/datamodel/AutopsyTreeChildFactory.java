@@ -175,12 +175,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      */
     @Override
     protected Node createNodeForKey(Object key) {
-        Node node;
-        if (key instanceof SleuthkitVisitableItem) {
-            node = ((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor());
-        } else {
-            node = RootContentChildren.createNode(key);
-        }
+        Node node = RootContentChildren.createNode(key);
 
         if (node == null) {
             logger.log(Level.SEVERE, "Unknown key type: ", key.getClass().getName());

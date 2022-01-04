@@ -28,8 +28,6 @@ import org.sleuthkit.datamodel.SleuthkitVisitableItem;
  */
 abstract class AbstractContentChildren<T extends Content> extends BaseChildFactory<T> {
 
-    private final CreateSleuthkitNodeVisitor createSleuthkitNodeVisitor = new CreateSleuthkitNodeVisitor();
-
     AbstractContentChildren(String nodeName) {
         super(nodeName, new DataSourcesKnownAndSlackFilter<>());
     }
@@ -37,7 +35,7 @@ abstract class AbstractContentChildren<T extends Content> extends BaseChildFacto
     @Override
     protected Node createNodeForKey(T key) {
         if (key instanceof SleuthkitVisitableItem) {
-            return ((SleuthkitVisitableItem) key).accept(createSleuthkitNodeVisitor);
+            return RootContentChildren.createNode(key);
         } else {
             return null;
         }

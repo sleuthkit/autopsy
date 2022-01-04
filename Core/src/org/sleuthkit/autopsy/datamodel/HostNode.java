@@ -153,7 +153,6 @@ public class HostNode extends DisplayableItemNode implements SelectionResponder{
 
     private static final Logger logger = Logger.getLogger(HostNode.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/host.png";
-    private static final CreateSleuthkitNodeVisitor CREATE_TSK_NODE_VISITOR = new CreateSleuthkitNodeVisitor();
 
     /**
      * Means of creating just data source nodes underneath the host (i.e. no
@@ -161,7 +160,7 @@ public class HostNode extends DisplayableItemNode implements SelectionResponder{
      */
     private static final Function<DataSourceGrouping, Node> HOST_DATA_SOURCES = key -> {
         if (key.getDataSource() instanceof SleuthkitVisitableItem) {
-            return ((SleuthkitVisitableItem) key.getDataSource()).accept(CREATE_TSK_NODE_VISITOR);
+            return RootContentChildren.createNode(key);
         } else {
             return null;
         }
