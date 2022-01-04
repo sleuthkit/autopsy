@@ -23,6 +23,7 @@ import java.text.MessageFormat;
 import java.util.Objects;
 import java.util.logging.Level;
 import javax.swing.Action;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -40,7 +41,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 public abstract class TreeNode<T> extends AbstractNode implements SelectionResponder {
 
     private static final Logger logger = Logger.getLogger(TreeNode.class.getName());
-    
+
     private ChildNodeSelectionInfo childNodeSelectionInfo;
 
     /**
@@ -95,25 +96,35 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
     protected TreeItemDTO<? extends T> getItemData() {
         return itemData;
     }
-    
+
     /**
      * Sets the display name of the node to include the display name and count
      * of the item.
      *
      * @param prevData The previous item data (may be null).
-     * @param curData The item data (must be non-null).
+     * @param curData  The item data (must be non-null).
      */
     protected void updateDisplayName(TreeItemDTO<? extends T> prevData, TreeItemDTO<? extends T> curData) {
         // update display name only if there is a change.
         if (prevData == null
                 || !prevData.getDisplayName().equals(curData.getDisplayName())
                 || !Objects.equals(prevData.getDisplayCount(), curData.getDisplayCount())) {
-            String displayName = curData.getDisplayCount() == null
-                    ? curData.getDisplayName()
-                    : curData.getDisplayName() + curData.getDisplayCount().getDisplaySuffix();
 
-            this.setDisplayName(displayName);
+            this.setDisplayName(getDisplayNameString(curData.getDisplayName(), curData.getDisplayCount()));
         }
+    }
+
+    /**
+     * Returns a string to be used as the node display name (including the count).
+     * @param displayName The display name taken from the current tree item dto.
+     * @param displayCount The display count taken from the current tree item dto.
+     * @return The display string.
+     */
+    protected String getDisplayNameString(String displayName, TreeDisplayCount displayCount) {
+        String safeDisplayName = StringUtils.defaultString(displayName);
+        return displayCount == null
+                ? safeDisplayName
+                : safeDisplayName + displayCount.getDisplaySuffix();
     }
 
     /**
@@ -143,8 +154,7 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
     public void respondSelection(DataResultTopComponent dataResultPanel) {
         dataResultPanel.setNode(this);
     }
-    
-     
+
     @Override
     public Action getPreferredAction() {
         // TreeNodes are used for both the result viewer and the tree viewer. For the result viewer,
@@ -157,33 +167,34 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
         }
         return openChildAction;
     }
-    
+
     public ChildNodeSelectionInfo getNodeSelectionInfo() {
         return childNodeSelectionInfo;
     }
-    
+
     public void setNodeSelectionInfo(ChildNodeSelectionInfo info) {
         childNodeSelectionInfo = info;
     }
-    
+
     /**
      * Tree node for displaying static content in the tree.
      */
     public static class StaticTreeNode extends TreeNode<String> {
+
         public StaticTreeNode(String nodeName, String displayName, String icon) {
             this(nodeName, displayName, icon, Children.LEAF);
         }
-        
+
         public StaticTreeNode(String nodeName, String displayName, String icon, ChildFactory<?> childFactory) {
             this(nodeName, displayName, icon, Children.create(childFactory, true), null);
         }
-                
+
         public StaticTreeNode(String nodeName, String displayName, String icon, Children children) {
             this(nodeName, displayName, icon, children, null);
         }
-        
+
         public StaticTreeNode(String nodeName, String displayName, String icon, Children children, Lookup lookup) {
             super(nodeName, icon, new TreeItemDTO<String>(nodeName, nodeName, nodeName, displayName, TreeDisplayCount.NOT_SHOWN), children, lookup);
-        }   
-    }    
+        }
+    }
 }
