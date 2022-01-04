@@ -126,6 +126,7 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(UnsupportedContentNode ucn);
 
     T visit(LocalFilesDataSourceNode lfdsn);
+    
 
     /**
      * Visitor with an implementable default behavior for all types. Override

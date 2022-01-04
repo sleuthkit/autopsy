@@ -87,11 +87,6 @@ public class UnsupportedContentNode extends AbstractContentNode<UnsupportedConte
     }
 
     @Override
-    public <T> T accept(ContentNodeVisitor<T> visitor) {
-        return visitor.visit(this);
-    }
-
-    @Override
     public boolean isLeafTypeNode() {
         return false;
     }
