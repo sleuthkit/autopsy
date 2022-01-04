@@ -263,7 +263,6 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
     public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> implements ActionContext {
 
         private String translatedSourceName;
-        private final Object translatedSourceNameLock = new Object();
         
         protected FileSystemTreeNode(String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children, Lookup lookup) {
             super(ContentNodeUtil.getContentName(itemData.getSearchParams().getContentObjectId()), icon, itemData, children, lookup);
@@ -301,10 +300,10 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         @Override
         protected String getDisplayNameString(String displayName, TreeResultsDTO.TreeDisplayCount displayCount) {
             // lock to prevent simultaneous reads and updates of translatedSourceName
-            synchronized (this.translatedSourceNameLock) {
+            synchronized (this) {
                 // defer to translated source name if present; otherwise use current display name
                 String displayNameToUse = this.translatedSourceName != null ? this.translatedSourceName : displayName;
-                return super.getDisplayNameString(displayName, displayCount);    
+                return super.getDisplayNameString(displayNameToUse, displayCount);    
             }
         }
         
@@ -323,7 +322,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
                             String eventType = evt.getPropertyName();
                             if (eventType.equals(FileNameTransTask.getPropertyName())) {
                                 // lock to prevent simultaneous reads and updates of translatedSourceName
-                                synchronized (FileSystemTreeNode.this.translatedSourceNameLock) {
+                                synchronized (FileSystemTreeNode.this) {
                                     FileSystemTreeNode.this.translatedSourceName = evt.getNewValue().toString();    
                                 }
                                 
