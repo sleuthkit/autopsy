@@ -38,7 +38,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.PersonManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**

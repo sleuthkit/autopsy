@@ -50,7 +50,6 @@ import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -159,11 +158,7 @@ public class HostNode extends DisplayableItemNode implements SelectionResponder{
      * results, reports, etc.)
      */
     private static final Function<DataSourceGrouping, Node> HOST_DATA_SOURCES = key -> {
-        if (key.getDataSource() instanceof SleuthkitVisitableItem) {
-            return RootContentChildren.createNode(key);
-        } else {
-            return null;
-        }
+        return RootContentChildren.createNode(key);
     };
 
     /**

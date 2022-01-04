@@ -20,11 +20,10 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 /**
- * Abstract subclass for ContentChildren implementation
- * that handles creating Nodes from Content objects.
+ * Abstract subclass for ContentChildren implementation that handles creating
+ * Nodes from Content objects.
  */
 abstract class AbstractContentChildren<T extends Content> extends BaseChildFactory<T> {
 
@@ -34,10 +33,6 @@ abstract class AbstractContentChildren<T extends Content> extends BaseChildFacto
 
     @Override
     protected Node createNodeForKey(T key) {
-        if (key instanceof SleuthkitVisitableItem) {
-            return RootContentChildren.createNode(key);
-        } else {
-            return null;
-        }
+        return RootContentChildren.createNode(key);
     }
 }
