@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.Host;
 /**
  * A Host node only showing data sources (no results view, reports, etc.).
  */
-public class HostDataSources implements AutopsyVisitableItem, Comparable<HostDataSources> {
+public class HostDataSources implements Comparable<HostDataSources> {
 
     private final Host host;
 
@@ -42,11 +42,6 @@ public class HostDataSources implements AutopsyVisitableItem, Comparable<HostDat
      */
     Host getHost() {
         return host;
-    }
-
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
     }
 
     @Override

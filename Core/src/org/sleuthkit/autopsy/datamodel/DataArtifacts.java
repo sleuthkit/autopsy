@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
@@ -31,7 +29,7 @@ import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeFactory;
  */
 @NbBundle.Messages({
     "DataArtifacts_name=Data Artifacts",})
-public class DataArtifacts implements AutopsyVisitableItem {
+public class DataArtifacts {
 
     private static final Logger logger = Logger.getLogger(DataArtifacts.class.getName());
 
@@ -70,7 +68,7 @@ public class DataArtifacts implements AutopsyVisitableItem {
                     DataArtifacts.getName());
             this.filteringDSObjId = filteringDSObjId;
         }
-        
+
         public Node clone() {
             return new RootNode(this.filteringDSObjId);
         }
@@ -92,11 +90,6 @@ public class DataArtifacts implements AutopsyVisitableItem {
      */
     public DataArtifacts(long dsObjId) {
         this.datasourceObjId = dsObjId;
-    }
-
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
     }
 
     /**

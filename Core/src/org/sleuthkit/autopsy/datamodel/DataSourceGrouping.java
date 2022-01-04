@@ -22,28 +22,22 @@ import java.util.Objects;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
- * A top level UI grouping of Files, Views, Results, Tags 
- * for 'Group by Data Source' view of the tree.
- * 
+ * A top level UI grouping of Files, Views, Results, Tags for 'Group by Data
+ * Source' view of the tree.
+ *
  */
-public class DataSourceGrouping  implements AutopsyVisitableItem {
-    
+public class DataSourceGrouping {
+
     private final DataSource dataSource;
 
     public DataSourceGrouping(DataSource dataSource) {
         this.dataSource = dataSource;
     }
-    
+
     DataSource getDataSource() {
         return this.dataSource;
     }
-    
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
-    }
-    
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {

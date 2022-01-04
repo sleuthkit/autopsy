@@ -50,15 +50,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Implements the Reports subtree of the Autopsy tree.
  */
-public final class Reports implements AutopsyVisitableItem {
+public final class Reports {
 
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
-
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        // CreateAutopsyNodeVisitor.visit() constructs a ReportsListNode.
-        return visitor.visit(this);
-    }
 
     /**
      * The root node of the Reports subtree of the Autopsy tree.
@@ -208,7 +202,7 @@ public final class Reports implements AutopsyVisitableItem {
             actions.add(DeleteReportAction.getInstance());
             actions.add(null);
             actions.addAll(Arrays.asList(super.getActions(true)));
-            return actions.toArray(new Action[actions.size()]); 
+            return actions.toArray(new Action[actions.size()]);
         }
 
         @Override
@@ -287,11 +281,10 @@ public final class Reports implements AutopsyVisitableItem {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String reportPath = ReportNode.this.report.getPath();
-                
+
                 if (reportPath.toLowerCase().startsWith("http")) {
                     ExternalViewerAction.openURL(reportPath);
-                }
-                else {
+                } else {
                     String extension = "";
                     int extPosition = reportPath.lastIndexOf('.');
                     if (extPosition != -1) {
