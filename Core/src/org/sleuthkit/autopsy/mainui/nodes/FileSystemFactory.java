@@ -263,11 +263,9 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
     public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> {
 
         private String translatedSourceName;
-        private TreeResultsDTO.TreeItemDTO itemData;
         
         protected FileSystemTreeNode(String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children, Lookup lookup) {
             super(ContentNodeUtil.getContentName(itemData.getSearchParams().getContentObjectId()), icon, itemData, children, lookup);
-            this.itemData = itemData;
             startTranslationTask();
         }
 
@@ -298,6 +296,16 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         public Action[] getActions(boolean context) {
             return ActionsFactory.getActions(this);
         }
+
+        @Override
+        protected String getDisplayNameString(String displayName, TreeResultsDTO.TreeDisplayCount displayCount) {
+            // lock to prevent simultaneous reads and updates of translatedSourceName
+            synchronized (this) {
+                // defer to translated source name if present; otherwise use current display name
+                String displayNameToUse = this.translatedSourceName != null ? this.translatedSourceName : displayName;
+                return super.getDisplayNameString(displayNameToUse, displayCount);    
+            }
+        }
         
         private void startTranslationTask() {
             if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
@@ -313,11 +321,13 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
                         public void propertyChange(PropertyChangeEvent evt) {
                             String eventType = evt.getPropertyName();
                             if (eventType.equals(FileNameTransTask.getPropertyName())) {
-                                // update translated display name and include count of the item.
-                                String translatedNameWithCount = itemData.getDisplayCount() == null
-                                        ? evt.getNewValue().toString()
-                                        : evt.getNewValue().toString() + itemData.getDisplayCount().getDisplaySuffix();
-                                displayTranslation(evt.getOldValue().toString(), translatedNameWithCount);
+                                // lock to prevent simultaneous reads and updates of translatedSourceName
+                                synchronized (FileSystemTreeNode.this) {
+                                    FileSystemTreeNode.this.translatedSourceName = evt.getNewValue().toString();    
+                                }
+                                
+                                TreeItemDTO<? extends FileSystemContentSearchParam> itemData = FileSystemTreeNode.this.getItemData();
+                                FileSystemTreeNode.this.setDisplayName(getDisplayNameString(itemData.getDisplayName(), itemData.getDisplayCount()));
                             }
                         }
                     };
@@ -325,20 +335,9 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
                      * NOTE: The task makes its own weak reference to the
                      * listener.
                      */
-                    new FileNameTransTask(itemData.getDisplayName(), this, listener).submit();
+                    new FileNameTransTask(getItemData().getDisplayName(), this, listener).submit();
                 }
             }
-        }
-
-        private void displayTranslation(String originalName, String translatedSourceName) {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    setDisplayName(translatedSourceName);
-                    setShortDescription(originalName);
-                }
-            });
-
         }
     }
 
