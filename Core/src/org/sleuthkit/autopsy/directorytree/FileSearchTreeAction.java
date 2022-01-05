@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.filesearch.FileSearchAction;
 public class FileSearchTreeAction extends AbstractAction {
 
     private final long dataSourceId;
+    private FileSearchAction searcher; 
 
     /**
      * Main constructor.
@@ -43,7 +44,10 @@ public class FileSearchTreeAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        FileSearchAction searcher = new FileSearchAction();
+        if(searcher == null) {
+            searcher = FileSearchAction.getDefault();
+        }
+        
         searcher.showDialog(dataSourceId);
     }
 

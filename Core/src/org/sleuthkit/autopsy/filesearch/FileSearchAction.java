@@ -25,6 +25,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 
 final public class FileSearchAction extends CallableSystemAction {
 
@@ -33,7 +34,7 @@ final public class FileSearchAction extends CallableSystemAction {
     private static FileSearchDialog searchDialog;
     private static Long selectedDataSourceId;
 
-    public FileSearchAction() {
+    private FileSearchAction() {
         super();
         setEnabled(Case.isCaseOpen());
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
@@ -48,7 +49,7 @@ final public class FileSearchAction extends CallableSystemAction {
 
     public static FileSearchAction getDefault() {
         if (instance == null) {
-            instance = new FileSearchAction();
+            instance = CallableSystemAction.get(FileSearchAction.class);
         }
         return instance;
     }
