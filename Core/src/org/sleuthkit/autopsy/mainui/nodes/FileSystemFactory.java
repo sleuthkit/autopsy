@@ -327,12 +327,12 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
     static class ImageTreeNode extends FileSystemTreeNode {
 
         private final long objId;
-        
+
         ImageTreeNode(long objId, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
             super(NodeIconUtil.IMAGE.getPath(),
                     itemData,
                     createChildrenForContent(itemData));
-        
+
             this.objId = objId;
         }
 
@@ -360,13 +360,14 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
     }
 
     static class VolumeTreeNode extends FileSystemTreeNode {
+
         private final long objId;
-        
+
         VolumeTreeNode(long objId, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
             super(NodeIconUtil.VOLUME.getPath(),
                     itemData,
                     createChildrenForContent(itemData));
-            
+
             this.objId = objId;
         }
 
@@ -376,11 +377,19 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
-            ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
-            group.add(new ExtractUnallocAction(
-                    Bundle.VolumnNode_ExtractUnallocAction_text(), this.objId));
-            group.add(new FileSystemDetailsAction(this.objId));
-            return Optional.of(group);
+            try {
+                ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
+                Volume volume = (Volume) Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(objId);
+
+                group.add(new ExtractUnallocAction(
+                        Bundle.VolumnNode_ExtractUnallocAction_text(), this.objId));
+
+                group.add(new FileSystemDetailsAction(this.objId));
+                return Optional.of(group);
+            } catch (NoCurrentCaseException | TskCoreException | ClassCastException ex) {
+                logger.log(Level.WARNING, "Could not get volume for id: " + fsContentId);
+                return Optional.empty();
+            }
         }
 
         @Override
@@ -397,7 +406,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             super(NodeIconUtil.POOL.getPath(),
                     itemData,
                     createChildrenForContent(itemData));
-            
+
             this.objId = objId;
         }
 
@@ -621,7 +630,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             try {
                 encryptionDetected = isArchive && Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getAnalysisResultsWhere(
                         "obj_id = " + objId + " AND artifact_type_id = " + BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED.getTypeID()).size() > 0;
-                
+
             } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error loading artifacts for file with ID: " + objId, ex);
             }
