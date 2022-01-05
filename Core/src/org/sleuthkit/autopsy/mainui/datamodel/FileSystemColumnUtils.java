@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;

@@ -109,8 +109,8 @@ public class FileSystemDAO extends AbstractDAO {
             Case.Events.HOSTS_REMOVED_FROM_PERSON.toString()
     );
 
-    private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache = 
-            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<?>, BaseSearchResultsDTO> searchParamsCache
+            = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
     private final TreeCounts<DAOEvent> treeCounts = new TreeCounts<>();
 
@@ -290,18 +290,17 @@ public class FileSystemDAO extends AbstractDAO {
      *
      * @return The list of paged content.
      */
-    private List<Content> getPaged(List<? extends Content> contentObjects, SearchParams<?> searchParams) {
-        Stream<? extends Content> pagedArtsStream = contentObjects.stream()
-                .sorted(Comparator.comparing((conent) -> conent.getId()))
-                .skip(searchParams.getStartItem());
-
-        if (searchParams.getMaxResultsCount() != null) {
-            pagedArtsStream = pagedArtsStream.limit(searchParams.getMaxResultsCount());
-        }
-
-        return pagedArtsStream.collect(Collectors.toList());
-    }
-
+//    private List<Content> getPaged(List<? extends Content> contentObjects, SearchParams<?> searchParams) {
+//        Stream<? extends Content> pagedArtsStream = contentObjects.stream()
+//                .sorted(Comparator.comparing((conent) -> conent.getId()))
+//                .skip(searchParams.getStartItem());
+//
+//        if (searchParams.getMaxResultsCount() != null) {
+//            pagedArtsStream = pagedArtsStream.limit(searchParams.getMaxResultsCount());
+//        }
+//
+//        return pagedArtsStream.collect(Collectors.toList());
+//    }
     public BaseSearchResultsDTO getContentForTable(FileSystemContentSearchParam objectKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         SearchParams<FileSystemContentSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
         return searchParamsCache.get(searchParams, () -> fetchContentForTableFromContent(searchParams));
@@ -555,11 +554,12 @@ public class FileSystemDAO extends AbstractDAO {
         }
     }
 
-    private FileSystemTreeItem createDisplayableContentTreeItem(Content child, TreeDisplayCount displayCount) {
+    private FileSystemTreeItem createDisplayableContentTreeItem(Content child, TreeDisplayCount displayCount, boolean isLeaf) {
         return new FileSystemTreeItem(
                 FileSystemContentSearchParam.getTypeId(),
                 new FileSystemContentSearchParam(child == null ? null : child.getId()),
                 child,
+                isLeaf,
                 child == null ? null : getNameForContent(child),
                 child instanceof AbstractFile ? ((AbstractFile) child).getMetaType() : null,
                 displayCount
@@ -575,7 +575,7 @@ public class FileSystemDAO extends AbstractDAO {
      */
     private String getNameForContent(Content content) {
         if (content instanceof Volume) {
-            return FileSystemColumnUtils.getVolumeDisplayName((Volume)content);
+            return FileSystemColumnUtils.getVolumeDisplayName((Volume) content);
         }
         return content.getName();
     }
@@ -630,26 +630,52 @@ public class FileSystemDAO extends AbstractDAO {
 
     }
 
+    public enum TreeContentType {
+        DIRECTORY,
+        FILE,
+        IMAGE,
+        LOCAL_FILES_DATA_SOURCE,
+        LOCAL_DIRECTORY,
+        POOL,
+        VIRTUAL_DIRECTORY,
+        VOLUME,
+        UNKNOWN
+    }
+
     public static class FileSystemTreeItem extends TreeItemDTO<FileSystemContentSearchParam> {
 
         private final TskData.TSK_FS_META_TYPE_ENUM metaType;
+        private final TreeContentType contentType;
+        private final boolean leaf;
+        
 
         FileSystemTreeItem(
                 String typeId,
                 FileSystemContentSearchParam searchParams,
                 Object id,
                 String displayName,
+                TreeDisplayCount count,
+                TreeContentType contentType,
                 TskData.TSK_FS_META_TYPE_ENUM metaType,
-                TreeDisplayCount count) {
+                boolean isLeaf) {
 
             super(typeId, searchParams, id, displayName, count);
             this.metaType = metaType;
+            this.leaf = isLeaf;
+            this.contentType = contentType;
         }
 
         public TskData.TSK_FS_META_TYPE_ENUM getMetaType() {
             return metaType;
         }
 
+        public TreeContentType getContentType() {
+            return contentType;
+        }
+
+        public boolean isLeaf() {
+            return leaf;
+        }
     }
 
     public static class FileSystemTreeEvent extends TreeEvent {
