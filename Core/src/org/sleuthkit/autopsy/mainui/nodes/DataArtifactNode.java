@@ -83,4 +83,9 @@ public class DataArtifactNode extends ArtifactNode<DataArtifact, DataArtifactRow
         
         return IconsUtil.getIconFilePath(((CommAccoutTableSearchResultsDTO)tableData).getAccountType());  
     }
+    
+    @Override
+    protected boolean shouldUpdateSCOColumns(long eventObjId) {
+        return eventObjId == getRowDTO().getArtifact().getObjectID();
+    }
 }
