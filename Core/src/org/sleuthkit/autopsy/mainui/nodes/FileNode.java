@@ -115,8 +115,8 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
     }
 
     @Override
-    public Optional<AbstractFile> getFileForViewInTimelineAction() {
-        return Optional.of(fileData.getAbstractFile());
+    public Optional<Long> getFileForViewInTimelineAction() {
+        return Optional.of(fileData.getAbstractFile().getId());
     }
 
     @Override
@@ -145,16 +145,16 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
     }
 
     @Override
-    public Optional<AbstractFile> getFileForDirectoryBrowseMode() {
+    public Optional<Long> getFileForDirectoryBrowseMode() {
         if (directoryBrowseMode) {
-            return Optional.of(fileData.getAbstractFile());
+            return Optional.of(fileData.getAbstractFile().getId());
         }
 
         return Optional.empty();
     }
 
     @Override
-    public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
+    public Optional<Long> getExtractArchiveWithPasswordActionFile() {
         // TODO: See JIRA-8099
         AbstractFile file = this.fileData.getAbstractFile();
         boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
@@ -165,7 +165,7 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
             // TODO
         }
 
-        return encryptionDetected ? Optional.of(fileData.getAbstractFile()) : Optional.empty();
+        return encryptionDetected ? Optional.of(fileData.getAbstractFile().getId()) : Optional.empty();
     }
 
     @Override

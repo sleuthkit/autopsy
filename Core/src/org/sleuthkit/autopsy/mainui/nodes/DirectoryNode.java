@@ -75,8 +75,8 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> i
     }
 
     @Override
-    public Optional<AbstractFile> getFileForViewInTimelineAction() {
-        return Optional.of(getRowDTO().getContent());
+    public Optional<Long> getFileForViewInTimelineAction() {
+        return Optional.of(getRowDTO().getContent().getId());
     }
 
     @Override
@@ -85,8 +85,8 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> i
     }
 
     @Override
-    public Optional<Content> getContentForRunIngestionModuleAction() {
-        return Optional.of(getRowDTO().getContent());
+    public Optional<Long> getContentForRunIngestionModuleAction() {
+        return Optional.of(getRowDTO().getContent().getId());
     }
 
     @Override

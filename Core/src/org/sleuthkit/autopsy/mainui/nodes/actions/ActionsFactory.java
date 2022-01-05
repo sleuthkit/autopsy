@@ -156,7 +156,7 @@ public final class ActionsFactory {
         actionGroups.add(getTagActions(actionContext));
         
 
-        Optional<AbstractFile> optionalFile = actionContext.getExtractArchiveWithPasswordActionFile();
+        Optional<Long> optionalFile = actionContext.getExtractArchiveWithPasswordActionFile();
         if (optionalFile.isPresent()) {
             actionGroups.add(new ActionGroup(new ExtractArchiveWithPasswordAction(optionalFile.get())));
         }
@@ -471,23 +471,16 @@ public final class ActionsFactory {
     })
     private static Optional<ActionGroup> getRunIngestAction(ActionContext context) {
         ActionGroup group = new ActionGroup();        
-        Optional<Content> optional = context.getDataSourceForActions();
+        Optional<Long> optional = context.getDataSourceForActions();
         if(optional.isPresent()) {
-            group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
-            group.add(new ViewSummaryInformationAction(optional.get().getId()));
-            group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
-            group.add(new DeleteDataSourceAction(optional.get().getId()));
+            group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get()));
+            group.add(new ViewSummaryInformationAction(optional.get()));
+            group.add(new RunIngestModulesAction(Collections.singletonList(optional.get())));
+            group.add(new DeleteDataSourceAction(optional.get()));
         }
         else {
             optional = context.getContentForRunIngestionModuleAction();
-
-            if(optional.isPresent()) {
-                if (optional.get() instanceof AbstractFile) {
-                    group.add(new RunIngestModulesAction((AbstractFile)optional.get()));
-                } else {
-                    logger.log(Level.WARNING, "Can not create RunIngestModulesAction on non-AbstractFile content with ID " + optional.get().getId());
-                }
-            }
+            group.add(new RunIngestModulesAction(optional.get()));
         }
         
         return group.isEmpty() ? Optional.empty() : Optional.of(group);
@@ -497,7 +490,7 @@ public final class ActionsFactory {
         "ActionsFactory_viewFileInDir_text=View File in Directory"
     })
     private static Optional<Action> getBrowseModeAction(ActionContext actionContext) {
-        Optional<AbstractFile> optional = actionContext.getFileForDirectoryBrowseMode();
+        Optional<Long> optional = actionContext.getFileForDirectoryBrowseMode();
         if(optional.isPresent()) {
             return Optional.of(new ViewContextAction(Bundle.ActionsFactory_viewFileInDir_text(), optional.get()));
         }

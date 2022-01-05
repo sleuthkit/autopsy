@@ -74,10 +74,10 @@ public final class ContentTagNode extends BaseNode<SearchResultsDTO, ContentTags
     }
 
     @Override
-    public Optional<AbstractFile> getFileForViewInTimelineAction() {
+    public Optional<Long> getFileForViewInTimelineAction() {
         Content tagContent = rowData.getTag().getContent();
         if (tagContent instanceof AbstractFile) {
-            return Optional.of((AbstractFile) tagContent);
+            return Optional.of(tagContent.getId());
         }
 
         return Optional.empty();

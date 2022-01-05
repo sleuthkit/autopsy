@@ -290,17 +290,18 @@ public class FileSystemDAO extends AbstractDAO {
      *
      * @return The list of paged content.
      */
-//    private List<Content> getPaged(List<? extends Content> contentObjects, SearchParams<?> searchParams) {
-//        Stream<? extends Content> pagedArtsStream = contentObjects.stream()
-//                .sorted(Comparator.comparing((conent) -> conent.getId()))
-//                .skip(searchParams.getStartItem());
-//
-//        if (searchParams.getMaxResultsCount() != null) {
-//            pagedArtsStream = pagedArtsStream.limit(searchParams.getMaxResultsCount());
-//        }
-//
-//        return pagedArtsStream.collect(Collectors.toList());
-//    }
+    private List<Content> getPaged(List<? extends Content> contentObjects, SearchParams<?> searchParams) {
+        Stream<? extends Content> pagedArtsStream = contentObjects.stream()
+                .sorted(Comparator.comparing((conent) -> conent.getId()))
+                .skip(searchParams.getStartItem());
+
+        if (searchParams.getMaxResultsCount() != null) {
+            pagedArtsStream = pagedArtsStream.limit(searchParams.getMaxResultsCount());
+        }
+
+        return pagedArtsStream.collect(Collectors.toList());
+    }
+
     public BaseSearchResultsDTO getContentForTable(FileSystemContentSearchParam objectKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         SearchParams<FileSystemContentSearchParam> searchParams = new SearchParams<>(objectKey, startItem, maxCount);
         return searchParamsCache.get(searchParams, () -> fetchContentForTableFromContent(searchParams));
@@ -647,7 +648,6 @@ public class FileSystemDAO extends AbstractDAO {
         private final TskData.TSK_FS_META_TYPE_ENUM metaType;
         private final TreeContentType contentType;
         private final boolean leaf;
-        
 
         FileSystemTreeItem(
                 String typeId,

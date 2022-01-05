@@ -63,8 +63,8 @@ public class ImageNode extends BaseNode<SearchResultsDTO, ImageRowDTO> implement
     }
 
     @Override
-    public Optional<Content> getDataSourceForActions() {
-        return Optional.of(getRowDTO().getContent());
+    public Optional<Long> getDataSourceForActions() {
+        return Optional.of(getRowDTO().getContent().getId());
     }
 
     @Override

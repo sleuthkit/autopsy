@@ -30,6 +30,8 @@ import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -342,13 +344,13 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
             group.add(new ExtractUnallocAction(
-                    Bundle.FileSystemFactory_FileSystemTreeNode_ExtractUnallocAction_text(), image));
+                    Bundle.FileSystemFactory_FileSystemTreeNode_ExtractUnallocAction_text(), this.objId));
             return Optional.of(group);
         }
 
         @Override
-        public Optional<Content> getDataSourceForActions() {
-            return Optional.of(image);
+        public Optional<Long> getDataSourceForActions() {
+            return Optional.of(this.objId);
         }
 
         @Override
@@ -376,8 +378,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
             group.add(new ExtractUnallocAction(
-                    Bundle.VolumnNode_ExtractUnallocAction_text(), volume));
-            group.add(new FileSystemDetailsAction(volume));
+                    Bundle.VolumnNode_ExtractUnallocAction_text(), this.objId));
+            group.add(new FileSystemDetailsAction(this.objId));
             return Optional.of(group);
         }
 
@@ -435,8 +437,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public Optional<AbstractFile> getFileForViewInTimelineAction() {
-            return Optional.of(dir);
+        public Optional<Long> getFileForViewInTimelineAction() {
+            return Optional.of(objId);
         }
 
         @Override
@@ -445,8 +447,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public Optional<Content> getContentForRunIngestionModuleAction() {
-            return Optional.of(dir);
+        public Optional<Long> getContentForRunIngestionModuleAction() {
+            return Optional.of(this.objId);
         }
 
         @Override
@@ -479,8 +481,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public Optional<Content> getContentForRunIngestionModuleAction() {
-            return Optional.of(dir);
+        public Optional<Long> getContentForRunIngestionModuleAction() {
+            return Optional.of(objId);
         }
     }
 
@@ -517,8 +519,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public Optional<Content> getDataSourceForActions() {
-            return Optional.of(dir);
+        public Optional<Long> getDataSourceForActions() {
+            return Optional.of(getObjId());
         }
     }
 
@@ -577,8 +579,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public Optional<AbstractFile> getFileForViewInTimelineAction() {
-            return Optional.of(file);
+        public Optional<Long> getFileForViewInTimelineAction() {
+            return Optional.of(objId);
         }
 
         @Override
@@ -607,22 +609,24 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public Optional<AbstractFile> getFileForDirectoryBrowseMode() {
-            return Optional.of(file);
+        public Optional<Long> getFileForDirectoryBrowseMode() {
+            return Optional.of(this.objId);
         }
 
         @Override
-        public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
+        public Optional<Long> getExtractArchiveWithPasswordActionFile() {
             // TODO: See JIRA-8099
             boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + this.extension.toLowerCase());
             boolean encryptionDetected = false;
             try {
-                encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error loading artifacts for file with ID: " + file.getId(), ex);
+                encryptionDetected = isArchive && Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getAnalysisResultsWhere(
+                        "obj_id = " + objId + " AND artifact_type_id = " + BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED.getTypeID()).size() > 0;
+                
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error loading artifacts for file with ID: " + objId, ex);
             }
 
-            return encryptionDetected ? Optional.of(file) : Optional.empty();
+            return encryptionDetected ? Optional.of(objId) : Optional.empty();
         }
     }
 
