@@ -26,7 +26,11 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 final class IngestSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
-
+    static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = false;
+    static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = false;
+    static final boolean DEFAULT_FLAG_UNIQUE_DEVICES = false;
+    static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
+    
     private final boolean flagTaggedNotableItems;
     private final boolean flagPreviousDevices;
     private final boolean createCorrelationProperties;
@@ -36,10 +40,10 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
      * Instantiate the ingest job settings with default values.
      */
     IngestSettings() {
-        this.flagTaggedNotableItems = CentralRepoIngestModule.DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
-        this.flagPreviousDevices = CentralRepoIngestModule.DEFAULT_FLAG_PREVIOUS_DEVICES;
-        this.createCorrelationProperties = CentralRepoIngestModule.DEFAULT_CREATE_CR_PROPERTIES;
-        this.flagUniqueArtifacts = CentralRepoIngestModule.DEFAULT_FLAG_UNIQUE_DEVICES;
+        this.flagTaggedNotableItems = DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
+        this.flagPreviousDevices = DEFAULT_FLAG_PREVIOUS_DEVICES;
+        this.createCorrelationProperties = DEFAULT_CREATE_CR_PROPERTIES;
+        this.flagUniqueArtifacts = DEFAULT_FLAG_UNIQUE_DEVICES;
     }
 
     /**

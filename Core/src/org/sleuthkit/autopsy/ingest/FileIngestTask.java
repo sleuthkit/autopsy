@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A file ingest task that will be executed by an ingest thread using a given
- * ingest job pipeline.
+ * ingest job executor.
  */
 final class FileIngestTask extends IngestTask {
 
@@ -34,33 +34,33 @@ final class FileIngestTask extends IngestTask {
 
     /**
      * Constructs a file ingest task that will be executed by an ingest thread
-     * using a given ingest job pipeline.
+     * using a given ingest job executor.
      *
-     * @param ingestJobPipeline The ingest job pipeline to use to execute the
+     * @param ingestJobPipeline The ingest job executor to use to execute the
      *                          task.
      * @param file              The file to be processed.
      */
-    FileIngestTask(IngestJobPipeline ingestJobPipeline, AbstractFile file) {
-        super(ingestJobPipeline);
+    FileIngestTask(IngestJobExecutor ingestJobPipeline, AbstractFile file) {
+        super(file.getName(), ingestJobPipeline);
         this.file = file;
         fileId = file.getId();
     }
 
     /**
      * Constructs a file ingest task that will be executed by an ingest thread
-     * using a given ingest job pipeline. This constructor supports streaming
+     * using a given ingest job executor. This constructor supports streaming
      * ingest by deferring the construction of the AbstractFile object for this
      * task to conserve heap memory.
      *
-     * @param ingestJobPipeline The ingest job pipeline to use to execute the
+     * @param ingestJobPipeline The ingest job executor to use to execute the
      *                          task.
      * @param fileId            The object ID of the file to be processed.
      */
-    FileIngestTask(IngestJobPipeline ingestJobPipeline, long fileId) {
-        super(ingestJobPipeline);
+    FileIngestTask(IngestJobExecutor ingestJobPipeline, long fileId) {
+        super("", ingestJobPipeline);
         this.fileId = fileId;
     }
-
+    
     /**
      * Gets the object ID of the file for this task.
      *
@@ -81,6 +81,9 @@ final class FileIngestTask extends IngestTask {
     synchronized AbstractFile getFile() throws TskCoreException {
         if (file == null) {
             file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(fileId);
+            if (file != null) {
+                setContentName(file.getName());
+            }
         }
         return file;
     }
@@ -88,7 +91,7 @@ final class FileIngestTask extends IngestTask {
     @Override
     void execute(long threadId) {
         super.setThreadId(threadId);
-        getIngestJobPipeline().execute(this);
+        getIngestJobExecutor().execute(this);
     }        
     
     @Override
@@ -100,19 +103,19 @@ final class FileIngestTask extends IngestTask {
             return false;
         }
         FileIngestTask other = (FileIngestTask) obj;
-        IngestJobPipeline thisPipeline = getIngestJobPipeline();
-        IngestJobPipeline otherPipeline = other.getIngestJobPipeline();
+        IngestJobExecutor thisPipeline = getIngestJobExecutor();
+        IngestJobExecutor otherPipeline = other.getIngestJobExecutor();
         if (thisPipeline != otherPipeline && (thisPipeline == null || !thisPipeline.equals(otherPipeline))) {
             return false;
         }
-        return (this.fileId == other.fileId);
+        return (getFileId() == other.getFileId());
     }
 
     @Override
     public int hashCode() {
         int hash = 5;
-        hash = 47 * hash + Objects.hashCode(getIngestJobPipeline());
-        hash = 47 * hash + Objects.hashCode(this.fileId);
+        hash = 47 * hash + Objects.hashCode(getIngestJobExecutor());
+        hash = 47 * hash + Objects.hashCode(getFileId());
         return hash;
     }
 

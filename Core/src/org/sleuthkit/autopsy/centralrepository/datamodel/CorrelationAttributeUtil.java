@@ -40,7 +40,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
-import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.OsAccount;
@@ -114,8 +113,54 @@ public class CorrelationAttributeUtil {
         return Collections.emptyList();
     }
 
-    public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(OsAccountInstance osAccountInstance) {
-        return makeCorrAttrsForSearch(osAccountInstance);
+    /**
+     * Gets the correlation attributes for an OS account instance represented as
+     * an OS account plus a data source.
+     *
+     * @param account    The OS account.
+     * @param dataSource The data source.
+     *
+     * @return The correlation attributes.
+     */
+    public static List<CorrelationAttributeInstance> makeCorrAttrsToSave(OsAccount account, Content dataSource) {
+        List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
+        if (CentralRepository.isEnabled()) {
+            Optional<String> accountAddr = account.getAddr();
+            if (accountAddr.isPresent() && !isSystemOsAccount(accountAddr.get())) {
+                try {
+                    CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
+                    CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
+                            CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
+                            accountAddr.get(),
+                            correlationCase,
+                            CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource),
+                            dataSource.getName(),
+                            "",
+                            TskData.FileKnown.KNOWN,
+                            account.getId());
+                    correlationAttrs.add(correlationAttributeInstance);
+                } catch (CentralRepoException ex) {
+                    logger.log(Level.SEVERE, String.format("Error querying central repository for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, String.format("Error getting current case for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
+                } catch (CorrelationAttributeNormalizationException ex) {
+                    logger.log(Level.SEVERE, String.format("Error normalizing correlation attribute for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
+                }
+            }
+        }
+        return correlationAttrs;
+    }
+
+    /**
+     * Determines whether or not a given OS account address is a system account
+     * address.
+     *
+     * @param accountAddr The OS account address.
+     *
+     * @return True or false.
+     */
+    private static boolean isSystemOsAccount(String accountAddr) {
+        return accountAddr.equals("S-1-5-18") || accountAddr.equals("S-1-5-19") || accountAddr.equals("S-1-5-20");
     }
 
     /**
@@ -135,14 +180,18 @@ public class CorrelationAttributeUtil {
      *
      * @return A list, possibly empty, of correlation attribute instances for
      *         the AnalysisResult.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(AnalysisResult analysisResult) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
 
         if (CentralRepository.isEnabled()) {
             try {
                 int artifactTypeID = analysisResult.getArtifactTypeID();
-                if (artifactTypeID == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+                if (artifactTypeID == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() || artifactTypeID == ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID()) {
                     //because this attribute retrieval is only occuring when the analysis result is an interesting artifact hit 
                     //and only one attribute is being retrieved the analysis result's own get attribute method can be used efficently
                     BlackboardAttribute assocArtifactAttr = analysisResult.getAttribute(BlackboardAttribute.Type.TSK_ASSOCIATED_ARTIFACT);
@@ -783,43 +832,11 @@ public class CorrelationAttributeUtil {
 
     public static List<CorrelationAttributeInstance> makeCorrAttrsForSearch(OsAccountInstance osAccountInst) {
         List<CorrelationAttributeInstance> correlationAttrs = new ArrayList<>();
-        if (CentralRepository.isEnabled()) {
-            OsAccount account = null;
-            DataSource dataSource = null;
-            if (osAccountInst != null) {
-                try {
-                    account = osAccountInst.getOsAccount();
-                    dataSource = osAccountInst.getDataSource();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting information from OsAccountInstance.", ex);
-                }
-            }
-            if (account != null && dataSource != null) {
-                Optional<String> accountAddr = account.getAddr();
-                // Check address if it is null or one of the ones below we want to ignore it since they will always be one a windows system
-                // and they are not unique
-                if (accountAddr.isPresent() && !accountAddr.get().equals("S-1-5-18") && !accountAddr.get().equals("S-1-5-19") && !accountAddr.get().equals("S-1-5-20")) {
-                    try {
-
-                        CorrelationCase correlationCase = CentralRepository.getInstance().getCase(Case.getCurrentCaseThrows());
-                        CorrelationAttributeInstance correlationAttributeInstance = new CorrelationAttributeInstance(
-                                CentralRepository.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.OSACCOUNT_TYPE_ID),
-                                accountAddr.get(),
-                                correlationCase,
-                                CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource),
-                                dataSource.getName(),
-                                "",
-                                TskData.FileKnown.KNOWN,
-                                account.getId());
-                        correlationAttrs.add(correlationAttributeInstance);
-                    } catch (CentralRepoException ex) {
-                        logger.log(Level.SEVERE, String.format("Cannot get central repository for OsAccount: %s.", accountAddr.get()), ex);  //NON-NLS
-                    } catch (NoCurrentCaseException ex) {
-                        logger.log(Level.WARNING, "Exception while getting open case.", ex);  //NON-NLS
-                    } catch (CorrelationAttributeNormalizationException ex) {
-                        logger.log(Level.SEVERE, "Exception with Correlation Attribute Normalization.", ex);  //NON-NLS
-                    }
-                }
+        if (CentralRepository.isEnabled() && osAccountInst != null) {
+            try {
+                correlationAttrs.addAll(makeCorrAttrsToSave(osAccountInst.getOsAccount(), osAccountInst.getDataSource()));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error getting OS account from OS account instance '%s'", osAccountInst), ex);
             }
         }
         return correlationAttrs;
