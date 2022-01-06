@@ -27,8 +27,10 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import javax.swing.Action;
-import org.openide.util.Lookup;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -43,6 +45,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeItem;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.TreeContentType;
+import static org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.TreeContentType.UNALLOC_FILE;
 import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
@@ -58,15 +61,9 @@ import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LocalDirectory;
-import org.sleuthkit.datamodel.LocalFilesDataSource;
-import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
 /**
@@ -119,9 +116,12 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         long objId = rowData.getSearchParams().getContentObjectId();
         switch (contentType) {
             case DIRECTORY:
-                return new DirectoryTreeNode(objId, rowData);
+            case UNALLOC_DIRECTORY:
+                return new DirectoryTreeNode(objId, TreeContentType.UNALLOC_DIRECTORY.equals(contentType), rowData);
             case FILE:
-                return new FileTreeNode(objId, rowData);
+            case UNALLOC_FILE:
+            case CARVED_FILE:
+                return new FileTreeNode(objId, UNALLOC_FILE.equals(contentType), CARVED_FILE.equals(contentType), FilenameUtils.getExtension(rowData.getDisplayName()), rowData);
             case IMAGE:
                 return new ImageTreeNode(objId, rowData);
             case LOCAL_FILES_DATA_SOURCE:
@@ -344,7 +344,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
             group.add(new ExtractUnallocAction(
-                    Bundle.FileSystemFactory_FileSystemTreeNode_ExtractUnallocAction_text(), this.objId));
+                    Bundle.FileSystemFactory_FileSystemTreeNode_ExtractUnallocAction_text(), this.objId, null));
             return Optional.of(group);
         }
 
@@ -382,7 +382,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
                 Volume volume = (Volume) Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(objId);
 
                 group.add(new ExtractUnallocAction(
-                        Bundle.VolumnNode_ExtractUnallocAction_text(), this.objId));
+                        Bundle.VolumnNode_ExtractUnallocAction_text(), volume));
 
                 group.add(new FileSystemDetailsAction(volume));
                 return Optional.of(group);

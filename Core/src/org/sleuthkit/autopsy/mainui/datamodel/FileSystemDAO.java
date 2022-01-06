@@ -481,6 +481,11 @@ public class FileSystemDAO extends AbstractDAO {
             }
         });
     }
+    
+    private List<FileSystemTreeItem> fetchTreeContent(String whereQuery, boolean fetchCount) {
+        
+    }
+    
 
     /**
      * Get all data sources belonging to a given host.
@@ -493,11 +498,7 @@ public class FileSystemDAO extends AbstractDAO {
      */
     public TreeResultsDTO<FileSystemContentSearchParam> getDataSourcesForHost(Host host) throws ExecutionException {
         try {
-            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
-            for (DataSource ds : Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getDataSourcesForHost(host)) {
-                treeItemRows.add(createDisplayableContentTreeItem(ds, TreeDisplayCount.NOT_SHOWN));
-            }
-            return new TreeResultsDTO<>(treeItemRows);
+            return new TreeResultsDTO<>(fetchTreeContent("WHERE b.obj_id IN (SELECT obj_id FROM data_source_info WHERE host_id = " + host.getHostId() + ")", false));
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching images for host with ID " + host.getHostId(), ex);
         }
@@ -555,18 +556,6 @@ public class FileSystemDAO extends AbstractDAO {
         }
     }
 
-    private FileSystemTreeItem createDisplayableContentTreeItem(Content child, TreeDisplayCount displayCount, boolean isLeaf) {
-        return new FileSystemTreeItem(
-                FileSystemContentSearchParam.getTypeId(),
-                new FileSystemContentSearchParam(child == null ? null : child.getId()),
-                child,
-                isLeaf,
-                child == null ? null : getNameForContent(child),
-                child instanceof AbstractFile ? ((AbstractFile) child).getMetaType() : null,
-                displayCount
-        );
-    }
-
     /**
      * Get display name for the given content.
      *
@@ -589,7 +578,13 @@ public class FileSystemDAO extends AbstractDAO {
             return new FileSystemTreeEvent(
                     contentEvt.getParentObjId(),
                     contentEvt.getParentHost(),
-                    createDisplayableContentTreeItem(contentEvt.getContent(), count),
+                    new FileSystemTreeItem(
+                            contentEvt.getContentObjectId(),
+                            contentEvt.getContent().getName(),
+                            count,
+                            TBD,
+                            ((contentEvt.getContent() instanceof AbstractFile) ? ((AbstractFile) contentEvt.getContent()).getMetaType() : null),
+                            isLeaf),
                     fullRefresh);
 
         } else if (daoEvent instanceof FileSystemHostEvent) {
@@ -633,7 +628,10 @@ public class FileSystemDAO extends AbstractDAO {
 
     public enum TreeContentType {
         DIRECTORY,
+        UNALLOC_DIRECTORY,
         FILE,
+        UNALLOC_FILE,
+        CARVED_FILE,
         IMAGE,
         LOCAL_FILES_DATA_SOURCE,
         LOCAL_DIRECTORY,
@@ -649,17 +647,19 @@ public class FileSystemDAO extends AbstractDAO {
         private final TreeContentType contentType;
         private final boolean leaf;
 
+        FileSystemTreeItem(FileSystemTreeItem treeItem, TreeDisplayCount count) {
+            this(treeItem.getSearchParams().getContentObjectId(), treeItem.getDisplayName(), count, treeItem.getContentType(), treeItem.getMetaType(), treeItem.isLeaf());
+        }
+
         FileSystemTreeItem(
-                String typeId,
-                FileSystemContentSearchParam searchParams,
-                Object id,
+                long contentId,
                 String displayName,
                 TreeDisplayCount count,
                 TreeContentType contentType,
                 TskData.TSK_FS_META_TYPE_ENUM metaType,
                 boolean isLeaf) {
 
-            super(typeId, searchParams, id, displayName, count);
+            super(FileSystemContentSearchParam.getTypeId(), new FileSystemContentSearchParam(contentId), contentId, displayName, count);
             this.metaType = metaType;
             this.leaf = isLeaf;
             this.contentType = contentType;

@@ -24,22 +24,26 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.RootPaneContainer;
+import org.apache.commons.collections.CollectionUtils;
 import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel.SpecialDirectoryNode;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * An action that invokes the Run Ingest Modules wizard for one or more data
@@ -56,9 +60,11 @@ public final class RunIngestModulesAction extends AbstractAction {
      * used instead of this wizard and is retained for backwards compatibility.
      */
     private static final String EXECUTION_CONTEXT = "org.sleuthkit.autopsy.ingest.RunIngestModulesDialog";
-    private final List<Content> dataSources = new ArrayList<>();
     private final IngestJobSettings.IngestType ingestType;
-    private final AbstractFile parentFile;
+    private final Long parentFileId;
+    private AbstractFile parentFile = null;
+    private final List<Long> dataSourceIds;
+    private List<Content> dataSources = null;
 
     /**
      * Display any warnings that the ingestJobSettings have.
@@ -83,10 +89,26 @@ public final class RunIngestModulesAction extends AbstractAction {
      * @param dataSources - the data sources you want to run ingest on
      */
     public RunIngestModulesAction(List<Content> dataSources) {
+        this(dataSources, dataSources.stream().map(ds -> ds.getId()).collect(Collectors.toList()));
+    }
+
+    /**
+     * Constructs an action that invokes the Run Ingest Modules wizard for one
+     * or more data sources.
+     *
+     * @param dataSourceIds - the data source ids you want to run ingest on
+     */
+    public static RunIngestModulesAction createDataSourceIdsAction(List<Long> dataSourceIds) {
+        return new RunIngestModulesAction(null, dataSourceIds);
+    }
+
+    private RunIngestModulesAction(List<Content> dataSources, List<Long> dataSourceIds) {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
-        this.dataSources.addAll(dataSources);
+        this.dataSources = new ArrayList<>(dataSources);
         this.ingestType = IngestJobSettings.IngestType.ALL_MODULES;
         this.parentFile = null;
+        this.parentFileId = null;
+        this.dataSourceIds = new ArrayList<>(dataSourceIds);
     }
 
     /**
@@ -96,8 +118,24 @@ public final class RunIngestModulesAction extends AbstractAction {
      * @param parentFile The file.
      */
     public RunIngestModulesAction(AbstractFile parentFile) {
+        this(parentFile, parentFile.getId());
+    }
+
+    /**
+     * Constructs an action that invokes the Run Ingest Modules wizard for the
+     * children of a file.
+     *
+     * @param parentFileId The file id.
+     */
+    public RunIngestModulesAction(long parentFileId) {
+        this(null, parentFileId);
+    }
+
+    private RunIngestModulesAction(AbstractFile parentFile, Long parentFileId) {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
         this.parentFile = parentFile;
+        this.parentFileId = parentFileId;
+        this.dataSourceIds = null;
         this.ingestType = IngestJobSettings.IngestType.FILES_ONLY;
         try {
             this.setEnabled(parentFile.hasChildren());
@@ -117,7 +155,29 @@ public final class RunIngestModulesAction extends AbstractAction {
         "RunIngestModulesAction.actionPerformed.errorMessage=Error querying the case database for the selected item."
     })
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public synchronized void actionPerformed(ActionEvent e) {
+
+        if (parentFile == null && parentFileId != null) {
+            try {
+                parentFile = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(parentFileId);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to acquire parentFile from parentFileId (objId=%d), action failed", parentFileId), ex);
+                MessageNotifyUtil.Message.error(Bundle.RunIngestModulesAction_actionPerformed_errorMessage());
+                return;
+            }
+        } else if (CollectionUtils.isEmpty(dataSources) && !CollectionUtils.isEmpty(dataSourceIds)) {
+            try {
+                dataSources = new ArrayList<>();
+                for (Long contentId : dataSourceIds) {
+                    dataSources.add(Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(contentId));
+                }
+            } catch (NoCurrentCaseException | TskCoreException | TskDataException ex) {
+                logger.log(Level.SEVERE, "Failed to acquire data sources for list: " + dataSourceIds.stream().map(id -> Long.toString(id)).collect(Collectors.joining(", ")), ex);
+                MessageNotifyUtil.Message.error(Bundle.RunIngestModulesAction_actionPerformed_errorMessage());
+                return;
+            }
+        }
+
         /**
          * Create and display a Run Ingest Modules wizard. Note that the
          * argument in the title format string will be supplied by
