@@ -1484,16 +1484,17 @@ final class IngestJobExecutor {
         boolean fileIngestRunning = false;
         Date fileIngestStartTime = null;
         Optional<List<FileIngestPipeline>> fileIngestPipelines = getCurrentFileIngestPipelines();
-        if (fileIngestPipelines.isPresent()) {
-            for (FileIngestPipeline pipeline : fileIngestPipelines.get()) {
-        
-                if (pipeline.isRunning()) {
-                    fileIngestRunning = true;
-                }
-                Date pipelineStartTime = pipeline.getStartTime();
-                if (pipelineStartTime != null && (fileIngestStartTime == null || pipelineStartTime.before(fileIngestStartTime))) {
-                    fileIngestStartTime = pipelineStartTime;
-                }
+        if (!fileIngestPipelines.isPresent()) {
+            // If there are no currently running pipelines, use the original set.
+            fileIngestPipelines = Optional.of(ingestModuleTiers.get(0).getFileIngestPipelines());
+        }
+        for (FileIngestPipeline pipeline : fileIngestPipelines.get()) {
+            if (pipeline.isRunning()) {
+                fileIngestRunning = true;
+            }
+            Date pipelineStartTime = pipeline.getStartTime();
+            if (pipelineStartTime != null && (fileIngestStartTime == null || pipelineStartTime.before(fileIngestStartTime))) {
+                fileIngestStartTime = pipelineStartTime;
             }
         }
 
