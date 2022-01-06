@@ -2814,10 +2814,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         /*
                          * Block until notified by the ingest job event listener
                          * or until interrupted because auto ingest is shutting
-                         * down.
+                         * down. For very small jobs, it is possible that ingest has
+                         * completed by the time we get here, so check periodically
+                         * in case the event was missed.
                          */
-                        ingestLock.wait();
-                        sysLogger.log(Level.INFO, "Finished ingest modules analysis for {0} ", manifestPath);
+                        while (IngestManager.getInstance().isIngestRunning()) {
+                            ingestLock.wait(300000);  // Check every five minutes
+                        }
                         IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
                         IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot = jobSnapshot.getDataSourceProcessingSnapshot();
                         AutoIngestJobLogger nestedJobLogger = new AutoIngestJobLogger(manifestPath, snapshot.getDataSource(), caseDirectoryPath);
