@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUti
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.datamodel.DataArtifact;
 
 /**
  * This creates a single context menu item for adding or editing a Central
@@ -39,19 +40,23 @@ public class CentralRepoContextMenuActionsProvider implements ContextMenuActions
     @Override
     public List<Action> getActions() {
         ArrayList<Action> actionsList = new ArrayList<>();
-        Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
+        
+        Collection<? extends DataArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(DataArtifact.class);
+        if(artifacts.isEmpty()) {       
+            Collection<? extends AbstractFile> selectedFiles = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class);
 
-        if (selectedFiles.size() != 1) {
-            return actionsList;
-        }
+            if (selectedFiles.size() != 1) {
+                return actionsList;
+            }
 
-        for (AbstractFile file : selectedFiles) {
-            if (CentralRepository.isEnabled() && CorrelationAttributeUtil.isSupportedAbstractFileType(file) && file.isFile()) {
-                AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(file);
-                if (action.getCorrelationAttribute() == null) {
-                    action.setEnabled(false);
+            for (AbstractFile file : selectedFiles) {
+                if (CentralRepository.isEnabled() && CorrelationAttributeUtil.isSupportedAbstractFileType(file) && file.isFile()) {
+                    AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(file);
+                    if (action.getCorrelationAttribute() == null) {
+                        action.setEnabled(false);
+                    }
+                    actionsList.add(action);
                 }
-                actionsList.add(action);
             }
         }
 

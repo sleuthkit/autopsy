@@ -86,6 +86,6 @@ public class DataArtifactNode extends ArtifactNode<DataArtifact, DataArtifactRow
     
     @Override
     protected boolean shouldUpdateSCOColumns(long eventObjId) {
-        return eventObjId == getRowDTO().getArtifact().getObjectID();
+        return false;
     }
 }
