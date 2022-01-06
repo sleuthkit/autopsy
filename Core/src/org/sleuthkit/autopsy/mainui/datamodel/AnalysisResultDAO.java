@@ -45,7 +45,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.python.google.common.collect.ImmutableSet;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DeleteAnalysisResultEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -56,24 +58,17 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.KeywordHitEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.HostAddress;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import static org.sleuthkit.datamodel.TskData.KeywordSearchQueryType.REGEX;
 import static org.sleuthkit.datamodel.TskData.KeywordSearchQueryType.SUBSTRING;
-import org.sleuthkit.datamodel.Volume;
-import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * DAO for providing data about analysis results to populate the results viewer.
@@ -281,6 +276,11 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     private boolean isAnalysisResultsInvalidating(AnalysisResultSearchParam key, DAOEvent eventData) {
+        
+        if(eventData instanceof DeleteAnalysisResultEvent) {
+            return true;
+        }
+        
         if (!(eventData instanceof AnalysisResultEvent)) {
             return false;
         }
@@ -855,6 +855,13 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     @Override
     Set<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
+        
+        if(evt.getPropertyName().equals(Case.Events.ANALYSIS_RESULT_DELETED.toString())) {
+            this.analysisResultCache.invalidateAll();
+
+            return Collections.singleton(new DeleteAnalysisResultEvent());
+        }
+        
         // get a grouping of artifacts mapping the artifact type id to data source id.
         Map<BlackboardArtifact.Type, Set<Long>> analysisResultMap = new HashMap<>();
         Map<Pair<BlackboardArtifact.Type, String>, Set<Long>> setMap = new HashMap<>();

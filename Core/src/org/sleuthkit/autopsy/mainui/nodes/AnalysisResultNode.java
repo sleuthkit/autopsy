@@ -31,6 +31,9 @@ import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultTableSearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
+import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
+import org.sleuthkit.autopsy.mainui.nodes.actions.DeleteAnalysisResultAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -133,4 +136,14 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
         }
         return Optional.empty();
     }
+    
+    @Override
+    public Optional<ActionGroup> getNodeSpecificActions() {
+        ActionGroup group = new ActionGroup();
+        
+        group.add(new DeleteAnalysisResultAction());
+        
+        return Optional.of(group);
+    }
+
 }
