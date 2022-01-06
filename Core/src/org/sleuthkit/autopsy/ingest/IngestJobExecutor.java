@@ -365,12 +365,12 @@ final class IngestJobExecutor {
              * thread executing an ingest task, so such a job would run forever,
              * doing nothing, without a check here.
              */
-            checkForTierCompleted();
+            checkForTierCompleted(moduleTierIndex);
         }
     }
 
     /**
-     * Estimates the files to be prcessed in the current tier.
+     * Estimates the files to be processed in the current tier.
      */
     private void estimateFilesToProcess() {
         estimatedFilesToProcess = 0;
@@ -487,7 +487,7 @@ final class IngestJobExecutor {
                  * job, so such a job would run forever, doing nothing, without
                  * a check here.
                  */
-                checkForTierCompleted();
+                checkForTierCompleted(moduleTierIndex);
             }
         }
     }
@@ -497,9 +497,14 @@ final class IngestJobExecutor {
      * module tier are completed, and does an appropriate state transition if
      * they are.
      */
-    private void checkForTierCompleted() {
+    private void checkForTierCompleted(int currentTier) {
         synchronized (tierTransitionLock) {
             if (jobState.equals(IngestJobState.ACCEPTING_STREAMED_CONTENT_AND_ANALYZING)) {
+                return;
+            }
+            if (currentTier < moduleTierIndex) {
+                // We likely had a leftover task from the previous tier. Since we've already
+                // advanced to the next tier, ignore it.
                 return;
             }
             if (taskScheduler.currentTasksAreCompleted(getIngestJobId())) {
@@ -512,7 +517,7 @@ final class IngestJobExecutor {
                         shutDown();
                         break;
                     }
-                } while (taskScheduler.currentTasksAreCompleted(getIngestJobId()));
+                } while (taskScheduler.currentTasksAreCompleted(getIngestJobId())); // Loop again immediately in case the new tier is empty
             }
         }
     }
@@ -566,8 +571,11 @@ final class IngestJobExecutor {
                 }
             }
         } finally {
+            // Save the module tier assocaited with this task since it could change after
+            // notifyTaskComplete
+            int currentTier = moduleTierIndex;
             taskScheduler.notifyTaskCompleted(task);
-            checkForTierCompleted();
+            checkForTierCompleted(currentTier);
         }
     }
 
@@ -619,8 +627,11 @@ final class IngestJobExecutor {
             logger.log(Level.SEVERE, String.format("File ingest thread interrupted during execution of file ingest job (file object ID = %d, thread ID = %d)", task.getFileId(), task.getThreadId()), ex);
             Thread.currentThread().interrupt();
         } finally {
+            // Save the module tier assocaited with this task since it could change after
+            // notifyTaskComplete
+            int currentTier = moduleTierIndex;
             taskScheduler.notifyTaskCompleted(task);
-            checkForTierCompleted();
+            checkForTierCompleted(currentTier);
         }
     }
 
@@ -644,13 +655,16 @@ final class IngestJobExecutor {
                 }
             }
         } finally {
+            // Save the module tier assocaited with this task since it could change after
+            // notifyTaskComplete
+            int currentTier = moduleTierIndex;
             taskScheduler.notifyTaskCompleted(task);
-            checkForTierCompleted();
+            checkForTierCompleted(currentTier);
         }
     }
 
     /**
-     * Passes an analyisis result from the data source for the ingest job
+     * Passes an analysis result from the data source for the ingest job
      * through the analysis result ingest module pipeline.
      *
      * @param task An analysis result ingest task encapsulating the analysis
@@ -669,8 +683,11 @@ final class IngestJobExecutor {
                 }
             }
         } finally {
+            // Save the module tier assocaited with this task since it could change after
+            // notifyTaskComplete
+            int currentTier = moduleTierIndex;
             taskScheduler.notifyTaskCompleted(task);
-            checkForTierCompleted();
+            checkForTierCompleted(currentTier);
         }
     }
 
@@ -793,6 +810,12 @@ final class IngestJobExecutor {
      * Shuts down the ingest module pipelines in the current module tier.
      */
     private void shutDownCurrentTier() {
+        // Note that this method is only called while holding the tierTransitionLock, so moduleTierIndex can not change
+        // during execution.
+        if (moduleTierIndex >= ingestModuleTiers.size()) {
+            logErrorMessage(Level.SEVERE, "shutDownCurrentTier called with out-of-bounds moduleTierIndex (" + moduleTierIndex + ")");
+            return;
+        }
         logInfoMessage(String.format("Finished all ingest tasks for tier %s of ingest job", moduleTierIndex)); //NON-NLS        
         jobState = IngestJobExecutor.IngestJobState.PIPELINES_SHUTTING_DOWN;
         IngestModuleTier moduleTier = ingestModuleTiers.get(moduleTierIndex);
@@ -861,7 +884,7 @@ final class IngestJobExecutor {
      * @return The currently running module, may be null.
      */
     DataSourceIngestPipeline.DataSourcePipelineModule getCurrentDataSourceIngestModule() {
-        Optional<DataSourceIngestPipeline> pipeline = ingestModuleTiers.get(moduleTierIndex).getDataSourceIngestPipeline();
+        Optional<DataSourceIngestPipeline> pipeline = getCurrentDataSourceIngestPipelines();
         if (pipeline.isPresent()) {
             return (DataSourceIngestPipeline.DataSourcePipelineModule) pipeline.get().getCurrentlyRunningModule();
         } else {
@@ -963,7 +986,7 @@ final class IngestJobExecutor {
             }
             pausedIngestThreads.clear();
         }
-        checkForTierCompleted();
+        checkForTierCompleted(moduleTierIndex);
     }
 
     /**
@@ -1407,6 +1430,35 @@ final class IngestJobExecutor {
             logErrorMessage(Level.SEVERE, String.format("%s experienced an error during analysis while processing file %s (object ID = %d)", error.getModuleDisplayName(), file.getName(), file.getId()), error.getThrowable()); //NON-NLS
         }
     }
+    
+    /**
+     * Safely gets the file ingest pipelines for the current tier.
+     * 
+     * @return The file ingest pipelines or empty if ingest has completed/is shutting down.
+     */
+    Optional<List<FileIngestPipeline>> getCurrentFileIngestPipelines() {
+        // Make a local copy in case the tier increments
+        int currentModuleTierIndex = moduleTierIndex;
+        if (currentModuleTierIndex < ingestModuleTiers.size()) {
+            return Optional.of(ingestModuleTiers.get(currentModuleTierIndex).getFileIngestPipelines());
+        }
+        return Optional.empty();
+    }
+    
+    /**
+     * Safely gets the data source ingest pipeline for the current tier.
+     * 
+     * @return The data source ingest pipeline or empty if ingest has completed/is shutting down.
+     */
+    Optional<DataSourceIngestPipeline> getCurrentDataSourceIngestPipelines() {
+        // Make a local copy in case the tier increments
+        int currentModuleTierIndex = moduleTierIndex;
+        if (currentModuleTierIndex < ingestModuleTiers.size()) {
+            return ingestModuleTiers.get(currentModuleTierIndex).getDataSourceIngestPipeline();
+        }
+        return Optional.empty();
+    }
+    
 
     /**
      * Gets a snapshot of some basic diagnostic statistics for the ingest job
@@ -1431,13 +1483,17 @@ final class IngestJobExecutor {
          */
         boolean fileIngestRunning = false;
         Date fileIngestStartTime = null;
-        for (FileIngestPipeline pipeline : ingestModuleTiers.get(moduleTierIndex).getFileIngestPipelines()) {
-            if (pipeline.isRunning()) {
-                fileIngestRunning = true;
-            }
-            Date pipelineStartTime = pipeline.getStartTime();
-            if (pipelineStartTime != null && (fileIngestStartTime == null || pipelineStartTime.before(fileIngestStartTime))) {
-                fileIngestStartTime = pipelineStartTime;
+        Optional<List<FileIngestPipeline>> fileIngestPipelines = getCurrentFileIngestPipelines();
+        if (fileIngestPipelines.isPresent()) {
+            for (FileIngestPipeline pipeline : fileIngestPipelines.get()) {
+        
+                if (pipeline.isRunning()) {
+                    fileIngestRunning = true;
+                }
+                Date pipelineStartTime = pipeline.getStartTime();
+                if (pipelineStartTime != null && (fileIngestStartTime == null || pipelineStartTime.before(fileIngestStartTime))) {
+                    fileIngestStartTime = pipelineStartTime;
+                }
             }
         }
 
