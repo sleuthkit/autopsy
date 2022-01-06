@@ -34,11 +34,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
+import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 
 /**
  * A node to be displayed in the tree that shows the count.
  */
-public abstract class TreeNode<T> extends AbstractNode implements SelectionResponder {
+public abstract class TreeNode<T> extends AbstractNode implements SelectionResponder, ActionContext {
 
     private static final Logger logger = Logger.getLogger(TreeNode.class.getName());
 
@@ -175,7 +177,17 @@ public abstract class TreeNode<T> extends AbstractNode implements SelectionRespo
     public void setNodeSelectionInfo(ChildNodeSelectionInfo info) {
         childNodeSelectionInfo = info;
     }
-
+    
+    @Override
+    public boolean supportsCollapseAll() {
+        return !isLeaf();
+    }
+    
+    @Override
+    public Action[] getActions(boolean context) {
+        return ActionsFactory.getActions(this);
+    }
+    
     /**
      * Tree node for displaying static content in the tree.
      */
