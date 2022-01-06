@@ -88,6 +88,11 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
     public void updateSheet(List<NodeProperty<?>> newProps) {
         super.updateSheet(newProps);
     }
+    
+    @Override 
+    public boolean supportsFileSearchAction() {
+        return true;
+    }
 
     /**
      * A node representing a LocalDirectory.

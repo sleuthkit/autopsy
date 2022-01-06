@@ -5,6 +5,7 @@ ActionFactory_getViewSrcContentAction_type_File=File
 ActionFactory_getViewSrcContentAction_type_OSAccount=OS Account
 ActionFactory_getViewSrcContentAction_type_unknown=Item
 ActionFactory_openFileSearchByAttr_text=Open File Search by Attributes
+ActionsFactory_Collapse_All_Name=Collapse All
 # {0} - type
 ActionsFactory_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory
 # {0} - type
