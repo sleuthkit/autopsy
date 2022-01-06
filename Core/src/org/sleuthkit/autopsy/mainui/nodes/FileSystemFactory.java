@@ -384,10 +384,10 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
                 group.add(new ExtractUnallocAction(
                         Bundle.VolumnNode_ExtractUnallocAction_text(), this.objId));
 
-                group.add(new FileSystemDetailsAction(this.objId));
+                group.add(new FileSystemDetailsAction(volume));
                 return Optional.of(group);
             } catch (NoCurrentCaseException | TskCoreException | ClassCastException ex) {
-                logger.log(Level.WARNING, "Could not get volume for id: " + fsContentId);
+                logger.log(Level.WARNING, "Could not get volume for id: " + this.objId);
                 return Optional.empty();
             }
         }

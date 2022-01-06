@@ -452,7 +452,7 @@ public final class ActionsFactory {
     })
     private static Action getViewInTimelineAction(ActionContext context) {
         Optional<BlackboardArtifact> optionalArtifact = context.getArtifact();
-        Optional<AbstractFile> optionalFile = context.getFileForViewInTimelineAction();
+        Optional<Long> optionalFile = context.getFileForViewInTimelineAction();
         if (optionalArtifact.isPresent()) {
             return new ViewArtifactInTimelineAction(optionalArtifact.get(), Bundle.ActionsFactory_getTimelineArtifactAction_displayName());
         } else if (optionalFile.isPresent()) {
