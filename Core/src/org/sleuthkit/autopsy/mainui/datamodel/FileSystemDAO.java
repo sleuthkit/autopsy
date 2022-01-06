@@ -81,7 +81,6 @@ import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
@@ -481,11 +480,14 @@ public class FileSystemDAO extends AbstractDAO {
             }
         });
     }
-    
-    private List<FileSystemTreeItem> fetchTreeContent(String whereQuery, boolean fetchCount) {
-        
+
+    private List<FileSystemTreeItem> fetchTreeContent(String whereQuery, boolean fetchCount) throws NoCurrentCaseException, TskCoreException {
+
     }
-    
+
+    private TreeContentType getContentType(Content content) {
+
+    }
 
     /**
      * Get all data sources belonging to a given host.
@@ -498,7 +500,11 @@ public class FileSystemDAO extends AbstractDAO {
      */
     public TreeResultsDTO<FileSystemContentSearchParam> getDataSourcesForHost(Host host) throws ExecutionException {
         try {
-            return new TreeResultsDTO<>(fetchTreeContent("WHERE b.obj_id IN (SELECT obj_id FROM data_source_info WHERE host_id = " + host.getHostId() + ")", false));
+            @SuppressWarnings("unchecked")
+            List<TreeItemDTO<FileSystemContentSearchParam>> treeItemRows
+                    = (List<TreeItemDTO<FileSystemContentSearchParam>>) (List<? extends TreeItemDTO<FileSystemContentSearchParam>>) fetchTreeContent(
+                            "WHERE b.obj_id IN (SELECT obj_id FROM data_source_info WHERE host_id = " + host.getHostId() + ")", false);
+            return new TreeResultsDTO<>(treeItemRows);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching images for host with ID " + host.getHostId(), ex);
         }
@@ -515,11 +521,12 @@ public class FileSystemDAO extends AbstractDAO {
      */
     public TreeResultsDTO<FileSystemContentSearchParam> getSingleDataSource(long dataSourceObjId) throws ExecutionException {
         try {
-            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
-            DataSource ds = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(dataSourceObjId);
-            treeItemRows.add(createDisplayableContentTreeItem(ds, TreeDisplayCount.NOT_SHOWN));
+            @SuppressWarnings("unchecked")
+            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows
+                    = (List<TreeItemDTO<FileSystemContentSearchParam>>) (List<? extends TreeItemDTO<FileSystemContentSearchParam>>) fetchTreeContent(
+                            "WHERE b.obj_id = " + dataSourceObjId, false);
             return new TreeResultsDTO<>(treeItemRows);
-        } catch (NoCurrentCaseException | TskCoreException | TskDataException ex) {
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching data source with ID " + dataSourceObjId, ex);
         }
     }
@@ -539,16 +546,10 @@ public class FileSystemDAO extends AbstractDAO {
 
             List<Content> treeChildren = FileSystemColumnUtils.getVisibleTreeNodeChildren(contentId);
 
-            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows = new ArrayList<>();
-            for (Content child : treeChildren) {
-                Long countForNode = null;
-                if ((child instanceof AbstractFile)
-                        && !(child instanceof LocalFilesDataSource)) {
-                    countForNode = getContentForTable(new FileSystemContentSearchParam(child.getId()), 0, null).getTotalResultsCount();
-                }
-                TreeDisplayCount displayCount = countForNode == null ? TreeDisplayCount.NOT_SHOWN : TreeDisplayCount.getDeterminate(countForNode);
-                treeItemRows.add(createDisplayableContentTreeItem(child, displayCount));
-            }
+            @SuppressWarnings("unchecked")
+            List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows
+                    = (List<TreeItemDTO<FileSystemContentSearchParam>>) (List<? extends TreeItemDTO<FileSystemContentSearchParam>>) fetchTreeContent(
+                            "WHERE b.par_obj_id = " + contentId, false);
             return new TreeResultsDTO<>(treeItemRows);
 
         } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -574,17 +575,19 @@ public class FileSystemDAO extends AbstractDAO {
 
         if (daoEvent instanceof FileSystemContentEvent) {
             FileSystemContentEvent contentEvt = (FileSystemContentEvent) daoEvent;
+            Content child = contentEvt.getContent();
 
             return new FileSystemTreeEvent(
                     contentEvt.getParentObjId(),
                     contentEvt.getParentHost(),
+                    // in order to trigger a refresh
                     new FileSystemTreeItem(
-                            contentEvt.getContentObjectId(),
-                            contentEvt.getContent().getName(),
+                            child.getId(),
+                            child.getName(),
                             count,
-                            TBD,
+                            getContentType(child),
                             ((contentEvt.getContent() instanceof AbstractFile) ? ((AbstractFile) contentEvt.getContent()).getMetaType() : null),
-                            isLeaf),
+                            null),
                     fullRefresh);
 
         } else if (daoEvent instanceof FileSystemHostEvent) {
@@ -645,7 +648,7 @@ public class FileSystemDAO extends AbstractDAO {
 
         private final TskData.TSK_FS_META_TYPE_ENUM metaType;
         private final TreeContentType contentType;
-        private final boolean leaf;
+        private final Boolean leaf;
 
         FileSystemTreeItem(FileSystemTreeItem treeItem, TreeDisplayCount count) {
             this(treeItem.getSearchParams().getContentObjectId(), treeItem.getDisplayName(), count, treeItem.getContentType(), treeItem.getMetaType(), treeItem.isLeaf());
@@ -657,7 +660,7 @@ public class FileSystemDAO extends AbstractDAO {
                 TreeDisplayCount count,
                 TreeContentType contentType,
                 TskData.TSK_FS_META_TYPE_ENUM metaType,
-                boolean isLeaf) {
+                Boolean isLeaf) {
 
             super(FileSystemContentSearchParam.getTypeId(), new FileSystemContentSearchParam(contentId), contentId, displayName, count);
             this.metaType = metaType;
@@ -673,7 +676,11 @@ public class FileSystemDAO extends AbstractDAO {
             return contentType;
         }
 
-        public boolean isLeaf() {
+        /**
+         * @return Whether or not this tree item is a leaf. If null, leaf status
+         *         is unknown.
+         */
+        public Boolean isLeaf() {
             return leaf;
         }
     }

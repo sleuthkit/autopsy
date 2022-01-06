@@ -260,7 +260,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         protected static Children createChildrenForContent(TreeItemDTO<? extends FileSystemContentSearchParam> treeItem) {
-            if ((treeItem instanceof FileSystemTreeItem && ((FileSystemTreeItem) treeItem).isLeaf())) {
+            if ((treeItem instanceof FileSystemTreeItem && ((FileSystemTreeItem) treeItem).isLeaf() == true)) {
                 return Children.LEAF;
             } else {
                 return Children.create(new FileSystemFactory(treeItem.getSearchParams().getContentObjectId()), true);
