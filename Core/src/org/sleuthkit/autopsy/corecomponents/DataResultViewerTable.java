@@ -74,7 +74,6 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.SearchResultRootNode;
-import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.datamodel.Score.Significance;
 
 /**
@@ -131,6 +130,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final IconRendererTableListener iconRendererListener;
     private Node rootNode;
     private SearchResultsDTO searchResults;
+    private DataResultPanel.PagingControls pagingControls = null;
 
     /**
      * Constructs a tabular result viewer that displays the children of the
@@ -212,7 +212,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outline.getTableHeader().addMouseListener(outlineViewListener);
     }
 
-
+    public void setPagingControls(DataResultPanel.PagingControls pagingControls) {
+        this.pagingControls = pagingControls;
+    }
 
     /**
      * Creates a new instance of a tabular result viewer that displays the
@@ -266,6 +268,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node rootNode, SearchResultsDTO searchResults) {
         this.searchResults = searchResults;
+        
+        // enable paging controls (they could have been disabled by different viewer)
+        if (pagingControls != null) {
+            pagingControls.setPageControlsEnabled(true);
+        }
 
         if (!SwingUtilities.isEventDispatchThread()) {
             LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread");

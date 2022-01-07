@@ -1615,15 +1615,17 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
     
     void enablePagingControls(boolean enable) {
-        this.pagePrevButton.setEnabled(false);
-        this.pageNextButton.setEnabled(false);
+        this.pagePrevButton.setEnabled(enable);
+        this.pageNextButton.setEnabled(enable);
+        this.gotoPageTextField.setEnabled(enable);
         this.pageNumLabel.setText("");
         this.gotoPageTextField.setText("");
     }
 
     private void updatePagingComponents() {
+        
         if (!pagingControlsEnabled) {
-            enablePagingControls(false);
+            enablePagingControls(pagingControlsEnabled);
             return;
         }
         
@@ -1633,6 +1635,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
                     this.searchResultManager.getPageIdx() + 1,
                     Math.max(this.searchResultManager.getTotalPages(), 1)));
+            this.gotoPageTextField.setEnabled(true);
             this.gotoPageTextField.setText(Integer.toString(this.searchResultManager.getPageIdx() + 1));
         } else if (this.pagingSupport != null) {
             this.pagePrevButton.setEnabled(this.pagingSupport.getCurrentPageIdx() > 0);
@@ -1640,6 +1643,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             this.pageNumLabel.setText(Bundle.DataResultPanel_pageIdxOfCount(
                     this.pagingSupport.getCurrentPageIdx() + 1,
                     Math.max(this.pagingSupport.getLastKnownPageCount(), 1)));
+            this.gotoPageTextField.setEnabled(true);
             this.gotoPageTextField.setText(Integer.toString(this.pagingSupport.getCurrentPageIdx() + 1));
         } else {
             enablePagingControls(false);
