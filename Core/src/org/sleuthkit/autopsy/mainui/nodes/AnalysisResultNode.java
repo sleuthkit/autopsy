@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -32,13 +31,8 @@ import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultTableSearchResultsDTO;
-<<<<<<< HEAD
-import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
 import org.sleuthkit.autopsy.mainui.nodes.actions.DeleteAnalysisResultAction;
-=======
-import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
->>>>>>> new_table_load
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
