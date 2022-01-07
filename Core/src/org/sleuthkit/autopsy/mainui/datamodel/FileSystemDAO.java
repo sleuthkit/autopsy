@@ -22,6 +22,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableSet;
 import java.beans.PropertyChangeEvent;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -43,6 +44,7 @@ import org.sleuthkit.autopsy.casemodule.events.HostsAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsAddedToPersonEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsRemovedFromPersonEvent;
 import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
@@ -83,6 +85,7 @@ import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
@@ -482,7 +485,7 @@ public class FileSystemDAO extends AbstractDAO {
         });
     }
 
-    private String getQuery(String whereQuery, boolean fetchCount, boolean hideKnown, boolean hideSlack) {
+    private static String getTreeContentQuery(String whereQuery, boolean fetchCount, boolean hideKnown, boolean hideSlack) {
         // where query references an alias of query that has fields of par_obj_id and obj_id
         return "WITH content_query AS (\n"
                 + "  SELECT\n"
@@ -531,6 +534,11 @@ public class FileSystemDAO extends AbstractDAO {
                 + "      -- content is visible if it is an image, a pool, a volume, or a file under certain situations\n"
                 + "      ,(CASE \n"
                 + "        WHEN o.type IN (" + TskData.ObjectType.IMG.getObjectType() + ", " + TskData.ObjectType.POOL.getObjectType() + ", " + TskData.ObjectType.VOL.getObjectType() + ") THEN 1\n"
+                + "        WHEN o.type = " + TskData.ObjectType.ARTIFACT.getObjectType() + " THEN\n"
+                + "          (SELECT \n"
+                + "            CASE WHEN art.artifact_type_id IN (24, 13) THEN 1 ELSE 0 END\n"
+                + "            FROM blackboard_artifacts art\n"
+                + "            WHERE art.artifact_obj_id = o.obj_id)"
                 + "        WHEN o.type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + "\n"
                 + "          (SELECT\n"
                 + "            (CASE \n"
@@ -552,28 +560,36 @@ public class FileSystemDAO extends AbstractDAO {
                 + "  ) o2\n"
                 + ")\n"
                 + "SELECT \n"
-                + "  query.*\n"
+                + "  query.obj_id\n"
+                + "  query.name\n"
+                + "  ,query.is_transparent_parent\n"
+                + "  ,query.child_count\n"
+                + "  ,query.object_type\n"
+                + "  ,query.file_type\n"
+                + "  ,query.has_tree_children\n"
                 + "FROM (\n"
                 + "  SELECT \n"
                 + "    c.* \n"
                 + "    -- get the child count to display\n"
-                + "    ,(SELECT SUM(\n"
-                + "      (CASE \n"
-                + "        -- determine child count by summing children that are displayable \n"
-                + "        WHEN c2.is_displayable = 1 THEN 1\n"
-                + "        -- or the total of transparent parent content's children (only one layer deep)\n"
-                + "        WHEN c2.is_transparent_parent = 1 THEN\n"
-                + "          (SELECT SUM(\n"
-                + "            CASE \n"
-                + "              WHEN c3.is_displayable = 1 THEN 1\n"
-                + "              WHEN c3.is_transparent_parent = 1 THEN\n"
-                + "                (SELECT COUNT(*) AS count FROM content_query c4 WHERE c4.par_obj_id = c3.obj_id AND (c4.is_displayable = 1 OR c4.is_transparent_parent = 1))\n"
-                + "              ELSE 0\n"
-                + "            END\n"
-                + "          ) FROM content_query c3 WHERE c3.par_obj_id = c2.obj_id)\n"
-                + "        ELSE 0\n"
-                + "      END)) FROM content_query c2\n"
-                + "    WHERE c2.par_obj_id = c.obj_id) AS child_count\n"
+                + (fetchCount
+                        ? "    ,(SELECT SUM(\n"
+                        + "      (CASE \n"
+                        + "        -- determine child count by summing children that are displayable \n"
+                        + "        WHEN c2.is_displayable = 1 THEN 1\n"
+                        + "        -- or the total of transparent parent content's children (only one layer deep)\n"
+                        + "        WHEN c2.is_transparent_parent = 1 THEN\n"
+                        + "          (SELECT SUM(\n"
+                        + "            CASE \n"
+                        + "              WHEN c3.is_displayable = 1 THEN 1\n"
+                        + "              WHEN c3.is_transparent_parent = 1 THEN\n"
+                        + "                (SELECT COUNT(*) AS count FROM content_query c4 WHERE c4.par_obj_id = c3.obj_id AND (c4.is_displayable = 1 OR c4.is_transparent_parent = 1))\n"
+                        + "              ELSE 0\n"
+                        + "            END\n"
+                        + "          ) FROM content_query c3 WHERE c3.par_obj_id = c2.obj_id)\n"
+                        + "        ELSE 0\n"
+                        + "      END)) FROM content_query c2\n"
+                        + "    WHERE c2.par_obj_id = c.obj_id) AS child_count\n"
+                        : "")
                 + "    -- determine whether any of those children have children (making this expandable)\n"
                 + "    ,(CASE\n"
                 + "      -- all transparent parents will be resolved\n"
@@ -652,16 +668,48 @@ public class FileSystemDAO extends AbstractDAO {
                 + "AND " + whereQuery;
     }
 
-    private List<FileSystemTreeItem> runTreeCountQuery(String whereQuery, boolean fetchCount) throws NoCurrentCaseException, TskCoreException {
+    private List<FileSystemTreeItem> runTreeCountsQuery(String whereQuery, boolean fetchCount, boolean hideKnown, boolean hideSlack) throws NoCurrentCaseException, TskCoreException {
+        String sql = getTreeContentQuery(whereQuery, fetchCount, hideKnown, hideSlack);
 
+        List<FileSystemTreeItem> treeItems = new ArrayList<>();
+        List<Long> transparentParents = new ArrayList<>();
+        Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().query(sql, (rs) -> {
+            try {
+                while (rs.next()) {
+                    if (rs.getByte("is_transparent_parent") > 0 && rs.getLong("child_count") > 0) {
+                        transparentParents.add(rs.getLong("obj_id"));
+                    } else {
+                        treeItems.add(new FileSystemTreeItem(
+                                rs.getLong("obj_id"),
+                                rs.getString("name"),
+                                TreeDisplayCount.getDeterminate(rs.getLong("child_count")),
+                                TreeFileType.valueOf(rs.getShort("file_type")),
+                                null, // GVDTODO: TSK_FS_META_TYPE_ENUM
+                                rs.getByte("has_tree_children") > 0
+                        ));
+                    }
+                }
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "There was an error fetching results for query:\n" + sql, ex);
+            }
+        });
+
+        for (Long transparentParent : transparentParents) {
+            treeItems.addAll(runTreeCountsQuery("query.par_obj_id = " + transparentParent, fetchCount, hideKnown, hideSlack));
+        }
+        
+        return treeItems;
     }
 
     private List<FileSystemTreeItem> fetchTreeContent(String whereQuery, boolean fetchCount) throws NoCurrentCaseException, TskCoreException {
-
+        List<FileSystemTreeItem> toRet = runTreeCountsQuery(whereQuery, fetchCount, UserPreferences.hideKnownFilesInDataSourcesTree(), UserPreferences.hideSlackFilesInDataSourcesTree());
+        // GVDTODO sort
+        return toRet;
     }
 
     private TreeFileType getContentType(Content content) {
-
+        // GVDTODO handle
+        return null;
     }
 
     /**
@@ -807,38 +855,34 @@ public class FileSystemDAO extends AbstractDAO {
     public enum TreeFileType {
         IMAGE(1),
         LOCAL_FILES_DATA_SOURCE(2),
-        
         POOL(3),
         VOLUME(4),
-        
         DIRECTORY(5),
         UNALLOC_DIRECTORY(6),
         LOCAL_DIRECTORY(7),
         VIRTUAL_DIRECTORY(8),
-        
         FILE(9),
         UNALLOC_FILE(10),
         CARVED_FILE(11),
-        
         UNKNOWN(12);
-        
+
         private static final Map<Short, TreeFileType> MAPPING = Stream.of(TreeFileType.values())
                 .collect(Collectors.toMap(tft -> tft.getId(), tft -> tft));
-        
+
         private short id;
-        
+
         TreeFileType(int id) {
-            this.id = (short)id;
+            this.id = (short) id;
         }
 
         public short getId() {
             return id;
         }
-        
+
         public static TreeFileType valueOf(short shortVal) {
             return MAPPING.get(shortVal);
         }
-        
+
     }
 
     public static class FileSystemTreeItem extends TreeItemDTO<FileSystemContentSearchParam> {
