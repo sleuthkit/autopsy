@@ -518,7 +518,7 @@ public class FileSystemDAO extends AbstractDAO {
                 + "      -- determine file name based on relevant table information (i.e. going to images / files for appropriate name and concatenating a string for volume systems)\n"
                 + "      ,(CASE \n"
                 + "        WHEN o.type = " + TskData.ObjectType.IMG.getObjectType() + " THEN (SELECT name FROM tsk_image_names i WHERE i.obj_id = o.obj_id LIMIT 1)\n"
-                + "        WHEN o.type = " + TskData.ObjectType.VOL.getObjectType() + " THEN (SELECT (v.addr || ' (' || v.descr || ':' || v.start || '-' || (v.start + v.length) || ')') AS name FROM tsk_vs_parts v WHERE v.obj_id = o.obj_id LIMIT 1)\n"
+                + "        WHEN o.type = " + TskData.ObjectType.VOL.getObjectType() + " THEN (SELECT (v.addr || ' (' || v.desc || ':' || v.start || '-' || (v.start + v.length) || ')') AS name FROM tsk_vs_parts v WHERE v.obj_id = o.obj_id LIMIT 1)\n"
                 + "        WHEN o.type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + " THEN (SELECT name FROM tsk_files f WHERE f.obj_id = o.obj_id LIMIT 1)\n"
                 + "        WHEN o.type = " + TskData.ObjectType.POOL.getObjectType() + " THEN \n"
                 + "          (SELECT\n"
@@ -538,8 +538,8 @@ public class FileSystemDAO extends AbstractDAO {
                 + "          (SELECT \n"
                 + "            CASE WHEN art.artifact_type_id IN (24, 13) THEN 1 ELSE 0 END\n"
                 + "            FROM blackboard_artifacts art\n"
-                + "            WHERE art.artifact_obj_id = o.obj_id)"
-                + "        WHEN o.type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + "\n"
+                + "            WHERE art.artifact_obj_id = o.obj_id LIMIT 1)"
+                + "        WHEN o.type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + " THEN \n"
                 + "          (SELECT\n"
                 + "            (CASE \n"
                 + "              -- file is not displayable without a name\n"
@@ -561,9 +561,9 @@ public class FileSystemDAO extends AbstractDAO {
                 + ")\n"
                 + "SELECT \n"
                 + "  query.obj_id\n"
-                + "  query.name\n"
+                + "  ,query.name\n"
                 + "  ,query.is_transparent_parent\n"
-                + "  ,query.child_count\n"
+                + (fetchCount ? "  ,query.child_count\n" : "")
                 + "  ,query.object_type\n"
                 + "  ,query.file_type\n"
                 + "  ,query.has_tree_children\n"
@@ -664,7 +664,7 @@ public class FileSystemDAO extends AbstractDAO {
                 + "  FROM content_query c  \n"
                 + ") query\n"
                 + "-- only return displayable items with a child count (for the tree) or transparent parents that should be recursed upon\n"
-                + "WHERE ((query.is_displayable = 1 AND query.child_count > 0) OR query.is_transparent_parent = 1)\n"
+                + "WHERE ((query.is_displayable = 1" + (fetchCount ? " AND query.child_count > 0" : "") + ") OR query.is_transparent_parent = 1)\n"
                 + "AND " + whereQuery;
     }
 
@@ -682,7 +682,7 @@ public class FileSystemDAO extends AbstractDAO {
                         treeItems.add(new FileSystemTreeItem(
                                 rs.getLong("obj_id"),
                                 rs.getString("name"),
-                                TreeDisplayCount.getDeterminate(rs.getLong("child_count")),
+                                (fetchCount ? TreeDisplayCount.getDeterminate(rs.getLong("child_count")) : TreeDisplayCount.NOT_SHOWN),
                                 TreeFileType.valueOf(rs.getShort("file_type")),
                                 null, // GVDTODO: TSK_FS_META_TYPE_ENUM
                                 rs.getByte("has_tree_children") > 0
@@ -726,7 +726,7 @@ public class FileSystemDAO extends AbstractDAO {
             @SuppressWarnings("unchecked")
             List<TreeItemDTO<FileSystemContentSearchParam>> treeItemRows
                     = (List<TreeItemDTO<FileSystemContentSearchParam>>) (List<? extends TreeItemDTO<FileSystemContentSearchParam>>) fetchTreeContent(
-                            "WHERE b.obj_id IN (SELECT obj_id FROM data_source_info WHERE host_id = " + host.getHostId() + ")", false);
+                            "query.obj_id IN (SELECT dsi.obj_id FROM data_source_info dsi WHERE dsi.host_id = " + host.getHostId() + ")", false);
             return new TreeResultsDTO<>(treeItemRows);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching images for host with ID " + host.getHostId(), ex);
@@ -747,7 +747,7 @@ public class FileSystemDAO extends AbstractDAO {
             @SuppressWarnings("unchecked")
             List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows
                     = (List<TreeItemDTO<FileSystemContentSearchParam>>) (List<? extends TreeItemDTO<FileSystemContentSearchParam>>) fetchTreeContent(
-                            "WHERE b.obj_id = " + dataSourceObjId, false);
+                            "query.obj_id = " + dataSourceObjId, false);
             return new TreeResultsDTO<>(treeItemRows);
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching data source with ID " + dataSourceObjId, ex);
@@ -772,7 +772,7 @@ public class FileSystemDAO extends AbstractDAO {
             @SuppressWarnings("unchecked")
             List<TreeResultsDTO.TreeItemDTO<FileSystemContentSearchParam>> treeItemRows
                     = (List<TreeItemDTO<FileSystemContentSearchParam>>) (List<? extends TreeItemDTO<FileSystemContentSearchParam>>) fetchTreeContent(
-                            "WHERE b.par_obj_id = " + contentId, false);
+                            "query.par_obj_id = " + contentId, false);
             return new TreeResultsDTO<>(treeItemRows);
 
         } catch (NoCurrentCaseException | TskCoreException ex) {
