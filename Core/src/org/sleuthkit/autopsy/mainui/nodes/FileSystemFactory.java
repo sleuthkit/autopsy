@@ -44,8 +44,8 @@ import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeItem;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.TreeContentType;
-import static org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.TreeContentType.UNALLOC_FILE;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.TreeFileType;
+import static org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.TreeFileType.UNALLOC_FILE;
 import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
@@ -107,7 +107,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     @Override
     protected TreeNode<FileSystemContentSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> rowData) {
-        TreeContentType contentType = rowData instanceof FileSystemTreeItem ? ((FileSystemTreeItem) rowData).getContentType() : null;
+        TreeFileType contentType = rowData instanceof FileSystemTreeItem ? ((FileSystemTreeItem) rowData).getContentType() : null;
         if (contentType == null) {
             logger.log(Level.WARNING, MessageFormat.format("Tree item: {0} did not have a valid content type.", rowData.getId()));
             return null;
@@ -117,7 +117,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         switch (contentType) {
             case DIRECTORY:
             case UNALLOC_DIRECTORY:
-                return new DirectoryTreeNode(objId, TreeContentType.UNALLOC_DIRECTORY.equals(contentType), rowData);
+                return new DirectoryTreeNode(objId, TreeFileType.UNALLOC_DIRECTORY.equals(contentType), rowData);
             case FILE:
             case UNALLOC_FILE:
             case CARVED_FILE:
@@ -205,7 +205,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         protected TreeNode<FileSystemContentSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> rowData) {
-            TreeContentType contentType = rowData instanceof FileSystemTreeItem ? ((FileSystemTreeItem) rowData).getContentType() : null;
+            TreeFileType contentType = rowData instanceof FileSystemTreeItem ? ((FileSystemTreeItem) rowData).getContentType() : null;
             if (contentType == null) {
                 logger.log(Level.WARNING, MessageFormat.format("Tree item: {0} did not have a valid content type.", rowData.getId()));
                 return null;
