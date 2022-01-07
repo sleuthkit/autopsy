@@ -636,6 +636,10 @@ public class FileSystemDAO extends AbstractDAO {
                 + "    END) AS has_tree_children\n"
                 + "    -- determine icon to display in table based on the content\n"
                 + "    ,(CASE\n"
+                + "      WHEN c.object_type = " + TskData.ObjectType.IMG.getObjectType() + " THEN " + TreeFileType.IMAGE.getId() + "\n"
+                + "      WHEN c.object_type = " + TskData.ObjectType.VOL.getObjectType() + " THEN " + TreeFileType.VOLUME.getId() + "\n"
+                + "      WHEN c.object_type = " + TskData.ObjectType.POOL.getObjectType() + " THEN " + TreeFileType.POOL.getId() + "\n"
+                // GVDTODO local files data source?
                 + "      WHEN c.object_type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + " THEN\n"
                 + "        (SELECT\n"
                 + "          (CASE\n"
