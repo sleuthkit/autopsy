@@ -85,6 +85,7 @@ import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.DbType;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_TYPE_ENUM;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
@@ -485,8 +486,22 @@ public class FileSystemDAO extends AbstractDAO {
         });
     }
 
-    private static String getTreeContentQuery(String whereQuery, boolean fetchCount, boolean hideKnown, boolean hideSlack) {
+    private static String getTreeContentQuery(DbType dbType, String whereQuery, boolean fetchCount, boolean hideKnown, boolean hideSlack) {
         // where query references an alias of query that has fields of par_obj_id and obj_id
+        String imagePathParseSql;
+        switch (dbType) {
+            case POSTGRESQL:
+                // adapted from https://stackoverflow.com/a/25447017/2375948
+                imagePathParseSql = "(SELECT a.arr[array_upper(a.arr, 1)] FROM (SELECT regexp_split_to_array(image_names.name, '[\\/\\\\]') AS arr) a)";
+                break;
+            case SQLITE:
+            default:
+                // taken from https://stackoverflow.com/a/38330814/2375948
+                imagePathParseSql = "(SELECT REPLACE(image_names.name, RTRIM(image_names.name, REPLACE(REPLACE(image_names.name, '\\', ''), '/', '')), ''))";
+                break;
+        }
+        
+        
         return "WITH content_query AS (\n"
                 + "  SELECT\n"
                 + "    o2.*\n"
@@ -517,8 +532,20 @@ public class FileSystemDAO extends AbstractDAO {
                 + "      ,o.type AS object_type\n"
                 + "      -- determine file name based on relevant table information (i.e. going to images / files for appropriate name and concatenating a string for volume systems)\n"
                 + "      ,(CASE \n"
-                + "        WHEN o.type = " + TskData.ObjectType.IMG.getObjectType() + " THEN (SELECT name FROM tsk_image_names i WHERE i.obj_id = o.obj_id LIMIT 1)\n"
-                + "        WHEN o.type = " + TskData.ObjectType.VOL.getObjectType() + " THEN (SELECT (v.addr || ' (' || v.desc || ':' || v.start || '-' || (v.start + v.length) || ')') AS name FROM tsk_vs_parts v WHERE v.obj_id = o.obj_id LIMIT 1)\n"
+                + "        WHEN o.type = " + TskData.ObjectType.IMG.getObjectType() + " THEN \n"
+                + "          (SELECT \n"
+                + "            -- this is based on how an image is created from a result set\n"
+                + "            CASE \n"
+                + "              WHEN image_info.display_name IS NOT NULL AND LENGTH(image_info.display_name) > 0 THEN\n"
+                + "                image_info.display_name\n"
+                + "              ELSE\n"
+                + "                " + imagePathParseSql + "\n"
+                + "              END\n"
+                + "          FROM tsk_image_info image_info \n"
+                + "          INNER JOIN tsk_image_names image_names\n"
+                + "          ON image_info.obj_id = image_names.obj_id\n"
+                + "          WHERE image_names.obj_id = o.obj_id)\n"
+                + "        WHEN o.type = " + TskData.ObjectType.VOL.getObjectType() + " THEN (SELECT ('vol ' || v.addr || ' (' || v.descr || ':' || v.start || '-' || (v.start + v.length) || ')') AS name FROM tsk_vs_parts v WHERE v.obj_id = o.obj_id LIMIT 1)\n"
                 + "        WHEN o.type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + " THEN (SELECT name FROM tsk_files f WHERE f.obj_id = o.obj_id LIMIT 1)\n"
                 + "        WHEN o.type = " + TskData.ObjectType.POOL.getObjectType() + " THEN \n"
                 + "          (SELECT\n"
@@ -673,14 +700,15 @@ public class FileSystemDAO extends AbstractDAO {
     }
 
     private List<FileSystemTreeItem> runTreeCountsQuery(String whereQuery, boolean fetchCount, boolean hideKnown, boolean hideSlack) throws NoCurrentCaseException, TskCoreException {
-        String sql = getTreeContentQuery(whereQuery, fetchCount, hideKnown, hideSlack);
+        SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        String sql = getTreeContentQuery(skCase.getDatabaseType(), whereQuery, fetchCount, hideKnown, hideSlack);
 
         List<FileSystemTreeItem> treeItems = new ArrayList<>();
         List<Long> transparentParents = new ArrayList<>();
-        Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().query(sql, (rs) -> {
+        skCase.getCaseDbAccessManager().query(sql, (rs) -> {
             try {
                 while (rs.next()) {
-                    if (rs.getByte("is_transparent_parent") > 0 && rs.getLong("child_count") > 0) {
+                    if (rs.getByte("is_transparent_parent") > 0 && (!fetchCount || rs.getLong("child_count") > 0)) {
                         transparentParents.add(rs.getLong("obj_id"));
                     } else {
                         treeItems.add(new FileSystemTreeItem(
@@ -689,7 +717,7 @@ public class FileSystemDAO extends AbstractDAO {
                                 (fetchCount ? TreeDisplayCount.getDeterminate(rs.getLong("child_count")) : TreeDisplayCount.NOT_SHOWN),
                                 TreeFileType.valueOf(rs.getShort("file_type")),
                                 null, // GVDTODO: TSK_FS_META_TYPE_ENUM
-                                rs.getByte("has_tree_children") > 0
+                                rs.getByte("has_tree_children") < 1
                         ));
                     }
                 }
@@ -701,7 +729,7 @@ public class FileSystemDAO extends AbstractDAO {
         for (Long transparentParent : transparentParents) {
             treeItems.addAll(runTreeCountsQuery("query.par_obj_id = " + transparentParent, fetchCount, hideKnown, hideSlack));
         }
-        
+
         return treeItems;
     }
 
