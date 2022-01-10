@@ -518,7 +518,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         LocalFilesDataSourceTreeNode(long objId, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
             super(objId,
-                    NodeIconUtil.VOLUME.getPath(),
+                    NodeIconUtil.LOCAL_FILES_DATA_SOURCE.getPath(),
                     itemData,
                     createChildrenForContent(itemData));
         }
