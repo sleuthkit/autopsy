@@ -130,6 +130,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         buttonBarPanel.setLayout(new WrapLayout());
     }
     
+    @Override
     public void setPagingControls(DataResultPanel.PagingControls pagingControls) {
         this.pagingControls = pagingControls;
     }

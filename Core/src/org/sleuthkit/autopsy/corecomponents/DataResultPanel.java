@@ -867,7 +867,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     public class PagingControls {
 
-        int getTotalPages() {
+        public int getTotalPages() {
             if (searchResultManager != null) {
                 return searchResultManager.getTotalPages();
             } else if (pagingSupport != null) {
@@ -876,7 +876,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             return 0;
         }
 
-        int getCurrentPage() {
+        public int getCurrentPage() {
             if (searchResultManager != null) {
                 // NOTE: SearchManager returns page indexes that start at 0, not 1. 
                 return searchResultManager.getPageIdx() + 1;
@@ -886,11 +886,11 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             return 0;
         }
 
-        void gotoPage(int idx) {
+        public void gotoPage(int idx) {
             goToPage(idx);
         }
 
-        void setPageControlsEnabled(boolean enabled) {
+        public void setPageControlsEnabled(boolean enabled) {
             if (pagingControlsEnabled != enabled){
                 pagingControlsEnabled = enabled;
                 updatePagingComponents();

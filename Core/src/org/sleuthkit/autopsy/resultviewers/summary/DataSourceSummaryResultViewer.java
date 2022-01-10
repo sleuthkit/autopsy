@@ -96,6 +96,7 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
         return getDataSource(node) != null;
     }
     
+    @Override
     public void setPagingControls(DataResultPanel.PagingControls pagingControls) {
         this.pagingControls = pagingControls;
     }
@@ -126,7 +127,7 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
         
         // disable paging controls
         if (pagingControls != null) {
-            pagingControls.setPageControlsEnabled(true);
+            pagingControls.setPageControlsEnabled(false);
         }
 
         DataSource dataSource = getDataSource(node);

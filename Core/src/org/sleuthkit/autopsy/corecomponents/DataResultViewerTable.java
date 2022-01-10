@@ -212,6 +212,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outline.getTableHeader().addMouseListener(outlineViewListener);
     }
 
+    @Override
     public void setPagingControls(DataResultPanel.PagingControls pagingControls) {
         this.pagingControls = pagingControls;
     }
