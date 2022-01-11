@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
@@ -599,12 +600,11 @@ public class FileSystemDAO extends AbstractDAO {
                 + "          (SELECT\n"
                 + "            (CASE \n"
                 + "              -- file is not displayable without a name\n"
-                + "              WHEN f.name IS NOT NULL AND f.name NOT IN ('.', '..') AND LENGTH(f.name) > 0\n"
+                + "              WHEN f.name IS NOT NULL AND LENGTH(f.name) > 0\n"
                 + "                -- hide known files if applicable based on settings\n"
-                + (hideKnown ? "                AND (f.known IS NULL OR f.known <> " + TskData.FileKnown.KNOWN + ")\n" : "")
+                + (hideKnown ? "                AND (f.known IS NULL OR f.known <> " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")\n" : "")
                 + "                -- hide slack files if applicable based on settings\n"
                 + (hideSlack ? "                AND (f.type IS NULL OR f.type <> " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType() + ")\n" : "")
-                + "                \n"
                 + "              THEN 1 \n"
                 + "              ELSE 0\n"
                 + "            END)\n"
@@ -752,7 +752,8 @@ public class FileSystemDAO extends AbstractDAO {
                 + "  FROM content_query c  \n"
                 + ") query\n"
                 + "-- only return displayable items with a child count (for the tree) or transparent parents that should be recursed upon\n"
-                + "WHERE ((query.is_displayable = 1" + (fetchCount ? " AND query.child_count > 0" : "") + ") OR query.is_transparent_parent = 1)\n"
+                + "WHERE (query.name IS NULL OR query.name NOT IN ('.', '..'))\n"
+                + "AND ((query.is_displayable = 1" + (fetchCount ? " AND query.child_count > 0" : "") + ") OR query.is_transparent_parent = 1)\n"
                 + "AND " + whereQuery;
     }
 
@@ -797,7 +798,7 @@ public class FileSystemDAO extends AbstractDAO {
 
     private List<FileSystemTreeItem> fetchTreeContent(String whereQuery, boolean fetchCount) throws NoCurrentCaseException, TskCoreException {
         List<FileSystemTreeItem> toRet = runTreeCountsQuery(whereQuery, fetchCount, UserPreferences.hideKnownFilesInDataSourcesTree(), UserPreferences.hideSlackFilesInDataSourcesTree());
-        toRet.sort(TREE_ITEM_COMPARATOR);
+        toRet.sort((a,b) -> StringUtils.defaultString(a.getDisplayName()).compareToIgnoreCase(StringUtils.defaultString(b.getDisplayName())));
         return toRet;
     }
     
