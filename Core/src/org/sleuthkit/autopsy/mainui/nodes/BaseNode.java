@@ -36,6 +36,7 @@ import javax.swing.SwingUtilities;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
@@ -59,6 +60,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A a simple starting point for nodes.
@@ -118,9 +122,9 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
             } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
                 if(BaseNode.this instanceof SCOSupporter) {
                     CommentChangedEvent event = (CommentChangedEvent) evt;
-                    Optional<Content> optional = ((SCOSupporter)BaseNode.this).getContent();
-                    if (optional.isPresent() && event.getContentID() == optional.get().getId()) {
-                        updateSCOColumns();
+                    
+                    if (shouldUpdateSCOColumns(event.getContentID())) {
+                       updateSCOColumns();
                     }
                 }
             } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
@@ -197,6 +201,15 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
     @Override
     public Action[] getActions(boolean context) {
         return ActionsFactory.getActions(this);
+    }
+    
+    protected boolean shouldUpdateSCOColumns(long eventObjId) {
+        if (BaseNode.this instanceof SCOSupporter) {
+            Optional<Content> optional = ((SCOSupporter) BaseNode.this).getContent();
+            return optional.isPresent() && eventObjId == optional.get().getId();
+            
+        }
+        return false;
     }
     
     private void updateSCOColumns() {

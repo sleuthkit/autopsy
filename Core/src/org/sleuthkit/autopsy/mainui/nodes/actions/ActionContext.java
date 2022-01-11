@@ -229,4 +229,12 @@ public interface ActionContext {
     default boolean supportsResultArtifactAction() {
         return false;
     }
+    
+    default boolean supportsFileSearchAction() {
+        return false;
+    }
+    
+    default boolean supportsCollapseAll() {
+        return false;
+    }
 }

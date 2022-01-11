@@ -235,7 +235,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
      */
     @NbBundle.Messages({
         "FileSystemFactory.FileSystemTreeNode.ExtractUnallocAction.text=Extract Unallocated Space to Single Files"})
-    public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> implements ActionContext {
+    public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> {
 
         private String translatedSourceName;
 
@@ -340,6 +340,11 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         public boolean supportsSourceContentViewerActions() {
+            return true;
+        }
+        
+        @Override 
+        public boolean supportsFileSearchAction() {
             return true;
         }
     }
@@ -478,6 +483,11 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         public Optional<Long> getContentForRunIngestionModuleAction() {
             return Optional.of(objId);
         }
+        
+        @Override 
+        public boolean supportsFileSearchAction() {
+            return true;
+        }
     }
 
     static class LocalDirectoryTreeNode extends SpecialDirectoryTreeNode {
@@ -529,6 +539,11 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         public Node clone() {
             return new VirtualDirectoryTreeNode(getObjId(), getItemData());
+        }
+        
+        @Override 
+        public boolean supportsFileSearchAction() {
+            return true;
         }
     }
 
