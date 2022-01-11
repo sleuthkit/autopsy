@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -64,7 +65,7 @@ public final class RunIngestModulesAction extends AbstractAction {
     private final Long parentFileId;
     private AbstractFile parentFile = null;
     private final List<Long> dataSourceIds;
-    private List<Content> dataSources = null;
+    private List<Content> dataSources = Collections.emptyList();
 
     /**
      * Display any warnings that the ingestJobSettings have.
@@ -104,11 +105,13 @@ public final class RunIngestModulesAction extends AbstractAction {
 
     private RunIngestModulesAction(List<Content> dataSources, List<Long> dataSourceIds) {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
-        this.dataSources = new ArrayList<>(dataSources);
+        if (dataSources != null) {
+            this.dataSources = new ArrayList<>(dataSources);    
+        }
         this.ingestType = IngestJobSettings.IngestType.ALL_MODULES;
         this.parentFile = null;
         this.parentFileId = null;
-        this.dataSourceIds = new ArrayList<>(dataSourceIds);
+        this.dataSourceIds = dataSourceIds == null ? Collections.emptyList() : new ArrayList<>(dataSourceIds);
     }
 
     /**
@@ -138,10 +141,10 @@ public final class RunIngestModulesAction extends AbstractAction {
         this.dataSourceIds = null;
         this.ingestType = IngestJobSettings.IngestType.FILES_ONLY;
         try {
-            this.setEnabled(parentFile.hasChildren());
+            this.setEnabled(parentFile == null || parentFile.hasChildren());
         } catch (TskCoreException ex) {
             this.setEnabled(false);
-            logger.log(Level.SEVERE, String.format("Failed to get children count for parent file %s (objId=%d), RunIngestModulesAction disabled", parentFile.getName(), parentFile.getId()), ex);
+            logger.log(Level.SEVERE, String.format("Failed to get children count for parent file %s (objId=%d), RunIngestModulesAction disabled", parentFile == null ? "<unknown>" : parentFile.getName(), parentFileId), ex);
             MessageNotifyUtil.Message.error(Bundle.RunIngestModulesAction_actionPerformed_errorMessage());
         }
     }

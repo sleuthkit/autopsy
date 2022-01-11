@@ -50,6 +50,8 @@ import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DataSourceFilesNode;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.ContentNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -273,12 +275,26 @@ public class ViewContextAction extends AbstractAction {
     private Node getParentNodeGroupedByDataSource(ExplorerManager treeViewExplorerMgr, Content parentContent) {
         // Classic view
         // Start the search at the DataSourcesNode
+        long dataSourceId;
+        if (parentContent instanceof AbstractFile) {
+            dataSourceId = ((AbstractFile) parentContent).getDataSourceObjectId();
+        } else {
+            try {
+                dataSourceId = parentContent.getDataSource().getId();    
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to get data source id for content with id: " + parentContent.getId(), ex);
+                return null;
+            }
+        }
+        
         Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
         Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesNode.getNameIdentifier());
         if (rootDsNode != null) {
             for (Node dataSourceLevelNode : getDataSourceLevelNodes(rootDsNode)) {
-                DataSource dataSource = dataSourceLevelNode.getLookup().lookup(DataSource.class);
-                if (dataSource != null) {
+                TreeItemDTO<?> dataSourceInfo = dataSourceLevelNode.getLookup().lookup(TreeItemDTO.class);   
+                if (dataSourceInfo != null && dataSourceInfo.getSearchParams() instanceof FileSystemContentSearchParam && 
+                        ((FileSystemContentSearchParam) dataSourceInfo.getSearchParams()).getContentObjectId() == dataSourceId) {
+                    
                     // the tree view needs to be searched to find the parent treeview node.
                     Node potentialParentTreeViewNode = findParentNodeInTree(parentContent, dataSourceLevelNode);
                     if (potentialParentTreeViewNode != null) {
