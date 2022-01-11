@@ -71,6 +71,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Directory;
@@ -554,48 +555,20 @@ public class FileSystemDAO extends AbstractDAO {
                 + "      o.obj_id\n"
                 + "      ,o.par_obj_id\n"
                 + "      ,o.type AS object_type\n"
-                + "      -- determine file name based on relevant table information (i.e. going to images / files for appropriate name and concatenating a string for volume systems)\n"
-                + "      ,(CASE \n"
-                + "        WHEN o.type = " + TskData.ObjectType.IMG.getObjectType() + " THEN \n"
-                + "          (SELECT \n"
-                + "            -- this is based on how an image is created from a result set\n"
-                + "            CASE \n"
-                + "              WHEN image_info.display_name IS NOT NULL AND LENGTH(image_info.display_name) > 0 THEN\n"
-                + "                image_info.display_name\n"
-                + "              ELSE\n"
-                + "                " + imagePathParseSql + "\n"
-                + "              END\n"
-                + "          FROM tsk_image_info image_info \n"
-                + "          INNER JOIN tsk_image_names image_names\n"
-                + "          ON image_info.obj_id = image_names.obj_id\n"
-                + "          WHERE image_names.obj_id = o.obj_id)\n"
-                + "        WHEN o.type = " + TskData.ObjectType.VOL.getObjectType() + " THEN (SELECT ('vol ' || v.addr || ' (' || " + volumeDescValue + " || ':' || v.start || '-' || (v.start + v.length) || ')') AS name FROM tsk_vs_parts v WHERE v.obj_id = o.obj_id LIMIT 1)\n"
-                + "        WHEN o.type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + " THEN (SELECT name FROM tsk_files f WHERE f.obj_id = o.obj_id LIMIT 1)\n"
-                + "        WHEN o.type = " + TskData.ObjectType.POOL.getObjectType() + " THEN \n"
-                + "          (SELECT\n"
-                + "            (CASE \n"
-                + "              WHEN p.pool_type = 0 THEN 'Auto detect'\n"
-                + "              WHEN p.pool_type = 1 THEN 'APFS Pool'\n"
-                + "              ELSE 'Unsupported'\n"
-                + "            END) AS name\n"
-                + "          FROM tsk_pool_info p\n"
-                + "          WHERE p.obj_id = o.obj_id)\n"
-                + "        ELSE NULL\n"
-                + "      END) AS name\n"
                 + "      ,(CASE\n"
                 + "        WHEN o.type = 4 THEN \n"
                 + "          (SELECT f.meta_type FROM tsk_files f WHERE o.obj_id = f.obj_id LIMIT 1)\n"
                 + "        ELSE\n"
                 + "          NULL\n"
-                + "        END) AS meta_type"
+                + "        END) AS meta_type\n"
                 + "      -- content is visible if it is an image, a pool, a volume, or a file under certain situations\n"
                 + "      ,(CASE \n"
                 + "        WHEN o.type IN (" + TskData.ObjectType.IMG.getObjectType() + ", " + TskData.ObjectType.POOL.getObjectType() + ", " + TskData.ObjectType.VOL.getObjectType() + ") THEN 1\n"
                 + "        WHEN o.type = " + TskData.ObjectType.ARTIFACT.getObjectType() + " THEN\n"
                 + "          (SELECT \n"
-                + "            CASE WHEN art.artifact_type_id IN (24, 13) THEN 1 ELSE 0 END\n"
+                + "            CASE WHEN art.artifact_type_id IN (" + BlackboardArtifact.Type.TSK_MESSAGE.getTypeID() + ", " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + ") THEN 1 ELSE 0 END\n"
                 + "            FROM blackboard_artifacts art\n"
-                + "            WHERE art.artifact_obj_id = o.obj_id LIMIT 1)"
+                + "            WHERE art.artifact_obj_id = o.obj_id LIMIT 1)\n"
                 + "        WHEN o.type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + " THEN \n"
                 + "          (SELECT\n"
                 + "            (CASE \n"
@@ -650,60 +623,53 @@ public class FileSystemDAO extends AbstractDAO {
                 + "    -- determine whether any of those children have children (making this expandable)\n"
                 + "    ,(CASE\n"
                 + "      -- all transparent parents will be resolved\n"
-                + "      WHEN (c.is_transparent_parent <> 1 AND (\n"
+                + "      WHEN (c.is_transparent_parent <> 1 AND \n"
                 + "        -- determine any children of children (limit to 1, because we only need to know about 1)\n"
                 + "        (SELECT COUNT(*)\n"
                 + "          FROM content_query c2 \n"
                 + "          WHERE c2.par_obj_id = c.obj_id\n"
-                + "          AND ((\n"
-                + "            -- if grandchild is immediately displayable, then child should be in tree and this should be expandable\n"
-                + "            c2.is_displayable = 1\n"
-                + "            AND (SELECT COUNT(*) \n"
-                + "              FROM content_query c3 \n"
-                + "              WHERE c3.par_obj_id = c2.obj_id \n"
-                + "              AND (c3.is_displayable = 1 \n"
-                + "                OR (SELECT COUNT(*)\n"
-                + "                FROM content_query c4\n"
-                + "                WHERE c4.par_obj_id = c3.obj_id\n"
-                + "                AND c4.is_displayable = 1 LIMIT 1) > 0)\n"
-                + "              LIMIT 1) > 0\n"
-                + "          ) OR (\n"
-                + "            -- if grandchild is a transparent parent, then check children of that child\n"
-                + "            c2.is_transparent_parent = 1\n"
-                + "            -- only perform check if not '.' or '..' file\n"
-                + "            AND (c2.object_type <> 4 OR c2.name NOT IN ('.', '..'))\n"
-                + "            AND (SELECT COUNT(*)\n"
-                + "              FROM content_query c3 \n"
-                + "              WHERE c3.par_obj_id = c2.obj_id\n"
-                + "              AND (\n"
-                + "                c3.is_displayable = 1\n"
-                + "                AND ((SELECT COUNT(*) \n"
-                + "                  FROM content_query c4 \n"
-                + "                  WHERE c4.par_obj_id = c3.obj_id \n"
-                + "                  AND (c4.is_displayable = 1 \n"
-                + "                    OR (SELECT COUNT(*)\n"
-                + "                    FROM content_query c5\n"
-                + "                    WHERE c5.par_obj_id = c4.obj_id\n"
-                + "                    AND c5.is_displayable = 1 LIMIT 1) > 0)\n"
-                + "                  LIMIT 1) > 0) OR (\n"
-                + "                    -- for file system children, go one level deeper (file system -> root file -> children of that)\n"
-                + "                    c2.object_type = " + TskData.ObjectType.FS.getObjectType() + " AND -- handle file system children of children\n"
-                + "                    ((SELECT COUNT(*) \n"
-                + "                    FROM content_query c4 \n"
-                + "                    INNER JOIN content_query c5 ON c4.obj_id = c5.par_obj_id\n"
-                + "                    WHERE c4.par_obj_id = c3.obj_id \n"
-                + "                    AND (c5.is_displayable = 1 \n"
-                + "                      OR (SELECT COUNT(*)\n"
-                + "                      FROM content_query c6\n"
-                + "                      WHERE c6.par_obj_id = c5.obj_id\n"
-                + "                      AND c6.is_displayable = 1 LIMIT 1) > 0)\n"
-                + "                    LIMIT 1) > 0)\n"
-                + "                  ))\n"
-                + "              LIMIT 1) > 0))\n"
-                + "            LIMIT 1) > 0)\n"
-                + "      ) THEN 1\n"
-                + "      ELSE 0\n"
+                + "          AND (\n"
+                + "              c2.is_transparent_parent = 1 \n"
+                + "              OR (\n"
+                + "                -- if grandchild is immediately displayable, then child should be in tree and this should be expandable\n"
+                + "                c2.is_displayable = 1\n"
+                + "                AND (SELECT COUNT(*) \n"
+                + "                  FROM tsk_objects c3 \n"
+                + "                  WHERE c3.par_obj_id = c2.obj_id \n"
+                + "                  LIMIT 1) > 0\n"
+                + "              ))\n"
+                + "             LIMIT 1) > 0)\n"
+                + "		THEN 1\n"
+                + "        ELSE 0\n"
                 + "    END) AS has_tree_children\n"
+                + "    -- determine file name based on relevant table information (i.e. going to images / files for appropriate name and concatenating a string for volume systems)\n"
+                + "    ,(CASE \n"
+                + "      WHEN c.object_type = " + TskData.ObjectType.IMG.getObjectType() + " THEN \n"
+                + "        (SELECT \n"
+                + "          -- this is based on how an image is created from a result set\n"
+                + "          CASE \n"
+                + "            WHEN image_info.display_name IS NOT NULL AND LENGTH(image_info.display_name) > 0 THEN\n"
+                + "              image_info.display_name\n"
+                + "            ELSE\n"
+                + "              " + imagePathParseSql + "\n"
+                + "            END\n"
+                + "        FROM tsk_image_info image_info \n"
+                + "        INNER JOIN tsk_image_names image_names\n"
+                + "        ON image_info.obj_id = image_names.obj_id\n"
+                + "        WHERE image_names.obj_id = c.obj_id)\n"
+                + "      WHEN c.object_type = " + TskData.ObjectType.VOL.getObjectType() + " THEN (SELECT ('vol ' || v.addr || ' (' || " + volumeDescValue + " || ':' || v.start || '-' || (v.start + v.length) || ')') AS name FROM tsk_vs_parts v WHERE v.obj_id = c.obj_id LIMIT 1)\n"
+                + "      WHEN c.object_type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + " THEN (SELECT name FROM tsk_files f WHERE f.obj_id = c.obj_id LIMIT 1)\n"
+                + "      WHEN c.object_type = " + TskData.ObjectType.POOL.getObjectType() + " THEN \n"
+                + "        (SELECT\n"
+                + "          (CASE \n"
+                + "            WHEN p.pool_type = 0 THEN 'Auto detect'\n"
+                + "            WHEN p.pool_type = 1 THEN 'APFS Pool'\n"
+                + "            ELSE 'Unsupported'\n"
+                + "          END) AS name\n"
+                + "        FROM tsk_pool_info p\n"
+                + "        WHERE p.obj_id = c.obj_id)\n"
+                + "      ELSE NULL\n"
+                + "    END) AS name\n"
                 + "    -- determine icon to display in table based on the content\n"
                 + "    ,(CASE\n"
                 + "      WHEN c.object_type = " + TskData.ObjectType.IMG.getObjectType() + " OR\n"
@@ -798,10 +764,10 @@ public class FileSystemDAO extends AbstractDAO {
 
     private List<FileSystemTreeItem> fetchTreeContent(String whereQuery, boolean fetchCount) throws NoCurrentCaseException, TskCoreException {
         List<FileSystemTreeItem> toRet = runTreeCountsQuery(whereQuery, fetchCount, UserPreferences.hideKnownFilesInDataSourcesTree(), UserPreferences.hideSlackFilesInDataSourcesTree());
-        toRet.sort((a,b) -> StringUtils.defaultString(a.getDisplayName()).compareToIgnoreCase(StringUtils.defaultString(b.getDisplayName())));
+        toRet.sort((a, b) -> StringUtils.defaultString(a.getDisplayName()).compareToIgnoreCase(StringUtils.defaultString(b.getDisplayName())));
         return toRet;
     }
-    
+
     private TreeFileType getContentType(Content content) {
         if (content instanceof Image) {
             return TreeFileType.IMAGE;
@@ -821,7 +787,7 @@ public class FileSystemDAO extends AbstractDAO {
             AbstractFile file = (AbstractFile) content;
             boolean isUnalloc = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
             boolean isCarved = isUnalloc && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED);
-            
+
             if (file.isDir()) {
                 return isUnalloc ? TreeFileType.UNALLOC_DIRECTORY : TreeFileType.DIRECTORY;
             } else {
@@ -830,7 +796,7 @@ public class FileSystemDAO extends AbstractDAO {
                 } else if (isUnalloc) {
                     return TreeFileType.UNALLOC_FILE;
                 } else {
-                    return TreeFileType.FILE;    
+                    return TreeFileType.FILE;
                 }
             }
         } else {
@@ -981,7 +947,7 @@ public class FileSystemDAO extends AbstractDAO {
         }
 
     }
-    
+
     public enum TreeFileType {
         IMAGE(1),
         LOCAL_FILES_DATA_SOURCE(2),
