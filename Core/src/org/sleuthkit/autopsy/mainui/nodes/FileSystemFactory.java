@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
 import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeItem;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.TreeFileType;
@@ -116,9 +117,13 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         long objId = rowData.getSearchParams().getContentObjectId();
         switch (contentType) {
             case DIRECTORY:
+            case DERIVED_DIRECTORY:
             case UNALLOC_DIRECTORY:
                 return new DirectoryTreeNode(objId, TreeFileType.UNALLOC_DIRECTORY.equals(contentType), rowData);
+            case LOCAL_FILE:
             case FILE:
+            case DERIVED_FILE:
+            case SLACK_FILE:
             case UNALLOC_FILE:
             case CARVED_FILE:
                 return new FileTreeNode(objId, UNALLOC_FILE.equals(contentType), CARVED_FILE.equals(contentType), FilenameUtils.getExtension(rowData.getDisplayName()), rowData);
@@ -161,21 +166,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         if (o1 instanceof FileSystemTreeItem && o2 instanceof FileSystemTreeItem) {
             FileSystemTreeItem fs1 = (FileSystemTreeItem) o1;
             FileSystemTreeItem fs2 = (FileSystemTreeItem) o2;
-
-            // ordering taken from SELECT_FILES_BY_PARENT in SleuthkitCase
-            if ((fs1.getMetaType() != null) && (fs2.getMetaType() != null)
-                    && (fs1.getMetaType().getValue() != fs2.getMetaType().getValue())) {
-                return -Short.compare(fs1.getMetaType().getValue(), fs2.getMetaType().getValue());
-            }
-
-            // The case where both meta types are null will fall through to the name comparison.
-            if (fs1.getMetaType() == null) {
-                if (fs2.getMetaType() != null) {
-                    return -1;
-                }
-            } else if (fs2.getMetaType() != null) {
-                return 1;
-            }
+            return FileSystemDAO.getTreeItemComparator().compare(fs1, fs2);
         }
         return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
     }

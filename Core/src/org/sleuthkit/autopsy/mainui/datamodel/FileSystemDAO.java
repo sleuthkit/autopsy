@@ -98,6 +98,25 @@ public class FileSystemDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(FileSystemDAO.class.getName());
 
+    private static final Comparator<FileSystemTreeItem> TREE_ITEM_COMPARATOR = (fs1, fs2) -> {
+
+        // ordering taken from SELECT_FILES_BY_PARENT in SleuthkitCase
+        if ((fs1.getMetaType() != null) && (fs2.getMetaType() != null)
+                && (fs1.getMetaType().getValue() != fs2.getMetaType().getValue())) {
+            return -Short.compare(fs1.getMetaType().getValue(), fs2.getMetaType().getValue());
+        }
+
+        // The case where both meta types are null will fall through to the name comparison.
+        if (fs1.getMetaType() == null) {
+            if (fs2.getMetaType() != null) {
+                return -1;
+            }
+        } else if (fs2.getMetaType() != null) {
+            return 1;
+        }
+        return fs1.getDisplayName().compareToIgnoreCase(fs2.getDisplayName());
+    };
+
     private static final Set<String> HOST_LEVEL_EVTS = ImmutableSet.of(
             Case.Events.DATA_SOURCE_ADDED.toString(),
             // this should trigger the case to be reopened
@@ -562,6 +581,12 @@ public class FileSystemDAO extends AbstractDAO {
                 + "          WHERE p.obj_id = o.obj_id)\n"
                 + "        ELSE NULL\n"
                 + "      END) AS name\n"
+                + "      ,(CASE\n"
+                + "        WHEN o.type = 4 THEN \n"
+                + "          (SELECT f.meta_type FROM tsk_files f WHERE o.obj_id = f.obj_id LIMIT 1)\n"
+                + "        ELSE\n"
+                + "          NULL\n"
+                + "        END) AS meta_type"
                 + "      -- content is visible if it is an image, a pool, a volume, or a file under certain situations\n"
                 + "      ,(CASE \n"
                 + "        WHEN o.type IN (" + TskData.ObjectType.IMG.getObjectType() + ", " + TskData.ObjectType.POOL.getObjectType() + ", " + TskData.ObjectType.VOL.getObjectType() + ") THEN 1\n"
@@ -598,6 +623,7 @@ public class FileSystemDAO extends AbstractDAO {
                 + "  ,query.object_type\n"
                 + "  ,query.file_type\n"
                 + "  ,query.has_tree_children\n"
+                + "  ,query.meta_type\n"
                 + "FROM (\n"
                 + "  SELECT \n"
                 + "    c.* \n"
@@ -703,14 +729,19 @@ public class FileSystemDAO extends AbstractDAO {
                 + "                WHEN f.dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() + " THEN " + TreeFileType.UNALLOC_FILE.getId() + "\n"
                 + "                ELSE " + TreeFileType.FILE.getId() + " \n"
                 + "              END)\n"
+                + "            WHEN f.type IN (" + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
+                + ", " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
+                + ", " + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.getFileType() + ") THEN " + TreeFileType.UNALLOC_FILE.getId() + "\n"
                 + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType() + " THEN " + TreeFileType.VIRTUAL_DIRECTORY.getId() + "\n"
                 + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR.getFileType() + " THEN " + TreeFileType.LOCAL_DIRECTORY.getId() + "\n"
                 + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType() + " THEN " + TreeFileType.CARVED_FILE.getId() + "\n"
-                // not needed for tree directories
-                // + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + " OR f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType() + " OR f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.getFileType() + " THEN " + TreeFileType.LAYOUT_FILE.getId() + "\n"
-                // + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.getFileType() + " THEN " + TreeFileType.DERIVED.getId() + "\n"
-                // + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.getFileType() + " THEN " + TreeFileType.LOCAL_FILE.getId() + "\n"
-                // + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType() + " THEN " + TreeFileType.SLACK.getId() + "\n"
+                + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.getFileType() + " THEN " + TreeFileType.LOCAL_FILE.getId() + "\n"
+                + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.getFileType() + " THEN (\n"
+                + "              CASE\n"
+                + "                WHEN f.meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue() + " THEN " + TreeFileType.DERIVED_DIRECTORY.getId() + "\n"
+                + "                ELSE " + TreeFileType.DERIVED_FILE.getId() + "\n"
+                + "              END)\n"
+                + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType() + " THEN " + TreeFileType.SLACK_FILE.getId() + "\n"
                 + "            ELSE " + TreeFileType.UNKNOWN.getId() + "\n"
                 + "          END)\n"
                 + "        FROM tsk_files f\n"
@@ -739,12 +770,15 @@ public class FileSystemDAO extends AbstractDAO {
                         transparentParents.add(rs.getLong("obj_id"));
                         //}
                     } else {
+                        short metaTypeNum = rs.getShort("meta_type");
+                        TSK_FS_META_TYPE_ENUM metaType = rs.wasNull() ? null : TSK_FS_META_TYPE_ENUM.valueOf(metaTypeNum);
+
                         treeItems.add(new FileSystemTreeItem(
                                 rs.getLong("obj_id"),
                                 rs.getString("name"),
                                 (fetchCount ? TreeDisplayCount.getDeterminate(rs.getLong("child_count")) : TreeDisplayCount.NOT_SHOWN),
                                 TreeFileType.valueOf(rs.getShort("file_type")),
-                                null, // GVDTODO: TSK_FS_META_TYPE_ENUM
+                                metaType,
                                 rs.getByte("has_tree_children") < 1
                         ));
                     }
@@ -763,13 +797,17 @@ public class FileSystemDAO extends AbstractDAO {
 
     private List<FileSystemTreeItem> fetchTreeContent(String whereQuery, boolean fetchCount) throws NoCurrentCaseException, TskCoreException {
         List<FileSystemTreeItem> toRet = runTreeCountsQuery(whereQuery, fetchCount, UserPreferences.hideKnownFilesInDataSourcesTree(), UserPreferences.hideSlackFilesInDataSourcesTree());
-        // GVDTODO sort
+        toRet.sort(TREE_ITEM_COMPARATOR);
         return toRet;
     }
 
     private TreeFileType getContentType(Content content) {
         // GVDTODO handle
         return null;
+    }
+
+    public static Comparator<FileSystemTreeItem> getTreeItemComparator() {
+        return TREE_ITEM_COMPARATOR;
     }
 
     /**
@@ -921,10 +959,14 @@ public class FileSystemDAO extends AbstractDAO {
         UNALLOC_DIRECTORY(6),
         LOCAL_DIRECTORY(7),
         VIRTUAL_DIRECTORY(8),
-        FILE(9),
-        UNALLOC_FILE(10),
-        CARVED_FILE(11),
-        UNKNOWN(12);
+        DERIVED_DIRECTORY(9),
+        FILE(10),
+        LOCAL_FILE(11),
+        UNALLOC_FILE(12),
+        CARVED_FILE(13),
+        DERIVED_FILE(14),
+        SLACK_FILE(15),
+        UNKNOWN(16);
 
         private static final Map<Short, TreeFileType> MAPPING = Stream.of(TreeFileType.values())
                 .collect(Collectors.toMap(tft -> tft.getId(), tft -> tft));
