@@ -35,6 +35,7 @@ AbstractContentNode.valueLoading=value loading
 # {0} - significanceDisplayName
 AbstractContentNode_getScorePropertyAndDescription_description=Has an {0} analysis result score
 AbstractFsContentNode.noDesc.text=no description
+AnalysisResult_Collapse_All_Name=Collapse All
 AnalysisResults_name=Analysis Results
 AttachmentNode.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E
 AttachmentNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash
@@ -97,6 +98,7 @@ BlackboardArtifactNode_getViewSrcContentAction_type_DataArtifact=Data Artifact
 BlackboardArtifactNode_getViewSrcContentAction_type_File=File
 BlackboardArtifactNode_getViewSrcContentAction_type_OSAccount=OS Account
 BlackboardArtifactNode_getViewSrcContentAction_type_unknown=Item
+DataArtifacts_Collapse_All_Name=Collapse All
 DataArtifacts_name=Data Artifacts
 DataSourcesHostsNode_name=Data Sources
 DeleteReportAction.showConfirmDialog.errorMsg=An error occurred while deleting the reports.

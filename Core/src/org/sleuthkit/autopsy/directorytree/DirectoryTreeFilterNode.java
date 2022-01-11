@@ -166,7 +166,9 @@ class DirectoryTreeFilterNode extends FilterNode {
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
         actions.addAll(Arrays.asList(getNodeActions()));
-        actions.add(collapseAllAction);
+        if(!this.isLeaf()) {
+            actions.add(collapseAllAction);
+        }
         return actions.toArray(new Action[actions.size()]);
     }
 

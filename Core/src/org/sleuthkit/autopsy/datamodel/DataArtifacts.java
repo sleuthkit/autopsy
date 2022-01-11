@@ -18,17 +18,20 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.CollapseAction;
 import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeFactory;
 
 /**
  * Analysis Results node support.
  */
 @NbBundle.Messages({
-    "DataArtifacts_name=Data Artifacts",})
+    "DataArtifacts_name=Data Artifacts",
+    "DataArtifacts_Collapse_All_Name=Collapse All"})
 public class DataArtifacts {
 
     private static final Logger logger = Logger.getLogger(DataArtifacts.class.getName());
@@ -71,6 +74,13 @@ public class DataArtifacts {
 
         public Node clone() {
             return new RootNode(this.filteringDSObjId);
+        }
+        
+        @Override
+        public Action[] getActions(boolean context) {
+            Action[] actions = new Action[1];
+            actions[0] = new CollapseAction(Bundle.DataArtifacts_Collapse_All_Name());
+            return actions;
         }
     }
 

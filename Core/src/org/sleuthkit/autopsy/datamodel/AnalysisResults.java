@@ -18,16 +18,19 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.directorytree.CollapseAction;
 import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory;
 
 /**
  * Analysis Results node support.
  */
 @NbBundle.Messages({
-    "AnalysisResults_name=Analysis Results",})
+    "AnalysisResults_name=Analysis Results",
+    "AnalysisResult_Collapse_All_Name=Collapse All"})
 public class AnalysisResults {
 
     /**
@@ -38,7 +41,7 @@ public class AnalysisResults {
     public static String getName() {
         return Bundle.AnalysisResults_name();
     }
-
+       
     /**
      * Parent node of all analysis results.
      */
@@ -69,6 +72,13 @@ public class AnalysisResults {
 
         public Node clone() {
             return new AnalysisResults.RootNode(this.filteringDSObjId);
+        }
+        
+        @Override
+        public Action[] getActions(boolean context) {
+            Action[] actions = new Action[1];
+            actions[0] = new CollapseAction(Bundle.AnalysisResult_Collapse_All_Name());
+            return actions;
         }
     }
 

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -31,6 +32,7 @@ import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultTableSearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -132,5 +134,15 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
             return Optional.of(tags);
         }
         return Optional.empty();
+    }
+    
+    @Override
+    protected boolean shouldUpdateSCOColumns(long eventObjId) {
+        try {
+            return eventObjId == getRowDTO().getArtifact().getParent().getId();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to update comment icon, failed to get parent for artifact id = " + getRowDTO().getArtifact().getId(), ex);
+        }
+        return false;
     }
 }

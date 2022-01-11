@@ -130,6 +130,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         buttonBarPanel.setLayout(new WrapLayout());
     }
     
+    @Override
     public void setPagingControls(DataResultPanel.PagingControls pagingControls) {
         this.pagingControls = pagingControls;
     }
@@ -461,6 +462,12 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     @Override
     public void setNode(Node givenNode, SearchResultsDTO searchResults) {
+        
+        // enable paging controls (they could have been disabled by different viewer)
+        if (pagingControls != null) {
+            pagingControls.setPageControlsEnabled(true);
+        }
+        
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (selectionListener == null) {
             this.getExplorerManager().addPropertyChangeListener(new NodeSelectionListener());

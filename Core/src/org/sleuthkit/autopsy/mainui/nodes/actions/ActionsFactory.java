@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
 import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
+import org.sleuthkit.autopsy.directorytree.CollapseAction;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
@@ -78,7 +79,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class ActionsFactory {
     
+    @Messages({
+        "ActionsFactory_Collapse_All_Name=Collapse All"
+    })
+    
     private static final Logger logger = Logger.getLogger(ActionsFactory.class.getName());
+    private static final Action collapseAllAction = new CollapseAction(Bundle.ActionsFactory_Collapse_All_Name());
 
     // private constructor for utility class.
     private ActionsFactory() {}
@@ -171,6 +177,12 @@ public final class ActionsFactory {
 
         // Add the properties menu item to the bottom.
         actionList.add(SystemAction.get(PropertiesAction.class));
+        
+        
+        if(actionContext.supportsCollapseAll()) {
+            actionList.add(null);
+            actionList.add(collapseAllAction);
+        }
 
         Action[] actions = new Action[actionList.size()];
         actionList.toArray(actions);
@@ -483,6 +495,10 @@ public final class ActionsFactory {
 
             if(optional.isPresent()) {
                 if (optional.get() instanceof AbstractFile) {
+                    if(context.supportsFileSearchAction()) {
+                        group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
+                    }
+                    
                     group.add(new RunIngestModulesAction((AbstractFile)optional.get()));
                 } else {
                     logger.log(Level.WARNING, "Can not create RunIngestModulesAction on non-AbstractFile content with ID " + optional.get().getId());
