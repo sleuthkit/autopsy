@@ -735,13 +735,13 @@ public class FileSystemDAO extends AbstractDAO {
                 + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType() + " THEN " + TreeFileType.VIRTUAL_DIRECTORY.getId() + "\n"
                 + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR.getFileType() + " THEN " + TreeFileType.LOCAL_DIRECTORY.getId() + "\n"
                 + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType() + " THEN " + TreeFileType.CARVED_FILE.getId() + "\n"
-                + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.getFileType() + " THEN " + TreeFileType.LOCAL_FILE.getId() + "\n"
+                + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.getFileType() + " THEN " + TreeFileType.FILE.getId() + "\n"
                 + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.getFileType() + " THEN (\n"
                 + "              CASE\n"
-                + "                WHEN f.meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue() + " THEN " + TreeFileType.DERIVED_DIRECTORY.getId() + "\n"
-                + "                ELSE " + TreeFileType.DERIVED_FILE.getId() + "\n"
+                + "                WHEN f.meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue() + " THEN " + TreeFileType.DIRECTORY.getId() + "\n"
+                + "                ELSE " + TreeFileType.FILE.getId() + "\n"
                 + "              END)\n"
-                + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType() + " THEN " + TreeFileType.SLACK_FILE.getId() + "\n"
+                + "            WHEN f.type = " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType() + " THEN " + TreeFileType.FILE.getId() + "\n"
                 + "            ELSE " + TreeFileType.UNKNOWN.getId() + "\n"
                 + "          END)\n"
                 + "        FROM tsk_files f\n"
@@ -800,10 +800,41 @@ public class FileSystemDAO extends AbstractDAO {
         toRet.sort(TREE_ITEM_COMPARATOR);
         return toRet;
     }
-
+    
     private TreeFileType getContentType(Content content) {
-        // GVDTODO handle
-        return null;
+        if (content instanceof Image) {
+            return TreeFileType.IMAGE;
+        } else if (content instanceof Volume) {
+            return TreeFileType.VOLUME;
+        } else if (content instanceof Pool) {
+            return TreeFileType.POOL;
+        } else if (content instanceof LocalFilesDataSource) {
+            return TreeFileType.LOCAL_FILES_DATA_SOURCE;
+        } else if (content instanceof LocalDirectory) {
+            return TreeFileType.LOCAL_DIRECTORY;
+        } else if (content instanceof VirtualDirectory) {
+            return TreeFileType.VIRTUAL_DIRECTORY;
+        } else if (content instanceof Volume) {
+            return TreeFileType.VOLUME;
+        } else if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile) content;
+            boolean isUnalloc = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
+            boolean isCarved = isUnalloc && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED);
+            
+            if (file.isDir()) {
+                return isUnalloc ? TreeFileType.UNALLOC_DIRECTORY : TreeFileType.DIRECTORY;
+            } else {
+                if (isCarved) {
+                    return TreeFileType.CARVED_FILE;
+                } else if (isUnalloc) {
+                    return TreeFileType.UNALLOC_FILE;
+                } else {
+                    return TreeFileType.FILE;    
+                }
+            }
+        } else {
+            return TreeFileType.UNKNOWN;
+        }
     }
 
     public static Comparator<FileSystemTreeItem> getTreeItemComparator() {
@@ -949,7 +980,7 @@ public class FileSystemDAO extends AbstractDAO {
         }
 
     }
-
+    
     public enum TreeFileType {
         IMAGE(1),
         LOCAL_FILES_DATA_SOURCE(2),
@@ -959,14 +990,10 @@ public class FileSystemDAO extends AbstractDAO {
         UNALLOC_DIRECTORY(6),
         LOCAL_DIRECTORY(7),
         VIRTUAL_DIRECTORY(8),
-        DERIVED_DIRECTORY(9),
-        FILE(10),
-        LOCAL_FILE(11),
-        UNALLOC_FILE(12),
-        CARVED_FILE(13),
-        DERIVED_FILE(14),
-        SLACK_FILE(15),
-        UNKNOWN(16);
+        FILE(9),
+        UNALLOC_FILE(10),
+        CARVED_FILE(11),
+        UNKNOWN(12);
 
         private static final Map<Short, TreeFileType> MAPPING = Stream.of(TreeFileType.values())
                 .collect(Collectors.toMap(tft -> tft.getId(), tft -> tft));

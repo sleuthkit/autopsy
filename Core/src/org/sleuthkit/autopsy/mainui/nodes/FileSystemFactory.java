@@ -27,9 +27,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
 import javax.swing.Action;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -117,13 +115,9 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         long objId = rowData.getSearchParams().getContentObjectId();
         switch (contentType) {
             case DIRECTORY:
-            case DERIVED_DIRECTORY:
             case UNALLOC_DIRECTORY:
                 return new DirectoryTreeNode(objId, TreeFileType.UNALLOC_DIRECTORY.equals(contentType), rowData);
-            case LOCAL_FILE:
             case FILE:
-            case DERIVED_FILE:
-            case SLACK_FILE:
             case UNALLOC_FILE:
             case CARVED_FILE:
                 return new FileTreeNode(objId, UNALLOC_FILE.equals(contentType), CARVED_FILE.equals(contentType), FilenameUtils.getExtension(rowData.getDisplayName()), rowData);
