@@ -29,6 +29,9 @@
         <dependency conf="autopsy_core->*" org="commons-lang" name="commons-lang" rev="2.6"/> 
         <dependency conf="autopsy_core->*" org="commons-logging" name="commons-logging" rev="1.1.2"/>
         <dependency conf="autopsy_core->*" org="commons-io" name="commons-io" rev="2.5"/>
+		<!-- Prevent log4j 2.17.1 from bringing in its many optional dependencies -->
+		<dependency conf="autopsy_core->*" org="org.osgi" name="osgi.core" rev="8.0.0"/>
+		<dependency conf="autopsy_core->*" org="org.apache.logging.log4j" name="log4j-api" rev="2.17.1" transitive="false"/>
         <dependency conf="autopsy_core->*" org="org.apache.logging.log4j" name="log4j-core" rev="2.17.1" transitive="false"/>
         <!-- <dependency conf="autopsy_core->*" org="org.jdom" name="jdom" rev="1.1.3"/> -->
         <dependency conf="autopsy_core->*" org="org.apache.poi" name="poi-excelant" rev="4.0.1"/>
