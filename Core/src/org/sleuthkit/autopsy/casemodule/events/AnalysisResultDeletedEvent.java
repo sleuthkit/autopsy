@@ -16,17 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mainui.datamodel.events;
+package org.sleuthkit.autopsy.casemodule.events;
 
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import java.util.List;
+import org.sleuthkit.autopsy.casemodule.Case;
 
-/**
- * An event for an artifact added or changed of a particular type possibly for a
- * particular data source.
- */
-public class AnalysisResultEvent extends BlackboardArtifactEvent {
+public class AnalysisResultDeletedEvent extends TskDataModelObjectsDeletedEvent{
 
-    public AnalysisResultEvent(BlackboardArtifact.Type artifactType, long dataSourceId) {
-        super(artifactType, dataSourceId);
+    private static final long serialVersionUID = 1L;
+    
+    public AnalysisResultDeletedEvent(List<Long> analysisResultIds) {
+        super(Case.Events.ANALYSIS_RESULT_DELETED.name(), analysisResultIds);
     }
 }

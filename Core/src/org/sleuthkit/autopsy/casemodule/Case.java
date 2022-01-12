@@ -77,6 +77,7 @@ import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.datasourcesummary.ui.DataSourceSummaryAction;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
+import org.sleuthkit.autopsy.casemodule.events.AnalysisResultDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
@@ -514,7 +515,9 @@ public class Case {
         /**
          * One or more TagSets have been removed.
          */
-        TAG_SETS_DELETED;
+        TAG_SETS_DELETED,
+        
+        ANALYSIS_RESULT_DELETED;
 
     };
 
@@ -635,17 +638,17 @@ public class Case {
         }
 
         @Subscribe
-        public void publisHostsRemovedFromPersonEvent(TskEvent.HostsRemovedFromPersonTskEvent event) {
+        public void publishHostsRemovedFromPersonEvent(TskEvent.HostsRemovedFromPersonTskEvent event) {
             eventPublisher.publish(new HostsRemovedFromPersonEvent(event.getPerson(), event.getHostIds()));
         }
         
         @Subscribe
-        public void publicTagNamesAdded(TskEvent.TagNamesAddedTskEvent event) {
+        public void publishTagNamesAdded(TskEvent.TagNamesAddedTskEvent event) {
             eventPublisher.publish(new TagNamesAddedEvent(event.getTagNames()));
         }
 
         @Subscribe
-        public void publicTagNamesUpdated(TskEvent.TagNamesUpdatedTskEvent event) {
+        public void publishTagNamesUpdated(TskEvent.TagNamesUpdatedTskEvent event) {
             eventPublisher.publish(new TagNamesUpdatedEvent(event.getTagNames()));
         }
 
@@ -655,13 +658,18 @@ public class Case {
         }
 
         @Subscribe
-        public void publicTagSetsAdded(TskEvent.TagSetsAddedTskEvent event) {
+        public void publishTagSetsAdded(TskEvent.TagSetsAddedTskEvent event) {
             eventPublisher.publish(new TagSetsAddedEvent(event.getTagSets()));
         }
 
         @Subscribe
-        public void publicTagSetsDeleted(TskEvent.TagSetsDeletedTskEvent event) {
+        public void publishTagSetsDeleted(TskEvent.TagSetsDeletedTskEvent event) {
             eventPublisher.publish(new TagSetsDeletedEvent(event.getTagSetIds()));
+        }
+        
+        @Subscribe
+        public void publishAnalysisResultDeleted(TskEvent.AnalysisResultsDeletedTskEvent event) {
+            eventPublisher.publish(new AnalysisResultDeletedEvent(event.getAnalysisResultObjectIds()));
         }
     }
 

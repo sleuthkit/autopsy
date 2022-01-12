@@ -18,15 +18,24 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import java.util.List;
 
 /**
- * An event for an artifact added or changed of a particular type possibly for a
- * particular data source.
+ * An event for the deletion of an analysis result.
  */
-public class AnalysisResultEvent extends BlackboardArtifactEvent {
+public class DeleteAnalysisResultEvent implements DAOEvent {
 
-    public AnalysisResultEvent(BlackboardArtifact.Type artifactType, long dataSourceId) {
-        super(artifactType, dataSourceId);
+    private final List<Long> deletedAnalysisResultIds;
+    
+    private final DAOEvent.Type type;
+    
+    public DeleteAnalysisResultEvent(DAOEvent.Type type, List<Long> deletedIds) {
+        deletedAnalysisResultIds = deletedIds;
+        this.type = type;
+    }
+    
+    @Override
+    public DAOEvent.Type getType() {
+        return type;
     }
 }
