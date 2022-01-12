@@ -20,14 +20,15 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
-import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.filesearch.FileSearchAction;
 
 /**
  * The “File Search by Attributes” action for data sources in the tree.
  */
-public class FileSearchAction extends AbstractAction {
+public class FileSearchTreeAction extends AbstractAction {
 
     private final long dataSourceId;
+    private FileSearchAction searcher; 
 
     /**
      * Main constructor.
@@ -36,14 +37,17 @@ public class FileSearchAction extends AbstractAction {
      * @param dataSourceID The data source id of the item that is selected in
      *                     the tree.
      */
-    public FileSearchAction(String title, long dataSourceID) {
+    public FileSearchTreeAction(String title, long dataSourceID) {
         super(title);
         dataSourceId = dataSourceID;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        FileSearchProvider searcher = Lookup.getDefault().lookup(FileSearchProvider.class);
+        if(searcher == null) {
+            searcher = FileSearchAction.getDefault();
+        }
+        
         searcher.showDialog(dataSourceId);
     }
 

@@ -25,16 +25,16 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
+import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 
-final class FileSearchAction extends CallableSystemAction implements FileSearchProvider {
+final public class FileSearchAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
     private static FileSearchAction instance = null;
     private static FileSearchDialog searchDialog;
     private static Long selectedDataSourceId;
 
-    FileSearchAction() {
+    private FileSearchAction() {
         super();
         setEnabled(Case.isCaseOpen());
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
@@ -49,7 +49,7 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
 
     public static FileSearchAction getDefault() {
         if (instance == null) {
-            instance = new FileSearchAction();
+            instance = CallableSystemAction.get(FileSearchAction.class);
         }
         return instance;
     }
@@ -89,15 +89,12 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
         return false;
     }
 
-    @Override
     public void showDialog(Long dataSourceId) {
         selectedDataSourceId = dataSourceId;
         performAction();
 
     }
 
-    @Override
-    @Deprecated
     public void showDialog() {
         showDialog(null);
     }
