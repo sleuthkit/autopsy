@@ -761,6 +761,13 @@ public class FileSystemDAO extends AbstractDAO {
         boolean hideKnown = UserPreferences.hideKnownFilesInDataSourcesTree();
         boolean hideSlack = UserPreferences.hideSlackFilesInDataSourcesTree();
 
+        Set<Long> affectedContentIds = this.treeCounts.getEnqueued().stream()
+                .filter(evt -> evt instanceof FileSystemTreeEvent)
+                .map(evt -> ((FileSystemTreeEvent) evt).getParentContentId())
+                .filter(contentId -> contentId != null)
+                .collect(Collectors.toSet());
+        
+        
         List<FileSystemTreeItem> toRet = new ArrayList<>();
 
         for (TreeItemRecord record : this.treeItemCache.get(whereQuery, () -> fetchRecords(whereQuery, hideKnown, hideSlack))) {
@@ -786,11 +793,20 @@ public class FileSystemDAO extends AbstractDAO {
                     break;
                 }
             }
+            
+            TreeDisplayCount displayCount;
+            if (!fetchCount) {
+                displayCount = TreeDisplayCount.NOT_SHOWN;
+            } else if (affectedContentIds.contains(record.getObjId())) {
+                displayCount = TreeDisplayCount.INDETERMINATE;
+            } else {
+                displayCount = TreeDisplayCount.getDeterminate(grandChildren.size());
+            }
 
             toRet.add(new FileSystemTreeItem(
                     record.getObjId(),
                     record.getName(),
-                    fetchCount ? TreeDisplayCount.getDeterminate(grandChildren.size()) : TreeDisplayCount.NOT_SHOWN,
+                    displayCount,
                     record.getTreeType(),
                     record.getMetaType(),
                     isLeaf

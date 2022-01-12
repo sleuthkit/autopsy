@@ -49,13 +49,14 @@ import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.CARVED_FILE;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.DELETED_FILE;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.DELETED_FOLDER;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.FOLDER;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
-import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -140,13 +141,25 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
     }
 
     @Override
+    protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+        // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
+        for (DAOEvent evt : aggEvt.getEvents()) {
+            if (evt instanceof FileSystemTreeEvent && ((FileSystemTreeEvent) evt).getItemRecord().getSearchParams().getContentObjectId() == null) {
+                super.update();
+                return;
+            }
+        }
+
+        super.handleDAOAggregateEvent(aggEvt);
+    }
+
+    @Override
     protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
         if (treeEvt instanceof FileSystemTreeEvent) {
             FileSystemTreeEvent fsTreeEvent = (FileSystemTreeEvent) treeEvt;
             // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
-            if (fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId() == null
-                    || (Objects.equals(this.host, fsTreeEvent.getParentHost())
-                    && Objects.equals(this.contentId, fsTreeEvent.getParentContentId()))) {
+            if (Objects.equals(this.host, fsTreeEvent.getParentHost())
+                    && Objects.equals(this.contentId, fsTreeEvent.getParentContentId())) {
 
                 return fsTreeEvent.getItemRecord();
             }
@@ -209,13 +222,23 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof FileSystemTreeEvent && ((FileSystemTreeEvent) evt).getItemRecord().getSearchParams().getContentObjectId() == null) {
+                    super.update();
+                    return;
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
+        }
+
+        @Override
         protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
             if (treeEvt instanceof FileSystemTreeEvent) {
                 FileSystemTreeEvent fsTreeEvent = (FileSystemTreeEvent) treeEvt;
-                // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
-                if (fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId() == null
-                        || Objects.equals(fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId(), dataSourceId)) {
-
+                if (Objects.equals(fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId(), dataSourceId)) {
                     return fsTreeEvent.getItemRecord();
                 }
             }
@@ -245,7 +268,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         protected static Children createChildrenForContent(TreeItemDTO<? extends FileSystemContentSearchParam> treeItem) {
-            if ((treeItem instanceof FileSystemTreeItem && ((FileSystemTreeItem) treeItem).isLeaf() == true)) {
+            if (treeItem instanceof FileSystemTreeItem && ((FileSystemTreeItem) treeItem).isLeaf() != null && ((FileSystemTreeItem) treeItem).isLeaf()) {
                 return Children.LEAF;
             } else {
                 return Children.create(new FileSystemFactory(treeItem.getSearchParams().getContentObjectId()), true);
@@ -342,8 +365,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         public boolean supportsSourceContentViewerActions() {
             return true;
         }
-        
-        @Override 
+
+        @Override
         public boolean supportsFileSearchAction() {
             return true;
         }
@@ -483,8 +506,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         public Optional<Long> getContentForRunIngestionModuleAction() {
             return Optional.of(objId);
         }
-        
-        @Override 
+
+        @Override
         public boolean supportsFileSearchAction() {
             return true;
         }
@@ -540,8 +563,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         public Node clone() {
             return new VirtualDirectoryTreeNode(getObjId(), getItemData());
         }
-        
-        @Override 
+
+        @Override
         public boolean supportsFileSearchAction() {
             return true;
         }
