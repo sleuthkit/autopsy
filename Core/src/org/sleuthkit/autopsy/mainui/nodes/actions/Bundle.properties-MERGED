@@ -24,3 +24,4 @@ ArtifactFactory_getViewSrcContentAction_displayName=View Source {0} in Directory
 # {0} - contentType
 ArtifactFactory_getViewSrcContentAction_displayName2=View Source {0}
 DeleteAnalysisResultAction_label=Delete Analysis Result
+DeleteKeywordSetAction_label=Delete Keyword Search Results
