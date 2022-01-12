@@ -57,7 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * RootContentChildren class. RootContentChildren is a NetBeans child node
  * factory built on top of the NetBeans Children.Keys class.
  */
-public class Tags implements AutopsyVisitableItem {
+public class Tags {
     // Creation of a RootNode object corresponding to a Tags object is done
     // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren
     // override of Children.Keys<T>.createNodes().
@@ -91,10 +91,7 @@ public class Tags implements AutopsyVisitableItem {
         return this.filteringDSObjId;
     }
 
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
-    }
+
 
     /**
      * This class largely does nothing except act as a top-level object that the

@@ -68,8 +68,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class CommAccountsDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(CommAccountsDAO.class.getName());
-    private final Cache<SearchParams<CommAccountsSearchParams>, SearchResultsDTO> searchParamsCache = 
-            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<CommAccountsSearchParams>, SearchResultsDTO> searchParamsCache
+            = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<CommAccountsEvent> accountCounts = new TreeCounts<>();
 
     private static CommAccountsDAO instance = null;
@@ -179,20 +179,39 @@ public class CommAccountsDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<CommAccountsSearchParams> getAccountsCounts(Long dataSourceId) throws ExecutionException {
-        String query = "res.account_type AS account_type, MIN(res.account_display_name) AS account_display_name, COUNT(*) AS count\n"
+        String innerQuery;
+        if (dataSourceId != null) {
+            innerQuery
+                    = "  SELECT \n"
+                    + "    blackboard_attributes.value_text AS account_type_id,\n"
+                    + "    COUNT(*) AS count\n"
+                    + "  FROM blackboard_artifacts\n"
+                    + "  LEFT JOIN blackboard_attributes \n"
+                    + "    ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id\n"
+                    + "  WHERE blackboard_attributes.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
+                    + "  AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
+                    + "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId + " \n"
+                    + "  GROUP BY blackboard_attributes.value_text";
+        } else {
+            innerQuery
+                    = "  SELECT \n"
+                    + "    blackboard_attributes.value_text AS account_type_id,\n"
+                    + "    COUNT(*) AS count\n"
+                    + "  FROM blackboard_attributes \n"
+                    + "  WHERE blackboard_attributes.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
+                    + "  AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
+                    + "  GROUP BY blackboard_attributes.value_text";
+        }
+
+        String query = "res.count AS count,\n"
+                + "  acc.display_name AS account_display_name,\n"
+                + "  acc.type_name AS account_type\n"
                 + "FROM (\n"
-                + "  SELECT MIN(account_types.type_name) AS account_type, MIN(account_types.display_name) AS account_display_name\n"
-                + "  FROM blackboard_artifacts\n"
-                + "  LEFT JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id\n"
-                + "  LEFT JOIN account_types ON blackboard_attributes.value_text = account_types.type_name\n"
-                + "  WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID() + "\n"
-                + "  AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.Type.TSK_ACCOUNT_TYPE.getTypeID() + "\n"
-                + (dataSourceId != null && dataSourceId > 0 ? "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId + " " : " ") + "\n"
-                + "  -- group by artifact_id to ensure only one account type per artifact\n"
-                + "  GROUP BY blackboard_artifacts.artifact_id\n"
+                + innerQuery + "\n"
                 + ") res\n"
-                + "GROUP BY res.account_type\n"
-                + "ORDER BY MIN(res.account_display_name)";
+                + "LEFT JOIN account_types acc\n"
+                + "  ON res.account_type_id = acc.type_name\n"
+                + "ORDER BY acc.display_name";
 
         List<TreeResultsDTO.TreeItemDTO<CommAccountsSearchParams>> accountParams = new ArrayList<>();
         try {
@@ -211,7 +230,7 @@ public class CommAccountsDAO extends AbstractDAO {
                         TreeDisplayCount treeDisplayCount = indeterminateTypes.contains(accountType)
                                 ? TreeDisplayCount.INDETERMINATE
                                 : TreeResultsDTO.TreeDisplayCount.getDeterminate(count);
-                        
+
                         accountParams.add(createAccountTreeItem(accountType, dataSourceId, treeDisplayCount));
                     }
                 } catch (SQLException ex) {

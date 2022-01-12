@@ -29,6 +29,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.datasourcesummary.ui.DataSourceSummaryTabbedPane;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer;
+import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -45,6 +46,7 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
     private static final Logger LOGGER = Logger.getLogger(DataSourceSummaryResultViewer.class.getName());
 
     private final String title;
+    private DataResultPanel.PagingControls pagingControls = null;
 
     /**
      * Constructs a tabular result viewer that displays a summary of the
@@ -93,6 +95,11 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
     public boolean isSupported(Node node) {
         return getDataSource(node) != null;
     }
+    
+    @Override
+    public void setPagingControls(DataResultPanel.PagingControls pagingControls) {
+        this.pagingControls = pagingControls;
+    }
 
     /**
      * Returns the datasource attached to the node or null if none can be found.
@@ -116,6 +123,11 @@ public class DataSourceSummaryResultViewer extends AbstractDataResultViewer {
         if (!SwingUtilities.isEventDispatchThread()) {
             LOGGER.log(Level.SEVERE, "Attempting to run setNode() from non-EDT thread.");
             return;
+        }
+        
+        // disable paging controls
+        if (pagingControls != null) {
+            pagingControls.setPageControlsEnabled(false);
         }
 
         DataSource dataSource = getDataSource(node);

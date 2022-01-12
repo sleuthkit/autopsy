@@ -29,5 +29,4 @@ public class AnalysisResultEvent extends BlackboardArtifactEvent {
     public AnalysisResultEvent(BlackboardArtifact.Type artifactType, long dataSourceId) {
         super(artifactType, dataSourceId);
     }
-
 }

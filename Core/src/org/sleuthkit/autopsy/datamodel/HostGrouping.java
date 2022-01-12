@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.Host;
 /**
  * A top level UI grouping of data sources under a host.
  */
-public class HostGrouping implements AutopsyVisitableItem, Comparable<HostGrouping> {
+public class HostGrouping implements Comparable<HostGrouping> {
 
     private final Host host;
 
@@ -42,11 +42,6 @@ public class HostGrouping implements AutopsyVisitableItem, Comparable<HostGroupi
      */
     Host getHost() {
         return host;
-    }
-
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
     }
 
     @Override

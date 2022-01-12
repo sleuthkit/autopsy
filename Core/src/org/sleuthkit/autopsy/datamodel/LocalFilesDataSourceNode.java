@@ -88,11 +88,6 @@ public class LocalFilesDataSourceNode extends VirtualDirectoryNode {
     }
 
     @Override
-    public <T> T accept(ContentNodeVisitor<T> visitor) {
-        return visitor.visit(this);
-    }
-
-    @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> visitor) {
         return visitor.visit(this);
     }

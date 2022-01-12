@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -436,13 +437,18 @@ public class ViewsDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<FileTypeExtensionsSearchParams> getFileExtCounts(Collection<FileExtSearchFilter> filters, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        Map<FileExtSearchFilter, TreeDisplayCount> countsByFilter;
+        List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList;
+        String query = null;
         try {
+            // if exceeded file count threshold, show no counts
             if (this.exceededFileThreshold || getCase().countFilesWhere("1=1") > NODE_COUNT_FILE_TABLE_THRESHOLD) {
                 this.exceededFileThreshold = true;
-                countsByFilter = filters.stream().collect(Collectors.toMap(f -> f, f -> TreeDisplayCount.NOT_SHOWN, (f1, f2) -> f1));
+                treeList = filters.stream()
+                        .map(f -> createExtensionTreeItem(f, dataSourceId, TreeDisplayCount.NOT_SHOWN))
+                        .collect(Collectors.toList());
 
             } else {
+                // determine filters to be marked as indeterminate
                 Set<FileExtSearchFilter> indeterminateFilters = new HashSet<>();
                 for (DAOEvent evt : this.treeCounts.getEnqueued()) {
                     if (evt instanceof FileTypeExtensionsEvent) {
@@ -459,31 +465,45 @@ public class ViewsDAO extends AbstractDAO {
                     }
                 }
 
-                Map<FileExtSearchFilter, String> whereClauses = filters.stream()
-                        .collect(Collectors.toMap(
-                                filter -> filter,
-                                filter -> getFileExtensionClause(filter)));
+                // create selects that provide counts for each filter name; assumes that filter enum names are sql safe.
+                String filterSums = filters.stream()
+                        // no point in getting a count for filters that will not display count
+                        .filter(f -> !indeterminateFilters.contains(f))
+                        // this assumes that filter enum names are safe to use as sql identifiers
+                        .map(f -> MessageFormat.format("\n  SUM(CASE WHEN {0} THEN 1 ELSE 0 END) AS {1}", getFileExtensionClause(f), f.getName()))
+                        .collect(Collectors.joining(","));
 
-                countsByFilter = getFilesCounts(whereClauses, getBaseFileExtensionFilter(), dataSourceId, true).entrySet().stream()
-                        .collect(Collectors.toMap(
-                                e -> e.getKey(),
-                                e -> {
-                                    return indeterminateFilters.contains(e.getKey())
-                                    ? TreeDisplayCount.INDETERMINATE
-                                    : TreeDisplayCount.getDeterminate(e.getValue());
-                                },
-                                (v1, v2) -> v1));
+                query = filterSums
+                        + "\nFROM tsk_files\nWHERE "
+                        + getBaseFileExtensionFilter()
+                        + getDataSourceAndClause(dataSourceId);
+
+                treeList = new ArrayList<>();
+                getCase().getCaseDbAccessManager().select(query, (resultSet) -> {
+                    try {
+                        if (resultSet.next()) {
+                            for (FileExtSearchFilter filter : filters) {
+                                // if filter should be indeterminate, don't bother with count
+                                if (indeterminateFilters.contains(filter)) {
+                                    treeList.add(createExtensionTreeItem(filter, dataSourceId, TreeDisplayCount.INDETERMINATE));
+                                } else {
+                                    // otherwise get the count which should be labeled by the enum name in the sql query
+                                    treeList.add(createExtensionTreeItem(filter, dataSourceId, TreeDisplayCount.getDeterminate(resultSet.getLong(filter.getName()))));
+                                }
+                            }
+                        }
+                    } catch (SQLException ex) {
+                        logger.log(Level.WARNING, "An error occurred while fetching file type counts.", ex);
+                    }
+                });
+
             }
-
-            List<TreeItemDTO<FileTypeExtensionsSearchParams>> treeList = countsByFilter.entrySet().stream()
-                    .map(entry -> createExtensionTreeItem(entry.getKey(), dataSourceId, entry.getValue()))
-                    .sorted((a, b) -> Integer.compare(a.getSearchParams().getFilter().getId(), b.getSearchParams().getFilter().getId()))
-                    .collect(Collectors.toList());
-
-            return new TreeResultsDTO<>(treeList);
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            throw new ExecutionException("An error occurred while fetching file extension counts.", ex);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching file counts with query:\n" + (query == null ? "<null>" : query), ex);
         }
+
+        treeList.sort(Comparator.comparing(item -> item.getSearchParams().getFilter().getId()));
+        return new TreeResultsDTO<>(treeList);
     }
 
     /**

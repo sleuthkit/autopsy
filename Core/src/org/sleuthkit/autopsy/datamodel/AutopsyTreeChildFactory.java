@@ -38,7 +38,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.PersonManager;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -83,13 +82,13 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     };
 
     private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
-    
+
     @Override
     protected void addNotify() {
         super.addNotify();
         Case.addEventTypeSubscriber(EVENTS_OF_INTEREST, weakPcl);
     }
-    
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -137,9 +136,9 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                     nodes = tskCase.getHostManager().getAllHosts().stream()
                             .map(HostGrouping::new)
                             .sorted()
-                            .collect(Collectors.toList());                    
+                            .collect(Collectors.toList());
                 }
-                
+
                 // either way, add in reports node
                 nodes.add(new Reports());
             } else {
@@ -159,7 +158,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to create tree because of an error querying the case database", ex); //NON-NLS
         }
-        
+
         // add all nodes to the netbeans node list
         list.addAll(nodes);
         return true;
@@ -175,16 +174,12 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
      */
     @Override
     protected Node createNodeForKey(Object key) {
-        Node node = null;
-        if (key != null) {
-            if (key instanceof SleuthkitVisitableItem) {
-                node = ((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor());
-            } else if (key instanceof AutopsyVisitableItem) {
-                node = ((AutopsyVisitableItem) key).accept(new RootContentChildren.CreateAutopsyNodeVisitor());
-            } else {
-                logger.log(Level.SEVERE, "Unknown key type: ", key.getClass().getName());
-            }
+        Node node = RootContentChildren.createNode(key);
+
+        if (node == null) {
+            logger.log(Level.SEVERE, "Unknown key type: ", key.getClass().getName());
         }
+
         return node;
     }
 
@@ -194,5 +189,5 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
     public void refreshChildren() {
         refresh(true);
     }
-    
+
 }

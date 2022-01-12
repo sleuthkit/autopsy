@@ -248,7 +248,7 @@ public final class ActionsFactory {
             int selectedFileCount = Utilities.actionsGlobalContext().lookupAll(AbstractFile.class).size();
             if (selectedFileCount == 1) {
                 actionGroup.add(new ExternalViewerAction(Bundle.ActionsFactory_getSrcContentViewerActions_openInExtViewer(), nodeOptional.get()));
-            } else {
+            } else if(selectedFileCount > 1) {
                 actionGroup.add(ExternalViewerShortcutAction.getInstance());
             }
         }
