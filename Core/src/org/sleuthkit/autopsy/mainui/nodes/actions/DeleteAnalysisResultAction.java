@@ -23,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -51,14 +52,25 @@ public class DeleteAnalysisResultAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         Collection<? extends AnalysisResult> selectedResult = Utilities.actionsGlobalContext().lookupAll(AnalysisResult.class);
         
-        for(AnalysisResult result: selectedResult) {
-            try {
-                Case.getCurrentCase().getSleuthkitCase().getBlackboard().deleteAnalysisResult(result);
-                logger.log(Level.INFO, "Deleted Analysis Result id = " + result.getId());
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to delete analysis result id = " + result.getId(), ex);
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                for (AnalysisResult result : selectedResult) {
+                    if (!isCancelled()) {
+                        try {
+                            Case.getCurrentCase().getSleuthkitCase().getBlackboard().deleteAnalysisResult(result);
+                            logger.log(Level.INFO, "Deleted Analysis Result id = " + result.getId());
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Failed to delete analysis result id = " + result.getId(), ex);
+                        }
+                    }
+                }
+                return null;
             }
-        }
+        };
+        
+        worker.execute();
+        
     }
     
 }

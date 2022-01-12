@@ -69,8 +69,7 @@ public class MainDAO extends AbstractDAO {
             Case.Events.OS_ACCOUNTS_UPDATED.toString(),
             Case.Events.OS_ACCOUNTS_DELETED.toString(),
             Case.Events.OS_ACCT_INSTANCES_ADDED.toString(),
-            Case.Events.DATA_SOURCE_ADDED.toString(),
-            Case.Events.ANALYSIS_RESULT_DELETED.toString()
+            Case.Events.DATA_SOURCE_ADDED.toString()
     );
 
     private static final long WATCH_RESOLUTION_MILLIS = 30 * 1000;

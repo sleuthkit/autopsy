@@ -18,13 +18,24 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
+import java.util.List;
+
 /**
  * An event for the deletion of an analysis result.
  */
 public class DeleteAnalysisResultEvent implements DAOEvent {
 
+    private final List<Long> deletedAnalysisResultIds;
+    
+    private final DAOEvent.Type type;
+    
+    public DeleteAnalysisResultEvent(DAOEvent.Type type, List<Long> deletedIds) {
+        deletedAnalysisResultIds = deletedIds;
+        this.type = type;
+    }
+    
     @Override
     public DAOEvent.Type getType() {
-        return DAOEvent.Type.RESULT;
+        return type;
     }
 }

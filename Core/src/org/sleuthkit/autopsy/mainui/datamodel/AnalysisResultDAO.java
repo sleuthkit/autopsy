@@ -47,6 +47,7 @@ import org.openide.util.NbBundle.Messages;
 import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.TskDataModelObjectsDeletedEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DeleteAnalysisResultEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -291,22 +292,30 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     private boolean isAnalysisResultsSetInvalidating(AnalysisResultSetSearchParam key, DAOEvent event) {
+         if(event instanceof DeleteAnalysisResultEvent) {
+            return true;
+        }
+        
         if (!(event instanceof AnalysisResultSetEvent)) {
             return false;
         }
 
         AnalysisResultSetEvent setEvent = (AnalysisResultSetEvent) event;
-        return isAnalysisResultsInvalidating((AnalysisResultSearchParam) key, (AnalysisResultEvent) setEvent)
+        return isAnalysisResultsInvalidating(key, setEvent)
                 && Objects.equals(key.getSetName(), setEvent.getSetName());
     }
 
     private boolean isKeywordHitInvalidating(KeywordHitSearchParam parameters, DAOEvent event) {
+        if(event instanceof DeleteAnalysisResultEvent) {
+            return true;
+        }
+        
         if (!(event instanceof KeywordHitEvent)) {
             return false;
         }
 
         KeywordHitEvent khEvt = (KeywordHitEvent) event;
-        return isAnalysisResultsInvalidating((AnalysisResultSetSearchParam) parameters, (AnalysisResultEvent) khEvt)
+        return isAnalysisResultsInvalidating( parameters, khEvt)
                 && (parameters.getKeyword() == null || Objects.equals(parameters.getKeyword(), khEvt.getMatch()))
                 && (parameters.getRegex() == null || Objects.equals(parameters.getRegex(), khEvt.getSearchString()))
                 && (parameters.getSearchType() == null || Objects.equals(parameters.getSearchType(), khEvt.getSearchType()));
@@ -857,9 +866,13 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     Set<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
         
         if(evt.getPropertyName().equals(Case.Events.ANALYSIS_RESULT_DELETED.toString())) {
-            this.analysisResultCache.invalidateAll();
-
-            return Collections.singleton(new DeleteAnalysisResultEvent());
+            clearCaches();
+            
+            Set<DeleteAnalysisResultEvent> events = new HashSet<>();
+            events.add(new DeleteAnalysisResultEvent( DAOEvent.Type.RESULT, ((TskDataModelObjectsDeletedEvent)evt).getOldValue()));
+            events.add(new DeleteAnalysisResultEvent( DAOEvent.Type.TREE, ((TskDataModelObjectsDeletedEvent)evt).getOldValue()));
+            
+            return events;
         }
         
         // get a grouping of artifacts mapping the artifact type id to data source id.

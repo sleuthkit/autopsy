@@ -36,6 +36,9 @@ import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DeleteAnalysisResultEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -120,6 +123,18 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     public int compare(TreeItemDTO<? extends AnalysisResultSearchParam> o1, TreeItemDTO<? extends AnalysisResultSearchParam> o2) {
         return o1.getSearchParams().getArtifactType().getDisplayName().compareTo(o2.getSearchParams().getArtifactType().getDisplayName());
     }
+    
+    @Override
+    protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+        for (DAOEvent evt : aggEvt.getEvents()) {
+            if (evt instanceof DeleteAnalysisResultEvent && evt.getType() == DAOEvent.Type.TREE) {
+                super.update();
+                return;
+            }
+        }
+
+        super.handleDAOAggregateEvent(aggEvt);
+    }
 
     /**
      * Display name and count of an analysis result type in the tree.
@@ -131,7 +146,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          *
          * @param itemData The data to display.
          */
-        public AnalysisResultTypeTreeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
+        AnalysisResultTypeTreeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
             super(itemData.getSearchParams().getArtifactType().getTypeName(),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData);
@@ -153,7 +168,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          *
          * @param itemData The data to display.
          */
-        public TreeTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData, ChildFactory<?> childFactory) {
+        TreeTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData, ChildFactory<?> childFactory) {
             super(itemData.getSearchParams().getArtifactType().getTypeName(),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
@@ -181,7 +196,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          * @param nullSetName  The name of the set for artifacts with no
          *                     TSK_SET_NAME value. If null, items are omitted.
          */
-        public TreeSetFactory(BlackboardArtifact.Type artifactType, Long dataSourceId, String nullSetName) {
+        TreeSetFactory(BlackboardArtifact.Type artifactType, Long dataSourceId, String nullSetName) {
             this.artifactType = artifactType;
             this.dataSourceId = dataSourceId;
             this.nullSetName = nullSetName;
@@ -221,6 +236,19 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public int compare(TreeItemDTO<? extends AnalysisResultSetSearchParam> o1, TreeItemDTO<? extends AnalysisResultSetSearchParam> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getSetName(), o2.getSearchParams().getSetName());
         }
+        
+        @Override
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof DeleteAnalysisResultEvent && evt.getType() == DAOEvent.Type.TREE) {
+                    super.update();
+                    return;
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
+        }
+
     }
 
     /**
@@ -233,7 +261,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          *
          * @param itemData The data to display.
          */
-        public TreeSetTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
+        TreeSetTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
             super(itemData.getSearchParams().getArtifactType().getTypeName() + "_SET_" + itemData.getSearchParams().getSetName(),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
@@ -294,7 +322,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          *
          * @param setParams The parameters for the set.
          */
-        public KeywordSearchTermFactory(AnalysisResultSetSearchParam setParams) {
+        KeywordSearchTermFactory(AnalysisResultSetSearchParam setParams) {
             this.setParams = setParams;
         }
 
@@ -342,6 +370,18 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public int compare(TreeItemDTO<? extends KeywordSearchTermParams> o1, TreeItemDTO<? extends KeywordSearchTermParams> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getRegex(), o2.getSearchParams().getRegex());
         }
+        
+        @Override
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof DeleteAnalysisResultEvent && evt.getType() == DAOEvent.Type.TREE) {
+                    super.update();
+                    return;
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
+        }
 
     }
 
@@ -355,7 +395,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          *
          * @param itemData The data for the search term.
          */
-        public KeywordSearchTermNode(TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> itemData) {
+        KeywordSearchTermNode(TreeResultsDTO.TreeItemDTO<? extends KeywordSearchTermParams> itemData) {
             super(itemData.getSearchParams().getRegex(),
                     getIconPath(BlackboardArtifact.Type.TSK_KEYWORD_HIT),
                     itemData,
@@ -450,6 +490,18 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         @Override
         public int compare(TreeItemDTO<? extends KeywordHitSearchParam> o1, TreeItemDTO<? extends KeywordHitSearchParam> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getKeyword(), o2.getSearchParams().getKeyword());
+        }
+        
+        @Override
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof DeleteAnalysisResultEvent && evt.getType() == DAOEvent.Type.TREE) {
+                    super.update();
+                    return;
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
         }
     }
 
