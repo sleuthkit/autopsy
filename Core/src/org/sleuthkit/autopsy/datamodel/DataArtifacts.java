@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeFactory;
 @NbBundle.Messages({
     "DataArtifacts_name=Data Artifacts",
     "DataArtifacts_Collapse_All_Name=Collapse All"})
-public class DataArtifacts implements AutopsyVisitableItem {
+public class DataArtifacts {
 
     private static final Logger logger = Logger.getLogger(DataArtifacts.class.getName());
 
@@ -71,7 +71,7 @@ public class DataArtifacts implements AutopsyVisitableItem {
                     DataArtifacts.getName());
             this.filteringDSObjId = filteringDSObjId;
         }
-        
+
         public Node clone() {
             return new RootNode(this.filteringDSObjId);
         }
@@ -100,11 +100,6 @@ public class DataArtifacts implements AutopsyVisitableItem {
      */
     public DataArtifacts(long dsObjId) {
         this.datasourceObjId = dsObjId;
-    }
-
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
     }
 
     /**

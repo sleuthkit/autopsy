@@ -22,9 +22,6 @@ package org.sleuthkit.autopsy.datamodel;
  * Signifies a "Data Sources" node with hosts underneath it, and data sources
  * (and only data sources) underneath that.
  */
-public class DataSourcesByType implements AutopsyVisitableItem {
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
-    }
+public class DataSourcesByType {
+
 }

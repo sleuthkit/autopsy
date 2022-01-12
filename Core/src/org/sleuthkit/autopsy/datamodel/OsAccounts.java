@@ -22,14 +22,12 @@ import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Implements the OS Accounts subnode of Results in the Autopsy tree.
  */
-public final class OsAccounts implements AutopsyVisitableItem {
+public final class OsAccounts {
 
     private static final String LIST_NAME = Bundle.OsAccount_listNode_name();
 
@@ -52,18 +50,13 @@ public final class OsAccounts implements AutopsyVisitableItem {
         this.filteringDSObjId = objId;
     }
 
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
-    }
-
     @Messages({
         "OsAccount_listNode_name=OS Accounts"
     })
     /**
      * The root node of the OS Accounts subtree.
      */
-    public final class OsAccountListNode extends DisplayableItemNode implements SelectionResponder{
+    public final class OsAccountListNode extends DisplayableItemNode implements SelectionResponder {
 
         /**
          * Construct a new OsAccountListNode.

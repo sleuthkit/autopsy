@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory;
 @NbBundle.Messages({
     "AnalysisResults_name=Analysis Results",
     "AnalysisResult_Collapse_All_Name=Collapse All"})
-public class AnalysisResults implements AutopsyVisitableItem {
+public class AnalysisResults {
 
     /**
      * Returns the name of this node that is the key in the children object.
@@ -98,11 +98,6 @@ public class AnalysisResults implements AutopsyVisitableItem {
      */
     public AnalysisResults(long dsObjId) {
         this.datasourceObjId = dsObjId;
-    }
-
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
     }
 
     /**

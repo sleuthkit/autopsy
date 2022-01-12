@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.Person;
 /**
  * A top level UI grouping of hosts under a person.
  */
-public class PersonGrouping implements AutopsyVisitableItem, Comparable<PersonGrouping> {
+public class PersonGrouping implements Comparable<PersonGrouping> {
 
     private final Person person;
 
@@ -43,11 +43,6 @@ public class PersonGrouping implements AutopsyVisitableItem, Comparable<PersonGr
      */
     Person getPerson() {
         return person;
-    }
-
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> visitor) {
-        return visitor.visit(this);
     }
 
     @Override
