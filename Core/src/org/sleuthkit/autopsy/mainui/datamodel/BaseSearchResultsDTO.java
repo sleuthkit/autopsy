@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
+import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Base implementation for a series of results to be displayed in the results viewer.
@@ -32,12 +33,17 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
     private final long totalResultsCount;
     private final long startItem;
     private final String signature;
+    private final DataSource parentDataSource;
 
     public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowDTO> items, String signature) {
         this(typeId, displayName, columns, items, signature, 0, items == null ? 0 : items.size());
     }
 
     public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowDTO> items, String signature, long startItem, long totalResultsCount) {
+        this(typeId, displayName, columns, items, signature, startItem, totalResultsCount, null);
+    }
+    
+    public BaseSearchResultsDTO(String typeId, String displayName, List<ColumnKey> columns, List<RowDTO> items, String signature, long startItem, long totalResultsCount, DataSource parentDataSource) {
         this.typeId = typeId;
         this.displayName = displayName;
         this.columns = columns;
@@ -45,6 +51,7 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
         this.startItem = startItem;
         this.totalResultsCount = totalResultsCount;
         this.signature = signature;
+        this.parentDataSource = parentDataSource;
     }
 
     @Override
@@ -80,5 +87,10 @@ public class BaseSearchResultsDTO implements SearchResultsDTO {
     @Override
     public String getSignature() {
         return signature;
+    }
+    
+    @Override
+    public DataSource getDataSourceParent() {
+        return parentDataSource;
     }
 }

@@ -160,7 +160,7 @@ public class FileSystemDAO extends AbstractDAO {
             contentForTable.addAll(FileSystemColumnUtils.getDisplayableContentForTable(content));
         }
 
-        return fetchContentForTable(cacheKey, contentForTable, parentName);
+        return fetchContentForTable(cacheKey, contentForTable, parentName, parentContent instanceof DataSource ? (DataSource)parentContent : null);
     }
 
     private BaseSearchResultsDTO fetchContentForTableFromHost(SearchParams<FileSystemHostSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -177,7 +177,7 @@ public class FileSystemDAO extends AbstractDAO {
         } else {
             throw new TskCoreException("Error loading host with ID " + objectId);
         }
-        return fetchContentForTable(cacheKey, contentForTable, parentName);
+        return fetchContentForTable(cacheKey, contentForTable, parentName, null);
     }
 
     private BaseSearchResultsDTO fetchHostsForTable(SearchParams<FileSystemPersonSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -220,7 +220,7 @@ public class FileSystemDAO extends AbstractDAO {
     }
 
     private BaseSearchResultsDTO fetchContentForTable(SearchParams<?> cacheKey, List<Content> contentForTable,
-            String parentName) throws NoCurrentCaseException, TskCoreException {
+            String parentName, DataSource parentDataSource) throws NoCurrentCaseException, TskCoreException {
         // Ensure consistent columns for each page by doing this before paging
         List<FileSystemColumnUtils.ContentType> displayableTypes = FileSystemColumnUtils.getDisplayableTypesForContentList(contentForTable);
 
@@ -279,7 +279,7 @@ public class FileSystemDAO extends AbstractDAO {
                         cellValues));
             }
         }
-        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, FILE_SYSTEM_TYPE_ID, cacheKey.getStartItem(), contentForTable.size());
+        return new BaseSearchResultsDTO(FILE_SYSTEM_TYPE_ID, parentName, columnKeys, rows, FILE_SYSTEM_TYPE_ID, cacheKey.getStartItem(), contentForTable.size(), parentDataSource);
     }
 
     /**

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.List;
+import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Interface for all search results that are used to display in the table/DataResultViewer area. 
@@ -45,4 +46,10 @@ public interface SearchResultsDTO {
     
     // Index in the total results that this set/page starts at
     long getStartItem();
+    
+    // Will only return a DataSource if the parent ie the selected node was a
+    // data source. This was added to support the DataSourceSummaryResultViewer.
+    default DataSource getDataSourceParent() {
+        return null;
+    }
 }
