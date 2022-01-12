@@ -578,7 +578,7 @@ public class FileSystemDAO extends AbstractDAO {
                 + "            ELSE 'Unsupported'\n"
                 + "          END) AS name\n"
                 + "        FROM tsk_pool_info p\n"
-                + "        WHERE p.obj_id = c.obj_id)\n"
+                + "        WHERE p.obj_id = o2.obj_id)\n"
                 + "      ELSE NULL\n"
                 + "    END) AS name\n"
                 + "    -- determine icon to display in table based on the content\n"
@@ -594,6 +594,7 @@ public class FileSystemDAO extends AbstractDAO {
                 + "            LEFT JOIN tsk_image_info AS img ON ds.obj_id = img.obj_id\n"
                 + "            WHERE ds.obj_id = o2.obj_id\n"
                 + "          )\n"
+                + "      WHEN o2.object_type = " + TskData.ObjectType.ARTIFACT.getObjectType() + " THEN " + TreeFileType.ARTIFACT.getId() + "\n"
                 + "      WHEN o2.object_type = " + TskData.ObjectType.VOL.getObjectType() + " THEN " + TreeFileType.VOLUME.getId() + "\n"
                 + "      WHEN o2.object_type = " + TskData.ObjectType.POOL.getObjectType() + " THEN " + TreeFileType.POOL.getId() + "\n"
                 + "      WHEN o2.object_type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + " THEN\n"
@@ -636,7 +637,7 @@ public class FileSystemDAO extends AbstractDAO {
                 + "            (CASE \n"
                 + "              WHEN \n"
                 + "                -- ignore . and .. directories\n"
-                + "                (o2.name IS NULL OR o2.name NOT IN ('.', '..')) AND \n"
+                + "                (o2.file_name IS NULL OR o2.file_name NOT IN ('.', '..')) AND \n"
                 + "                -- taken from LocalDirectory.isRoot determining if file is root by seeing if parent is volume system\n"
                 + "                ((o2.file_type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR.getFileType() + " AND (SELECT o3.type FROM tsk_objects o3 WHERE o3.obj_id = o2.par_obj_id) = 1)\n"
                 + "                -- taken from FsContent.isRoot determining if file system root file is this\n"
@@ -763,10 +764,12 @@ public class FileSystemDAO extends AbstractDAO {
         List<FileSystemTreeItem> toRet = new ArrayList<>();
 
         for (TreeItemRecord record : this.treeItemCache.get(whereQuery, () -> fetchRecords(whereQuery, hideKnown, hideSlack))) {
-            if (dotDirs.contains(record.getName()) && dirTypes.contains(record.getTreeType())) {
+            // determine if they are items that are not visible in the tree
+            if ((dotDirs.contains(record.getName()) && dirTypes.contains(record.getTreeType())) || TreeFileType.ARTIFACT.equals(record.getTreeType())) {
                 continue;
             }
 
+            // otherwise, get grand children to determine count and whether or not this child is expandable 
             List<TreeItemRecord> grandChildren = this.treeItemCache.get(getContentParentClause(record.getObjId()),
                     () -> fetchRecords(getContentParentClause(record.getObjId()), hideKnown, hideSlack));
 
@@ -774,6 +777,7 @@ public class FileSystemDAO extends AbstractDAO {
                 continue;
             }
 
+            // this child is expandable in the tree if one of the grandchildren has displayable children
             boolean isLeaf = true;
             for (TreeItemRecord grandChild : grandChildren) {
                 if (!this.treeItemCache.get(getContentParentClause(grandChild.getObjId()),
@@ -1057,7 +1061,8 @@ public class FileSystemDAO extends AbstractDAO {
         FILE(9),
         UNALLOC_FILE(10),
         CARVED_FILE(11),
-        UNKNOWN(12);
+        ARTIFACT(12),
+        UNKNOWN(13);
 
         private static final Map<Short, TreeFileType> MAPPING = Stream.of(TreeFileType.values())
                 .collect(Collectors.toMap(tft -> tft.getId(), tft -> tft));
