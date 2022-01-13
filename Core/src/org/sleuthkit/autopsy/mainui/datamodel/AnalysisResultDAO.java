@@ -631,8 +631,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + "  FROM (\n"
                 + "	-- get pertinent attribute values for artifacts\n"
                 + "    SELECT art.artifact_id, \n"
-                + "    (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
-                + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID() + " LIMIT 1) AS set_name,\n"
+                + "    ar.configuration AS set_name,\n"
                 + "    (SELECT value_int32 FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
                 + BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID() + " LIMIT 1) AS search_type,\n"
                 + "    (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
@@ -640,6 +639,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + "    (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
                 + BlackboardAttribute.Type.TSK_KEYWORD.getTypeID() + " LIMIT 1) AS keyword\n"
                 + "    FROM blackboard_artifacts art\n"
+                + "    LEFT JOIN tsk_analysis_results ar ON art.artifact_obj_id = ar.artifact_obj_id\n"
                 + "    WHERE  art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() + "\n"
                 + dataSourceClause
                 + "  ) attr_res\n"
@@ -763,8 +763,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + "  COUNT(*) AS count \n"
                 + "FROM (\n"
                 + "  SELECT art.artifact_id, \n"
-                + "  (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
-                + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID() + " LIMIT 1) AS set_name,\n"
+                + "  ar.configuration AS set_name,\n"
                 + "  (SELECT value_int32 FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
                 + BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID() + " LIMIT 1) AS search_type,\n"
                 + "  (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
@@ -772,6 +771,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + "  (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
                 + BlackboardAttribute.Type.TSK_KEYWORD.getTypeID() + " LIMIT 1) AS keyword\n"
                 + "  FROM blackboard_artifacts art\n"
+                + "  LEFT JOIN tsk_analysis_results ar ON art.artifact_obj_id = ar.artifact_obj_id\n"
                 + "  WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() + "\n"
                 + dataSourceClause
                 + ") res\n"
@@ -871,16 +871,14 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      */
     private Pair<KeywordHitSearchParam, Long> getKeywordEvtData(BlackboardArtifact art) throws TskCoreException {
         long dataSourceId = art.getDataSourceObjectID();
-        String setName = null;
+        String configuration = (art instanceof AnalysisResult) ? ((AnalysisResult) art).getConfiguration() : null;
         String searchTerm = null;
         String keywordMatch = null;
         // assume literal unless otherwise specified
         TskData.KeywordSearchQueryType searchType = TskData.KeywordSearchQueryType.LITERAL;
 
         for (BlackboardAttribute attr : art.getAttributes()) {
-            if (BlackboardAttribute.Type.TSK_SET_NAME.equals(attr.getAttributeType())) {
-                setName = attr.getValueString();
-            } else if (BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.equals(attr.getAttributeType())) {
+            if (BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.equals(attr.getAttributeType())) {
                 try {
                     searchType = TskData.KeywordSearchQueryType.valueOf(attr.getValueInt());
                 } catch (IllegalArgumentException ex) {
@@ -894,7 +892,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         // data source id is null for KeywordHitSearchParam so that key lookups can be done without data source id.
-        return Pair.of(new KeywordHitSearchParam(null, setName, keywordMatch, searchTerm, searchType), dataSourceId);
+        return Pair.of(new KeywordHitSearchParam(null, configuration, keywordMatch, searchTerm, searchType), dataSourceId);
     }
 
     @Override

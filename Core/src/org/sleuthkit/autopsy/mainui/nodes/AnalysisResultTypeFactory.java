@@ -59,7 +59,6 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 //            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID(),
 //            BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()
 //    );
-
     /**
      * Returns the path to the icon to use for this artifact type.
      *
@@ -91,10 +90,9 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     @Messages({"AnalysisResultTypeFactory_nullSetName=(No Set)"})
     @Override
     protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
-        // Not handled at this time
-        // if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
-        // return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
-        if (rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false)) {
+        if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
+            return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
+        } else if (rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false)) {
             return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, Bundle.AnalysisResultTypeFactory_nullSetName()));
         } else {
             return new AnalysisResultTypeTreeNode(rowData);
@@ -126,7 +124,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     public int compare(TreeItemDTO<? extends AnalysisResultSearchParam> o1, TreeItemDTO<? extends AnalysisResultSearchParam> o2) {
         return o1.getSearchParams().getArtifactType().getDisplayName().compareTo(o2.getSearchParams().getArtifactType().getDisplayName());
     }
-    
+
     @Override
     protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
         for (DAOEvent evt : aggEvt.getEvents()) {
@@ -181,7 +179,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     }
 
     /**
-     * Factory displaying all analysis result configurations with count in the tree.
+     * Factory displaying all analysis result configurations with count in the
+     * tree.
      */
     static class TreeSetFactory extends TreeChildFactory<AnalysisResultSetSearchParam> {
 
@@ -239,7 +238,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public int compare(TreeItemDTO<? extends AnalysisResultSetSearchParam> o1, TreeItemDTO<? extends AnalysisResultSetSearchParam> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getSetName(), o2.getSearchParams().getSetName());
         }
-        
+
         @Override
         protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
             for (DAOEvent evt : aggEvt.getEvents()) {
@@ -373,7 +372,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public int compare(TreeItemDTO<? extends KeywordSearchTermParams> o1, TreeItemDTO<? extends KeywordSearchTermParams> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getRegex(), o2.getSearchParams().getRegex());
         }
-        
+
         @Override
         protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
             for (DAOEvent evt : aggEvt.getEvents()) {
@@ -494,7 +493,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public int compare(TreeItemDTO<? extends KeywordHitSearchParam> o1, TreeItemDTO<? extends KeywordHitSearchParam> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getKeyword(), o2.getSearchParams().getKeyword());
         }
-        
+
         @Override
         protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
             for (DAOEvent evt : aggEvt.getEvents()) {
