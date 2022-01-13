@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -151,7 +152,7 @@ class PstParser  implements AutoCloseable{
         Iterable<EmailMessage> iterable = null;
 
         try {
-            iterable = getEmailMessageIterator(pstFile.getRootFolder(), "\\", fileID, true);
+            iterable = getEmailMessageIterator(pstFile.getRootFolder(), "", fileID, true);
         } catch (PSTException | IOException ex) {
             logger.log(Level.WARNING, String.format("Exception thrown while parsing fileID: %d", fileID), ex);
         }
@@ -254,7 +255,7 @@ class PstParser  implements AutoCloseable{
         if (folder.hasSubfolders()) {
             List<PSTFolder> subFolders = folder.getSubFolders();
             for (PSTFolder subFolder : subFolders) {
-                String newpath = path + "\\" + subFolder.getDisplayName();
+                String newpath = path + "/" + subFolder.getDisplayName();
                 Iterable<EmailMessage> subIterable = getEmailMessageIterator(subFolder, newpath, fileID, wholeMsg);
                 if (subIterable == null) {
                     continue;

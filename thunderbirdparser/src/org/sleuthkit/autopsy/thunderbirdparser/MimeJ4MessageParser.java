@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Message;
@@ -136,7 +137,7 @@ class MimeJ4MessageParser implements AutoCloseable{
         email.setCc(getAddresses(msg.getCc()));
         email.setSubject(msg.getSubject());
         email.setSentDate(msg.getDate());
-        email.setLocalPath(localPath);
+        email.setLocalPath(FilenameUtils.getBaseName(localPath));
         email.setMessageID(msg.getMessageId());
 
         Field field = msg.getHeader().getField("in-reply-to"); //NON-NLS
