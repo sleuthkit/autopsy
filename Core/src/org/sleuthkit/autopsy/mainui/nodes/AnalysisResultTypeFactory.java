@@ -30,6 +30,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultTreeItem;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
@@ -51,13 +52,13 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
     private final static Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
 
-    @SuppressWarnings("deprecation")
-    private static Set<Integer> SET_TREE_ARTIFACTS = ImmutableSet.of(
-            BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID(),
-            BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
-            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID(),
-            BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()
-    );
+//    @SuppressWarnings("deprecation")
+//    private static Set<Integer> SET_TREE_ARTIFACTS = ImmutableSet.of(
+//            BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID(),
+//            BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
+//            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID(),
+//            BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()
+//    );
 
     /**
      * Returns the path to the icon to use for this artifact type.
@@ -89,7 +90,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
     @Override
     protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
-        if (SET_TREE_ARTIFACTS.contains(rowData.getSearchParams().getArtifactType().getTypeID())) {
+        if (rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false)) {
             return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, null));
         } else if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
             return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
@@ -178,7 +179,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     }
 
     /**
-     * Factory displaying all hashset sets with count in the tree.
+     * Factory displaying all analysis result configurations with count in the tree.
      */
     static class TreeSetFactory extends TreeChildFactory<AnalysisResultSetSearchParam> {
 
@@ -194,7 +195,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          *                     should be filtered or null if no data source
          *                     filtering.
          * @param nullSetName  The name of the set for artifacts with no
-         *                     TSK_SET_NAME value. If null, items are omitted.
+         *                     configuration value. If null, items are omitted.
          */
         TreeSetFactory(BlackboardArtifact.Type artifactType, Long dataSourceId, String nullSetName) {
             this.artifactType = artifactType;
