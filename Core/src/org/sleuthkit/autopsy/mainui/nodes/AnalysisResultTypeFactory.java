@@ -88,12 +88,14 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultCounts(dataSourceId);
     }
 
+    @Messages({"AnalysisResultTypeFactory_nullSetName=(No Set)"})
     @Override
     protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
+        // Not handled at this time
+        // if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
+        // return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
         if (rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false)) {
-            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, null));
-        } else if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
-            return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
+            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, Bundle.AnalysisResultTypeFactory_nullSetName()));
         } else {
             return new AnalysisResultTypeTreeNode(rowData);
         }
