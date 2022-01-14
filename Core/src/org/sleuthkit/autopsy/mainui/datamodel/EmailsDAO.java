@@ -422,7 +422,7 @@ public class EmailsDAO extends AbstractDAO {
     Set<? extends DAOEvent> handleIngestComplete() {
         return SubDAOUtils.getIngestCompleteEvents(
                 this.emailCounts,
-                (daoEvt, count) -> createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
+                (daoEvt, count) -> createEmailTreeItem(daoEvt.getFolder(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
         );
     }
 
@@ -430,7 +430,7 @@ public class EmailsDAO extends AbstractDAO {
     Set<TreeEvent> shouldRefreshTree() {
         return SubDAOUtils.getRefreshEvents(
                 this.emailCounts,
-                (daoEvt, count) -> createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
+                (daoEvt, count) -> createEmailTreeItem(daoEvt.getFolder(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
         );
     }
 
@@ -443,14 +443,12 @@ public class EmailsDAO extends AbstractDAO {
         }
 
         // maps email account => folder => data source id
-        Map<String, Map<String, Set<Long>>> emailMap = new HashMap<>();
+        Map<String, Set<Long>> emailMap = new HashMap<>();
 
         for (BlackboardArtifact art : dataEvt.getArtifacts()) {
             try {
                 if (art.getType().getTypeID() == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
-                    Pair<String, String> accountFolder = getAccountAndFolder(art);
                     emailMap
-                            .computeIfAbsent(accountFolder.getLeft(), (k) -> new HashMap<>())
                             .computeIfAbsent(accountFolder.getRight(), (k) -> new HashSet<>())
                             .add(art.getDataSourceObjectID());
                 }
@@ -464,32 +462,17 @@ public class EmailsDAO extends AbstractDAO {
             return Collections.emptySet();
         }
 
-        SubDAOUtils.invalidateKeys(this.searchParamsCache, (searchParams) -> {
-            Map<String, Set<Long>> folders = emailMap.get(searchParams.getAccount());
-            if (folders == null) {
-                return false;
-            }
-
-            Set<Long> dsIds = folders.get(searchParams.getFolder());
-            if (dsIds == null) {
-                return false;
-            }
-            return searchParams.getDataSourceId() == null || dsIds.contains(searchParams.getDataSourceId());
-        });
-
+        SubDAOUtils.invalidateKeys(this.searchParamsCache, (searchParams) -> Pair.of(searchParams.getFolder(), searchParams.getDataSourceId()), emailMap);
         List<EmailEvent> emailEvents = new ArrayList<>();
-        for (Entry<String, Map<String, Set<Long>>> accountEntry : emailMap.entrySet()) {
-            String acct = accountEntry.getKey();
-            for (Entry<String, Set<Long>> folderEntry : accountEntry.getValue().entrySet()) {
-                String folder = folderEntry.getKey();
-                for (Long dsObjId : folderEntry.getValue()) {
-                    emailEvents.add(new EmailEvent(dsObjId, acct, folder));
-                }
+        for (Entry<String, Set<Long>> folderEntry : emailMap.entrySet()) {
+            String folder = folderEntry.getKey();
+            for (Long dsObjId : folderEntry.getValue()) {
+                emailEvents.add(new EmailEvent(dsObjId, folder));
             }
         }
 
         Stream<TreeEvent> treeEvents = this.emailCounts.enqueueAll(emailEvents).stream()
-                .map(daoEvt -> new TreeEvent(createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getFolder(),
+                .map(daoEvt -> new TreeEvent(createEmailTreeItem(daoEvt.getFolder(), daoEvt.getFolder(),
                 daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
 
         return Stream.of(emailEvents.stream(), treeEvents)
@@ -509,9 +492,8 @@ public class EmailsDAO extends AbstractDAO {
     private boolean isEmailInvalidating(EmailSearchParams parameters, DAOEvent evt) {
         if (evt instanceof EmailEvent) {
             EmailEvent emailEvt = (EmailEvent) evt;
-            return (Objects.equals(parameters.getAccount(), emailEvt.getAccount())
-                    && Objects.equals(parameters.getFolder(), emailEvt.getFolder())
-                    && (parameters.getDataSourceId() == null || Objects.equals(parameters.getDataSourceId(), emailEvt.getDataSourceId())));
+            return Objects.equals(parameters.getFolder(), emailEvt.getFolder())
+                    && (parameters.getDataSourceId() == null || Objects.equals(parameters.getDataSourceId(), emailEvt.getDataSourceId()));
         } else {
             return false;
 
