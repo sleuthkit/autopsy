@@ -1,4 +1,5 @@
 AnalysisResultTypeFactory_adHocName=Ad Hoc Results
+AnalysisResultTypeFactory_nullSetName=(No Set)
 BaseNode_columnKeys_originalName_description=Original Name
 BaseNode_columnKeys_originalName_displayName=Original Name
 BaseNode_columnKeys_originalName_name=Original Name
