@@ -35,42 +35,45 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordSearchTermParams;
 import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Action class for Deleting Analysis Result objects.
  */
-public class DeleteKeywordSetAction extends AbstractAction {
+public class DeleteAnalysisResultSetAction extends AbstractAction {
     
     @Messages({
-        "DeleteKeywordSetAction_label=Delete Keyword Search Results"
+        "DeleteKeywordSetAction_label=Delete Analysis Results"
     })
     
-    private static final Logger logger = Logger.getLogger(DeleteKeywordSetAction.class.getName());
+    private static final Logger logger = Logger.getLogger(DeleteAnalysisResultSetAction.class.getName());
     private static final long serialVersionUID = 1L;
     
-    private KeywordSearchTermParams searchTermParams;
+    private BlackboardArtifact.Type type;
+    private String configuration;
+    private Long dsID;
     
-    public DeleteKeywordSetAction(KeywordSearchTermParams searchTermParams) {
+    public DeleteAnalysisResultSetAction(BlackboardArtifact.Type type, String configuration, Long dsID) {
         super(Bundle.DeleteKeywordSetAction_label());
-        this.searchTermParams = searchTermParams;
+        this.type = type;
+        this.configuration = configuration;
+        this.dsID = dsID;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ExplorerManager em = DirectoryTreeTopComponent.findInstance().getExplorerManager();
-        Node[] selectedNode = em.getSelectedNodes();
+        //ExplorerManager em = DirectoryTreeTopComponent.findInstance().getExplorerManager();
+        //Node[] selectedNode = em.getSelectedNodes();
+        //Children c = selectedNode[0].getChildren();
+        //for (Node next : c.getNodes()) {
+        //}
+                
         
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
-                if (selectedNode.length == 0) {
-                    return null;
-                }
 
-                Children c = selectedNode[0].getChildren();
-                for (Node next : c.getNodes()) {
-                    int a =5;
 //                    for (AnalysisResult result : selectedNode[0].getChildren()) {
 //                        if (!isCancelled()) {
 //                            try {
@@ -81,7 +84,7 @@ public class DeleteKeywordSetAction extends AbstractAction {
 //                            }
 //                        }
 //                    }
-                }
+                
                 return null;
             }
         };

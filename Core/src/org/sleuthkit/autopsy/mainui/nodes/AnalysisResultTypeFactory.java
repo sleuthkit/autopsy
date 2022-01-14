@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DeleteAnalysisResultEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
-import org.sleuthkit.autopsy.mainui.nodes.actions.DeleteKeywordSetAction;
+import org.sleuthkit.autopsy.mainui.nodes.actions.DeleteAnalysisResultSetAction;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskData;
 
@@ -303,6 +303,20 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public Optional<String> getAnalysisResultConfiguration() {
             return Optional.of(this.getItemData().getSearchParams().getSetName());
         }
+
+        @Override
+        public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
+            ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
+
+            Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
+            Optional<String> configuration = getAnalysisResultConfiguration();
+            Optional<Long> dsId = getDataSourceIdForActions();
+            if (type.isPresent()) {
+                group.add(new DeleteAnalysisResultSetAction(type.get(), configuration.isPresent() ? configuration.get() : "", dsId.isPresent() ? dsId.get() : null));
+            }
+
+            return Optional.of(group);
+        }
     }
 
     /**
@@ -474,7 +488,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
             KeywordSearchTermParams searchTermParams = this.getItemData().getSearchParams();
 
-            group.add(new DeleteKeywordSetAction(searchTermParams));
+            // ELTODO group.add(new DeleteAnalysisResultSetAction(searchTermParams));
 
             return Optional.of(group);
         }
