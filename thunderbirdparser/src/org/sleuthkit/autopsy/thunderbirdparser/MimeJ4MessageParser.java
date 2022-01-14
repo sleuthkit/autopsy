@@ -137,7 +137,7 @@ class MimeJ4MessageParser implements AutoCloseable{
         email.setCc(getAddresses(msg.getCc()));
         email.setSubject(msg.getSubject());
         email.setSentDate(msg.getDate());
-        email.setLocalPath(FilenameUtils.getBaseName(localPath));
+        email.setLocalPath("\\" + FilenameUtils.getBaseName(localPath).replaceAll("\\\\", "/"));
         email.setMessageID(msg.getMessageId());
 
         Field field = msg.getHeader().getField("in-reply-to"); //NON-NLS

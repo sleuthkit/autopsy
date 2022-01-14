@@ -255,7 +255,7 @@ class PstParser  implements AutoCloseable{
         if (folder.hasSubfolders()) {
             List<PSTFolder> subFolders = folder.getSubFolders();
             for (PSTFolder subFolder : subFolders) {
-                String newpath = path + "/" + subFolder.getDisplayName();
+                String newpath = path + "\\" + subFolder.getDisplayName().replaceAll("\\\\", "/");
                 Iterable<EmailMessage> subIterable = getEmailMessageIterator(subFolder, newpath, fileID, wholeMsg);
                 if (subIterable == null) {
                     continue;
