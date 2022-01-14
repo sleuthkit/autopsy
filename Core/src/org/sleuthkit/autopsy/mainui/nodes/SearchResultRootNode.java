@@ -22,9 +22,9 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 
 /**
  * A node whose children will be displayed in the results view and determines
@@ -43,7 +43,7 @@ public class SearchResultRootNode extends AbstractNode {
     }
 
     private SearchResultRootNode(SearchResultsDTO initialResults, SearchResultChildFactory factory) {
-        super(Children.create(factory, true));
+        super(Children.create(factory, true), initialResults.getDataSourceParent() != null ? Lookups.singleton(initialResults.getDataSourceParent()) : null);
         this.factory = factory;
 
         setName(initialResults.getTypeId());

@@ -19,11 +19,9 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordSearchTermParams;
-import com.google.common.collect.ImmutableSet;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -31,6 +29,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultTreeItem;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
@@ -53,14 +52,6 @@ import org.sleuthkit.datamodel.TskData;
 public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSearchParam> {
 
     private final static Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
-
-    @SuppressWarnings("deprecation")
-    private static Set<Integer> SET_TREE_ARTIFACTS = ImmutableSet.of(
-            BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID(),
-            BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),
-            BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID(),
-            BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()
-    );
 
     /**
      * Returns the path to the icon to use for this artifact type.
@@ -90,12 +81,14 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         return MainDAO.getInstance().getAnalysisResultDAO().getAnalysisResultCounts(dataSourceId);
     }
 
+    @Messages({"AnalysisResultTypeFactory_nullSetName=(No Set)"})
     @Override
     protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
-        if (SET_TREE_ARTIFACTS.contains(rowData.getSearchParams().getArtifactType().getTypeID())) {
-            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, null));
-        } else if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
+        if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
             return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
+        } else if ((rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false))
+                || rowData.getSearchParams() instanceof AnalysisResultSetSearchParam) {
+            return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, Bundle.AnalysisResultTypeFactory_nullSetName()));
         } else {
             return new AnalysisResultTypeTreeNode(rowData);
         }
@@ -110,14 +103,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                 && !AnalysisResultDAO.getIgnoredTreeTypes().contains(originalTreeItem.getSearchParams().getArtifactType())
                 && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 
+            Boolean hasChildren = null;
+            if (originalTreeItem instanceof AnalysisResultTreeItem) {
+                hasChildren = ((AnalysisResultTreeItem) originalTreeItem).getHasChildren().orElse(null);
+            } else if (originalTreeItem.getSearchParams() instanceof AnalysisResultSetSearchParam) {
+                hasChildren = true;
+            }
+
             // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
             AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
-            return new TreeResultsDTO.TreeItemDTO<>(
-                    AnalysisResultSearchParam.getTypeId(),
-                    new AnalysisResultSearchParam(searchParam.getArtifactType(), this.dataSourceId),
-                    searchParam.getArtifactType().getTypeID(),
-                    searchParam.getArtifactType().getDisplayName(),
-                    originalTreeItem.getDisplayCount());
+            return new AnalysisResultTreeItem(searchParam.getArtifactType(), this.dataSourceId, originalTreeItem.getDisplayCount(), hasChildren);
         }
         return null;
     }
@@ -126,7 +121,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     public int compare(TreeItemDTO<? extends AnalysisResultSearchParam> o1, TreeItemDTO<? extends AnalysisResultSearchParam> o2) {
         return o1.getSearchParams().getArtifactType().getDisplayName().compareTo(o2.getSearchParams().getArtifactType().getDisplayName());
     }
-    
+
     @Override
     protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
         for (DAOEvent evt : aggEvt.getEvents()) {
@@ -159,6 +154,12 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public void respondSelection(DataResultTopComponent dataResultPanel) {
             dataResultPanel.displayAnalysisResult(this.getItemData().getSearchParams());
         }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+
     }
 
     /**
@@ -178,10 +179,21 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     Children.create(childFactory, true),
                     getDefaultLookup(itemData));
         }
+
+        @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
     }
 
     /**
-     * Factory displaying all hashset sets with count in the tree.
+     * Factory displaying all analysis result configurations with count in the
+     * tree.
      */
     static class TreeSetFactory extends TreeChildFactory<AnalysisResultSetSearchParam> {
 
@@ -197,7 +209,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          *                     should be filtered or null if no data source
          *                     filtering.
          * @param nullSetName  The name of the set for artifacts with no
-         *                     TSK_SET_NAME value. If null, items are omitted.
+         *                     configuration value. If null, items are omitted.
          */
         TreeSetFactory(BlackboardArtifact.Type artifactType, Long dataSourceId, String nullSetName) {
             this.artifactType = artifactType;
@@ -239,7 +251,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public int compare(TreeItemDTO<? extends AnalysisResultSetSearchParam> o1, TreeItemDTO<? extends AnalysisResultSetSearchParam> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getSetName(), o2.getSearchParams().getSetName());
         }
-        
+
         @Override
         protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
             for (DAOEvent evt : aggEvt.getEvents()) {
@@ -276,6 +288,21 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public void respondSelection(DataResultTopComponent dataResultPanel) {
             dataResultPanel.displayAnalysisResultSet(this.getItemData().getSearchParams());
         }
+
+        @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+
+        @Override
+        public Optional<String> getAnalysisResultConfiguration() {
+            return Optional.of(this.getItemData().getSearchParams().getSetName());
+        }
     }
 
     /**
@@ -309,6 +336,21 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     itemData,
                     Children.create(new KeywordSearchTermFactory(itemData.getSearchParams()), true),
                     getDefaultLookup(itemData));
+        }
+
+        @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+
+        @Override
+        public Optional<String> getAnalysisResultConfiguration() {
+            return Optional.of(this.getItemData().getSearchParams().getSetName());
         }
     }
 
@@ -373,7 +415,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public int compare(TreeItemDTO<? extends KeywordSearchTermParams> o1, TreeItemDTO<? extends KeywordSearchTermParams> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getRegex(), o2.getSearchParams().getRegex());
         }
-        
+
         @Override
         protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
             for (DAOEvent evt : aggEvt.getEvents()) {
@@ -437,6 +479,19 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             return Optional.of(group);
         }
 
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+
+        @Override
+        public Optional<String> getAnalysisResultConfiguration() {
+            return Optional.of(this.getItemData().getSearchParams().getSetName());
+        }
     }
 
     /**
@@ -504,7 +559,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public int compare(TreeItemDTO<? extends KeywordHitSearchParam> o1, TreeItemDTO<? extends KeywordHitSearchParam> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getKeyword(), o2.getSearchParams().getKeyword());
         }
-        
+
         @Override
         protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
             for (DAOEvent evt : aggEvt.getEvents()) {
@@ -542,6 +597,20 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             dataResultPanel.displayKeywordHits(this.getItemData().getSearchParams());
         }
 
+        @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+
+        @Override
+        public Optional<String> getAnalysisResultConfiguration() {
+            return Optional.of(this.getItemData().getSearchParams().getSetName());
+        }
     }
 
 }
