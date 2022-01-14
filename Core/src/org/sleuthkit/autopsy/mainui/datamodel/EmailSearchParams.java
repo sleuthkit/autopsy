@@ -26,7 +26,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class EmailSearchParams extends DataArtifactSearchParam {
 
-    private final String account;
     private final String folder;
 
     /**
@@ -34,17 +33,11 @@ public class EmailSearchParams extends DataArtifactSearchParam {
      *
      * @param dataSourceId The data source id or null if no data source
      *                     filtering should occur.
-     * @param account      The email account.
      * @param folder       The folder within the email account.
      */
-    public EmailSearchParams(Long dataSourceId, String account, String folder) {
+    public EmailSearchParams(Long dataSourceId, String folder) {
         super(BlackboardArtifact.Type.TSK_EMAIL_MSG, dataSourceId);
-        this.account = account;
         this.folder = folder;
-    }
-
-    public String getAccount() {
-        return account;
     }
 
     public String getFolder() {
@@ -54,7 +47,6 @@ public class EmailSearchParams extends DataArtifactSearchParam {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.account);
         hash = 23 * hash + Objects.hashCode(this.folder);
         return hash;
     }
@@ -71,9 +63,6 @@ public class EmailSearchParams extends DataArtifactSearchParam {
             return false;
         }
         final EmailSearchParams other = (EmailSearchParams) obj;
-        if (!Objects.equals(this.account, other.account)) {
-            return false;
-        }
         if (!Objects.equals(this.folder, other.folder)) {
             return false;
         }

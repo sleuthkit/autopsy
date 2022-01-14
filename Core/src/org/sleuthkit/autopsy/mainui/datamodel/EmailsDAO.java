@@ -97,55 +97,10 @@ public class EmailsDAO extends AbstractDAO {
     public SearchResultsDTO getEmailMessages(EmailSearchParams searchParams, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (searchParams.getDataSourceId() != null && searchParams.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
-        } else if ((searchParams.getAccount() == null) != (searchParams.getFolder() == null)) {
-            throw new IllegalArgumentException(
-                    MessageFormat.format(
-                            "Either folder and account are null or they are both non-null.  Received [account: {0}, folder: {1}]",
-                            StringUtils.defaultIfBlank(searchParams.getAccount(), "<null>"),
-                            StringUtils.defaultIfBlank(searchParams.getFolder(), "<null>")));
         }
 
         SearchParams<EmailSearchParams> emailSearchParams = new SearchParams<>(searchParams, startItem, maxCount);
         return searchParamsCache.get(emailSearchParams, () -> fetchEmailMessageDTOs(emailSearchParams));
-    }
-
-    /**
-     * Returns a pair of the email account and folder.
-     *
-     * NOTE: Subject to change; see JIRA-8220.
-     *
-     * @param art The artifact.
-     *
-     * @return The pair of the account and folder or null if undetermined.
-     */
-    private static Pair<String, String> getAccountAndFolder(BlackboardArtifact art) throws TskCoreException {
-        BlackboardAttribute pathAttr = art.getAttribute(BlackboardAttribute.Type.TSK_PATH);
-        if (pathAttr == null) {
-            return Pair.of("", "");
-        }
-
-        String pathVal = pathAttr.getValueString();
-        if (pathVal == null) {
-            return Pair.of("", "");
-        }
-
-        return getPathAccountFolder(pathVal);
-    }
-
-    /**
-     * Returns a pair of the email account and folder.
-     *
-     * NOTE: Subject to change; see JIRA-8220.
-     *
-     * @param art The path value.
-     *
-     * @return The pair of the account and folder or null if undetermined.
-     */
-    public static Pair<String, String> getPathAccountFolder(String pathVal) {
-        String[] pieces = pathVal.split(PATH_DELIMITER);
-        return pieces.length < 4
-                ? Pair.of("", "")
-                : Pair.of(pieces[2], pieces[3]);
     }
 
     private SearchResultsDTO fetchEmailMessageDTOs(SearchParams<EmailSearchParams> searchParams) throws NoCurrentCaseException, TskCoreException, SQLException {
@@ -153,8 +108,6 @@ public class EmailsDAO extends AbstractDAO {
         // get current page of communication accounts results
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         Blackboard blackboard = skCase.getBlackboard();
-
-        boolean unknownPath = StringUtils.isBlank(searchParams.getParamData().getAccount());
 
         String query = " art.artifact_id AS artifact_id \n"
                 + "FROM blackboard_artifacts art \n"
@@ -175,8 +128,7 @@ public class EmailsDAO extends AbstractDAO {
         try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(query)) {
 
             int paramIdx = 0;
-            preparedStatement.setString(++paramIdx, MessageFormat.format("%/%/{0}/{1}%",
-                    SubDAOUtils.likeEscape(searchParams.getParamData().getAccount(), ESCAPE_CHAR),
+            preparedStatement.setString(++paramIdx, MessageFormat.format("%{}%",
                     SubDAOUtils.likeEscape(searchParams.getParamData().getFolder(), ESCAPE_CHAR)
             ));
 
@@ -247,15 +199,13 @@ public class EmailsDAO extends AbstractDAO {
         return StringUtils.isBlank(folder) ? Bundle.EmailsDAO_getFolderDisplayName_defaultName() : folder;
     }
 
-    public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String account, String folder, String displayName,
+    public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String folder, String displayName,
             Long dataSourceId, TreeDisplayCount count) {
 
         return new TreeItemDTO<>(
                 EmailSearchParams.getTypeId(),
-                new EmailSearchParams(dataSourceId, account, folder),
-                Stream.of(account, folder)
-                        .map(s -> StringUtils.isBlank(s) ? "" : s)
-                        .collect(Collectors.joining(PATH_DELIMITER)),
+                new EmailSearchParams(dataSourceId, folder),
+                folder == null ? 0 : folder,
                 displayName,
                 count
         );
