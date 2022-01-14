@@ -19,10 +19,8 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordSearchTermParams;
-import com.google.common.collect.ImmutableSet;
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -92,7 +90,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
         if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
             return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
-        } else if (rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false)) {
+        } else if ((rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false))
+                || rowData.getSearchParams() instanceof AnalysisResultSetSearchParam) {
             return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, Bundle.AnalysisResultTypeFactory_nullSetName()));
         } else {
             return new AnalysisResultTypeTreeNode(rowData);
@@ -108,14 +107,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                 && !AnalysisResultDAO.getIgnoredTreeTypes().contains(originalTreeItem.getSearchParams().getArtifactType())
                 && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 
+            Boolean hasChildren = null;
+            if (originalTreeItem instanceof AnalysisResultTreeItem) {
+                hasChildren = ((AnalysisResultTreeItem) originalTreeItem).getHasChildren().orElse(null);
+            } else if (originalTreeItem.getSearchParams() instanceof AnalysisResultSetSearchParam) {
+                hasChildren = true;
+            }
+            
             // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
             AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
-            return new TreeResultsDTO.TreeItemDTO<>(
-                    AnalysisResultSearchParam.getTypeId(),
-                    new AnalysisResultSearchParam(searchParam.getArtifactType(), this.dataSourceId),
-                    searchParam.getArtifactType().getTypeID(),
-                    searchParam.getArtifactType().getDisplayName(),
-                    originalTreeItem.getDisplayCount());
+            return new AnalysisResultTreeItem(searchParam.getArtifactType(), this.dataSourceId, originalTreeItem.getDisplayCount(), hasChildren);
         }
         return null;
     }
