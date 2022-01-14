@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes.actions;
 
+import java.awt.event.ActionEvent;
+import java.text.MessageFormat;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,13 +31,16 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Stream;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JOptionPane;
 import org.openide.actions.PropertiesAction;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.openide.util.actions.SystemAction;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
@@ -165,6 +170,25 @@ public final class ActionsFactory {
         Optional<AbstractFile> optionalFile = actionContext.getExtractArchiveWithPasswordActionFile();
         if (optionalFile.isPresent()) {
             actionGroups.add(new ActionGroup(new ExtractArchiveWithPasswordAction(optionalFile.get())));
+        }
+
+        Optional<BlackboardArtifact.Type> analysisResultType = actionContext.getAnalysisResultType();
+        if (analysisResultType.isPresent()) {
+            Optional<String> configuration = actionContext.getAnalysisResultConfiguration();
+            Optional<Long> dataSourceId = actionContext.getDataSourceIdForActions();
+            
+            actionGroups.add(new ActionGroup(new AbstractAction("Delete Analysis Results of Type") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            MessageFormat.format("Stub Action for deleting analysis result type: {0} with configuration {1} and data source of {2}",
+                                    analysisResultType.get().getDisplayName(), 
+                                    configuration.map(c -> c == null ? "<Null>" : c).orElse("<Empty>"),
+                                    dataSourceId.map(d -> Long.toString(d)).orElse("<Null or Empty>")),
+                            "Deleting...",
+                            JOptionPane.WARNING_MESSAGE);
+                }
+            }));
         }
 
         List<Action> actionList = new ArrayList<>();

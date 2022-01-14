@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordSearchTermParams;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -113,7 +114,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             } else if (originalTreeItem.getSearchParams() instanceof AnalysisResultSetSearchParam) {
                 hasChildren = true;
             }
-            
+
             // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
             AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
             return new AnalysisResultTreeItem(searchParam.getArtifactType(), this.dataSourceId, originalTreeItem.getDisplayCount(), hasChildren);
@@ -158,6 +159,12 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public void respondSelection(DataResultTopComponent dataResultPanel) {
             dataResultPanel.displayAnalysisResult(this.getItemData().getSearchParams());
         }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+
     }
 
     /**
@@ -176,6 +183,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     itemData,
                     Children.create(childFactory, true),
                     getDefaultLookup(itemData));
+        }
+
+        @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
         }
     }
 
@@ -276,6 +293,21 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public void respondSelection(DataResultTopComponent dataResultPanel) {
             dataResultPanel.displayAnalysisResultSet(this.getItemData().getSearchParams());
         }
+
+        @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+
+        @Override
+        public Optional<String> getAnalysisResultConfiguration() {
+            return Optional.of(this.getItemData().getSearchParams().getSetName());
+        }
     }
 
     /**
@@ -309,6 +341,21 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                     itemData,
                     Children.create(new KeywordSearchTermFactory(itemData.getSearchParams()), true),
                     getDefaultLookup(itemData));
+        }
+
+        @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+
+        @Override
+        public Optional<String> getAnalysisResultConfiguration() {
+            return Optional.of(this.getItemData().getSearchParams().getSetName());
         }
     }
 
@@ -427,6 +474,20 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             }
         }
 
+        @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+
+        @Override
+        public Optional<String> getAnalysisResultConfiguration() {
+            return Optional.of(this.getItemData().getSearchParams().getSetName());
+        }
     }
 
     /**
@@ -532,6 +593,20 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             dataResultPanel.displayKeywordHits(this.getItemData().getSearchParams());
         }
 
+        @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+
+        @Override
+        public Optional<String> getAnalysisResultConfiguration() {
+            return Optional.of(this.getItemData().getSearchParams().getSetName());
+        }
     }
 
 }
