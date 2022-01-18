@@ -50,9 +50,9 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
     private static final Logger logger = Logger.getLogger(DeleteAnalysisResultSetAction.class.getName());
     private static final long serialVersionUID = 1L;
     
-    private BlackboardArtifact.Type type;
-    private String configuration;
-    private Long dsID;
+    private final BlackboardArtifact.Type type;
+    private final String configuration;
+    private final Long dsID;
     
     public DeleteAnalysisResultSetAction(BlackboardArtifact.Type type, String configuration, Long dsID) {
         super(Bundle.DeleteKeywordSetAction_label());
@@ -74,17 +74,15 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
             @Override
             protected Void doInBackground() throws Exception {
 
-//                    for (AnalysisResult result : selectedNode[0].getChildren()) {
-//                        if (!isCancelled()) {
-//                            try {
-//                                Case.getCurrentCase().getSleuthkitCase().getBlackboard().deleteAnalysisResult(result);
-//                                logger.log(Level.INFO, "Deleted Analysis Result id = " + result.getId());
-//                            } catch (TskCoreException ex) {
-//                                logger.log(Level.SEVERE, "Failed to delete analysis result id = " + result.getId(), ex);
-//                            }
-//                        }
-//                    }
-                
+                if (!isCancelled()) {
+                    try {
+                        Case.getCurrentCase().getSleuthkitCase().getBlackboard().deleteAnalysisResults(type, dsID, configuration);
+                        logger.log(Level.INFO, "Deleted Analysis Result type = " + type);
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Failed to delete analysis result type = " + type, ex);
+                    }
+                }
+
                 return null;
             }
         };

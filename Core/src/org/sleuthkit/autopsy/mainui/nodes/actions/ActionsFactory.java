@@ -177,7 +177,12 @@ public final class ActionsFactory {
             Optional<String> configuration = actionContext.getAnalysisResultConfiguration();
             Optional<Long> dataSourceId = actionContext.getDataSourceIdForActions();
             
-            actionGroups.add(new ActionGroup(new AbstractAction("Delete Analysis Results of Type") {
+            actionGroups.add(new ActionGroup(new DeleteAnalysisResultSetAction(analysisResultType.get(), 
+                    configuration.isPresent() ? configuration.get() : "", 
+                    dataSourceId.isPresent() ? dataSourceId.get() : null)));
+            
+            /* ELTODO stub to enable the action for all analysis results
+             * actionGroups.add(new ActionGroup(new AbstractAction("Delete Analysis Results of Type") {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
@@ -188,7 +193,7 @@ public final class ActionsFactory {
                             "Deleting...",
                             JOptionPane.WARNING_MESSAGE);
                 }
-            }));
+            }));*/
         }
 
         List<Action> actionList = new ArrayList<>();
