@@ -172,17 +172,19 @@ public final class ActionsFactory {
             actionGroups.add(new ActionGroup(new ExtractArchiveWithPasswordAction(optionalFile.get())));
         }
 
+        /* ELTODO REMOVE
         Optional<BlackboardArtifact.Type> analysisResultType = actionContext.getAnalysisResultType();
         if (analysisResultType.isPresent()) {
             Optional<String> configuration = actionContext.getAnalysisResultConfiguration();
+            
+            //dataSourceId.map(d -> Long.toString(d)).orElse("<Null or Empty>");
             Optional<Long> dataSourceId = actionContext.getDataSourceIdForActions();
             
             actionGroups.add(new ActionGroup(new DeleteAnalysisResultSetAction(analysisResultType.get(), 
                     configuration.isPresent() ? configuration.get() : "", 
                     dataSourceId.isPresent() ? dataSourceId.get() : null)));
             
-            /* ELTODO stub to enable the action for all analysis results
-             * actionGroups.add(new ActionGroup(new AbstractAction("Delete Analysis Results of Type") {
+            actionGroups.add(new ActionGroup(new AbstractAction("Delete Analysis Results of Type") {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
@@ -193,8 +195,8 @@ public final class ActionsFactory {
                             "Deleting...",
                             JOptionPane.WARNING_MESSAGE);
                 }
-            }));*/
-        }
+            }));
+        }*/
 
         List<Action> actionList = new ArrayList<>();
         for (ActionGroup aGroup : actionGroups) {

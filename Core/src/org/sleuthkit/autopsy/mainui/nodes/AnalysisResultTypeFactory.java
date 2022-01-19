@@ -159,6 +159,24 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
             return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
         }
+        
+         @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
+            ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
+
+            Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
+            Optional<Long> dsId = getDataSourceIdForActions();
+            if (type.isPresent()) {
+                group.add(new DeleteAnalysisResultSetAction(type.get(), "", dsId.isPresent() ? dsId.get() : null));
+            }
+
+            return Optional.of(group);
+        }       
 
     }
 
