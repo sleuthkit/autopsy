@@ -232,27 +232,37 @@ public class EmailsDAO extends AbstractDAO {
         return safePath;
     }
 
-    public static class EmailTreeItem extends TreeItemDTO<EmailSearchParams> {
-
-        private final Optional<Boolean> hasChildren;
-
-        EmailTreeItem(String fullFolder, Long dataSourceId, TreeDisplayCount count,
-                Boolean hasChildren) {
-            super(
-                    EmailSearchParams.getTypeId(),
-                    new EmailSearchParams(dataSourceId, fullFolder),
-                    fullFolder == null ? 0 : fullFolder,
-                    getFolderDisplayName(fullFolder),
-                    count
-            );
-            this.hasChildren = Optional.ofNullable(hasChildren);
-        }
-
-        public Optional<Boolean> getHasChildren() {
-            return hasChildren;
-        }
+    public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String fullFolder, Long dataSourceId, TreeDisplayCount count) {
+        return new TreeItemDTO<>(
+                EmailSearchParams.getTypeId(),
+                new EmailSearchParams(dataSourceId, fullFolder),
+                fullFolder == null ? 0 : fullFolder,
+                getFolderDisplayName(fullFolder),
+                count
+        );
     }
 
+    
+    public Optional<String> getNextSubFolder(String folderParent, String folder) {
+        String normalizedParent = folderParent == null ? null : getNormalizedPath(folderParent);
+        String normalizedFolder = folder == null ? null : getNormalizedPath(folder);
+        
+        if (normalizedParent == null || normalizedFolder.startsWith(normalizedParent)) {
+            if (normalizedFolder == null) {
+                return Optional.of(null);
+            } else {
+                int nextDelim = normalizedFolder.indexOf(PATH_DELIMITER, normalizedParent.length());
+                if (nextDelim >= 0) {
+                    return Optional.of(normalizedFolder.substring(normalizedParent.length(), nextDelim));
+                } else {
+                    return Optional.of(normalizedFolder.substring(normalizedParent.length()));
+                }
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
+    
     /**
      * Returns sql to query for email counts.
      *
@@ -383,8 +393,7 @@ public class EmailsDAO extends AbstractDAO {
                                     ? TreeDisplayCount.INDETERMINATE
                                     : TreeResultsDTO.TreeDisplayCount.getDeterminate(resultSet.getLong("count"));
 
-                            accumulatedData.add(
-                                    new EmailTreeItem(getNormalizedPath(rsPath), dataSourceId, treeDisplayCount, hasChildren));
+                            accumulatedData.add(createEmailTreeItem(getNormalizedPath(rsPath), dataSourceId, treeDisplayCount));
                         }
                     } catch (SQLException ex) {
                         throw new IllegalStateException("A sql exception occurred.", ex);
@@ -414,11 +423,10 @@ public class EmailsDAO extends AbstractDAO {
     Set<? extends DAOEvent> handleIngestComplete() {
         return SubDAOUtils.getIngestCompleteEvents(
                 this.emailCounts,
-                (daoEvt, count) -> new EmailTreeItem(
+                (daoEvt, count) -> createEmailTreeItem(
                         getNormalizedPath(daoEvt.getFolder()),
                         daoEvt.getDataSourceId(),
-                        count,
-                        daoEvt.getHasChildren().orElse(null)
+                        count
                 ));
     }
 
@@ -426,11 +434,10 @@ public class EmailsDAO extends AbstractDAO {
     Set<TreeEvent> shouldRefreshTree() {
         return SubDAOUtils.getRefreshEvents(
                 this.emailCounts,
-                (daoEvt, count) -> new EmailTreeItem(
+                (daoEvt, count) -> createEmailTreeItem(
                         getNormalizedPath(daoEvt.getFolder()),
                         daoEvt.getDataSourceId(),
-                        count,
-                        daoEvt.getHasChildren().orElse(null)
+                        count
                 ));
     }
 
@@ -469,18 +476,17 @@ public class EmailsDAO extends AbstractDAO {
         for (Entry<String, Set<Long>> folderEntry : emailMap.entrySet()) {
             String folder = folderEntry.getKey();
             for (Long dsObjId : folderEntry.getValue()) {
-                emailEvents.add(new EmailEvent(dsObjId, folder, null));
+                emailEvents.add(new EmailEvent(dsObjId, folder));
             }
         }
 
         Stream<TreeEvent> treeEvents = this.emailCounts.enqueueAll(emailEvents).stream()
                 .map(daoEvt -> {
                     return new TreeEvent(
-                            new EmailTreeItem(
+                            createEmailTreeItem(
                                     daoEvt.getFolder(),
                                     daoEvt.getDataSourceId(),
-                                    TreeResultsDTO.TreeDisplayCount.INDETERMINATE,
-                                    null),
+                                    TreeResultsDTO.TreeDisplayCount.INDETERMINATE),
                             false);
                 });
 
@@ -508,6 +514,7 @@ public class EmailsDAO extends AbstractDAO {
 
         }
     }
+
 
     /**
      * Handles fetching and paging of data for communication accounts.

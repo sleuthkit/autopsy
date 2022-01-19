@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
-import java.util.Optional;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -28,7 +27,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public class EmailEvent extends DataArtifactEvent {
 
     private final String folder;
-    private final Optional<Boolean> hasChildren;
 
     /**
      * Main constructor.
@@ -36,20 +34,14 @@ public class EmailEvent extends DataArtifactEvent {
      * @param dataSourceId The data source id that the email message belongs to.
      * @param account      The email message account.
      * @param folder       The folder within that account of the email message.
-     * @param hasChildren  True if this folder has further tree folders.  Null if unknown.
      */
-    public EmailEvent(long dataSourceId, String folder, Boolean hasChildren) {
+    public EmailEvent(long dataSourceId, String folder) {
         super(BlackboardArtifact.Type.TSK_EMAIL_MSG, dataSourceId);
         this.folder = folder;
-        this.hasChildren = Optional.ofNullable(hasChildren);
     }
 
     public String getFolder() {
         return folder;
-    }
-
-    public Optional<Boolean> getHasChildren() {
-        return hasChildren;
     }
 
     @Override
