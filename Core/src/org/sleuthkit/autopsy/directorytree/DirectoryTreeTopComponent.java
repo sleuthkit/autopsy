@@ -1570,7 +1570,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 for (Node child : childNodes) {
                     if (Objects.equals(path, child.getName())) {
                         return child;
-                    } else if ((path == null && child.getName() == null) || (path != null && path.startsWith(child.getName()))) {
+                    } else if ((StringUtils.isBlank(path) && StringUtils.isBlank(child.getName()))
+                            || (StringUtils.isNotBlank(path) && path.startsWith(child.getName()))) {
                         parentNode = child;
                         childNodes = parentNode.getChildren().getNodes(true);
                         break;

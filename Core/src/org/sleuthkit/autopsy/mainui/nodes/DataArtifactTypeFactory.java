@@ -328,11 +328,14 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public int compare(TreeItemDTO<? extends EmailSearchParams> o1, TreeItemDTO<? extends EmailSearchParams> o2) {
-            boolean firstDown = o1.getSearchParams().getFolder() == null;
-            boolean secondDown = o2.getSearchParams().getFolder() == null;
+            String safeO1 = o1.getId() == null ? "" : o1.getId().toString();
+            String safeO2 = o2.getId() == null ? "" : o2.getId().toString();
+            
+            boolean firstDown = StringUtils.isBlank(safeO1);
+            boolean secondDown = StringUtils.isBlank(safeO2);
 
             if (firstDown == secondDown) {
-                return o1.getSearchParams().getFolder().compareToIgnoreCase(o2.getSearchParams().getFolder());
+                return safeO1.compareToIgnoreCase(safeO2);
             } else {
                 return Boolean.compare(firstDown, secondDown);
             }
@@ -356,7 +359,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
 
         private EmailNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData, Children children) {
-            super(itemData.getSearchParams().getFolder(),
+            super(itemData.getId().toString(),
                     "org/sleuthkit/autopsy/images/folder-icon-16.png",
                     itemData,
                     children,
@@ -366,7 +369,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
         }
 
         private boolean hasChildren() {
-            return this.children.getNodesCount(true) > 0;
+            return !StringUtils.isBlank(this.getItemData().getId().toString()) && this.children.getNodesCount(true) > 0;
         }
 
         @Override

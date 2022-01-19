@@ -154,7 +154,8 @@ public class SubDAOUtils {
         }
 
         return toBeEscaped
-                .replaceAll("%", escapeChar + "%")
-                .replaceAll("_", escapeChar + "_");
+                .replace("%", escapeChar + "%")
+                .replace("_", escapeChar + "_")
+                .replace(escapeChar, escapeChar + escapeChar);
     }
 }
