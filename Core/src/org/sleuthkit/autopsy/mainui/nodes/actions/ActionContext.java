@@ -221,6 +221,10 @@ public interface ActionContext {
     default Optional<Content> getDataSourceForActions() {
         return Optional.empty();
     }
+
+    default Optional<Long> getDataSourceIdForActions() {
+        return Optional.empty();
+    }
     
     default Optional<AbstractFile> getFileForDirectoryBrowseMode() {
         return Optional.empty();
@@ -236,5 +240,23 @@ public interface ActionContext {
     
     default boolean supportsCollapseAll() {
         return false;
+    }
+    
+    
+    /**
+     * @return Provides the node configuration if applicable or empty. The
+     *         optional may be null if other analysis results of the same
+     *         artifact type have a configuration but these analysis results
+     *         do not.
+     */
+    default Optional<String> getAnalysisResultConfiguration() {
+        return Optional.empty();
+    }
+    
+    /**
+     * @return The analysis result type if applicable or empty.
+     */
+    default Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+        return Optional.empty();
     }
 }

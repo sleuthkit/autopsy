@@ -139,7 +139,7 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
             TSK_ASSOCIATED_OBJECT
     );
 
-    private static final String IGNORED_TYPES_SQL_SET = IGNORED_TYPES.stream()
+    static final String IGNORED_TYPES_SQL_SET = IGNORED_TYPES.stream()
             .map(tp -> Integer.toString(tp.getTypeID()))
             .collect(Collectors.joining(", "));
 
