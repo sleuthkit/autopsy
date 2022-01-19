@@ -109,13 +109,15 @@ public class EmailsDAO extends AbstractDAO {
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         Blackboard blackboard = skCase.getBlackboard();
 
+        String pathWhereStatement = (searchParams.getParamData().getFolder() == null
+                ? "AND attr.value_text IS NULL OR attr.value_text NOT LIKE '/%' ESCAPE '" + ESCAPE_CHAR + " \n"
+                : "AND attr.value_text LIKE ? ESCAPE '" + ESCAPE_CHAR + "' \n");
+
         String baseQuery = "FROM blackboard_artifacts art \n"
                 + "LEFT JOIN blackboard_attributes attr ON attr.artifact_id = art.artifact_id \n"
                 + "  AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + " \n"
                 + "WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + " \n"
-                + (searchParams.getParamData().getFolder() == null
-                ? "AND attr.value_text IS NULL OR attr.value_text NOT LIKE '/%' ESCAPE '" + ESCAPE_CHAR + " \n"
-                : "AND attr.value_text LIKE ? ESCAPE '" + ESCAPE_CHAR + "' \n")
+                + pathWhereStatement
                 + (searchParams.getParamData().getDataSourceId() == null ? "" : "AND art.data_source_obj_id = ? \n")
                 + "GROUP BY art.artifact_id \n";
 
@@ -136,7 +138,7 @@ public class EmailsDAO extends AbstractDAO {
             int paramIdx = 0;
             if (searchParams.getParamData().getFolder() != null) {
                 preparedStatement.setString(++paramIdx, MessageFormat.format("%{0}%",
-                        SubDAOUtils.likeEscape(searchParams.getParamData().getFolder(), ESCAPE_CHAR)
+                        SubDAOUtils.likeEscape(searchParams.getParamData().getFolder() + "%", ESCAPE_CHAR)
                 ));
             }
 
@@ -242,11 +244,10 @@ public class EmailsDAO extends AbstractDAO {
         );
     }
 
-    
-    public Optional<String> getNextSubFolder(String folderParent, String folder) {
+    public static Optional<String> getNextSubFolder(String folderParent, String folder) {
         String normalizedParent = folderParent == null ? null : getNormalizedPath(folderParent);
         String normalizedFolder = folder == null ? null : getNormalizedPath(folder);
-        
+
         if (normalizedParent == null || normalizedFolder.startsWith(normalizedParent)) {
             if (normalizedFolder == null) {
                 return Optional.of(null);
@@ -262,7 +263,7 @@ public class EmailsDAO extends AbstractDAO {
             return Optional.empty();
         }
     }
-    
+
     /**
      * Returns sql to query for email counts.
      *
@@ -281,7 +282,7 @@ public class EmailsDAO extends AbstractDAO {
         String folderSplitSql;
         switch (dbType) {
             case POSTGRESQL:
-                folderSplitSql = "SPLITPART(res.subfolders, '" + PATH_DELIMITER + "', 1)";
+                folderSplitSql = "SPLIT_PART(res.subfolders, '" + PATH_DELIMITER + "', 1)";
                 break;
             case SQLITE:
                 folderSplitSql = "SUBSTR(res.subfolders, 1, INSTR(res.subfolders, '" + PATH_DELIMITER + "') - 1)";
@@ -290,9 +291,19 @@ public class EmailsDAO extends AbstractDAO {
                 throw new IllegalArgumentException("Unknown db type: " + dbType);
         }
 
+        String substringFolderSql;
+        String folderWhereStatement;
+        if (StringUtils.isBlank(folder)) {
+            substringFolderSql = "CASE WHEN p.path LIKE '" + PATH_DELIMITER + "%' ESCAPE '" + ESCAPE_CHAR + "' THEN SUBSTR(p.path, 1) ELSE NULL END";
+            folderWhereStatement = "";
+        } else {
+            substringFolderSql = "SUBSTR(p.path, LENGTH(?) + 1)";
+            folderWhereStatement = "    WHERE p.path LIKE ? ESCAPE '" + ESCAPE_CHAR + "'\n";
+        }
+
         String query = "\n  grouped_res.folder\n"
                 + "  ,MAX(grouped_res.has_children) AS has_children\n"
-                + "  ,COUNT(*) AS count\b"
+                + "  ,COUNT(*) AS count\n"
                 + "FROM (\n"
                 + "  SELECT\n"
                 + "    (CASE \n"
@@ -304,7 +315,7 @@ public class EmailsDAO extends AbstractDAO {
                 + "    ,(CASE WHEN res.subfolders LIKE '%" + PATH_DELIMITER + "%' THEN 1 ELSE 0 END) AS has_children\n"
                 + "  FROM (\n"
                 + "    SELECT\n"
-                + "      SUBSTR(p.path, LENGTH(?) + 1) AS subfolders\n"
+                + "      " + substringFolderSql + " AS subfolders\n"
                 + "    FROM blackboard_artifacts art\n"
                 + "    LEFT JOIN (\n"
                 + "        SELECT \n"
@@ -314,7 +325,7 @@ public class EmailsDAO extends AbstractDAO {
                 + "        WHERE attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + " \n"
                 + "        GROUP BY attr.artifact_id\n"
                 + "    ) p ON art.artifact_id = p.artifact_id\n"
-                + "    WHERE p.path LIKE ? ESCAPE '" + ESCAPE_CHAR + "'\n"
+                + folderWhereStatement
                 + "    AND art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + " \n"
                 + (dataSourceId != null ? "    AND art.data_source_obj_id = ? \n" : "")
                 + "  ) res\n"
@@ -514,7 +525,6 @@ public class EmailsDAO extends AbstractDAO {
 
         }
     }
-
 
     /**
      * Handles fetching and paging of data for communication accounts.

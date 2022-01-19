@@ -1553,23 +1553,34 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     private Node getEmailNode(Children typesChildren, BlackboardArtifact art) {
         Node emailMsgRootNode = typesChildren.findChild(art.getArtifactTypeName());
-        Children emailMsgRootChilds = emailMsgRootNode.getChildren();
-        Pair<String, String> parsedPath = null;
+        String path = null;
         try {
             List<BlackboardAttribute> attributes = art.getAttributes();
-            for (BlackboardAttribute att : attributes) {
-                int typeId = att.getAttributeType().getTypeID();
+            for (BlackboardAttribute attr : attributes) {
+                int typeId = attr.getAttributeType().getTypeID();
                 if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()) {
-                    parsedPath = EmailsDAO.getPathAccountFolder(att.getValueString());
+                    path = attr.getValueString();
                     break;
                 }
             }
-            if (parsedPath == null) {
-                return null;
+            
+            Node parentNode = emailMsgRootNode;
+            Node[] childNodes = emailMsgRootNode.getChildren().getNodes(true);
+            while (childNodes != null) {
+                for (Node child : childNodes) {
+                    if (Objects.equals(path, child.getName())) {
+                        return child;
+                    } else if ((path == null && child.getName() == null) || (path != null && path.startsWith(child.getName()))) {
+                        parentNode = child;
+                        childNodes = parentNode.getChildren().getNodes(true);
+                        break;
+                    } else {
+                        return null;
+                    }
+                }
             }
-            Node defaultNode = emailMsgRootChilds.findChild(parsedPath.getLeft());
-            Children defaultChildren = defaultNode.getChildren();
-            return defaultChildren.findChild(parsedPath.getRight());
+            
+            return null;
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;
