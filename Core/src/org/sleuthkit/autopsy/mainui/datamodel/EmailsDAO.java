@@ -203,29 +203,48 @@ public class EmailsDAO extends AbstractDAO {
     }
 
     @Messages({"EmailsDAO_getFolderDisplayName_defaultName=Default"})
-    public String getFolderDisplayName(String folder) {
-        return StringUtils.isBlank(folder) ? Bundle.EmailsDAO_getFolderDisplayName_defaultName() : folder;
+    public static String getFolderDisplayName(String fullFolder) {
+
+        if (fullFolder != null) {
+            String[] folderPieces = fullFolder.split(PATH_DELIMITER);
+            for (int i = folderPieces.length - 1; i >= 0; i--) {
+                if (!StringUtils.isBlank(folderPieces[i])) {
+                    return folderPieces[i].trim();
+                }
+            }
+        }
+
+        return Bundle.EmailsDAO_getFolderDisplayName_defaultName();
     }
 
-    public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String folder, String displayName,
-            Long dataSourceId, TreeDisplayCount count, Boolean hasChildren) {
+    private static String getNormalizedPath(String origPath) {
+        String safePath = StringUtils.defaultString(origPath);
+        safePath = safePath.trim();
 
-        return new EmailTreeItem(
-                EmailSearchParams.getTypeId(),
-                new EmailSearchParams(dataSourceId, folder),
-                folder == null ? 0 : folder,
-                displayName,
-                count,
-                hasChildren
-        );
+        if (!safePath.endsWith(PATH_DELIMITER)) {
+            safePath = safePath + PATH_DELIMITER;
+        }
+
+        if (!safePath.startsWith(PATH_DELIMITER)) {
+            safePath = PATH_DELIMITER + safePath;
+        }
+
+        return safePath;
     }
-    
+
     public static class EmailTreeItem extends TreeItemDTO<EmailSearchParams> {
+
         private final Optional<Boolean> hasChildren;
 
-        public EmailTreeItem(String typeId, EmailSearchParams searchParams, Object id, String displayName, TreeDisplayCount count,
+        EmailTreeItem(String fullFolder, Long dataSourceId, TreeDisplayCount count,
                 Boolean hasChildren) {
-            super(typeId, searchParams, id, displayName, count);
+            super(
+                    EmailSearchParams.getTypeId(),
+                    new EmailSearchParams(dataSourceId, fullFolder),
+                    fullFolder == null ? 0 : fullFolder,
+                    getFolderDisplayName(fullFolder),
+                    count
+            );
             this.hasChildren = Optional.ofNullable(hasChildren);
         }
 
@@ -365,7 +384,7 @@ public class EmailsDAO extends AbstractDAO {
                                     : TreeResultsDTO.TreeDisplayCount.getDeterminate(resultSet.getLong("count"));
 
                             accumulatedData.add(
-                                    createEmailTreeItem(rsPath + PATH_DELIMITER, rsFolderSegment, dataSourceId, treeDisplayCount, hasChildren));
+                                    new EmailTreeItem(getNormalizedPath(rsPath), dataSourceId, treeDisplayCount, hasChildren));
                         }
                     } catch (SQLException ex) {
                         throw new IllegalStateException("A sql exception occurred.", ex);
@@ -395,16 +414,24 @@ public class EmailsDAO extends AbstractDAO {
     Set<? extends DAOEvent> handleIngestComplete() {
         return SubDAOUtils.getIngestCompleteEvents(
                 this.emailCounts,
-                (daoEvt, count) -> createEmailTreeItem(daoEvt.getFolder(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
-        );
+                (daoEvt, count) -> new EmailTreeItem(
+                        getNormalizedPath(daoEvt.getFolder()),
+                        daoEvt.getDataSourceId(),
+                        count,
+                        daoEvt.getHasChildren().orElse(null)
+                ));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
         return SubDAOUtils.getRefreshEvents(
                 this.emailCounts,
-                (daoEvt, count) -> createEmailTreeItem(daoEvt.getFolder(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
-        );
+                (daoEvt, count) -> new EmailTreeItem(
+                        getNormalizedPath(daoEvt.getFolder()),
+                        daoEvt.getDataSourceId(),
+                        count,
+                        daoEvt.getHasChildren().orElse(null)
+                ));
     }
 
     @Override
@@ -424,7 +451,7 @@ public class EmailsDAO extends AbstractDAO {
                     BlackboardAttribute attr = art.getAttribute(BlackboardAttribute.Type.TSK_PATH);
                     String folder = attr == null ? null : attr.getValueString();
                     emailMap
-                            .computeIfAbsent(folder, (k) -> new HashSet<>())
+                            .computeIfAbsent(getNormalizedPath(folder), (k) -> new HashSet<>())
                             .add(art.getDataSourceObjectID());
                 }
             } catch (TskCoreException ex) {
@@ -442,13 +469,20 @@ public class EmailsDAO extends AbstractDAO {
         for (Entry<String, Set<Long>> folderEntry : emailMap.entrySet()) {
             String folder = folderEntry.getKey();
             for (Long dsObjId : folderEntry.getValue()) {
-                emailEvents.add(new EmailEvent(dsObjId, folder));
+                emailEvents.add(new EmailEvent(dsObjId, folder, null));
             }
         }
 
         Stream<TreeEvent> treeEvents = this.emailCounts.enqueueAll(emailEvents).stream()
-                .map(daoEvt -> new TreeEvent(createEmailTreeItem(daoEvt.getFolder(), daoEvt.getFolder(),
-                daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
+                .map(daoEvt -> {
+                    return new TreeEvent(
+                            new EmailTreeItem(
+                                    daoEvt.getFolder(),
+                                    daoEvt.getDataSourceId(),
+                                    TreeResultsDTO.TreeDisplayCount.INDETERMINATE,
+                                    null),
+                            false);
+                });
 
         return Stream.of(emailEvents.stream(), treeEvents)
                 .flatMap(s -> s)
