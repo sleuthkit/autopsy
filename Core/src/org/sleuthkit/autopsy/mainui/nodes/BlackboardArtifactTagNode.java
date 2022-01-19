@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.Children;
@@ -54,8 +55,8 @@ public final class BlackboardArtifactTagNode extends BaseNode<SearchResultsDTO, 
 
     private static final Logger logger = Logger.getLogger(BlackboardArtifactTagNode.class.getName());
 
-    public BlackboardArtifactTagNode(SearchResultsDTO results, BlackboardArtifactTagsRowDTO rowData) {
-        super(Children.LEAF, createLookup(rowData.getTag()), results, rowData);
+    public BlackboardArtifactTagNode(SearchResultsDTO results, BlackboardArtifactTagsRowDTO rowData, ExecutorService backgroundTasksPool) {
+        super(Children.LEAF, createLookup(rowData.getTag()), results, rowData, backgroundTasksPool);
         this.rowData = rowData;
         this.columns = results.getColumns();
         setDisplayName(rowData.getDisplayName());

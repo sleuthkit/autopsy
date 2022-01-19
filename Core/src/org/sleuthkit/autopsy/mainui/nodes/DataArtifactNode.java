@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -52,12 +53,12 @@ public class DataArtifactNode extends ArtifactNode<DataArtifact, DataArtifactRow
         }
     }
 
-    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow) {
-        this(tableData, artifactRow, getIconFilePath(tableData));
+    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow, ExecutorService backgroundTasksPool) {
+        this(tableData, artifactRow, getIconFilePath(tableData), backgroundTasksPool);
     }
 
-    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow, String iconPath) {
-        super(tableData, artifactRow, tableData.getColumns(), createLookup(artifactRow), iconPath);
+    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow, String iconPath, ExecutorService backgroundTasksPool) {
+        super(tableData, artifactRow, tableData.getColumns(), createLookup(artifactRow), iconPath, backgroundTasksPool);
     }
 
     @Override

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
+import java.util.concurrent.ExecutorService;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
@@ -38,8 +39,8 @@ public class SearchResultRootNode extends AbstractNode {
     // therefore is not included in the equals and hashcode methods.
     private ChildNodeSelectionInfo childNodeSelectionInfo;
 
-    public SearchResultRootNode(SearchResultsDTO initialResults) {
-        this(initialResults, new SearchResultChildFactory(initialResults));
+    public SearchResultRootNode(SearchResultsDTO initialResults, ExecutorService nodeThreadPool) {
+        this(initialResults, new SearchResultChildFactory(initialResults, nodeThreadPool));
     }
 
     private SearchResultRootNode(SearchResultsDTO initialResults, SearchResultChildFactory factory) {

@@ -22,6 +22,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
@@ -43,7 +44,6 @@ import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.OsAccountRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
-import static org.sleuthkit.autopsy.mainui.nodes.BaseNode.backgroundTasksPool;
 import org.sleuthkit.autopsy.mainui.sco.SCOSupporter;
 import org.sleuthkit.autopsy.mainui.sco.SCOUtils;
 import org.sleuthkit.datamodel.Content;
@@ -64,11 +64,12 @@ public class OsAccountNode extends BaseNode<SearchResultsDTO, OsAccountRowDTO> i
     
     private FutureTask<String> realmFutureTask = null;
 
-    public OsAccountNode(SearchResultsDTO results, OsAccountRowDTO rowData) {
+    public OsAccountNode(SearchResultsDTO results, OsAccountRowDTO rowData, ExecutorService backgroundTasksPool) {
         super(Children.LEAF,
                 Lookups.fixed(rowData.getContent(), new TskContentItem<>(rowData.getContent())),
                 results,
-                rowData);
+                rowData,
+                backgroundTasksPool);
         String name = rowData.getContent().getName();
         setName(ContentNodeUtil.getContentName(rowData.getContent().getId()));
         setDisplayName(name);
@@ -114,7 +115,7 @@ public class OsAccountNode extends BaseNode<SearchResultsDTO, OsAccountRowDTO> i
 
         if ((realmFutureTask == null || realmFutureTask.isDone())) {
             realmFutureTask = new FutureTask<>(new RealmFetcher<>(new WeakReference<>(this)), "");
-            backgroundTasksPool.submit(realmFutureTask);
+            getTaskPool().submit(realmFutureTask);
         }
     }
     @Override
