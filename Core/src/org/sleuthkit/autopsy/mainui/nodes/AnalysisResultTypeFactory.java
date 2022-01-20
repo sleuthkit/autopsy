@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
@@ -86,8 +87,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
         if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
             return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
-        } else if ((rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false))
-                || rowData.getSearchParams() instanceof AnalysisResultSetSearchParam) {
+        } else if (rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false)) {
             return new TreeTypeNode(rowData, new TreeSetFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, Bundle.AnalysisResultTypeFactory_nullSetName()));
         } else {
             return new AnalysisResultTypeTreeNode(rowData);
@@ -107,7 +107,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             if (originalTreeItem instanceof AnalysisResultTreeItem) {
                 hasChildren = ((AnalysisResultTreeItem) originalTreeItem).getHasChildren().orElse(null);
             } else if (originalTreeItem.getSearchParams() instanceof AnalysisResultSetSearchParam) {
-                hasChildren = true;
+                String setName = ((AnalysisResultSetSearchParam) originalTreeItem.getSearchParams()).getSetName();
+                hasChildren = StringUtils.isNotBlank(setName);
             }
 
             // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
