@@ -298,7 +298,8 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         protected TreeNode<EmailSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> rowData) {
-            return new EmailNode(rowData);
+            boolean isLeafNode = Objects.equals(rowData.getSearchParams().getFolder(), this.folderParent);
+            return new EmailNode(rowData, isLeafNode);
         }
 
         @Override
@@ -328,11 +329,11 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public int compare(TreeItemDTO<? extends EmailSearchParams> o1, TreeItemDTO<? extends EmailSearchParams> o2) {
-            String safeO1 = o1.getId() == null ? "" : o1.getId().toString();
-            String safeO2 = o2.getId() == null ? "" : o2.getId().toString();
-            
-            boolean firstDown = StringUtils.isBlank(safeO1);
-            boolean secondDown = StringUtils.isBlank(safeO2);
+            String safeO1 = o1.getId() instanceof String ? o1.getId().toString() : "";
+            String safeO2 = o2.getId() instanceof String ? o2.getId().toString() : "";
+
+            boolean firstDown = o1.getId() instanceof String;
+            boolean secondDown = o2.getId() instanceof String;
 
             if (firstDown == secondDown) {
                 return safeO1.compareToIgnoreCase(safeO2);
@@ -347,37 +348,37 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
      */
     static class EmailNode extends TreeNode<EmailSearchParams> {
 
-        private final Children children;
+        private final boolean isLeafNode;
 
         /**
          * Main constructor.
          *
          * @param itemData The data to display.
          */
-        public EmailNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
-            this(itemData, Children.create(new EmailFolderFactory(itemData.getSearchParams().getFolder(), itemData.getSearchParams().getDataSourceId()), true));
+        public EmailNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData, boolean isLeafNode) {
+            this(itemData,
+                    isLeafNode
+                            ? Children.LEAF
+                            : Children.create(new EmailFolderFactory(itemData.getSearchParams().getFolder(), itemData.getSearchParams().getDataSourceId()), true),
+                    isLeafNode);
         }
 
-        private EmailNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData, Children children) {
+        private EmailNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData, Children children, boolean isLeafNode) {
             super(itemData.getId().toString(),
                     "org/sleuthkit/autopsy/images/folder-icon-16.png",
                     itemData,
                     children,
                     getDefaultLookup(itemData));
 
-            this.children = children;
-        }
-
-        private boolean hasChildren() {
-            return !StringUtils.isBlank(this.getItemData().getId().toString()) && this.children.getNodesCount(true) > 0;
+            this.isLeafNode = isLeafNode;
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            if (hasChildren()) {
-                super.respondSelection(dataResultPanel);
-            } else {
+            if (this.isLeafNode) {
                 dataResultPanel.displayEmailMessages(super.getItemData().getSearchParams());
+            } else {
+                super.respondSelection(dataResultPanel);
             }
         }
     }

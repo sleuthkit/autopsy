@@ -32,7 +32,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -50,7 +49,6 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.explorer.view.BeanTreeView;
@@ -89,8 +87,7 @@ import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
-import org.sleuthkit.autopsy.mainui.datamodel.EmailsDAO;
-import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetFactory;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
@@ -1564,19 +1561,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }
             
-            Node parentNode = emailMsgRootNode;
+            Node parentNode = null;
             Node[] childNodes = emailMsgRootNode.getChildren().getNodes(true);
             while (childNodes != null) {
                 for (Node child : childNodes) {
-                    if (Objects.equals(path, child.getName())) {
-                        return child;
-                    } else if ((StringUtils.isBlank(path) && StringUtils.isBlank(child.getName()))
-                            || (StringUtils.isNotBlank(path) && path.startsWith(child.getName()))) {
+                    if (MainDAO.getInstance().getEmailsDAO().getNextSubFolder(child.getName(), path).isPresent()) {
                         parentNode = child;
                         childNodes = parentNode.getChildren().getNodes(true);
                         break;
-                    } else {
-                        return null;
                     }
                 }
             }
