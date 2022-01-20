@@ -42,6 +42,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -515,7 +516,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                             return getSetTreeItem(type,
                                     dataSourceId,
                                     entry.getKey(),
-                                    entry.getKey() == null ? nullSetName : entry.getKey(),
+                                    StringUtils.isBlank(entry.getKey()) ? nullSetName : entry.getKey(),
                                     displayCount);
                         })
                         .collect(Collectors.toList());
