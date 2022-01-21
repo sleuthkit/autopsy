@@ -177,7 +177,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             }
 
             return Optional.of(group);
-        }       
+        }
 
     }
 
