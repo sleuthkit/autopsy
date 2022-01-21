@@ -31,3 +31,8 @@ DeleteAnalysisResultsAction.progress.allResults=Deleting Analysis Results type {
 # {1} - configuration
 DeleteAnalysisResultsAction.progress.allResultsWithConfiguration=Deleting Analysis Results type {0} and configuration {1}
 DeleteAnalysisResultsAction.title=Deleting Analysis Results
+# {0} - result type
+DeleteAnalysisResultsAction.warning.allResults=Are you sure you want to delete all Analysis Results of type {0}?
+# {0} - result type
+# {1} - configuration
+DeleteAnalysisResultsAction.warning.allResultsWithConfiguration=Are you sure you want to delete all Analysis Results of type {0} and configuration {1}?
