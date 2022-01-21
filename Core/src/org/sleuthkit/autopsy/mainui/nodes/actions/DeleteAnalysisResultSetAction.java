@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.progress.AppFrameProgressBar;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -35,7 +36,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DeleteAnalysisResultSetAction extends AbstractAction {
     
     @Messages({
-        "DeleteKeywordSetAction_label=Delete Analysis Results"
+        "DeleteAnalysisResultsAction.label=Delete Analysis Results",
+        "DeleteAnalysisResultsAction.title=Deleting Analysis Results",
+        "# {0} - result type", 
+        "DeleteAnalysisResultsAction.progress.allResults=Deleting Analysis Results type {0}",
+        "# {0} - result type", "# {1} - configuration", 
+        "DeleteAnalysisResultsAction.progress.allResultsWithConfiguration=Deleting Analysis Results type {0} and configuration {1}"
     })
     
     private static final Logger logger = Logger.getLogger(DeleteAnalysisResultSetAction.class.getName());
@@ -46,7 +52,7 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
     private final Long dsID;
     
     public DeleteAnalysisResultSetAction(BlackboardArtifact.Type type, String configuration, Long dsID) {
-        super(Bundle.DeleteKeywordSetAction_label());
+        super(Bundle.DeleteAnalysisResultsAction_label());
         this.type = type;
         this.configuration = configuration;
         this.dsID = dsID;
@@ -58,20 +64,34 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
             @Override
             protected Void doInBackground() throws Exception {
 
-                if (!isCancelled()) {
-                    try {
-                        Case.getCurrentCase().getSleuthkitCase().getBlackboard().deleteAnalysisResults(type, dsID, configuration);
-                        logger.log(Level.INFO, "Deleted Analysis Result type = " + type);
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Failed to delete analysis result type = " + type, ex);
+                AppFrameProgressBar progress = new AppFrameProgressBar(Bundle.DeleteAnalysisResultsAction_title());
+                try {
+                    String message;
+                    if (configuration == null || configuration.isEmpty()) {
+                        message = Bundle.DeleteAnalysisResultsAction_progress_allResults(type.getDisplayName());
+                    } else {
+                        message = Bundle.DeleteAnalysisResultsAction_progress_allResultsWithConfiguration(type.getDisplayName(), configuration);
                     }
-                }
+                    
+                    progress.start(message);
+                    progress.switchToIndeterminate(message);
+                    if (!isCancelled()) {
+                        try {
+                            logger.log(Level.INFO, "Deleting Analysis Results type = {0}, data source ID = {1}, configuration = {2}", new Object[]{type, dsID, configuration});
+                            Case.getCurrentCase().getSleuthkitCase().getBlackboard().deleteAnalysisResults(type, dsID, configuration);
+                            logger.log(Level.INFO, "Deleted Analysis Results type = {0}, data source ID = {1}, configuration = {2}", new Object[]{type, dsID, configuration});
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Failed to delete analysis results of type = "+type+", data source ID = "+dsID+", configuration = "+configuration, ex);
+                        }
+                    }
 
-                return null;
+                    return null;
+                } finally {
+                    progress.finish();
+                }
             }
         };
         
         worker.execute();        
-    }
-    
+    }    
 }

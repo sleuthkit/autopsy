@@ -24,4 +24,10 @@ ArtifactFactory_getViewSrcContentAction_displayName=View Source {0} in Directory
 # {0} - contentType
 ArtifactFactory_getViewSrcContentAction_displayName2=View Source {0}
 DeleteAnalysisResultAction_label=Delete Analysis Result
-DeleteKeywordSetAction_label=Delete Analysis Results
+DeleteAnalysisResultsAction.label=Delete Analysis Results
+# {0} - result type
+DeleteAnalysisResultsAction.progress.allResults=Deleting Analysis Results type {0}
+# {0} - result type
+# {1} - configuration
+DeleteAnalysisResultsAction.progress.allResultsWithConfiguration=Deleting Analysis Results type {0} and configuration {1}
+DeleteAnalysisResultsAction.title=Deleting Analysis Results
