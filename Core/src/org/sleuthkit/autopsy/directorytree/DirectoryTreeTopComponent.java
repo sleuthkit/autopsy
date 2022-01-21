@@ -1564,16 +1564,22 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             Node parentNode = null;
             Node[] childNodes = emailMsgRootNode.getChildren().getNodes(true);
             while (childNodes != null) {
+                boolean recursing = false;
                 for (Node child : childNodes) {
                     if (MainDAO.getInstance().getEmailsDAO().getNextSubFolder(child.getName(), path).isPresent()) {
+                        recursing = true;
                         parentNode = child;
-                        childNodes = parentNode.getChildren().getNodes(true);
+                        childNodes = child.getChildren().getNodes(true);
                         break;
                     }
                 }
+                
+                if (!recursing) {
+                    break;
+                }
             }
             
-            return null;
+            return parentNode;
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;

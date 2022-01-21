@@ -300,7 +300,8 @@ public class EmailsDAO extends AbstractDAO {
         return new TreeItemDTO<>(
                 EmailSearchParams.getTypeId(),
                 new EmailSearchParams(dataSourceId, normalizedPath),
-                normalizedPath == null ? 0 : normalizedPath,
+                // path for id to lower case so case insensitive
+                normalizedPath == null ? 0 : normalizedPath.toLowerCase(),
                 displayName,
                 count
         );
@@ -330,7 +331,7 @@ public class EmailsDAO extends AbstractDAO {
         }
 
         // ensure that child is a sub path of parent
-        if (normalizedChild.startsWith(normalizedParent)) {
+        if (normalizedChild.toLowerCase().startsWith(normalizedParent.toLowerCase())) {
             int nextDelimiter = normalizedChild.indexOf(PATH_DELIMITER, normalizedParent.length());
             return nextDelimiter >= 0
                     ? Optional.of(getNormalizedPath(normalizedChild.substring(0, nextDelimiter + 1)))
@@ -472,13 +473,13 @@ public class EmailsDAO extends AbstractDAO {
                             String rsPath;
                             if (normalizedParent != null && rsFolderSegment != null) {
                                 // both the parent path and next folder segment are present
-                                rsPath = getNormalizedPath(normalizedParent + rsFolderSegment);
+                                rsPath = getNormalizedPath(normalizedParent + rsFolderSegment + PATH_DELIMITER);
                             } else if (rsFolderSegment == null) {
                                 // the folder segment is not present
                                 rsPath = getNormalizedPath(normalizedParent);
                             } else {
                                 // the normalized parent is not present but the folder segment is
-                                rsPath = getNormalizedPath(PATH_DELIMITER + rsFolderSegment);
+                                rsPath = getNormalizedPath(PATH_DELIMITER + rsFolderSegment + PATH_DELIMITER);
                             }
 
                             TreeDisplayCount treeDisplayCount = indeterminateTypes.contains(rsPath)
