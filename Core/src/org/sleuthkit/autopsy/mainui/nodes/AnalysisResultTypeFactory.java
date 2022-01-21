@@ -507,7 +507,8 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
             KeywordSearchTermParams searchTermParams = this.getItemData().getSearchParams();
 
-            // ELTODO group.add(new DeleteAnalysisResultSetAction(searchTermParams));
+            // ELTODO fill this stub when implementing KWS result deletion
+            // group.add(new DeleteAnalysisResultSetAction(searchTermParams));
 
             return Optional.of(group);
         }

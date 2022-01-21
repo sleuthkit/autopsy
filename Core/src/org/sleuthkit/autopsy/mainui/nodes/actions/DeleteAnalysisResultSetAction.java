@@ -20,21 +20,12 @@
 package org.sleuthkit.autopsy.mainui.nodes.actions;
 
 import java.awt.event.ActionEvent;
-import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.SwingWorker;
-import org.openide.explorer.ExplorerManager;
-import org.openide.explorer.view.BeanTreeView;
-import org.openide.nodes.Children;
-import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
-import org.sleuthkit.autopsy.mainui.datamodel.KeywordSearchTermParams;
-import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -63,13 +54,6 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        //ExplorerManager em = DirectoryTreeTopComponent.findInstance().getExplorerManager();
-        //Node[] selectedNode = em.getSelectedNodes();
-        //Children c = selectedNode[0].getChildren();
-        //for (Node next : c.getNodes()) {
-        //}
-                
-        
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -87,8 +71,7 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
             }
         };
         
-        worker.execute();
-        
+        worker.execute();        
     }
     
 }
