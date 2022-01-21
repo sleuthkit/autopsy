@@ -115,7 +115,6 @@ public class EmailsDAO extends AbstractDAO {
     private void setResultsViewPreparedStatement(CaseDbPreparedStatement preparedStatement, String normalizedPath, Long dataSourceId) throws TskCoreException {
         int paramIdx = 0;
         if (normalizedPath != null) {
-            preparedStatement.setString(++paramIdx, normalizedPath);
             String noEndingSlash = normalizedPath.endsWith(PATH_DELIMITER) ? normalizedPath.substring(0, normalizedPath.length() - 1) : normalizedPath;
             preparedStatement.setString(++paramIdx, noEndingSlash);
         }
@@ -134,13 +133,17 @@ public class EmailsDAO extends AbstractDAO {
         String normalizedPath = getNormalizedPath(searchParams.getParamData().getFolder());
         String pathWhereStatement = (normalizedPath == null)
                 // if searching for result without any folder, find items that are not prefixed with '\' or aren't null
-                ? "AND attr.value_text IS NULL OR attr.value_text NOT LIKE '" + PATH_DELIMITER + "%' ESCAPE '" + ESCAPE_CHAR + " \n"
+                ? "AND (attr.value_text IS NULL OR attr.value_text NOT LIKE '" + PATH_DELIMITER + "%' ESCAPE '" + ESCAPE_CHAR + "') \n"
                 // the path should start with the prescribed folder
-                : "AND (LOWER(attr.value_text) = LOWER(?) OR LOWER(attr.value_text) = LOWER(?))\n";
+                : "AND (LOWER(attr.value_text) = LOWER(?))\n";
 
         String baseQuery = "FROM blackboard_artifacts art \n"
-                + "LEFT JOIN blackboard_attributes attr ON attr.artifact_id = art.artifact_id \n"
-                + "  AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + " \n"
+                + "LEFT JOIN (\n"
+                + "  SELECT attr1.artifact_id, MIN(attr1.value_text) AS value_text\n"
+                + "  FROM blackboard_attributes attr1\n"
+                + "  WHERE attr1.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + "\n"
+                + "  GROUP BY attr1.artifact_id\n"
+                + ") attr ON attr.artifact_id = art.artifact_id \n"
                 + "WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + " \n"
                 + pathWhereStatement
                 + (searchParams.getParamData().getDataSourceId() == null ? "" : "AND art.data_source_obj_id = ? \n")
@@ -290,26 +293,69 @@ public class EmailsDAO extends AbstractDAO {
      * @param fullPath     The full TSK_PATH path.
      * @param dataSourceId The data source object id.
      * @param count        The count to display.
+     * @param hasChildren  True if has children. False if no children. Empty if
+     *                     unknown.
      *
      * @return The tree item dto.
      */
-    public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String fullPath, Long dataSourceId, TreeDisplayCount count) {
+    private TreeItemDTO<EmailSearchParams> createEmailTreeItem(String fullPath, Long dataSourceId, TreeDisplayCount count, Optional<Boolean> hasChildren) {
         String normalizedPath = getNormalizedPath(fullPath);
-        String lastSegment = getLastFolderSegment(fullPath);
-        String displayName = getFolderDisplayName(lastSegment);
-        return new TreeItemDTO<>(
-                EmailSearchParams.getTypeId(),
-                new EmailSearchParams(dataSourceId, normalizedPath),
-                // path for id to lower case so case insensitive
-                normalizedPath == null ? 0 : normalizedPath.toLowerCase(),
-                displayName,
-                count
-        );
+        String displayName = getFolderDisplayName(getLastFolderSegment(getNormalizedPath(fullPath)));
+        return createEmailTreeItem(normalizedPath, displayName, dataSourceId, count, hasChildren);
+    }
+
+    /**
+     * Creates a tree item dto with the given parameters.
+     *
+     * @param fullPath     The full TSK_PATH path.
+     * @param displayName  The display name.
+     * @param dataSourceId The data source object id.
+     * @param count        The count to display.
+     * @param hasChildren  True if has children. False if no children. Empty if
+     *                     unknown.
+     *
+     * @return The tree item dto.
+     */
+    private TreeItemDTO<EmailSearchParams> createEmailTreeItem(String fullPath, String displayName, Long dataSourceId, TreeDisplayCount count, Optional<Boolean> hasChildren) {
+        String normalizedPath = getNormalizedPath(fullPath);
+        return new EmailTreeItem(normalizedPath, displayName, dataSourceId, count, hasChildren);
+    }
+        
+    /**
+     * Creates a tree item dto if full path is a subfolder of parent path.
+     *
+     * @param fullPath     The full TSK_PATH path.
+     * @param parentPath   The parent path of the tree item. If fullPath is
+     *                     equivalent to parentPath, name of this item will be
+     *                     default.
+     * @param dataSourceId The data source object id.
+     * @param count        The count to display.
+     *
+     * @return The tree item dto or null if fullPath is not a sub folder of
+     *         parent path.
+     */
+    public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String fullPath, String parentPath, Long dataSourceId, TreeDisplayCount count) {
+        Optional<String> subFolderOpt = getNextSubFolder(parentPath, fullPath);
+        if (!subFolderOpt.isPresent()) {
+            return null;
+        }
+
+        String subFolder = subFolderOpt.get();
+        boolean equalPaths = Objects.equals(subFolder, getNormalizedPath(parentPath));
+
+        // if full path has further children, then has children is true, otherwise we don't know.
+        Optional<Boolean> hasChildren = Objects.equals(subFolder, getNormalizedPath(fullPath)) ? Optional.empty() : Optional.of(true);
+        String displayName = equalPaths
+                ? Bundle.EmailsDAO_getFolderDisplayName_defaultName()
+                : getFolderDisplayName(getLastFolderSegment(subFolder));
+
+        return new EmailTreeItem(subFolder, displayName, dataSourceId, count, hasChildren);
+
     }
 
     /**
      * Returns the next relevant subfolder (the full path) after the parent path
-     * or empty if child path is not a sub path of parent path path.
+     * or empty if child path is not a sub path of parent path.
      *
      * @param parentPath The parent path.
      * @param childPath  The child path.
@@ -386,6 +432,7 @@ public class EmailsDAO extends AbstractDAO {
 
         String query = "\n  MAX(grouped_res.folder) AS folder\n"
                 + "  ,COUNT(*) AS count\n"
+                + "  ,MAX(grouped_res.has_children) AS has_children\n"
                 + "FROM (\n"
                 + "  SELECT\n"
                 + "    (CASE \n"
@@ -394,6 +441,10 @@ public class EmailsDAO extends AbstractDAO {
                 + "        ELSE\n"
                 + "          res.subfolders\n"
                 + "    END) AS folder\n"
+                + "    ,(CASE \n"
+                + "        WHEN res.subfolders LIKE '%" + PATH_DELIMITER + "%' THEN 1\n"
+                + "        ELSE 0\n"
+                + "    END) AS has_children\n"
                 + "  FROM (\n"
                 + "    SELECT\n"
                 + "      " + substringFolderSql + " AS subfolders\n"
@@ -469,6 +520,7 @@ public class EmailsDAO extends AbstractDAO {
                 skCase.getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
                     try {
                         while (resultSet.next()) {
+                            boolean hasChildren = resultSet.getBoolean("has_children");
                             String rsFolderSegment = resultSet.getString("folder");
                             String rsPath;
                             if (normalizedParent != null && rsFolderSegment != null) {
@@ -486,20 +538,16 @@ public class EmailsDAO extends AbstractDAO {
                                     ? TreeDisplayCount.INDETERMINATE
                                     : TreeResultsDTO.TreeDisplayCount.getDeterminate(resultSet.getLong("count"));
 
-                            accumulatedData.add(createEmailTreeItem(rsPath, dataSourceId, treeDisplayCount));
+                            accumulatedData.add(createEmailTreeItem(rsPath, getFolderDisplayName(rsFolderSegment), 
+                                    dataSourceId, treeDisplayCount, Optional.of(hasChildren)));
                         }
                     } catch (SQLException ex) {
                         throw new IllegalStateException("A sql exception occurred.", ex);
                     }
                 });
 
-                // if only one item of this type, don't show children
-                if (accumulatedData.size() == 1 && Objects.equals(accumulatedData.get(0).getSearchParams().getFolder(), folder)) {
-                    return new TreeResultsDTO<>(Collections.emptyList());
-                } else {
-                    // return results
-                    return new TreeResultsDTO<>(accumulatedData);
-                }
+                // return results
+                return new TreeResultsDTO<>(accumulatedData);
             }
 
         } catch (SQLException | NoCurrentCaseException | TskCoreException | IllegalStateException ex) {
@@ -524,7 +572,8 @@ public class EmailsDAO extends AbstractDAO {
                 (daoEvt, count) -> createEmailTreeItem(
                         daoEvt.getFolder(),
                         daoEvt.getDataSourceId(),
-                        count
+                        count,
+                        Optional.empty()
                 ));
     }
 
@@ -535,7 +584,8 @@ public class EmailsDAO extends AbstractDAO {
                 (daoEvt, count) -> createEmailTreeItem(
                         daoEvt.getFolder(),
                         daoEvt.getDataSourceId(),
-                        count
+                        count,
+                        Optional.empty()
                 ));
     }
 
@@ -584,7 +634,8 @@ public class EmailsDAO extends AbstractDAO {
                             createEmailTreeItem(
                                     daoEvt.getFolder(),
                                     daoEvt.getDataSourceId(),
-                                    TreeResultsDTO.TreeDisplayCount.INDETERMINATE),
+                                    TreeResultsDTO.TreeDisplayCount.INDETERMINATE,
+                                    Optional.empty()),
                             false);
                 });
 
@@ -611,6 +662,43 @@ public class EmailsDAO extends AbstractDAO {
         } else {
             return false;
 
+        }
+    }
+
+    /**
+     * Tree item for emails.
+     */
+    public static class EmailTreeItem extends TreeItemDTO<EmailSearchParams> {
+
+        private final Optional<Boolean> hasChildren;
+
+        /**
+         * Constructor.
+         *
+         * @param normalizedPath The normalized path.
+         * @param displayName    The display name.
+         * @param dataSourceId   The data source id.
+         * @param count          The tree count.
+         * @param hasChildren    True if has children. False if no children.
+         *                       Empty if unknown.
+         */
+        EmailTreeItem(String normalizedPath, String displayName, Long dataSourceId, TreeDisplayCount count, Optional<Boolean> hasChildren) {
+            super(
+                    EmailSearchParams.getTypeId(),
+                    new EmailSearchParams(dataSourceId, normalizedPath),
+                    // path for id to lower case so case insensitive
+                    normalizedPath == null ? 0 : normalizedPath.toLowerCase(),
+                    displayName,
+                    count
+            );
+            this.hasChildren = hasChildren;
+        }
+
+        /**
+         * @return True if has children. False if no children. Empty if unknown.
+         */
+        public Optional<Boolean> getHasChildren() {
+            return hasChildren;
         }
     }
 

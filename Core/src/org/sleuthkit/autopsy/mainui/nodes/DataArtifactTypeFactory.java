@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.EmailSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.EmailsDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.EmailsDAO.EmailTreeItem;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
@@ -298,8 +299,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         protected TreeNode<EmailSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> rowData) {
-            boolean isLeafNode = Objects.equals(rowData.getSearchParams().getFolder(), this.folderParent);
-            return new EmailNode(rowData, isLeafNode);
+            return new EmailNode(rowData);
         }
 
         @Override
@@ -312,16 +312,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
                     && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 
                 EmailSearchParams originalSearchParam = originalTreeItem.getSearchParams();
-
-                Optional<String> thisSubFolderOpt = getDAO().getNextSubFolder(this.folderParent, originalSearchParam.getFolder());
-                if (thisSubFolderOpt.isPresent()) {
-                    String thisSubFolder = thisSubFolderOpt.get();
-
-                    return getDAO().createEmailTreeItem(
-                            thisSubFolder,
-                            dataSourceId,
-                            originalTreeItem.getDisplayCount());
-                }
+                return getDAO().createEmailTreeItem(originalSearchParam.getFolder(), this.folderParent, dataSourceId, originalTreeItem.getDisplayCount());
             }
 
             return null;
@@ -348,40 +339,56 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
      */
     static class EmailNode extends TreeNode<EmailSearchParams> {
 
-        private final boolean isLeafNode;
-        private final Children children;
-
         /**
          * Main constructor.
          *
          * @param itemData The data to display.
          */
-        public EmailNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData, boolean isLeafNode) {
-            this(itemData,
-                    isLeafNode
-                            ? Children.LEAF
-                            : Children.create(new EmailFolderFactory(itemData.getSearchParams().getFolder(), itemData.getSearchParams().getDataSourceId()), true),
-                    isLeafNode);
-        }
-
-        private EmailNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData, Children children, boolean isLeafNode) {
+        public EmailNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
             super(itemData.getId().toString(),
                     "org/sleuthkit/autopsy/images/folder-icon-16.png",
                     itemData,
-                    children,
+                    getChildren(itemData),
                     getDefaultLookup(itemData));
-
-            this.isLeafNode = isLeafNode;
-            this.children = children;
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            if (this.isLeafNode || this.children.getNodesCount(true) == 0) {
+            if (Children.LEAF.equals(getChildren())) {
                 dataResultPanel.displayEmailMessages(super.getItemData().getSearchParams());
             } else {
                 super.respondSelection(dataResultPanel);
             }
+        }
+
+        @Override
+        public void update(TreeItemDTO<? extends EmailSearchParams> updatedData) {
+            setChildren(updatedData);
+            super.update(updatedData);
+        }
+
+        private void setChildren(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
+            if (Children.LEAF.equals(getChildren())) {
+                Children newChildren = getChildren(itemData);
+                if (!Children.LEAF.equals(newChildren)) {
+                    setChildren(newChildren);
+                }
+            }
+        }
+
+        private static Children getChildren(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
+            if (itemData instanceof EmailTreeItem) {
+                EmailTreeItem treeItem = (EmailTreeItem) itemData;
+                if (treeItem.getHasChildren().orElse(false)) {
+                    return Children.create(
+                            new EmailFolderFactory(
+                                    treeItem.getSearchParams().getFolder(),
+                                    treeItem.getSearchParams().getDataSourceId()),
+                            true);
+                }
+            }
+
+            return Children.LEAF;
         }
     }
 
