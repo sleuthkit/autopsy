@@ -136,7 +136,7 @@ public class EmailsDAO extends AbstractDAO {
                 // if searching for result without any folder, find items that are not prefixed with '\' or aren't null
                 ? "AND attr.value_text IS NULL OR attr.value_text NOT LIKE '" + PATH_DELIMITER + "%' ESCAPE '" + ESCAPE_CHAR + " \n"
                 // the path should start with the prescribed folder
-                : "AND (attr.value_text = ? OR attr.value_text = ?)\n";
+                : "AND (LOWER(attr.value_text) = LOWER(?) OR LOWER(attr.value_text) = LOWER(?))\n";
 
         String baseQuery = "FROM blackboard_artifacts art \n"
                 + "LEFT JOIN blackboard_attributes attr ON attr.artifact_id = art.artifact_id \n"
@@ -149,8 +149,8 @@ public class EmailsDAO extends AbstractDAO {
         String itemsQuery = " art.artifact_id AS artifact_id \n"
                 + baseQuery
                 + "ORDER BY art.artifact_id\n"
-                + "OFFSET " + searchParams.getStartItem() + "\n"
-                + (searchParams.getMaxResultsCount() == null ? "" : "LIMIT " + searchParams.getMaxResultsCount() + "\n");
+                + (searchParams.getMaxResultsCount() == null ? "" : "LIMIT " + searchParams.getMaxResultsCount() + "\n")
+                + "OFFSET " + searchParams.getStartItem() + "\n";
 
         String countsQuery = " COUNT(*) AS count FROM (SELECT art.artifact_id\n" + baseQuery + ") res";
 
@@ -236,14 +236,16 @@ public class EmailsDAO extends AbstractDAO {
             return null;
         }
 
-        if (normalizedPath.length() > 1) {
-            int lastIdx = normalizedPath.lastIndexOf(PATH_DELIMITER, normalizedPath.length() - 1);
-            if (lastIdx >= 0) {
-                return normalizedPath.substring(lastIdx + 1, normalizedPath.length() - 1);
-            }
-        }
+        String pathWithoutEndSlash = normalizedPath.endsWith(PATH_DELIMITER)
+                ? normalizedPath.substring(0, normalizedPath.length() - 1)
+                : normalizedPath;
 
-        return "";
+        int lastIdx = pathWithoutEndSlash.lastIndexOf(PATH_DELIMITER);
+        if (lastIdx >= 0) {
+            return pathWithoutEndSlash.substring(lastIdx + 1);
+        } else {
+            return pathWithoutEndSlash;
+        }
     }
 
     /**
@@ -372,12 +374,12 @@ public class EmailsDAO extends AbstractDAO {
             folderWhereStatement = "";
         } else {
             // if exact match, 
-            substringFolderSql = "CASE\n"
-                    + "  WHEN p.path LIKE ? THEN \n"
-                    + "    SUBSTR(p.path, LENGTH(?))\n"
-                    + "  ELSE\n"
-                    + "    NULL\n"
-                    + "END";
+            substringFolderSql = "      CASE\n"
+                    + "        WHEN p.path LIKE ? THEN \n"
+                    + "          SUBSTR(p.path, LENGTH(?) + 1)\n"
+                    + "        ELSE\n"
+                    + "          NULL\n"
+                    + "      END";
             folderWhereStatement = "    WHERE (p.path = ? OR p.path LIKE ? ESCAPE '" + ESCAPE_CHAR + "')\n";
         }
 
@@ -394,18 +396,17 @@ public class EmailsDAO extends AbstractDAO {
                 + "  FROM (\n"
                 + "    SELECT\n"
                 + "      " + substringFolderSql + " AS subfolders\n"
-                + "    FROM blackboard_artifacts art\n"
-                + "    LEFT JOIN (\n"
-                + "        SELECT \n"
-                + "        MIN(attr.value_text) AS path\n"
-                + "        ,attr.artifact_id \n"
-                + "        FROM blackboard_attributes attr \n"
-                + "        WHERE attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + " \n"
-                + "        GROUP BY attr.artifact_id\n"
-                + "    ) p ON art.artifact_id = p.artifact_id\n"
+                + "    FROM (\n"
+                + "      SELECT MIN(attr.value_text) AS path\n"
+                + "      FROM blackboard_attributes attr \n"
+                + "      LEFT JOIN blackboard_artifacts art \n"
+                + "        ON attr.artifact_id = art.artifact_id\n"
+                + "      WHERE attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + " \n"
+                + "      AND attr.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + " \n"
+                + (dataSourceId != null ? "      AND art.data_source_obj_id = ? \n" : "")
+                + "      GROUP BY attr.artifact_id\n"
+                + "    ) p\n"
                 + folderWhereStatement
-                + "    AND art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + " \n"
-                + (dataSourceId != null ? "    AND art.data_source_obj_id = ? \n" : "")
                 + "  ) res\n"
                 + ") grouped_res\n"
                 + "GROUP BY LOWER(grouped_res.folder)\n"
@@ -471,13 +472,13 @@ public class EmailsDAO extends AbstractDAO {
                             String rsPath;
                             if (normalizedParent != null && rsFolderSegment != null) {
                                 // both the parent path and next folder segment are present
-                                rsPath = getNormalizedPath(normalizedParent + PATH_DELIMITER + rsFolderSegment + PATH_DELIMITER);
+                                rsPath = getNormalizedPath(normalizedParent + rsFolderSegment);
                             } else if (rsFolderSegment == null) {
                                 // the folder segment is not present
                                 rsPath = getNormalizedPath(normalizedParent);
                             } else {
                                 // the normalized parent is not present but the folder segment is
-                                rsPath = getNormalizedPath(PATH_DELIMITER + rsFolderSegment + PATH_DELIMITER);
+                                rsPath = getNormalizedPath(PATH_DELIMITER + rsFolderSegment);
                             }
 
                             TreeDisplayCount treeDisplayCount = indeterminateTypes.contains(rsPath)
@@ -492,7 +493,7 @@ public class EmailsDAO extends AbstractDAO {
                 });
 
                 // if only one item of this type, don't show children
-                if (accumulatedData.size() == 1 && accumulatedData.get(0).getId() == null) {
+                if (accumulatedData.size() == 1 && Objects.equals(accumulatedData.get(0).getSearchParams().getFolder(), folder)) {
                     return new TreeResultsDTO<>(Collections.emptyList());
                 } else {
                     // return results

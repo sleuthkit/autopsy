@@ -349,6 +349,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     static class EmailNode extends TreeNode<EmailSearchParams> {
 
         private final boolean isLeafNode;
+        private final Children children;
 
         /**
          * Main constructor.
@@ -371,11 +372,12 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
                     getDefaultLookup(itemData));
 
             this.isLeafNode = isLeafNode;
+            this.children = children;
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            if (this.isLeafNode) {
+            if (this.isLeafNode || this.children.getNodesCount(true) == 0) {
                 dataResultPanel.displayEmailMessages(super.getItemData().getSearchParams());
             } else {
                 super.respondSelection(dataResultPanel);
