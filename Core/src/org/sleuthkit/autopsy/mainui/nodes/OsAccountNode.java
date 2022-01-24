@@ -113,9 +113,10 @@ public class OsAccountNode extends BaseNode<SearchResultsDTO, OsAccountRowDTO> i
             realmFutureTask = null;
         }
 
-        if ((realmFutureTask == null || realmFutureTask.isDone())) {
+        ExecutorService threadPool = getTaskPool();
+        if ((threadPool != null && !threadPool.isShutdown() && !threadPool.isTerminated()) && (realmFutureTask == null || realmFutureTask.isDone())) {
             realmFutureTask = new FutureTask<>(new RealmFetcher<>(new WeakReference<>(this)), "");
-            getTaskPool().submit(realmFutureTask);
+            threadPool.submit(realmFutureTask);
         }
     }
     @Override
