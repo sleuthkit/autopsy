@@ -231,7 +231,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        aLeappFileProcessor.processFiles(dataSource, moduleOutputPath, aLeappFile);
+        aLeappFileProcessor.processFiles(dataSource, moduleOutputPath, aLeappFile, statusHelper);
     }
 
     /**
@@ -274,7 +274,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        aLeappFileProcessor.processFileSystem(dataSource, moduleOutputPath);
+        aLeappFileProcessor.processFileSystem(dataSource, moduleOutputPath, statusHelper);
     }
 
     /**
