@@ -66,31 +66,31 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        
+        String warningMessage;
+        String progressMessage;
+        if (configuration == null || configuration.isEmpty()) {
+            warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResults(type.getDisplayName());
+            progressMessage = Bundle.DeleteAnalysisResultsAction_progress_allResults(type.getDisplayName());
+        } else {
+            warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResultsWithConfiguration(type.getDisplayName(), configuration);
+            progressMessage = Bundle.DeleteAnalysisResultsAction_progress_allResultsWithConfiguration(type.getDisplayName(), configuration);
+        }
+        int response = JOptionPane.showConfirmDialog(
+                WindowManager.getDefault().getMainWindow(),
+                warningMessage,
+                Bundle.DeleteAnalysisResultsAction_title(),
+                JOptionPane.YES_NO_OPTION);
+        if (response != JOptionPane.YES_OPTION) {
+            return;
+        }
+
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
 
                 AppFrameProgressBar progress = new AppFrameProgressBar(Bundle.DeleteAnalysisResultsAction_title());
-                try {
-                    String progressMessage;
-                    String warningMessage;
-                    if (configuration == null || configuration.isEmpty()) {
-                        progressMessage = Bundle.DeleteAnalysisResultsAction_progress_allResults(type.getDisplayName());
-                        warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResults(type.getDisplayName());
-                    } else {
-                        progressMessage = Bundle.DeleteAnalysisResultsAction_progress_allResultsWithConfiguration(type.getDisplayName(), configuration);
-                        warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResultsWithConfiguration(type.getDisplayName(), configuration);
-                    }
- 
-                    int response = JOptionPane.showConfirmDialog(
-                            WindowManager.getDefault().getMainWindow(),
-                            warningMessage,
-                            Bundle.DeleteAnalysisResultsAction_title(),
-                            JOptionPane.YES_NO_OPTION);
-                    if (response != JOptionPane.YES_OPTION) {
-                        return null;
-                    }
-
+                try {                    
                     progress.start(progressMessage);
                     progress.switchToIndeterminate(progressMessage);
                     if (!isCancelled()) {
