@@ -312,16 +312,16 @@ public final class LeappFileProcessor {
     })
     private void processLeappFiles(List<String> LeappFilesToProcess, Content dataSource, DataSourceIngestModuleProgress progress) throws IngestModuleException {
         progress.switchToDeterminate(LeappFilesToProcess.size());
-        
+
         for (int i = 0; i < LeappFilesToProcess.size(); i++) {
             if (checkCancelled()) {
                 return;
             }
-            
+
             String LeappFileName = LeappFilesToProcess.get(i);
             String fileName = FilenameUtils.getName(LeappFileName);
             progress.progress(Bundle.LeappFileProcessor_tsvProcessed(fileName), i);
-            
+
             File LeappFile = new File(LeappFileName);
             if (tsvFileAttributes.containsKey(fileName)) {
                 List<TsvColumn> attrList = tsvFileAttributes.get(fileName);
