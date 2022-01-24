@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.lang.ref.WeakReference;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -28,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 import javax.swing.Action;
@@ -36,7 +34,6 @@ import javax.swing.SwingUtilities;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
@@ -60,9 +57,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
-import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.DataArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A a simple starting point for nodes.
@@ -213,7 +207,9 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
 
         if (backgroundTasksPool != null && (scoFutureTask == null || scoFutureTask.isDone()) && this instanceof SCOSupporter) {
             scoFutureTask = new FutureTask<>(new SCOFetcher<>(new WeakReference<>((SCOSupporter) this)), "");
-            backgroundTasksPool.submit(scoFutureTask);
+            if(!backgroundTasksPool.isShutdown() && !backgroundTasksPool.isTerminated()) {
+                backgroundTasksPool.submit(scoFutureTask);
+            }
         }
     }
     
