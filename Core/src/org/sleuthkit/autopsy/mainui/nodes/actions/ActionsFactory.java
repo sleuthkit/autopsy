@@ -60,9 +60,10 @@ import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.FileSearchAction;
+import org.sleuthkit.autopsy.directorytree.FileSearchTreeAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.filesearch.FileSearchAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
@@ -509,7 +510,7 @@ public final class ActionsFactory {
         ActionGroup group = new ActionGroup();        
         Optional<Content> optional = context.getDataSourceForActions();
         if(optional.isPresent()) {
-            group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
+            group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
             group.add(new ViewSummaryInformationAction(optional.get().getId()));
             group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
             group.add(new DeleteDataSourceAction(optional.get().getId()));
@@ -520,7 +521,7 @@ public final class ActionsFactory {
             if(optional.isPresent()) {
                 if (optional.get() instanceof AbstractFile) {
                     if(context.supportsFileSearchAction()) {
-                        group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
+                        group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
                     }
                     
                     group.add(new RunIngestModulesAction((AbstractFile)optional.get()));
