@@ -205,11 +205,9 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
             scoFutureTask = null;
         }
 
-        if (backgroundTasksPool != null && (scoFutureTask == null || scoFutureTask.isDone()) && this instanceof SCOSupporter) {
+        if ((backgroundTasksPool != null && !backgroundTasksPool.isShutdown() && !backgroundTasksPool.isTerminated()) && (scoFutureTask == null || scoFutureTask.isDone()) && this instanceof SCOSupporter) {
             scoFutureTask = new FutureTask<>(new SCOFetcher<>(new WeakReference<>((SCOSupporter) this)), "");
-            if(!backgroundTasksPool.isShutdown() && !backgroundTasksPool.isTerminated()) {
-                backgroundTasksPool.submit(scoFutureTask);
-            }
+            backgroundTasksPool.submit(scoFutureTask);
         }
     }
     
