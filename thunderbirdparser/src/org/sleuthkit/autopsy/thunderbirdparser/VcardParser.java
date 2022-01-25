@@ -40,6 +40,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
@@ -102,12 +103,12 @@ final class VcardParser {
      * A custom attribute cache provided to every VcardParser from the
      * ThunderbirdMboxFileIngestModule, but unique to one ingest run.
      */
-    private final Map<String, BlackboardAttribute.Type> customAttributeCache;
+    private final ConcurrentMap<String, BlackboardAttribute.Type> customAttributeCache;
     
     /**
      * Create a VcardParser object.
      */
-    VcardParser(Case currentCase, IngestJobContext context, Map<String, BlackboardAttribute.Type> customAttributeCache) {
+    VcardParser(Case currentCase, IngestJobContext context, ConcurrentMap<String, BlackboardAttribute.Type> customAttributeCache) {
         this.context = context;
         this.currentCase = currentCase;
         tskCase = currentCase.getSleuthkitCase();
