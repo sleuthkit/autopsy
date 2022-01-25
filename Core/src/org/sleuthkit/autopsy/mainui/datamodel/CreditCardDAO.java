@@ -211,7 +211,10 @@ public class CreditCardDAO extends AbstractDAO {
                                         .collect(Collectors.toSet());
 
                         AbstractFile file = getCase().getAbstractFileById(fileId);
-
+                       if(file == null) {
+                           continue;
+                       }
+                        
                         String fileName = StringUtils.isBlank(solrDocId)
                                 ? file.getName()
                                 : Bundle.CreditCardDAO_fetchCreditCardByFile_file_displayName(file.getName(), StringUtils.substringAfter(solrDocId, "_"));
