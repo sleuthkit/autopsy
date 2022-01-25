@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -45,8 +45,8 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
      * @param results The search result DTO.
      * @param row     The table row DTO.
      */
-    private SpecialDirectoryNode(SearchResultsDTO results, ContentRowDTO<? extends SpecialDirectory> row) {
-        super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
+    private SpecialDirectoryNode(SearchResultsDTO results, ContentRowDTO<? extends SpecialDirectory> row, ExecutorService backgroundTasksPool) {
+        super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row, backgroundTasksPool);
         setName(ContentNodeUtil.getContentName(row.getContent().getId()));
         setDisplayName(row.getContent().getName());
         setShortDescription(row.getContent().getName());
@@ -105,8 +105,8 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
          * @param results The search result DTO.
          * @param row     The table row DTO.
          */
-        public LocalDirectoryNode(SearchResultsDTO results, LocalDirectoryRowDTO row) {
-            super(results, row);
+        public LocalDirectoryNode(SearchResultsDTO results, LocalDirectoryRowDTO row, ExecutorService backgroundTasksPool) {
+            super(results, row, backgroundTasksPool);
             setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
         }
     }
@@ -122,8 +122,8 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
          * @param results The search result DTO.
          * @param row     The table row DTO.
          */
-        public VirtualDirectoryNode(SearchResultsDTO results, VirtualDirectoryRowDTO row) {
-            super(results, row);
+        public VirtualDirectoryNode(SearchResultsDTO results, VirtualDirectoryRowDTO row, ExecutorService backgroundTasksPool) {
+            super(results, row, backgroundTasksPool);
             setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-virtual.png");
         }
     }
@@ -141,8 +141,8 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
          * @param results The search result DTO.
          * @param row     The table row DTO.
          */
-        public LocalFileDataSourceNode(SearchResultsDTO results, LocalFileDataSourceRowDTO row) {
-            super(results, row);
+        public LocalFileDataSourceNode(SearchResultsDTO results, LocalFileDataSourceRowDTO row, ExecutorService backgroundTasksPool) {
+            super(results, row, backgroundTasksPool);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
         }
     }

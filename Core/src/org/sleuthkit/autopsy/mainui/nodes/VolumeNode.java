@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
@@ -44,8 +45,8 @@ public class VolumeNode extends BaseNode<SearchResultsDTO, VolumeRowDTO> impleme
      * @param results The search result DTO.
      * @param row     The table row DTO.
      */
-    public VolumeNode(SearchResultsDTO results, VolumeRowDTO row) {
-        super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
+    public VolumeNode(SearchResultsDTO results, VolumeRowDTO row, ExecutorService backgroundTasksPool) {
+        super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row, backgroundTasksPool);
         setIconBaseWithExtension(NodeIconUtil.VOLUME.getPath()); //NON-NLS
 
         // use first cell value for display name
