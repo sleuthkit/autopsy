@@ -216,9 +216,21 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             this.nullSetName = nullSetName;
         }
 
+        protected BlackboardArtifact.Type getArtifactType() {
+            return artifactType;
+        }
+
+        protected Long getDataSourceId() {
+            return dataSourceId;
+        }
+
+        protected String getNullSetName() {
+            return nullSetName;
+        }
+
         @Override
         protected TreeResultsDTO<? extends AnalysisResultSetSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getSetCounts(this.artifactType, this.dataSourceId, this.nullSetName);
+            return MainDAO.getInstance().getAnalysisResultDAO().getConfigurationCounts(this.artifactType, this.dataSourceId, this.nullSetName);
         }
 
         @Override
@@ -314,6 +326,11 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         public KeywordSetFactory(Long dataSourceId) {
             super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, Bundle.AnalysisResultTypeFactory_adHocName());
+        }
+
+        @Override
+        protected TreeResultsDTO<? extends AnalysisResultSetSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
+            return MainDAO.getInstance().getAnalysisResultDAO().getSetCounts(getArtifactType(), getDataSourceId(), getNullSetName());
         }
 
         @Override
