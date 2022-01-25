@@ -16,10 +16,10 @@
     <dependencies>
         <!-- Solr -->
 	<dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file for embedded Solr 4 -->
-        <dependency name="solr-cell" rev="8.6.3" org="org.apache.solr" conf="solr-libs->default"/>
+        <dependency name="solr-cell" rev="8.11.1" org="org.apache.solr" conf="solr-libs->default"/>
         
         <!-- Autopsy -->
-        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="8.6.3"/>
+        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="8.11.1"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
         <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
         <dependency conf="autopsy->*" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>

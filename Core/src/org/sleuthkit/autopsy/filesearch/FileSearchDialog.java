@@ -42,10 +42,16 @@ final class FileSearchDialog extends javax.swing.JDialog {
         setResizable(false);
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         fileSearchPanel1.addListenerToAll(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);
+            }
+        });
+        
+        fileSearchPanel1.addCloseListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
             }
         });
     }

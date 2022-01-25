@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +55,18 @@ public class DataSourcePanel extends javax.swing.JPanel {
     public DataSourcePanel() {
         initComponents();
         resetDataSourcePanel();
+        
+         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), (PropertyChangeEvent evt) -> {
+           if(evt.getPropertyName().equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+               List<String> strings = getDataSourceArray();
+               for (String dataSource : strings) {
+                   DefaultListModel<String> model = (DefaultListModel<String>) dataSourceList.getModel();
+                   if(!model.contains(dataSource)) {
+                       model.addElement(dataSource);
+                   }
+                } 
+            }
+        });
     }
 
     /**

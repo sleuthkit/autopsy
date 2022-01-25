@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.FileSearchAction;
+import org.sleuthkit.autopsy.directorytree.FileSearchTreeAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.datamodel.Content;
@@ -62,7 +62,7 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
         actions.add(ExtractAction.getInstance());
         actions.add(ExportCSVAction.getInstance());
         actions.add(null); // creates a menu separator
-        actions.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text(), content.getId()));
+        actions.add(new FileSearchTreeAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text(), content.getId()));
         if (content.isDataSource()) {
             actions.add(new ViewSummaryInformationAction(content.getId()));
             actions.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
