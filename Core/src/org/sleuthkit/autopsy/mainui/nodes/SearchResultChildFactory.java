@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
@@ -60,9 +61,12 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
 
     private static final Logger logger = Logger.getLogger(SearchResultChildFactory.class.getName());
     private SearchResultsDTO results;
+    
+    private final ExecutorService nodeThreadPool;
 
-    public SearchResultChildFactory(SearchResultsDTO initialResults) {
+    public SearchResultChildFactory(SearchResultsDTO initialResults, ExecutorService nodeThreadPool) {
         this.results = initialResults;
+        this.nodeThreadPool = nodeThreadPool;
     }
 
     @Override
@@ -85,37 +89,37 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
         String typeId = key.getRow().getTypeId();
         try {
             if (DataArtifactRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new DataArtifactNode((DataArtifactTableSearchResultsDTO) key.getSearchResults(), (DataArtifactRowDTO) key.getRow());
+                return new DataArtifactNode((DataArtifactTableSearchResultsDTO) key.getSearchResults(), (DataArtifactRowDTO) key.getRow(), nodeThreadPool);
             } else if (FileRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new FileNode(key.getSearchResults(), (FileRowDTO) key.getRow(), true);
+                return new FileNode(key.getSearchResults(), (FileRowDTO) key.getRow(), true, nodeThreadPool);
             } else if (AnalysisResultRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new AnalysisResultNode((AnalysisResultTableSearchResultsDTO) key.getSearchResults(), (AnalysisResultRowDTO) key.getRow());
+                return new AnalysisResultNode((AnalysisResultTableSearchResultsDTO) key.getSearchResults(), (AnalysisResultRowDTO) key.getRow(), nodeThreadPool);
             } else if (ContentTagsRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new ContentTagNode(key.getSearchResults(), (ContentTagsRowDTO) key.getRow());
+                return new ContentTagNode(key.getSearchResults(), (ContentTagsRowDTO) key.getRow(), nodeThreadPool);
             } else if (BlackboardArtifactTagsRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new BlackboardArtifactTagNode(key.getSearchResults(), (BlackboardArtifactTagsRowDTO) key.getRow());
+                return new BlackboardArtifactTagNode(key.getSearchResults(), (BlackboardArtifactTagsRowDTO) key.getRow(), nodeThreadPool);
             } else if (ImageRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new ImageNode(key.getSearchResults(), (ImageRowDTO) key.getRow());
+                return new ImageNode(key.getSearchResults(), (ImageRowDTO) key.getRow(), nodeThreadPool);
             } else if (LocalFileDataSourceRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new LocalFileDataSourceNode(key.getSearchResults(), (LocalFileDataSourceRowDTO) key.getRow());
+                return new LocalFileDataSourceNode(key.getSearchResults(), (LocalFileDataSourceRowDTO) key.getRow(), nodeThreadPool);
             } else if (DirectoryRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new DirectoryNode(key.getSearchResults(), (DirectoryRowDTO) key.getRow());
+                return new DirectoryNode(key.getSearchResults(), (DirectoryRowDTO) key.getRow(), nodeThreadPool);
             } else if (VolumeRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new VolumeNode(key.getSearchResults(), (VolumeRowDTO) key.getRow());
+                return new VolumeNode(key.getSearchResults(), (VolumeRowDTO) key.getRow(), nodeThreadPool);
             } else if (LocalDirectoryRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new LocalDirectoryNode(key.getSearchResults(), (LocalDirectoryRowDTO) key.getRow());
+                return new LocalDirectoryNode(key.getSearchResults(), (LocalDirectoryRowDTO) key.getRow(), nodeThreadPool);
             } else if (VirtualDirectoryRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new VirtualDirectoryNode(key.getSearchResults(), (VirtualDirectoryRowDTO) key.getRow());
+                return new VirtualDirectoryNode(key.getSearchResults(), (VirtualDirectoryRowDTO) key.getRow(), nodeThreadPool);
             } else if (LayoutFileRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new LayoutFileNode(key.getSearchResults(), (LayoutFileRowDTO) key.getRow());
+                return new LayoutFileNode(key.getSearchResults(), (LayoutFileRowDTO) key.getRow(), nodeThreadPool);
             } else if (PoolRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new PoolNode(key.getSearchResults(), (PoolRowDTO) key.getRow());
+                return new PoolNode(key.getSearchResults(), (PoolRowDTO) key.getRow(), nodeThreadPool);
             } else if (SlackFileRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new SlackFileNode(key.getSearchResults(), (SlackFileRowDTO) key.getRow());
+                return new SlackFileNode(key.getSearchResults(), (SlackFileRowDTO) key.getRow(), nodeThreadPool);
             } else if (OsAccountRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new OsAccountNode(key.getSearchResults(), (OsAccountRowDTO) key.getRow());
+                return new OsAccountNode(key.getSearchResults(), (OsAccountRowDTO) key.getRow(), nodeThreadPool);
             } else if (CreditCardByFileRowDTO.getTypeIdForClass().equals(typeId)) {
-                return new CreditCardByFileNode(key.getSearchResults(), (CreditCardByFileRowDTO) key.getRow());
+                return new CreditCardByFileNode(key.getSearchResults(), (CreditCardByFileRowDTO) key.getRow(), nodeThreadPool);
             }else {
                 logger.log(Level.WARNING, MessageFormat.format("No known node for type id: {0} provided by row result: {1}", typeId, key.getRow()));
             }

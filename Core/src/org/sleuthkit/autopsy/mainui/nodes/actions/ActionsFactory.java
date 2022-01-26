@@ -61,9 +61,10 @@ import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.FileSearchAction;
+import org.sleuthkit.autopsy.directorytree.FileSearchTreeAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.filesearch.FileSearchAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
@@ -171,26 +172,6 @@ public final class ActionsFactory {
         Optional<AbstractFile> optionalFile = actionContext.getExtractArchiveWithPasswordActionFile();
         if (optionalFile.isPresent()) {
             actionGroups.add(new ActionGroup(new ExtractArchiveWithPasswordAction(optionalFile.get())));
-        }
-
-        Optional<BlackboardArtifact.Type> analysisResultType = actionContext.getAnalysisResultType();
-        if (analysisResultType.isPresent() && actionContext.hasAnalysisResultConfigurations()) {
-            Optional<Long> dataSourceId = actionContext.getDataSourceIdForActions();
-            
-            actionGroups.add(new ActionGroup(new AbstractAction("Delete Analysis Results of Type") {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    List<String> configurations = actionContext.getAnalysisResultConfigurations();
-                    
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                            MessageFormat.format("Stub Action for deleting analysis result type: {0} with configurations [{1}] and data source of {2}",
-                                    analysisResultType.get().getDisplayName(), 
-                                    configurations.stream().map(c -> c == null ? "<Null>" : "\"" + c + "\"").collect(Collectors.joining(",")),
-                                    dataSourceId.map(d -> Long.toString(d)).orElse("<Null or Empty>")),
-                            "Deleting...",
-                            JOptionPane.WARNING_MESSAGE);
-                }
-            }));
         }
 
         List<Action> actionList = new ArrayList<>();
@@ -511,7 +492,7 @@ public final class ActionsFactory {
         ActionGroup group = new ActionGroup();        
         Optional<Content> optional = context.getDataSourceForActions();
         if(optional.isPresent()) {
-            group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
+            group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
             group.add(new ViewSummaryInformationAction(optional.get().getId()));
             group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
             group.add(new DeleteDataSourceAction(optional.get().getId()));
@@ -522,7 +503,7 @@ public final class ActionsFactory {
             if(optional.isPresent()) {
                 if (optional.get() instanceof AbstractFile) {
                     if(context.supportsFileSearchAction()) {
-                        group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
+                        group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
                     }
                     
                     group.add(new RunIngestModulesAction((AbstractFile)optional.get()));

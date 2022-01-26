@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import javax.swing.Action;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
@@ -63,8 +64,8 @@ public abstract class ArtifactNode<T extends BlackboardArtifact, R extends Artif
     private final List<ColumnKey> columns;
     private Node parentFileNode;
 
-    ArtifactNode(SearchResultsDTO searchResults, R rowData, List<ColumnKey> columns, Lookup lookup, String iconPath) {
-        super(Children.LEAF, lookup, searchResults, rowData);
+    ArtifactNode(SearchResultsDTO searchResults, R rowData, List<ColumnKey> columns, Lookup lookup, String iconPath, ExecutorService backgroundTasksPool) {
+        super(Children.LEAF, lookup, searchResults, rowData, backgroundTasksPool);
         this.rowData = rowData;
         this.columns = columns;
         setupNodeDisplay(iconPath);

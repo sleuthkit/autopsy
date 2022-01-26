@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import org.openide.nodes.Children;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -40,10 +41,10 @@ public class PoolNode extends BaseNode<SearchResultsDTO, PoolRowDTO> implements 
      * @param results Search Result DTO.
      * @param row     Pool table row DTO.
      */
-    public PoolNode(SearchResultsDTO results, PoolRowDTO row) {
+    public PoolNode(SearchResultsDTO results, PoolRowDTO row, ExecutorService backgroundTasksPool) {
         super(Children.LEAF,
                 Lookups.fixed(row.getContent(), new TskContentItem<>(row.getContent())),
-                results, row);
+                results, row, backgroundTasksPool);
 
         String name = row.getContent().getType().getName();
         setName(ContentNodeUtil.getContentName(row.getContent().getId()));
