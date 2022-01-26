@@ -453,7 +453,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             TreeResultsDTO.TreeItemDTO<KeywordSearchTermParams> originalTreeItem = super.getTypedTreeItem(treeEvt, KeywordSearchTermParams.class);
 
             if (originalTreeItem != null
-                    && Objects.equals(originalTreeItem.getSearchParams().getConfiguration(), this.setParams.getSetName())
+                    && Objects.equals(originalTreeItem.getSearchParams().getSetName(), this.setParams.getSetName())
                     && (this.setParams.getDataSourceId() == null
                     || Objects.equals(this.setParams.getDataSourceId(), originalTreeItem.getSearchParams().getDataSourceId()))) {
 
