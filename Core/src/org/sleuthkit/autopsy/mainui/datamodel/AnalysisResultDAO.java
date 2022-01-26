@@ -672,6 +672,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + "  SELECT \n"
                 + "    attr_res.keyword, \n"
                 + "    attr_res.search_type,\n"
+                + "    attr_res.configuration,\n"
                 + "    COUNT(*) AS count,\n"
                 + "    CASE \n"
                 + "      WHEN attr_res.search_type = 0 OR attr_res.regexp_str IS NULL THEN \n"

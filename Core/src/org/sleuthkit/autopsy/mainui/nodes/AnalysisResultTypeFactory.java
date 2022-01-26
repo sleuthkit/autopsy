@@ -599,7 +599,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         @Override
         protected TreeResultsDTO<? extends KeywordHitSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
             return MainDAO.getInstance().getAnalysisResultDAO().getKeywordMatchCounts(
-                    this.searchTermParams.getConfiguration(),
+                    this.searchTermParams.getSetName(),
                     this.searchTermParams.getRegex(),
                     this.searchTermParams.getSearchType(),
                     this.searchTermParams.getDataSourceId());

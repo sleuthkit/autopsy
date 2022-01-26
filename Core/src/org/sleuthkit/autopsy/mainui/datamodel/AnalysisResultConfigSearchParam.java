@@ -35,7 +35,7 @@ public class AnalysisResultConfigSearchParam extends AnalysisResultSearchParam {
         return TYPE_ID;
     }
 
-    private final String configuration;
+    final String configuration;
 
     public AnalysisResultConfigSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, String configuration) {
         super(artifactType, dataSourceId);
