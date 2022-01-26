@@ -725,7 +725,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                         long count = resultSet.getLong("count");
                         boolean hasChildren = resultSet.getBoolean("has_children");
                         // only a unique applicable configuration if no child tree nodes
-                        String configuration = hasChildren ? null : resultSet.getString("configuration");
+                        String configuration = resultSet.getString("configuration");
 
                         TskData.KeywordSearchQueryType searchTypeEnum
                                 = Stream.of(TskData.KeywordSearchQueryType.values())
