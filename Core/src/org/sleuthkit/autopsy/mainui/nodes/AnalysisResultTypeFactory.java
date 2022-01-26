@@ -347,16 +347,17 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
-            ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
-
-            Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
-            Optional<String> configuration = getAnalysisResultConfiguration();
-            Optional<Long> dsId = getDataSourceIdForActions();
-            if (type.isPresent()) {
-                group.add(new DeleteAnalysisResultSetAction(type.get(), configuration.isPresent() ? configuration.get() : "", dsId.isPresent() ? dsId.get() : null));
-            }
-
-            return Optional.of(group);
+//            ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
+//
+//            Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
+//            Optional<String> configuration = getAnalysisResultConfiguration();
+//            Optional<Long> dsId = getDataSourceIdForActions();
+//            if (type.isPresent()) {
+//                group.add(new DeleteAnalysisResultSetAction(type.get(), configuration.isPresent() ? configuration.get() : "", dsId.isPresent() ? dsId.get() : null));
+//            }
+//
+//            return Optional.of(group);
+            return Optional.empty();
         }
     }
 
