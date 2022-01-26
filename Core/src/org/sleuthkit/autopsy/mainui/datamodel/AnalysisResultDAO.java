@@ -472,69 +472,16 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     /**
-     *
-     * @param type         The artifact type to filter on.
-     * @param setNameAttr  The blackboard attribute denoting the set name.
-     * @param dataSourceId The data source object id for which the results
-     *                     should be filtered or null if no data source
-     *                     filtering.
-     *
-     * @return A mapping of set names to their counts.
-     *
-     * @throws IllegalArgumentException
-     * @throws ExecutionException
-     */
-    Map<String, Long> getSetCountsMap(BlackboardArtifact.Type type, BlackboardAttribute.Type setNameAttr, Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        if (dataSourceId != null && dataSourceId <= 0) {
-            throw new IllegalArgumentException("Expected data source id to be > 0");
-        }
-
-        try {
-            // get artifact types and counts
-            SleuthkitCase skCase = getCase();
-            String query = " res.set_name, COUNT(*) AS count \n"
-                    + "FROM ( \n"
-                    + "  SELECT art.artifact_id, \n"
-                    + "  (SELECT value_text \n"
-                    + "    FROM blackboard_attributes attr \n"
-                    + "    WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = " + setNameAttr.getTypeID() + " LIMIT 1) AS set_name \n"
-                    + "	 FROM blackboard_artifacts art \n"
-                    + "	 WHERE  art.artifact_type_id = " + type.getTypeID() + " \n"
-                    + ((dataSourceId == null) ? "" : "  AND art.data_source_obj_id = " + dataSourceId + " \n")
-                    + ") res \n"
-                    + "GROUP BY res.set_name";
-
-            Map<String, Long> setCounts = new HashMap<>();
-            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
-                try {
-                    while (resultSet.next()) {
-                        String setName = resultSet.getString("set_name");
-                        long count = resultSet.getLong("count");
-                        setCounts.put(setName, count);
-                    }
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
-                }
-            });
-
-            return setCounts;
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            throw new ExecutionException("An error occurred while fetching set counts", ex);
-        }
-    }
-
-    /**
      * Get counts for individual configurations of the provided type to be used
      * in the tree view.
      *
-     * @param type                   The blackboard artifact type.
-     * @param dataSourceId           The data source object id for which the
-     *                               results should be filtered or null if no
-     *                               data source filtering.
-     * @param blankConfigName For artifacts with no configuration, this
-     *                               is the name to provide. If null or empty,
-     *                               artifacts without a configuration will be
-     *                               ignored.
+     * @param type            The blackboard artifact type.
+     * @param dataSourceId    The data source object id for which the results
+     *                        should be filtered or null if no data source
+     *                        filtering.
+     * @param blankConfigName For artifacts with no configuration, this is the
+     *                        name to provide. If null or empty, artifacts
+     *                        without a configuration will be ignored.
      *
      * @return The configurations along with counts to display.
      *
@@ -578,7 +525,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * Get counts for individual sets of the provided type to be used in the
      * tree view.
      *
-     * @param type         The blackboard artifact type.
      * @param dataSourceId The data source object id for which the results
      *                     should be filtered or null if no data source
      *                     filtering.
@@ -593,35 +539,57 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * @throws IllegalArgumentException
      * @throws ExecutionException
      */
-    public TreeResultsDTO<AnalysisResultConfigSearchParam> getSetCounts(
-            BlackboardArtifact.Type type,
+    public TreeResultsDTO<AnalysisResultSetSearchParam> getKwSetCounts(
             Long dataSourceId,
             String nullSetName) throws IllegalArgumentException, ExecutionException {
 
         Set<String> indeterminateSetNames = new HashSet<>();
         for (AnalysisResultEvent evt : this.treeCounts.getEnqueued()) {
-            if (evt instanceof AnalysisResultConfigEvent
-                    && (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
-                    && evt.getArtifactType().equals(type)) {
-                indeterminateSetNames.add(((AnalysisResultConfigEvent) evt).getConfiguration());
+            if (evt instanceof KeywordHitEvent
+                    && (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))) {
+                indeterminateSetNames.add(((KeywordHitEvent) evt).getSetName());
             }
         }
 
-        List<TreeItemDTO<AnalysisResultConfigSearchParam>> allSets
-                = getSetCountsMap(type, BlackboardAttribute.Type.TSK_SET_NAME, dataSourceId).entrySet().stream()
-                        .sorted((a, b) -> compareStrings(a.getKey(), b.getKey()))
-                        .map(entry -> {
-                            TreeDisplayCount displayCount = indeterminateSetNames.contains(entry.getKey())
-                                    ? TreeDisplayCount.INDETERMINATE
-                                    : TreeDisplayCount.getDeterminate(entry.getValue());
+        List<TreeItemDTO<AnalysisResultSetSearchParam>> allSets = new ArrayList<>();
+        try {
+            // get artifact types and counts
+            SleuthkitCase skCase = getCase();
+            String query = " res.set_name, COUNT(*) AS count \n"
+                    + "FROM ( \n"
+                    + "  SELECT art.artifact_id, \n"
+                    + "  (SELECT value_text \n"
+                    + "    FROM blackboard_attributes attr \n"
+                    + "    WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID() + " LIMIT 1) AS set_name \n"
+                    + "	 FROM blackboard_artifacts art \n"
+                    + "	 WHERE  art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() + " \n"
+                    + ((dataSourceId == null) ? "" : "  AND art.data_source_obj_id = " + dataSourceId + " \n")
+                    + ") res \n"
+                    + "GROUP BY res.set_name\n"
+                    + "ORDER BY res.set_name";
 
-                            return getConfigTreeItem(type,
-                                    dataSourceId,
-                                    entry.getKey(),
-                                    StringUtils.isBlank(entry.getKey()) ? nullSetName : entry.getKey(),
-                                    displayCount);
-                        })
-                        .collect(Collectors.toList());
+            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        String setName = resultSet.getString("set_name");
+
+                        TreeDisplayCount displayCount = indeterminateSetNames.contains(setName)
+                                ? TreeDisplayCount.INDETERMINATE
+                                : TreeDisplayCount.getDeterminate(resultSet.getLong("count"));
+
+                        allSets.add(getSetTreeItem(BlackboardArtifact.Type.TSK_KEYWORD_HIT,
+                                dataSourceId,
+                                setName,
+                                StringUtils.isBlank(setName) ? nullSetName : setName,
+                                displayCount));
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
+                }
+            });
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching keyword set hits.", ex);
+        }
 
         return new TreeResultsDTO<>(allSets);
     }
@@ -674,7 +642,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             if (evt instanceof KeywordHitEvent
                     && (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
                     && evt.getArtifactType().equals(BlackboardArtifact.Type.TSK_KEYWORD_HIT)
-                    && Objects.equals(((KeywordHitEvent) evt).getConfiguration(), setName)) {
+                    && Objects.equals(((KeywordHitEvent) evt).getSetName(), setName)) {
 
                 KeywordHitEvent keywordEvt = (KeywordHitEvent) evt;
                 indeterminateSearchTerms.add(Pair.of(keywordEvt.getSearchString(), keywordEvt.getSearchType()));
@@ -870,7 +838,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     && evt.getArtifactType().equals(BlackboardArtifact.Type.TSK_KEYWORD_HIT)) {
 
                 KeywordHitEvent keywordEvt = (KeywordHitEvent) evt;
-                if (Objects.equals(keywordEvt.getConfiguration(), setName)
+                if (Objects.equals(keywordEvt.getSetName(), setName)
                         && Objects.equals(keywordEvt.getSearchString(), regexStr)
                         && keywordEvt.getSearchType() == searchType) {
 
@@ -1039,14 +1007,14 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     /**
      * Generate result view events from digest of Autopsy events.
      *
-     * @param resultsWithConfigMap Contains the analysis results that do use a set
-     *                          name. A mapping of (analysis result type id, set
-     *                          name) to data sources where results were
-     *                          created.
-     * @param keywordHitsMap    Contains the keyword hits mapping parameters to
-     *                          data source. The data source in the parameters
-     *                          is null.
-     * @param ingestIsRunning   Whether or not ingest is running.
+     * @param resultsWithConfigMap Contains the analysis results that do use a
+     *                             set name. A mapping of (analysis result type
+     *                             id, set name) to data sources where results
+     *                             were created.
+     * @param keywordHitsMap       Contains the keyword hits mapping parameters
+     *                             to data source. The data source in the
+     *                             parameters is null.
+     * @param ingestIsRunning      Whether or not ingest is running.
      *
      * @return The list of dao events.
      */
@@ -1069,7 +1037,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     String match = params.getKeyword();
                     return entry.getValue().stream().map(dsId -> new KeywordHitEvent(setName, searchString, queryType, match, dsId));
                 })
-                .collect(Collectors.partitioningBy(kwe -> kwe.getConfiguration() == null));
+                .collect(Collectors.partitioningBy(kwe -> kwe.getSetName() == null));
 
         // include config results in regular events.
         List<AnalysisResultEvent> daoEvents = Stream.of(analysisResultConfigEvents, keywordHitEvts.get(false))
@@ -1118,7 +1086,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             KeywordHitEvent khEvt = (KeywordHitEvent) arEvt;
             return createKWHitsTreeItem(
                     khEvt.getDataSourceId(),
-                    khEvt.getConfiguration(),
+                    khEvt.getSetName(),
                     khEvt.getMatch(),
                     khEvt.getSearchString(),
                     khEvt.getSearchType(),
@@ -1140,6 +1108,17 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 AnalysisResultConfigSearchParam.getTypeId(),
                 new AnalysisResultConfigSearchParam(type, dataSourceId, configuration),
                 configuration == null ? 0 : configuration,
+                displayName,
+                displayCount);
+    }
+
+    private TreeItemDTO<AnalysisResultSetSearchParam> getSetTreeItem(BlackboardArtifact.Type type,
+            Long dataSourceId, String setName, String displayName, TreeDisplayCount displayCount) {
+
+        return new TreeItemDTO<>(
+                AnalysisResultSetSearchParam.getTypeId(),
+                new AnalysisResultSetSearchParam(type, dataSourceId, setName),
+                setName == null ? 0 : setName,
                 displayName,
                 displayCount);
     }

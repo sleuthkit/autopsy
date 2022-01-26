@@ -26,11 +26,12 @@ import org.sleuthkit.datamodel.TskData;
  * An event for an artifact added or changed of a particular type possibly for a
  * particular data source.
  */
-public class KeywordHitEvent extends AnalysisResultConfigEvent {
+public class KeywordHitEvent extends AnalysisResultEvent {
 
     private final String searchString;
     private final String match;
     private final TskData.KeywordSearchQueryType searchType;
+    private final String setName;
 
     /**
      * Main constructor.
@@ -42,12 +43,17 @@ public class KeywordHitEvent extends AnalysisResultConfigEvent {
      * @param dataSourceId The data source id.
      */
     public KeywordHitEvent(String setName, String searchString, TskData.KeywordSearchQueryType searchType, String match, long dataSourceId) {
-        super(setName, BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId);
+        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId);
+        this.setName = setName;
         this.searchString = searchString;
         this.match = match;
         this.searchType = searchType;
     }
 
+    public String getSetName() {
+        return setName;
+    }
+    
     public String getSearchString() {
         return searchString;
     }
