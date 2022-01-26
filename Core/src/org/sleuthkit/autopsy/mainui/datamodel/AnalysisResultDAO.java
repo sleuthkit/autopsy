@@ -659,6 +659,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         String query = "res.search_term,\n"
                 + "  res.search_type,\n"
+                // this should be unique for each one
                 + "  MIN(res.configuration) AS configuration,\n"
                 + "  SUM(res.count) AS count,\n"
                 + "  -- when there are multiple keyword groupings, return true for has children\n"
@@ -1152,15 +1153,21 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     /**
-     * Returns all the configurations for keyword hits for the given filtering parameters.
-     * @param setName The set name as defined by TSK_SET_NAME.  If null, assumed to be ad hoc result.
-     * @param regex The TSK_KEYWORD_REGEXP value.  If null, no filtering by regex occurs.
-     * @param searchType The TSK_KEYWORD_SEARCH_TYPE value.  If null, no filtering by search type occurs.
-     * @param dataSourceId The data source object id.  If null, no filtering by data source occurs.
+     * Returns all the configurations for keyword hits for the given filtering
+     * parameters.
+     *
+     * @param setName      The set name as defined by TSK_SET_NAME. If null,
+     *                     assumed to be ad hoc result.
+     * @param dataSourceId The data source object id. If null, no filtering by
+     *                     data source occurs.
+     *
      * @return The distinct configurations.
-     * @throws ExecutionException 
+     *
+     * @throws ExecutionException
      */
-    public List<String> getKeywordHitConfigurations(String setName, String regex, TskData.KeywordSearchQueryType searchType, Long dataSourceId) throws ExecutionException {
+    public List<String> getKeywordHitConfigurations(String setName, Long dataSourceId) throws ExecutionException {
+        String kwHitClause = "art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID();
+
         String setNameClause = setName == null
                 // if set name is null, then there should be no set name attribute associated with this 
                 ? "(SELECT "
@@ -1175,27 +1182,11 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + " AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID()
                 + " )";
 
-        String regexClause = regex == null
-                ? null
-                : "? IN (SELECT attr.value_text FROM blackboard_attributes attr "
-                + " WHERE attr.artifact_id = art.artifact_id "
-                + " AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_KEYWORD_REGEXP.getTypeID()
-                + " )";
-
-        String searchTypeClause = searchType == null
-                ? null
-                : "? IN (SELECT attr.value_int32 FROM blackboard_attributes attr "
-                + " WHERE attr.artifact_id = art.artifact_id "
-                + " AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
-                + " )";
-
         String dataSourceClause = dataSourceId == null
                 ? null
                 : "art.data_source_obj_id = ?";
 
-        String kwHitClause = "art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID();
-        
-        String clauses = Stream.of(kwHitClause, setNameClause, regexClause, searchTypeClause, dataSourceClause)
+        String clauses = Stream.of(kwHitClause, setNameClause, dataSourceClause)
                 .filter(s -> s != null)
                 .map(s -> " (" + s + ") ")
                 .collect(Collectors.joining("AND\n"));
@@ -1214,14 +1205,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 preparedStatement.setString(++paramIdx, setName);
             }
 
-            if (regex != null) {
-                preparedStatement.setString(++paramIdx, regex);
-            }
-
-            if (searchType != null) {
-                preparedStatement.setInt(++paramIdx, searchType.getType());
-            }
-
             if (dataSourceId != null) {
                 preparedStatement.setLong(++paramIdx, dataSourceId);
             }
@@ -1236,15 +1219,13 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
                 }
             });
-            
+
             return configurations;
 
         } catch (SQLException | NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException(MessageFormat.format(
-                    "An error occurred while fetching configurations for counts where setName = {0} regex = {1} and search type = {2}",
-                    setName == null ? "<null>" : setName,
-                    regex == null ? "<null>" : regex,
-                    searchType == null ? "<null>" : searchType.name()),
+                    "An error occurred while fetching configurations for counts where setName = {0}",
+                    setName == null ? "<null>" : setName),
                     ex);
         }
     }

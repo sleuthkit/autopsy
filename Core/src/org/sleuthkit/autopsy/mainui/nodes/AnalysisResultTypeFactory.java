@@ -557,20 +557,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public List<String> getAnalysisResultConfigurations() {
-            KeywordSearchTermParams searchParams = this.getItemData().getSearchParams();
-            if (searchParams.hasChildren()) {
-                try {
-                    return MainDAO.getInstance().getAnalysisResultDAO().getKeywordHitConfigurations(
-                            searchParams.getSetName(), searchParams.getRegex(), searchParams.getSearchType(),
-                            searchParams.getDataSourceId());
-                } catch (ExecutionException ex) {
-                    logger.log(Level.WARNING, "An exception occurred while fetching configurations.", ex);
-                    return Collections.emptyList();
-                }
-
-            } else {
-                return Collections.singletonList(searchParams.getConfiguration());
-            }
+            return Collections.singletonList(this.getItemData().getSearchParams().getConfiguration());
         }
     }
 
