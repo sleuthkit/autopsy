@@ -32,28 +32,35 @@ public class KeywordHitEvent extends AnalysisResultEvent {
     private final String match;
     private final TskData.KeywordSearchQueryType searchType;
     private final String setName;
+    private final String configuration;
 
     /**
      * Main constructor.
      *
-     * @param setName      The set name.
-     * @param searchString The search string or regex.
-     * @param searchType   THe search type.
-     * @param match        The match string.
-     * @param dataSourceId The data source id.
+     * @param setName       The set name.
+     * @param searchString  The search string or regex.
+     * @param searchType    THe search type.
+     * @param match         The match string.
+     * @param configuration The configuration of the analysis result.
+     * @param dataSourceId  The data source id.
      */
-    public KeywordHitEvent(String setName, String searchString, TskData.KeywordSearchQueryType searchType, String match, long dataSourceId) {
+    public KeywordHitEvent(String setName, String searchString, TskData.KeywordSearchQueryType searchType, String match, String configuration, long dataSourceId) {
         super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId);
         this.setName = setName;
         this.searchString = searchString;
         this.match = match;
         this.searchType = searchType;
+        this.configuration = configuration;
     }
 
+    public String getConfiguration() {
+        return configuration;
+    }
+    
     public String getSetName() {
         return setName;
     }
-    
+
     public String getSearchString() {
         return searchString;
     }

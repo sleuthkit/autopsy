@@ -659,6 +659,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         String query = "res.search_term,\n"
                 + "  res.search_type,\n"
+                + "  MIN(res.configuration) AS configuration,\n"
                 + "  SUM(res.count) AS count,\n"
                 + "  -- when there are multiple keyword groupings, return true for has children\n"
                 + "  CASE\n"
@@ -681,6 +682,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + "  FROM (\n"
                 + "	-- get pertinent attribute values for artifacts\n"
                 + "    SELECT art.artifact_id, \n"
+                + "    ar.configuration,\n"
                 + "    (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
                 + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID() + " LIMIT 1) AS set_name,\n"
                 + "    (SELECT value_int32 FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
@@ -690,6 +692,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + "    (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
                 + BlackboardAttribute.Type.TSK_KEYWORD.getTypeID() + " LIMIT 1) AS keyword\n"
                 + "    FROM blackboard_artifacts art\n"
+                + "    LEFT JOIN tsk_analysis_results ar ON ar.artifact_obj_id = art.artifact_obj_id\n"
                 + "    WHERE  art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() + "\n"
                 + dataSourceClause
                 + "  ) attr_res\n"
@@ -719,6 +722,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                         int searchType = resultSet.getInt("search_type");
                         long count = resultSet.getLong("count");
                         boolean hasChildren = resultSet.getBoolean("has_children");
+                        // only a unique applicable configuration if no child tree nodes
+                        String configuration = hasChildren ? null : resultSet.getString("configuration");
 
                         TskData.KeywordSearchQueryType searchTypeEnum
                                 = Stream.of(TskData.KeywordSearchQueryType.values())
@@ -734,7 +739,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
                         TreeItemDTO<KeywordSearchTermParams> treeItem = new TreeItemDTO<>(
                                 KeywordSearchTermParams.getTypeId(),
-                                new KeywordSearchTermParams(setName, searchTerm, TskData.KeywordSearchQueryType.valueOf(searchType), hasChildren, dataSourceId),
+                                new KeywordSearchTermParams(setName, searchTerm, TskData.KeywordSearchQueryType.valueOf(searchType), configuration, hasChildren, dataSourceId),
                                 searchTermModified,
                                 searchTermModified,
                                 displayCount
@@ -810,9 +815,11 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 : "res.set_name = ?";
 
         String query = "keyword, \n"
+                + "  MIN(configuration) AS configuration,\n"
                 + "  COUNT(*) AS count \n"
                 + "FROM (\n"
                 + "  SELECT art.artifact_id, \n"
+                + "  ar.configuration,"
                 + "  (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
                 + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID() + " LIMIT 1) AS set_name,\n"
                 + "  (SELECT value_int32 FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
@@ -822,6 +829,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + "  (SELECT value_text FROM blackboard_attributes attr WHERE attr.artifact_id = art.artifact_id AND attr.attribute_type_id = "
                 + BlackboardAttribute.Type.TSK_KEYWORD.getTypeID() + " LIMIT 1) AS keyword\n"
                 + "  FROM blackboard_artifacts art\n"
+                + "  LEFT JOIN tsk_analysis_results ar ON art.artifact_obj_id = ar.artifact_obj_id\n"
                 + "  WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() + "\n"
                 + dataSourceClause
                 + ") res\n"
@@ -867,13 +875,14 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 try {
                     while (resultSet.next()) {
                         String keyword = resultSet.getString("keyword");
+                        String configuration = resultSet.getString("configuration");
                         long count = resultSet.getLong("count");
 
                         TreeDisplayCount displayCount = indeterminateMatches.contains(keyword)
                                 ? TreeDisplayCount.INDETERMINATE
                                 : TreeDisplayCount.getDeterminate(count);
 
-                        items.add(createKWHitsTreeItem(dataSourceId, setName, keyword, regexStr, searchType, displayCount));
+                        items.add(createKWHitsTreeItem(dataSourceId, setName, keyword, regexStr, searchType, configuration, displayCount));
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
@@ -888,11 +897,11 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     private static TreeItemDTO<KeywordHitSearchParam> createKWHitsTreeItem(
             Long dataSourceId, String setName, String keyword, String regexStr,
-            TskData.KeywordSearchQueryType searchType, TreeDisplayCount displayCount) {
+            TskData.KeywordSearchQueryType searchType, String configuration, TreeDisplayCount displayCount) {
 
         return new TreeItemDTO<>(
                 KeywordHitSearchParam.getTypeId(),
-                new KeywordHitSearchParam(dataSourceId, setName, keyword, regexStr, searchType),
+                new KeywordHitSearchParam(dataSourceId, setName, keyword, regexStr, searchType, configuration),
                 keyword == null ? "" : keyword,
                 keyword == null ? "" : keyword,
                 displayCount
@@ -943,8 +952,10 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             }
         }
 
+        String configuration = (art instanceof AnalysisResult) ? ((AnalysisResult) art).getConfiguration() : null;
+
         // data source id is null for KeywordHitSearchParam so that key lookups can be done without data source id.
-        return Pair.of(new KeywordHitSearchParam(null, setName, keywordMatch, searchTerm, searchType), dataSourceId);
+        return Pair.of(new KeywordHitSearchParam(null, setName, keywordMatch, searchTerm, searchType, configuration), dataSourceId);
     }
 
     @Override
@@ -997,7 +1008,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         SubDAOUtils.invalidateKeys(this.configHitCache, ar -> Pair.of(Pair.of(ar.getArtifactType(), ar.getConfiguration()), ar.getDataSourceId()), configMap);
         SubDAOUtils.invalidateKeys(this.keywordHitCache, kw -> Pair.of(
                 // null data source for lookup
-                new KeywordHitSearchParam(null, kw.getConfiguration(), kw.getKeyword(), kw.getRegex(), kw.getSearchType()),
+                new KeywordHitSearchParam(null, kw.getSetName(), kw.getKeyword(), kw.getRegex(), kw.getSearchType(), kw.getConfiguration()),
                 kw.getDataSourceId()
         ), keywordHitsMap);
 
@@ -1031,11 +1042,11 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         Map<Boolean, List<KeywordHitEvent>> keywordHitEvts = keywordHitsMap.entrySet().stream()
                 .flatMap(entry -> {
                     KeywordHitSearchParam params = entry.getKey();
-                    String setName = params.getConfiguration();
+                    String setName = params.getSetName();
                     String searchString = params.getRegex();
                     TskData.KeywordSearchQueryType queryType = params.getSearchType();
                     String match = params.getKeyword();
-                    return entry.getValue().stream().map(dsId -> new KeywordHitEvent(setName, searchString, queryType, match, dsId));
+                    return entry.getValue().stream().map(dsId -> new KeywordHitEvent(setName, searchString, queryType, match, params.getConfiguration(), dsId));
                 })
                 .collect(Collectors.partitioningBy(kwe -> kwe.getSetName() == null));
 
@@ -1090,6 +1101,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     khEvt.getMatch(),
                     khEvt.getSearchString(),
                     khEvt.getSearchType(),
+                    khEvt.getConfiguration(),
                     displayCount
             );
         } else if (arEvt instanceof AnalysisResultConfigEvent) {
@@ -1136,6 +1148,102 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     Set<TreeEvent> shouldRefreshTree() {
         return SubDAOUtils.getRefreshEvents(this.treeCounts, (arEvt, count) -> getTreeItem(arEvt, count));
 
+    }
+
+    /**
+     * Returns all the configurations for keyword hits for the given filtering parameters.
+     * @param setName The set name as defined by TSK_SET_NAME.  If null, assumed to be ad hoc result.
+     * @param regex The TSK_KEYWORD_REGEXP value.  If null, no filtering by regex occurs.
+     * @param searchType The TSK_KEYWORD_SEARCH_TYPE value.  If null, no filtering by search type occurs.
+     * @param dataSourceId The data source object id.  If null, no filtering by data source occurs.
+     * @return The distinct configurations.
+     * @throws ExecutionException 
+     */
+    public List<String> getKeywordHitConfigurations(String setName, String regex, TskData.KeywordSearchQueryType searchType, Long dataSourceId) throws ExecutionException {
+        String setNameClause = setName == null
+                // if set name is null, then there should be no set name attribute associated with this 
+                ? "(SELECT "
+                + " COUNT(*) FROM blackboard_attributes attr "
+                + " WHERE attr.artifact_id = art.artifact_id "
+                + " AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID()
+                + " AND attr.value_text IS NOT NULL "
+                + " AND LEN(attr.value_text) > 0) = 0"
+                // otherwise, see if the set name attribute matches expected value
+                : "? IN (SELECT attr.value_text FROM blackboard_attributes attr "
+                + " WHERE attr.artifact_id = art.artifact_id "
+                + " AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID()
+                + " )";
+
+        String regexClause = regex == null
+                ? null
+                : "? IN (SELECT attr.value_text FROM blackboard_attributes attr "
+                + " WHERE attr.artifact_id = art.artifact_id "
+                + " AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_KEYWORD_REGEXP.getTypeID()
+                + " )";
+
+        String searchTypeClause = searchType == null
+                ? null
+                : "? IN (SELECT attr.value_int32 FROM blackboard_attributes attr "
+                + " WHERE attr.artifact_id = art.artifact_id "
+                + " AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
+                + " )";
+
+        String dataSourceClause = dataSourceId == null
+                ? null
+                : "art.data_source_obj_id = ?";
+
+        String clauses = Stream.of(setNameClause, regexClause, searchTypeClause, dataSourceClause)
+                .filter(s -> s != null)
+                .map(s -> " (" + s + ") ")
+                .collect(Collectors.joining("AND"));
+
+        String query = "DISTINCT(ar.configuration) AS configuration \n"
+                + "FROM tsk_analysis_results ar\n"
+                + "LEFT JOIN blackboard_artifacts"
+                + "WHERE " + clauses;
+
+        // get artifact types and counts
+        try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(query)) {
+
+            int paramIdx = 0;
+
+            if (setName != null) {
+                preparedStatement.setString(++paramIdx, setName);
+            }
+
+            if (regex != null) {
+                preparedStatement.setString(++paramIdx, regex);
+            }
+
+            if (searchType != null) {
+                preparedStatement.setInt(++paramIdx, searchType.getType());
+            }
+
+            if (dataSourceId != null) {
+                preparedStatement.setLong(++paramIdx, dataSourceId);
+            }
+
+            List<String> configurations = new ArrayList<>();
+            getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        configurations.add(resultSet.getString("configuration"));
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
+                }
+            });
+            
+            return configurations;
+
+        } catch (SQLException | NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException(MessageFormat.format(
+                    "An error occurred while fetching configurations for counts where setName = {0} regex = {1} and search type = {2}",
+                    setName == null ? "<null>" : setName,
+                    regex == null ? "<null>" : regex,
+                    searchType == null ? "<null>" : searchType.name()),
+                    ex);
+        }
     }
 
     /**

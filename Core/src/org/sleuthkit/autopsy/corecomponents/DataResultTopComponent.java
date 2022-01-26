@@ -468,7 +468,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      * Displays results of querying the DAO for an artifact type and set name.
      * @param params The search parameters.
      */
-    public void displayAnalysisResultSet(AnalysisResultConfigSearchParam params) {
+    public void displayAnalysisResultConfig(AnalysisResultConfigSearchParam params) {
         dataResultPanel.displayAnalysisResultSet(params);
     }
 
