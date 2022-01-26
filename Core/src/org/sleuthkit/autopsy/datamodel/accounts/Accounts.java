@@ -955,12 +955,17 @@ final public class Accounts implements AutopsyVisitableItem {
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet resultSet = results.getResultSet();) {
                 while (resultSet.next()) {
-                    list.add(new FileWithCCN(
-                            resultSet.getLong("obj_id"), //NON-NLS
-                            resultSet.getString("solr_document_id"), //NON-NLS
-                            unGroupConcat(resultSet.getString("artifact_IDs"), Long::valueOf), //NON-NLS
-                            resultSet.getLong("hits"), //NON-NLS
-                            new HashSet<>(unGroupConcat(resultSet.getString("review_status_ids"), reviewStatusID -> BlackboardArtifact.ReviewStatus.withID(Integer.valueOf(reviewStatusID))))));  //NON-NLS
+                    long file_id = resultSet.getLong("obj_id");
+                    AbstractFile abstractFileById = skCase.getAbstractFileById(file_id);
+                    if(abstractFileById != null) {
+                        list.add(new FileWithCCN(
+                                abstractFileById,
+                                file_id, //NON-NLS
+                                resultSet.getString("solr_document_id"), //NON-NLS
+                                unGroupConcat(resultSet.getString("artifact_IDs"), Long::valueOf), //NON-NLS
+                                resultSet.getLong("hits"), //NON-NLS
+                                new HashSet<>(unGroupConcat(resultSet.getString("review_status_ids"), reviewStatusID -> BlackboardArtifact.ReviewStatus.withID(Integer.valueOf(reviewStatusID))))));  //NON-NLS
+                    }
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for files with ccn hits.", ex); //NON-NLS
@@ -977,7 +982,7 @@ final public class Accounts implements AutopsyVisitableItem {
                 for (long artId : key.artifactIDs) {
                     lookupContents.add(skCase.getBlackboardArtifact(artId));
                 }
-                AbstractFile abstractFileById = skCase.getAbstractFileById(key.getObjID());
+                AbstractFile abstractFileById = key.getFile();
                 lookupContents.add(abstractFileById);
                 return new Node[]{new FileWithCCNNode(key, abstractFileById, lookupContents.toArray())};
             } catch (TskCoreException ex) {
@@ -1314,13 +1319,15 @@ final public class Accounts implements AutopsyVisitableItem {
         private final List<Long> artifactIDs;
         private final long hits;
         private final Set<BlackboardArtifact.ReviewStatus> statuses;
+        private final AbstractFile file;
 
-        private FileWithCCN(long objID, String solrDocID, List<Long> artifactIDs, long hits, Set<BlackboardArtifact.ReviewStatus> statuses) {
+        private FileWithCCN(AbstractFile file, long objID, String solrDocID, List<Long> artifactIDs, long hits, Set<BlackboardArtifact.ReviewStatus> statuses) {
             this.objID = objID;
             this.keywordSearchDocID = solrDocID;
             this.artifactIDs = artifactIDs;
             this.hits = hits;
             this.statuses = statuses;
+            this.file = file;
         }
 
         /**
@@ -1367,6 +1374,10 @@ final public class Accounts implements AutopsyVisitableItem {
          */
         public Set<BlackboardArtifact.ReviewStatus> getStatuses() {
             return Collections.unmodifiableSet(statuses);
+        }
+        
+        AbstractFile getFile() {
+            return file;
         }
     }
 
