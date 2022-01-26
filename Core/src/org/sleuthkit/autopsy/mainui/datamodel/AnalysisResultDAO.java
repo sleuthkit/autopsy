@@ -1193,14 +1193,16 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 ? null
                 : "art.data_source_obj_id = ?";
 
-        String clauses = Stream.of(setNameClause, regexClause, searchTypeClause, dataSourceClause)
+        String kwHitClause = "art.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID();
+        
+        String clauses = Stream.of(kwHitClause, setNameClause, regexClause, searchTypeClause, dataSourceClause)
                 .filter(s -> s != null)
                 .map(s -> " (" + s + ") ")
-                .collect(Collectors.joining("AND"));
+                .collect(Collectors.joining("AND\n"));
 
         String query = "DISTINCT(ar.configuration) AS configuration \n"
                 + "FROM tsk_analysis_results ar\n"
-                + "LEFT JOIN blackboard_artifacts"
+                + "LEFT JOIN blackboard_artifacts art ON ar.artifact_obj_id = art.artifact_obj_id\n"
                 + "WHERE " + clauses;
 
         // get artifact types and counts
