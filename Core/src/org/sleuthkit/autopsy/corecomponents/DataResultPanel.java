@@ -66,10 +66,10 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFetcher;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultSetFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultConfigFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultConfigSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsDAO.CommAccountFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardBinSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardDAO.CreditCardByBinFetcher;
@@ -1403,7 +1403,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for keyword filter: {0} and data source id: {1}.",
-                    keywordHitKey.getSetName(),
+                    keywordHitKey.getConfiguration(),
                     keywordHitKey.getDataSourceId() == null ? "<null>" : keywordHitKey.getDataSourceId()),
                     ex);
         }
@@ -1435,15 +1435,15 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      *
      * @param setKey The search parameter query.
      */
-    void displayAnalysisResultSet(AnalysisResultSetSearchParam setKey) {
+    void displayAnalysisResultSet(AnalysisResultConfigSearchParam setKey) {
         try {
-            this.searchResultManager = new SearchManager(new AnalysisResultSetFetcher(setKey), getPageSize());
+            this.searchResultManager = new SearchManager(new AnalysisResultConfigFetcher(setKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for hash set filter: {0} and data source id: {1}.",
-                    setKey.getSetName(),
+                    setKey.getConfiguration(),
                     setKey.getDataSourceId() == null ? "<null>" : setKey.getDataSourceId()),
                     ex);
         }

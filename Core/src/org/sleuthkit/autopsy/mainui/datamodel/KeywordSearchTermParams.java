@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Parameters for a keyword search term.
  */
-public class KeywordSearchTermParams extends AnalysisResultSetSearchParam {
+public class KeywordSearchTermParams extends AnalysisResultConfigSearchParam {
 
     private static final String TYPE_ID = "KEYWORD_SEARCH_TERMS";
 

@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.TskData;
  * An event for an artifact added or changed of a particular type possibly for a
  * particular data source.
  */
-public class KeywordHitEvent extends AnalysisResultSetEvent {
+public class KeywordHitEvent extends AnalysisResultConfigEvent {
 
     private final String searchString;
     private final String match;

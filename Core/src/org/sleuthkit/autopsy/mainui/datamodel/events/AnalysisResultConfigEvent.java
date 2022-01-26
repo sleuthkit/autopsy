@@ -24,15 +24,15 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * An event for an Analysis Result that is organized by Set names to
  * signal that one has been added or removed on a given data source. 
  */
-public class AnalysisResultSetEvent extends AnalysisResultEvent {
-    private final String setName;
+public class AnalysisResultConfigEvent extends AnalysisResultEvent {
+    private final String configuration;
 
-    public AnalysisResultSetEvent(String setName, BlackboardArtifact.Type artifactType, long dataSourceId) {
+    public AnalysisResultConfigEvent(String configuration, BlackboardArtifact.Type artifactType, long dataSourceId) {
         super(artifactType, dataSourceId);
-        this.setName = setName;
+        this.configuration = configuration;
     }
 
-    public String getSetName() {
-        return setName;
+    public String getConfiguration() {
+        return configuration;
     }
 }

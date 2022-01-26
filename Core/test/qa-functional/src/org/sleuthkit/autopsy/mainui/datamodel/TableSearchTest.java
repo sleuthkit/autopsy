@@ -1030,13 +1030,13 @@ public class TableSearchTest extends NbTestCase {
             // Test hash set hits
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
             HashHitSearchParam hashParam = new HashHitSearchParam(null, HASH_SET_1);
-            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getAnalysisResultSetHits(hashParam, 0, null);
+            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getAnalysisResultConfigResults(hashParam, 0, null);
             assertEquals(BlackboardArtifact.Type.TSK_HASHSET_HIT, results.getArtifactType());
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
             hashParam = new HashHitSearchParam(dataSource2.getId(), HASH_SET_1);
-            results = analysisResultDAO.getAnalysisResultSetHits(hashParam, 0, null);
+            results = analysisResultDAO.getAnalysisResultConfigResults(hashParam, 0, null);
             assertEquals(BlackboardArtifact.Type.TSK_HASHSET_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
