@@ -412,7 +412,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         public List<String> getAnalysisResultConfigurations() {
             try {
                 return MainDAO.getInstance().getAnalysisResultDAO().getKeywordHitConfigurations(
-                        this.getItemData().getSearchParams().getSetName(), null, null,
+                        this.getItemData().getSearchParams().getSetName(),
                         this.getItemData().getSearchParams().getDataSourceId());
             } catch (ExecutionException ex) {
                 logger.log(Level.WARNING, "An exception occurred while fetching configurations.", ex);
