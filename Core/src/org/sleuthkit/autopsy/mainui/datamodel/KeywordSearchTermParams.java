@@ -36,32 +36,32 @@ public class KeywordSearchTermParams extends AnalysisResultSetSearchParam {
         return TYPE_ID;
     }
 
-
     private final String searchTerm;
     private final Boolean hasChildren;
     private final TskData.KeywordSearchQueryType searchType;
+    private final String configuration;
 
     /**
      * Main constructor.
      *
-     * @param setName      The set name.
-     * @param searchTerm   The search term (determined from regex or keyword).
-     * @param searchType   The keyword search type attribute.
-     * @param hasChildren  Whether or not this search term has children tree
-     *                     nodes (i.e. url regex search that further divides
-     *                     into different urls).
-     * @param dataSourceId The data source id or null.
+     * @param setName       The set name.
+     * @param searchTerm    The search term (determined from regex or keyword).
+     * @param searchType    The keyword search type attribute.
+     * @param configuration The configuration of the analysis results set if
+     *                      hasChildren is false.
+     * @param hasChildren   Whether or not this search term has children tree
+     *                      nodes (i.e. url regex search that further divides
+     *                      into different urls).
+     * @param dataSourceId  The data source id or null.
      */
-    public KeywordSearchTermParams(String setName, String searchTerm, TskData.KeywordSearchQueryType searchType, boolean hasChildren, Long dataSourceId) {
+    public KeywordSearchTermParams(String setName, String searchTerm, TskData.KeywordSearchQueryType searchType, String configuration, boolean hasChildren, Long dataSourceId) {
         super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName);
         this.searchTerm = searchTerm;
         this.hasChildren = hasChildren;
         this.searchType = searchType;
+        this.configuration = configuration;
     }
 
-
-    
-    
     /**
      * @return The search term (determined from regex or keyword).
      */
@@ -76,6 +76,11 @@ public class KeywordSearchTermParams extends AnalysisResultSetSearchParam {
     public boolean hasChildren() {
         return hasChildren;
     }
+
+    public String getConfiguration() {
+        return configuration;
+    }
+
     /**
      * @return The keyword search type value.
      */
@@ -112,6 +117,5 @@ public class KeywordSearchTermParams extends AnalysisResultSetSearchParam {
         }
         return super.equals(obj);
     }
-    
-    
+
 }
