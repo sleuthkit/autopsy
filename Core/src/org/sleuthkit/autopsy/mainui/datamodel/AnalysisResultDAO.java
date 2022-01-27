@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultConfigEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
@@ -143,7 +143,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     private final Cache<SearchParams<BlackboardArtifactSearchParam>, AnalysisResultTableSearchResultsDTO> analysisResultCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-    private final Cache<SearchParams<AnalysisResultConfigSearchParam>, AnalysisResultTableSearchResultsDTO> configHitCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<AnalysisResultSearchParam>, AnalysisResultTableSearchResultsDTO> configHitCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final Cache<SearchParams<KeywordHitSearchParam>, AnalysisResultTableSearchResultsDTO> keywordHitCache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
     private final TreeCounts<AnalysisResultEvent> treeCounts = new TreeCounts<>();
@@ -187,7 +187,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
 
     // filters results by configuration attr and needs a search param with the configuration
-    private AnalysisResultTableSearchResultsDTO fetchConfigResultsForTable(SearchParams<? extends AnalysisResultConfigSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+    private AnalysisResultTableSearchResultsDTO fetchConfigResultsForTable(SearchParams<? extends AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
@@ -282,16 +282,16 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 && (key.getDataSourceId() == null || key.getDataSourceId() == analysisResultEvt.getDataSourceId());
     }
 
-    private boolean isAnalysisResultsConfigInvalidating(AnalysisResultConfigSearchParam key, DAOEvent event) {
+    private boolean isAnalysisResultsConfigInvalidating(AnalysisResultSearchParam key, DAOEvent event) {
         if (event instanceof DeleteAnalysisResultEvent) {
             return true;
         }
 
-        if (!(event instanceof AnalysisResultConfigEvent)) {
+        if (!(event instanceof AnalysisResultEvent)) {
             return false;
         }
 
-        AnalysisResultConfigEvent setEvent = (AnalysisResultConfigEvent) event;
+        AnalysisResultEvent setEvent = (AnalysisResultEvent) event;
         return isAnalysisResultsInvalidating(key, setEvent)
                 && Objects.equals(key.getConfiguration(), setEvent.getConfiguration());
     }
@@ -313,14 +313,14 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
     }
 
-    public AnalysisResultTableSearchResultsDTO getAnalysisResultConfigResults(AnalysisResultConfigSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
+    public AnalysisResultTableSearchResultsDTO getAnalysisResultConfigResults(AnalysisResultSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
             throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
                     + "Data source id must be null or > 0.  "
                     + "Received data source id: {0}", artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
         }
 
-        SearchParams<AnalysisResultConfigSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        SearchParams<AnalysisResultSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         return configHitCache.get(searchParams, () -> fetchConfigResultsForTable(searchParams));
     }
 
@@ -362,7 +362,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                                 ? TreeDisplayCount.INDETERMINATE
                                 : TreeDisplayCount.getDeterminate(entry.getValue().getLeft());
 
-                        return getTreeItem(entry.getKey(), dataSourceId, displayCount, entry.getValue().getRight());
+                        return getTreeItem(entry.getKey(), null, dataSourceId, displayCount, entry.getValue().getRight());
                     })
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
                     .collect(Collectors.toList());
@@ -488,21 +488,21 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * @throws IllegalArgumentException
      * @throws ExecutionException
      */
-    public TreeResultsDTO<AnalysisResultConfigSearchParam> getConfigurationCounts(
+    public TreeResultsDTO<AnalysisResultSearchParam> getConfigurationCounts(
             BlackboardArtifact.Type type,
             Long dataSourceId,
             String blankConfigName) throws IllegalArgumentException, ExecutionException {
 
         Set<String> indeterminateConfigCounts = new HashSet<>();
         for (AnalysisResultEvent evt : this.treeCounts.getEnqueued()) {
-            if (evt instanceof AnalysisResultConfigEvent
+            if (evt instanceof AnalysisResultEvent
                     && (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
                     && evt.getArtifactType().equals(type)) {
-                indeterminateConfigCounts.add(((AnalysisResultConfigEvent) evt).getConfiguration());
+                indeterminateConfigCounts.add(evt.getConfiguration());
             }
         }
 
-        List<TreeItemDTO<AnalysisResultConfigSearchParam>> allConfigurations
+        List<TreeItemDTO<AnalysisResultSearchParam>> allConfigurations
                 = getConfigurationCountsMap(type, dataSourceId).entrySet().stream()
                         .sorted((a, b) -> compareStrings(a.getKey(), b.getKey()))
                         .map(entry -> {
@@ -539,7 +539,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * @throws IllegalArgumentException
      * @throws ExecutionException
      */
-    public TreeResultsDTO<AnalysisResultSetSearchParam> getKwSetCounts(
+    public TreeResultsDTO<KeywordListSearchParam> getKwSetCounts(
             Long dataSourceId,
             String nullSetName) throws IllegalArgumentException, ExecutionException {
 
@@ -551,7 +551,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             }
         }
 
-        List<TreeItemDTO<AnalysisResultSetSearchParam>> allSets = new ArrayList<>();
+        List<TreeItemDTO<KeywordListSearchParam>> allSets = new ArrayList<>();
         try {
             // get artifact types and counts
             SleuthkitCase skCase = getCase();
@@ -577,7 +577,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                                 ? TreeDisplayCount.INDETERMINATE
                                 : TreeDisplayCount.getDeterminate(resultSet.getLong("count"));
 
-                        allSets.add(getSetTreeItem(BlackboardArtifact.Type.TSK_KEYWORD_HIT,
+                        allSets.add(getKeywordListTreeItem(
                                 dataSourceId,
                                 setName,
                                 StringUtils.isBlank(setName) ? nullSetName : setName,
@@ -1036,8 +1036,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             Map<KeywordHitSearchParam, Set<Long>> keywordHitsMap,
             boolean ingestIsRunning) {
 
-        List<AnalysisResultEvent> analysisResultConfigEvents = resultsWithConfigMap.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(dsId -> new AnalysisResultConfigEvent(entry.getKey().getRight(), entry.getKey().getLeft(), dsId)))
+        List<AnalysisResultEvent> AnalysisResultEvents = resultsWithConfigMap.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream().map(dsId -> new AnalysisResultEvent(entry.getKey().getLeft(), entry.getKey().getRight(), dsId)))
                 .collect(Collectors.toList());
 
         // divide into ad hoc searches (null set name) and the rest
@@ -1053,7 +1053,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 .collect(Collectors.partitioningBy(kwe -> kwe.getSetName() == null));
 
         // include config results in regular events.
-        List<AnalysisResultEvent> daoEvents = Stream.of(analysisResultConfigEvents, keywordHitEvts.get(false))
+        List<AnalysisResultEvent> daoEvents = Stream.of(AnalysisResultEvents, keywordHitEvts.get(false))
                 .filter(lst -> lst != null)
                 .flatMap(s -> s.stream())
                 .collect(Collectors.toList());
@@ -1106,39 +1106,37 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     khEvt.getConfiguration(),
                     displayCount
             );
-        } else if (arEvt instanceof AnalysisResultConfigEvent) {
-            AnalysisResultConfigEvent configEvent = (AnalysisResultConfigEvent) arEvt;
-            return getConfigTreeItem(configEvent.getArtifactType(), configEvent.getDataSourceId(),
-                    configEvent.getConfiguration(), configEvent.getConfiguration(), displayCount);
         } else {
-            return getTreeItem(arEvt.getArtifactType(), arEvt.getDataSourceId(), displayCount, null);
+            return getTreeItem(arEvt.getArtifactType(), arEvt.getConfiguration(), arEvt.getDataSourceId(), displayCount, null);
         }
     }
 
-    private TreeItemDTO<AnalysisResultConfigSearchParam> getConfigTreeItem(BlackboardArtifact.Type type,
+    private TreeItemDTO<AnalysisResultSearchParam> getConfigTreeItem(BlackboardArtifact.Type type,
             Long dataSourceId, String configuration, String displayName, TreeDisplayCount displayCount) {
 
         return new TreeItemDTO<>(
-                AnalysisResultConfigSearchParam.getTypeId(),
-                new AnalysisResultConfigSearchParam(type, dataSourceId, configuration),
+                AnalysisResultSearchParam.getTypeId(),
+                new AnalysisResultSearchParam(type, configuration, dataSourceId),
                 configuration == null ? 0 : configuration,
                 displayName,
                 displayCount);
     }
 
-    private TreeItemDTO<AnalysisResultSetSearchParam> getSetTreeItem(BlackboardArtifact.Type type,
+    private TreeItemDTO<KeywordListSearchParam> getKeywordListTreeItem(
             Long dataSourceId, String setName, String displayName, TreeDisplayCount displayCount) {
 
         return new TreeItemDTO<>(
-                AnalysisResultSetSearchParam.getTypeId(),
-                new AnalysisResultSetSearchParam(type, dataSourceId, setName),
+                KeywordListSearchParam.getTypeId(),
+                // there are one to many for keyword lists to configuration so leave as null
+                new KeywordListSearchParam(dataSourceId, null, setName),
                 setName == null ? 0 : setName,
                 displayName,
                 displayCount);
     }
 
-    private TreeItemDTO<AnalysisResultSearchParam> getTreeItem(BlackboardArtifact.Type type, Long dataSourceId, TreeDisplayCount displayCount, Boolean hasChildren) {
-        return new AnalysisResultTreeItem(type, dataSourceId, displayCount, hasChildren);
+    private TreeItemDTO<AnalysisResultSearchParam> getTreeItem(BlackboardArtifact.Type type, String configuration,
+            Long dataSourceId, TreeDisplayCount displayCount, Boolean hasChildren) {
+        return new AnalysisResultTreeItem(type, configuration, dataSourceId, displayCount, hasChildren);
     }
 
     @Override
@@ -1238,9 +1236,9 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         private final Optional<Boolean> hasChildren;
 
-        public AnalysisResultTreeItem(BlackboardArtifact.Type type, Long dataSourceId, TreeDisplayCount displayCount, Boolean hasChildren) {
+        public AnalysisResultTreeItem(BlackboardArtifact.Type type, String configuration, Long dataSourceId, TreeDisplayCount displayCount, Boolean hasChildren) {
             super(AnalysisResultSearchParam.getTypeId(),
-                    new AnalysisResultSearchParam(type, dataSourceId),
+                    new AnalysisResultSearchParam(type, configuration, dataSourceId),
                     type.getTypeID(),
                     type.getDisplayName(),
                     displayCount);
@@ -1288,14 +1286,14 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     /**
      * Handles fetching and paging of configuration filtered results.
      */
-    public static class AnalysisResultConfigFetcher extends DAOFetcher<AnalysisResultConfigSearchParam> {
+    public static class AnalysisResultConfigFetcher extends DAOFetcher<AnalysisResultSearchParam> {
 
         /**
          * Main constructor.
          *
          * @param params Parameters to handle fetching of data.
          */
-        public AnalysisResultConfigFetcher(AnalysisResultConfigSearchParam params) {
+        public AnalysisResultConfigFetcher(AnalysisResultSearchParam params) {
             super(params);
         }
 

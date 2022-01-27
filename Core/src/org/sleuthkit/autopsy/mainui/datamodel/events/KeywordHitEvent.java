@@ -45,7 +45,7 @@ public class KeywordHitEvent extends AnalysisResultEvent {
      * @param dataSourceId  The data source id.
      */
     public KeywordHitEvent(String setName, String searchString, TskData.KeywordSearchQueryType searchType, String match, String configuration, long dataSourceId) {
-        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId);
+        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, configuration, dataSourceId);
         this.setName = setName;
         this.searchString = searchString;
         this.match = match;

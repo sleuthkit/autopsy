@@ -18,15 +18,50 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
+import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * An event for an artifact added or changed of a particular type possibly for a
- * particular data source.
+ * An event for an Analysis Result that is organized by Set names to
+ * signal that one has been added or removed on a given data source. 
  */
 public class AnalysisResultEvent extends BlackboardArtifactEvent {
+    private final String configuration;
 
-    public AnalysisResultEvent(BlackboardArtifact.Type artifactType, long dataSourceId) {
+    public AnalysisResultEvent(BlackboardArtifact.Type artifactType, String configuration, long dataSourceId) {
         super(artifactType, dataSourceId);
+        this.configuration = configuration;
     }
+
+    public String getConfiguration() {
+        return configuration;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 53 * hash + Objects.hashCode(this.configuration);
+        hash = 53 * hash + super.hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final AnalysisResultEvent other = (AnalysisResultEvent) obj;
+        if (!Objects.equals(this.configuration, other.configuration)) {
+            return false;
+        }
+        return super.equals(obj);
+    }
+    
+    
 }

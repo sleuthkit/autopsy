@@ -36,8 +36,7 @@ import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultTreeItem;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultConfigSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.KeywordListSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
@@ -111,14 +110,15 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             Boolean hasChildren = null;
             if (originalTreeItem instanceof AnalysisResultTreeItem) {
                 hasChildren = ((AnalysisResultTreeItem) originalTreeItem).getHasChildren().orElse(null);
-            } else if (originalTreeItem.getSearchParams() instanceof AnalysisResultConfigSearchParam) {
-                String setName = ((AnalysisResultConfigSearchParam) originalTreeItem.getSearchParams()).getConfiguration();
+            } else if (StringUtils.isNotBlank(originalTreeItem.getSearchParams().getConfiguration())) {
+                String setName = originalTreeItem.getSearchParams().getConfiguration();
                 hasChildren = StringUtils.isNotBlank(setName);
             }
 
             // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
             AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
-            return new AnalysisResultTreeItem(searchParam.getArtifactType(), this.dataSourceId, originalTreeItem.getDisplayCount(), hasChildren);
+            return new AnalysisResultTreeItem(searchParam.getArtifactType(), searchParam.getConfiguration(), 
+                    this.dataSourceId, originalTreeItem.getDisplayCount(), hasChildren);
         }
         return null;
     }
@@ -219,7 +219,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
      * Factory displaying all analysis result configurations with count in the
      * tree.
      */
-    static class TreeConfigFactory extends TreeChildFactory<AnalysisResultConfigSearchParam> {
+    static class TreeConfigFactory extends TreeChildFactory<AnalysisResultSearchParam> {
 
         private final BlackboardArtifact.Type artifactType;
         private final Long dataSourceId;
@@ -254,28 +254,28 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO<? extends AnalysisResultConfigSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
+        protected TreeResultsDTO<? extends AnalysisResultSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
             return MainDAO.getInstance().getAnalysisResultDAO().getConfigurationCounts(this.artifactType, this.dataSourceId, this.nullSetName);
         }
 
         @Override
-        protected TreeNode<AnalysisResultConfigSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultConfigSearchParam> rowData) {
+        protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
             return new TreeConfigTypeNode(rowData);
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultConfigSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
-            TreeResultsDTO.TreeItemDTO<AnalysisResultConfigSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, AnalysisResultConfigSearchParam.class);
+        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<AnalysisResultSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, AnalysisResultSearchParam.class);
 
             if (originalTreeItem != null
                     && originalTreeItem.getSearchParams().getArtifactType().equals(this.artifactType)
                     && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
-                AnalysisResultConfigSearchParam searchParam = originalTreeItem.getSearchParams();
+                AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
                 return new TreeResultsDTO.TreeItemDTO<>(
-                        AnalysisResultConfigSearchParam.getTypeId(),
-                        new AnalysisResultConfigSearchParam(this.artifactType, this.dataSourceId, searchParam.getConfiguration()),
+                        AnalysisResultSearchParam.getTypeId(),
+                        new AnalysisResultSearchParam(this.artifactType, searchParam.getConfiguration(), this.dataSourceId),
                         searchParam.getConfiguration() == null ? 0 : searchParam.getConfiguration(),
                         searchParam.getConfiguration() == null ? nullSetName : searchParam.getConfiguration(),
                         originalTreeItem.getDisplayCount());
@@ -284,7 +284,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        public int compare(TreeItemDTO<? extends AnalysisResultConfigSearchParam> o1, TreeItemDTO<? extends AnalysisResultConfigSearchParam> o2) {
+        public int compare(TreeItemDTO<? extends AnalysisResultSearchParam> o1, TreeItemDTO<? extends AnalysisResultSearchParam> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getConfiguration(), o2.getSearchParams().getConfiguration());
         }
 
@@ -305,14 +305,14 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     /**
      * A node for a set within an artifact type.
      */
-    static class TreeConfigTypeNode extends TreeNode<AnalysisResultConfigSearchParam> {
+    static class TreeConfigTypeNode extends TreeNode<AnalysisResultSearchParam> {
 
         /**
          * Main constructor.
          *
          * @param itemData The data to display.
          */
-        TreeConfigTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultConfigSearchParam> itemData) {
+        TreeConfigTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
             super(itemData.getSearchParams().getArtifactType().getTypeName() + "_SET_" + itemData.getSearchParams().getConfiguration(),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
@@ -367,7 +367,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     @Messages({
         "AnalysisResultTypeFactory_adHocName=Ad Hoc Results"
     })
-    public static class KeywordSetFactory extends TreeChildFactory<AnalysisResultSetSearchParam> {
+    public static class KeywordSetFactory extends TreeChildFactory<KeywordListSearchParam> {
 
         private final Long dataSourceId;
 
@@ -376,23 +376,23 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        protected TreeResultsDTO<? extends AnalysisResultSetSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
+        protected TreeResultsDTO<? extends KeywordListSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
             return MainDAO.getInstance().getAnalysisResultDAO().getKwSetCounts(this.dataSourceId, Bundle.AnalysisResultTypeFactory_adHocName());
         }
 
         @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
-            TreeResultsDTO.TreeItemDTO<AnalysisResultSetSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, AnalysisResultSetSearchParam.class);
+        protected TreeResultsDTO.TreeItemDTO<? extends KeywordListSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<KeywordListSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, KeywordListSearchParam.class);
 
             if (originalTreeItem != null
                     && originalTreeItem.getSearchParams().getArtifactType().equals(BlackboardArtifact.Type.TSK_KEYWORD_HIT)
                     && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
-                AnalysisResultSetSearchParam searchParam = originalTreeItem.getSearchParams();
+                KeywordListSearchParam searchParam = originalTreeItem.getSearchParams();
                 return new TreeResultsDTO.TreeItemDTO<>(
-                        AnalysisResultSetSearchParam.getTypeId(),
-                        new AnalysisResultSetSearchParam(BlackboardArtifact.Type.TSK_KEYWORD_HIT, this.dataSourceId, searchParam.getSetName()),
+                        KeywordListSearchParam.getTypeId(),
+                        new KeywordListSearchParam(this.dataSourceId, searchParam.getConfiguration(), searchParam.getSetName()),
                         searchParam.getSetName() == null ? 0 : searchParam.getSetName(),
                         searchParam.getSetName() == null ? Bundle.AnalysisResultTypeFactory_adHocName() : searchParam.getSetName(),
                         originalTreeItem.getDisplayCount());
@@ -401,17 +401,17 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         }
 
         @Override
-        public int compare(TreeItemDTO<? extends AnalysisResultSetSearchParam> o1, TreeItemDTO<? extends AnalysisResultSetSearchParam> o2) {
+        public int compare(TreeItemDTO<? extends KeywordListSearchParam> o1, TreeItemDTO<? extends KeywordListSearchParam> o2) {
             return STRING_COMPARATOR.compare(o1.getSearchParams().getSetName(), o2.getSearchParams().getSetName());
         }
 
         @Override
-        protected TreeNode<AnalysisResultSetSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> rowData) {
+        protected TreeNode<KeywordListSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends KeywordListSearchParam> rowData) {
             return new KeywordSetNode(rowData);
         }
     }
 
-    static class KeywordSetNode extends TreeNode<AnalysisResultSetSearchParam> {
+    static class KeywordSetNode extends TreeNode<KeywordListSearchParam> {
 
         private static final Logger logger = Logger.getLogger(KeywordSetNode.class.getName());
 
@@ -420,7 +420,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
          *
          * @param itemData The data to display.
          */
-        public KeywordSetNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSetSearchParam> itemData) {
+        public KeywordSetNode(TreeResultsDTO.TreeItemDTO<? extends KeywordListSearchParam> itemData) {
             super("TSK_KEYWORD_HIT_SET_" + itemData.getSearchParams().getSetName(),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
@@ -462,14 +462,14 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
      */
     static class KeywordSearchTermFactory extends TreeChildFactory<KeywordSearchTermParams> {
 
-        private final AnalysisResultSetSearchParam setParams;
+        private final KeywordListSearchParam setParams;
 
         /**
          * Main constructor.
          *
          * @param setParams The parameters for the set.
          */
-        KeywordSearchTermFactory(AnalysisResultSetSearchParam setParams) {
+        KeywordSearchTermFactory(KeywordListSearchParam setParams) {
             this.setParams = setParams;
         }
 
