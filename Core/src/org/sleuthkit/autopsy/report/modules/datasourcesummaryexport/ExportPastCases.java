@@ -37,10 +37,11 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "ExportPastCases_caseColumn_title=Case",
     "ExportPastCases_countColumn_title=Count",
-    "ExportPastCases_notableFileTable_tabName=Cases with Common Notable Items at Time Of Ingest",
-    "ExportPastCases_sameIdsTable_tabName=Past Cases with the Same Devices",})
+    "ExportPastCases_notableFileTable_tabName=Cases with Common Notable Items",
+    "ExportPastCases_seenResultsTable_tabName=Cases With The Same Addresses",
+    "ExportPastCases_seenDevicesTable_tabName=Cases With The Same Device IDs",})
 class ExportPastCases {
-    
+
     private final PastCasesSummary pastSummary;
 
     // model for column indicating the case
@@ -73,8 +74,9 @@ class ExportPastCases {
         }
 
         return Arrays.asList(
-                getTableExport(DEFAULT_TEMPLATE, Bundle.ExportPastCases_notableFileTable_tabName(), result.getTaggedNotable()),
-                getTableExport(DEFAULT_TEMPLATE, Bundle.ExportPastCases_sameIdsTable_tabName(), result.getSameIdsResults())
+                getTableExport(DEFAULT_TEMPLATE, Bundle.ExportPastCases_notableFileTable_tabName(), result.getPreviouslyNotable()),
+                getTableExport(DEFAULT_TEMPLATE, Bundle.ExportPastCases_seenResultsTable_tabName(), result.getPreviouslySeenResults()),
+                getTableExport(DEFAULT_TEMPLATE, Bundle.ExportPastCases_seenDevicesTable_tabName(), result.getPreviouslySeenDevices())
         );
     }
 }

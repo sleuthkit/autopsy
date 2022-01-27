@@ -24,14 +24,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -70,42 +71,51 @@ public class PastCasesSummary {
      */
     public static class PastCasesResult {
 
-        private final List<Pair<String, Long>> sameIdsResults;
-        private final List<Pair<String, Long>> taggedNotable;
+        private final List<Pair<String, Long>> previouslyNotable;
+        private final List<Pair<String, Long>> previouslySeenDevices;
+        private final List<Pair<String, Long>> previouslySeenResults;
 
         /**
          * Main constructor.
          *
-         * @param sameIdsResults Data for the cases with same id table.
-         * @param taggedNotable  Data for the tagged notable table.
+         * @param previouslyNotable     TSK_PREVIOUSLY_NOTABLE results.
+         * @param previouslySeenDevices TSK_PREVIOUSLY_SEEN device results.
+         * @param previouslySeenResults TSK_PREVIOUSLY_SEEN non-device results.
          */
-        public PastCasesResult(List<Pair<String, Long>> sameIdsResults, List<Pair<String, Long>> taggedNotable) {
-            this.sameIdsResults = sameIdsResults;
-            this.taggedNotable = taggedNotable;
+        public PastCasesResult(List<Pair<String, Long>> previouslyNotable, List<Pair<String, Long>> previouslySeenDevices, List<Pair<String, Long>> previouslySeenResults) {
+            this.previouslyNotable = Collections.unmodifiableList(previouslyNotable);
+            this.previouslySeenDevices = Collections.unmodifiableList(previouslySeenDevices);
+            this.previouslySeenResults = Collections.unmodifiableList(previouslySeenResults);
         }
 
         /**
-         * @return Data for the cases with same id table.
+         * @return TSK_PREVIOUSLY_NOTABLE results.
          */
-        public List<Pair<String, Long>> getSameIdsResults() {
-            return Collections.unmodifiableList(sameIdsResults);
+        public List<Pair<String, Long>> getPreviouslyNotable() {
+            return previouslyNotable;
         }
 
         /**
-         * @return Data for the tagged notable table.
+         * @return TSK_PREVIOUSLY_SEEN device results.
          */
-        public List<Pair<String, Long>> getTaggedNotable() {
-            return Collections.unmodifiableList(taggedNotable);
+        public List<Pair<String, Long>> getPreviouslySeenDevices() {
+            return previouslySeenDevices;
+        }
+
+        /**
+         * @return TSK_PREVIOUSLY_SEEN non-device results.
+         */
+        public List<Pair<String, Long>> getPreviouslySeenResults() {
+            return previouslySeenResults;
         }
     }
 
     private static final Set<Integer> ARTIFACT_UPDATE_TYPE_IDS = new HashSet<>(Arrays.asList(
-            ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID(), 
+            ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID(),
             ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE.getTypeID()
     ));
 
     private static final String CENTRAL_REPO_INGEST_NAME = CentralRepoIngestModuleFactory.getModuleName().toUpperCase().trim();
-    private static final BlackboardAttribute.Type TYPE_COMMENT = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_OTHER_CASES);
 
     private static final Set<Integer> CR_DEVICE_TYPE_IDS = new HashSet<>(Arrays.asList(
             ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID(),
@@ -180,11 +190,24 @@ public class PastCasesSummary {
 
         BlackboardAttribute commentAttr = null;
         try {
-            commentAttr = artifact.getAttribute(TYPE_COMMENT);
+            commentAttr = artifact.getAttribute(BlackboardAttribute.Type.TSK_OTHER_CASES);
         } catch (TskCoreException ignored) {
             // ignore if no attribute can be found
         }
 
+        return getCasesFromAttr(commentAttr);
+
+    }
+
+    /**
+     * Gets a list of cases from the TSK_OTHER_CASES attribute. The cases
+     * string is expected to be of a form of "case1,case2...caseN".
+     *
+     * @param artifact The attribute.
+     *
+     * @return The list of cases if found or empty list if not.
+     */
+    private static List<String> getCasesFromAttr(BlackboardAttribute commentAttr) {
         if (commentAttr == null) {
             return Collections.emptyList();
         }
@@ -197,7 +220,6 @@ public class PastCasesSummary {
         return Stream.of(justCasesStr.split(CASE_SEPARATOR))
                 .map(String::trim)
                 .collect(Collectors.toList());
-
     }
 
     /**
@@ -226,9 +248,28 @@ public class PastCasesSummary {
                 .sorted((a, b) -> -Long.compare(a.getValue(), b.getValue()))
                 .collect(Collectors.toList());
     }
+    
+    
+    /**
+     * Determines a list of counts for most populated cases based on comment
+     * attribute.
+     *
+     * @param artifacts The list of artifacts.
+     *
+     * @return The key value pairs mapping case to counts.
+     */
+    private static List<Pair<String, Long>> getCaseCountsFromArtifacts(List<BlackboardArtifact> artifacts) {
+        List<String> cases = new ArrayList<>();
+        for (BlackboardArtifact art : artifacts) {
+            cases.addAll(getCasesFromArtifact(art));
+        }
+        
+        return getCaseCounts(cases.stream());
+    }
 
     /**
-     * Given a TSK_PREVIOUSLY_SEEN or TSK_PREVIOUSLY_NOTABLE artifact, retrieves it's parent artifact.
+     * Given a TSK_PREVIOUSLY_SEEN or TSK_PREVIOUSLY_NOTABLE artifact, retrieves
+     * it's parent artifact.
      *
      * @param artifact The input artifact.
      *
@@ -241,7 +282,7 @@ public class PastCasesSummary {
 
         BlackboardArtifact sourceArtifact = null;
         SleuthkitCase skCase = caseProvider.get();
-        Content content = skCase.getContentById(artifact.getObjectID());        
+        Content content = skCase.getContentById(artifact.getObjectID());
         if (content instanceof BlackboardArtifact) {
             sourceArtifact = (BlackboardArtifact) content;
         }
@@ -285,28 +326,31 @@ public class PastCasesSummary {
             return null;
         }
 
-        SleuthkitCase skCase = caseProvider.get();
+        long dataSourceId = dataSource.getId();
 
-        List<String> deviceArtifactCases = new ArrayList<>();
-        List<String> nonDeviceArtifactCases = new ArrayList<>();
-        for (Integer typeId : ARTIFACT_UPDATE_TYPE_IDS) {
-            for (BlackboardArtifact artifact : skCase.getBlackboard().getArtifacts(typeId, dataSource.getId())) {
-                List<String> cases = getCasesFromArtifact(artifact);
-                if (cases == null || cases.isEmpty()) {
-                    continue;
-                }
+        Blackboard blackboard = caseProvider.get().getBlackboard();
 
-                if (hasDeviceAssociatedArtifact(artifact)) {
-                    deviceArtifactCases.addAll(cases);
-                } else {
-                    nonDeviceArtifactCases.addAll(cases);
-                }
+        List<BlackboardArtifact> previouslyNotableArtifacts
+                = blackboard.getArtifacts(BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE.getTypeID(), dataSourceId);
+       
+        List<BlackboardArtifact> previouslySeenArtifacts
+                = blackboard.getArtifacts(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN.getTypeID(), dataSourceId);
+        
+        List<BlackboardArtifact> previouslySeenDevice = new ArrayList<>();
+        List<BlackboardArtifact> previouslySeenNoDevice = new ArrayList<>();
+        
+        for (BlackboardArtifact art : previouslySeenArtifacts) {
+            if (hasDeviceAssociatedArtifact(art)) {
+                previouslySeenDevice.add(art);
+            } else {
+                previouslySeenNoDevice.add(art);
             }
-        }      
+        }
         
         return new PastCasesResult(
-                getCaseCounts(deviceArtifactCases.stream()),
-                getCaseCounts(nonDeviceArtifactCases.stream())
+                getCaseCountsFromArtifacts(previouslyNotableArtifacts),
+                getCaseCountsFromArtifacts(previouslySeenDevice),
+                getCaseCountsFromArtifacts(previouslySeenNoDevice)
         );
     }
 }
