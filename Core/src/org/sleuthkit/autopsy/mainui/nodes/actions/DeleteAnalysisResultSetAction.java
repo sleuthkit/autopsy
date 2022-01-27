@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.mainui.nodes.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
@@ -54,13 +55,13 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
     private static final long serialVersionUID = 1L;
     
     private final BlackboardArtifact.Type type;
-    private final String configuration;
+    private final List<String> configurations;
     private final Long dsID;
     
-    public DeleteAnalysisResultSetAction(BlackboardArtifact.Type type, String configuration, Long dsID) {
+    public DeleteAnalysisResultSetAction(BlackboardArtifact.Type type, List<String> configurations, Long dsID) {
         super(Bundle.DeleteAnalysisResultsAction_label());
         this.type = type;
-        this.configuration = configuration;
+        this.configurations = configurations;
         this.dsID = dsID;
     }
 
@@ -68,13 +69,13 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         
         String warningMessage;
-        String progressMessage;
-        if (configuration == null || configuration.isEmpty()) {
-            warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResults(type.getDisplayName());
-            progressMessage = Bundle.DeleteAnalysisResultsAction_progress_allResults(type.getDisplayName());
+        if (configurations == null || configurations.isEmpty() || configurations.size() > 1 
+                || type == BlackboardArtifact.Type.TSK_KEYWORD_HIT) {
+            // either no configuration or multiple configurations. 
+            // do not display configuration for KWS hits as it contains (KW term, search type, KW list name).
+            warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResults(type.getDisplayName());            
         } else {
-            warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResultsWithConfiguration(type.getDisplayName(), configuration);
-            progressMessage = Bundle.DeleteAnalysisResultsAction_progress_allResultsWithConfiguration(type.getDisplayName(), configuration);
+            warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResultsWithConfiguration(type.getDisplayName(), configurations.get(0));
         }
         int response = JOptionPane.showConfirmDialog(
                 WindowManager.getDefault().getMainWindow(),
@@ -84,25 +85,28 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
         if (response != JOptionPane.YES_OPTION) {
             return;
         }
-
+        
+        AppFrameProgressBar progress = new AppFrameProgressBar(Bundle.DeleteAnalysisResultsAction_title());
+        
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
 
-                AppFrameProgressBar progress = new AppFrameProgressBar(Bundle.DeleteAnalysisResultsAction_title());
-                try {                    
-                    progress.start(progressMessage);
-                    progress.switchToIndeterminate(progressMessage);
-                    if (!isCancelled()) {
-                        try {
-                            logger.log(Level.INFO, "Deleting Analysis Results type = {0}, data source ID = {1}, configuration = {2}", new Object[]{type, dsID, configuration});
-                            Case.getCurrentCase().getSleuthkitCase().getBlackboard().deleteAnalysisResults(type, dsID, configuration);
-                            logger.log(Level.INFO, "Deleted Analysis Results type = {0}, data source ID = {1}, configuration = {2}", new Object[]{type, dsID, configuration});
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Failed to delete analysis results of type = "+type+", data source ID = "+dsID+", configuration = "+configuration, ex);
+                progress.start(Bundle.DeleteAnalysisResultsAction_title());
+                try {
+                    if (configurations == null || configurations.isEmpty()) {
+                        progress.switchToIndeterminate(Bundle.DeleteAnalysisResultsAction_progress_allResults(type.getDisplayName()));
+                        if (!isCancelled()) {
+                            delete(type, "", dsID);
+                        }
+                    } else {
+                        for (String configuration : configurations) {
+                            progress.switchToIndeterminate(Bundle.DeleteAnalysisResultsAction_progress_allResultsWithConfiguration(type.getDisplayName(), configuration));
+                            if (!isCancelled()) {
+                                delete(type, configuration, dsID);
+                            }
                         }
                     }
-
                     return null;
                 } finally {
                     progress.finish();
@@ -111,5 +115,15 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
         };
         
         worker.execute();        
-    }    
+    }
+    
+    private static void delete(BlackboardArtifact.Type type, String configuration, Long dsID) {
+        try {
+            logger.log(Level.INFO, "Deleting Analysis Results type = {0}, data source ID = {1}, configuration = {2}", new Object[]{type, dsID, configuration});
+            Case.getCurrentCase().getSleuthkitCase().getBlackboard().deleteAnalysisResults(type, dsID, configuration);
+            logger.log(Level.INFO, "Deleted Analysis Results type = {0}, data source ID = {1}, configuration = {2}", new Object[]{type, dsID, configuration});
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to delete analysis results of type = " + type + ", data source ID = " + dsID + ", configuration = " + configuration, ex);
+        }
+    }  
 }

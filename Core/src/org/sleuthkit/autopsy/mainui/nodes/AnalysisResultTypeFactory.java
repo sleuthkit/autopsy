@@ -178,7 +178,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
             Optional<Long> dsId = getDataSourceIdForActions();
             if (type.isPresent()) {
-                group.add(new DeleteAnalysisResultSetAction(type.get(), "", dsId.isPresent() ? dsId.get() : null));
+                group.add(new DeleteAnalysisResultSetAction(type.get(), Collections.emptyList(), dsId.isPresent() ? dsId.get() : null));
             }
 
             return Optional.of(group);
@@ -347,17 +347,16 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
 
         @Override
         public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
-//            ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
-//
-//            Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
-//            Optional<String> configuration = getAnalysisResultConfiguration();
-//            Optional<Long> dsId = getDataSourceIdForActions();
-//            if (type.isPresent()) {
-//                group.add(new DeleteAnalysisResultSetAction(type.get(), configuration.isPresent() ? configuration.get() : "", dsId.isPresent() ? dsId.get() : null));
-//            }
-//
-//            return Optional.of(group);
-            return Optional.empty();
+            ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
+
+            Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
+            List<String> configurations = getAnalysisResultConfigurations();
+            Optional<Long> dsId = getDataSourceIdForActions();
+            if (type.isPresent()) {
+                group.add(new DeleteAnalysisResultSetAction(type.get(), configurations, dsId.isPresent() ? dsId.get() : null));
+            }
+
+            return Optional.of(group);
         }
     }
 
@@ -578,10 +577,13 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
         @Override
         public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
-            KeywordSearchTermParams searchTermParams = this.getItemData().getSearchParams();
 
-            // ELTODO fill this stub when implementing KWS result deletion
-            // group.add(new DeleteAnalysisResultSetAction(searchTermParams));
+            Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
+            List<String> configurations = getAnalysisResultConfigurations();
+            Optional<Long> dsId = getDataSourceIdForActions();
+            if (type.isPresent()) {
+                group.add(new DeleteAnalysisResultSetAction(type.get(), configurations, dsId.isPresent() ? dsId.get() : null));
+            }
 
             return Optional.of(group);
         }
