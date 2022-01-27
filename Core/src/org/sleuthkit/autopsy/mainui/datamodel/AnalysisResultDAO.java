@@ -498,7 +498,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             if (evt instanceof AnalysisResultEvent
                     && (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
                     && evt.getArtifactType().equals(type)) {
-                indeterminateConfigCounts.add(((AnalysisResultEvent) evt).getConfiguration());
+                indeterminateConfigCounts.add(evt.getConfiguration());
             }
         }
 
@@ -1106,10 +1106,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     khEvt.getConfiguration(),
                     displayCount
             );
-        } else if (arEvt instanceof AnalysisResultEvent) {
-            AnalysisResultEvent configEvent = (AnalysisResultEvent) arEvt;
-            return getConfigTreeItem(configEvent.getArtifactType(), configEvent.getDataSourceId(),
-                    configEvent.getConfiguration(), configEvent.getConfiguration(), displayCount);
         } else {
             return getTreeItem(arEvt.getArtifactType(), arEvt.getConfiguration(), arEvt.getDataSourceId(), displayCount, null);
         }

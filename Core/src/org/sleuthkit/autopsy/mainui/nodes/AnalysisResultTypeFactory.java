@@ -111,7 +111,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             if (originalTreeItem instanceof AnalysisResultTreeItem) {
                 hasChildren = ((AnalysisResultTreeItem) originalTreeItem).getHasChildren().orElse(null);
             } else if (StringUtils.isNotBlank(originalTreeItem.getSearchParams().getConfiguration())) {
-                String setName = ((AnalysisResultSearchParam) originalTreeItem.getSearchParams()).getConfiguration();
+                String setName = originalTreeItem.getSearchParams().getConfiguration();
                 hasChildren = StringUtils.isNotBlank(setName);
             }
 
