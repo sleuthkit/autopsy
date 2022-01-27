@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Parameters for a keyword search term.
  */
-public class KeywordSearchTermParams extends AnalysisResultSetSearchParam {
+public class KeywordSearchTermParams extends KeywordListSearchParam {
 
     private static final String TYPE_ID = "KEYWORD_SEARCH_TERMS";
 
@@ -39,7 +39,6 @@ public class KeywordSearchTermParams extends AnalysisResultSetSearchParam {
     private final String searchTerm;
     private final Boolean hasChildren;
     private final TskData.KeywordSearchQueryType searchType;
-    private final String configuration;
 
     /**
      * Main constructor.
@@ -55,11 +54,10 @@ public class KeywordSearchTermParams extends AnalysisResultSetSearchParam {
      * @param dataSourceId  The data source id or null.
      */
     public KeywordSearchTermParams(String setName, String searchTerm, TskData.KeywordSearchQueryType searchType, String configuration, boolean hasChildren, Long dataSourceId) {
-        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, dataSourceId, setName);
+        super(dataSourceId, configuration, setName);
         this.searchTerm = searchTerm;
         this.hasChildren = hasChildren;
         this.searchType = searchType;
-        this.configuration = configuration;
     }
 
     /**
@@ -75,10 +73,6 @@ public class KeywordSearchTermParams extends AnalysisResultSetSearchParam {
      */
     public boolean hasChildren() {
         return hasChildren;
-    }
-
-    public String getConfiguration() {
-        return configuration;
     }
 
     /**

@@ -72,7 +72,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFe
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultConfigFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultConfigSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsDAO.CommAccountFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardBinSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardDAO.CreditCardByBinFetcher;
@@ -1440,7 +1440,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      *
      * @param setKey The search parameter query.
      */
-    void displayAnalysisResultSet(AnalysisResultConfigSearchParam setKey) {
+    void displayAnalysisResultSet(AnalysisResultSearchParam setKey) {
         try {
             this.searchResultManager = new SearchManager(new AnalysisResultConfigFetcher(setKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();

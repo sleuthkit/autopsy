@@ -22,11 +22,11 @@ import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Base class for search params for analysis results that filter by configuration.
+ * Base class for search params for analysis results that filter by set name.
  */
-public class AnalysisResultConfigSearchParam extends AnalysisResultSearchParam {
+public class KeywordListSearchParam extends AnalysisResultSearchParam {
 
-    private static final String TYPE_ID = "ANALYSIS_RESULT_CONFIG";
+    private static final String TYPE_ID = "ANALYSIS_RESULT_SET";
 
     /**
      * @return The type id for this search parameter.
@@ -35,21 +35,21 @@ public class AnalysisResultConfigSearchParam extends AnalysisResultSearchParam {
         return TYPE_ID;
     }
 
-    final String configuration;
+    private final String setName;
 
-    public AnalysisResultConfigSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, String configuration) {
-        super(artifactType, dataSourceId);
-        this.configuration = configuration;
+    public KeywordListSearchParam(Long dataSourceId, String configuration, String setName) {
+        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, configuration, dataSourceId);
+        this.setName = setName;
     }
 
-    public String getConfiguration() {
-        return configuration;
+    public String getSetName() {
+        return setName;
     }
 
     @Override
     public int hashCode() {
         int hash = 3;
-        hash = 79 * hash + Objects.hashCode(this.configuration);
+        hash = 79 * hash + Objects.hashCode(this.setName);
         hash = 79 * hash + super.hashCode();
         return hash;
     }
@@ -65,8 +65,8 @@ public class AnalysisResultConfigSearchParam extends AnalysisResultSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final AnalysisResultConfigSearchParam other = (AnalysisResultConfigSearchParam) obj;
-        if (!Objects.equals(this.configuration, other.configuration)) {
+        final KeywordListSearchParam other = (KeywordListSearchParam) obj;
+        if (!Objects.equals(this.setName, other.setName)) {
             return false;
         }
         return super.equals(obj);
