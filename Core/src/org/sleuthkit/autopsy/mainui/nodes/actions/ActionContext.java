@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes.actions;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
@@ -243,14 +245,15 @@ public interface ActionContext {
     }
     
     
+    default boolean hasAnalysisResultConfigurations() {
+        return false;
+    }
+    
     /**
-     * @return Provides the node configuration if applicable or empty. The
-     *         optional may be null if other analysis results of the same
-     *         artifact type have a configuration but these analysis results
-     *         do not.
+     * @return Provides the node configurations if applicable or an empty list.
      */
-    default Optional<String> getAnalysisResultConfiguration() {
-        return Optional.empty();
+    default List<String> getAnalysisResultConfigurations() {
+        return Collections.emptyList();
     }
     
     /**

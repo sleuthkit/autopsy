@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.AbstractAction;
 import javax.swing.Action;

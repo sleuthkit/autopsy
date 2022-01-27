@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 /**
  * Base class for search params for analysis results that filter by set name.
  */
-public class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
+public class KeywordListSearchParam extends AnalysisResultSearchParam {
 
     private static final String TYPE_ID = "ANALYSIS_RESULT_SET";
 
@@ -37,8 +37,8 @@ public class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
 
     private final String setName;
 
-    public AnalysisResultSetSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId, String setName) {
-        super(artifactType, dataSourceId);
+    public KeywordListSearchParam(Long dataSourceId, String configuration, String setName) {
+        super(BlackboardArtifact.Type.TSK_KEYWORD_HIT, configuration, dataSourceId);
         this.setName = setName;
     }
 
@@ -65,7 +65,7 @@ public class AnalysisResultSetSearchParam extends AnalysisResultSearchParam {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final AnalysisResultSetSearchParam other = (AnalysisResultSetSearchParam) obj;
+        final KeywordListSearchParam other = (KeywordListSearchParam) obj;
         if (!Objects.equals(this.setName, other.setName)) {
             return false;
         }

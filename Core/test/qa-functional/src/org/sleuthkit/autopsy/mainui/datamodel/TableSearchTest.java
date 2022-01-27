@@ -938,7 +938,7 @@ public class TableSearchTest extends NbTestCase {
         
         try {
             // Get all encryption detected artifacts
-            AnalysisResultSearchParam param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, null);
+            AnalysisResultSearchParam param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, null, null);
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
             
             AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getAnalysisResultsForTable(param, 0, null);
@@ -947,14 +947,14 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(3, results.getItems().size());
             
             // Get encryption detected artifacts from data source 2
-            param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, dataSource2.getId());
+            param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, null, dataSource2.getId());
             results = analysisResultDAO.getAnalysisResultsForTable(param, 0, null);
             assertEquals(BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
             
             // Get all custom artifacts
-            param = new AnalysisResultSearchParam(customAnalysisResultType, null);
+            param = new AnalysisResultSearchParam(customAnalysisResultType, null, null);
             results = analysisResultDAO.getAnalysisResultsForTable(param, 0, null);
             assertEquals(customAnalysisResultType, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
@@ -989,7 +989,7 @@ public class TableSearchTest extends NbTestCase {
             assertTrue(ARTIFACT_COUNT_YARA > pageSize);
             
             // Get the first page
-            param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_YARA_HIT, null);
+            param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_YARA_HIT, null, null);
             results = analysisResultDAO.getAnalysisResultsForTable(param, 0, pageSize);
             assertEquals(ARTIFACT_COUNT_YARA, results.getTotalResultsCount());
             assertEquals(pageSize.longValue(), results.getItems().size());
@@ -1005,7 +1005,7 @@ public class TableSearchTest extends NbTestCase {
             assertEquals(pageSize.longValue(), firstPageObjIds.size());
          
             // Get the second page
-            param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_YARA_HIT, null);
+            param = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_YARA_HIT, null, null);
             results = analysisResultDAO.getAnalysisResultsForTable(param, pageSize, pageSize);
             assertEquals(ARTIFACT_COUNT_YARA, results.getTotalResultsCount());
             assertEquals(ARTIFACT_COUNT_YARA - pageSize, results.getItems().size());
@@ -1029,14 +1029,14 @@ public class TableSearchTest extends NbTestCase {
         try {
             // Test hash set hits
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
-            HashHitSearchParam hashParam = new HashHitSearchParam(null, HASH_SET_1);
-            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getAnalysisResultSetHits(hashParam, 0, null);
+            AnalysisResultSearchParam hashParam = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_HASHSET_HIT, HASH_SET_1, null);
+            AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getAnalysisResultConfigResults(hashParam, 0, null);
             assertEquals(BlackboardArtifact.Type.TSK_HASHSET_HIT, results.getArtifactType());
             assertEquals(3, results.getTotalResultsCount());
             assertEquals(3, results.getItems().size());
             
-            hashParam = new HashHitSearchParam(dataSource2.getId(), HASH_SET_1);
-            results = analysisResultDAO.getAnalysisResultSetHits(hashParam, 0, null);
+            hashParam = new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_HASHSET_HIT, HASH_SET_1, dataSource2.getId());
+            results = analysisResultDAO.getAnalysisResultConfigResults(hashParam, 0, null);
             assertEquals(BlackboardArtifact.Type.TSK_HASHSET_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
@@ -1068,19 +1068,19 @@ public class TableSearchTest extends NbTestCase {
         try {
             // Test keyword set hits
             AnalysisResultDAO analysisResultDAO = MainDAO.getInstance().getAnalysisResultDAO();
-            KeywordHitSearchParam kwParam = new KeywordHitSearchParam(null, KEYWORD_SET_1, "keyword1", "", TskData.KeywordSearchQueryType.LITERAL);
+            KeywordHitSearchParam kwParam = new KeywordHitSearchParam(null, KEYWORD_SET_1, "keyword1", "", TskData.KeywordSearchQueryType.LITERAL, "");
             AnalysisResultTableSearchResultsDTO results = analysisResultDAO.getKeywordHitsForTable(kwParam, 0, null);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
             
-            kwParam = new KeywordHitSearchParam(dataSource1.getId(), KEYWORD_SET_2, "keyword2", "", TskData.KeywordSearchQueryType.LITERAL);
+            kwParam = new KeywordHitSearchParam(dataSource1.getId(), KEYWORD_SET_2, "keyword2", "", TskData.KeywordSearchQueryType.LITERAL, "");
             results = analysisResultDAO.getKeywordHitsForTable(kwParam, 0, null);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
             assertEquals(1, results.getItems().size());
             
-            kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_2, KEYWORD, KEYWORD_REGEX, TskData.KeywordSearchQueryType.REGEX);
+            kwParam = new KeywordHitSearchParam(dataSource2.getId(), KEYWORD_SET_2, KEYWORD, KEYWORD_REGEX, TskData.KeywordSearchQueryType.REGEX, "");
             results = analysisResultDAO.getKeywordHitsForTable(kwParam, 0, null);
             assertEquals(BlackboardArtifact.Type.TSK_KEYWORD_HIT, results.getArtifactType());
             assertEquals(1, results.getTotalResultsCount());
