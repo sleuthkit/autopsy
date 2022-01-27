@@ -453,6 +453,20 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
                 return Collections.emptyList();
             }
         }
+        
+        @Override
+        public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
+            ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
+
+            Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
+            List<String> configurations = getAnalysisResultConfigurations();
+            Optional<Long> dsId = getDataSourceIdForActions();
+            if (type.isPresent()) {
+                group.add(new DeleteAnalysisResultSetAction(type.get(), configurations, dsId.isPresent() ? dsId.get() : null));
+            }
+
+            return Optional.of(group);
+        }        
     }
 
     /**
