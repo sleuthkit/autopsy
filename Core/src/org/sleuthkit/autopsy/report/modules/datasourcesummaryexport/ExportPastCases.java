@@ -37,9 +37,9 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "ExportPastCases_caseColumn_title=Case",
     "ExportPastCases_countColumn_title=Count",
-    "ExportPastCases_notableFileTable_tabName=Cases with Common Notable Items",
-    "ExportPastCases_seenResultsTable_tabName=Cases With The Same Addresses",
-    "ExportPastCases_seenDevicesTable_tabName=Cases With The Same Device IDs",})
+    "ExportPastCases_notableFileTable_tabName=Cases with common notable items",
+    "ExportPastCases_seenResultsTable_tabName=Cases with the same addresses",
+    "ExportPastCases_seenDevicesTable_tabName=Cases with the same device IDs",})
 class ExportPastCases {
 
     private final PastCasesSummary pastSummary;

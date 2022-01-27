@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -36,7 +35,6 @@ import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -200,8 +198,8 @@ public class PastCasesSummary {
     }
 
     /**
-     * Gets a list of cases from the TSK_OTHER_CASES attribute. The cases
-     * string is expected to be of a form of "case1,case2...caseN".
+     * Gets a list of cases from the TSK_OTHER_CASES attribute. The cases string
+     * is expected to be of a form of "case1,case2...caseN".
      *
      * @param artifact The attribute.
      *
@@ -248,8 +246,7 @@ public class PastCasesSummary {
                 .sorted((a, b) -> -Long.compare(a.getValue(), b.getValue()))
                 .collect(Collectors.toList());
     }
-    
-    
+
     /**
      * Determines a list of counts for most populated cases based on comment
      * attribute.
@@ -263,7 +260,7 @@ public class PastCasesSummary {
         for (BlackboardArtifact art : artifacts) {
             cases.addAll(getCasesFromArtifact(art));
         }
-        
+
         return getCaseCounts(cases.stream());
     }
 
@@ -332,13 +329,13 @@ public class PastCasesSummary {
 
         List<BlackboardArtifact> previouslyNotableArtifacts
                 = blackboard.getArtifacts(BlackboardArtifact.Type.TSK_PREVIOUSLY_NOTABLE.getTypeID(), dataSourceId);
-       
+
         List<BlackboardArtifact> previouslySeenArtifacts
                 = blackboard.getArtifacts(BlackboardArtifact.Type.TSK_PREVIOUSLY_SEEN.getTypeID(), dataSourceId);
-        
+
         List<BlackboardArtifact> previouslySeenDevice = new ArrayList<>();
         List<BlackboardArtifact> previouslySeenNoDevice = new ArrayList<>();
-        
+
         for (BlackboardArtifact art : previouslySeenArtifacts) {
             if (hasDeviceAssociatedArtifact(art)) {
                 previouslySeenDevice.add(art);
@@ -346,7 +343,7 @@ public class PastCasesSummary {
                 previouslySeenNoDevice.add(art);
             }
         }
-        
+
         return new PastCasesResult(
                 getCaseCountsFromArtifacts(previouslyNotableArtifacts),
                 getCaseCountsFromArtifacts(previouslySeenDevice),
