@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Factory for displaying analysis result types in the tree.
  */
-public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSearchParam> {
+public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory<AnalysisResultSearchParam> {
 
     private final static Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
 
@@ -178,7 +178,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
             Optional<Long> dsId = getDataSourceIdForActions();
             if (type.isPresent()) {
-                group.add(new DeleteAnalysisResultSetAction(type.get(), Collections.emptyList(), dsId.isPresent() ? dsId.get() : null));
+                group.add(new DeleteAnalysisResultSetAction(type.get(), () -> Collections.emptyList(), dsId.isPresent() ? dsId.get() : null));
             }
 
             return Optional.of(group);
@@ -219,7 +219,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
      * Factory displaying all analysis result configurations with count in the
      * tree.
      */
-    static class TreeConfigFactory extends TreeChildFactory<AnalysisResultSearchParam> {
+    static class TreeConfigFactory extends AbstractAnalysisResultTreeFactory<AnalysisResultSearchParam> {
 
         private final BlackboardArtifact.Type artifactType;
         private final Long dataSourceId;
@@ -350,10 +350,12 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
 
             Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
-            List<String> configurations = getAnalysisResultConfigurations();
             Optional<Long> dsId = getDataSourceIdForActions();
             if (type.isPresent()) {
-                group.add(new DeleteAnalysisResultSetAction(type.get(), configurations, dsId.isPresent() ? dsId.get() : null));
+                group.add(new DeleteAnalysisResultSetAction(
+                        type.get(), 
+                        () -> this.getAnalysisResultConfigurations(), 
+                        dsId.isPresent() ? dsId.get() : null));
             }
 
             return Optional.of(group);
@@ -366,7 +368,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
     @Messages({
         "AnalysisResultTypeFactory_adHocName=Ad Hoc Results"
     })
-    public static class KeywordSetFactory extends TreeChildFactory<KeywordListSearchParam> {
+    public static class KeywordSetFactory extends AbstractAnalysisResultTreeFactory<KeywordListSearchParam> {
 
         private final Long dataSourceId;
 
@@ -459,10 +461,12 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
 
             Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
-            List<String> configurations = getAnalysisResultConfigurations();
             Optional<Long> dsId = getDataSourceIdForActions();
             if (type.isPresent()) {
-                group.add(new DeleteAnalysisResultSetAction(type.get(), configurations, dsId.isPresent() ? dsId.get() : null));
+                group.add(new DeleteAnalysisResultSetAction(
+                        type.get(), 
+                        () -> this.getAnalysisResultConfigurations(), 
+                        dsId.isPresent() ? dsId.get() : null));
             }
 
             return Optional.of(group);
@@ -473,7 +477,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
      * Factory for displaying all search terms (regex or exact) for a specific
      * set.
      */
-    static class KeywordSearchTermFactory extends TreeChildFactory<KeywordSearchTermParams> {
+    static class KeywordSearchTermFactory extends AbstractAnalysisResultTreeFactory<KeywordSearchTermParams> {
 
         private final KeywordListSearchParam setParams;
 
@@ -593,10 +597,12 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
 
             Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
-            List<String> configurations = getAnalysisResultConfigurations();
             Optional<Long> dsId = getDataSourceIdForActions();
             if (type.isPresent()) {
-                group.add(new DeleteAnalysisResultSetAction(type.get(), configurations, dsId.isPresent() ? dsId.get() : null));
+                group.add(new DeleteAnalysisResultSetAction(
+                        type.get(), 
+                        () -> this.getAnalysisResultConfigurations(), 
+                        dsId.isPresent() ? dsId.get() : null));
             }
 
             return Optional.of(group);
@@ -626,7 +632,7 @@ public class AnalysisResultTypeFactory extends TreeChildFactory<AnalysisResultSe
      * A factory for found keyword matches based on the search term (for
      * regex/substring).
      */
-    public static class KeywordFoundMatchFactory extends TreeChildFactory<KeywordHitSearchParam> {
+    public static class KeywordFoundMatchFactory extends AbstractAnalysisResultTreeFactory<KeywordHitSearchParam> {
 
         private final KeywordSearchTermParams searchTermParams;
 

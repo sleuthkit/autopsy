@@ -16,14 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.mainui.nodes.actions;
 
 import java.awt.event.ActionEvent;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
@@ -37,60 +39,71 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Action class for Deleting Analysis Result objects.
  */
 public class DeleteAnalysisResultSetAction extends AbstractAction {
-    
+
     @Messages({
         "DeleteAnalysisResultsAction.label=Delete Analysis Results",
         "DeleteAnalysisResultsAction.title=Deleting Analysis Results",
-        "# {0} - result type", 
+        "# {0} - result type",
         "DeleteAnalysisResultsAction.progress.allResults=Deleting Analysis Results type {0}",
-        "# {0} - result type", "# {1} - configuration", 
+        "# {0} - result type", "# {1} - configuration",
         "DeleteAnalysisResultsAction.progress.allResultsWithConfiguration=Deleting Analysis Results type {0} and configuration {1}",
-        "# {0} - result type", 
+        "# {0} - result type",
         "DeleteAnalysisResultsAction.warning.allResults=Are you sure you want to delete all Analysis Results of type {0}?",
-        "# {0} - result type", "# {1} - configuration", 
-        "DeleteAnalysisResultsAction.warning.allResultsWithConfiguration=Are you sure you want to delete all Analysis Results of type {0} and configuration {1}?"        
+        "# {0} - result type", "# {1} - configuration",
+        "DeleteAnalysisResultsAction.warning.allResultsWithConfiguration=Are you sure you want to delete all Analysis Results of type {0} and configuration {1}?"
     })
-    
+
     private static final Logger logger = Logger.getLogger(DeleteAnalysisResultSetAction.class.getName());
     private static final long serialVersionUID = 1L;
-    
+
     private final BlackboardArtifact.Type type;
-    private final List<String> configurations;
+    private final Supplier<List<String>> configurationsFetcher;
     private final Long dsID;
-    
-    public DeleteAnalysisResultSetAction(BlackboardArtifact.Type type, List<String> configurations, Long dsID) {
+
+    public DeleteAnalysisResultSetAction(BlackboardArtifact.Type type, Supplier<List<String>> configurationsFetcher, Long dsID) {
         super(Bundle.DeleteAnalysisResultsAction_label());
         this.type = type;
-        this.configurations = configurations;
+        this.configurationsFetcher = configurationsFetcher;
         this.dsID = dsID;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        
-        String warningMessage;
-        if (configurations == null || configurations.isEmpty() || configurations.size() > 1 
-                || type == BlackboardArtifact.Type.TSK_KEYWORD_HIT) {
-            // either no configuration or multiple configurations. 
-            // do not display configuration for KWS hits as it contains (KW term, search type, KW list name).
-            warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResults(type.getDisplayName());            
-        } else {
-            warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResultsWithConfiguration(type.getDisplayName(), configurations.get(0));
-        }
-        int response = JOptionPane.showConfirmDialog(
-                WindowManager.getDefault().getMainWindow(),
-                warningMessage,
-                Bundle.DeleteAnalysisResultsAction_title(),
-                JOptionPane.YES_NO_OPTION);
-        if (response != JOptionPane.YES_OPTION) {
-            return;
-        }
-        
+
         AppFrameProgressBar progress = new AppFrameProgressBar(Bundle.DeleteAnalysisResultsAction_title());
-        
+
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
+                // fetch configurations possibly from the database
+                List<String> configurations = (DeleteAnalysisResultSetAction.this.configurationsFetcher == null)
+                        ? null
+                        : DeleteAnalysisResultSetAction.this.configurationsFetcher.get();
+
+                String warningMessage;
+                if (configurations == null || configurations.isEmpty() || configurations.size() > 1
+                        || type == BlackboardArtifact.Type.TSK_KEYWORD_HIT) {
+                    // either no configuration or multiple configurations. 
+                    // do not display configuration for KWS hits as it contains (KW term, search type, KW list name).
+                    warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResults(type.getDisplayName());
+                } else {
+                    warningMessage = Bundle.DeleteAnalysisResultsAction_warning_allResultsWithConfiguration(type.getDisplayName(), configurations.get(0));
+                }
+
+                AtomicReference<Integer> confirmResponse = new AtomicReference<Integer>(JOptionPane.NO_OPTION);
+                SwingUtilities.invokeAndWait(() -> {
+                    int response = JOptionPane.showConfirmDialog(
+                            WindowManager.getDefault().getMainWindow(),
+                            warningMessage,
+                            Bundle.DeleteAnalysisResultsAction_title(),
+                            JOptionPane.YES_NO_OPTION);
+
+                    confirmResponse.set(response);
+                });
+
+                if (confirmResponse.get() != JOptionPane.YES_OPTION) {
+                    return null;
+                }
 
                 progress.start(Bundle.DeleteAnalysisResultsAction_title());
                 try {
@@ -113,10 +126,10 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
                 }
             }
         };
-        
-        worker.execute();        
+
+        worker.execute();
     }
-    
+
     private static void delete(BlackboardArtifact.Type type, String configuration, Long dsID) {
         try {
             logger.log(Level.INFO, "Deleting Analysis Results type = {0}, data source ID = {1}, configuration = {2}", new Object[]{type, dsID, configuration});
@@ -125,5 +138,5 @@ public class DeleteAnalysisResultSetAction extends AbstractAction {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to delete analysis results of type = " + type + ", data source ID = " + dsID + ", configuration = " + configuration, ex);
         }
-    }  
+    }
 }
