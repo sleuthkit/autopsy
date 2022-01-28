@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.contentviewers.artifactviewers;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -30,13 +29,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -44,9 +41,10 @@ import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -54,6 +52,7 @@ import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.discovery.ui.AbstractArtifactDetailsPanel;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -146,7 +145,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),
             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()});
     }
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.unknown.text=Unknown"})
     @Override
@@ -154,6 +153,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         resetComponent();
         if (artifact != null) {
             String dataSourceName = Bundle.GeneralPurposeArtifactViewer_unknown_text();
+            String hostName = Bundle.GeneralPurposeArtifactViewer_unknown_text();
             String sourceFileName = Bundle.GeneralPurposeArtifactViewer_unknown_text();
             Map<Integer, List<BlackboardAttribute>> attributeMap = new HashMap<>();
             try {
@@ -167,11 +167,16 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                     attributeMap.put(bba.getAttributeType().getTypeID(), attrList);
                 }
                 dataSourceName = artifact.getDataSource().getName();
+
+                hostName = Optional.ofNullable(Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHostByDataSource((DataSource) artifact.getDataSource()))
+                        .map(h -> h.getName())
+                        .orElse(null);
+
                 sourceFileName = artifact.getParent().getUniquePath();
-            } catch (TskCoreException ex) {
+            } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get attributes for artifact " + artifact.getArtifactID(), ex);
             }
-            updateView(artifact, attributeMap, dataSourceName, sourceFileName);
+            updateView(artifact, attributeMap, dataSourceName, hostName, sourceFileName);
         }
         detailsScrollPane.setViewportView(detailsPanel);
         detailsScrollPane.revalidate();
@@ -194,7 +199,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         gridBagConstraints.fill = GridBagConstraints.NONE;
         gridBagConstraints.insets = ZERO_INSETS;
     }
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public boolean isSupported(BlackboardArtifact artifact) {
@@ -209,10 +214,11 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL.getTypeID());
     }
-    
+
     @NbBundle.Messages({"GeneralPurposeArtifactViewer.details.attrHeader=Details",
         "GeneralPurposeArtifactViewer.details.sourceHeader=Source",
         "GeneralPurposeArtifactViewer.details.dataSource=Data Source",
+        "GeneralPurposeArtifactViewer_details_host=Host",
         "GeneralPurposeArtifactViewer.details.file=File",
         "GeneralPurposeArtifactViewer.details.datesHeader=Dates"})
     /**
@@ -249,6 +255,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
      * @param attributeMap   The map of attributes that exist for the artifact.
      * @param dataSourceName The name of the datasource that caused the creation
      *                       of the artifact.
+     * @param hostName       The host name.
      * @param sourceFilePath The path of the file that caused the creation of
      *                       the artifact.
      */
@@ -260,7 +267,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         "GeneralPurposeArtifactViewer.details.otherHeader=Other",
         "GeneralPurposeArtifactViewer.noFile.text= (no longer exists)"})
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    private void updateView(BlackboardArtifact artifact, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String sourceFilePath) {
+    private void updateView(BlackboardArtifact artifact, Map<Integer, List<BlackboardAttribute>> attributeMap, String dataSourceName, String hostName, String sourceFilePath) {
         final Integer artifactTypeId = artifact.getArtifactTypeID();
         if (!(artifactTypeId < 1 || artifactTypeId >= Integer.MAX_VALUE)) {
             JTextPane firstTextPane = addDetailsHeader(artifactTypeId);
@@ -313,6 +320,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
             }
             addHeader(Bundle.GeneralPurposeArtifactViewer_details_sourceHeader());
             addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_dataSource(), dataSourceName);
+            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_host(), hostName);
             addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_file(), sourceFilePath);
             // add veritcal glue at the end
             addPageEndGlue();
@@ -398,10 +406,10 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
         headingLabel.setEditable(false);
         // add a blank line before the start of new section, unless it's 
         // the first section
-        gridBagConstraints.insets = (gridBagConstraints.gridy == 0) 
+        gridBagConstraints.insets = (gridBagConstraints.gridy == 0)
                 ? FIRST_HEADER_INSETS
                 : HEADER_INSETS;
-        
+
         gridBagConstraints.gridy++;
         gridBagConstraints.gridx = LABEL_COLUMN;;
         // let the header span all of the row
