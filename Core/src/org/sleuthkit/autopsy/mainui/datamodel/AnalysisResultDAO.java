@@ -1172,7 +1172,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + " WHERE attr.artifact_id = art.artifact_id "
                 + " AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID()
                 + " AND attr.value_text IS NOT NULL "
-                + " AND LEN(attr.value_text) > 0) = 0"
+                + " AND LENGTH(attr.value_text) > 0) = 0"
                 // otherwise, see if the set name attribute matches expected value
                 : "? IN (SELECT attr.value_text FROM blackboard_attributes attr "
                 + " WHERE attr.artifact_id = art.artifact_id "
