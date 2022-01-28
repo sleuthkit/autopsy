@@ -328,10 +328,10 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         "ContactArtifactViewer_label_host=Host",})
     private void updateSource() {
         CommunicationArtifactViewerHelper.addHeader(this, this.m_gridBagLayout, m_constraints, ContentViewerDefaults.getSectionSpacing(), Bundle.ContactArtifactViewer_heading_Source());
-        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_label_datasource());
-        CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, m_constraints, datasourceName);
         CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_label_host());
         CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, m_constraints, hostName);
+        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_label_datasource());
+        CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, m_constraints, datasourceName);
     }
 
     /**

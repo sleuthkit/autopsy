@@ -427,11 +427,11 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
     private void updateSourceView(CallLogViewData callLogViewData) {
         CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, ContentViewerDefaults.getSectionSpacing(), Bundle.CallLogArtifactViewer_heading_Source());
 
-        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_datasource());
-        CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, callLogViewData.getDataSourceName());
-
         CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_hostName());
         CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, StringUtils.defaultString(callLogViewData.getHostName()));
+
+        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_datasource());
+        CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, callLogViewData.getDataSourceName());
     }
 
     /**
