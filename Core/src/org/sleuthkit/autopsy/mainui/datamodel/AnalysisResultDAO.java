@@ -362,7 +362,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                                 ? TreeDisplayCount.INDETERMINATE
                                 : TreeDisplayCount.getDeterminate(entry.getValue().getLeft());
 
-                        return getTreeItem(entry.getKey(), null, dataSourceId, displayCount, entry.getValue().getRight());
+                        return new AnalysisResultTreeItem(entry.getKey(), null, dataSourceId, displayCount, entry.getValue().getRight());
                     })
                     .sorted(Comparator.comparing(countRow -> countRow.getDisplayName()))
                     .collect(Collectors.toList());
@@ -1107,7 +1107,12 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                     displayCount
             );
         } else {
-            return getTreeItem(arEvt.getArtifactType(), arEvt.getConfiguration(), arEvt.getDataSourceId(), displayCount, null);
+            return getConfigTreeItem(
+                    arEvt.getArtifactType(), 
+                    arEvt.getDataSourceId(), 
+                    arEvt.getConfiguration(), 
+                    StringUtils.isBlank(arEvt.getConfiguration()) ? arEvt.getArtifactType().getDisplayName() : arEvt.getConfiguration(), 
+                    displayCount);
         }
     }
 
@@ -1132,11 +1137,6 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 setName == null ? 0 : setName,
                 displayName,
                 displayCount);
-    }
-
-    private TreeItemDTO<AnalysisResultSearchParam> getTreeItem(BlackboardArtifact.Type type, String configuration,
-            Long dataSourceId, TreeDisplayCount displayCount, Boolean hasChildren) {
-        return new AnalysisResultTreeItem(type, configuration, dataSourceId, displayCount, hasChildren);
     }
 
     @Override
