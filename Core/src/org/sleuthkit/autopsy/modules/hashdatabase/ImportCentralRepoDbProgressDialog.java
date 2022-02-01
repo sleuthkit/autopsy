@@ -30,7 +30,6 @@ import javax.swing.WindowConstants;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.Executors;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
