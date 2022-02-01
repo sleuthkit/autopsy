@@ -195,13 +195,13 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
                 if (content == null) {
                     // it is possible that the previously indexed KW hit is in the content 
                     // that has since been deleted (e.g. deleted analysis result)
-                    logger.log(Level.WARNING, "There was a error getting content by id."); //NON-NLS
+                    logger.log(Level.WARNING, "There was an error getting content by id."); //NON-NLS
                     return false;
                 }
             } catch (TskCoreException ex) {
                 // it is possible that the previously indexed KW hit is in the content 
                 // that has since been deleted (e.g. deleted analysis result)
-                logger.log(Level.WARNING, "There was a error getting content by id.", ex); //NON-NLS
+                logger.log(Level.WARNING, "There was an error getting content by id.", ex); //NON-NLS
                 return false;
             }
 
