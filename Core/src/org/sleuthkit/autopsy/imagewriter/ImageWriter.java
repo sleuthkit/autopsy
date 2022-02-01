@@ -30,6 +30,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle.Messages;
@@ -143,6 +144,7 @@ class ImageWriter implements PropertyChangeListener {
     })
     private void startFinishImage(String dataSourceName) {
 
+        ExecutorService executor = Executors.newSingleThreadExecutor();
         synchronized (currentTasksLock) {
             if (isCancelled) {
                 return;
@@ -186,7 +188,7 @@ class ImageWriter implements PropertyChangeListener {
             // The added complexity here with the Future is because we absolutely need to make sure
             // the call to finishImageWriter returns before allowing the TSK data structures to be freed
             // during case close.
-            finishTask = Executors.newSingleThreadExecutor().submit(new Callable<Integer>() {
+            finishTask = executor.submit(new Callable<Integer>() {
                 @Override
                 public Integer call() throws TskCoreException {
                     try {
@@ -199,7 +201,7 @@ class ImageWriter implements PropertyChangeListener {
                             caseDb.updateImagePath(settings.getPath(), dataSourceId);
                         }
                         return result;
-                    } catch (TskCoreException ex) {
+                    } catch (Throwable ex) {
                         logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
                         return -1;
                     }
@@ -215,6 +217,7 @@ class ImageWriter implements PropertyChangeListener {
         try {
             // The call to get() can happen multiple times if the user closes the case, which is ok
             result = finishTask.get();
+            executor.shutdownNow();
         } catch (InterruptedException | ExecutionException ex) {
             logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
         }
