@@ -56,6 +56,8 @@ class QueryResults {
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
     private final KeywordSearchQuery query;
     private final Map<Keyword, List<KeywordHit>> results = new HashMap<>();
+    
+    private static final int MAX_INBOX_NOTIFICATIONS_PER_KW_TERM = 20;
 
     /**
      * Constructs a object that stores and processes the results of a keyword
@@ -142,6 +144,14 @@ class QueryResults {
      */
     void process(SwingWorker<?, ?> worker, boolean notifyInbox, boolean saveResults, Long ingestJobId) {
         final Collection<BlackboardArtifact> hitArtifacts = new ArrayList<>();
+        
+        /*
+         * Reduce the hits for this keyword to one hit per text source object so
+         * that only one hit artifact is generated per text source object, no
+         * matter how many times the keyword was actually found.
+         */
+        int notificationCount = 0;
+
         for (final Keyword keyword : getKeywords()) {
             /*
              * Cancellation check.
@@ -151,11 +161,6 @@ class QueryResults {
                 return;
             }
 
-            /*
-             * Reduce the hits for this keyword to one hit per text source
-             * object so that only one hit artifact is generated per text source
-             * object, no matter how many times the keyword was actually found.
-             */
             for (KeywordHit hit : getOneHitPerTextSourceObject(keyword)) {
                 /*
                  * Get a snippet (preview) for the hit. Regex queries always
@@ -200,8 +205,12 @@ class QueryResults {
                      */
                     if (null != artifact) {
                         hitArtifacts.add(artifact);
-                        if (notifyInbox) {
+                        if (notifyInbox && notificationCount < MAX_INBOX_NOTIFICATIONS_PER_KW_TERM) {
+                            // only send ingest inbox messages for the first MAX_INBOX_NOTIFICATIONS_PER_KW_TERM hits
+                            // for every KW term (per ingest job, aka data source). Otherwise we can have a situation
+                            // where we send tens of thousands of notifications. 
                             try {
+                                notificationCount++;
                                 writeSingleFileInboxMessage(artifact, content);
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error sending message to ingest messages inbox", ex); //NON-NLS
