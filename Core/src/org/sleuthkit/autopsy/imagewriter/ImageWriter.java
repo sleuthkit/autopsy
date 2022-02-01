@@ -144,7 +144,7 @@ class ImageWriter implements PropertyChangeListener {
     })
     private void startFinishImage(String dataSourceName) {
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("ImageWriter-startFinishImage-%d").build());
         synchronized (currentTasksLock) {
             if (isCancelled) {
                 return;

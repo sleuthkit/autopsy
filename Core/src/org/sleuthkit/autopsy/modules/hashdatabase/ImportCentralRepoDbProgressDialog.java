@@ -291,16 +291,13 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             if (referenceSetID.get() >= 0) {
 
                 // This can be slow on large reference sets
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            CentralRepository.getInstance().deleteReferenceSet(referenceSetID.get());
-                        } catch (CentralRepoException ex2) {
-                            Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
-                        }
+                new Thread(() -> {
+                    try {
+                        CentralRepository.getInstance().deleteReferenceSet(referenceSetID.get());
+                    } catch (CentralRepoException ex2) {
+                        Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
                     }
-                });
+                }).start();
             }
         }
 
