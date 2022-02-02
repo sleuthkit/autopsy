@@ -87,6 +87,7 @@ import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.mainui.datamodel.EmailsDAO;
@@ -461,6 +462,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @return getDefault() - the default instance
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public static synchronized DirectoryTreeTopComponent findInstance() {
         WindowManager winManager = WindowManager.getDefault();
         TopComponent win = winManager.findTopComponent(PREFERRED_ID);

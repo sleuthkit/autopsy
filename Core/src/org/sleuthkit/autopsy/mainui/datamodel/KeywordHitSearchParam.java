@@ -40,8 +40,8 @@ public class KeywordHitSearchParam extends KeywordSearchTermParams {
     private final String regex;
     private final TskData.KeywordSearchQueryType searchType;
     
-    public KeywordHitSearchParam(Long dataSourceId, String setName, String keyword, String regex, TskData.KeywordSearchQueryType searchType) {
-        super(setName, regex, searchType, StringUtils.isNotBlank(keyword) && !Objects.equals(regex, keyword), dataSourceId);
+    public KeywordHitSearchParam(Long dataSourceId, String setName, String keyword, String regex, TskData.KeywordSearchQueryType searchType, String configuration) {
+        super(setName, regex, searchType, configuration, StringUtils.isNotBlank(keyword) && !Objects.equals(regex, keyword), dataSourceId);
         this.keyword = keyword;
         this.regex = regex;
         this.searchType = searchType;

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -55,8 +56,8 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
      * @param tableData The table search result DTO.
      * @param resultRow The row DTO.
      */
-    AnalysisResultNode(AnalysisResultTableSearchResultsDTO tableData, AnalysisResultRowDTO resultRow) {
-        this(tableData, resultRow, IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID()));
+    AnalysisResultNode(AnalysisResultTableSearchResultsDTO tableData, AnalysisResultRowDTO resultRow, ExecutorService backgroundTasksPool) {
+        this(tableData, resultRow, IconsUtil.getIconFilePath(tableData.getArtifactType().getTypeID()), backgroundTasksPool);
     }
 
     /**
@@ -66,8 +67,8 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
      * @param resultRow The row DTO.
      * @param iconPath  The path for the node icon.
      */
-    AnalysisResultNode(AnalysisResultTableSearchResultsDTO tableData, AnalysisResultRowDTO resultRow, String iconPath) {
-        super(tableData, resultRow, tableData.getColumns(), createLookup(resultRow), iconPath);
+    AnalysisResultNode(AnalysisResultTableSearchResultsDTO tableData, AnalysisResultRowDTO resultRow, String iconPath, ExecutorService backgroundTasksPool) {
+        super(tableData, resultRow, tableData.getColumns(), createLookup(resultRow), iconPath, backgroundTasksPool);
     }
 
     /**

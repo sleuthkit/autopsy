@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -32,6 +33,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
@@ -66,16 +69,15 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFetcher;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultSetFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultConfigFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsDAO.CommAccountFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardBinSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardDAO.CreditCardByBinFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardDAO.CreditCardByFileFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardFileSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.CreditCardSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO.DataArtifactFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
@@ -194,6 +196,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     };
 
     private final PropertyChangeListener weakDAOListener = WeakListeners.propertyChange(DAOListener, mainDAO);
+    
+    private ExecutorService nodeBackgroundTasksPool;
+     private static final Integer MAX_POOL_SIZE = 10;
 
     /**
      * Creates and opens a Swing JPanel with a JTabbedPane child component that
@@ -1403,7 +1408,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for keyword filter: {0} and data source id: {1}.",
-                    keywordHitKey.getSetName(),
+                    keywordHitKey.getConfiguration(),
                     keywordHitKey.getDataSourceId() == null ? "<null>" : keywordHitKey.getDataSourceId()),
                     ex);
         }
@@ -1435,15 +1440,15 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      *
      * @param setKey The search parameter query.
      */
-    void displayAnalysisResultSet(AnalysisResultSetSearchParam setKey) {
+    void displayAnalysisResultSet(AnalysisResultSearchParam setKey) {
         try {
-            this.searchResultManager = new SearchManager(new AnalysisResultSetFetcher(setKey), getPageSize());
+            this.searchResultManager = new SearchManager(new AnalysisResultConfigFetcher(setKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for hash set filter: {0} and data source id: {1}.",
-                    setKey.getSetName(),
+                    setKey.getConfiguration(),
                     setKey.getDataSourceId() == null ? "<null>" : setKey.getDataSourceId()),
                     ex);
         }
@@ -1551,11 +1556,19 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             SwingUtilities.invokeLater(() -> displaySearchResults(searchResults, resetPaging, childSelectionInfo));
             return;
         }
+        
+        // Stop any running background threads.
+        if(nodeBackgroundTasksPool != null) {
+            nodeBackgroundTasksPool.shutdown(); 
+        }
+        
+        nodeBackgroundTasksPool = Executors.newFixedThreadPool(MAX_POOL_SIZE,
+                new ThreadFactoryBuilder().setNameFormat("DataResultPanel-background-task-%d").build()); 
 
         if (searchResults == null) {
             setNode(null, resetPaging);
         } else {
-            SearchResultRootNode node = new SearchResultRootNode(searchResults);
+            SearchResultRootNode node = new SearchResultRootNode(searchResults, nodeBackgroundTasksPool);
             node.setNodeSelectionInfo(childSelectionInfo);
             setNode(node, resetPaging);
             setNumberOfChildNodes(

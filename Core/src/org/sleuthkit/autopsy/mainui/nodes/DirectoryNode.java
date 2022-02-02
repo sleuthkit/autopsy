@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
@@ -47,8 +48,8 @@ public class DirectoryNode extends BaseNode<SearchResultsDTO, DirectoryRowDTO> i
      * @param results The search result DTO.
      * @param row     The table row DTO.
      */
-    public DirectoryNode(SearchResultsDTO results, DirectoryRowDTO row) {
-        super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
+    public DirectoryNode(SearchResultsDTO results, DirectoryRowDTO row, ExecutorService backgroundTasksPool) {
+        super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row, backgroundTasksPool);
         setName(ContentNodeUtil.getContentName(row.getContent().getId()));
         setDisplayName(ContentNodeUtil.getContentDisplayName(row.getContent().getName()));
         setShortDescription(ContentNodeUtil.getContentDisplayName(row.getContent().getName()));

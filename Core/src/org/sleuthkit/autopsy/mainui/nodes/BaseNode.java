@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.lang.ref.WeakReference;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -28,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 import javax.swing.Action;
@@ -36,7 +34,6 @@ import javax.swing.SwingUtilities;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
@@ -60,9 +57,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
-import org.sleuthkit.datamodel.AnalysisResult;
-import org.sleuthkit.datamodel.DataArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A a simple starting point for nodes.
@@ -144,22 +138,15 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
      * A pool of background tasks to run any long computation needed to populate
      * this node.
      */
-    static final ExecutorService backgroundTasksPool;
-    private static final Integer MAX_POOL_SIZE = 10;
+    private final ExecutorService backgroundTasksPool;
 
     private FutureTask<String> scoFutureTask;
 
-    static {
-        //Initialize this pool only once! This will be used by every instance BaseNode
-        //to do their heavy duty SCO column and translation updates.
-        backgroundTasksPool = Executors.newFixedThreadPool(MAX_POOL_SIZE,
-                new ThreadFactoryBuilder().setNameFormat("BaseNode-background-task-%d").build());
-    }
-
-    BaseNode(Children children, Lookup lookup, S results, R rowData) {
+    BaseNode(Children children, Lookup lookup, S results, R rowData, ExecutorService backgroundTasksPool) {
         super(children, lookup);
         this.results = results;
         this.rowData = rowData;
+        this.backgroundTasksPool = backgroundTasksPool;
 
         // If the S column is there register the listeners.
         if (results.getColumns().stream().map(p -> p.getDisplayName()).collect(Collectors.toList()).contains(SCOUtils.SCORE_COLUMN_NAME)) {
@@ -218,7 +205,7 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
             scoFutureTask = null;
         }
 
-        if ((scoFutureTask == null || scoFutureTask.isDone()) && this instanceof SCOSupporter) {
+        if ((backgroundTasksPool != null && !backgroundTasksPool.isShutdown() && !backgroundTasksPool.isTerminated()) && (scoFutureTask == null || scoFutureTask.isDone()) && this instanceof SCOSupporter) {
             scoFutureTask = new FutureTask<>(new SCOFetcher<>(new WeakReference<>((SCOSupporter) this)), "");
             backgroundTasksPool.submit(scoFutureTask);
         }
@@ -317,5 +304,9 @@ abstract class BaseNode<S extends SearchResultsDTO, R extends BaseRowDTO> extend
     @Override
     public Action getPreferredAction() {
         return DirectoryTreeTopComponent.getOpenChildAction(getName());
+    }
+    
+    protected ExecutorService getTaskPool() {
+        return backgroundTasksPool;
     }
 }

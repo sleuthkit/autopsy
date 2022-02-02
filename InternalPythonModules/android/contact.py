@@ -158,7 +158,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                             phoneNumber,    # phoneNumber,
                             None,           # homePhoneNumber,
                             None,           # mobilePhoneNumber,
-                            emailAddr, context.getJobId())      # emailAddr                                            
+                            emailAddr)      # emailAddr                                            
                                                                      
         except SQLException as ex:
                 self._logger.log(Level.WARNING, "Error processing query result for Android messages.", ex)

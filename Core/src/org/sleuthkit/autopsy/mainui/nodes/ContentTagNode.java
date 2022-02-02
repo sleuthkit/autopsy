@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
@@ -48,8 +49,8 @@ public final class ContentTagNode extends BaseNode<SearchResultsDTO, ContentTags
      * @param results Search results.
      * @param rowData Row data.
      */
-    public ContentTagNode(SearchResultsDTO results, ContentTagsRowDTO rowData) {
-        super(Children.LEAF, createLookup(rowData.getTag()), results, rowData);
+    public ContentTagNode(SearchResultsDTO results, ContentTagsRowDTO rowData, ExecutorService backgroundTasksPool) {
+        super(Children.LEAF, createLookup(rowData.getTag()), results, rowData, backgroundTasksPool);
         this.rowData = rowData;
         this.columns = results.getColumns();
         setDisplayName(rowData.getDisplayName());

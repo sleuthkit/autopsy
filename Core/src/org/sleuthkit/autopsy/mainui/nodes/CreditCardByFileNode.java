@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -37,11 +38,12 @@ public class CreditCardByFileNode extends BaseNode<SearchResultsDTO, CreditCardB
                 .toArray();
     }
     
-    public CreditCardByFileNode(SearchResultsDTO results, CreditCardByFileRowDTO rowData) {
+    public CreditCardByFileNode(SearchResultsDTO results, CreditCardByFileRowDTO rowData, ExecutorService backgroundTasksPool) {
             super(Children.LEAF, 
                 Lookups.fixed(getLookupItems(rowData)),
                 results, 
-                rowData);
+                rowData,
+                backgroundTasksPool);
             
             setName(rowData.getFileName() + rowData.getId());
             setDisplayName(rowData.getFileName());

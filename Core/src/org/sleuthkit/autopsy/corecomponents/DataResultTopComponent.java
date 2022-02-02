@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSetSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardBinSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardFileSearchParams;
@@ -468,7 +468,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      * Displays results of querying the DAO for an artifact type and set name.
      * @param params The search parameters.
      */
-    public void displayAnalysisResultSet(AnalysisResultSetSearchParam params) {
+    public void displayAnalysisResultConfig(AnalysisResultSearchParam params) {
         dataResultPanel.displayAnalysisResultSet(params);
     }
 

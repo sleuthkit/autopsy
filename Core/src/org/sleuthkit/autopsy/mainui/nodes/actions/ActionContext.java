@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes.actions;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
@@ -221,6 +223,10 @@ public interface ActionContext {
     default Optional<Long> getDataSourceForActions() {
         return Optional.empty();
     }
+
+    default Optional<Long> getDataSourceIdForActions() {
+        return Optional.empty();
+    }
     
     default Optional<Long> getFileForDirectoryBrowseMode() {
         return Optional.empty();
@@ -236,5 +242,24 @@ public interface ActionContext {
     
     default boolean supportsCollapseAll() {
         return false;
+    }
+    
+    
+    default boolean hasAnalysisResultConfigurations() {
+        return false;
+    }
+    
+    /**
+     * @return Provides the node configurations if applicable or an empty list.
+     */
+    default List<String> getAnalysisResultConfigurations() {
+        return Collections.emptyList();
+    }
+    
+    /**
+     * @return The analysis result type if applicable or empty.
+     */
+    default Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+        return Optional.empty();
     }
 }

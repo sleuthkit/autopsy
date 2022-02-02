@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
@@ -69,13 +70,13 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
     private final FileRowDTO fileData;
     private final List<ColumnKey> columns;
 
-    public FileNode(SearchResultsDTO results, FileRowDTO file) {
-        this(results, file, true);
+    public FileNode(SearchResultsDTO results, FileRowDTO file, ExecutorService backgroundTasksPool) {
+        this(results, file, true, backgroundTasksPool);
     }
 
-    public FileNode(SearchResultsDTO results, FileRowDTO file, boolean directoryBrowseMode) {
+    public FileNode(SearchResultsDTO results, FileRowDTO file, boolean directoryBrowseMode, ExecutorService backgroundTasksPool) {
         // GVDTODO: at some point, this leaf will need to allow for children
-        super(Children.LEAF, ContentNodeUtil.getLookup(file.getAbstractFile()), results, file);
+        super(Children.LEAF, ContentNodeUtil.getLookup(file.getAbstractFile()), results, file, backgroundTasksPool);
         setIcon(file);
         setName(ContentNodeUtil.getContentName(file.getId()));
         setDisplayName(ContentNodeUtil.getContentDisplayName(file.getFileName()));
@@ -266,8 +267,8 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
 
         private final LayoutFileRowDTO layoutFileRow;
 
-        public LayoutFileNode(SearchResultsDTO results, LayoutFileRowDTO file) {
-            super(results, file, true);
+        public LayoutFileNode(SearchResultsDTO results, LayoutFileRowDTO file, ExecutorService backgroundTasksPool) {
+            super(results, file, true, backgroundTasksPool);
             layoutFileRow = file;
         }
 
@@ -296,8 +297,8 @@ public class FileNode extends BaseNode<SearchResultsDTO, FileRowDTO> implements 
      */
     public static class SlackFileNode extends FileNode {
 
-        public SlackFileNode(SearchResultsDTO results, SlackFileRowDTO file) {
-            super(results, file);
+        public SlackFileNode(SearchResultsDTO results, SlackFileRowDTO file, ExecutorService backgroundTasksPool) {
+            super(results, file, backgroundTasksPool);
         }
 
         @Override

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
+import java.util.Objects;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -34,8 +35,41 @@ public class AnalysisResultSearchParam extends BlackboardArtifactSearchParam {
         return TYPE_ID;
     }
 
-    public AnalysisResultSearchParam(BlackboardArtifact.Type artifactType, Long dataSourceId) {
+    final String configuration;
+
+    public AnalysisResultSearchParam(BlackboardArtifact.Type artifactType, String configuration, Long dataSourceId) {
         super(artifactType, dataSourceId);
+        this.configuration = configuration;
+    }
+
+    public String getConfiguration() {
+        return configuration;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 29 * hash + Objects.hashCode(this.configuration);
+        hash = 29 * hash + super.hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final AnalysisResultSearchParam other = (AnalysisResultSearchParam) obj;
+        if (!Objects.equals(this.configuration, other.configuration)) {
+            return false;
+        }
+        return super.equals(obj);
     }
     
     

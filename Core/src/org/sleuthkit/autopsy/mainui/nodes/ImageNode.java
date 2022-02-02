@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
@@ -42,8 +43,8 @@ public class ImageNode extends BaseNode<SearchResultsDTO, ImageRowDTO> implement
      * @param results The search result DTO.
      * @param row     The table row DTO.
      */
-    public ImageNode(SearchResultsDTO results, ImageRowDTO row) {
-        super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row);
+    public ImageNode(SearchResultsDTO results, ImageRowDTO row, ExecutorService backgroundTasksPool) {
+        super(Children.LEAF, ContentNodeUtil.getLookup(row.getContent()), results, row, backgroundTasksPool);
         setName(ContentNodeUtil.getContentName(row.getContent().getId()));
         setDisplayName(row.getContent().getName());
         setShortDescription(row.getContent().getName());

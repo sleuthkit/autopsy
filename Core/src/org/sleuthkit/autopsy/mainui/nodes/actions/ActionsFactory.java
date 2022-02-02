@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes.actions;
 
+import java.awt.event.ActionEvent;
+import java.text.MessageFormat;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,8 +30,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JOptionPane;
 import org.openide.actions.PropertiesAction;
 import org.openide.nodes.Node;
 import org.openide.util.Exceptions;
@@ -37,6 +42,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.openide.util.actions.SystemAction;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
@@ -57,9 +63,10 @@ import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.FileSearchAction;
+import org.sleuthkit.autopsy.directorytree.FileSearchTreeAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
+import org.sleuthkit.autopsy.filesearch.FileSearchAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
@@ -495,19 +502,25 @@ public final class ActionsFactory {
         "ActionFactory_openFileSearchByAttr_text=Open File Search by Attributes"
     })
     private static Optional<ActionGroup> getRunIngestAction(ActionContext context) {
-        ActionGroup group = new ActionGroup();
-        Optional<Long> optional = context.getDataSourceForActions();
-        if (optional.isPresent()) {
-            group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get()));
-            group.add(new ViewSummaryInformationAction(optional.get()));
-            group.add(RunIngestModulesAction.createDataSourceIdsAction(Collections.singletonList(optional.get())));
-            group.add(new DeleteDataSourceAction(optional.get()));
-        } else {
+        ActionGroup group = new ActionGroup();        
+        Optional<Content> optional = context.getDataSourceForActions();
+        if(optional.isPresent()) {
+            group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
+            group.add(new ViewSummaryInformationAction(optional.get().getId()));
+            group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
+            group.add(new DeleteDataSourceAction(optional.get().getId()));
+        }
+        else {
             optional = context.getContentForRunIngestionModuleAction();
             if(optional.isPresent()) {
-                group.add(new RunIngestModulesAction(optional.get()));
-                if(context.supportsFileSearchAction()) {
-                    group.add(new FileSearchAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get()));
+                if (optional.get() instanceof AbstractFile) {
+                    if(context.supportsFileSearchAction()) {
+                        group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
+                    }
+                    
+                    group.add(new RunIngestModulesAction((AbstractFile)optional.get()));
+                } else {
+                    logger.log(Level.WARNING, "Can not create RunIngestModulesAction on non-AbstractFile content with ID " + optional.get().getId());
                 }
             }
         }

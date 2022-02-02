@@ -188,6 +188,14 @@ solrAdminApp.config([
         templateUrl: 'partials/segments.html',
         controller: 'SegmentsController'
       }).
+      when('/~schema-designer', {
+        templateUrl: 'partials/schema-designer.html',
+        controller: 'SchemaDesignerController'
+      }).
+      when('/~security', {
+        templateUrl: 'partials/security.html',
+        controller: 'SecurityController'
+      }).
       otherwise({
         templateUrl: 'partials/unknown.html',
         controller: 'UnknownController'
@@ -335,12 +343,17 @@ solrAdminApp.config([
                   var treeConfig = {
                     'core' : {
                       'animation' : 0,
-                      'data': scope.data,
                       'worker': false
                     }
                   };
 
                   var tree = $(element).jstree(treeConfig);
+
+                  // This is done to ensure that the data can be refreshed if it is updated behind the scenes.
+                  // Putting the data in the treeConfig makes it stack and doesn't update.
+                  $(element).jstree(true).settings.core.data = scope.data;
+                  $(element).jstree(true).refresh();
+
                   $(element).jstree('open_node','li:first');
                   if (tree) {
                       element.bind("select_node.jstree", function (event, data) {
@@ -378,7 +391,9 @@ solrAdminApp.config([
     if (sessionStorage.getItem("auth.header")) {
       config.headers['Authorization'] = sessionStorage.getItem("auth.header");
     }
-    config.timeout = 10000;
+    if (!config.timeout) {
+      config.timeout = 10000;
+    }
     return config || $q.when(config);
   };
 
@@ -411,6 +426,12 @@ solrAdminApp.config([
     if (rejection.config.headers.doNotIntercept) {
         return rejection;
     }
+
+    // Some page controllers, such as Schema Designer, handle errors internally to provide a better user experience than the global error handler
+    var isHandledByPageController =
+        (rejection.config.url && rejection.config.url.startsWith("/api/schema-designer/")) ||
+        (rejection.status === 403 && $location.path() === "/~security");
+
     if (rejection.status === 0) {
       $rootScope.$broadcast('connectionStatusActive');
       if (!$rootScope.retryCount) $rootScope.retryCount=0;
@@ -418,7 +439,7 @@ solrAdminApp.config([
       var $http = $injector.get('$http');
       var result = $http(rejection.config);
       return result;
-    } else if (rejection.status === 401) {
+    } else if (rejection.status === 401 && !isHandledByPageController) {
       // Authentication redirect
       var headers = rejection.headers();
       var wwwAuthHeader = headers['www-authenticate'];
@@ -440,7 +461,14 @@ solrAdminApp.config([
         $location.path('/login');
       }
     } else {
-      $rootScope.exceptions[rejection.config.url] = rejection.data.error;
+      // some controllers prefer to handle errors internally
+      if (!isHandledByPageController) {
+        if (rejection.data.error) {
+          $rootScope.exceptions[rejection.config.url] = rejection.data.error;
+        } else if (rejection.data.message) {
+          $rootScope.exceptions[rejection.config.url] = {msg:rejection.data.message+" from "+rejection.data.url};
+        }
+      }
     }
     return $q.reject(rejection);
   };
@@ -468,7 +496,7 @@ solrAdminApp.config([
     };
 });
 
-solrAdminApp.controller('MainController', function($scope, $route, $rootScope, $location, Cores, Collections, System, Ping, Constants) {
+solrAdminApp.controller('MainController', function($scope, $route, $rootScope, $location, Cores, Collections, System, Ping, Constants, SchemaDesigner) {
 
   $rootScope.exceptions={};
 
@@ -490,6 +518,9 @@ solrAdminApp.controller('MainController', function($scope, $route, $rootScope, $
       delete $scope.currentCore;
       for (key in data.status) {
         var core = data.status[key];
+        if (core.name.startsWith("._designer_")) {
+          continue;
+        }
         $scope.cores.push(core);
         if ((!$scope.isSolrCloud || pageType == Constants.IS_CORE_PAGE) && core.name == currentCoreName) {
             $scope.currentCore = core;
@@ -499,6 +530,7 @@ solrAdminApp.controller('MainController', function($scope, $route, $rootScope, $
       $scope.initFailures = data.initFailures;
     });
 
+    $scope.isSchemaDesignerEnabled = true;
     System.get(function(data) {
       $scope.isCloudEnabled = data.mode.match( /solrcloud/i );
 
@@ -521,6 +553,9 @@ solrAdminApp.controller('MainController', function($scope, $route, $rootScope, $
             }
             $scope.collections = [];
             for (key in cdata.collections) {
+              if (cdata.collections[key].startsWith("._designer_")) {
+                continue; // ignore temp designer collections
+              }
               var collection = {name: cdata.collections[key], type: 'collection'};
               $scope.collections.push(collection);
               if (pageType == Constants.IS_COLLECTION_PAGE && collection.name == currentCollectionName) {
@@ -533,6 +568,14 @@ solrAdminApp.controller('MainController', function($scope, $route, $rootScope, $
               $scope.aliases_and_collections = $scope.aliases_and_collections.concat({name:'-----'});
             }
             $scope.aliases_and_collections = $scope.aliases_and_collections.concat($scope.collections);
+
+            SchemaDesigner.get({path: "configs"}, function (ignore) {
+              // no-op, just checking if we have access to this path
+            }, function(e) {
+              if (e.status === 401 || e.status === 403) {
+                $scope.isSchemaDesignerEnabled = false;
+              }
+            });
           });
         });
       }
