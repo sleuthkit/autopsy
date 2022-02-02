@@ -45,6 +45,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
@@ -467,10 +468,14 @@ public class CreditCardDAO extends AbstractDAO {
 
     /**
      * Returns counts of artifacts found for bin prefixes.
-     * @param dataSourceId The data source id to filter on or null for no filtering.
+     *
+     * @param dataSourceId    The data source id to filter on or null for no
+     *                        filtering.
      * @param includeRejected Whether or not to include rejected accounts.
+     *
      * @return The results to use in the tree.
-     * @throws ExecutionException 
+     *
+     * @throws ExecutionException
      */
     public TreeResultsDTO<CreditCardBinSearchParams> getCreditCardBinCounts(Long dataSourceId, boolean includeRejected) throws ExecutionException {
 
@@ -613,15 +618,24 @@ public class CreditCardDAO extends AbstractDAO {
             }
         }
 
-        List<TreeEvent> treeEvents = this.creditCardTreeCounts.enqueueAll(events).stream()
-                .flatMap(daoEvt -> {
-                    List<TreeItemDTO<CreditCardSearchParams>> treeItems = createTreeItems(daoEvt, TreeDisplayCount.INDETERMINATE);
-                    return treeItems.stream().map(item -> new TreeEvent(item, false));
-                })
-                .collect(Collectors.toList());
+        Stream<TreeEvent> treeEvents;
+        if (IngestManager.getInstance().isIngestRunning()) {
+            treeEvents = this.creditCardTreeCounts.enqueueAll(events).stream()
+                    .flatMap(daoEvt -> {
+                        List<TreeItemDTO<CreditCardSearchParams>> treeItems = createTreeItems(daoEvt, TreeDisplayCount.INDETERMINATE);
+                        return treeItems.stream().map(item -> new TreeEvent(item, false));
+                    });
 
-        return Stream.of(events, treeEvents)
-                .flatMap(s -> s.stream())
+        } else {
+            treeEvents = events.stream()
+                    .flatMap(daoEvt -> {
+                        List<TreeItemDTO<CreditCardSearchParams>> treeItems = createTreeItems(daoEvt, TreeDisplayCount.UNSPECIFIED);
+                        return treeItems.stream().map(item -> new TreeEvent(item, true));
+                    });
+        }
+
+        return Stream.of(events.stream(), treeEvents)
+                .flatMap(s -> s)
                 .collect(Collectors.toSet());
     }
 

@@ -232,7 +232,7 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             dataArtifactTreeEvents = this.treeCounts.enqueueAll(dataArtifactEvents).stream()
                 .map(daoEvt -> new TreeEvent(createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false));
         } else {
-            dataArtifactTreeEvents = this.treeCounts.enqueueAll(dataArtifactEvents).stream()
+            dataArtifactTreeEvents = dataArtifactEvents.stream()
                 .map(daoEvt -> new TreeEvent(createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true));
         }
 

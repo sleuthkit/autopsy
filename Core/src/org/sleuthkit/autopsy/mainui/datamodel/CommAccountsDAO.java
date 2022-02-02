@@ -41,6 +41,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
@@ -316,9 +317,15 @@ public class CommAccountsDAO extends AbstractDAO {
             }
         }
 
-        Stream<TreeEvent> treeEvents = this.accountCounts.enqueueAll(accountEvents).stream()
+        Stream<TreeEvent> treeEvents;
+        if (IngestManager.getInstance().isIngestRunning()) {
+            treeEvents = this.accountCounts.enqueueAll(accountEvents).stream()
                 .map(daoEvt -> new TreeEvent(createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
-
+        } else {
+            treeEvents = accountEvents.stream()
+                .map(daoEvt -> new TreeEvent(createAccountTreeItem(daoEvt.getAccountType(), daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
+        }
+                
         return Stream.of(accountEvents.stream(), treeEvents)
                 .flatMap(s -> s)
                 .collect(Collectors.toSet());
