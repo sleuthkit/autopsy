@@ -502,25 +502,19 @@ public final class ActionsFactory {
         "ActionFactory_openFileSearchByAttr_text=Open File Search by Attributes"
     })
     private static Optional<ActionGroup> getRunIngestAction(ActionContext context) {
-        ActionGroup group = new ActionGroup();        
-        Optional<Content> optional = context.getDataSourceForActions();
-        if(optional.isPresent()) {
-            group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
-            group.add(new ViewSummaryInformationAction(optional.get().getId()));
-            group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
-            group.add(new DeleteDataSourceAction(optional.get().getId()));
-        }
-        else {
+        ActionGroup group = new ActionGroup();
+        Optional<Long> optional = context.getDataSourceForActions();
+        if (optional.isPresent()) {
+            group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get()));
+            group.add(new ViewSummaryInformationAction(optional.get()));
+            group.add(RunIngestModulesAction.createDataSourceIdsAction(Collections.singletonList(optional.get())));
+            group.add(new DeleteDataSourceAction(optional.get()));
+        } else {
             optional = context.getContentForRunIngestionModuleAction();
             if(optional.isPresent()) {
-                if (optional.get() instanceof AbstractFile) {
-                    if(context.supportsFileSearchAction()) {
-                        group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
-                    }
-                    
-                    group.add(new RunIngestModulesAction((AbstractFile)optional.get()));
-                } else {
-                    logger.log(Level.WARNING, "Can not create RunIngestModulesAction on non-AbstractFile content with ID " + optional.get().getId());
+                group.add(new RunIngestModulesAction(optional.get()));
+                if(context.supportsFileSearchAction()) {
+                    group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get()));
                 }
             }
         }
