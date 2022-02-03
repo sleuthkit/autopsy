@@ -26,7 +26,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class EmailEvent extends DataArtifactEvent {
 
-    private final String account;
     private final String folder;
 
     /**
@@ -36,14 +35,9 @@ public class EmailEvent extends DataArtifactEvent {
      * @param account      The email message account.
      * @param folder       The folder within that account of the email message.
      */
-    public EmailEvent(long dataSourceId, String account, String folder) {
+    public EmailEvent(long dataSourceId, String folder) {
         super(BlackboardArtifact.Type.TSK_EMAIL_MSG, dataSourceId);
-        this.account = account;
         this.folder = folder;
-    }
-
-    public String getAccount() {
-        return account;
     }
 
     public String getFolder() {
@@ -53,7 +47,6 @@ public class EmailEvent extends DataArtifactEvent {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 89 * hash + Objects.hashCode(this.account);
         hash = 89 * hash + Objects.hashCode(this.folder);
         hash = 89 * hash + super.hashCode();
         return hash;
@@ -71,9 +64,6 @@ public class EmailEvent extends DataArtifactEvent {
             return false;
         }
         final EmailEvent other = (EmailEvent) obj;
-        if (!Objects.equals(this.account, other.account)) {
-            return false;
-        }
         if (!Objects.equals(this.folder, other.folder)) {
             return false;
         }

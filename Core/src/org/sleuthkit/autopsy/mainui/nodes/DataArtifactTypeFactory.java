@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.EmailSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.EmailsDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.EmailsDAO.EmailTreeItem;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
@@ -135,7 +137,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
             super(itemData.getSearchParams().getArtifactType().getTypeName(),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
-                    Children.create(new EmailAccountTypeFactory(itemData.getSearchParams().getDataSourceId()), true),
+                    Children.create(new EmailFolderFactory(null, itemData.getSearchParams().getDataSourceId()), true),
                     getDefaultLookup(itemData)
             );
         }
@@ -268,19 +270,22 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     /**
      * Factory for displaying account types.
      */
-    static class EmailAccountTypeFactory extends TreeChildFactory<EmailSearchParams> {
+    static class EmailFolderFactory extends TreeChildFactory<EmailSearchParams> {
 
+        private final String folderParent;
         private final Long dataSourceId;
 
         /**
          * Main constructor.
          *
+         * @param folderParent The email parent folder for the factory.
          * @param dataSourceId The data source object id for which the results
          *                     should be filtered or null if no data source
          *                     filtering.
          */
-        public EmailAccountTypeFactory(Long dataSourceId) {
+        public EmailFolderFactory(String folderParent, Long dataSourceId) {
             this.dataSourceId = dataSourceId;
+            this.folderParent = folderParent;
         }
 
         private EmailsDAO getDAO() {
@@ -289,12 +294,12 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         protected TreeResultsDTO<? extends EmailSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return getDAO().getEmailCounts(dataSourceId, null);
+            return getDAO().getEmailCounts(dataSourceId, this.folderParent);
         }
 
         @Override
         protected TreeNode<EmailSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> rowData) {
-            return new EmailAccountTypeNode(rowData);
+            return new EmailNode(rowData);
         }
 
         @Override
@@ -303,14 +308,11 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
             TreeItemDTO<EmailSearchParams> originalTreeItem = getTypedTreeItem(treeEvt, EmailSearchParams.class);
 
             if (originalTreeItem != null
+                    // ensure data source id for factory is null or data sources are equal
                     && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
                 EmailSearchParams originalSearchParam = originalTreeItem.getSearchParams();
-                return getDAO().createEmailTreeItem(
-                        originalSearchParam.getAccount(),
-                        null,
-                        getDAO().getAccountDisplayName(originalSearchParam.getAccount(), null),
-                        dataSourceId,
-                        originalTreeItem.getDisplayCount());
+                return getDAO().createEmailTreeItem(originalSearchParam.getFolder(), this.folderParent, dataSourceId, originalTreeItem.getDisplayCount());
             }
 
             return null;
@@ -318,11 +320,14 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public int compare(TreeItemDTO<? extends EmailSearchParams> o1, TreeItemDTO<? extends EmailSearchParams> o2) {
-            boolean firstDown = o1.getSearchParams().getAccount() == null;
-            boolean secondDown = o2.getSearchParams().getAccount() == null;
+            String safeO1 = o1.getId() instanceof String ? o1.getId().toString() : "";
+            String safeO2 = o2.getId() instanceof String ? o2.getId().toString() : "";
+
+            boolean firstDown = o1.getId() instanceof String;
+            boolean secondDown = o2.getId() instanceof String;
 
             if (firstDown == secondDown) {
-                return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+                return safeO1.compareToIgnoreCase(safeO2);
             } else {
                 return Boolean.compare(firstDown, secondDown);
             }
@@ -332,111 +337,58 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     /**
      * A node representing a single account type in the tree.
      */
-    static class EmailAccountTypeNode extends TreeNode<EmailSearchParams> {
+    static class EmailNode extends TreeNode<EmailSearchParams> {
 
         /**
          * Main constructor.
          *
          * @param itemData The data to display.
          */
-        public EmailAccountTypeNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
-            super(itemData.getSearchParams().getAccount(),
-                    "org/sleuthkit/autopsy/images/account-icon-16.png",
-                    itemData,
-                    Children.create(new EmailFolderTypeFactory(itemData.getSearchParams().getAccount(), itemData.getSearchParams().getDataSourceId()), true),
-                    getDefaultLookup(itemData)
-            );
-
-        }
-    }
-
-    /**
-     * Factory for displaying account types.
-     */
-    static class EmailFolderTypeFactory extends TreeChildFactory<EmailSearchParams> {
-
-        private final String account;
-        private final Long dataSourceId;
-
-        /**
-         * Main constructor.
-         *
-         * @param account      The email account for the factory.
-         * @param dataSourceId The data source object id for which the results
-         *                     should be filtered or null if no data source
-         *                     filtering.
-         */
-        public EmailFolderTypeFactory(String account, Long dataSourceId) {
-            this.dataSourceId = dataSourceId;
-            this.account = account;
-        }
-
-        private EmailsDAO getDAO() {
-            return MainDAO.getInstance().getEmailsDAO();
-        }
-
-        @Override
-        protected TreeResultsDTO<? extends EmailSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return getDAO().getEmailCounts(dataSourceId, account);
-        }
-
-        @Override
-        protected TreeNode<EmailSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> rowData) {
-            return new EmailFolderTypeNode(rowData);
-        }
-
-        @Override
-        protected TreeItemDTO<? extends EmailSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
-
-            TreeItemDTO<EmailSearchParams> originalTreeItem = getTypedTreeItem(treeEvt, EmailSearchParams.class);
-
-            if (originalTreeItem != null
-                    && Objects.equals(this.account, originalTreeItem.getSearchParams().getAccount())
-                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
-                EmailSearchParams originalSearchParam = originalTreeItem.getSearchParams();
-                return getDAO().createEmailTreeItem(
-                        originalSearchParam.getAccount(),
-                        originalSearchParam.getFolder(),
-                        getDAO().getFolderDisplayName(originalSearchParam.getFolder()),
-                        dataSourceId,
-                        originalTreeItem.getDisplayCount());
-            }
-
-            return null;
-        }
-
-        @Override
-        public int compare(TreeItemDTO<? extends EmailSearchParams> o1, TreeItemDTO<? extends EmailSearchParams> o2) {
-            boolean firstDown = o1.getSearchParams().getFolder() == null;
-            boolean secondDown = o2.getSearchParams().getFolder() == null;
-
-            if (firstDown == secondDown) {
-                return o1.getSearchParams().getFolder().compareToIgnoreCase(o2.getSearchParams().getFolder());
-            } else {
-                return Boolean.compare(firstDown, secondDown);
-            }
-        }
-    }
-
-    /**
-     * A node representing a single account type in the tree.
-     */
-    static class EmailFolderTypeNode extends TreeNode<EmailSearchParams> {
-
-        /**
-         * Main constructor.
-         *
-         * @param itemData The data to display.
-         */
-        public EmailFolderTypeNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
-            super(itemData.getSearchParams().getFolder(),
+        public EmailNode(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
+            super(itemData.getId().toString(),
                     "org/sleuthkit/autopsy/images/folder-icon-16.png",
-                    itemData);
+                    itemData,
+                    getChildren(itemData),
+                    getDefaultLookup(itemData));
         }
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayEmailMessages(super.getItemData().getSearchParams());
+            if (Children.LEAF.equals(getChildren())) {
+                dataResultPanel.displayEmailMessages(super.getItemData().getSearchParams());
+            } else {
+                super.respondSelection(dataResultPanel);
+            }
+        }
+
+        @Override
+        public void update(TreeItemDTO<? extends EmailSearchParams> updatedData) {
+            setChildren(updatedData);
+            super.update(updatedData);
+        }
+
+        private void setChildren(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
+            if (Children.LEAF.equals(getChildren())) {
+                Children newChildren = getChildren(itemData);
+                if (!Children.LEAF.equals(newChildren)) {
+                    setChildren(newChildren);
+                }
+            }
+        }
+
+        private static Children getChildren(TreeResultsDTO.TreeItemDTO<? extends EmailSearchParams> itemData) {
+            if (itemData instanceof EmailTreeItem) {
+                EmailTreeItem treeItem = (EmailTreeItem) itemData;
+                if (treeItem.getHasChildren().orElse(false)) {
+                    return Children.create(
+                            new EmailFolderFactory(
+                                    treeItem.getSearchParams().getFolder(),
+                                    treeItem.getSearchParams().getDataSourceId()),
+                            true);
+                }
+            }
+
+            return Children.LEAF;
         }
     }
 

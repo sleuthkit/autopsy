@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,13 +30,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.python.icu.text.MessageFormat;
@@ -65,19 +64,19 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Provides information to populate the results viewer for data in the
- * Emails section.
+ * Provides information to populate the results viewer for data in the Emails
+ * section.
  */
 public class EmailsDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(EmailsDAO.class.getName());
 
-    private static final String PATH_DELIMITER = "/";
-    private static final String ESCAPE_CHAR = "\\";
+    private static final String PATH_DELIMITER = "\\";
+    private static final String ESCAPE_CHAR = "$";
 
-    private final Cache<SearchParams<EmailSearchParams>, SearchResultsDTO> searchParamsCache = 
-            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
-    
+    private final Cache<SearchParams<EmailSearchParams>, SearchResultsDTO> searchParamsCache
+            = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+
     private final TreeCounts<EmailEvent> emailCounts = new TreeCounts<>();
 
     private static EmailsDAO instance = null;
@@ -97,12 +96,6 @@ public class EmailsDAO extends AbstractDAO {
     public SearchResultsDTO getEmailMessages(EmailSearchParams searchParams, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (searchParams.getDataSourceId() != null && searchParams.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
-        } else if ((searchParams.getAccount() == null) != (searchParams.getFolder() == null)) {
-            throw new IllegalArgumentException(
-                    MessageFormat.format(
-                            "Either folder and account are null or they are both non-null.  Received [account: {0}, folder: {1}]",
-                            StringUtils.defaultIfBlank(searchParams.getAccount(), "<null>"),
-                            StringUtils.defaultIfBlank(searchParams.getFolder(), "<null>")));
         }
 
         SearchParams<EmailSearchParams> emailSearchParams = new SearchParams<>(searchParams, startItem, maxCount);
@@ -110,103 +103,96 @@ public class EmailsDAO extends AbstractDAO {
     }
 
     /**
-     * Returns a pair of the email account and folder.
+     * Sets the values of a results view prepared statement used in
+     * fetchEmailMessageDTOs.
      *
-     * NOTE: Subject to change; see JIRA-8220.
+     * @param preparedStatement The prepared statement.
+     * @param normalizedPath    The query path indicated by TSK_PATH.
+     * @param dataSourceId      The data source id.
      *
-     * @param art The artifact.
-     *
-     * @return The pair of the account and folder or null if undetermined.
+     * @throws TskCoreException
      */
-    private static Pair<String, String> getAccountAndFolder(BlackboardArtifact art) throws TskCoreException {
-        BlackboardAttribute pathAttr = art.getAttribute(BlackboardAttribute.Type.TSK_PATH);
-        if (pathAttr == null) {
-            return Pair.of("", "");
+    private void setResultsViewPreparedStatement(CaseDbPreparedStatement preparedStatement, String normalizedPath, Long dataSourceId) throws TskCoreException {
+        int paramIdx = 0;
+        if (normalizedPath != null) {
+            String noEndingSlash = normalizedPath.endsWith(PATH_DELIMITER) ? normalizedPath.substring(0, normalizedPath.length() - 1) : normalizedPath;
+            preparedStatement.setString(++paramIdx, noEndingSlash);
         }
 
-        String pathVal = pathAttr.getValueString();
-        if (pathVal == null) {
-            return Pair.of("", "");
+        if (dataSourceId != null) {
+            preparedStatement.setLong(++paramIdx, dataSourceId);
         }
-
-        return getPathAccountFolder(pathVal);
     }
 
-    /**
-     * Returns a pair of the email account and folder.
-     *
-     * NOTE: Subject to change; see JIRA-8220.
-     *
-     * @param art The path value.
-     *
-     * @return The pair of the account and folder or null if undetermined.
-     */
-    public static Pair<String, String> getPathAccountFolder(String pathVal) {
-        String[] pieces = pathVal.split(PATH_DELIMITER);
-        return pieces.length < 4
-                ? Pair.of("", "")
-                : Pair.of(pieces[2], pieces[3]);
-    }
-
-    private SearchResultsDTO fetchEmailMessageDTOs(SearchParams<EmailSearchParams> searchParams) throws NoCurrentCaseException, TskCoreException, SQLException {
+    private SearchResultsDTO fetchEmailMessageDTOs(SearchParams<EmailSearchParams> searchParams) throws NoCurrentCaseException, TskCoreException, SQLException, IllegalStateException {
 
         // get current page of communication accounts results
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         Blackboard blackboard = skCase.getBlackboard();
 
-        boolean unknownPath = StringUtils.isBlank(searchParams.getParamData().getAccount());
+        String normalizedPath = getNormalizedPath(searchParams.getParamData().getFolder());
+        String pathWhereStatement = (normalizedPath == null)
+                // if searching for result without any folder, find items that are not prefixed with '\' or aren't null
+                ? "AND (attr.value_text IS NULL OR attr.value_text NOT LIKE '" + PATH_DELIMITER + "%' ESCAPE '" + ESCAPE_CHAR + "') \n"
+                // the path should start with the prescribed folder
+                : "AND (LOWER(attr.value_text) = LOWER(?))\n";
 
-        String query = " art.artifact_id AS artifact_id \n"
-                + "FROM blackboard_artifacts art \n"
-                + "LEFT JOIN blackboard_attributes attr ON attr.artifact_id = art.artifact_id \n"
-                + "  AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + " \n"
+        String baseQuery = "FROM blackboard_artifacts art \n"
+                + "LEFT JOIN (\n"
+                + "  SELECT attr1.artifact_id, MIN(attr1.value_text) AS value_text\n"
+                + "  FROM blackboard_attributes attr1\n"
+                + "  WHERE attr1.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + "\n"
+                + "  GROUP BY attr1.artifact_id\n"
+                + ") attr ON attr.artifact_id = art.artifact_id \n"
                 + "WHERE art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + " \n"
-                + (unknownPath
-                        ? "AND (attr.value_text IS NULL OR attr.value_text NOT LIKE '%/%/%/%' ESCAPE '" + ESCAPE_CHAR + "' OR attr.value_text LIKE ?) \n"
-                        : "AND attr.value_text LIKE ? ESCAPE '" + ESCAPE_CHAR + "' \n")
+                + pathWhereStatement
                 + (searchParams.getParamData().getDataSourceId() == null ? "" : "AND art.data_source_obj_id = ? \n")
-                + "GROUP BY art.artifact_id \n"
-                + "ORDER BY art.artifact_id";
+                + "GROUP BY art.artifact_id \n";
 
-        List<Long> allMatchingIds = new ArrayList<>();
+        String itemsQuery = " art.artifact_id AS artifact_id \n"
+                + baseQuery
+                + "ORDER BY art.artifact_id\n"
+                + (searchParams.getMaxResultsCount() == null ? "" : "LIMIT " + searchParams.getMaxResultsCount() + "\n")
+                + "OFFSET " + searchParams.getStartItem() + "\n";
 
-        // TODO load paged artifacts; 
+        String countsQuery = " COUNT(*) AS count FROM (SELECT art.artifact_id\n" + baseQuery + ") res";
+
         // this could potentially be done in a query obtaining the artifacts and another retrieving the total count.
-        try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(query)) {
+        List<Long> pagedIds = new ArrayList<>();
+        AtomicReference<Long> totalCount = new AtomicReference<>(0L);
 
-            int paramIdx = 0;
-            preparedStatement.setString(++paramIdx, MessageFormat.format("%/%/{0}/{1}%",
-                    SubDAOUtils.likeEscape(searchParams.getParamData().getAccount(), ESCAPE_CHAR),
-                    SubDAOUtils.likeEscape(searchParams.getParamData().getFolder(), ESCAPE_CHAR)
-            ));
-
-            if (searchParams.getParamData().getDataSourceId() != null) {
-                preparedStatement.setLong(++paramIdx, searchParams.getParamData().getDataSourceId());
-            }
-
+        // query for counts
+        try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(countsQuery)) {
+            setResultsViewPreparedStatement(preparedStatement, searchParams.getParamData().getFolder(), searchParams.getParamData().getDataSourceId());
             getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
                 try {
-                    while (resultSet.next()) {
-                        allMatchingIds.add(resultSet.getLong("artifact_id"));
+                    if (resultSet.next()) {
+                        totalCount.set(resultSet.getLong("count"));
                     }
                 } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "There was an error fetching emails for ");
+                    throw new IllegalStateException("There was an error fetching count with query:\nSELECT" + countsQuery, ex);
                 }
 
             });
         }
-        
-        Stream<Long> pagedIdStream = allMatchingIds.stream()
-                .skip(searchParams.getStartItem());
-        
-        if (searchParams.getMaxResultsCount() != null && searchParams.getMaxResultsCount() > 0) {
-            pagedIdStream = pagedIdStream.limit(searchParams.getMaxResultsCount());
-        }
-        
-        List<Long> pagedIds = pagedIdStream.collect(Collectors.toList());
 
+        // if there is a result count, get paged artifact ids
         List<BlackboardArtifact> allArtifacts = Collections.emptyList();
-        if (!allMatchingIds.isEmpty()) {
+        if (totalCount.get() > 0) {
+            try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(itemsQuery)) {
+                setResultsViewPreparedStatement(preparedStatement, searchParams.getParamData().getFolder(), searchParams.getParamData().getDataSourceId());
+                getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
+                    try {
+                        while (resultSet.next()) {
+                            pagedIds.add(resultSet.getLong("artifact_id"));
+                        }
+                    } catch (SQLException ex) {
+                        logger.log(Level.WARNING, "There was an error fetching emails for ");
+                    }
+
+                });
+            }
+
             String whereClause = "artifacts.artifact_id IN (" + pagedIds.stream().map(l -> Long.toString(l)).collect(Collectors.joining(", ")) + ")";
             allArtifacts = getDataArtifactsAsBBA(blackboard, whereClause);
 
@@ -218,55 +204,194 @@ public class EmailsDAO extends AbstractDAO {
         DataArtifactDAO dataArtDAO = MainDAO.getInstance().getDataArtifactsDAO();
         BlackboardArtifactDAO.TableData tableData = dataArtDAO.createTableData(BlackboardArtifact.Type.TSK_EMAIL_MSG, allArtifacts);
         return new DataArtifactTableSearchResultsDTO(BlackboardArtifact.Type.TSK_EMAIL_MSG, tableData.columnKeys,
-                tableData.rows, searchParams.getStartItem(), allMatchingIds.size());
+                tableData.rows, searchParams.getStartItem(), totalCount.get());
     }
 
+    /**
+     * Converts a list of data artifacts gathered using
+     * Blackboard.getDataArtifactsWhere into a list of blackboard artifacts.
+     *
+     * @param blackboard  The TSK blackboard.
+     * @param whereClause The where clause to use with
+     *                    Blackboard.getDataArtifactsWhere.
+     *
+     * @return The list of BlackboardArtifacts.
+     *
+     * @throws TskCoreException
+     */
     @SuppressWarnings("unchecked")
     private List<BlackboardArtifact> getDataArtifactsAsBBA(Blackboard blackboard, String whereClause) throws TskCoreException {
         return (List<BlackboardArtifact>) (List<? extends BlackboardArtifact>) blackboard.getDataArtifactsWhere(whereClause);
     }
 
-    @Messages("EmailsDAO_getAccountDisplayName_defaultName=Default")
-    public String getAccountDisplayName(String account, Set<String> folders) {
-        String accountName = StringUtils.isBlank(account) ? Bundle.EmailsDAO_getAccountDisplayName_defaultName() : account;
-        if (CollectionUtils.isEmpty(folders)) {
-            return accountName;
-        } else {
-            String folderDisplay = folders.stream()
-                    .map(f -> StringUtils.isBlank(f) ? Bundle.EmailsDAO_getFolderDisplayName_defaultName() : f)
-                    .sorted((a, b) -> a.compareToIgnoreCase(b))
-                    .collect(Collectors.joining(", "));
-
-            return MessageFormat.format("{0} ([{1}])", accountName, folderDisplay);
+    /**
+     * Determines the last non-blank folder segment.
+     *
+     * @param fullPath The full path taken from a TSK_PATH.
+     *
+     * @return The last non-blank folder segment.
+     */
+    private static String getLastFolderSegment(String fullPath) {
+        // getNormalizedPath should remove any trailing whitespace or path delimiters,
+        // so take the last index of the path delimiter if it exists, and use everything after that.
+        String normalizedPath = getNormalizedPath(fullPath);
+        if (normalizedPath == null) {
+            return null;
         }
 
+        String pathWithoutEndSlash = normalizedPath.endsWith(PATH_DELIMITER)
+                ? normalizedPath.substring(0, normalizedPath.length() - 1)
+                : normalizedPath;
+
+        int lastIdx = pathWithoutEndSlash.lastIndexOf(PATH_DELIMITER);
+        if (lastIdx >= 0) {
+            return pathWithoutEndSlash.substring(lastIdx + 1);
+        } else {
+            return pathWithoutEndSlash;
+        }
     }
 
-    @Messages({"EmailsDAO_getFolderDisplayName_defaultName=Default"})
-    public String getFolderDisplayName(String folder) {
-        return StringUtils.isBlank(folder) ? Bundle.EmailsDAO_getFolderDisplayName_defaultName() : folder;
+    /**
+     * Returns the folder display name based on the folder. If blank, returns
+     * Default folder string.
+     *
+     * @param folder The folder.
+     *
+     * @return The folder display name.
+     */
+    @Messages({"EmailsDAO_getFolderDisplayName_defaultName=[Default]"})
+    public static String getFolderDisplayName(String folder) {
+        return folder == null
+                ? Bundle.EmailsDAO_getFolderDisplayName_defaultName()
+                : folder;
     }
 
-    public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String account, String folder, String displayName,
-            Long dataSourceId, TreeDisplayCount count) {
+    /**
+     * Normalizes the path. If path is blank or does not start with a path
+     * delimiter, return an empty string. Otherwise, remove all trailing
+     * whitespace and path delimiters.
+     *
+     * @param origPath The original path.
+     *
+     * @return The normalized path.
+     */
+    private static String getNormalizedPath(String origPath) {
+        if (origPath == null || !origPath.startsWith(PATH_DELIMITER)) {
+            return null;
+        }
 
-        return new TreeItemDTO<>(
-                EmailSearchParams.getTypeId(),
-                new EmailSearchParams(dataSourceId, account, folder),
-                Stream.of(account, folder)
-                        .map(s -> StringUtils.isBlank(s) ? "" : s)
-                        .collect(Collectors.joining(PATH_DELIMITER)),
-                displayName,
-                count
-        );
+        if (!origPath.endsWith(PATH_DELIMITER)) {
+            origPath = origPath + PATH_DELIMITER;
+        }
+
+        return origPath;
+    }
+
+    /**
+     * Creates a tree item dto with the given parameters.
+     *
+     * @param fullPath     The full TSK_PATH path.
+     * @param dataSourceId The data source object id.
+     * @param count        The count to display.
+     * @param hasChildren  True if has children. False if no children. Empty if
+     *                     unknown.
+     *
+     * @return The tree item dto.
+     */
+    private TreeItemDTO<EmailSearchParams> createEmailTreeItem(String fullPath, Long dataSourceId, TreeDisplayCount count, Optional<Boolean> hasChildren) {
+        String normalizedPath = getNormalizedPath(fullPath);
+        String displayName = getFolderDisplayName(getLastFolderSegment(getNormalizedPath(fullPath)));
+        return createEmailTreeItem(normalizedPath, displayName, dataSourceId, count, hasChildren);
+    }
+
+    /**
+     * Creates a tree item dto with the given parameters.
+     *
+     * @param fullPath     The full TSK_PATH path.
+     * @param displayName  The display name.
+     * @param dataSourceId The data source object id.
+     * @param count        The count to display.
+     * @param hasChildren  True if has children. False if no children. Empty if
+     *                     unknown.
+     *
+     * @return The tree item dto.
+     */
+    private TreeItemDTO<EmailSearchParams> createEmailTreeItem(String fullPath, String displayName, Long dataSourceId, TreeDisplayCount count, Optional<Boolean> hasChildren) {
+        String normalizedPath = getNormalizedPath(fullPath);
+        return new EmailTreeItem(normalizedPath, displayName, dataSourceId, count, hasChildren);
+    }
+        
+    /**
+     * Creates a tree item dto if full path is a subfolder of parent path.
+     *
+     * @param fullPath     The full TSK_PATH path.
+     * @param parentPath   The parent path of the tree item. If fullPath is
+     *                     equivalent to parentPath, name of this item will be
+     *                     default.
+     * @param dataSourceId The data source object id.
+     * @param count        The count to display.
+     *
+     * @return The tree item dto or null if fullPath is not a sub folder of
+     *         parent path.
+     */
+    public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String fullPath, String parentPath, Long dataSourceId, TreeDisplayCount count) {
+        Optional<String> subFolderOpt = getNextSubFolder(parentPath, fullPath);
+        if (!subFolderOpt.isPresent()) {
+            return null;
+        }
+
+        String subFolder = subFolderOpt.get();
+        boolean equalPaths = Objects.equals(subFolder, getNormalizedPath(parentPath));
+
+        // if full path has further children, then has children is true, otherwise we don't know.
+        Optional<Boolean> hasChildren = Objects.equals(subFolder, getNormalizedPath(fullPath)) ? Optional.empty() : Optional.of(true);
+        String displayName = equalPaths
+                ? Bundle.EmailsDAO_getFolderDisplayName_defaultName()
+                : getFolderDisplayName(getLastFolderSegment(subFolder));
+
+        return new EmailTreeItem(subFolder, displayName, dataSourceId, count, hasChildren);
+
+    }
+
+    /**
+     * Returns the next relevant subfolder (the full path) after the parent path
+     * or empty if child path is not a sub path of parent path.
+     *
+     * @param parentPath The parent path.
+     * @param childPath  The child path.
+     *
+     * @return The next subfolder or empty.
+     */
+    public Optional<String> getNextSubFolder(String parentPath, String childPath) {
+        String normalizedParent = getNormalizedPath(parentPath);
+        String normalizedChild = getNormalizedPath(childPath);
+
+        if (normalizedChild == null) {
+            return (normalizedParent == null)
+                    ? Optional.of(null)
+                    : Optional.empty();
+        }
+
+        if (normalizedParent == null) {
+            normalizedParent = PATH_DELIMITER;
+        }
+
+        // ensure that child is a sub path of parent
+        if (normalizedChild.toLowerCase().startsWith(normalizedParent.toLowerCase())) {
+            int nextDelimiter = normalizedChild.indexOf(PATH_DELIMITER, normalizedParent.length());
+            return nextDelimiter >= 0
+                    ? Optional.of(getNormalizedPath(normalizedChild.substring(0, nextDelimiter + 1)))
+                    : Optional.of(normalizedChild);
+
+        }
+        return Optional.empty();
     }
 
     /**
      * Returns sql to query for email counts.
      *
      * @param dbType       The db type (postgres/sqlite).
-     * @param account      The account string to filter on. Null if no filter.
-     *                     Empty if account is default.
+     * @param folder       The parent folder or null for root level.
      * @param dataSourceId The data source id to filter on or null for no
      *                     filter. If non-null, a prepared statement parameter
      *                     will need to be provided at index 2.
@@ -274,222 +399,163 @@ public class EmailsDAO extends AbstractDAO {
      * @return A tuple of the sql and the account like string (or null if no
      *         account filter).
      */
-    private static Pair<String, String> getAccountFolderSql(TskData.DbType dbType, String account, Long dataSourceId) {
+    private static String getFolderChildrenSql(TskData.DbType dbType, String folder, Long dataSourceId) {
         // possible and claused depending on whether or not there is an account to filter on and a data source object id to filter on.
 
-        String accountClause = "";
-        if (account != null) {
-            if (StringUtils.isBlank(account)) {
-                accountClause = "      AND (attr.value_text IS NULL OR attr.value_text NOT LIKE '%/%/%/%' OR attr.value_text LIKE ?)\n";
-            } else {
-                accountClause = "      AND attr.value_text LIKE ? ESCAPE '" + ESCAPE_CHAR + "'\n";
-            }
-        }
-
-        String dataSourceClause = (dataSourceId == null ? "" : "      AND art.data_source_obj_id = ?\n");
-
-        // get path attribute value for emails 
-        String innerQuery = "SELECT\n"
-                + "      MIN(attr.value_text) AS path, \n"
-                + "      art.artifact_id\n"
-                + "    FROM blackboard_artifacts art\n"
-                + "    LEFT JOIN blackboard_attributes attr ON attr.artifact_id = art.artifact_id\n"
-                + "      AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + "\n" // may change due to JIRA-8220
-                + "    WHERE\n"
-                + " art.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + "\n"
-                + accountClause
-                + dataSourceClause
-                + "    GROUP BY art.artifact_id\n";
-
-        // get index 2 (account) and index 3 (folder) after splitting on delimiter
-        String accountFolderQuery;
+        String folderSplitSql;
         switch (dbType) {
             case POSTGRESQL:
-                accountFolderQuery = "SELECT\n"
-                        + (account != null ? "" : "  SPLIT_PART(a.path, '" + PATH_DELIMITER + "', 3) AS account,\n")
-                        + "  SPLIT_PART(a.path, '" + PATH_DELIMITER + "', 4) AS folder\n"
-                        + "FROM (\n"
-                        + innerQuery
-                        + "\n) a";
+                folderSplitSql = "SPLIT_PART(res.subfolders, '" + PATH_DELIMITER + "', 1)";
                 break;
             case SQLITE:
-                accountFolderQuery = "SELECT\n"
-                        + (account != null ? "" : "  a.account AS account,\n")
-                        + "  (CASE \n"
-                        + "    WHEN INSTR(a.remaining, '" + PATH_DELIMITER + "') > 0 THEN SUBSTR(a.remaining, 1, INSTR(a.remaining, '" + PATH_DELIMITER + "') - 1) \n"
-                        + "    ELSE a.remaining\n"
-                        + "  END) AS folder\n"
-                        + "FROM (\n"
-                        + "  SELECT \n"
-                        + "    SUBSTR(l.ltrimmed, 1, INSTR(l.ltrimmed, '" + PATH_DELIMITER + "') - 1) AS account,\n"
-                        + "    SUBSTR(l.ltrimmed, INSTR(l.ltrimmed, '" + PATH_DELIMITER + "') + 1) AS remaining\n"
-                        + "  FROM (\n"
-                        + "      SELECT SUBSTR(email_paths.path, INSTR(SUBSTR(email_paths.path, 2), '" + PATH_DELIMITER + "') + 2) AS ltrimmed\n"
-                        + "      FROM (\n"
-                        + innerQuery
-                        + "      ) email_paths\n"
-                        + "  ) l\n"
-                        + ") a\n";
+                folderSplitSql = "SUBSTR(res.subfolders, 1, INSTR(res.subfolders, '" + PATH_DELIMITER + "') - 1)";
                 break;
             default:
                 throw new IllegalArgumentException("Unknown db type: " + dbType);
         }
 
-        // group and get counts
-        String sql = "  COUNT(*) AS count,\n "
-                + (account != null ? "" : "  account_folder.account,\n")
-                + "  account_folder.folder\n"
+        String substringFolderSql;
+        String folderWhereStatement;
+        if (folder == null) {
+            substringFolderSql = "CASE WHEN p.path LIKE '" + PATH_DELIMITER + "%' ESCAPE '" + ESCAPE_CHAR + "' THEN SUBSTR(p.path, 2) ELSE NULL END";
+            folderWhereStatement = "";
+        } else {
+            // if exact match, 
+            substringFolderSql = "      CASE\n"
+                    + "        WHEN p.path LIKE ? ESCAPE '" + ESCAPE_CHAR + "' THEN \n"
+                    + "          SUBSTR(p.path, LENGTH(?) + 1)\n"
+                    + "        ELSE\n"
+                    + "          NULL\n"
+                    + "      END";
+            folderWhereStatement = "    WHERE (p.path = ? OR p.path LIKE ? ESCAPE '" + ESCAPE_CHAR + "')\n";
+        }
+
+        String query = "\n  MAX(grouped_res.folder) AS folder\n"
+                + "  ,COUNT(*) AS count\n"
+                + "  ,MAX(grouped_res.has_children) AS has_children\n"
                 + "FROM (\n"
-                + accountFolderQuery
-                + "\n) AS account_folder\n"
-                + "GROUP BY \n"
-                + (account != null ? "" : "  account_folder.account,\n")
-                + "  account_folder.folder";
+                + "  SELECT\n"
+                + "    (CASE \n"
+                + "        WHEN res.subfolders LIKE '%" + PATH_DELIMITER + "%' ESCAPE '" + ESCAPE_CHAR + "' THEN \n"
+                + "          " + folderSplitSql + "\n"
+                + "        ELSE\n"
+                + "          res.subfolders\n"
+                + "    END) AS folder\n"
+                + "    ,(CASE \n"
+                + "        WHEN res.subfolders LIKE '%" + PATH_DELIMITER + "%' ESCAPE '" + ESCAPE_CHAR + "' THEN 1\n"
+                + "        ELSE 0\n"
+                + "    END) AS has_children\n"
+                + "  FROM (\n"
+                + "    SELECT\n"
+                + "      " + substringFolderSql + " AS subfolders\n"
+                + "    FROM (\n"
+                + "      SELECT MIN(attr.value_text) AS path\n"
+                + "      FROM blackboard_attributes attr \n"
+                + "      LEFT JOIN blackboard_artifacts art \n"
+                + "        ON attr.artifact_id = art.artifact_id\n"
+                + "      WHERE attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_PATH.getTypeID() + " \n"
+                + "      AND attr.artifact_type_id = " + BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID() + " \n"
+                + (dataSourceId != null ? "      AND art.data_source_obj_id = ? \n" : "")
+                + "      GROUP BY attr.artifact_id\n"
+                + "    ) p\n"
+                + folderWhereStatement
+                + "  ) res\n"
+                + ") grouped_res\n"
+                + "GROUP BY LOWER(grouped_res.folder)\n"
+                + "ORDER BY LOWER(grouped_res.folder)";
 
-        String accountLikeStr = (account == null)
-                ? null
-                : "%/%/" + SubDAOUtils.likeEscape(account, ESCAPE_CHAR) + "/%";
-
-        return Pair.of(sql, accountLikeStr);
+        return query;
     }
 
     /**
      * Returns the accounts and their counts in the current data source if a
      * data source id is provided or all accounts if data source id is null.
      *
-     * @param dataSourceId The data source id or null for no data source filter.
+     * @param dataSourceId   The data source id or null for no data source
+     *                       filter.
+     * @param normalizedPath The email folder parent (using '\' as prefix,
+     *                       suffix, and delimiter). If null, root level folders
      *
      * @return The results.
      *
      * @throws ExecutionException
      */
-    public TreeResultsDTO<EmailSearchParams> getEmailCounts(Long dataSourceId, String account) throws ExecutionException {
+    public TreeResultsDTO<EmailSearchParams> getEmailCounts(Long dataSourceId, String folder) throws ExecutionException {
 
-        // track indeterminate types by key (account if account is null, account folders if account parameter is non-null)
+        String normalizedParent = getNormalizedPath(folder);
+
+        // a series of full folder paths prefixed and delimiter of '\' (no suffix)
         Set<String> indeterminateTypes = this.emailCounts.getEnqueued().stream()
-                .filter(evt -> (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId))
-                && (account == null || account.equals(evt.getAccount())))
-                .map(evt -> account == null ? evt.getAccount() : evt.getFolder())
+                .filter(evt -> (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId)))
+                .map(evt -> getNextSubFolder(normalizedParent, evt.getFolder()))
+                .filter(opt -> opt.isPresent())
+                .map(opt -> opt.get())
                 .collect(Collectors.toSet());
 
         String query = null;
         try {
             SleuthkitCase skCase = getCase();
-            Pair<String, String> sqlAndLike = getAccountFolderSql(skCase.getDatabaseType(), account, dataSourceId);
-            query = sqlAndLike.getLeft();
-            String accountLikeStr = sqlAndLike.getRight();
-            
-            try (CaseDbPreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query)) {
+            query = getFolderChildrenSql(skCase.getDatabaseType(), normalizedParent, dataSourceId);
 
+            try (CaseDbPreparedStatement preparedStatement = skCase.getCaseDbAccessManager().prepareSelect(query)) {
                 int paramIdx = 0;
-                if (account != null) {
-                    preparedStatement.setString(++paramIdx, accountLikeStr);
+                if (normalizedParent != null) {
+                    String likeStatement = SubDAOUtils.likeEscape(normalizedParent, ESCAPE_CHAR) + "%";
+                    String normalizedWithoutSlash = normalizedParent.endsWith(PATH_DELIMITER)
+                            ? normalizedParent.substring(0, normalizedParent.length() - 1)
+                            : normalizedParent;
+
+                    preparedStatement.setString(++paramIdx, likeStatement);
+                    preparedStatement.setString(++paramIdx, normalizedParent);
+                    preparedStatement.setString(++paramIdx, normalizedWithoutSlash);
+                    preparedStatement.setString(++paramIdx, likeStatement);
                 }
 
                 if (dataSourceId != null) {
                     preparedStatement.setLong(++paramIdx, dataSourceId);
                 }
 
-                // query for data
-                List<EmailCountsData> accumulatedData = new ArrayList<>();
+                // query for data and create tree data
+                List<TreeResultsDTO.TreeItemDTO<EmailSearchParams>> accumulatedData = new ArrayList<>();
                 skCase.getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
-                    accumulatedData.addAll(processCountsResultSet(resultSet, account));
+                    try {
+                        while (resultSet.next()) {
+                            boolean hasChildren = resultSet.getBoolean("has_children");
+                            String rsFolderSegment = resultSet.getString("folder");
+                            String rsPath;
+                            if (normalizedParent != null && rsFolderSegment != null) {
+                                // both the parent path and next folder segment are present
+                                rsPath = getNormalizedPath(normalizedParent + rsFolderSegment + PATH_DELIMITER);
+                            } else if (rsFolderSegment == null) {
+                                // the folder segment is not present
+                                rsPath = getNormalizedPath(normalizedParent);
+                            } else {
+                                // the normalized parent is not present but the folder segment is
+                                rsPath = getNormalizedPath(PATH_DELIMITER + rsFolderSegment + PATH_DELIMITER);
+                            }
+
+                            TreeDisplayCount treeDisplayCount = indeterminateTypes.contains(rsPath)
+                                    ? TreeDisplayCount.INDETERMINATE
+                                    : TreeResultsDTO.TreeDisplayCount.getDeterminate(resultSet.getLong("count"));
+
+                            accumulatedData.add(createEmailTreeItem(rsPath, getFolderDisplayName(rsFolderSegment), 
+                                    dataSourceId, treeDisplayCount, Optional.of(hasChildren)));
+                        }
+                    } catch (SQLException ex) {
+                        throw new IllegalStateException("A sql exception occurred.", ex);
+                    }
                 });
 
-                // create tree data from that
-                List<TreeResultsDTO.TreeItemDTO<EmailSearchParams>> emailParams = accumulatedData.stream()
-                        .map(entry -> {
-                            TreeDisplayCount treeDisplayCount = indeterminateTypes.contains(entry.getKey())
-                                    ? TreeDisplayCount.INDETERMINATE
-                                    : TreeResultsDTO.TreeDisplayCount.getDeterminate(entry.getCount());
-
-                            return createEmailTreeItem(entry.getAccount(), entry.getFolder(), entry.getDisplayName(), dataSourceId, treeDisplayCount);
-
-                        })
-                        .sorted((a,b) -> {
-                            boolean keyADown = StringUtils.isBlank((account == null ? a.getSearchParams().getAccount() : a.getSearchParams().getFolder()));
-                            boolean keyBDown = StringUtils.isBlank((account == null ? b.getSearchParams().getAccount() : b.getSearchParams().getFolder()));
-                                   
-                            if (keyADown != keyBDown) {
-                                return Boolean.compare(keyADown, keyBDown);
-                            } else {
-                                return a.getDisplayName().compareToIgnoreCase(b.getDisplayName());
-                            }
-                        })
-                        .collect(Collectors.toList());
-
                 // return results
-                return new TreeResultsDTO<>(emailParams);
+                return new TreeResultsDTO<>(accumulatedData);
             }
 
-        } catch (SQLException | NoCurrentCaseException | TskCoreException ex) {
+        } catch (SQLException | NoCurrentCaseException | TskCoreException | IllegalStateException ex) {
             throw new ExecutionException(
-                    MessageFormat.format("An error occurred while fetching email counts for account: {0} and sql: \n{1}",
-                            account == null ? "<null>" : account,
+                    MessageFormat.format("An error occurred while fetching email counts for folder: {0} and sql: \n{1}",
+                            normalizedParent == null ? "<null>" : normalizedParent,
                             query == null ? "<null>" : query),
                     ex);
-        }
-    }
-
-    /**
-     * Processes a result querying for email counts.
-     *
-     * @param resultSet The result set.
-     * @param account   The account for which results apply. If null, email
-     *                  counts data is returned for an account level.
-     *
-     * @return The email counts data.
-     */
-    private List<EmailCountsData> processCountsResultSet(ResultSet resultSet, String account) {
-        try {
-            if (account == null) {
-                Map<String, Set<String>> accountFolders = new HashMap<>();
-                Map<String, Long> counts = new HashMap<>();
-                while (resultSet.next()) {
-                    long count = resultSet.getLong("count");
-                    String resultFolder = resultSet.getString("folder");
-                    String resultAccount = resultSet.getString("account");
-                    if (StringUtils.isBlank(resultFolder) || StringUtils.isBlank(resultAccount)) {
-                        resultFolder = "";
-                        resultAccount = "";
-                    }
-
-                    counts.compute(resultAccount, (k, v) -> v == null ? count : v + count);
-                    accountFolders
-                            .computeIfAbsent(resultAccount, (k) -> new HashSet<>())
-                            .add(resultFolder);
-                }
-
-                return counts.entrySet().stream()
-                        .map(e -> {
-                            String thisAccount = e.getKey();
-                            String displayName = getAccountDisplayName(e.getKey(), accountFolders.get(e.getKey()));
-                            Long count = e.getValue();
-
-                            return new EmailCountsData(thisAccount, null, thisAccount, displayName, count);
-                        })
-                        .collect(Collectors.toList());
-            } else {
-
-                Map<String, Long> counts = new HashMap<>();
-                while (resultSet.next()) {
-                    long count = resultSet.getLong("count");
-                    String resultFolder = resultSet.getString("folder");
-                    if (StringUtils.isBlank(resultFolder) || StringUtils.isBlank(account)) {
-                        resultFolder = "";
-                    }
-                    
-                    counts.compute(resultFolder, (k, v) -> v == null ? count : v + count);
-                }
-                
-                return counts.entrySet().stream()
-                        .map(e -> new EmailCountsData(account, e.getKey(), e.getKey(), getFolderDisplayName(e.getKey()), e.getValue()))
-                        .collect(Collectors.toList());
-            }
-
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "An error occurred while fetching artifact type counts.", ex);
-            return Collections.emptyList();
         }
     }
 
@@ -503,16 +569,24 @@ public class EmailsDAO extends AbstractDAO {
     Set<? extends DAOEvent> handleIngestComplete() {
         return SubDAOUtils.getIngestCompleteEvents(
                 this.emailCounts,
-                (daoEvt, count) -> createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
-        );
+                (daoEvt, count) -> createEmailTreeItem(
+                        daoEvt.getFolder(),
+                        daoEvt.getDataSourceId(),
+                        count,
+                        Optional.empty()
+                ));
     }
 
     @Override
     Set<TreeEvent> shouldRefreshTree() {
         return SubDAOUtils.getRefreshEvents(
                 this.emailCounts,
-                (daoEvt, count) -> createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getFolder(), daoEvt.getDataSourceId(), count)
-        );
+                (daoEvt, count) -> createEmailTreeItem(
+                        daoEvt.getFolder(),
+                        daoEvt.getDataSourceId(),
+                        count,
+                        Optional.empty()
+                ));
     }
 
     @Override
@@ -523,16 +597,16 @@ public class EmailsDAO extends AbstractDAO {
             return Collections.emptySet();
         }
 
-        // maps email account => folder => data source id
-        Map<String, Map<String, Set<Long>>> emailMap = new HashMap<>();
+        // maps email folder => data source id
+        Map<String, Set<Long>> emailMap = new HashMap<>();
 
         for (BlackboardArtifact art : dataEvt.getArtifacts()) {
             try {
                 if (art.getType().getTypeID() == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
-                    Pair<String, String> accountFolder = getAccountAndFolder(art);
+                    BlackboardAttribute attr = art.getAttribute(BlackboardAttribute.Type.TSK_PATH);
+                    String folder = attr == null ? null : getNormalizedPath(attr.getValueString());
                     emailMap
-                            .computeIfAbsent(accountFolder.getLeft(), (k) -> new HashMap<>())
-                            .computeIfAbsent(accountFolder.getRight(), (k) -> new HashSet<>())
+                            .computeIfAbsent(folder, (k) -> new HashSet<>())
                             .add(art.getDataSourceObjectID());
                 }
             } catch (TskCoreException ex) {
@@ -545,33 +619,25 @@ public class EmailsDAO extends AbstractDAO {
             return Collections.emptySet();
         }
 
-        SubDAOUtils.invalidateKeys(this.searchParamsCache, (searchParams) -> {
-            Map<String, Set<Long>> folders = emailMap.get(searchParams.getAccount());
-            if (folders == null) {
-                return false;
-            }
-
-            Set<Long> dsIds = folders.get(searchParams.getFolder());
-            if (dsIds == null) {
-                return false;
-            }
-            return searchParams.getDataSourceId() == null || dsIds.contains(searchParams.getDataSourceId());
-        });
-
+        SubDAOUtils.invalidateKeys(this.searchParamsCache, (searchParams) -> Pair.of(searchParams.getFolder(), searchParams.getDataSourceId()), emailMap);
         List<EmailEvent> emailEvents = new ArrayList<>();
-        for (Entry<String, Map<String, Set<Long>>> accountEntry : emailMap.entrySet()) {
-            String acct = accountEntry.getKey();
-            for (Entry<String, Set<Long>> folderEntry : accountEntry.getValue().entrySet()) {
-                String folder = folderEntry.getKey();
-                for (Long dsObjId : folderEntry.getValue()) {
-                    emailEvents.add(new EmailEvent(dsObjId, acct, folder));
-                }
+        for (Entry<String, Set<Long>> folderEntry : emailMap.entrySet()) {
+            String folder = folderEntry.getKey();
+            for (Long dsObjId : folderEntry.getValue()) {
+                emailEvents.add(new EmailEvent(dsObjId, folder));
             }
         }
 
         Stream<TreeEvent> treeEvents = this.emailCounts.enqueueAll(emailEvents).stream()
-                .map(daoEvt -> new TreeEvent(createEmailTreeItem(daoEvt.getAccount(), daoEvt.getFolder(), daoEvt.getFolder(),
-                daoEvt.getDataSourceId(), TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false));
+                .map(daoEvt -> {
+                    return new TreeEvent(
+                            createEmailTreeItem(
+                                    daoEvt.getFolder(),
+                                    daoEvt.getDataSourceId(),
+                                    TreeResultsDTO.TreeDisplayCount.INDETERMINATE,
+                                    Optional.empty()),
+                            false);
+                });
 
         return Stream.of(emailEvents.stream(), treeEvents)
                 .flatMap(s -> s)
@@ -590,8 +656,8 @@ public class EmailsDAO extends AbstractDAO {
     private boolean isEmailInvalidating(EmailSearchParams parameters, DAOEvent evt) {
         if (evt instanceof EmailEvent) {
             EmailEvent emailEvt = (EmailEvent) evt;
-            return (Objects.equals(parameters.getAccount(), emailEvt.getAccount())
-                    && Objects.equals(parameters.getFolder(), emailEvt.getFolder())
+            // determines if sub folder or not.  if equivalent, will return present
+            return (getNextSubFolder(parameters.getFolder(), emailEvt.getFolder()).isPresent()
                     && (parameters.getDataSourceId() == null || Objects.equals(parameters.getDataSourceId(), emailEvt.getDataSourceId())));
         } else {
             return false;
@@ -600,55 +666,40 @@ public class EmailsDAO extends AbstractDAO {
     }
 
     /**
-     * Holds data for email counts.
+     * Tree item for emails.
      */
-    private static final class EmailCountsData {
+    public static class EmailTreeItem extends TreeItemDTO<EmailSearchParams> {
 
-        private final String displayName;
-        private final String account;
-        private final String folder;
-        private final String key;
-        private final Long count;
+        private final Optional<Boolean> hasChildren;
 
         /**
-         * Main constructor.
+         * Constructor.
          *
-         * @param account     The relevant email account.
-         * @param folder      The relevant email folder.
-         * @param key         The key when querying for what should be
-         *                    indeterminate folders (account if no account
-         *                    parameter; otherwise, folder).
-         * @param displayName The display name.
-         * @param count
+         * @param normalizedPath The normalized path.
+         * @param displayName    The display name.
+         * @param dataSourceId   The data source id.
+         * @param count          The tree count.
+         * @param hasChildren    True if has children. False if no children.
+         *                       Empty if unknown.
          */
-        public EmailCountsData(String account, String folder, String key, String displayName, Long count) {
-            this.displayName = displayName;
-            this.account = account;
-            this.folder = folder;
-            this.key = key;
-            this.count = count;
+        EmailTreeItem(String normalizedPath, String displayName, Long dataSourceId, TreeDisplayCount count, Optional<Boolean> hasChildren) {
+            super(
+                    EmailSearchParams.getTypeId(),
+                    new EmailSearchParams(dataSourceId, normalizedPath),
+                    // path for id to lower case so case insensitive
+                    normalizedPath == null ? 0 : normalizedPath.toLowerCase(),
+                    displayName,
+                    count
+            );
+            this.hasChildren = hasChildren;
         }
 
-        public String getDisplayName() {
-            return displayName;
+        /**
+         * @return True if has children. False if no children. Empty if unknown.
+         */
+        public Optional<Boolean> getHasChildren() {
+            return hasChildren;
         }
-
-        public String getAccount() {
-            return account;
-        }
-
-        public String getFolder() {
-            return folder;
-        }
-
-        public String getKey() {
-            return key;
-        }
-
-        public Long getCount() {
-            return count;
-        }
-
     }
 
     /**

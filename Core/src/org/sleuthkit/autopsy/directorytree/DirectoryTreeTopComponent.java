@@ -32,7 +32,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -50,7 +49,6 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.explorer.view.BeanTreeView;
@@ -90,8 +88,7 @@ import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
-import org.sleuthkit.autopsy.mainui.datamodel.EmailsDAO;
-import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetFactory;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
@@ -1555,23 +1552,36 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     private Node getEmailNode(Children typesChildren, BlackboardArtifact art) {
         Node emailMsgRootNode = typesChildren.findChild(art.getArtifactTypeName());
-        Children emailMsgRootChilds = emailMsgRootNode.getChildren();
-        Pair<String, String> parsedPath = null;
+        String path = null;
         try {
             List<BlackboardAttribute> attributes = art.getAttributes();
-            for (BlackboardAttribute att : attributes) {
-                int typeId = att.getAttributeType().getTypeID();
+            for (BlackboardAttribute attr : attributes) {
+                int typeId = attr.getAttributeType().getTypeID();
                 if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()) {
-                    parsedPath = EmailsDAO.getPathAccountFolder(att.getValueString());
+                    path = attr.getValueString();
                     break;
                 }
             }
-            if (parsedPath == null) {
-                return null;
+            
+            Node parentNode = null;
+            Node[] childNodes = emailMsgRootNode.getChildren().getNodes(true);
+            while (childNodes != null) {
+                boolean recursing = false;
+                for (Node child : childNodes) {
+                    if (MainDAO.getInstance().getEmailsDAO().getNextSubFolder(child.getName(), path).isPresent()) {
+                        recursing = true;
+                        parentNode = child;
+                        childNodes = child.getChildren().getNodes(true);
+                        break;
+                    }
+                }
+                
+                if (!recursing) {
+                    break;
+                }
             }
-            Node defaultNode = emailMsgRootChilds.findChild(parsedPath.getLeft());
-            Children defaultChildren = defaultNode.getChildren();
-            return defaultChildren.findChild(parsedPath.getRight());
+            
+            return parentNode;
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;

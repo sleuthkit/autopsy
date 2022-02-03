@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
@@ -148,11 +149,10 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
     protected void updateNodeData(TreeItemDTO<? extends T> item) {
         synchronized (resultsUpdateLock) {
             TreeItemDTO<? extends T> cachedTreeItem = this.idMapping.get(item.getId());
+            // add to id mapping
+            this.idMapping.put(item.getId(), item);
+
             if (cachedTreeItem == null) {
-
-                // add to id mapping
-                this.idMapping.put(item.getId(), item);
-
                 // insert in sorted position
                 int insertIndex = 0;
                 for (; insertIndex < this.curItemsList.size(); insertIndex++) {
@@ -162,6 +162,14 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
                     }
                 }
                 this.curItemsList.add(insertIndex, item);
+            } else {
+                for (int i = 0; i < this.curItemsList.size(); i++) {
+                    TreeItemDTO<? extends T> listItem = this.curItemsList.get(i);
+                    if (Objects.equals(listItem.getId(), item.getId())) {
+                        this.curItemsList.set(i, item);
+                        break;
+                    }
+                }
             }
         }
         this.refresh(false);

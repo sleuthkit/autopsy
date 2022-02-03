@@ -1312,9 +1312,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
-                    MessageFormat.format("There was an error displaying search results for [data source id: {0}, account: {1}, folder: {2}]",
+                    MessageFormat.format("There was an error displaying search results for [data source id: {0}, folder: {1}]",
                             searchParams.getDataSourceId() == null ? "<null>" : searchParams.getDataSourceId(),
-                            searchParams.getAccount() == null ? "<null>" : searchParams.getAccount(),
                             searchParams.getFolder() == null ? "<null>" : searchParams.getFolder()),
                     ex);
         }
