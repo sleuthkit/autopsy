@@ -242,13 +242,13 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
             callLogViewData.setFromContactNameList(fromContactNames);
             callLogViewData.setToContactNameList(toContactNames);
+
+            String hostName = Optional.ofNullable(Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHostByDataSource((DataSource) dataSource))
+                    .map(h -> h.getName())
+                    .orElse(null);
+
+            callLogViewData.setHostName(hostName);
         }
-
-        String hostName = Optional.ofNullable(Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHostByDataSource((DataSource) dataSource))
-                .map(h -> h.getName())
-                .orElse(null);
-
-        callLogViewData.setHostName(hostName);
 
         return callLogViewData;
     }

@@ -319,7 +319,7 @@ public class GeneralPurposeArtifactViewer extends AbstractArtifactDetailsPanel i
                 }
             }
             addHeader(Bundle.GeneralPurposeArtifactViewer_details_sourceHeader());
-            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_host(), hostName);
+            addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_host(), StringUtils.defaultString(hostName));
             addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_dataSource(), dataSourceName);
             addNameValueRow(Bundle.GeneralPurposeArtifactViewer_details_file(), sourceFilePath);
             // add veritcal glue at the end
