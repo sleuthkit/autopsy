@@ -117,11 +117,14 @@ class OtherOccurrencesNodeWorker extends SwingWorker<OtherOccurrencesData, Void>
             }
             int totalCount = 0;
             Set<String> dataSources = new HashSet<>();
+            String currentCaseName = Case.getCurrentCase().getName();
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {
                 for (NodeData nodeData : OtherOccurrences.getCorrelatedInstances(deviceId, dataSourceName, corAttr).values()) {
                     try {
-                        dataSources.add(OtherOccurrences.makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
-                        caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
+                        if(!currentCaseName.equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                            dataSources.add(OtherOccurrences.makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
+                            caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
+                        }
                     } catch (CentralRepoException ex) {
                         logger.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName(), ex);
                     }

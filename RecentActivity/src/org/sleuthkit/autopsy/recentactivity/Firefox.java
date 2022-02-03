@@ -449,9 +449,12 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
 
                 if (checkColumn == true) {
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                            RecentActivityExtracterModuleFactory.getModuleName(),
-                            (Long.valueOf(result.get("creationTime").toString())))); //NON-NLS
+                    String value = result.get("creationTime").toString();
+                    if(value != null && !value.isEmpty()) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                                RecentActivityExtracterModuleFactory.getModuleName(),
+                                (Long.valueOf(result.get("creationTime").toString())))); //NON-NLS
+                    }
                 }
                 String domain = extractDomain(host);
                 if (domain != null && domain.isEmpty() == false) {

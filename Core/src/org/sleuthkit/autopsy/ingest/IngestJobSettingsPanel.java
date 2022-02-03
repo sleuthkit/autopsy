@@ -644,7 +644,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                     if (factory.isDataSourceIngestModuleFactory()) {
                         String uniqueName = FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + "-"
                                 + factory.getModuleDisplayName() + "-"
-                                + IngestModuleInfo.IngestModuleType.DATA_SOURCE_LEVEL.toString() + "-"
                                 + factory.getModuleVersionNumber();
                         for (IngestModuleInfo ingestModuleInfo : ingestJob.getIngestModuleInfo()) {
                             boolean sameModule = ingestModuleInfo.getUniqueName().equals(uniqueName);
@@ -659,7 +658,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                     if (factory.isFileIngestModuleFactory()) {
                         String uniqueName = FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + "-"
                                 + factory.getModuleDisplayName() + "-"
-                                + IngestModuleInfo.IngestModuleType.FILE_LEVEL.toString() + "-"
                                 + factory.getModuleVersionNumber();
                         for (IngestModuleInfo ingestModuleInfo : ingestJob.getIngestModuleInfo()) {
                             boolean sameModule = ingestModuleInfo.getUniqueName().equals(uniqueName);
