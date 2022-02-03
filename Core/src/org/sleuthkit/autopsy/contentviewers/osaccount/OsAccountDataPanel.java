@@ -181,7 +181,8 @@ public class OsAccountDataPanel extends JPanel {
         "OsAccountDataPanel_basic_address=Address",
         "OsAccountDataPanel_basic_admin=Administrator",
         "OsAccountDataPanel_basic_type=Type",
-        "OsAccountDataPanel_basic_creationDate=Creation Date",})
+        "OsAccountDataPanel_basic_creationDate=Creation Date",
+        "OsAccountDataPanel_basic_objId=Object ID"})
 
     /**
      * Returns the data for the Basic Properties section of the panel.
@@ -211,6 +212,8 @@ public class OsAccountDataPanel extends JPanel {
 
         Optional<Long> crTime = account.getCreationTime();
         data.addData(Bundle.OsAccountDataPanel_basic_creationDate(), crTime.isPresent() ? TimeZoneUtils.getFormattedTime(crTime.get()) : "");
+        
+        data.addData(Bundle.OsAccountDataPanel_basic_objId(), Long.toString(account.getId()));
 
         section.addSectionData(data);
         return section;

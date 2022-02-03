@@ -148,7 +148,7 @@ final class DataSourceSummaryNode extends AbstractNode {
             "DataSourceSummaryNode.column.status.header=Ingest Status",
             "DataSourceSummaryNode.column.type.header=Type",
             "DataSourceSummaryNode.column.files.header=Files",
-            "DataSourceSummaryNode.column.results.header=Results",
+            "DataSourceSummaryNode.column.results.header=Artifacts",
             "DataSourceSummaryNode.column.tags.header=Tags"})
         @Override
         protected Sheet createSheet() {
