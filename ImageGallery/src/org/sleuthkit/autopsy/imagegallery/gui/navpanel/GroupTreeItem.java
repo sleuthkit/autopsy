@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +40,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
  */
 class GroupTreeItem extends TreeItem<GroupTreeNode> {
 
-    static final Executor treeInsertTread = Executors.newSingleThreadExecutor();
+    static final Executor treeInsertTread = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("GroupTreeItem-%d").build());
 
     GroupTreeItem getTreeItemForGroup(DrawableGroup grouping) {
         if (Objects.equals(getValue().getGroup(), grouping)) {
