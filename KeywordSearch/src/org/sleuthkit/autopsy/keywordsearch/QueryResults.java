@@ -145,13 +145,7 @@ class QueryResults {
     void process(SwingWorker<?, ?> worker, boolean notifyInbox, boolean saveResults, Long ingestJobId) {
         final Collection<BlackboardArtifact> hitArtifacts = new ArrayList<>();
         
-        /*
-         * Reduce the hits for this keyword to one hit per text source object so
-         * that only one hit artifact is generated per text source object, no
-         * matter how many times the keyword was actually found.
-         */
         int notificationCount = 0;
-
         for (final Keyword keyword : getKeywords()) {
             /*
              * Cancellation check.
@@ -160,7 +154,12 @@ class QueryResults {
                 logger.log(Level.INFO, "Processing cancelled, exiting before processing search term {0}", keyword.getSearchTerm()); //NON-NLS
                 return;
             }
-
+            
+            /*
+             * Reduce the hits for this keyword to one hit per text source
+             * object so that only one hit artifact is generated per text source
+             * object, no matter how many times the keyword was actually found.
+             */
             for (KeywordHit hit : getOneHitPerTextSourceObject(keyword)) {
                 /*
                  * Get a snippet (preview) for the hit. Regex queries always
