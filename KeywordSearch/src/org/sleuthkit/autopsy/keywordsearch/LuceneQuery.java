@@ -236,28 +236,36 @@ class LuceneQuery implements KeywordSearchQuery {
     public BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
+        String configuration;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
-        if (StringUtils.isNotBlank(listName)) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
-        }
 
         if (originalKeyword != null) {
+            configuration = originalKeyword.getOriginalTerm();
             BlackboardAttribute.ATTRIBUTE_TYPE selType = originalKeyword.getArtifactAttributeType();
             if (selType != null) {
                 attributes.add(new BlackboardAttribute(selType, MODULE_NAME, foundKeyword.getSearchTerm()));
             }
 
             if (originalKeyword.searchTermIsWholeWord()) {
+                configuration += " (" + TskData.KeywordSearchQueryType.LITERAL.name() + ")";
                 attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.LITERAL.getType()));
             } else {
+                configuration += " (" + TskData.KeywordSearchQueryType.SUBSTRING.name() + ")";
                 attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.SUBSTRING.getType()));
             }
+        } else {
+            configuration = foundKeyword.getOriginalTerm();
         }
 
+        if (StringUtils.isNotBlank(listName)) {
+            configuration += " - " + listName;
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+        }
+        
         hit.getArtifactID().ifPresent(artifactID
                 -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
@@ -265,7 +273,7 @@ class LuceneQuery implements KeywordSearchQuery {
         try {
             return content.newAnalysisResult(
                     BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_LIKELY_NOTABLE, 
-                    null, listName, null, 
+                    null, configuration, null, 
                     attributes)
                     .getAnalysisResult();
         } catch (TskCoreException e) {
