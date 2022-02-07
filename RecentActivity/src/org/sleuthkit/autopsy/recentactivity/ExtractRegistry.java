@@ -962,7 +962,7 @@ class ExtractRegistry extends Extract {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, "Windows"));
                 if (results.isEmpty()) {
-                    newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
+                    postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
                 } else if(results.get(0).getAttribute(BlackboardAttribute.Type.TSK_PROG_NAME) == null){
                     results.get(0).addAttributes(bbattributes);
                 }
