@@ -43,6 +43,8 @@ public final class ExtractAction extends AbstractAction {
         }
         return instance;
     }
+    
+    private final ExtractActionHelper extractor = new ExtractActionHelper();
 
     /**
      * Private constructor for the action.
@@ -61,7 +63,6 @@ public final class ExtractAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         Lookup lookup = Utilities.actionsGlobalContext();
         Collection<? extends AbstractFile> selectedFiles =lookup.lookupAll(AbstractFile.class);
-        ExtractActionHelper extractor = new ExtractActionHelper();
         extractor.extract(e, selectedFiles);
 
     }
