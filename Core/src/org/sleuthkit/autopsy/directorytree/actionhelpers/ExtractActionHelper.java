@@ -36,6 +36,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
@@ -68,12 +69,7 @@ public class ExtractActionHelper {
         if (selectedFiles.size() > 1) {
             extractFiles(event, selectedFiles);
         } else if (selectedFiles.size() == 1) {
-            AbstractFile source = selectedFiles.iterator().next();
-            if (source.isDir()) {
-                extractFiles(event, selectedFiles);
-            } else {
-                extractFile(event, selectedFiles.iterator().next());
-            }
+            extractFile(event, selectedFiles.iterator().next());
         }
     }
 
@@ -83,7 +79,11 @@ public class ExtractActionHelper {
      * @param event
      * @param selectedFile Selected file
      */
-    @NbBundle.Messages({"ExtractActionHelper.noOpenCase.errMsg=No open case available."})
+    @NbBundle.Messages({"ExtractActionHelper.noOpenCase.errMsg=No open case available.",
+        "ExtractActionHelper.extractOverwrite.title=Export to csv file",
+        "# {0} - fileName",
+        "ExtractActionHelper.extractOverwrite.msg=A file already exists at {0}.  Do you want to overwrite the existing file?"
+    })
     private void extractFile(ActionEvent event, AbstractFile selectedFile) {
         Case openCase;
         try {
@@ -98,7 +98,19 @@ public class ExtractActionHelper {
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
         fileChooser.setSelectedFile(new File(FileUtil.escapeFileName(selectedFile.getName())));
         if (fileChooser.showSaveDialog((Component) event.getSource()) == JFileChooser.APPROVE_OPTION) {
-            updateExportDirectory(fileChooser.getSelectedFile().getParent(), openCase);
+            File saveLocation = fileChooser.getSelectedFile();
+            if (saveLocation.exists()) {
+                if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+                        Bundle.ExtractActionHelper_extractOverwrite_msg(saveLocation.getPath()),
+                        Bundle.ExtractActionHelper_extractOverwrite_title(),
+                        JOptionPane.YES_NO_OPTION)) {
+                } else {
+                    return;
+                }
+            }
+
+            String exportDirectory = saveLocation.getParent();
+            updateExportDirectory(exportDirectory, openCase);
 
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
