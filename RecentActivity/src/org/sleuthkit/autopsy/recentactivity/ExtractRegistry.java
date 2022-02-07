@@ -533,6 +533,7 @@ class ExtractRegistry extends Extract {
     private boolean parseAutopsyPluginOutput(String regFilePath, AbstractFile regFile) {
         FileInputStream fstream = null;
         List<BlackboardArtifact> newArtifacts = new ArrayList<>();
+        String parentModuleName = RecentActivityExtracterModuleFactory.getModuleName();
         try {
             // Read the file in and create a Document and elements
             File regfile = new File(regFilePath);
@@ -588,7 +589,6 @@ class ExtractRegistry extends Extract {
 
                 Element artroot = (Element) artroots.item(0);
                 NodeList myartlist = artroot.getChildNodes();
-                String parentModuleName = RecentActivityExtracterModuleFactory.getModuleName();
 
                 // If all artifact nodes should really go under one Blackboard artifact, need to process it differently
                 switch (dataType) {
@@ -930,7 +930,7 @@ class ExtractRegistry extends Extract {
                         }
                         break;
                 }
-            } // for
+            } // for                  
             return true;
         } catch (FileNotFoundException ex) {
             logger.log(Level.WARNING, String.format("Error finding the registry file: %s", regFilePath), ex); //NON-NLS
@@ -950,6 +950,24 @@ class ExtractRegistry extends Extract {
 
             if (!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(newArtifacts);
+            }
+            
+            // Test to see if a TSK_OS_INFO object was created. If one was not
+            // created, create a default Windows OS_INFO artifact.
+            // If a TSK_OS_INFO object was create, make sure that the TSK_PROG_NAME
+            // attribute was added. If a PROG_NAME is not present, add a default
+            // name and set to "Windows"
+            try{
+                ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, "Windows"));
+                if (results.isEmpty()) {
+                    newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
+                } else if(results.get(0).getAttribute(BlackboardAttribute.Type.TSK_PROG_NAME) == null){
+                    results.get(0).addAttributes(bbattributes);
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to create default OS_INFO artifact", ex); //NON-NLS
             }
         }
         return false;
