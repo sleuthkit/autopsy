@@ -101,19 +101,7 @@ public class ExtractActionHelper {
         // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
         fileChooser.setSelectedFile(new File(FileUtil.escapeFileName(selectedFile.getName())));
         if (fileChooser.showSaveDialog((Component) event.getSource()) == JFileChooser.APPROVE_OPTION) {
-            File saveLocation = fileChooser.getSelectedFile();
-//            if (saveLocation.exists()) {
-//                if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
-//                        Bundle.ExtractActionHelper_extractOverwrite_msg(saveLocation.getPath()),
-//                        Bundle.ExtractActionHelper_extractOverwrite_title(),
-//                        JOptionPane.YES_NO_OPTION)) {
-//                } else {
-//                    return;
-//                }
-//            }
-
-            String exportDirectory = saveLocation.getParent();
-            updateExportDirectory(exportDirectory, openCase);
+            updateExportDirectory(fileChooser.getSelectedFile().getParent(), openCase);
 
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
             fileExtractionTasks.add(new FileExtractionTask(selectedFile, fileChooser.getSelectedFile()));
