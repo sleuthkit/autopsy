@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.directorytree.actionhelpers;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,15 +38,16 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Helper class for methods needed by actions which extract files.
@@ -53,7 +56,7 @@ public class ExtractActionHelper {
 
     private final Logger logger = Logger.getLogger(ExtractActionHelper.class.getName());
     private String userDefinedExportPath;
-    
+
     private final JFileChooserFactory extractFileHelper = new JFileChooserFactory();
     private final JFileChooserFactory extractFilesHelper = new JFileChooserFactory();
 
@@ -99,15 +102,15 @@ public class ExtractActionHelper {
         fileChooser.setSelectedFile(new File(FileUtil.escapeFileName(selectedFile.getName())));
         if (fileChooser.showSaveDialog((Component) event.getSource()) == JFileChooser.APPROVE_OPTION) {
             File saveLocation = fileChooser.getSelectedFile();
-            if (saveLocation.exists()) {
-                if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
-                        Bundle.ExtractActionHelper_extractOverwrite_msg(saveLocation.getPath()),
-                        Bundle.ExtractActionHelper_extractOverwrite_title(),
-                        JOptionPane.YES_NO_OPTION)) {
-                } else {
-                    return;
-                }
-            }
+//            if (saveLocation.exists()) {
+//                if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
+//                        Bundle.ExtractActionHelper_extractOverwrite_msg(saveLocation.getPath()),
+//                        Bundle.ExtractActionHelper_extractOverwrite_title(),
+//                        JOptionPane.YES_NO_OPTION)) {
+//                } else {
+//                    return;
+//                }
+//            }
 
             String exportDirectory = saveLocation.getParent();
             updateExportDirectory(exportDirectory, openCase);
@@ -282,6 +285,62 @@ public class ExtractActionHelper {
     }
 
     /**
+     * A file content extraction visitor that handles for the UI designed to
+     * handle file name conflicts by appending the object id to the file name.
+     */
+    private static class UIExtractionVisitor<T, V> extends ExtractFscContentVisitor<T, V> {
+
+        /**
+         * @param file     The TSK content file.
+         * @param dest     The disk location where the content will be written.
+         * @param progress progress bar handle to update, if available. null
+         *                 otherwise
+         * @param worker   the swing worker background thread the process runs
+         *                 within, or null, if in the main thread, used to
+         *                 handle task cancellation
+         * @param source   true if source file
+         */
+        UIExtractionVisitor(File dest, ProgressHandle progress, SwingWorker<T, V> worker, boolean source) {
+            super(dest, progress, worker, source);
+        }
+
+        /**
+         * Writes content and children to disk.
+         *
+         * @param content  The root content.
+         * @param file     The TSK content file.
+         * @param dest     The disk location where the content will be written.
+         * @param progress progress bar handle to update, if available. null
+         *                 otherwise
+         * @param worker   the swing worker background thread the process runs
+         *                 within, or null, if in the main thread, used to
+         *                 handle task cancellation
+         * @param source   true if source file
+         */
+        static <T,V> void writeContent(Content content, File dest, ProgressHandle progress, SwingWorker<T, V> worker) {
+            content.accept(new UIExtractionVisitor<>(dest, progress, worker, true));
+        }
+        
+        
+        @Override
+        protected void writeFile(Content file, File dest, ProgressHandle progress, SwingWorker<T, V> worker, boolean source) throws IOException {
+            File destFile;
+            if (dest.exists()) {
+                String parent = dest.getParent();
+                String fileName = dest.getName();
+                String objIdFileName = MessageFormat.format("{0}-{1}", file.getId(), fileName);
+                destFile = new File(parent, objIdFileName);
+            } else {
+                destFile = dest;
+            }
+            
+            super.writeFile(file, destFile, progress, worker, source);   
+        }
+
+        
+    }
+
+    /**
      * Thread that does the actual extraction work
      */
     private class FileExtracter extends SwingWorker<Object, Void> {
@@ -333,8 +392,7 @@ public class ExtractActionHelper {
             // Do the extraction tasks.
             for (FileExtractionTask task : this.extractionTasks) {
                 progress.progress(Bundle.ExtractActionHelper_progress_fileExtracting(task.destination.getName()));
-
-                ContentUtils.ExtractFscContentVisitor.extract(task.source, task.destination, null, this);
+                UIExtractionVisitor.writeContent(task.source, task.destination, null, this);
             }
 
             return null;
