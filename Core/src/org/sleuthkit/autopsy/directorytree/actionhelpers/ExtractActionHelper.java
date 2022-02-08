@@ -325,6 +325,12 @@ public class ExtractActionHelper {
             super.writeFile(file, destFile, progress, worker, source);   
         }
 
+        @Override
+        protected ExtractFscContentVisitor<T, V> getChildVisitor(File childFile, ProgressHandle progress, SwingWorker<T, V> worker) {
+            return new UIExtractionVisitor(childFile, progress, worker, false);
+        }
+
+        
         
     }
 

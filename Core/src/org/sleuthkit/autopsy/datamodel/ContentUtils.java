@@ -477,6 +477,20 @@ public final class ContentUtils {
                     + content.getName();
             return new java.io.File(path);
         }
+        
+        /**
+         * Returns a visitor to visit any child content.
+         * @param childFile     The disk location where the content will be written.
+         * @param progress progress bar handle to update, if available. null
+         *                 otherwise
+         * @param worker   the swing worker background thread the process runs
+         *                 within, or null, if in the main thread, used to
+         *                 handle task cancellation
+         * @return 
+         */
+        protected ExtractFscContentVisitor<T, V> getChildVisitor(java.io.File childFile, ProgressHandle progress, SwingWorker<T, V> worker) {
+            return new ExtractFscContentVisitor<>(childFile, progress, worker, false);
+        }
 
         public Void visitDir(AbstractFile dir) {
 
@@ -493,8 +507,7 @@ public final class ContentUtils {
                 for (Content child : dir.getChildren()) {
                     if (child instanceof AbstractFile) { //ensure the directory's artifact children are ignored
                         java.io.File childFile = getFsContentDest(child);
-                        ExtractFscContentVisitor<T, V> childVisitor
-                                = new ExtractFscContentVisitor<>(childFile, progress, worker, false);
+                        ExtractFscContentVisitor<T, V> childVisitor = getChildVisitor(childFile, progress, worker);
                         // If this is the source directory of an extract it
                         // will have a progress and worker, and will keep track
                         // of the progress bar's progress
