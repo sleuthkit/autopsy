@@ -199,7 +199,7 @@ public class FileSystemDAO extends AbstractDAO {
             contentForTable.addAll(FileSystemColumnUtils.getDisplayableContentForTable(content));
         }
 
-        return fetchContentForTable(cacheKey, contentForTable, parentName, parentContent instanceof DataSource ? (DataSource)parentContent : null);
+        return fetchContentForTable(cacheKey, contentForTable, parentName, parentContent instanceof DataSource ? (DataSource) parentContent : null);
     }
 
     private BaseSearchResultsDTO fetchContentForTableFromHost(SearchParams<FileSystemHostSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -567,7 +567,8 @@ public class FileSystemDAO extends AbstractDAO {
                 + "        FROM tsk_image_info image_info \n"
                 + "        INNER JOIN tsk_image_names image_names\n"
                 + "        ON image_info.obj_id = image_names.obj_id\n"
-                + "        WHERE image_names.obj_id = o2.obj_id)\n"
+                + "        WHERE image_names.obj_id = o2.obj_id\n"
+                + "        LIMIT 1)\n"
                 + "      WHEN o2.object_type = " + TskData.ObjectType.VOL.getObjectType() + " THEN (SELECT ('vol ' || v.addr || ' (' || " + volumeDescValue + " || ':' || v.start || '-' || (v.start + v.length) || ')') AS name FROM tsk_vs_parts v WHERE v.obj_id = o2.obj_id LIMIT 1)\n"
                 + "      WHEN o2.object_type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + " THEN (SELECT name FROM tsk_files f WHERE f.obj_id = o2.obj_id LIMIT 1)\n"
                 + "      WHEN o2.object_type = " + TskData.ObjectType.POOL.getObjectType() + " THEN \n"
@@ -578,7 +579,8 @@ public class FileSystemDAO extends AbstractDAO {
                 + "            ELSE 'Unsupported'\n"
                 + "          END) AS name\n"
                 + "        FROM tsk_pool_info p\n"
-                + "        WHERE p.obj_id = o2.obj_id)\n"
+                + "        WHERE p.obj_id = o2.obj_id\n"
+                + "        LIMIT 1)\n"
                 + "      ELSE NULL\n"
                 + "    END) AS name\n"
                 + "    -- determine icon to display in table based on the content\n"
@@ -593,6 +595,7 @@ public class FileSystemDAO extends AbstractDAO {
                 + "            FROM data_source_info AS ds\n"
                 + "            LEFT JOIN tsk_image_info AS img ON ds.obj_id = img.obj_id\n"
                 + "            WHERE ds.obj_id = o2.obj_id\n"
+                + "            LIMIT 1"
                 + "          )\n"
                 + "      WHEN o2.object_type = " + TskData.ObjectType.ARTIFACT.getObjectType() + " THEN " + TreeFileType.ARTIFACT.getId() + "\n"
                 + "      WHEN o2.object_type = " + TskData.ObjectType.VOL.getObjectType() + " THEN " + TreeFileType.VOLUME.getId() + "\n"
@@ -639,7 +642,7 @@ public class FileSystemDAO extends AbstractDAO {
                 + "                -- ignore . and .. directories\n"
                 + "                (o2.file_name IS NULL OR o2.file_name NOT IN ('.', '..')) AND \n"
                 + "                -- taken from LocalDirectory.isRoot determining if file is root by seeing if parent is volume system\n"
-                + "                ((o2.file_type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR.getFileType() + " AND (SELECT o3.type FROM tsk_objects o3 WHERE o3.obj_id = o2.par_obj_id) = 1)\n"
+                + "                ((o2.file_type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL_DIR.getFileType() + " AND (SELECT o3.type FROM tsk_objects o3 WHERE o3.obj_id = o2.par_obj_id LIMIT 1) = 1)\n"
                 + "                -- taken from FsContent.isRoot determining if file system root file is this\n"
                 + "                OR ((o2.file_type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + " AND o2.root_inum = o2.meta_addr))) \n"
                 + "              THEN 1 \n"
@@ -711,30 +714,35 @@ public class FileSystemDAO extends AbstractDAO {
 
         List<TreeItemRecord> treeItems = new ArrayList<>();
         List<Long> transparentParents = new ArrayList<>();
-        skCase.getCaseDbAccessManager().select(sql, (rs) -> {
-            try {
-                while (rs.next()) {
-                    // if transparent parent, the node itself shouldn't be shown but it's children should
-                    if (rs.getByte("is_transparent_parent") > 0) {
-                        transparentParents.add(rs.getLong("obj_id"));
-                    } else {
-                        // otherwise add the item
-                        short metaTypeNum = rs.getShort("meta_type");
-                        TSK_FS_META_TYPE_ENUM metaType = rs.wasNull() ? null : TSK_FS_META_TYPE_ENUM.valueOf(metaTypeNum);
+        try {
+            skCase.getCaseDbAccessManager().select(sql, (rs) -> {
+                try {
+                    while (rs.next()) {
+                        // if transparent parent, the node itself shouldn't be shown but it's children should
+                        if (rs.getByte("is_transparent_parent") > 0) {
+                            transparentParents.add(rs.getLong("obj_id"));
+                        } else {
+                            // otherwise add the item
+                            short metaTypeNum = rs.getShort("meta_type");
+                            TSK_FS_META_TYPE_ENUM metaType = rs.wasNull() ? null : TSK_FS_META_TYPE_ENUM.valueOf(metaTypeNum);
 
-                        treeItems.add(new TreeItemRecord(
-                                rs.getLong("par_obj_id"),
-                                rs.getLong("obj_id"),
-                                rs.getString("name"),
-                                TreeFileType.valueOf(rs.getShort("tree_type")),
-                                metaType
-                        ));
+                            treeItems.add(new TreeItemRecord(
+                                    rs.getLong("par_obj_id"),
+                                    rs.getLong("obj_id"),
+                                    rs.getString("name"),
+                                    TreeFileType.valueOf(rs.getShort("tree_type")),
+                                    metaType
+                            ));
+                        }
                     }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "There was an error fetching results for query:\n" + sql, ex);
                 }
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, "There was an error fetching results for query:\n" + sql, ex);
-            }
-        });
+            });
+        } catch (TskCoreException ex) {
+            // catch and rethrow exception to capture sql used
+            throw new TskCoreException("Error occurred while running query:\n" + sql, ex);
+        }
 
         // if there are items that shouldn't be shown directly, but the children should, fetch and add those
         if (!transparentParents.isEmpty()) {
@@ -766,8 +774,7 @@ public class FileSystemDAO extends AbstractDAO {
                 .map(evt -> ((FileSystemTreeEvent) evt).getParentContentId())
                 .filter(contentId -> contentId != null)
                 .collect(Collectors.toSet());
-        
-        
+
         List<FileSystemTreeItem> toRet = new ArrayList<>();
 
         for (TreeItemRecord record : this.treeItemCache.get(whereQuery, () -> fetchRecords(whereQuery, hideKnown, hideSlack))) {
@@ -793,7 +800,7 @@ public class FileSystemDAO extends AbstractDAO {
                     break;
                 }
             }
-            
+
             TreeDisplayCount displayCount;
             if (!fetchCount) {
                 displayCount = TreeDisplayCount.NOT_SHOWN;
