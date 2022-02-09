@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +37,7 @@ import javax.swing.SwingWorker;
  */
 public class SwingWorkerSequentialExecutor {
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(1);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(1, new ThreadFactoryBuilder().setNameFormat("SwingWorkerSequentialExecutor-%d").build());
     private List<? extends SwingWorker<?, ?>> workers = Collections.emptyList();
     private List<Future<?>> futures = Collections.emptyList();
 

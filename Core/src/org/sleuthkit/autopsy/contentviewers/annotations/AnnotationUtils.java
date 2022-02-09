@@ -219,7 +219,9 @@ public class AnnotationUtils {
 
         // if artifact is a hashset hit or interesting file and has a non-blank comment
         if ((BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() == bba.getArtifactTypeID()
-                || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID() || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID() == bba.getArtifactTypeID())
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() == bba.getArtifactTypeID() 
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bba.getArtifactTypeID() 
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID() == bba.getArtifactTypeID())
                 && (hasTskComment(bba))) {
 
             boolean filesetRendered = appendEntries(parent, ARTIFACT_COMMENT_CONFIG, Arrays.asList(bba), false, !contentRendered);
@@ -339,7 +341,7 @@ public class AnnotationUtils {
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             return tskCase.getBlackboardArtifacts(type, sourceFile.getId()).stream()
-                    .filter((bba) -> hasTskComment(bba))
+                    .filter((bba) -> hasTskComment(bba) || hasTskSet(bba))
                     .collect(Collectors.toList());
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
@@ -358,6 +360,17 @@ public class AnnotationUtils {
      */
     private static boolean hasTskComment(BlackboardArtifact artifact) {
         return StringUtils.isNotBlank(tryGetAttribute(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT));
+    }
+    
+    /**
+     * Returns true if the artifact contains a non-blank TSK_SET_NAME attribute.
+     *
+     * @param artifact The artifact to check.
+     *
+     * @return True if it has a non-blank TSK_SET_NAME.
+     */
+    private static boolean hasTskSet(BlackboardArtifact artifact) {
+        return StringUtils.isNotBlank(tryGetAttribute(artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
     }
 
     /**

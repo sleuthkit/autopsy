@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultEvent;
-import org.sleuthkit.autopsy.mainui.datamodel.events.AnalysisResultEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -397,7 +396,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + "FROM\n"
                 + "(SELECT \n"
                 + "  art.artifact_type_id\n"
-                + "  ,CASE WHEN ar.configuration IS NOT NULL AND LENGTH(ar.configuration) > 0 THEN 1 ELSE 0 END AS has_configuration\n"
+                + "  ,CASE WHEN ar.configuration IS NOT NULL AND ar.configuration <> '' THEN 1 ELSE 0 END AS has_configuration\n"
                 + "FROM blackboard_artifacts art\n"
                 + "INNER JOIN blackboard_artifact_types types ON types.category_type = 1 AND art.artifact_type_id = types.artifact_type_id\n"
                 + "LEFT JOIN tsk_analysis_results ar ON art.artifact_obj_id = ar.artifact_obj_id\n"
@@ -590,6 +589,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching keyword set hits.", ex);
         }
+        
+        Collections.sort(allSets, (a,b) -> compareStrings(a.getSearchParams().getSetName(), b.getSearchParams().getSetName()));
 
         return new TreeResultsDTO<>(allSets);
     }
@@ -1173,7 +1174,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 + " WHERE attr.artifact_id = art.artifact_id "
                 + " AND attr.attribute_type_id = " + BlackboardAttribute.Type.TSK_SET_NAME.getTypeID()
                 + " AND attr.value_text IS NOT NULL "
-                + " AND LEN(attr.value_text) > 0) = 0"
+                + " AND attr.value_text <> '' "
+                + " LIMIT 1) = 0 "
                 // otherwise, see if the set name attribute matches expected value
                 : "? IN (SELECT attr.value_text FROM blackboard_attributes attr "
                 + " WHERE attr.artifact_id = art.artifact_id "

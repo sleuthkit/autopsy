@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Objects;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
@@ -55,7 +56,7 @@ abstract public class DrawableUIBase extends AnchorPane implements DrawableView 
 
     /** The use of SingleThreadExecutor means we can only load a single image at
      * a time */
-    static final Executor exec = Executors.newSingleThreadExecutor();
+    static final Executor exec = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("DrawableUIBase-%d").build());
 
     @FXML
     BorderPane imageBorder;
