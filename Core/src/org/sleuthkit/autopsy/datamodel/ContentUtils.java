@@ -392,85 +392,69 @@ public final class ContentUtils {
         public static <T, V> void extract(Content cntnt, java.io.File dest, ProgressHandle progress, SwingWorker<T, V> worker) {
             cntnt.accept(new ExtractFscContentVisitor<>(dest, progress, worker, true));
         }
+        
+        /**
+         * Base method writing a file to disk.
+         *
+         * @param file     The TSK content file.
+         * @param dest     The disk location where the content will be written.
+         * @param progress progress bar handle to update, if available. null
+         *                 otherwise
+         * @param worker   the swing worker background thread the process runs
+         *                 within, or null, if in the main thread, used to
+         *                 handle task cancellation
+         * @param source   true if source file
+         *
+         * @throws IOException
+         */
+        protected void writeFile(Content file, java.io.File dest, ProgressHandle progress, SwingWorker<T, V> worker, boolean source) throws IOException {
+            ContentUtils.writeToFile(file, dest, progress, worker, source);
+        }
 
-        @Override
-        public Void visit(File file) {
+        /**
+         * Visits a TSK content file and writes that file to disk.
+         * @param file The file to be written.
+         * @param fileType The file type (i.e. "derived file") for error logging.
+         * @return null.
+         */
+        protected Void visitFile(Content file, String fileType) {
             try {
-                ContentUtils.writeToFile(file, dest, progress, worker, source);
+                writeFile(file, dest, progress, worker, source);
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING,
                         String.format("Error reading file '%s' (id=%d).",
                                 file.getName(), file.getId()), ex); //NON-NLS
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
-                        String.format("Error extracting file '%s' (id=%d) to '%s'.",
-                                file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
+                        String.format("Error extracting %s '%s' (id=%d) to '%s'.",
+                                fileType, file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
             }
             return null;
+        }
+        
+        @Override
+        public Void visit(File file) {
+            return visitFile(file, "file");
         }
 
         @Override
         public Void visit(LayoutFile file) {
-            try {
-                ContentUtils.writeToFile(file, dest, progress, worker, source);
-            } catch (ReadContentInputStreamException ex) {
-                logger.log(Level.WARNING,
-                        String.format("Error reading file '%s' (id=%d).",
-                                file.getName(), file.getId()), ex); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE,
-                        String.format("Error extracting unallocated content file '%s' (id=%d) to '%s'.",
-                                file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
-            }
-            return null;
+            return visitFile(file, "unallocated content file");
         }
 
         @Override
         public Void visit(DerivedFile file) {
-            try {
-                ContentUtils.writeToFile(file, dest, progress, worker, source);
-            } catch (ReadContentInputStreamException ex) {
-                logger.log(Level.WARNING,
-                        String.format("Error reading file '%s' (id=%d).",
-                                file.getName(), file.getId()), ex); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE,
-                        String.format("Error extracting derived file '%s' (id=%d) to '%s'.",
-                                file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
-            }
-            return null;
+            return visitFile(file, "derived file");
         }
 
         @Override
         public Void visit(LocalFile file) {
-            try {
-                ContentUtils.writeToFile(file, dest, progress, worker, source);
-            } catch (ReadContentInputStreamException ex) {
-                logger.log(Level.WARNING,
-                        String.format("Error reading file '%s' (id=%d).",
-                                file.getName(), file.getId()), ex); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE,
-                        String.format("Error extracting local file '%s' (id=%d) to '%s'.",
-                                file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
-            }
-            return null;
+            return visitFile(file, "local file");
         }
 
         @Override
         public Void visit(SlackFile file) {
-            try {
-                ContentUtils.writeToFile(file, dest, progress, worker, source);
-            } catch (ReadContentInputStreamException ex) {
-                logger.log(Level.WARNING,
-                        String.format("Error reading file '%s' (id=%d).",
-                                file.getName(), file.getId()), ex); //NON-NLS
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE,
-                        String.format("Error extracting slack file '%s' (id=%d) to '%s'.",
-                                file.getName(), file.getId(), dest.getAbsolutePath()), ex); //NON-NLS
-            }
-            return null;
+            return visitFile(file, "slack file");
         }
 
         @Override
@@ -493,6 +477,20 @@ public final class ContentUtils {
                     + content.getName();
             return new java.io.File(path);
         }
+        
+        /**
+         * Returns a visitor to visit any child content.
+         * @param childFile     The disk location where the content will be written.
+         * @param progress progress bar handle to update, if available. null
+         *                 otherwise
+         * @param worker   the swing worker background thread the process runs
+         *                 within, or null, if in the main thread, used to
+         *                 handle task cancellation
+         * @return 
+         */
+        protected ExtractFscContentVisitor<T, V> getChildVisitor(java.io.File childFile, ProgressHandle progress, SwingWorker<T, V> worker) {
+            return new ExtractFscContentVisitor<>(childFile, progress, worker, false);
+        }
 
         public Void visitDir(AbstractFile dir) {
 
@@ -509,8 +507,7 @@ public final class ContentUtils {
                 for (Content child : dir.getChildren()) {
                     if (child instanceof AbstractFile) { //ensure the directory's artifact children are ignored
                         java.io.File childFile = getFsContentDest(child);
-                        ExtractFscContentVisitor<T, V> childVisitor
-                                = new ExtractFscContentVisitor<>(childFile, progress, worker, false);
+                        ExtractFscContentVisitor<T, V> childVisitor = getChildVisitor(childFile, progress, worker);
                         // If this is the source directory of an extract it
                         // will have a progress and worker, and will keep track
                         // of the progress bar's progress
