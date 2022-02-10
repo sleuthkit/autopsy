@@ -30,6 +30,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -82,7 +84,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private IngestJobContext context;
     private Blackboard blackboard;
     private CommunicationArtifactsHelper communicationArtifactsHelper;
-
+    
+    // A cache of custom attributes for the VcardParser unique to each ingest run, but consistent across threads.
+    private static ConcurrentMap<String, BlackboardAttribute.Type> customAttributeCache = new ConcurrentHashMap<>();
+    private static Object customAttributeCacheLock = new Object();
+    
     private static final int MBOX_SIZE_TO_SPLIT = 1048576000;
     private Case currentCase;
 
@@ -96,6 +102,13 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     @Messages({"ThunderbirdMboxFileIngestModule.noOpenCase.errMsg=Exception while getting open case."})
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
+        
+        synchronized(customAttributeCacheLock) {
+            if (!customAttributeCache.isEmpty()) {
+                customAttributeCache.clear();
+            }
+        }
+        
         try {
             currentCase = Case.getCurrentCaseThrows();
             fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
@@ -441,7 +454,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     })
     private ProcessResult processVcard(AbstractFile abstractFile) {
         try {
-            VcardParser parser = new VcardParser(currentCase, context);
+            VcardParser parser = new VcardParser(currentCase, context, customAttributeCache);
             parser.parse(abstractFile);
         } catch (IOException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, String.format("Exception while parsing the file '%s' (id=%d).", abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
@@ -912,7 +925,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        // nothing to shut down
+        synchronized(customAttributeCacheLock) {
+            if (!customAttributeCache.isEmpty()) {
+                customAttributeCache.clear();
+            }
+        }
     }
 
 }
