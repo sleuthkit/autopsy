@@ -305,6 +305,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     infoLabel.setText(String.format(
                             "<html><font color='red'>%s</font></html>",
                             MEDIA_PLAYER_ERROR_STRING));
+                    
+                    progressLabel.setText("");
                 });
                 timer.stop();
             }
