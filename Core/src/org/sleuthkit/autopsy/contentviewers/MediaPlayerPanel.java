@@ -509,7 +509,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
      * Thread that extracts a file and initializes all of the playback
      * components.
      */
-    private class ExtractMedia extends SwingWorker<Void, Void> {
+    private class ExtractMedia extends SwingWorker<GstStatus, Void> {
 
         private ProgressHandle progress;
         private final AbstractFile sourceFile;
@@ -521,7 +521,20 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
 
         @Override
-        protected Void doInBackground() throws Exception {
+        protected GstStatus doInBackground() throws Exception {
+            if (this.isCancelled()) {
+                throw new InterruptedException("Thread has been interrupted");
+            }
+
+            GstStatus loadStatus = GstLoader.tryLoad();
+            if (loadStatus == GstStatus.FAILURE) {
+                return loadStatus;
+            }
+
+            if (this.isCancelled()) {
+                throw new InterruptedException("Thread has been interrupted");
+            }
+
             if (!tempFile.exists() || tempFile.length() < sourceFile.getSize()) {
                 progress = ProgressHandle.createHandle(NbBundle.getMessage(MediaPlayerPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> this.cancel(true));
 
@@ -539,7 +552,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     progress.finish();
                 }
             }
-            return null;
+            return loadStatus;
         }
 
         /*
@@ -553,18 +566,16 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         @Override
         protected void done() {
             try {
-                super.get();
-
                 if (this.isCancelled()) {
                     return;
                 }
 
-                GstStatus loadStatus = GstLoader.tryLoad();
-                if (loadStatus == GstStatus.FAILURE) {
-                    MessageNotifyUtil.Message.error(Bundle.MediaPlayerPanel_playbackDisabled());
+                GstStatus loadStatus = super.get();
+                if (loadStatus == null || loadStatus == GstStatus.FAILURE) {
+                    return;
+                }
 
-                    // This will disable the panel for future use.
-                    IS_GST_ENABLED = false;
+                if (this.isCancelled()) {
                     return;
                 }
 
@@ -662,7 +673,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          * thumb at the given width and height. It also paints the track blue as
          * the thumb progresses.
          *
-         * @param slider JSlider component
+         * @param slider         JSlider component
          * @param thumbDimension
          */
         public CircularJSliderUI(JSlider slider, Dimension thumbDimension) {
