@@ -839,10 +839,6 @@
                 <binary-origin>release/modules/ext/xmlbeans-3.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/mail-1.4.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/imageio-tga-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-tga-3.2.jar</binary-origin>
             </class-path-extension>
@@ -853,10 +849,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-api-1.6.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/activation-1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/activation-1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-scratchpad-4.0.1.jar</runtime-relative-path>
@@ -883,8 +875,8 @@
                 <binary-origin>release/modules/ext/imageio-pcx-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/log4j-1.2.17.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/log4j-1.2.17.jar</binary-origin>
+                <runtime-relative-path>ext/log4j-core-2.17.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/log4j-core-2.17.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/avalon-framework-4.1.5.jar</runtime-relative-path>
@@ -905,10 +897,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-sgi-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-sgi-3.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/geronimo-jms_1.1_spec-1.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/geronimo-jms_1.1_spec-1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-fxml-8.0-r4.jar</runtime-relative-path>
@@ -989,10 +977,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/controlsfx-8.40.11.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/javaee-api-5.0-2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/javaee-api-5.0-2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/common-image-3.2.jar</runtime-relative-path>
