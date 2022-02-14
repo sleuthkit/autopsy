@@ -40,6 +40,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
@@ -98,16 +99,22 @@ final class VcardParser {
     private final Blackboard blackboard;
     private final Case currentCase;
     private final SleuthkitCase tskCase;
+    /**
+     * A custom attribute cache provided to every VcardParser from the
+     * ThunderbirdMboxFileIngestModule, but unique to one ingest run.
+     */
+    private final ConcurrentMap<String, BlackboardAttribute.Type> customAttributeCache;
     
     /**
      * Create a VcardParser object.
      */
-    VcardParser(Case currentCase, IngestJobContext context) {
+    VcardParser(Case currentCase, IngestJobContext context, ConcurrentMap<String, BlackboardAttribute.Type> customAttributeCache) {
         this.context = context;
         this.currentCase = currentCase;
         tskCase = currentCase.getSleuthkitCase();
         blackboard = tskCase.getBlackboard();
         fileManager = currentCase.getServices().getFileManager();
+        this.customAttributeCache = customAttributeCache;
     }
 
     /**
@@ -421,26 +428,29 @@ final class VcardParser {
                 if (splitType != null && !splitType.isEmpty()) {
                     attributeTypeName = "TSK_PHONE_NUMBER_" + splitType;
                 }
+                
+                final String finalAttrTypeName = attributeTypeName;
 
-                try {
-                    BlackboardAttribute.Type attributeType = tskCase.getBlackboard().getAttributeType(attributeTypeName);
-                    if (attributeType == null) {
-                        try{
-                            // Add this attribute type to the case database.
-                            attributeType = tskCase.getBlackboard().getOrAddAttributeType(attributeTypeName,
-                                    BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
-                                    String.format("Phone Number (%s)", StringUtils.capitalize(splitType.toLowerCase())));
-                            
-                            ThunderbirdMboxFileIngestModule.addArtifactAttribute(telephoneText, attributeType, attributes);
-                        }catch (BlackboardException ex) {
-                            logger.log(Level.WARNING, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
-                        }
-                    }
-                    
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
+                // handled in computeIfAbsent to remove concurrency issues when adding to this concurrent hashmap.
+                BlackboardAttribute.Type attributeType
+                        = this.customAttributeCache.computeIfAbsent(finalAttrTypeName, k -> {
+                            try {
+                                // Add this attribute type to the case database.
+                                return tskCase.getBlackboard().getOrAddAttributeType(finalAttrTypeName,
+                                        BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                                        String.format("Phone Number (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+
+                            } catch (BlackboardException ex) {
+                                VcardParser.logger.log(Level.WARNING, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).",
+                                        finalAttrTypeName, abstractFile.getName(), abstractFile.getId()), ex);
+                                return null;
+                            }
+                        });
+
+                if (attributeType != null) {
+                    ThunderbirdMboxFileIngestModule.addArtifactAttribute(telephoneText, attributeType, attributes);
                 }
-            } 
+            }
         }
     }
     
@@ -469,30 +479,37 @@ final class VcardParser {
             * ez-vcard. Therefore, we must read them manually
             * ourselves.
             */
-           List<String> splitEmailTypes = Arrays.asList(
-                   type.getValue().toUpperCase().replaceAll("\\s+","").split(","));
+            List<String> splitEmailTypes = Arrays.asList(
+                    type.getValue().toUpperCase().replaceAll("\\s+", "").split(","));
 
-           if (splitEmailTypes.size() > 0) {
-               String splitType = splitEmailTypes.get(0);
-               String attributeTypeName = "TSK_EMAIL_" + splitType;
-               if(splitType.isEmpty()) {
-                   attributeTypeName = "TSK_EMAIL";
-               }
-               try {
-                   BlackboardAttribute.Type attributeType = tskCase.getBlackboard().getAttributeType(attributeTypeName);
-                   if (attributeType == null) {
-                       // Add this attribute type to the case database.
-                       attributeType = tskCase.getBlackboard().getOrAddAttributeType(attributeTypeName, 
-                               BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, 
-                               String.format("Email (%s)", StringUtils.capitalize(splitType.toLowerCase())));
-                   }
-                   ThunderbirdMboxFileIngestModule.addArtifactAttribute(email.getValue(), attributeType, attributes);
-               } catch (TskCoreException ex) {
-                   logger.log(Level.SEVERE, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
-               } catch (BlackboardException ex) {
-                   logger.log(Level.SEVERE, String.format("Unable to add custom attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
-               }
-           }  
+            if (splitEmailTypes.size() > 0) {
+                String splitType = splitEmailTypes.get(0);
+                String attributeTypeName = "TSK_EMAIL_" + splitType;
+                if (splitType.isEmpty()) {
+                    attributeTypeName = "TSK_EMAIL";
+                }
+
+                final String finalAttributeTypeName = attributeTypeName;
+
+                BlackboardAttribute.Type attributeType
+                        = this.customAttributeCache.computeIfAbsent(finalAttributeTypeName, k -> {
+                            try {
+                                // Add this attribute type to the case database.
+                                return tskCase.getBlackboard().getOrAddAttributeType(finalAttributeTypeName,
+                                        BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                                        String.format("Email (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+                            } catch (BlackboardException ex) {
+                                logger.log(Level.SEVERE, String.format("Unable to add custom attribute type '%s' for file '%s' (id=%d).",
+                                        finalAttributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
+                            }
+
+                            return null;
+                        });
+
+                if (attributeType != null) {
+                    ThunderbirdMboxFileIngestModule.addArtifactAttribute(email.getValue(), attributeType, attributes);
+                }
+            }
         }
     }
     

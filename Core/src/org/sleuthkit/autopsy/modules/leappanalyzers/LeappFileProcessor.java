@@ -54,6 +54,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.getCurrentCase;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -61,6 +62,7 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
@@ -221,13 +223,19 @@ public final class LeappFileProcessor {
         "LeappFileProcessor.has.run=Leapp",
         "LeappFileProcessor.Leapp.cancelled=Leapp run was canceled",
         "LeappFileProcessor.completed=Leapp Processing Completed",
+        "LeappFileProcessor.findTsv=Finding all Leapp ouput",
         "LeappFileProcessor.error.reading.Leapp.directory=Error reading Leapp Output Directory"
     })
-    public ProcessResult processFiles(Content dataSource, Path moduleOutputPath, AbstractFile LeappFile) {
+    public ProcessResult processFiles(Content dataSource, Path moduleOutputPath, AbstractFile LeappFile, DataSourceIngestModuleProgress progress) {
         try {
+            if (checkCancelled()) {
+                return ProcessResult.OK;
+            }
+            progress.switchToIndeterminate();
+            progress.progress(Bundle.LeappFileProcessor_findTsv());
             List<String> LeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
-            processLeappFiles(LeappTsvOutputFiles, LeappFile);
-        } catch (IOException | IngestModuleException ex) {
+            processLeappFiles(LeappTsvOutputFiles, LeappFile, progress);
+        } catch (IngestModuleException ex) {
             logger.log(Level.SEVERE, String.format("Error trying to process Leapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
             return ProcessResult.ERROR;
         }
@@ -235,11 +243,15 @@ public final class LeappFileProcessor {
         return ProcessResult.OK;
     }
 
-    public ProcessResult processFileSystem(Content dataSource, Path moduleOutputPath) {
-
+    public ProcessResult processFileSystem(Content dataSource, Path moduleOutputPath, DataSourceIngestModuleProgress progress) {
         try {
+            if (checkCancelled()) {
+                return ProcessResult.OK;
+            }
+            progress.switchToIndeterminate();
+            progress.progress(Bundle.LeappFileProcessor_findTsv());
             List<String> LeappTsvOutputFiles = findTsvFiles(moduleOutputPath);
-            processLeappFiles(LeappTsvOutputFiles, dataSource);
+            processLeappFiles(LeappTsvOutputFiles, dataSource, progress);
         } catch (IngestModuleException ex) {
             logger.log(Level.SEVERE, String.format("Error trying to process Leapp output files in directory %s. ", moduleOutputPath.toString()), ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -275,75 +287,58 @@ public final class LeappFileProcessor {
 
     }
 
-    /**
-     * Process the Leapp files that were found that match the xml mapping file
-     *
-     * @param LeappFilesToProcess List of files to process
-     * @param LeappImageFile      Abstract file to create artifact for
-     *
-     * @throws FileNotFoundException
-     * @throws IOException
-     */
-    private void processLeappFiles(List<String> LeappFilesToProcess, AbstractFile LeappImageFile) throws FileNotFoundException, IOException, IngestModuleException {
-        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
-
-        for (String LeappFileName : LeappFilesToProcess) {
-            String fileName = FilenameUtils.getName(LeappFileName);
-            File LeappFile = new File(LeappFileName);
-            if (tsvFileAttributes.containsKey(fileName)) {
-                BlackboardArtifact.Type artifactType = null;
-                try {
-                    List<TsvColumn> attrList = tsvFileAttributes.get(fileName);
-                    artifactType = tsvFileArtifacts.get(fileName);
-                    processFile(LeappFile, attrList, fileName, artifactType, bbartifacts, LeappImageFile);
-                } catch (TskCoreException ex) {
-                    throw new IngestModuleException(String.format("Error getting Blackboard Artifact Type for %s", artifactType == null ? "<null>" : artifactType.toString()), ex);
-                }
-            }
+    private boolean checkCancelled() {
+        if (this.context.dataSourceIngestIsCancelled()) {
+            logger.log(Level.INFO, "Leapp File processing module run was cancelled"); //NON-NLS
+            return true;
+        } else {
+            return false;
         }
-
-        if (!bbartifacts.isEmpty()) {
-            postArtifacts(bbartifacts);
-        }
-
     }
 
     /**
      * Process the Leapp files that were found that match the xml mapping file
      *
-     * @param LeappFilesToProcess List of files to process
+     * @param LeappFilesToProcess List of files to process.
      * @param dataSource          The data source.
+     * @param progress            Means of updating progress in UI.
      *
      * @throws FileNotFoundException
      * @throws IOException
      */
-    private void processLeappFiles(List<String> LeappFilesToProcess, Content dataSource) throws IngestModuleException {
-        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
+    @Messages({
+        "# {0} - fileName",
+        "LeappFileProcessor.tsvProcessed=Processing LEAPP output file: {0}"
+    })
+    private void processLeappFiles(List<String> LeappFilesToProcess, Content dataSource, DataSourceIngestModuleProgress progress) throws IngestModuleException {
+        progress.switchToDeterminate(LeappFilesToProcess.size());
 
-        for (String LeappFileName : LeappFilesToProcess) {
+        for (int i = 0; i < LeappFilesToProcess.size(); i++) {
+            if (checkCancelled()) {
+                return;
+            }
+
+            String LeappFileName = LeappFilesToProcess.get(i);
             String fileName = FilenameUtils.getName(LeappFileName);
+            progress.progress(Bundle.LeappFileProcessor_tsvProcessed(fileName), i);
+
             File LeappFile = new File(LeappFileName);
             if (tsvFileAttributes.containsKey(fileName)) {
                 List<TsvColumn> attrList = tsvFileAttributes.get(fileName);
                 BlackboardArtifact.Type artifactType = tsvFileArtifacts.get(fileName);
 
                 try {
-                    processFile(LeappFile, attrList, fileName, artifactType, bbartifacts, dataSource);
+                    processFile(LeappFile, attrList, fileName, artifactType, dataSource);
                 } catch (TskCoreException | IOException ex) {
                     logger.log(Level.SEVERE, String.format("Error processing file at %s", LeappFile.toString()), ex);
                 }
             }
 
         }
-
-        if (!bbartifacts.isEmpty()) {
-            postArtifacts(bbartifacts);
-        }
-
     }
 
-    private void processFile(File LeappFile, List<TsvColumn> attrList, String fileName, BlackboardArtifact.Type artifactType,
-            List<BlackboardArtifact> bbartifacts, Content dataSource) throws FileNotFoundException, IOException, IngestModuleException,
+    private void processFile(File LeappFile, List<TsvColumn> attrList, String fileName,
+            BlackboardArtifact.Type artifactType, Content dataSource) throws FileNotFoundException, IOException, IngestModuleException,
             TskCoreException {
 
         String trackpointSegmentName = null;
@@ -357,6 +352,8 @@ public final class LeappFileProcessor {
             logger.log(Level.WARNING, String.format("attribute list, artifact type or dataSource not provided for %s", LeappFile.toString()));
             return;
         }
+
+        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
 
         // based on https://stackoverflow.com/questions/56921465/jackson-csv-schema-for-array
         try (MappingIterator<List<String>> iterator = new CsvMapper()
@@ -418,6 +415,9 @@ public final class LeappFileProcessor {
             throw new IngestModuleException(Bundle.LeappFileProcessor_cannot_create_message_relationship() + ex.getLocalizedMessage(), ex); //NON-NLS
         }
 
+        if (!bbartifacts.isEmpty()) {
+            postArtifacts(bbartifacts);
+        }
     }
 
     @NbBundle.Messages({
