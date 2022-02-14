@@ -398,6 +398,14 @@ public class TagsDAO extends AbstractDAO {
         return null;
     }
 
+    public TreeResultsDTO<? extends TagNameSearchParams> getNameCounts(Long dataSourceId) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public TreeResultsDTO<? extends TagsSearchParams> getTypeCounts(TagNameSearchParams searchParams) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     /**
      * Handles fetching and paging of data for allTags.
      */

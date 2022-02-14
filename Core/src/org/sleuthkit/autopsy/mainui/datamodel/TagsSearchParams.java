@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.TagName;
 /**
  * Key for accessing data about tags from the DAO.
  */
-public class TagsSearchParams {
+public class TagsSearchParams extends TagNameSearchParams {
 
     private static final String TYPE_ID = "TAG";
 
@@ -41,33 +41,21 @@ public class TagsSearchParams {
     }
 
     private final TagType type;
-    private final TagName tagName;
-    private final Long dataSourceId;
 
     public TagsSearchParams(TagName tagName, TagType type, Long dataSourceId) {
-        this.tagName = tagName;
+        super(tagName, dataSourceId);
         this.type = type;
-        this.dataSourceId = dataSourceId;
-    }
-
-    public TagName getTagName() {
-        return tagName;
     }
 
     public TagType getTagType() {
         return type;
     }
 
-    public Long getDataSourceId() {
-        return dataSourceId;
-    }
-
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.tagName);
-        hash = 23 * hash + Objects.hashCode(this.type);
-        hash = 23 * hash + Objects.hashCode(this.dataSourceId);
+        int hash = 3;
+        hash = 97 * hash + Objects.hashCode(this.type);
+        hash = 97 * hash + super.hashCode();
         return hash;
     }
 
@@ -83,16 +71,11 @@ public class TagsSearchParams {
             return false;
         }
         final TagsSearchParams other = (TagsSearchParams) obj;
-        if (!Objects.equals(this.tagName, other.tagName)) {
+        if (this.type != other.type) {
             return false;
         }
-        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
-            return false;
-        }
-        if (!Objects.equals(this.type, other.type)) {
-            return false;
-        }
-        return true;
+        return super.equals(obj);
     }
 
+    
 }
