@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -950,18 +951,25 @@ final class IngestJobExecutor {
         currentDataSourceIngestModuleCancelled = false;
         cancelledDataSourceIngestModules.add(moduleDisplayName);
         if (usingNetBeansGUI && !jobCancelled) {
-            SwingUtilities.invokeLater(() -> {
-                /**
-                 * A new progress bar must be created because the cancel button
-                 * of the previously constructed component is disabled by
-                 * NetBeans when the user selects the "OK" button of the
-                 * cancellation confirmation dialog popped up by NetBeans when
-                 * the progress bar cancel button is pressed.
-                 */
-                dataSourceIngestProgressBar.finish();
-                dataSourceIngestProgressBar = null;
-                startDataSourceIngestProgressBar();
-            });
+            try {
+                // use invokeAndWait to ensure synchronous behavior.  
+                // See JIRA-8298 for more information.
+                SwingUtilities.invokeAndWait(() -> {
+                    /**
+                     * A new progress bar must be created because the cancel
+                     * button of the previously constructed component is
+                     * disabled by NetBeans when the user selects the "OK"
+                     * button of the cancellation confirmation dialog popped up
+                     * by NetBeans when the progress bar cancel button is
+                     * pressed.
+                     */
+                    dataSourceIngestProgressBar.finish();
+                    dataSourceIngestProgressBar = null;
+                    startDataSourceIngestProgressBar();
+                });
+            } catch (InvocationTargetException | InterruptedException ex) {
+                logger.log(Level.WARNING, "Cancellation worker cancelled.", ex);
+            }
         }
     }
 
