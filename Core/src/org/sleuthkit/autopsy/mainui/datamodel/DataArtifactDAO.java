@@ -42,6 +42,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
@@ -226,8 +227,14 @@ public class DataArtifactDAO extends BlackboardArtifactDAO {
             }
         }
 
-        Stream<TreeEvent> dataArtifactTreeEvents = this.treeCounts.enqueueAll(dataArtifactEvents).stream()
+        Stream<TreeEvent> dataArtifactTreeEvents;
+        if (IngestManager.getInstance().isIngestRunning()) {
+            dataArtifactTreeEvents = this.treeCounts.enqueueAll(dataArtifactEvents).stream()
                 .map(daoEvt -> new TreeEvent(createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.INDETERMINATE), false));
+        } else {
+            dataArtifactTreeEvents = dataArtifactEvents.stream()
+                .map(daoEvt -> new TreeEvent(createDataArtifactTreeItem(daoEvt.getArtifactType(), daoEvt.getDataSourceId(), TreeDisplayCount.UNSPECIFIED), true));
+        }
 
         return Stream.of(dataArtifactEvents.stream(), dataArtifactTreeEvents)
                 .flatMap(s -> s)
