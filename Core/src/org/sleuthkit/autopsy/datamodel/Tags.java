@@ -31,6 +31,30 @@ import org.sleuthkit.autopsy.mainui.nodes.TagNameFactory;
  * factory built on top of the NetBeans Children.Keys class.
  */
 public class Tags {
+    private final static String DISPLAY_NAME = NbBundle.getMessage(RootNode.class, "TagsNode.displayName.text");
+    private final long filteringDSObjId; // 0 if not filtering/grouping by data source
+
+    Tags() {
+        this(0);
+    }
+
+    Tags(long dsObjId) {
+        this.filteringDSObjId = dsObjId;
+    }
+
+    /**
+     * Return the display name used by the tags node in the tree.
+     *
+     * @return - DISPLAY_NAME
+     */
+    public static String getTagsDisplayName() {
+        return DISPLAY_NAME;
+    }
+
+    long filteringDataSourceObjId() {
+        return this.filteringDSObjId;
+    }
+    
     /**
      * Instances of this class are the root nodes of tree that is a sub-tree of
      * the Autopsy presentation of the SleuthKit data model. The sub-tree
@@ -38,16 +62,16 @@ public class Tags {
      * type, then by tag name.
      */
     public static class RootNode extends DisplayableItemNode {
-        private final static String DISPLAY_NAME = NbBundle.getMessage(RootNode.class, "TagsNode.displayName.text");
+        
         private final static String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
         private final Long dataSourceObjId;
 
         public RootNode(Long dsId) {
-            super(Children.create(new TagNameFactory(dsId > 0 ? dsId : null), true), Lookups.singleton(DISPLAY_NAME));
+            super(Children.create(new TagNameFactory(dsId != null && dsId> 0 ? dsId : null), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(DISPLAY_NAME);
             super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension(ICON_PATH);
-            this.dataSourceObjId = dsId > 0 ? dsId : null;
+            this.dataSourceObjId = dsId != null && dsId> 0 ? dsId : null;
         }
 
         @Override
@@ -80,6 +104,13 @@ public class Tags {
         
         public Node clone() {
             return new RootNode(dataSourceObjId);
+        }
+        
+        /**
+         * Cause the contents of the RootNode and its children to be updated.
+         */
+        public void refresh() {
+            this.refresh();
         }
     }
 }

@@ -361,9 +361,9 @@ public class TagsDAO extends AbstractDAO {
 
         Collection<TagsEvent> daoEvents = Collections.singletonList(data);
 
-        Collection<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
-                .map(arEvt -> new TreeEvent(getTreeItem(arEvt, TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false))
-                .collect(Collectors.toList());
+        Collection<TreeEvent> treeEvents = daoEvents.stream()
+                .map(arEvt -> new TreeEvent(getTreeItem(arEvt, TreeResultsDTO.TreeDisplayCount.UNSPECIFIED), true))
+                .collect(Collectors.toSet());
 
         return Stream.of(daoEvents, treeEvents)
                 .flatMap(lst -> lst.stream())
@@ -610,7 +610,7 @@ public class TagsDAO extends AbstractDAO {
         return new TreeItemDTO<>(
                 TagsSearchParams.getTypeId(),
                 new TagsSearchParams(tagName, tagType, dataSourceId),
-                tagName.getId(),
+                tagName.getId() + "_" + tagType.name(),
                 tagType.getDisplayName(),
                 treeDisplayCount
         );
