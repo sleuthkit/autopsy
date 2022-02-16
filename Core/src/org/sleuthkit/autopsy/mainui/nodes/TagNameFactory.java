@@ -155,6 +155,10 @@ public class TagNameFactory extends TreeChildFactory<TagNameSearchParams> {
 
     }
 
+    /**
+     * A tag type (i.e. File/Result) tree node. Clicking on this will go to
+     * results.
+     */
     static class TagsTypeNode extends TreeNode<TagsSearchParams> {
 
         private TagsTypeNode(TreeItemDTO<? extends TagsSearchParams> rowData) {
