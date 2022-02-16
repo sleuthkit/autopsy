@@ -50,6 +50,8 @@ import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DataSourceFilesNode;
 import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.ContentNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -77,7 +79,8 @@ public class ViewContextAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ViewContextAction.class.getName());
-    private final Content content;
+    private Content content;
+    private final Long contentId;
 
     /**
      * An action that displays the context for the source content of an artifact
@@ -99,6 +102,7 @@ public class ViewContextAction extends AbstractAction {
                 this.setEnabled(false);
             }
         }
+        this.contentId = (this.content == null) ? null : this.content.getId();
     }
 
     /**
@@ -114,6 +118,7 @@ public class ViewContextAction extends AbstractAction {
     public ViewContextAction(String displayName, AbstractFsContentNode<? extends AbstractFile> fileSystemContentNode) {
         super(displayName);
         this.content = fileSystemContentNode.getLookup().lookup(Content.class);
+        this.contentId = (this.content == null) ? null : this.content.getId();
     }
 
     /**
@@ -129,6 +134,7 @@ public class ViewContextAction extends AbstractAction {
     public ViewContextAction(String displayName, AbstractAbstractFileNode<? extends AbstractFile> abstractAbstractFileNode) {
         super(displayName);
         this.content = abstractAbstractFileNode.getLookup().lookup(Content.class);
+        this.contentId = (this.content == null) ? null : this.content.getId();
     }
 
     /**
@@ -143,6 +149,21 @@ public class ViewContextAction extends AbstractAction {
     public ViewContextAction(String displayName, Content content) {
         super(displayName);
         this.content = content;
+        this.contentId = (this.content == null) ? null : this.content.getId();
+    }
+
+    /**
+     * An action that displays the context for some content by expanding the
+     * data sources branch of the tree view to the level of the parent of the
+     * content, selecting the parent in the tree view, then selecting the
+     * content in the results view.
+     *
+     * @param displayName The display name for the action.
+     * @param contentId   The content id.
+     */
+    public ViewContextAction(String displayName, long contentId) {
+        super(displayName);
+        this.contentId = contentId;
     }
 
     /**
@@ -166,8 +187,21 @@ public class ViewContextAction extends AbstractAction {
         "ViewContextAction.errorMessage.cannotFindNode=Failed to locate data source node in tree.",
         "ViewContextAction.errorMessage.unsupportedParent=Unable to navigate to content not supported in this release."
     })
-    public void actionPerformed(ActionEvent event) {
+    public synchronized void actionPerformed(ActionEvent event) {
         EventQueue.invokeLater(() -> {
+            if (this.content == null && this.contentId != null) {
+                try {
+                    this.content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(this.contentId);
+                } catch (NoCurrentCaseException | TskCoreException ex) {
+                    logger.log(Level.WARNING, "Could not obtain content for content id: " + this.contentId, ex);
+                    return;
+                }
+
+                if (this.content == null) {
+                    logger.log(Level.WARNING, "No content could be found for id: " + this.contentId);
+                    return;
+                }
+            }
 
             Content parentContent = getParentContent(this.content);
 
@@ -241,12 +275,26 @@ public class ViewContextAction extends AbstractAction {
     private Node getParentNodeGroupedByDataSource(ExplorerManager treeViewExplorerMgr, Content parentContent) {
         // Classic view
         // Start the search at the DataSourcesNode
+        long dataSourceId;
+        if (parentContent instanceof AbstractFile) {
+            dataSourceId = ((AbstractFile) parentContent).getDataSourceObjectId();
+        } else {
+            try {
+                dataSourceId = parentContent.getDataSource().getId();    
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Unable to get data source id for content with id: " + parentContent.getId(), ex);
+                return null;
+            }
+        }
+        
         Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
         Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesNode.getNameIdentifier());
         if (rootDsNode != null) {
             for (Node dataSourceLevelNode : getDataSourceLevelNodes(rootDsNode)) {
-                DataSource dataSource = dataSourceLevelNode.getLookup().lookup(DataSource.class);
-                if (dataSource != null) {
+                TreeItemDTO<?> dataSourceInfo = dataSourceLevelNode.getLookup().lookup(TreeItemDTO.class);   
+                if (dataSourceInfo != null && dataSourceInfo.getSearchParams() instanceof FileSystemContentSearchParam && 
+                        ((FileSystemContentSearchParam) dataSourceInfo.getSearchParams()).getContentObjectId() == dataSourceId) {
+                    
                     // the tree view needs to be searched to find the parent treeview node.
                     Node potentialParentTreeViewNode = findParentNodeInTree(parentContent, dataSourceLevelNode);
                     if (potentialParentTreeViewNode != null) {
@@ -319,10 +367,11 @@ public class ViewContextAction extends AbstractAction {
 
     /**
      * Set the node selection in the tree.
-     * @param content The content to select.
-     * @param parentTreeViewNode The node that is the parent of the content.
+     *
+     * @param content              The content to select.
+     * @param parentTreeViewNode   The node that is the parent of the content.
      * @param treeViewTopComponent The DirectoryTreeTopComponent.
-     * @param treeViewExplorerMgr The ExplorerManager.
+     * @param treeViewExplorerMgr  The ExplorerManager.
      */
     private void setNodeSelection(Content content, Node parentTreeViewNode, DirectoryTreeTopComponent treeViewTopComponent, ExplorerManager treeViewExplorerMgr) {
         /*
@@ -332,7 +381,7 @@ public class ViewContextAction extends AbstractAction {
         * tree view top component responds to the selection of the parent
         * node by pushing it into the results view top component.
          */
-        
+
         Long childIdToSelect = content.getId();
 
         if (content instanceof BlackboardArtifact) {
@@ -345,8 +394,8 @@ public class ViewContextAction extends AbstractAction {
                 logger.log(Level.SEVERE, "Could not find associated content from artifact with id %d", artifact.getId());
             }
         }
-        
-        if(parentTreeViewNode instanceof TreeNode) {
+
+        if (parentTreeViewNode instanceof TreeNode) {
             ((TreeNode) parentTreeViewNode).setNodeSelectionInfo(new ContentNodeSelectionInfo(childIdToSelect));
         }
 

@@ -93,7 +93,7 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
     }
 
     @Override
-    public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
+    public Optional<Long> getExtractArchiveWithPasswordActionFile() {
         Optional<Content> optionalSourceContent = getSourceContent();
         // TODO: See JIRA-8099
         boolean encryptionDetected = false;
@@ -107,7 +107,7 @@ public class AnalysisResultNode extends ArtifactNode<AnalysisResult, AnalysisRes
                     // TODO
                 }
                 if (encryptionDetected) {
-                    return Optional.of(file);
+                    return Optional.of(file.getId());
                 }
             }
         }

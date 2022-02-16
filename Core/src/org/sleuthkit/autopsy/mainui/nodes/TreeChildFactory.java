@@ -105,7 +105,7 @@ public abstract class TreeChildFactory<T> extends ChildFactory.Detachable<Object
                 updateData();
             } catch (IllegalArgumentException | ExecutionException ex) {
                 logger.log(Level.WARNING, "An error occurred while fetching keys", ex);
-                return false;
+                return true;
             }
         }
         // make copy to avoid concurrent modification

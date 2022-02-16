@@ -94,11 +94,11 @@ public interface ActionContext {
     }
 
     /**
-     * Returns the file that should appear for the node in the Timeline viewer.
+     * Returns the file id that should appear for the node in the Timeline viewer.
      *
-     * @return The file to show in the timeline window.
+     * @return The file id to show in the timeline window.
      */
-    default Optional<AbstractFile> getFileForViewInTimelineAction() {
+    default Optional<Long> getFileForViewInTimelineAction() {
         return Optional.empty();
     }
 
@@ -202,25 +202,25 @@ public interface ActionContext {
     }
 
     /**
-     * Returns the file to be extracted.
+     * Returns the file id to be extracted.
      *
-     * @return True if the action is supported.
+     * @return The object id of the file if present.
      */
-    default Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
+    default Optional<Long> getExtractArchiveWithPasswordActionFile() {
         return Optional.empty();
     }
     
     /**
-     * Returns the content object to be passed into the
+     * Returns the content object id to be passed into the
      * RunIngestModelAction constructor.
      * 
-     * @return The content object for ingest.
+     * @return The content object id for ingest.
      */
-    default Optional<Content> getContentForRunIngestionModuleAction() {
+    default Optional<Long> getContentForRunIngestionModuleAction() {
         return Optional.empty();
     }
     
-    default Optional<Content> getDataSourceForActions() {
+    default Optional<Long> getDataSourceForActions() {
         return Optional.empty();
     }
 
@@ -228,7 +228,7 @@ public interface ActionContext {
         return Optional.empty();
     }
     
-    default Optional<AbstractFile> getFileForDirectoryBrowseMode() {
+    default Optional<Long> getFileForDirectoryBrowseMode() {
         return Optional.empty();
     }
     

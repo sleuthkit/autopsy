@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An action that will allow the user to enter a password for archive file and
@@ -48,7 +49,8 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ExtractArchiveWithPasswordAction.class.getName());
-    private final AbstractFile archiveFile;
+    private AbstractFile archiveFile;
+    private final Long archiveFileId;
 
     /**
      * Create an action that will allow the user to enter an password and then
@@ -65,10 +67,38 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
     public ExtractArchiveWithPasswordAction(AbstractFile file) {
         super(Bundle.ExtractArchiveWithPasswordAction_name_text());
         archiveFile = file;
+        archiveFileId = file.getId();
     }
-  
+
+    /**
+     * Create an action that will allow the user to enter an password and then
+     * use the entered password to extract contents of a password protected
+     * archive.
+     *
+     * @param file the password protected archive file id to extract
+     */
+    public ExtractArchiveWithPasswordAction(long fileId) {
+        super(Bundle.ExtractArchiveWithPasswordAction_name_text());
+        archiveFile = null;
+        archiveFileId = fileId;
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (archiveFile == null && archiveFileId != null) {
+            try {
+                archiveFile = Case.getCurrentCaseThrows().getSleuthkitCase().getAbstractFileById(archiveFileId);
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching archive file with id: " + archiveFileId, ex);
+                return;
+            }
+
+            if (archiveFile == null) {
+                logger.log(Level.WARNING, "Unable to get archive file with id: " + archiveFileId);
+                return;
+            }
+        }
+
         String password = getPassword(Bundle.ExtractArchiveWithPasswordAction_prompt_title(), "");
         if (password != null) {
             ExtractAndIngestWorker extractWorker = new ExtractAndIngestWorker(password, archiveFile);
@@ -99,9 +129,10 @@ public class ExtractArchiveWithPasswordAction extends AbstractAction {
 
         /**
          * Construct an ExtractAndIngestWorker
-         * 
+         *
          * @param pass - the password to initially attempt using
-         * @param file - the password protected archive file to extract the contents of
+         * @param file - the password protected archive file to extract the
+         *             contents of
          */
         private ExtractAndIngestWorker(String pass, AbstractFile file) {
             archive = file;

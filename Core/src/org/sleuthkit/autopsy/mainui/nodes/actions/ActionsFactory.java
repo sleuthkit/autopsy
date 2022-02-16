@@ -37,6 +37,7 @@ import javax.swing.Action;
 import javax.swing.JOptionPane;
 import org.openide.actions.PropertiesAction;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
@@ -50,6 +51,7 @@ import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.actions.ReplaceContentTagAction;
 import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -94,13 +96,14 @@ public final class ActionsFactory {
     private static final Action collapseAllAction = new CollapseAction(Bundle.ActionsFactory_Collapse_All_Name());
 
     // private constructor for utility class.
-    private ActionsFactory() {}
+    private ActionsFactory() {
+    }
 
     /**
      * Create the list of actions for given ActionContext.
-
+     *
      * @param actionContext The context for the actions.
-     * 
+     *
      * @return The list of Actions to display.
      */
     public static Action[] getActions(ActionContext actionContext) {
@@ -113,20 +116,20 @@ public final class ActionsFactory {
 
         ActionGroup group = new ActionGroup();
         Optional<Action> opAction = getBrowseModeAction(actionContext);
-        if(opAction.isPresent()) {
+        if (opAction.isPresent()) {
             group.add(opAction.get());
         }
-        
+
         if (actionContext.supportsViewInTimeline()) {
             group.add(getViewInTimelineAction(actionContext));
-        } 
-        
+        }
+
         actionGroups.add(group);
 
         group = new ActionGroup();
         if (actionContext.supportsAssociatedFileActions()) {
             Optional<ActionGroup> subGroup = getAssociatedFileActions(actionContext);
-            if(subGroup.isPresent()) {
+            if (subGroup.isPresent()) {
                 group.addAll(subGroup.get());
             }
         }
@@ -157,19 +160,18 @@ public final class ActionsFactory {
         } else if (actionContext.supportsTreeExtractActions()) {
             actionGroups.add(getTreeExtractActions());
         }
-        
+
         group = new ActionGroup();
         Optional<ActionGroup> ingestGroup = getRunIngestAction(actionContext);
-        if(ingestGroup.isPresent()) {
+        if (ingestGroup.isPresent()) {
             group.addAll(ingestGroup.get());
         }
         group.addAll(ContextMenuExtensionPoint.getActions());
         actionGroups.add(group);
-        
-        actionGroups.add(getTagActions(actionContext));
-        
 
-        Optional<AbstractFile> optionalFile = actionContext.getExtractArchiveWithPasswordActionFile();
+        actionGroups.add(getTagActions(actionContext));
+
+        Optional<Long> optionalFile = actionContext.getExtractArchiveWithPasswordActionFile();
         if (optionalFile.isPresent()) {
             actionGroups.add(new ActionGroup(new ExtractArchiveWithPasswordAction(optionalFile.get())));
         }
@@ -197,27 +199,27 @@ public final class ActionsFactory {
     }
 
     /**
-     * Returns the Extract actions for a table node. These actions are not specific to the
-     * ActionContext.
+     * Returns the Extract actions for a table node. These actions are not
+     * specific to the ActionContext.
      *
      * @return The Extract ActionGroup.
      */
     static ActionGroup getTableExtractActions() {
         ActionGroup actionsGroup = new ActionGroup();
-        
+
         Lookup lookup = Utilities.actionsGlobalContext();
-        Collection<? extends AbstractFile> selectedFiles =lookup.lookupAll(AbstractFile.class);
-        if(selectedFiles.size() > 0) {
+        Collection<? extends AbstractFile> selectedFiles = lookup.lookupAll(AbstractFile.class);
+        if (selectedFiles.size() > 0) {
             actionsGroup.add(ExtractAction.getInstance());
         }
         actionsGroup.add(ExportCSVAction.getInstance());
 
         return actionsGroup;
     }
-    
+
     /**
-     * Returns the Extract actions for a tree node. These actions are not specific to the
-     * ActionContext.
+     * Returns the Extract actions for a tree node. These actions are not
+     * specific to the ActionContext.
      *
      * @return The Extract ActionGroup.
      */
@@ -285,33 +287,33 @@ public final class ActionsFactory {
                     Bundle.ActionsFactory_getTimelineSrcContentAction_actionDisplayName(
                             getContentTypeStr(srcContentOptional.get()))));
         }
-        
+
         Optional<ActionGroup> optionalGroup = getViewResultArtifactActions(actionContext);
-        if(optionalGroup.isPresent()) {
+        if (optionalGroup.isPresent()) {
             group.addAll(optionalGroup.get());
         }
 
         return group.isEmpty() ? Optional.empty() : Optional.of(group);
     }
-    
+
     @Messages({
         "ActionFactory_getViewResultArtifactActions_result_text=View Source Result",
         "ActionFactory_getViewResultArtifactActions_timeline_text=View Source Result in Timeline..."
     })
     private static Optional<ActionGroup> getViewResultArtifactActions(ActionContext actionContext) {
         ActionGroup group = new ActionGroup();
-        
-        if(actionContext.supportsResultArtifactAction()) {
+
+        if (actionContext.supportsResultArtifactAction()) {
             Optional<BlackboardArtifact> optional = actionContext.getArtifact();
-            if(optional.isPresent()) {
+            if (optional.isPresent()) {
                 group.add(new ViewArtifactAction(
                         optional.get(),
                         Bundle.ActionFactory_getViewResultArtifactActions_result_text()));
-                
+
                 group.add(new ViewArtifactInTimelineAction(optional.get(), Bundle.ActionFactory_getViewResultArtifactActions_timeline_text()));
             }
         }
-        
+
         return group.isEmpty() ? Optional.empty() : Optional.of(group);
     }
 
@@ -339,7 +341,7 @@ public final class ActionsFactory {
         try {
             artifactType = artifactOptional.get().getType();
         } catch (TskCoreException ex) {
-            
+
             return Optional.empty();
         }
 
@@ -384,12 +386,12 @@ public final class ActionsFactory {
         if (context.supportsArtifactTagAction() && selectedArtifactCount == 1) {
             actionGroup.add(DeleteFileBlackboardArtifactTagAction.getInstance());
         }
-        
-        if((context.supportsArtifactTagAction() || context.supportsContentTagAction()) && context.supportsReplaceTagAction()) {
+
+        if ((context.supportsArtifactTagAction() || context.supportsContentTagAction()) && context.supportsReplaceTagAction()) {
             actionGroup.add(DeleteContentTagAction.getInstance());
             actionGroup.add(ReplaceContentTagAction.getInstance());
         }
-        
+
         return actionGroup;
     }
 
@@ -428,7 +430,7 @@ public final class ActionsFactory {
                         sourceContent.get()));
             }
         }
-    
+
         return Optional.empty();
     }
 
@@ -471,60 +473,64 @@ public final class ActionsFactory {
     })
     private static Action getViewInTimelineAction(ActionContext context) {
         Optional<BlackboardArtifact> optionalArtifact = context.getArtifact();
-        Optional<AbstractFile> optionalFile = context.getFileForViewInTimelineAction();
+        Optional<Long> optionalFileId = context.getFileForViewInTimelineAction();
         if (optionalArtifact.isPresent()) {
             return new ViewArtifactInTimelineAction(optionalArtifact.get(), Bundle.ActionsFactory_getTimelineArtifactAction_displayName());
-        } else if (optionalFile.isPresent()) {
-            return ViewFileInTimelineAction.createViewFileAction(optionalFile.get());
+        } else if (optionalFileId.isPresent()) {
+            try {
+                AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(optionalFileId.get());
+                if (file == null) {
+                    logger.log(Level.WARNING, "File not found with id: " + optionalFileId.get());
+                    return null;
+                }
+                
+                return ViewFileInTimelineAction.createViewFileAction(file);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "An error occurred while getting file for id: " + optionalFileId.get(), ex);
+            }
         }
         return null;
     }
-    
+
     /**
-     * 
+     *
      * @param context
-     * @return 
+     *
+     * @return
      */
     @Messages({
         "ActionFactory_openFileSearchByAttr_text=Open File Search by Attributes"
     })
     private static Optional<ActionGroup> getRunIngestAction(ActionContext context) {
-        ActionGroup group = new ActionGroup();        
-        Optional<Content> optional = context.getDataSourceForActions();
-        if(optional.isPresent()) {
-            group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
-            group.add(new ViewSummaryInformationAction(optional.get().getId()));
-            group.add(new RunIngestModulesAction(Collections.<Content>singletonList(optional.get())));
-            group.add(new DeleteDataSourceAction(optional.get().getId()));
-        }
-        else {
+        ActionGroup group = new ActionGroup();
+        Optional<Long> optional = context.getDataSourceForActions();
+        if (optional.isPresent()) {
+            group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get()));
+            group.add(new ViewSummaryInformationAction(optional.get()));
+            group.add(RunIngestModulesAction.createDataSourceIdsAction(Collections.singletonList(optional.get())));
+            group.add(new DeleteDataSourceAction(optional.get()));
+        } else {
             optional = context.getContentForRunIngestionModuleAction();
-
             if(optional.isPresent()) {
-                if (optional.get() instanceof AbstractFile) {
-                    if(context.supportsFileSearchAction()) {
-                        group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get().getId()));
-                    }
-                    
-                    group.add(new RunIngestModulesAction((AbstractFile)optional.get()));
-                } else {
-                    logger.log(Level.WARNING, "Can not create RunIngestModulesAction on non-AbstractFile content with ID " + optional.get().getId());
+                group.add(new RunIngestModulesAction(optional.get()));
+                if(context.supportsFileSearchAction()) {
+                    group.add(new FileSearchTreeAction(Bundle.ActionFactory_openFileSearchByAttr_text(), optional.get()));
                 }
             }
         }
-        
+
         return group.isEmpty() ? Optional.empty() : Optional.of(group);
     }
-    
+
     @Messages({
         "ActionsFactory_viewFileInDir_text=View File in Directory"
     })
     private static Optional<Action> getBrowseModeAction(ActionContext actionContext) {
-        Optional<AbstractFile> optional = actionContext.getFileForDirectoryBrowseMode();
-        if(optional.isPresent()) {
+        Optional<Long> optional = actionContext.getFileForDirectoryBrowseMode();
+        if (optional.isPresent()) {
             return Optional.of(new ViewContextAction(Bundle.ActionsFactory_viewFileInDir_text(), optional.get()));
         }
-        
+
         return Optional.empty();
     }
 

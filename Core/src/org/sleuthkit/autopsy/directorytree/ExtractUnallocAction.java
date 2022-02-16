@@ -73,8 +73,10 @@ public final class ExtractUnallocAction extends AbstractAction {
     private static final Set<Long> imagesInProgress = new HashSet<>();
     private static String userDefinedExportPath;
 
-    private final Volume volume;
-    private final Image image;
+    private Volume volume;
+    private final Long volumeId;
+    private Image image;
+    private final Long imageId;
 
     private final JFileChooserFactory chooserFactory;
 
@@ -86,7 +88,7 @@ public final class ExtractUnallocAction extends AbstractAction {
      */
     public ExtractUnallocAction(String title, Volume volume) {
         this(title, null, volume);
-        
+
     }
 
     /**
@@ -102,11 +104,43 @@ public final class ExtractUnallocAction extends AbstractAction {
     }
 
     public ExtractUnallocAction(String title, Image image, Volume volume) {
+        this(title, image, null, volume, null);
+    }
+
+    /**
+     * Constructor accepting object ids for imageId and volumeId. One of imageId
+     * or volumeId must be non-null.
+     *
+     * @param title    The title for the action.
+     * @param imageId  The image id.
+     * @param volumeId The volume id.
+     */
+    public ExtractUnallocAction(String title, Long imageId, Long volumeId) {
+        this(title, null, imageId, null, volumeId);
+    }
+
+    private ExtractUnallocAction(String title, Image image, Long imageId, Volume volume, Long volumeId) {
         super(title);
 
         this.volume = volume;
         this.image = image;
-        
+
+        if (imageId != null) {
+            this.imageId = imageId;
+        } else if (image != null) {
+            this.imageId = image.getId();
+        } else {
+            this.imageId = null;
+        }
+
+        if (volumeId != null) {
+            this.volumeId = volumeId;
+        } else if (image != null) {
+            this.volumeId = volume.getId();
+        } else {
+            this.volumeId = null;
+        }
+
         chooserFactory = new JFileChooserFactory(CustomFileChooser.class);
     }
 
@@ -131,6 +165,23 @@ public final class ExtractUnallocAction extends AbstractAction {
         } catch (NoCurrentCaseException ex) {
             MessageNotifyUtil.Message.info(Bundle.ExtractUnallocAction_noOpenCase_errMsg());
             return;
+        }
+
+        if (image == null && imageId != null) {
+            try {
+                image = openCase.getSleuthkitCase().getImageById(imageId);
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "No image could be obtained with id: " + imageId, ex);
+            }
+
+        }
+
+        if (volume == null && volumeId != null) {
+            try {
+                volume = (Volume) openCase.getSleuthkitCase().getContentById(volumeId);
+            } catch (TskCoreException | ClassCastException ex) {
+                logger.log(Level.WARNING, "No volume could be obtained with id: " + volumeId, ex);
+            }
         }
 
         JFileChooser fileChooser = chooserFactory.getChooser();
@@ -415,7 +466,7 @@ public final class ExtractUnallocAction extends AbstractAction {
                                     }
                                 });
                             } catch (InterruptedException | InvocationTargetException ex) {
-                               logger.log(Level.SEVERE, "An error occured launching confirmation dialog for extract unalloc actions", ex);
+                                logger.log(Level.SEVERE, "An error occured launching confirmation dialog for extract unalloc actions", ex);
                             }
 
                             if (dialogResult.value == JOptionPane.YES_OPTION) {
@@ -772,6 +823,7 @@ public final class ExtractUnallocAction extends AbstractAction {
     // Small helper class for use with SwingUtilities involkAndWait to get
     // the result from the launching of the JOptionPane.
     private class Result {
+
         private int value;
 
         void set(int value) {

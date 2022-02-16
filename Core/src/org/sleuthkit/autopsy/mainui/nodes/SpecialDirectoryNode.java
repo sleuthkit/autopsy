@@ -68,14 +68,14 @@ abstract class SpecialDirectoryNode extends BaseNode<SearchResultsDTO, ContentRo
     }
 
     @Override
-    public Optional<Content> getContentForRunIngestionModuleAction() {
-        return Optional.of(getRowDTO().getContent());
+    public Optional<Long> getContentForRunIngestionModuleAction() {
+        return Optional.of(getRowDTO().getContent().getId());
     }
 
     @Override
-    public Optional<Content> getDataSourceForActions() {
+    public Optional<Long> getDataSourceForActions() {
         return getRowDTO().getContent().isDataSource()
-                ? Optional.of(getRowDTO().getContent())
+                ? Optional.of(getRowDTO().getContent().getId())
                 : Optional.empty();
     }
 

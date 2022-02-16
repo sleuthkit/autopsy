@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
+import java.text.MessageFormat;
 import java.util.Objects;
 import java.util.Optional;
 import org.openide.nodes.Children;
@@ -28,8 +28,7 @@ import org.openide.nodes.Node;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.Action;
-import javax.swing.SwingUtilities;
-import org.openide.util.Lookup;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -37,40 +36,34 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
-import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.datamodel.utils.FileNameTransTask;
 import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
 import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemColumnUtils;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.FileSystemTreeItem;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.TreeFileType;
+import static org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO.TreeFileType.UNALLOC_FILE;
 import org.sleuthkit.autopsy.mainui.datamodel.MediaTypeUtils;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.CARVED_FILE;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.DELETED_FILE;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.DELETED_FOLDER;
 import static org.sleuthkit.autopsy.mainui.nodes.NodeIconUtil.FOLDER;
 import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
-import org.sleuthkit.autopsy.mainui.nodes.actions.ActionContext;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LocalDirectory;
-import org.sleuthkit.datamodel.LocalFilesDataSource;
-import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
 /**
@@ -114,39 +107,50 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     @Override
     protected TreeNode<FileSystemContentSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> rowData) {
-        try {
-            Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(rowData.getSearchParams().getContentObjectId());
-            if (content instanceof Image) {
-                return new ImageTreeNode((Image) content, rowData);
-            } else if (content instanceof Volume) {
-                return new VolumeTreeNode((Volume) content, rowData);
-            } else if (content instanceof Pool) {
-                return new PoolTreeNode((Pool) content, rowData);
-            } else if (content instanceof LocalFilesDataSource) {
-                return new LocalFilesDataSourceTreeNode((LocalFilesDataSource) content, rowData);
-            } else if (content instanceof LocalDirectory) {
-                return new LocalDirectoryTreeNode((LocalDirectory) content, rowData);
-            } else if (content instanceof VirtualDirectory) {
-                return new VirtualDirectoryTreeNode((VirtualDirectory) content, rowData);
-            } else if (content instanceof Volume) {
-                return new VolumeTreeNode((Volume) content, rowData);
-            } else if (content instanceof AbstractFile) {
-                AbstractFile file = (AbstractFile) content;
-                if (file.isDir()) {
-                    return new DirectoryTreeNode(file, rowData);
-                } else {
-                    return new FileTreeNode(file, rowData);
-                }
-            } else {
-                return new UnsupportedTreeNode(content, rowData);
-            }
-        } catch (NoCurrentCaseException ex) {
-            // Case was likely closed while nodes were being created - don't fill the log with errors.
-            return null;
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating new node for content with ID: " + rowData.getSearchParams().getContentObjectId(), ex);
+        TreeFileType contentType = rowData instanceof FileSystemTreeItem ? ((FileSystemTreeItem) rowData).getContentType() : null;
+        if (contentType == null) {
+            logger.log(Level.WARNING, MessageFormat.format("Tree item: {0} did not have a valid content type.", rowData.getId()));
             return null;
         }
+
+        long objId = rowData.getSearchParams().getContentObjectId();
+        switch (contentType) {
+            case DIRECTORY:
+            case UNALLOC_DIRECTORY:
+                return new DirectoryTreeNode(objId, TreeFileType.UNALLOC_DIRECTORY.equals(contentType), rowData);
+            case FILE:
+            case UNALLOC_FILE:
+            case CARVED_FILE:
+                return new FileTreeNode(objId, UNALLOC_FILE.equals(contentType), CARVED_FILE.equals(contentType), FilenameUtils.getExtension(rowData.getDisplayName()), rowData);
+            case IMAGE:
+                return new ImageTreeNode(objId, rowData);
+            case LOCAL_FILES_DATA_SOURCE:
+                return new LocalFilesDataSourceTreeNode(objId, rowData);
+            case LOCAL_DIRECTORY:
+                return new LocalDirectoryTreeNode(objId, rowData);
+            case POOL:
+                return new PoolTreeNode(objId, rowData);
+            case VIRTUAL_DIRECTORY:
+                return new VirtualDirectoryTreeNode(objId, rowData);
+            case VOLUME:
+                return new VolumeTreeNode(objId, rowData);
+            case UNKNOWN:
+            default:
+                return new UnsupportedTreeNode(rowData);
+        }
+    }
+
+    @Override
+    protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+        // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
+        for (DAOEvent evt : aggEvt.getEvents()) {
+            if (evt instanceof FileSystemTreeEvent && ((FileSystemTreeEvent) evt).getItemRecord().getSearchParams().getContentObjectId() == null) {
+                super.update();
+                return;
+            }
+        }
+
+        super.handleDAOAggregateEvent(aggEvt);
     }
 
     @Override
@@ -154,9 +158,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         if (treeEvt instanceof FileSystemTreeEvent) {
             FileSystemTreeEvent fsTreeEvent = (FileSystemTreeEvent) treeEvt;
             // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
-            if (fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId() == null
-                    || (Objects.equals(this.host, fsTreeEvent.getParentHost())
-                    && Objects.equals(this.contentId, fsTreeEvent.getParentContentId()))) {
+            if (Objects.equals(this.host, fsTreeEvent.getParentHost())
+                    && Objects.equals(this.contentId, fsTreeEvent.getParentContentId())) {
 
                 return fsTreeEvent.getItemRecord();
             }
@@ -170,21 +173,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         if (o1 instanceof FileSystemTreeItem && o2 instanceof FileSystemTreeItem) {
             FileSystemTreeItem fs1 = (FileSystemTreeItem) o1;
             FileSystemTreeItem fs2 = (FileSystemTreeItem) o2;
-
-            // ordering taken from SELECT_FILES_BY_PARENT in SleuthkitCase
-            if ((fs1.getMetaType() != null) && (fs2.getMetaType() != null)
-                && (fs1.getMetaType().getValue() != fs2.getMetaType().getValue())) {
-                return -Short.compare(fs1.getMetaType().getValue(), fs2.getMetaType().getValue());
-            }
-            
-            // The case where both meta types are null will fall through to the name comparison.
-            if (fs1.getMetaType() == null) {
-                if (fs2.getMetaType() != null) {
-                    return -1;
-                }
-            } else if (fs2.getMetaType() != null) {
-                return 1;
-            }
+            return FileSystemDAO.getTreeItemComparator().compare(fs1, fs2);
         }
         return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
     }
@@ -214,33 +203,42 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
         @Override
         protected TreeNode<FileSystemContentSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> rowData) {
-            try {
-                DataSource ds = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(dataSourceId);
-                if (ds instanceof Image) {
-                    return new ImageTreeNode((Image) ds, rowData);
-                } else if (ds instanceof LocalFilesDataSource) {
-                    return new LocalFilesDataSourceTreeNode((LocalFilesDataSource) ds, rowData);
-                } else {
-                    logger.log(Level.SEVERE, "Unexpected data source type (ID: {0})", dataSourceId);
-                    return null;
-                }
-            } catch (NoCurrentCaseException ex) {
-                // Case is likely closing
-                return null;
-            } catch (TskCoreException | TskDataException ex) {
-                logger.log(Level.SEVERE, "Error creating node from data source with ID: " + dataSourceId, ex);
+            TreeFileType contentType = rowData instanceof FileSystemTreeItem ? ((FileSystemTreeItem) rowData).getContentType() : null;
+            if (contentType == null) {
+                logger.log(Level.WARNING, MessageFormat.format("Tree item: {0} did not have a valid content type.", rowData.getId()));
                 return null;
             }
+
+            long objId = rowData.getSearchParams().getContentObjectId();
+            switch (contentType) {
+                case IMAGE:
+                    return new ImageTreeNode(objId, rowData);
+                case LOCAL_FILES_DATA_SOURCE:
+                    return new LocalFilesDataSourceTreeNode(objId, rowData);
+                default:
+                    logger.log(Level.SEVERE, "Unexpected data source type (ID: {0})", objId);
+                    return null;
+            }
+        }
+
+        @Override
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof FileSystemTreeEvent && ((FileSystemTreeEvent) evt).getItemRecord().getSearchParams().getContentObjectId() == null) {
+                    super.update();
+                    return;
+                }
+            }
+
+            super.handleDAOAggregateEvent(aggEvt);
         }
 
         @Override
         protected TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
             if (treeEvt instanceof FileSystemTreeEvent) {
                 FileSystemTreeEvent fsTreeEvent = (FileSystemTreeEvent) treeEvt;
-                // when getContentObjectId == null, trigger refresh, otherwise, see if common parent
-                if (fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId() == null
-                        || Objects.equals(fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId(), dataSourceId)) {
-
+                if (Objects.equals(fsTreeEvent.getItemRecord().getSearchParams().getContentObjectId(), dataSourceId)) {
                     return fsTreeEvent.getItemRecord();
                 }
             }
@@ -263,24 +261,17 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
     public abstract static class FileSystemTreeNode extends TreeNode<FileSystemContentSearchParam> {
 
         private String translatedSourceName;
-        
-        protected FileSystemTreeNode(String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children, Lookup lookup) {
-            super(ContentNodeUtil.getContentName(itemData.getSearchParams().getContentObjectId()), icon, itemData, children, lookup);
+
+        protected FileSystemTreeNode(String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children) {
+            super(ContentNodeUtil.getContentName(itemData.getSearchParams().getContentObjectId()), icon, itemData, children, getDefaultLookup(itemData));
             startTranslationTask();
         }
 
-        protected static Children createChildrenForContent(Long contentId) {
-            try {
-                if (FileSystemColumnUtils.getVisibleTreeNodeChildren(contentId).isEmpty()) {
-                    return Children.LEAF;
-                } else {
-                    return Children.create(new FileSystemFactory(contentId), true);
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error creating children for content with ID: " + contentId, ex);
+        protected static Children createChildrenForContent(TreeItemDTO<? extends FileSystemContentSearchParam> treeItem) {
+            if (treeItem instanceof FileSystemTreeItem && ((FileSystemTreeItem) treeItem).isLeaf() != null && ((FileSystemTreeItem) treeItem).isLeaf()) {
                 return Children.LEAF;
-            } catch (NoCurrentCaseException ex) {
-                return Children.LEAF;
+            } else {
+                return Children.create(new FileSystemFactory(treeItem.getSearchParams().getContentObjectId()), true);
             }
         }
 
@@ -303,10 +294,10 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             synchronized (this) {
                 // defer to translated source name if present; otherwise use current display name
                 String displayNameToUse = this.translatedSourceName != null ? this.translatedSourceName : displayName;
-                return super.getDisplayNameString(displayNameToUse, displayCount);    
+                return super.getDisplayNameString(displayNameToUse, displayCount);
             }
         }
-        
+
         private void startTranslationTask() {
             if (TextTranslationService.getInstance().hasProvider() && UserPreferences.displayTranslatedFileNames()) {
                 /*
@@ -323,9 +314,9 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
                             if (eventType.equals(FileNameTransTask.getPropertyName())) {
                                 // lock to prevent simultaneous reads and updates of translatedSourceName
                                 synchronized (FileSystemTreeNode.this) {
-                                    FileSystemTreeNode.this.translatedSourceName = evt.getNewValue().toString();    
+                                    FileSystemTreeNode.this.translatedSourceName = evt.getNewValue().toString();
                                 }
-                                
+
                                 TreeItemDTO<? extends FileSystemContentSearchParam> itemData = FileSystemTreeNode.this.getItemData();
                                 FileSystemTreeNode.this.setDisplayName(getDisplayNameString(itemData.getDisplayName(), itemData.getDisplayCount()));
                             }
@@ -343,39 +334,39 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     static class ImageTreeNode extends FileSystemTreeNode {
 
-        Image image;
+        private final long objId;
 
-        ImageTreeNode(Image image, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
+        ImageTreeNode(long objId, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
             super(NodeIconUtil.IMAGE.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
-                    ContentNodeUtil.getLookup(image));
-            this.image = image;
+                    createChildrenForContent(itemData));
+
+            this.objId = objId;
         }
 
         public Node clone() {
-            return new ImageTreeNode(image, getItemData());
+            return new ImageTreeNode(this.objId, getItemData());
         }
 
         @Override
         public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
             ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
             group.add(new ExtractUnallocAction(
-                    Bundle.FileSystemFactory_FileSystemTreeNode_ExtractUnallocAction_text(), image));
+                    Bundle.FileSystemFactory_FileSystemTreeNode_ExtractUnallocAction_text(), this.objId, null));
             return Optional.of(group);
         }
 
         @Override
-        public Optional<Content> getDataSourceForActions() {
-            return Optional.of(image);
+        public Optional<Long> getDataSourceForActions() {
+            return Optional.of(this.objId);
         }
 
         @Override
         public boolean supportsSourceContentViewerActions() {
             return true;
         }
-        
-        @Override 
+
+        @Override
         public boolean supportsFileSearchAction() {
             return true;
         }
@@ -383,27 +374,35 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     static class VolumeTreeNode extends FileSystemTreeNode {
 
-        Volume volume;
+        private final long objId;
 
-        VolumeTreeNode(Volume volume, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
+        VolumeTreeNode(long objId, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
             super(NodeIconUtil.VOLUME.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
-                    ContentNodeUtil.getLookup(volume));
-            this.volume = volume;
+                    createChildrenForContent(itemData));
+
+            this.objId = objId;
         }
 
         public Node clone() {
-            return new VolumeTreeNode(volume, getItemData());
+            return new VolumeTreeNode(this.objId, getItemData());
         }
 
         @Override
         public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
-            ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
-            group.add(new ExtractUnallocAction(
-                    Bundle.VolumnNode_ExtractUnallocAction_text(), volume));
-            group.add(new FileSystemDetailsAction(volume));
-            return Optional.of(group);
+            try {
+                ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
+                Volume volume = (Volume) Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(objId);
+
+                group.add(new ExtractUnallocAction(
+                        Bundle.VolumnNode_ExtractUnallocAction_text(), volume));
+
+                group.add(new FileSystemDetailsAction(volume));
+                return Optional.of(group);
+            } catch (NoCurrentCaseException | TskCoreException | ClassCastException ex) {
+                logger.log(Level.WARNING, "Could not get volume for id: " + this.objId);
+                return Optional.empty();
+            }
         }
 
         @Override
@@ -414,31 +413,32 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     static class PoolTreeNode extends FileSystemTreeNode {
 
-        Pool pool;
+        private final long objId;
 
-        PoolTreeNode(Pool pool, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
+        PoolTreeNode(long objId, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
             super(NodeIconUtil.POOL.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
-                    ContentNodeUtil.getLookup(pool));
-            this.pool = pool;
+                    createChildrenForContent(itemData));
+
+            this.objId = objId;
         }
 
         public Node clone() {
-            return new PoolTreeNode(pool, getItemData());
+            return new PoolTreeNode(this.objId, getItemData());
         }
     }
 
     static class DirectoryTreeNode extends FileSystemTreeNode {
 
-        AbstractFile dir;
+        private final long objId;
+        private final boolean isUnalloc;
 
-        DirectoryTreeNode(AbstractFile dir, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(getDirectoryIcon(dir),
+        DirectoryTreeNode(long objId, boolean isUnalloc, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
+            super(isUnalloc ? DELETED_FOLDER.getPath() : FOLDER.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
-                    ContentNodeUtil.getLookup(dir));
-            this.dir = dir;
+                    createChildrenForContent(itemData));
+            this.objId = objId;
+            this.isUnalloc = isUnalloc;
         }
 
         private static String getDirectoryIcon(AbstractFile dir) {
@@ -450,7 +450,7 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         public Node clone() {
-            return new DirectoryTreeNode(dir, getItemData());
+            return new DirectoryTreeNode(this.objId, this.isUnalloc, getItemData());
         }
 
         @Override
@@ -459,8 +459,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public Optional<AbstractFile> getFileForViewInTimelineAction() {
-            return Optional.of(dir);
+        public Optional<Long> getFileForViewInTimelineAction() {
+            return Optional.of(objId);
         }
 
         @Override
@@ -469,8 +469,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public Optional<Content> getContentForRunIngestionModuleAction() {
-            return Optional.of(dir);
+        public Optional<Long> getContentForRunIngestionModuleAction() {
+            return Optional.of(this.objId);
         }
 
         @Override
@@ -481,11 +481,11 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     static abstract class SpecialDirectoryTreeNode extends FileSystemTreeNode {
 
-        AbstractFile dir;
+        private final long objId;
 
-        protected SpecialDirectoryTreeNode(AbstractFile dir, String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children, Lookup lookup) {
-            super(icon, itemData, children, lookup);
-            this.dir = dir;
+        protected SpecialDirectoryTreeNode(long objId, String icon, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData, Children children) {
+            super(icon, itemData, children);
+            this.objId = objId;
         }
 
         @Override
@@ -498,12 +498,16 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
             return true;
         }
 
-        @Override
-        public Optional<Content> getContentForRunIngestionModuleAction() {
-            return Optional.of(dir);
+        protected long getObjId() {
+            return objId;
         }
-        
-        @Override 
+
+        @Override
+        public Optional<Long> getContentForRunIngestionModuleAction() {
+            return Optional.of(objId);
+        }
+
+        @Override
         public boolean supportsFileSearchAction() {
             return true;
         }
@@ -511,16 +515,15 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     static class LocalDirectoryTreeNode extends SpecialDirectoryTreeNode {
 
-        LocalDirectoryTreeNode(AbstractFile dir, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(dir,
+        LocalDirectoryTreeNode(long objId, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
+            super(objId,
                     NodeIconUtil.FOLDER.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
-                    ContentNodeUtil.getLookup(dir));
+                    createChildrenForContent(itemData));
         }
 
         public Node clone() {
-            return new LocalDirectoryTreeNode(dir, getItemData());
+            return new LocalDirectoryTreeNode(getObjId(), getItemData());
         }
 
         @Override
@@ -531,39 +534,37 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     static class LocalFilesDataSourceTreeNode extends SpecialDirectoryTreeNode {
 
-        LocalFilesDataSourceTreeNode(AbstractFile localFilesDataSource, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(localFilesDataSource,
-                    NodeIconUtil.VOLUME.getPath(),
+        LocalFilesDataSourceTreeNode(long objId, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
+            super(objId,
+                    NodeIconUtil.LOCAL_FILES_DATA_SOURCE.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
-                    ContentNodeUtil.getLookup(localFilesDataSource));
+                    createChildrenForContent(itemData));
         }
 
         public Node clone() {
-            return new LocalFilesDataSourceTreeNode(dir, getItemData());
+            return new LocalFilesDataSourceTreeNode(getObjId(), getItemData());
         }
 
         @Override
-        public Optional<Content> getDataSourceForActions() {
-            return Optional.of(dir);
+        public Optional<Long> getDataSourceForActions() {
+            return Optional.of(getObjId());
         }
     }
 
     static class VirtualDirectoryTreeNode extends SpecialDirectoryTreeNode {
 
-        VirtualDirectoryTreeNode(AbstractFile dir, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(dir,
+        VirtualDirectoryTreeNode(long objId, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
+            super(objId,
                     NodeIconUtil.VIRTUAL_DIRECTORY.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
-                    ContentNodeUtil.getLookup(dir));
+                    createChildrenForContent(itemData));
         }
 
         public Node clone() {
-            return new VirtualDirectoryTreeNode(dir, getItemData());
+            return new VirtualDirectoryTreeNode(getObjId(), getItemData());
         }
-        
-        @Override 
+
+        @Override
         public boolean supportsFileSearchAction() {
             return true;
         }
@@ -571,29 +572,35 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
 
     static class FileTreeNode extends FileSystemTreeNode {
 
-        AbstractFile file;
+        private final long objId;
+        private final boolean isUnalloc;
+        private final boolean isCarved;
+        private final String extension;
 
-        FileTreeNode(AbstractFile file, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
-            super(getFileIcon(file),
+        FileTreeNode(long objId, boolean isUnalloc, boolean isCarved, String extension, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
+            super(getFileIcon(isUnalloc, isCarved, extension),
                     itemData,
-                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
-                    ContentNodeUtil.getLookup(file));
-            this.file = file;
+                    createChildrenForContent(itemData));
+
+            this.objId = objId;
+            this.isUnalloc = isUnalloc;
+            this.isCarved = isCarved;
+            this.extension = extension;
         }
 
         public Node clone() {
-            return new FileTreeNode(file, getItemData());
+            return new FileTreeNode(this.objId, this.isUnalloc, this.isCarved, this.extension, getItemData());
         }
 
-        private static String getFileIcon(AbstractFile file) {
-            if (file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
-                if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)) {
+        private static String getFileIcon(boolean isUnalloc, boolean isCarved, String extension) {
+            if (isUnalloc) {
+                if (isCarved) {
                     return CARVED_FILE.getPath();
                 } else {
                     return DELETED_FILE.getPath();
                 }
             } else {
-                MediaTypeUtils.ExtensionMediaType mediaType = MediaTypeUtils.getExtensionMediaType(file.getNameExtension());
+                MediaTypeUtils.ExtensionMediaType mediaType = MediaTypeUtils.getExtensionMediaType(extension);
                 return MediaTypeUtils.getIconForFileType(mediaType);
             }
         }
@@ -604,8 +611,8 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public Optional<AbstractFile> getFileForViewInTimelineAction() {
-            return Optional.of(file);
+        public Optional<Long> getFileForViewInTimelineAction() {
+            return Optional.of(objId);
         }
 
         @Override
@@ -634,22 +641,24 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         }
 
         @Override
-        public Optional<AbstractFile> getFileForDirectoryBrowseMode() {
-            return Optional.of(file);
+        public Optional<Long> getFileForDirectoryBrowseMode() {
+            return Optional.of(this.objId);
         }
 
         @Override
-        public Optional<AbstractFile> getExtractArchiveWithPasswordActionFile() {
+        public Optional<Long> getExtractArchiveWithPasswordActionFile() {
             // TODO: See JIRA-8099
-            boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + file.getNameExtension().toLowerCase());
+            boolean isArchive = FileTypeExtensions.getArchiveExtensions().contains("." + this.extension.toLowerCase());
             boolean encryptionDetected = false;
             try {
-                encryptionDetected = isArchive && file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0;
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error loading artifacts for file with ID: " + file.getId(), ex);
+                encryptionDetected = isArchive && Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getAnalysisResultsWhere(
+                        "obj_id = " + objId + " AND artifact_type_id = " + BlackboardArtifact.Type.TSK_ENCRYPTION_DETECTED.getTypeID()).size() > 0;
+
+            } catch (NoCurrentCaseException | TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error loading artifacts for file with ID: " + objId, ex);
             }
 
-            return encryptionDetected ? Optional.of(file) : Optional.empty();
+            return encryptionDetected ? Optional.of(objId) : Optional.empty();
         }
     }
 
@@ -657,18 +666,14 @@ public class FileSystemFactory extends TreeChildFactory<FileSystemContentSearchP
         "FileSystemFactory.UnsupportedTreeNode.displayName=Unsupported Content",})
     static class UnsupportedTreeNode extends FileSystemTreeNode {
 
-        Content content;
-
-        UnsupportedTreeNode(Content content, TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
+        UnsupportedTreeNode(TreeResultsDTO.TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
             super(NodeIconUtil.FILE.getPath(),
                     itemData,
-                    createChildrenForContent(itemData.getSearchParams().getContentObjectId()),
-                    getDefaultLookup(itemData));
-            this.content = content;
+                    createChildrenForContent(itemData));
         }
 
         public Node clone() {
-            return new UnsupportedTreeNode(content, getItemData());
+            return new UnsupportedTreeNode(getItemData());
         }
     }
 }
