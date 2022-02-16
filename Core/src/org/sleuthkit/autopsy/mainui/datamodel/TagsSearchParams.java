@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.TagName;
 
 /**
@@ -35,9 +36,22 @@ public class TagsSearchParams extends TagNameSearchParams {
         return TYPE_ID;
     }
 
+    @Messages({
+        "TagType_File_displayName=File Tags",
+        "TagType_Result_displayName=Result Tags",})
     public enum TagType {
-        FILE,
-        RESULT;
+        FILE(Bundle.TagType_File_displayName()),
+        RESULT(Bundle.TagType_Result_displayName());
+        
+        private final String displayName;
+        
+        TagType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     private final TagType type;
@@ -77,5 +91,4 @@ public class TagsSearchParams extends TagNameSearchParams {
         return super.equals(obj);
     }
 
-    
 }
