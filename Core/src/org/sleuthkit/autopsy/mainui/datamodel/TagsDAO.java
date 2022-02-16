@@ -414,10 +414,15 @@ public class TagsDAO extends AbstractDAO {
         return null;
     }
 
-    private SleuthkitCase getCase() throws NoCurrentCaseException, TskCoreException {
-        return Case.getCurrentCaseThrows().getSleuthkitCase();
-    }
-
+    /**
+     * Returns the counts of each tag name.
+     *
+     * @param dataSourceId The data source object id to filter on.
+     *
+     * @return The tree item results.
+     *
+     * @throws ExecutionException
+     */
     public TreeResultsDTO<? extends TagNameSearchParams> getNameCounts(Long dataSourceId) throws ExecutionException {
         Set<TagName> indeterminateTagNameIds = this.treeCounts.getEnqueued().stream()
                 .filter(evt -> dataSourceId == null || evt.getDataSourceId() == dataSourceId)
@@ -481,6 +486,15 @@ public class TagsDAO extends AbstractDAO {
         return new TreeResultsDTO<>(tagNameParams);
     }
 
+    /**
+     * Creates a tag name tree item.
+     *
+     * @param tagName          The tag name.
+     * @param dataSourceId     The data source object id or null if not present.
+     * @param treeDisplayCount The tree display count.
+     *
+     * @return The tree item dto.
+     */
     public TreeItemDTO<TagNameSearchParams> createTagNameTreeItem(TagName tagName, Long dataSourceId, TreeResultsDTO.TreeDisplayCount treeDisplayCount) {
         return new TreeItemDTO<>(
                 TagNameSearchParams.getTypeId(),
@@ -491,6 +505,18 @@ public class TagsDAO extends AbstractDAO {
         );
     }
 
+    /**
+     * The count of content tags.
+     *
+     * @param dataSourceId The data source id where the content tag should
+     *                     appear or null.
+     * @param tagName      The tag name.
+     *
+     * @return The count.
+     *
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     */
     private long getContentTagCount(Long dataSourceId, TagName tagName) throws NoCurrentCaseException, TskCoreException {
 
         if (UserPreferences.showOnlyCurrentUserTags()) {
@@ -505,6 +531,18 @@ public class TagsDAO extends AbstractDAO {
         }
     }
 
+    /**
+     * The count of result tags.
+     *
+     * @param dataSourceId The data source id where the result tag should appear
+     *                     or null.
+     * @param tagName      The tag name.
+     *
+     * @return The count.
+     *
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     */
     private long getArtifactTagCount(Long dataSourceId, TagName tagName) throws NoCurrentCaseException, TskCoreException {
         if (UserPreferences.showOnlyCurrentUserTags()) {
             String userName = System.getProperty(USER_NAME_PROPERTY);
@@ -518,6 +556,15 @@ public class TagsDAO extends AbstractDAO {
         }
     }
 
+    /**
+     * Returns the counts of file and result type given the search params.
+     *
+     * @param searchParams The tag name search params.
+     *
+     * @return The tree item results.
+     *
+     * @throws ExecutionException
+     */
     public TreeResultsDTO<? extends TagsSearchParams> getTypeCounts(TagNameSearchParams searchParams) throws ExecutionException {
         Long dataSourceId = searchParams.getDataSourceId();
         TagName tagName = searchParams.getTagName();
@@ -549,6 +596,16 @@ public class TagsDAO extends AbstractDAO {
         }
     }
 
+    /**
+     * Creates a tag type tree item.
+     *
+     * @param tagName          The tag name.
+     * @param tagType          The tag type.
+     * @param dataSourceId     The data source object id or null if not present.
+     * @param treeDisplayCount The tree display count.
+     *
+     * @return The tree item dto.
+     */
     public TreeItemDTO<TagsSearchParams> createTagTypeTreeItem(TagName tagName, TagType tagType, Long dataSourceId, TreeResultsDTO.TreeDisplayCount treeDisplayCount) {
         return new TreeItemDTO<>(
                 TagsSearchParams.getTypeId(),
