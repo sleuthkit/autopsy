@@ -91,12 +91,6 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(Tags.RootNode node);
 
-    T visit(Tags.TagNameNode node);
-
-    T visit(Tags.ContentTagTypeNode node);
-
-    T visit(Tags.BlackboardArtifactTagTypeNode node);
-
 
     /*
      * Reports
@@ -267,21 +261,6 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(Tags.RootNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Tags.TagNameNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Tags.ContentTagTypeNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Tags.BlackboardArtifactTagTypeNode node) {
             return defaultVisit(node);
         }
 
