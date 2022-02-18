@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -253,26 +254,19 @@ class Chromium extends Extract {
             tempList = this.querySQLiteDb(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0}- Now getting history from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - Long.valueOf("11644473600"))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : ""))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        ((result.get("title").toString() != null) ? result.get("title").toString() : ""))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browser));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        (NetworkUtils.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
-
+                String url = result.get("url") == null ? "" : result.get("url").toString();
+                String extractedDomain = NetworkUtils.extractDomain(url);
+                
                 try {
+                    Collection<BlackboardAttribute> bbattributes = createHistoryAttributes(
+                        StringUtils.defaultString(url), 
+                        (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - Long.valueOf("11644473600"),
+                        result.get("from_visit") == null ? "" : result.get("from_visit").toString(),
+                        result.get("title") == null ? "" : result.get("title").toString(),
+                        browser,
+                        extractedDomain,
+                        "");
+                                    
                     bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_HISTORY, historyFile, bbattributes));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create history artifact for file (%d)", historyFile.getId()), ex);

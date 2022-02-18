@@ -217,32 +217,19 @@ class Firefox extends Extract {
                 }
 
                 String url = result.get("url").toString();
-
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        ((url != null) ? url : ""))); //NON-NLS
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        (Long.valueOf(result.get("visit_date").toString())))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        ((result.get("ref").toString() != null) ? result.get("ref").toString() : ""))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        ((result.get("title").toString() != null) ? result.get("title").toString() : ""))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
-                        NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
                 String domain = extractDomain(url);
-                if (domain != null && domain.isEmpty() == false) {
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
-
-                }
-
                 try {
+                    
+                    Collection<BlackboardAttribute> bbattributes = createHistoryAttributes(
+                            url, 
+                            Long.valueOf(result.get("visit_date").toString()), 
+                            result.get("ref").toString(), 
+                            result.get("title").toString(), 
+                            NbBundle.getMessage(this.getClass(), "Firefox.moduleName"), 
+                            domain, 
+                            null);
+                
+                    
                     bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_HISTORY, historyFile, bbattributes));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create TSK_WEB_HISTORY artifact for file %d", historyFile.getId()), ex);

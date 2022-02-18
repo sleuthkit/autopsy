@@ -651,7 +651,7 @@ public class CorrelationAttributeUtil {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
             return null;
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", artifact), ex); // NON-NLS
+            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s)", artifact)); // NON-NLS
             return null;
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
