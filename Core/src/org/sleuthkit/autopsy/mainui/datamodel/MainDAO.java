@@ -171,12 +171,10 @@ public class MainDAO extends AbstractDAO {
     private final CommAccountsDAO commAccountsDAO = CommAccountsDAO.getInstance();
     private final CreditCardDAO creditCardDAO = CreditCardDAO.getInstance();
     private final EmailsDAO emailsDAO = EmailsDAO.getInstance();
-    private final HostDAO hostDAO = HostDAO.getInstance();
-    private final PersonDAO personDAO = PersonDAO.getInstance();
+    private final HostPersonDAO hostPersonDAO = HostPersonDAO.getInstance();
     
     // NOTE: whenever adding a new sub-dao, it should be added to this list for event updates.
-    private final List<AbstractDAO> allDAOs = ImmutableList.of(
-            dataArtifactDAO,
+    private final List<AbstractDAO> allDAOs = ImmutableList.of(dataArtifactDAO,
             analysisResultDAO,
             viewsDAO,
             fileSystemDAO,
@@ -185,8 +183,7 @@ public class MainDAO extends AbstractDAO {
             commAccountsDAO,
             creditCardDAO,
             emailsDAO,
-            hostDAO,
-            personDAO);
+            hostPersonDAO);
 
     /**
      * Registers listeners with autopsy event publishers and starts internal
@@ -258,12 +255,8 @@ public class MainDAO extends AbstractDAO {
         return creditCardDAO;
     }
 
-    public HostDAO getHostDAO() {
-        return hostDAO;
-    }
-
-    public PersonDAO getPersonDAO() {
-        return personDAO;
+    public HostPersonDAO getPersonDAO() {
+        return hostPersonDAO;
     }
     
 
