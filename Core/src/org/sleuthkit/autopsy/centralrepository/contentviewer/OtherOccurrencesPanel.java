@@ -196,7 +196,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
                                 eamArtifact.getCorrelationType().getDisplayName(),
                                 eamArtifact.getCorrelationValue()));
                     } catch (CorrelationAttributeNormalizationException ex) {
-                        logger.log(Level.WARNING, String.format("Error getting commonality details for artifact with ID: %s.", eamArtifact.getID()), ex);
+                        logger.log(Level.WARNING, String.format("Error getting commonality details for artifact with ID: %s: %s", eamArtifact.getID(), ex.getMessage()));
                     }
                 }
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));

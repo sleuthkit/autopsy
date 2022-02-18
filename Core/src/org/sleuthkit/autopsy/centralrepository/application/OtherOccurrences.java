@@ -139,7 +139,7 @@ public final class OtherOccurrences {
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error getting artifact instances from database.", ex); // NON-NLS
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.INFO, "Error getting artifact instances from database.", ex); // NON-NLS
+            logger.log(Level.INFO, "Error getting artifact instances from database: " + ex.getMessage()); // NON-NLS
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         }
