@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,15 +19,15 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.TagName;
 
 /**
- * Key for accessing data about tags from the DAO.
+ *
+ * Search param for a tag name.
  */
-public class TagsSearchParams extends TagNameSearchParams {
+public class TagNameSearchParams {
 
-    private static final String TYPE_ID = "TAG";
+    private static final String TYPE_ID = "TAG_TYPE";
 
     /**
      * @return The type id for this search parameter.
@@ -36,40 +36,27 @@ public class TagsSearchParams extends TagNameSearchParams {
         return TYPE_ID;
     }
 
-    @Messages({
-        "TagType_File_displayName=File Tags",
-        "TagType_Result_displayName=Result Tags",})
-    public enum TagType {
-        FILE(Bundle.TagType_File_displayName()),
-        RESULT(Bundle.TagType_Result_displayName());
-        
-        private final String displayName;
-        
-        TagType(String displayName) {
-            this.displayName = displayName;
-        }
+    private final TagName tagName;
+    private final Long dataSourceId;
 
-        public String getDisplayName() {
-            return displayName;
-        }
+    public TagNameSearchParams(TagName tagName, Long dataSourceId) {
+        this.dataSourceId = dataSourceId;
+        this.tagName = tagName;
     }
 
-    private final TagType type;
-
-    public TagsSearchParams(TagName tagName, TagType type, Long dataSourceId) {
-        super(tagName, dataSourceId);
-        this.type = type;
+    public TagName getTagName() {
+        return tagName;
     }
 
-    public TagType getTagType() {
-        return type;
+    public Long getDataSourceId() {
+        return dataSourceId;
     }
 
     @Override
     public int hashCode() {
         int hash = 3;
-        hash = 97 * hash + Objects.hashCode(this.type);
-        hash = 97 * hash + super.hashCode();
+        hash = 67 * hash + Objects.hashCode(this.tagName);
+        hash = 67 * hash + Objects.hashCode(this.dataSourceId);
         return hash;
     }
 
@@ -84,11 +71,16 @@ public class TagsSearchParams extends TagNameSearchParams {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final TagsSearchParams other = (TagsSearchParams) obj;
-        if (this.type != other.type) {
+        final TagNameSearchParams other = (TagNameSearchParams) obj;
+        if (!Objects.equals(this.tagName, other.tagName)) {
             return false;
         }
-        return super.equals(obj);
+        if (!Objects.equals(this.dataSourceId, other.dataSourceId)) {
+            return false;
+        }
+        return true;
     }
+
+    
 
 }

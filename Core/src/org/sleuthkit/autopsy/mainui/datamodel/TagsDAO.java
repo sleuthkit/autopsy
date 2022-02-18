@@ -22,15 +22,20 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
+import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
@@ -42,21 +47,29 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.datamodel.Tags;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_SIZE;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams.TagType;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TagsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
+import org.sleuthkit.autopsy.tags.TagUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -84,6 +97,8 @@ import org.sleuthkit.datamodel.TskCoreException;
     "TagsDAO.tagColumns.commentColLbl=Comment",
     "TagsDAO.tagColumns.userNameColLbl=User Name"})
 public class TagsDAO extends AbstractDAO {
+
+    private static final Logger logger = Logger.getLogger(TagsDAO.class.getName());
 
     private static final String USER_NAME_PROPERTY = "user.name"; //NON-NLS
 
@@ -122,14 +137,12 @@ public class TagsDAO extends AbstractDAO {
         return new ColumnKey(name, name, Bundle.TagsDAO_fileColumns_noDescription());
     }
 
-    private final Cache<SearchParams<TagsSearchParams>, SearchResultsDTO> searchParamsCache = 
-            CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
+    private final Cache<SearchParams<TagsSearchParams>, SearchResultsDTO> searchParamsCache
+            = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<TagsEvent> treeCounts = new TreeCounts<>();
 
     public SearchResultsDTO getTags(TagsSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
-        if (key.getTagName() == null) {
-            throw new IllegalArgumentException("Must have non-null tag name");
-        } else if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
+        if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
             throw new IllegalArgumentException("Data source id must be greater than 0 or null");
         } else if (key.getTagType() == null) {
             throw new IllegalArgumentException("Must have non-null tag type");
@@ -175,13 +188,14 @@ public class TagsDAO extends AbstractDAO {
     private SearchResultsDTO fetchResultTags(SearchParams<TagsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
-        TagName tagName = cacheKey.getParamData().getTagName();
+        TagName tagNameId = cacheKey.getParamData().getTagName();
 
+        TagsManager tm = Case.getCurrentCase().getServices().getTagsManager();
         // get all tag results
         List<BlackboardArtifactTag> allTags = new ArrayList<>();
         List<BlackboardArtifactTag> artifactTags = (dataSourceId != null && dataSourceId > 0)
-                ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName, dataSourceId)
-                : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByTagName(tagName);
+                ? tm.getBlackboardArtifactTagsByTagName(tagNameId, dataSourceId)
+                : tm.getBlackboardArtifactTagsByTagName(tagNameId);
         if (UserPreferences.showOnlyCurrentUserTags()) {
             String userName = System.getProperty(USER_NAME_PROPERTY);
             for (BlackboardArtifactTag tag : artifactTags) {
@@ -233,13 +247,15 @@ public class TagsDAO extends AbstractDAO {
     private SearchResultsDTO fetchFileTags(SearchParams<TagsSearchParams> cacheKey) throws NoCurrentCaseException, TskCoreException {
 
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
-        TagName tagName = cacheKey.getParamData().getTagName();
+        TagName tagNameId = cacheKey.getParamData().getTagName();
+
+        TagsManager tm = Case.getCurrentCase().getServices().getTagsManager();
 
         // get all tag results
         List<ContentTag> allTags = new ArrayList<>();
         List<ContentTag> contentTags = (dataSourceId != null && dataSourceId > 0)
-                ? Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName, dataSourceId)
-                : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByTagName(tagName);
+                ? tm.getContentTagsByTagName(tagNameId, dataSourceId)
+                : tm.getContentTagsByTagName(tagNameId);
         if (UserPreferences.showOnlyCurrentUserTags()) {
             String userName = System.getProperty(USER_NAME_PROPERTY);
             for (ContentTag tag : contentTags) {
@@ -307,10 +323,10 @@ public class TagsDAO extends AbstractDAO {
 
     private TreeItemDTO<TagsSearchParams> getTreeItem(TagsEvent evt, TreeResultsDTO.TreeDisplayCount count) {
         return new TreeItemDTO<>(
-                TagsSearchParams.getTypeId(), 
-                new TagsSearchParams(evt.getTagName(), evt.getTagType(), evt.getDataSourceId()), 
-                evt.getTagName().getId(), 
-                evt.getTagName().getDisplayName(), 
+                TagsSearchParams.getTypeId(),
+                new TagsSearchParams(evt.getTagName(), evt.getTagType(), evt.getDataSourceId()),
+                evt.getTagName().getId(),
+                evt.getTagName().getDisplayName(),
                 count);
     }
 
@@ -345,9 +361,9 @@ public class TagsDAO extends AbstractDAO {
 
         Collection<TagsEvent> daoEvents = Collections.singletonList(data);
 
-        Collection<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
-                .map(arEvt -> new TreeEvent(getTreeItem(arEvt, TreeResultsDTO.TreeDisplayCount.INDETERMINATE), false))
-                .collect(Collectors.toList());
+        Collection<TreeEvent> treeEvents = daoEvents.stream()
+                .map(arEvt -> new TreeEvent(getTreeItem(arEvt, TreeResultsDTO.TreeDisplayCount.UNSPECIFIED), true))
+                .collect(Collectors.toSet());
 
         return Stream.of(daoEvents, treeEvents)
                 .flatMap(lst -> lst.stream())
@@ -396,6 +412,208 @@ public class TagsDAO extends AbstractDAO {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns the counts of each tag name.
+     *
+     * @param dataSourceId The data source object id to filter on.
+     *
+     * @return The tree item results.
+     *
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<? extends TagNameSearchParams> getNameCounts(Long dataSourceId) throws ExecutionException {
+        Set<TagName> indeterminateTagNameIds = this.treeCounts.getEnqueued().stream()
+                .filter(evt -> dataSourceId == null || evt.getDataSourceId() == dataSourceId)
+                .map(evt -> evt.getTagName())
+                .collect(Collectors.toSet());
+
+        Map<TagName, TreeDisplayCount> tagNameCount = new HashMap<>();
+        try {
+            TagsManager tm = Case.getCurrentCaseThrows().getServices().getTagsManager();
+
+            List<TagName> tagNamesInUse;
+            if (UserPreferences.showOnlyCurrentUserTags()) {
+                String userName = System.getProperty(USER_NAME_PROPERTY);
+                tagNamesInUse = (dataSourceId != null)
+                        ? tm.getTagNamesInUseForUser(dataSourceId, userName)
+                        : tm.getTagNamesInUseForUser(userName);
+            } else {
+                tagNamesInUse = (dataSourceId != null)
+                        ? Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse(dataSourceId)
+                        : Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
+            }
+
+            for (TagName tagName : tagNamesInUse) {
+                if (indeterminateTagNameIds.contains(tagName)) {
+                    tagNameCount.put(tagName, TreeDisplayCount.INDETERMINATE);
+                    continue;
+                }
+
+                long tagsCount;
+                if (UserPreferences.showOnlyCurrentUserTags()) {
+                    String userName = System.getProperty(USER_NAME_PROPERTY);
+                    if (dataSourceId != null) {
+                        tagsCount = tm.getContentTagsCountByTagNameForUser(tagName, dataSourceId, userName);
+                        tagsCount += tm.getBlackboardArtifactTagsCountByTagNameForUser(tagName, dataSourceId, userName);
+                    } else {
+                        tagsCount = tm.getContentTagsCountByTagNameForUser(tagName, userName);
+                        tagsCount += tm.getBlackboardArtifactTagsCountByTagNameForUser(tagName, userName);
+                    }
+                } else {
+                    if (dataSourceId != null) {
+                        tagsCount = tm.getContentTagsCountByTagName(tagName, dataSourceId);
+                        tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName, dataSourceId);
+                    } else {
+                        tagsCount = tm.getContentTagsCountByTagName(tagName);
+                        tagsCount += tm.getBlackboardArtifactTagsCountByTagName(tagName);
+                    }
+                }
+
+                tagNameCount.put(tagName, TreeDisplayCount.getDeterminate(tagsCount));
+            }
+
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching data artifact counts.", ex);
+        }
+
+        List<TreeResultsDTO.TreeItemDTO<TagNameSearchParams>> tagNameParams = tagNameCount.entrySet().stream()
+                .map(e -> createTagNameTreeItem(e.getKey(), dataSourceId, e.getValue()))
+                .collect(Collectors.toList());
+
+        // return results
+        return new TreeResultsDTO<>(tagNameParams);
+    }
+
+    /**
+     * Creates a tag name tree item.
+     *
+     * @param tagName          The tag name.
+     * @param dataSourceId     The data source object id or null if not present.
+     * @param treeDisplayCount The tree display count.
+     *
+     * @return The tree item dto.
+     */
+    public TreeItemDTO<TagNameSearchParams> createTagNameTreeItem(TagName tagName, Long dataSourceId, TreeResultsDTO.TreeDisplayCount treeDisplayCount) {
+        return new TreeItemDTO<>(
+                TagNameSearchParams.getTypeId(),
+                new TagNameSearchParams(tagName, dataSourceId),
+                tagName.getId(),
+                tagName.getDisplayName(),
+                treeDisplayCount
+        );
+    }
+
+    /**
+     * The count of content tags.
+     *
+     * @param dataSourceId The data source id where the content tag should
+     *                     appear or null.
+     * @param tagName      The tag name.
+     *
+     * @return The count.
+     *
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     */
+    private long getContentTagCount(Long dataSourceId, TagName tagName) throws NoCurrentCaseException, TskCoreException {
+
+        if (UserPreferences.showOnlyCurrentUserTags()) {
+            String userName = System.getProperty(USER_NAME_PROPERTY);
+            return (dataSourceId != null)
+                    ? Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagNameForUser(tagName, dataSourceId, userName)
+                    : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagNameForUser(tagName, userName);
+        } else {
+            return (dataSourceId != null)
+                    ? Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagName(tagName, dataSourceId)
+                    : Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsCountByTagName(tagName);
+        }
+    }
+
+    /**
+     * The count of result tags.
+     *
+     * @param dataSourceId The data source id where the result tag should appear
+     *                     or null.
+     * @param tagName      The tag name.
+     *
+     * @return The count.
+     *
+     * @throws NoCurrentCaseException
+     * @throws TskCoreException
+     */
+    private long getArtifactTagCount(Long dataSourceId, TagName tagName) throws NoCurrentCaseException, TskCoreException {
+        if (UserPreferences.showOnlyCurrentUserTags()) {
+            String userName = System.getProperty(USER_NAME_PROPERTY);
+            return (dataSourceId != null)
+                    ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagNameForUser(tagName, dataSourceId, userName)
+                    : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagNameForUser(tagName, userName);
+        } else {
+            return (dataSourceId != null)
+                    ? Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName, dataSourceId)
+                    : Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsCountByTagName(tagName);
+        }
+    }
+
+    /**
+     * Returns the counts of file and result type given the search params.
+     *
+     * @param searchParams The tag name search params.
+     *
+     * @return The tree item results.
+     *
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<? extends TagsSearchParams> getTypeCounts(TagNameSearchParams searchParams) throws ExecutionException {
+        Long dataSourceId = searchParams.getDataSourceId();
+        TagName tagName = searchParams.getTagName();
+
+        Set<TagType> indeterminateTagTypes = this.treeCounts.getEnqueued().stream()
+                .filter(evt -> (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId)) && Objects.equals(tagName, evt.getTagName()))
+                .map(evt -> evt.getTagType())
+                .collect(Collectors.toSet());
+
+        try {
+            return new TreeResultsDTO<>(Arrays.asList(
+                    createTagTypeTreeItem(
+                            tagName,
+                            TagType.FILE,
+                            dataSourceId,
+                            indeterminateTagTypes.contains(TagType.FILE)
+                            ? TreeDisplayCount.INDETERMINATE
+                            : TreeDisplayCount.getDeterminate(getContentTagCount(dataSourceId, tagName))),
+                    createTagTypeTreeItem(
+                            tagName,
+                            TagType.RESULT,
+                            dataSourceId,
+                            indeterminateTagTypes.contains(TagType.RESULT)
+                            ? TreeDisplayCount.INDETERMINATE
+                            : TreeDisplayCount.getDeterminate(getArtifactTagCount(dataSourceId, tagName)))
+            ));
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching tag type counts.", ex);
+        }
+    }
+
+    /**
+     * Creates a tag type tree item.
+     *
+     * @param tagName          The tag name.
+     * @param tagType          The tag type.
+     * @param dataSourceId     The data source object id or null if not present.
+     * @param treeDisplayCount The tree display count.
+     *
+     * @return The tree item dto.
+     */
+    public TreeItemDTO<TagsSearchParams> createTagTypeTreeItem(TagName tagName, TagType tagType, Long dataSourceId, TreeResultsDTO.TreeDisplayCount treeDisplayCount) {
+        return new TreeItemDTO<>(
+                TagsSearchParams.getTypeId(),
+                new TagsSearchParams(tagName, tagType, dataSourceId),
+                tagName.getId() + "_" + tagType.name(),
+                tagType.getDisplayName(),
+                treeDisplayCount
+        );
     }
 
     /**

@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
+import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
@@ -91,6 +92,9 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             return new Node[]{cloned};
         } else if (origNode instanceof AnalysisResults.RootNode) {
             Node cloned = ((AnalysisResults.RootNode) origNode).clone();
+            return new Node[]{cloned};
+        } else if (origNode instanceof Tags.RootNode) {
+            Node cloned = ((Tags.RootNode) origNode).clone();
             return new Node[]{cloned};
         } else if (origNode instanceof ViewsNode) {
             Node cloned = ((ViewsNode) origNode).clone();

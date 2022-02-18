@@ -97,7 +97,7 @@ public class RootContentChildren extends Children.Keys<Object> {
     public static Node createNode(Object key) {
         if (key instanceof Tags) {
             Tags tagsNodeKey = (Tags) key;
-            return tagsNodeKey.new RootNode(tagsNodeKey.filteringDataSourceObjId());
+            return new Tags.RootNode(tagsNodeKey.filteringDataSourceObjId());
         } else if (key instanceof DataSources) {
             DataSources dataSourcesKey = (DataSources) key;
             return new DataSourceFilesNode(dataSourcesKey.filteringDataSourceObjId());

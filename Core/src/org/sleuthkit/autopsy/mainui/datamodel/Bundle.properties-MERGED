@@ -117,3 +117,5 @@ TagsDAO.tagColumns.sourceNameColLbl=Source Name
 TagsDAO.tagColumns.sourcePathColLbl=Source File Path
 TagsDAO.tagColumns.typeColLbl=Result Type
 TagsDAO.tagColumns.userNameColLbl=User Name
+TagType_File_displayName=File Tags
+TagType_Result_displayName=Result Tags
