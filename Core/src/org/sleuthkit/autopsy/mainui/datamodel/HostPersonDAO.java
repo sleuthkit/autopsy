@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
@@ -111,6 +109,7 @@ public class HostPersonDAO extends AbstractDAO {
     
     @Override
     Set<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
+        // GVDTODO
         String eventName = evt.getPropertyName();
         if (Case.Events.PERSONS_ADDED.toString().equals(eventName)) {
             

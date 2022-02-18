@@ -255,7 +255,7 @@ public class MainDAO extends AbstractDAO {
         return creditCardDAO;
     }
 
-    public HostPersonDAO getPersonDAO() {
+    public HostPersonDAO getHostPersonDAO() {
         return hostPersonDAO;
     }
     

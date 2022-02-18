@@ -19,21 +19,22 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
-import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.HostSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.PersonSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
-import org.sleuthkit.autopsy.mainui.nodes.FileSystemFactory.DataSourceFactory;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode.StaticTreeNode;
+import org.sleuthkit.datamodel.Person;
 
 /**
  *
@@ -42,7 +43,11 @@ import org.sleuthkit.autopsy.mainui.nodes.TreeNode.StaticTreeNode;
 public class RootFactory {
 
     public Children getRootChildren() {
-
+        if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
+            return Children.create(new HostPersonRootFactory(), true);
+        } else {
+            return new DefaultViewRootFactory();
+        }
     }
     
     private static String getLongString(Long l) {
@@ -51,12 +56,32 @@ public class RootFactory {
 
     public static class HostPersonRootFactory extends TreeChildFactory<PersonSearchParams> {
 
+        @Override
+        protected TreeNode<PersonSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends PersonSearchParams> rowData) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        protected TreeResultsDTO<? extends PersonSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends PersonSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public int compare(TreeResultsDTO.TreeItemDTO<? extends PersonSearchParams> o1, TreeResultsDTO.TreeItemDTO<? extends PersonSearchParams> o2) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
     }
     
     public static class DefaultViewRootFactory extends Children.Array {
         public DefaultViewRootFactory() {
             super(Arrays.asList(
-                    new DataSourcesNode(),
+                    new AllDataSourcesNode(),
                     new ViewsRootNode(null),
                     new DataArtifactsRootNode(null),
                     new AnalysisResultsRootNode(null),
@@ -66,18 +91,61 @@ public class RootFactory {
             ));
         }
     }
+    
+    @Messages({"RootFactory_AllDataSourcesNode_displayName=Data Sources"})
+    public static class AllDataSourcesNode extends StaticTreeNode {
+        public AllDataSourcesNode() {
+            super("ALL_DATA_SOURCES",
+                    Bundle.RootFactory_AllDataSourcesNode_displayName(),
+                    "org/sleuthkit/autopsy/images/image.png",
+                    new HostFactory(Optional.empty()));
+        }        
+    }
 
     public static class HostFactory extends TreeChildFactory<HostSearchParams> {
 
-        private final boolean groupByPersonHost;
+        private final Optional<Person> parentPerson;
+
+        public HostFactory(Optional<Person> parentPerson) {
+            this.parentPerson = parentPerson;
+        }
+
+        @Override
+        protected TreeNode<HostSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> rowData) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        protected TreeResultsDTO<? extends HostSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
+            if (parentPerson.isPresent()) {
+                return MainDAO.getInstance().getHostPersonDAO().getHosts(parentPerson.get());
+            } else {
+                return MainDAO.getInstance().getHostPersonDAO().getAllHosts();
+            }
+        }
+
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            // GVDTODO
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public int compare(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> o1, TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> o2) {
+            return Comparator.comparing((TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> h) -> h.getSearchParams().getHost().getName()).compare(o1, o2);
+        }
+        
+        
+        
+        
 
     }
 
     public static class DataSourceGroupedNode extends StaticTreeNode {
-        public DataSourceGroupedNode(long dataSourceObjId) {
+        public DataSourceGroupedNode(long dataSourceObjId, String dsName, boolean isImage) {
             super("DATA_SOURCE_GROUPED_" + dataSourceObjId,
-                    dataSourceDisplayName,
-                    ICON,
+                    dsName,
+                    isImage ? "org/sleuthkit/autopsy/images/image.png" : "org/sleuthkit/autopsy/images/fileset-icon-16.png",
                     new DataSourceGroupedFactory(dataSourceObjId));
         }
     }
@@ -87,7 +155,7 @@ public class RootFactory {
 
         public DataSourceGroupedFactory(long dataSourceObjId) {
             super(Arrays.asList(
-                    new DataSourcesByTypeNode(dataSourceObjId),
+                    new DataSourceFilesNode(dataSourceObjId),
                     new ViewsRootNode(dataSourceObjId),
                     new DataArtifactsRootNode(dataSourceObjId),
                     new AnalysisResultsRootNode(dataSourceObjId),
@@ -98,12 +166,13 @@ public class RootFactory {
         }
     }
 
-    public static class DataSourcesByTypeNode extends StaticTreeNode {
+    @Messages({"RootFactory_DataSourceFilesNode_displayName=Data Source Files"})
+    public static class DataSourceFilesNode extends StaticTreeNode {
 
-        public DataSourcesByTypeNode(long dataSourceObjId) {
-            super("DATA_SOURCE_BY_TYPE_" + dataSourceObjId,
-                    dataSourceDisplayName,
-                    ICON,
+        public DataSourceFilesNode(long dataSourceObjId) {
+            super("DATA_SOURCE_FILES_" + dataSourceObjId,
+                    Bundle.RootFactory_DataSourceFilesNode_displayName(),
+                    "org/sleuthkit/autopsy/images/image.png",
                     new FileSystemFactory(dataSourceObjId));
         }
     }
@@ -164,11 +233,11 @@ public class RootFactory {
 
     @Messages({"RootFactory_TagsRootNode_displayName=Tags"})
     public static class TagsRootNode extends StaticTreeNode {
-        public TagsRootNode(long dataSourceObjId) {
+        public TagsRootNode(Long dataSourceObjId) {
             super("DATA_SOURCE_BY_TYPE_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_TagsRootNode_displayName(),
                     "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png",
-                    new Ta(dataSourceObjId));
+                    new TagNameFactory(dataSourceObjId));
         }
     }
 
@@ -180,38 +249,11 @@ public class RootFactory {
                     Bundle.RootFactory_ReportsRootNode_displayName(),
                     "org/sleuthkit/autopsy/images/report_16.png");
         }
-    }
-    
-    
-    
-    
 
-//                        new DataSourcesByType(),
-//                        new Views(Case.getCurrentCaseThrows().getSleuthkitCase()),
-//                        new DataArtifacts(),
-//                        new AnalysisResults(),
-//                        new OsAccounts(),
-//                        new Tags(),
-//                        new Reports()
-    /**
-     *
-     * if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(),
-     * true)) { PersonManager personManager = tskCase.getPersonManager();
-     * List<Person> persons = personManager.getPersons(); // show persons level
-     * if there are persons to be shown if (!CollectionUtils.isEmpty(persons)) {
-     * nodes = persons.stream() .map(PersonGrouping::new) .sorted()
-     * .collect(Collectors.toList());
-     *
-     * if (CollectionUtils.isNotEmpty(personManager.getHostsWithoutPersons())) {
-     * nodes.add(new PersonGrouping(null)); } } else { // otherwise, just show
-     * host level nodes = tskCase.getHostManager().getAllHosts().stream()
-     * .map(HostGrouping::new) .sorted() .collect(Collectors.toList()); }
-     *
-     * // either way, add in reports node nodes.add(new Reports()); } else { //
-     * data source by type view nodes = Arrays.asList( new DataSourcesByType(),
-     * new Views(Case.getCurrentCaseThrows().getSleuthkitCase()), new
-     * DataArtifacts(), new AnalysisResults(), new OsAccounts(), new Tags(), new
-     * Reports() ); }
-     *
-     */
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            // GVDTODO
+            // dataResultPanel.displayReports();
+        }
+    }
 }
