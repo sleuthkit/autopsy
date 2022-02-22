@@ -733,7 +733,7 @@ public class CorrelationAttributeUtil {
                 logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
                 return null;
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s): %s", file, , ex.getMessage())); // NON-NLS
+                logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s): %s", file, ex.getMessage())); // NON-NLS
                 return null;
             }
         }
