@@ -162,7 +162,7 @@ final public class CommonAttributeCountSearchResults {
                             }
                         }
                     } catch (CorrelationAttributeNormalizationException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to determine frequency percentage attribute - frequency filter may not be accurate for these results.", ex);
+                        LOGGER.log(Level.WARNING, "Unable to determine frequency percentage attribute - frequency filter may not be accurate for these results: " + ex.getMessage());
                     }
                 }
             }

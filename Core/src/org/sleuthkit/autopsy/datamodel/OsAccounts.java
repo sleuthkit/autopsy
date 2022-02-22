@@ -535,7 +535,7 @@ public final class OsAccounts implements AutopsyVisitableItem {
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, String.format("Error getting count of data sources with %s correlation attribute %s", attributeInstance.getCorrelationType().getDisplayName(), attributeInstance.getCorrelationValue()), ex);
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.WARNING, String.format("Unable to normalize %s correlation attribute %s", attributeInstance.getCorrelationType().getDisplayName(), attributeInstance.getCorrelationValue()), ex);
+                logger.log(Level.WARNING, String.format("Unable to normalize %s correlation attribute %s: %s", attributeInstance.getCorrelationType().getDisplayName(), attributeInstance.getCorrelationValue(), ex.getMessage()));
             }
             return Pair.of(count, description);
         }

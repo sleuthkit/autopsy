@@ -90,7 +90,7 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
                     });
                 }
             } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.WARNING, String.format("Unable to getArtifactInstance for accountID: %d", account.getAccountID()), ex); //NON-NLS
+                logger.log(Level.WARNING, String.format("Unable to getArtifactInstance for accountID, %d: %s", account.getAccountID(), ex.getMessage())); //NON-NLS
             }
         });
 

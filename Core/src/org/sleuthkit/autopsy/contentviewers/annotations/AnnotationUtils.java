@@ -489,7 +489,7 @@ public class AnnotationUtils {
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error connecting to the Central Repository database.", ex); // NON-NLS
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, "Error normalizing instance from Central Repository database.", ex); // NON-NLS
+            logger.log(Level.WARNING, "Error normalizing instance from Central Repository database: " + ex.getMessage()); // NON-NLS
         }
 
         return instancesToRet;

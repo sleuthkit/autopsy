@@ -308,7 +308,7 @@ final class InterCaseSearchResultsProcessor {
                     }
                 }
             } catch (SQLException | CentralRepoException | CorrelationAttributeNormalizationException ex) {
-                LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
+                LOGGER.log(Level.WARNING, "Error getting artifact instances from database: " + ex.getMessage()); // NON-NLS
             }
         }
 
@@ -386,7 +386,7 @@ final class InterCaseSearchResultsProcessor {
                     }
                 }
             } catch (CentralRepoException | SQLException | CorrelationAttributeNormalizationException ex) {
-                LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
+                LOGGER.log(Level.WARNING, "Error getting artifact instances from database: " + ex.getMessage()); // NON-NLS
             }
         }
 
@@ -424,7 +424,7 @@ final class InterCaseSearchResultsProcessor {
                                     InstanceTableCallback.getFilePath(resultSet));
                         }
                     } catch (CorrelationAttributeNormalizationException ex) {
-                        LOGGER.log(Level.INFO, "Unable to get CorrelationAttributeInstance.", ex); // NON-NLS
+                        LOGGER.log(Level.INFO, "Unable to get CorrelationAttributeInstance: " + ex.getMessage()); // NON-NLS
                     }
 
                 }
