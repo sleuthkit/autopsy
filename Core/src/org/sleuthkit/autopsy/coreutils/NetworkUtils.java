@@ -133,8 +133,6 @@ public class NetworkUtils {
                 return "";
             }
         }
-        
-        return result;
     }
 
 }
