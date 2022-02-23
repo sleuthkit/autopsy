@@ -337,7 +337,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
              for (String value : values) {
                 CorrelationAttributeNormalizer.normalize(type, value);
              }
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CorrelationAttributeNormalizationException | CentralRepoException ex) {
             // No need to log this.
             return false;
         }
