@@ -47,13 +47,13 @@ final public class CorrelationAttributeNormalizer {
      *
      * @return normalized data
      */
-    public static String normalize(CorrelationAttributeInstance.Type attributeType, String data) throws CorrelationAttributeNormalizationException {
+    public static String normalize(CorrelationAttributeInstance.Type attributeType, String data) throws CorrelationAttributeNormalizationException, CentralRepoException {
 
         if (attributeType == null) {
-            throw new CorrelationAttributeNormalizationException("Attribute type was null.");
+            throw new CentralRepoException("Attribute type was null.");
         }
         if (data == null) {
-            throw new CorrelationAttributeNormalizationException("Correlation value was null.");
+            throw new CentralRepoException("Correlation value was null.");
         }
 
         String trimmedData = data.trim();
@@ -81,22 +81,18 @@ final public class CorrelationAttributeNormalizer {
                 return normalizeIccid(trimmedData);
 
             default:
-                try {
-                    // If the atttribute is not one of the above 
-                    // but is one of the other default correlation types, then let the data go as is
-                    List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
-                    for (CorrelationAttributeInstance.Type defaultCorrelationType : defaultCorrelationTypes) {
-                        if (defaultCorrelationType.getId() == attributeType.getId()) {
-                            return trimmedData;
-                        }
+                // If the atttribute is not one of the above 
+                // but is one of the other default correlation types, then let the data go as is
+                List<CorrelationAttributeInstance.Type> defaultCorrelationTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+                for (CorrelationAttributeInstance.Type defaultCorrelationType : defaultCorrelationTypes) {
+                    if (defaultCorrelationType.getId() == attributeType.getId()) {
+                        return trimmedData;
                     }
-                    final String errorMessage = String.format(
-                            "Validator function not found for attribute type: %s",
-                            attributeType.getDisplayName());
-                    throw new CorrelationAttributeNormalizationException(errorMessage);
-                } catch (CentralRepoException ex) {
-                    throw new CorrelationAttributeNormalizationException("Failed to get default correlation types.", ex);
                 }
+                final String errorMessage = String.format(
+                        "Validator function not found for attribute type: %s",
+                        attributeType.getDisplayName());
+                throw new CentralRepoException(errorMessage);
         }
     }
 
@@ -109,19 +105,15 @@ final public class CorrelationAttributeNormalizer {
      *
      * @return normalized data
      */
-    public static String normalize(int attributeTypeId, String data) throws CorrelationAttributeNormalizationException {
-        try {
-            List<CorrelationAttributeInstance.Type> defaultTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
-            Optional<CorrelationAttributeInstance.Type> typeOption = defaultTypes.stream().filter(attributeType -> attributeType.getId() == attributeTypeId).findAny();
+    public static String normalize(int attributeTypeId, String data) throws CorrelationAttributeNormalizationException, CentralRepoException {
+        List<CorrelationAttributeInstance.Type> defaultTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
+        Optional<CorrelationAttributeInstance.Type> typeOption = defaultTypes.stream().filter(attributeType -> attributeType.getId() == attributeTypeId).findAny();
 
-            if (typeOption.isPresent()) {
-                CorrelationAttributeInstance.Type type = typeOption.get();
-                return CorrelationAttributeNormalizer.normalize(type, data);
-            } else {
-                throw new CorrelationAttributeNormalizationException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
-            }
-        } catch (CentralRepoException ex) {
-            throw new CorrelationAttributeNormalizationException(ex);
+        if (typeOption.isPresent()) {
+            CorrelationAttributeInstance.Type type = typeOption.get();
+            return CorrelationAttributeNormalizer.normalize(type, data);
+        } else {
+            throw new CorrelationAttributeNormalizationException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
         }
     }
 

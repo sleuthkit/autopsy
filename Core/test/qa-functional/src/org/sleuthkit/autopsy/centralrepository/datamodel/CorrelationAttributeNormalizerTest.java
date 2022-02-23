@@ -54,32 +54,32 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
 
         try {
             assertTrue("This hash should just work", CorrelationAttributeNormalizer.normalize(FILES_TYPE_ID, aValidHash).equals(aValidHash));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             assertTrue("This hash just needs to be converted to lower case", CorrelationAttributeNormalizer.normalize(CorrelationAttributeInstance.FILES_TYPE_ID, aValidHashWithCaps).equals(aValidHash));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             CorrelationAttributeNormalizer.normalize(FILES_TYPE_ID, anInValidHash);
             fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(FILES_TYPE_ID, emptyHash);
             fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(FILES_TYPE_ID, nullHash);
             fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
     }
@@ -149,7 +149,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
                     String normalizedDomain = CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, input);
                     assertTrue(String.format("Expected domain '%s' to be normalized, but was null.", item.getOriginalString()), normalizedDomain != null);
                     assertTrue(String.format("Was unable to normalize domain '%s' to '%s' but received %s instead.", input, expected, normalizedDomain), normalizedDomain.equals(expected));
-                } catch (CorrelationAttributeNormalizationException ex) {
+                } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
                     Exceptions.printStackTrace(ex);
                     fail(String.format("Unable to properly parse %s to %s.  Received: %s", input, expected, ex.getMessage()));
                 }
@@ -158,7 +158,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
                 try {
                     CorrelationAttributeNormalizer.normalize(DOMAIN_TYPE_ID, item.getOriginalString());
                     fail(String.format("Original string: '%s' should have failed to parse.", item.getOriginalString()));
-                } catch (CorrelationAttributeNormalizationException ex) {
+                } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
                     assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
                 }
             }
@@ -178,43 +178,43 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
 
         try {
             assertTrue("This email should pass.", CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, goodEmailOne).equals(goodEmailOne));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             assertTrue("This email should pass.", CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, goodEmailTwo).equals(goodEmailTwo.toLowerCase()));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailThree);
             fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailFour);
             fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailFive);
             fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try { //TODO consider a better library?
             assertTrue("This email should pass", CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, goodEmailSix).equals(goodEmailSix));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             fail(ex.getMessage());
         }
         try {
             CorrelationAttributeNormalizer.normalize(EMAIL_TYPE_ID, badEmailSeven);
             fail(THIS_SHOULD_HAVE_THROWN_AN_EXCEPTION);
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
     }
@@ -234,56 +234,56 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
 
         try {
             assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnOne).equals(goodPnOne));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnTwo).equals(goodPnOne));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnThree).equals(goodPnThree));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnFour).equals(goodPnOne));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, badPnFive);
             //fail("This should have thrown an exception.");    //this will eventually pass when we do a better job at this
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnSix).equals(goodPnThree));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             assertTrue(THIS_PHONE_NUMBER_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, goodPnSeven).equals(goodPnThree));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
             fail(ex.getMessage());
         }
         try {
             CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, badPnEight);
             fail("This should have thrown an exception.");
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
         try {
             CorrelationAttributeNormalizer.normalize(PHONE_TYPE_ID, badPnNine);
             fail("This should have thrown an exception.");
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             assertTrue(WE_EXPECT_AN_EXCEPTION_HERE, true);
         }
     }
@@ -304,7 +304,7 @@ public class CorrelationAttributeNormalizerTest extends NbTestCase {
 
         try {
             assertTrue(THIS_USB_ID_SHOULD_PASS, CorrelationAttributeNormalizer.normalize(USBID_TYPE_ID, goodIdOne).equals(goodIdOne));
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
             Assert.fail(ex.getMessage());
         }
     }
