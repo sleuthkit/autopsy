@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.HostSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.PersonSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode.StaticTreeNode;
@@ -38,7 +39,7 @@ import org.sleuthkit.datamodel.Person;
 
 /**
  *
- * @author gregd
+ * Root tree view factories.
  */
 public class RootFactory {
 
@@ -252,8 +253,7 @@ public class RootFactory {
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            // GVDTODO
-            // dataResultPanel.displayReports();
+            dataResultPanel.displayReports(ReportsSearchParams.getInstance());
         }
     }
 }

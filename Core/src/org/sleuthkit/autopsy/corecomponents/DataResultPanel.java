@@ -103,6 +103,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeMimeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeSizeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.DeletedFileFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.ReportsDAO.ReportsFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
 
@@ -1451,6 +1453,22 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     setKey.getDataSourceId() == null ? "<null>" : setKey.getDataSourceId()),
                     ex);
         }
+    }
+ 
+    /**
+     * Displays results of querying the DAO for given search parameters (set and
+     * artifact type) query.
+     *
+     * @param searchParams The search parameter query.
+     */
+    void displayReports(ReportsSearchParams searchParams) {
+        try {
+            this.searchResultManager = new SearchManager(new ReportsFetcher(searchParams), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, "There was an error fetching data for reports", ex);
+        }        
     }
 
     /**

@@ -26,6 +26,7 @@ import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Report;
 
 /**
  * Interface for nodes that want to use the ActionFactory to build their popup
@@ -260,6 +261,13 @@ public interface ActionContext {
      * @return The analysis result type if applicable or empty.
      */
     default Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+        return Optional.empty();
+    }
+    
+    /**
+     * @return The report relevant to the node if present.
+     */
+    default Optional<Report> getReport() {
         return Optional.empty();
     }
 }

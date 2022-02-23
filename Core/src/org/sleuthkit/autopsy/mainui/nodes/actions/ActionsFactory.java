@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes.actions;
 
-import java.awt.event.ActionEvent;
-import java.text.MessageFormat;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,23 +28,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JOptionPane;
 import org.openide.actions.PropertiesAction;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.openide.util.actions.SystemAction;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteReportAction;
+import org.sleuthkit.autopsy.actions.OpenReportAction;
 import org.sleuthkit.autopsy.actions.ReplaceContentTagAction;
 import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
@@ -64,7 +60,6 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.FileSearchTreeAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.autopsy.filesearch.FileSearchAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
@@ -173,6 +168,17 @@ public final class ActionsFactory {
         if (optionalFile.isPresent()) {
             actionGroups.add(new ActionGroup(new ExtractArchiveWithPasswordAction(optionalFile.get())));
         }
+        
+        // handle report actions if report is present.
+        actionContext.getReport()
+                .map(report -> {
+                    ActionGroup actions = new ActionGroup();
+                    actions.add(new OpenReportAction(report.getPath()));
+                    actions.add(DeleteReportAction.getInstance());
+                    return actions;
+                })
+                .ifPresent(ag -> actionGroups.add(ag));
+                
 
         List<Action> actionList = new ArrayList<>();
         for (ActionGroup aGroup : actionGroups) {

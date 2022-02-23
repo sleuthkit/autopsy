@@ -172,6 +172,7 @@ public class MainDAO extends AbstractDAO {
     private final CreditCardDAO creditCardDAO = CreditCardDAO.getInstance();
     private final EmailsDAO emailsDAO = EmailsDAO.getInstance();
     private final HostPersonDAO hostPersonDAO = HostPersonDAO.getInstance();
+    private final ReportsDAO reportsDAO = ReportsDAO.getInstance();
     
     // NOTE: whenever adding a new sub-dao, it should be added to this list for event updates.
     private final List<AbstractDAO> allDAOs = ImmutableList.of(dataArtifactDAO,
@@ -183,7 +184,8 @@ public class MainDAO extends AbstractDAO {
             commAccountsDAO,
             creditCardDAO,
             emailsDAO,
-            hostPersonDAO);
+            hostPersonDAO,
+            reportsDAO);
 
     /**
      * Registers listeners with autopsy event publishers and starts internal
@@ -258,7 +260,10 @@ public class MainDAO extends AbstractDAO {
     public HostPersonDAO getHostPersonDAO() {
         return hostPersonDAO;
     }
-    
+
+    public ReportsDAO getReportsDAO() {
+        return reportsDAO;
+    }    
 
     public PropertyChangeManager getResultEventsManager() {
         return this.resultEventsManager;
