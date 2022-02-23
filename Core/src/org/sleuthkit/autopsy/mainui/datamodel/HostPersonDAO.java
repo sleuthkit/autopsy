@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.HostPersonEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
@@ -106,31 +107,26 @@ public class HostPersonDAO extends AbstractDAO {
                 person.getName(),
                 TreeDisplayCount.NOT_SHOWN);
     }
+
+    private static final Set<String> caseEvents = Stream.of(
+            Case.Events.PERSONS_ADDED,
+            Case.Events.PERSONS_DELETED,
+            Case.Events.PERSONS_UPDATED,
+            Case.Events.HOSTS_ADDED,
+            Case.Events.HOSTS_ADDED_TO_PERSON,
+            Case.Events.HOSTS_DELETED,
+            Case.Events.HOSTS_REMOVED_FROM_PERSON,
+            Case.Events.HOSTS_UPDATED
+    )
+            .map(caseEvent -> caseEvent.toString())
+            .collect(Collectors.toSet());
+
     
     @Override
     Set<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
-        // GVDTODO
-        String eventName = evt.getPropertyName();
-        if (Case.Events.PERSONS_ADDED.toString().equals(eventName)) {
-            
-        } else if (Case.Events.PERSONS_DELETED.toString().equals(eventName)) {
-            
-        } else if (Case.Events.PERSONS_UPDATED.toString().equals(eventName)) {
-            
-        } else if (Case.Events.HOSTS_ADDED.toString().equals(eventName)) {
-            
-        } else if (Case.Events.HOSTS_ADDED_TO_PERSON.toString().equals(eventName)) {
-            
-        } else if (Case.Events.HOSTS_DELETED.toString().equals(eventName)) {
-            
-        } else if (Case.Events.HOSTS_REMOVED_FROM_PERSON.toString().equals(eventName)) {
-            
-        } else if (Case.Events.HOSTS_UPDATED.toString().equals(eventName)) {
-            
-        }
-//                if (CaseEvent.DATA_ADDED.toString().equals(eventName)
-//                && (evt.getOldValue() instanceof ModuleDataEvent)) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return caseEvents.contains(evt.getPropertyName()) 
+                ? Collections.singleton(new HostPersonEvent())
+                : Collections.emptySet();
     }
 
     @Override
