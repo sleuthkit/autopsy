@@ -113,7 +113,7 @@ final public class CorrelationAttributeNormalizer {
             CorrelationAttributeInstance.Type type = typeOption.get();
             return CorrelationAttributeNormalizer.normalize(type, data);
         } else {
-            throw new CorrelationAttributeNormalizationException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
+            throw new CentralRepoException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
         }
     }
 
