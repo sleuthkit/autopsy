@@ -91,6 +91,7 @@ import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetFactory;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.MimeParentNode;
 import org.sleuthkit.datamodel.Account;
@@ -122,7 +123,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
-    private AutopsyTreeChildFactory autopsyTreeChildFactory;
     private Children autopsyTreeChildren;
     private Accounts accounts;
     private boolean showRejectedResults;
@@ -576,8 +576,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
 
             // if there's at least one image, load the image and open the top componen
-            autopsyTreeChildFactory = new AutopsyTreeChildFactory();
-            autopsyTreeChildren = Children.create(autopsyTreeChildFactory, true);
+            autopsyTreeChildren = RootFactory.getRootChildren();
             Node root = new AbstractNode(autopsyTreeChildren) {
                 //JIRA-2807: What is the point of these overrides?
                 /**
@@ -602,7 +601,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             };
 
-            root = new DirectoryTreeFilterNode(root, true);
+//            root = new DirectoryTreeFilterNode(root, true);
 
             em.setRootContext(root);
             em.getRootContext().setName(currentCase.getName());
@@ -1029,7 +1028,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
 
         // refresh all children of the root.
-        autopsyTreeChildFactory.refreshChildren();
+        autopsyTreeChildren = RootFactory.getRootChildren();
 
         // Select the first node and reset the selection history
         // This should happen on the EDT once the tree has been rebuilt.

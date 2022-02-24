@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.beans.PropertyChangeEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -68,7 +69,11 @@ public class HostPersonDAO extends AbstractDAO {
 
     public TreeResultsDTO<HostSearchParams> getHosts(Person person) throws ExecutionException {
         try {
-            return new TreeResultsDTO<>(getCase().getPersonManager().getHostsForPerson(person).stream()
+            List<Host> hosts = person == null 
+                    ? getCase().getPersonManager().getHostsWithoutPersons() 
+                    : getCase().getPersonManager().getHostsForPerson(person);
+            
+            return new TreeResultsDTO<>(hosts.stream()
                     .map(h -> createHostTreeItem(h))
                     .collect(Collectors.toList()));
         } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -79,12 +84,17 @@ public class HostPersonDAO extends AbstractDAO {
     public TreeResultsDTO<PersonSearchParams> getAllPersons() throws ExecutionException {
         try {
             List<Person> persons = getCase().getPersonManager().getPersons();
-            Stream<Person> personStream
-                    = getCase().getPersonManager().getHostsWithoutPersons().isEmpty()
-                    ? persons.stream()
-                    : Stream.concat(persons.stream(), Stream.of(null));
-
-            return new TreeResultsDTO<>(personStream.map(p -> createPersonTreeItem(p)).collect(Collectors.toList()));
+            
+            List<TreeItemDTO<PersonSearchParams>> personSearchParams = new ArrayList<>();
+            for (Person person : persons) {
+                personSearchParams.add(createPersonTreeItem(person));
+            }
+            
+            if (!getCase().getPersonManager().getHostsWithoutPersons().isEmpty()) {
+                personSearchParams.add(createPersonTreeItem(null));
+            }
+            
+            return new TreeResultsDTO<>(personSearchParams);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             throw new ExecutionException("Error while fetching all hosts.", ex);
         }
@@ -101,10 +111,10 @@ public class HostPersonDAO extends AbstractDAO {
 
     private TreeItemDTO<PersonSearchParams> createPersonTreeItem(Person person) {
         return new TreeItemDTO<>(
-                HostSearchParams.getTypeId(),
+                PersonSearchParams.getTypeId(),
                 new PersonSearchParams(person),
-                person.getPersonId(),
-                person.getName(),
+                person == null ? 0 : person.getPersonId(),
+                person == null ? "" : person.getName(),
                 TreeDisplayCount.NOT_SHOWN);
     }
 

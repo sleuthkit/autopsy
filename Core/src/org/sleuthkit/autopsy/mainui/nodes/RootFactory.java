@@ -57,8 +57,7 @@ import org.sleuthkit.datamodel.Person;
 @Messages({"RootFactory_unknownPersons_displayName=Unknown Persons"})
 public class RootFactory {
 
-    public Children getRootChildren() {
-        // GVDTODO integrate
+    public static Children getRootChildren() {
         if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
             return Children.create(new HostPersonRootFactory(), true);
         } else {
@@ -88,7 +87,14 @@ public class RootFactory {
             }
         };
 
-        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, MainDAO.getInstance().getTreeEventsManager());
+        private PropertyChangeListener weakPcl;
+
+        @Override
+        protected void addNotify() {
+            weakPcl = WeakListeners.propertyChange(pcl, MainDAO.getInstance().getTreeEventsManager());
+            MainDAO.getInstance().getTreeEventsManager().addPropertyChangeListener(weakPcl);
+            super.addNotify();
+        }
 
         @Override
         protected boolean createKeys(List<TreeItemDTO<?>> toPopulate) {
@@ -140,7 +146,7 @@ public class RootFactory {
             super("ALL_DATA_SOURCES",
                     Bundle.RootFactory_AllDataSourcesNode_displayName(),
                     "org/sleuthkit/autopsy/images/image.png",
-                    new HostFactory(Optional.empty()));
+                    new AllHostsFactory());
         }
     }
 
@@ -150,31 +156,38 @@ public class RootFactory {
             super(PersonSearchParams.getTypeId(),
                     "org/sleuthkit/autopsy/images/person.png",
                     itemData,
-                    Children.create(new HostFactory(Optional.of(itemData.getSearchParams().getPerson())), true),
+                    Children.create(new HostFactory(itemData.getSearchParams().getPerson()), true),
                     getDefaultLookup(itemData));
         }
     }
 
-    public static class HostFactory extends TreeChildFactory<HostSearchParams> {
+    public static class AllHostsFactory extends BaseHostFactory {
 
-        private final Optional<Person> parentPerson;
+        @Override
+        protected TreeResultsDTO<? extends HostSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
+            return MainDAO.getInstance().getHostPersonDAO().getAllHosts();
+        }
+    }
 
-        public HostFactory(Optional<Person> parentPerson) {
+    public static class HostFactory extends BaseHostFactory {
+
+        private final Person parentPerson;
+
+        public HostFactory(Person parentPerson) {
             this.parentPerson = parentPerson;
         }
 
         @Override
-        protected TreeNode<HostSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> rowData) {
-            return new HostNode(rowData);
+        protected TreeResultsDTO<? extends HostSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
+            return MainDAO.getInstance().getHostPersonDAO().getHosts(parentPerson);
         }
+    }
+
+    public abstract static class BaseHostFactory extends TreeChildFactory<HostSearchParams> {
 
         @Override
-        protected TreeResultsDTO<? extends HostSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            if (parentPerson.isPresent()) {
-                return MainDAO.getInstance().getHostPersonDAO().getHosts(parentPerson.get());
-            } else {
-                return MainDAO.getInstance().getHostPersonDAO().getAllHosts();
-            }
+        protected TreeNode<HostSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> rowData) {
+            return new HostNode(rowData);
         }
 
         @Override
