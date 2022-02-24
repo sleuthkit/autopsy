@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
@@ -54,7 +53,6 @@ import org.sleuthkit.datamodel.Person;
  *
  * Root tree view factories.
  */
-@Messages({"RootFactory_unknownPersons_displayName=Unknown Persons"})
 public class RootFactory {
 
     public static Children getRootChildren() {

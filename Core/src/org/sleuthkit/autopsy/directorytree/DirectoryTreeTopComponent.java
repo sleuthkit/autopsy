@@ -601,8 +601,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             };
 
-//            root = new DirectoryTreeFilterNode(root, true);
-
             em.setRootContext(root);
             em.getRootContext().setName(currentCase.getName());
             em.getRootContext().setDisplayName(currentCase.getName());
