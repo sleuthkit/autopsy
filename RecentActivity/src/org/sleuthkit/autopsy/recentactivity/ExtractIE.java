@@ -155,14 +155,12 @@ class ExtractIE extends Extract {
             String domain = extractDomain(url);
 
             try {
-                Collection<BlackboardAttribute> bbattributes = createHistoryAttributes(
-                    url, 
-                    datetime, 
-                    null, 
-                    name, 
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text"), 
-                    domain, 
-                    null);
+                Collection<BlackboardAttribute> bbattributes = createBookmarkAttributes(
+                        url, 
+                        name,
+                        datetime, 
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text"), 
+                        domain);
                             
                 bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, fav, bbattributes));
             } catch (TskCoreException ex) {
