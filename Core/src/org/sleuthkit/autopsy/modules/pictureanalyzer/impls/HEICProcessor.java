@@ -80,8 +80,8 @@ public class HEICProcessor implements PictureProcessor {
     public HEICProcessor() {
         HeifJNI heifJNI;
         try {
-            heifJNI = new HeifJNI();
-        } catch (Exception ex) {
+            heifJNI = HeifJNI.getInstance();
+        } catch (UnsatisfiedLinkError ex) {
             logger.log(Level.SEVERE, "libheif native dependencies not found. HEIC functionality will be automatically disabled.", ex);
             heifJNI = null;
         }

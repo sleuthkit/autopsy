@@ -20,18 +20,25 @@ package org.sleuthkit.autopsy.modules.pictureanalyzer.impls;
 
 /**
  *
- * Interop with libheif dll's.
+ * Interop with libheif native dependencies.
  */
 public class HeifJNI {
 
-//    static {
-//        System.load("C:\\Users\\gregd\\Documents\\Source\\heif_convert_test\\HeifConvertTestJNI\\dist\\Release\\libx265.dll");
-//        System.load("C:\\Users\\gregd\\Documents\\Source\\heif_convert_test\\HeifConvertTestJNI\\dist\\Release\\libde265.dll");
-//        System.load("C:\\Users\\gregd\\Documents\\Source\\heif_convert_test\\HeifConvertTestJNI\\dist\\Release\\heif.dll");
-//        System.load("C:\\Users\\gregd\\Documents\\Source\\heif_convert_test\\HeifConvertTestJNI\\dist\\Release\\jpeg62.dll");
-//        System.load("C:\\Users\\gregd\\Documents\\Source\\heif_convert_test\\HeifConvertTestJNI\\dist\\Release\\heif-convert.dll");
-//
-//    }
+    private static HeifJNI instance = null;
+    
+    public static HeifJNI getInstance() throws UnsatisfiedLinkError {
+        if (instance == null) {
+            System.loadLibrary("libx265");
+            System.loadLibrary("libde265");
+            System.loadLibrary("heif");
+            System.loadLibrary("jpeg62");
+            System.loadLibrary("heif-convert");
+            instance = new HeifJNI();
+        }
+        return instance;
+    }
+    
+    private HeifJNI() {}
 
     public native int convertToDisk(byte[] data, String jpgOutputPath);
 }

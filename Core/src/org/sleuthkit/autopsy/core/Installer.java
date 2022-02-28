@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.modules.pictureanalyzer.impls.HeifJNI;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 
