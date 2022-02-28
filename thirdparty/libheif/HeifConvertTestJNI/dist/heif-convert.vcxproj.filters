@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertTestJNI\encoder.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertTestJNI\org_sleuthkit_autopsy_modules_pictureanalyzer_impls_HeifJNI.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertTestJNI\encoder_jpeg.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertTestJNI\encoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertTestJNI\org_sleuthkit_autopsy_modules_pictureanalyzer_impls_HeifJNI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertTestJNI\encoder_jpeg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertTestJNI\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{CBC44029-07BB-3213-8E38-17F72D951AFE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{241D2CE4-9F84-3CBE-98DE-CFEE2E049D46}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

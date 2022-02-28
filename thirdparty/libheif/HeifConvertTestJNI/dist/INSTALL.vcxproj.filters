@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertTestJNI\dist\CMakeFiles\2705a2fd9a29a14983f126804d7dabbc\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{064F6CD9-3B6F-3D7F-9728-15D5F92EA2A8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
