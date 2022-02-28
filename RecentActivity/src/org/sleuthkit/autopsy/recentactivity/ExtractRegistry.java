@@ -190,6 +190,8 @@ class ExtractRegistry extends Extract {
     private BlackboardArtifact.Type shellBagArtifactType = null;
     private BlackboardAttribute.Type shellBagKeyAttributeType = null;
     private BlackboardAttribute.Type shellBagLastWriteAttributeType = null;
+    
+    private OSInfo osInfo = new OSInfo();
 
     static {
         REG_RIPPER_TIME_FORMAT.setTimeZone(getTimeZone("GMT"));
@@ -649,28 +651,37 @@ class ExtractRegistry extends Extract {
                                 }
                             }
                         }
-                        try {
-                            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, version));
-                            if (installtime != null) {
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, installtime));
-                            }
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, parentModuleName, systemRoot));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PRODUCT_ID, parentModuleName, productId));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_OWNER, parentModuleName, regOwner));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ORGANIZATION, parentModuleName, regOrg));
+                        
+                        osInfo.setOsName(version);
+                        osInfo.setInstalltime(installtime);
+                        osInfo.setSystemRoot(systemRoot);
+                        osInfo.setProductId(productId);
+                        osInfo.setRegOwner(regOwner);
+                        osInfo.setRegOrg(regOrg);
+//                        try {
+//                            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+//                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, version));
+//                            if (installtime != null) {
+//                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, installtime));
+//                            }
+//                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, parentModuleName, systemRoot));
+//                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PRODUCT_ID, parentModuleName, productId));
+//                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_OWNER, parentModuleName, regOwner));
+//                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ORGANIZATION, parentModuleName, regOrg));
+//
+//                            // Check if there is already an OS_INFO artifact for this file, and add to that if possible.
+//                            ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
+//                            if (results.isEmpty()) {
+//                                newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
+//                            } else {
+//                                results.get(0).addAttributes(bbattributes);
+//                            }
 
-                            // Check if there is already an OS_INFO artifact for this file, and add to that if possible.
-                            ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
-                            if (results.isEmpty()) {
-                                newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
-                            } else {
-                                results.get(0).addAttributes(bbattributes);
-                            }
+                            
 
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, String.format("Error adding installed program artifact to blackboard for file %d.", regFile.getId()), ex); //NON-NLS
-                        }
+//                        } catch (TskCoreException ex) {
+//                            logger.log(Level.SEVERE, String.format("Error adding installed program artifact to blackboard for file %d.", regFile.getId()), ex); //NON-NLS
+//                        }
                         break;
                     case "Profiler": // NON-NLS
                         String os = "";
@@ -701,22 +712,10 @@ class ExtractRegistry extends Extract {
                                 }
                             }
                         }
-                        try {
-                            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VERSION, parentModuleName, os));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE, parentModuleName, procArch));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEMP_DIR, parentModuleName, tempDir));
-
-                            // Check if there is already an OS_INFO artifact for this file and add to that if possible
-                            ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
-                            if (results.isEmpty()) {
-                                newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
-                            } else {
-                                results.get(0).addAttributes(bbattributes);
-                            }
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, String.format("Error adding installed os_info to blackboard for file %d.", regFile.getId()), ex); //NON-NLS
-                        }
+                        
+                        osInfo.setOsName(os);
+                        osInfo.setProcessorArchitecture(procArch);
+                        osInfo.setTempDir(tempDir);
                         break;
                     case "CompName": // NON-NLS
                         for (int j = 0; j < myartlist.getLength(); j++) {
@@ -735,32 +734,22 @@ class ExtractRegistry extends Extract {
                                 }
                             }
                         }
-                        try {
-                            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, parentModuleName, compName));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, parentModuleName, domainName));
-
-                            // Check if there is already an OS_INFO artifact for this file and add to that if possible
-                            ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
-                            if (results.isEmpty()) {
-                                newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
-                            } else {
-                                results.get(0).addAttributes(bbattributes);
+                        
+                        osInfo.setOsName(compName);
+                        osInfo.setDomain(domainName);
+                        
+                        for (Map.Entry<String, String> userMap : getUserNameMap().entrySet()) {
+                            String sid = "";
+                            try {
+                                sid = userMap.getKey();
+                                String userName = userMap.getValue();
+                                // Accounts in the SAM are all local accounts
+                                createOrUpdateOsAccount(regFile, sid, userName, null, null, OsAccountRealm.RealmScope.LOCAL);
+                            } catch (TskCoreException | TskDataException | NotUserSIDException ex) {
+                                logger.log(Level.WARNING, String.format("Failed to update Domain for existing OsAccount: %s, sid: %s", regFile.getId(), sid), ex);
                             }
-                            for (Map.Entry<String, String> userMap : getUserNameMap().entrySet()) {
-                                String sid = "";
-                                try {
-                                    sid = userMap.getKey();
-                                    String userName = userMap.getValue();
-                                    // Accounts in the SAM are all local accounts
-                                    createOrUpdateOsAccount(regFile, sid, userName, null, null, OsAccountRealm.RealmScope.LOCAL);
-                                } catch (TskCoreException | TskDataException | NotUserSIDException ex) {
-                                    logger.log(Level.WARNING, String.format("Failed to update Domain for existing OsAccount: %s, sid: %s", regFile.getId(), sid), ex);
-                                }
-                            }
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, String.format("Error adding os_info artifact to blackboard for file %d.", regFile.getId()), ex); //NON-NLS
                         }
+
                         break;
                     default:
                         for (int j = 0; j < myartlist.getLength(); j++) {
@@ -950,24 +939,6 @@ class ExtractRegistry extends Extract {
 
             if (!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(newArtifacts);
-            }
-            
-            // Test to see if a TSK_OS_INFO object was created. If one was not
-            // created, create a default Windows OS_INFO artifact.
-            // If a TSK_OS_INFO object was create, make sure that the TSK_PROG_NAME
-            // attribute was added. If a PROG_NAME is not present, add a default
-            // name and set to "Windows"
-            try{
-                ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, "Windows"));
-                if (results.isEmpty()) {
-                    postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
-                } else if(results.get(0).getAttribute(BlackboardAttribute.Type.TSK_PROG_NAME) == null){
-                    results.get(0).addAttributes(bbattributes);
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to create default OS_INFO artifact", ex); //NON-NLS
             }
         }
         return false;
@@ -2029,7 +2000,8 @@ class ExtractRegistry extends Extract {
 
         progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
         analyzeRegistryFiles(context.getJobId());
-
+        
+        osInfo.createOSInfo();
     }
 
     /**
@@ -2373,6 +2345,108 @@ class ExtractRegistry extends Extract {
     private boolean isDomainIdInSAMList(String osAccountSID) {
         String relativeID = stripRelativeIdentifierFromSID(osAccountSID);
         return samDomainIDsList.contains(relativeID);
+    }
+    
+    // Structure to keep the OSInfo meta data so that only one instance
+    // of TSK_OS_INFO is created per RA run.
+    private class OSInfo {
+        private String compName = null;
+        private String progName = "Window";
+        private String processorArchitecture = null;
+        private String tempDir = null;
+        private String domain = null;
+        private Long installtime = null;
+        private String systemRoot = null;
+        private String productId = null;
+        private String regOwner = null;
+        private String regOrg = null;
+        
+        private OSInfo() {}
+        
+        void createOSInfo() {
+            try{
+                String parentModuleName = RecentActivityExtracterModuleFactory.getModuleName();
+                ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, context.getDataSource().getId());
+                
+                if (results.isEmpty()) {
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                    if (compName != null && !compName.isEmpty()) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, parentModuleName, compName));
+                    }
+                    if (domain != null && !domain.isEmpty()) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, parentModuleName, domain));
+                    }
+                    if (progName != null && !progName.isEmpty()) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, progName));
+                    }
+                    if (processorArchitecture != null && !processorArchitecture.isEmpty()) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROCESSOR_ARCHITECTURE, parentModuleName, processorArchitecture));
+                    }
+                    if (tempDir != null && !tempDir.isEmpty()) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEMP_DIR, parentModuleName, tempDir));
+                    }
+                    if (installtime != null) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, installtime));
+                    }
+                    if (systemRoot != null && !systemRoot.isEmpty()) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, parentModuleName, systemRoot));
+                    }
+                    if (productId != null && !productId.isEmpty()) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PRODUCT_ID, parentModuleName, productId));
+                    }
+                    if (regOwner != null && !regOwner.isEmpty()) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_OWNER, parentModuleName, regOwner));
+                    }
+                    if (regOrg != null && !regOrg.isEmpty()) {
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ORGANIZATION, parentModuleName, regOrg));
+                    }
+                    
+                    postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, context.getDataSource(), bbattributes));
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to create default OS_INFO artifact", ex); //NON-NLS
+            }
+        }
+
+        void setCompName(String compName) {
+            this.compName = compName;
+        }
+
+        void setOsName(String progName) {
+            this.progName = progName;
+        }
+
+        void setProcessorArchitecture(String processorArchitecture) {
+            this.processorArchitecture = processorArchitecture;
+        }
+
+        void setTempDir(String tempDir) {
+            this.tempDir = tempDir;
+        }
+
+        void setDomain(String domain) {
+            this.domain = domain;
+        }
+
+        void setInstalltime(Long installtime) {
+            this.installtime = installtime;
+        }
+
+        void setSystemRoot(String systemRoot) {
+            this.systemRoot = systemRoot;
+        }
+
+        void setProductId(String productId) {
+            this.productId = productId;
+        }
+
+        void setRegOwner(String regOwner) {
+            this.regOwner = regOwner;
+        }
+
+        public void setRegOrg(String regOrg) {
+            this.regOrg = regOrg;
+        } 
     }
 
 }
