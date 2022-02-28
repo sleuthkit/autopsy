@@ -232,7 +232,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        iLeappFileProcessor.processFiles(dataSource, moduleOutputPath, iLeappFile);
+        iLeappFileProcessor.processFiles(dataSource, moduleOutputPath, iLeappFile, statusHelper);
     }
 
     /**
@@ -274,7 +274,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        iLeappFileProcessor.processFileSystem(dataSource, moduleOutputPath);
+        iLeappFileProcessor.processFileSystem(dataSource, moduleOutputPath, statusHelper);
     }
 
     /**

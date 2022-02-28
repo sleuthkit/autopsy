@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JScrollPane;
@@ -36,6 +37,8 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerDefaults;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -100,7 +103,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         CallLogViewData callLogViewData = null;
         try {
             callLogViewData = getCallLogViewData(artifact);
-        } catch (TskCoreException ex) {
+        } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Error getting attributes for Calllog artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
         }
         List<AccountPersonaSearcherData> personaSearchDataList = new ArrayList<>();
@@ -115,7 +118,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
         } else {
             currentAccountFetcher = null;
         }
-        
+
         // repaint
         this.revalidate();
         this.repaint();
@@ -130,7 +133,7 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      *
      * @throws TskCoreException
      */
-    private CallLogViewData getCallLogViewData(BlackboardArtifact artifact) throws TskCoreException {
+    private CallLogViewData getCallLogViewData(BlackboardArtifact artifact) throws NoCurrentCaseException, TskCoreException {
 
         if (artifact == null) {
             return null;
@@ -239,6 +242,12 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
 
             callLogViewData.setFromContactNameList(fromContactNames);
             callLogViewData.setToContactNameList(toContactNames);
+
+            String hostName = Optional.ofNullable(Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHostByDataSource((DataSource) dataSource))
+                    .map(h -> h.getName())
+                    .orElse(null);
+
+            callLogViewData.setHostName(hostName);
         }
 
         return callLogViewData;
@@ -413,9 +422,14 @@ public class CallLogArtifactViewer extends javax.swing.JPanel implements Artifac
      */
     @NbBundle.Messages({
         "CallLogArtifactViewer_heading_Source=Source",
-        "CallLogArtifactViewer_label_datasource=Data Source",})
+        "CallLogArtifactViewer_label_datasource=Data Source",
+        "CallLogArtifactViewer_label_hostName=Host"})
     private void updateSourceView(CallLogViewData callLogViewData) {
         CommunicationArtifactViewerHelper.addHeader(this, m_gridBagLayout, this.m_constraints, ContentViewerDefaults.getSectionSpacing(), Bundle.CallLogArtifactViewer_heading_Source());
+
+        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_hostName());
+        CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, StringUtils.defaultString(callLogViewData.getHostName()));
+
         CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, this.m_constraints, Bundle.CallLogArtifactViewer_label_datasource());
         CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, this.m_constraints, callLogViewData.getDataSourceName());
     }

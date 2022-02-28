@@ -32,6 +32,8 @@ final class CallLogViewData {
 
     private String fromAccount = null;
     private String toAccount = null;
+    
+    private String hostName = null;
 
     // account identifier of the device owner, if known.
     // will be one of the to or from account.
@@ -174,4 +176,11 @@ final class CallLogViewData {
         return Collections.unmodifiableList(this.fromContactNameList);
     }
 
+    public String getHostName() {
+        return hostName;
+    }
+
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
+    }
 }

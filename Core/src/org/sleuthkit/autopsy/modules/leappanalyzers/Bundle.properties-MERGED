@@ -46,9 +46,12 @@ LeappFileProcessor.error.creating.new.artifacts=Error creating new artifacts.
 LeappFileProcessor.error.creating.output.dir=Error creating Leapp module output directory.
 LeappFileProcessor.error.reading.Leapp.directory=Error reading Leapp Output Directory
 LeappFileProcessor.error.running.Leapp=Error running Leapp, see log file.
+LeappFileProcessor.findTsv=Finding all Leapp ouput
 LeappFileProcessor.has.run=Leapp
 LeappFileProcessor.Leapp.cancelled=Leapp run was canceled
 LeappFileProcessor.postartifacts_error=Error posting Blackboard Artifact
 LeappFileProcessor.running.Leapp=Running Leapp
 LeappFileProcessor.starting.Leapp=Starting Leapp
+# {0} - fileName
+LeappFileProcessor.tsvProcessed=Processing LEAPP output file: {0}
 LeappFileProcessor_cannotParseXml=Cannot Parse XML file.
