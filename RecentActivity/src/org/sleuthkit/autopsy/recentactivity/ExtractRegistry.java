@@ -2409,43 +2409,63 @@ class ExtractRegistry extends Extract {
         }
 
         void setCompName(String compName) {
-            this.compName = compName;
+            if(this.compName == null || this.compName.isEmpty()) {
+                this.compName = compName;
+            }
         }
 
         void setOsName(String progName) {
-            this.progName = progName;
+            if(this.progName == null || this.progName.isEmpty()) {
+                this.progName = progName;
+            }
         }
 
         void setProcessorArchitecture(String processorArchitecture) {
-            this.processorArchitecture = processorArchitecture;
+            if(this.processorArchitecture == null || this.processorArchitecture.isEmpty()) {
+                this.processorArchitecture = processorArchitecture;
+            }
         }
 
         void setTempDir(String tempDir) {
-            this.tempDir = tempDir;
+            if(this.tempDir == null || this.tempDir.isEmpty()) {
+                this.tempDir = tempDir;
+            }
         }
 
         void setDomain(String domain) {
-            this.domain = domain;
+            if(this.domain == null || this.domain.isEmpty()) {
+                this.domain = domain;
+            }
         }
 
         void setInstalltime(Long installtime) {
-            this.installtime = installtime;
+            if(this.domain == null) {
+                this.installtime = installtime;
+            }
         }
 
         void setSystemRoot(String systemRoot) {
-            this.systemRoot = systemRoot;
+            if(this.systemRoot == null || this.systemRoot.isEmpty()) {
+                this.systemRoot = systemRoot;
+            }
         }
 
         void setProductId(String productId) {
-            this.productId = productId;
+            if(this.productId == null || this.productId.isEmpty()) {
+                this.productId = productId;
+            }
         }
 
         void setRegOwner(String regOwner) {
-            this.regOwner = regOwner;
+            if(this.regOwner == null || this.regOwner.isEmpty()) {
+                this.regOwner = regOwner;
+            }
         }
 
         public void setRegOrg(String regOrg) {
-            this.regOrg = regOrg;
+            if(this.regOrg == null || this.regOrg.isEmpty()) {
+                this.regOrg = regOrg;
+            }
         } 
     }
 
