@@ -24,17 +24,13 @@ import java.util.logging.Level;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import java.nio.file.DirectoryIteratorException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.MessageFormat;
 import java.util.List;
@@ -42,17 +38,13 @@ import org.apache.commons.io.FileUtils;
 
 import org.apache.commons.io.FilenameUtils;
 
-import org.openide.modules.InstalledFileLocator;
 import org.openide.util.lookup.ServiceProvider;
 
 import org.sleuthkit.autopsy.modules.pictureanalyzer.spi.PictureProcessor;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -98,6 +90,10 @@ public class HEICProcessor implements PictureProcessor {
             if (context.fileIngestIsCancelled()) {
                 return;
             }
+            
+            if (file == null || file.getId() <= 0) {
+                return;
+            }
 
             byte[] heifBytes;
             try (InputStream is = new ReadContentInputStream(file)) {
@@ -105,6 +101,10 @@ public class HEICProcessor implements PictureProcessor {
                 is.read(heifBytes);
             }
 
+            if (heifBytes == null || heifBytes.length == 0) {
+                return;
+            }
+            
             convertToJPEG(context, heifBytes, file);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "I/O error encountered during HEIC photo processing.", ex);
@@ -152,6 +152,9 @@ public class HEICProcessor implements PictureProcessor {
             this.heifJNI.convertToDisk(heifBytes, outputFile.toString());
         } catch (IllegalArgumentException | IllegalStateException ex) {
             logger.log(Level.WARNING, MessageFormat.format("There was an error processing {0} (id: {1}).", heicFile.getName(), heicFile.getId()), ex);
+            return;
+        } catch (Throwable ex) {
+            logger.log(Level.SEVERE, MessageFormat.format("A severe error occurred while processing {0} (id: {1}).", heicFile.getName(), heicFile.getId()), ex);
             return;
         }
 

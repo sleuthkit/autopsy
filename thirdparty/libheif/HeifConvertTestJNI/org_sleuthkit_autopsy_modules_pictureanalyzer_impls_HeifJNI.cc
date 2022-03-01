@@ -112,64 +112,70 @@ jint throwIllegalState(JNIEnv* env, const char* message)
 int convertToDisk
 	(JNIEnv* env, jclass cls, jbyteArray byteArr, jstring outputPath) {
 
-        size_t arrLen = env->GetArrayLength(byteArr);
-        boolean isCopy;
-        jbyte* nativeByteArr = env->GetByteArrayElements(byteArr, &isCopy);
-        std::string output_filename = env->GetStringUTFChars(outputPath, 0);
-        const int quality = 100;
+    size_t arrLen = env->GetArrayLength(byteArr);
+    std::vector<jbyte> nativeByteArr(arrLen);
 
-    enum heif_filetype_result filetype_check = heif_check_filetype((const uint8_t*)nativeByteArr, 12);
+    boolean isCopy;
+    env->GetByteArrayRegion(byteArr, 0, arrLen, &nativeByteArr[0]);
+    std::string output_filename = env->GetStringUTFChars(outputPath, 0);
+    const int quality = 100;
+
+    printf("Checking heif file type...\n");
+    enum heif_filetype_result filetype_check = heif_check_filetype((const uint8_t*)&nativeByteArr[0], 12);
     if (filetype_check == heif_filetype_no) {
-        env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+        // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
         throwIllegalArgument(env, "Input file is not an HEIF/AVIF file");
         return 1;
     }
 
+    printf("Checking heif file type supported...\n");
     if (filetype_check == heif_filetype_yes_unsupported) {
-        env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+        // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
         throwIllegalArgument(env, "Input file is an unsupported HEIF/AVIF file type");
         return 1;
     }
 
-    // --- read the HEIF file
-
+    printf("Creating heif context...\n");
     struct heif_context* ctx = heif_context_alloc();
     if (!ctx) {
-        env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+        // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
         throwIllegalState(env, "Could not create context object");
         return 1;
     }
 
+    printf("Reading in heif bytes...\n");
     ContextReleaser cr(ctx);
     struct heif_error err;
-    err = heif_context_read_from_memory_without_copy(ctx, (void*)nativeByteArr, arrLen, nullptr);
+    err = heif_context_read_from_memory_without_copy(ctx, (void*)&nativeByteArr[0], arrLen, nullptr);
     if (err.code != 0) {
-        env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+        // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
         std::string err_message = "Could not read HEIF/AVIF file:";
         err_message += err.message;
         throwIllegalState(env, err_message.c_str());
         return 1;
     }
 
+    printf("Checking heif file type...\n");
     int num_images = heif_context_get_number_of_top_level_images(ctx);
     if (num_images == 0) {
-        env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+        // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
         throwIllegalState(env, "File doesn't contain any images");
         return 1;
     }
 
-    //printf("File contains %d images\n", num_images);
+    printf("File contains %d images.  Reading in image ids...\n", num_images);
 
     std::vector<heif_item_id> image_IDs(num_images);
     num_images = heif_context_get_list_of_top_level_image_IDs(ctx, image_IDs.data(), num_images);
 
+    printf("Resetting encoder...\n");
     std::string filename;
-    std::unique_ptr<Encoder> encoder;
-    encoder.reset(new JpegEncoder(quality));
+    std::unique_ptr<Encoder> encoder(new JpegEncoder(quality));
 
     size_t image_index = 1;  // Image filenames are "1" based.
 
     for (int idx = 0; idx < num_images; ++idx) {
+        printf("Looping through for image %d\n", idx);
 
         if (num_images > 1) {
             std::ostringstream s;
@@ -177,16 +183,18 @@ int convertToDisk
             s << "-" << image_index;
             s << output_filename.substr(output_filename.find_last_of('.'));
             filename.assign(s.str());
+            printf("Assigning filename of %s\n", s.str().c_str());
         }
         else {
             filename.assign(output_filename);
+            printf("Assigning filename of %s\n", output_filename.c_str());
         }
 
-
+        printf("acquiring heif image handle...\n");
         struct heif_image_handle* handle;
         err = heif_context_get_image_handle(ctx, image_IDs[idx], &handle);
         if (err.code) {
-            env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+            // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
             std::string err_message = "Could not read HEIF/AVIF image ";
             err_message += idx;
             err_message += ": ";
@@ -195,21 +203,21 @@ int convertToDisk
             return 1;
         }
 
+        printf("handling alpha...\n");
         int has_alpha = heif_image_handle_has_alpha_channel(handle);
         struct heif_decoding_options* decode_options = heif_decoding_options_alloc();
         encoder->UpdateDecodingOptions(handle, decode_options);
-
-        //decode_options->strict_decoding = strict_decoding;
 
         int bit_depth = heif_image_handle_get_luma_bits_per_pixel(handle);
         if (bit_depth < 0) {
             heif_decoding_options_free(decode_options);
             heif_image_handle_release(handle);
-            env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+            // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
             throwIllegalState(env, "Input image has undefined bit-depth");
             return 1;
         }
 
+        printf("decoding heif image...\n");
         struct heif_image* image;
         err = heif_decode_image(handle,
             &image,
@@ -223,30 +231,17 @@ int convertToDisk
             err_message += idx;
             err_message += ": ";
             err_message += err.message;
-            env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+            // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
             throwIllegalState(env, err_message.c_str());
             return 1;
         }
 
-        // show decoding warnings
-
-        /*for (int i = 0;; i++) {
-            int n = heif_image_get_decoding_warnings(image, i, &err, 1);
-            if (n == 0) {
-            break;
-            }
-
-            std::cerr << "Warning: " << err.message << "\n";
-        }*/
-
-        /*char imageMessageBuffer[256];
-        sprintf(imageMessageBuffer, "Image: %B", image);
-        throwIllegalArgument(env, imageMessageBuffer);*/
 
         if (image) {
+            printf("valid image found.\n");
             bool written = encoder->Encode(handle, image, filename);
             if (!written) {
-                printf("could not write image");
+                printf("could not write image\n");
             }            
             else {
                 printf("Written to %s\n", filename.c_str());
@@ -256,6 +251,7 @@ int convertToDisk
 
             int has_depth = heif_image_handle_has_depth_image(handle);
             if (has_depth) {
+                printf("has depth...\n");
                 heif_item_id depth_id;
                 int nDepthImages = heif_image_handle_get_list_of_depth_image_IDs(handle, &depth_id, 1);
                 assert(nDepthImages == 1);
@@ -265,13 +261,14 @@ int convertToDisk
                 err = heif_image_handle_get_depth_image_handle(handle, depth_id, &depth_handle);
                 if (err.code) {
                     heif_image_handle_release(handle);
-                    env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+                    // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
                     throwIllegalState(env, "Could not read depth channel");
                     return 1;
                 }
 
                 int depth_bit_depth = heif_image_handle_get_luma_bits_per_pixel(depth_handle);
 
+                printf("decoding depth image...\n");
                 struct heif_image* depth_image;
                 err = heif_decode_image(depth_handle,
                     &depth_image,
@@ -281,7 +278,7 @@ int convertToDisk
                 if (err.code) {
                     heif_image_handle_release(depth_handle);
                     heif_image_handle_release(handle);
-                    env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+                    // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
                     std::string err_message = "Could not decode depth image: ";
                     err_message += err.message;
                     throwIllegalState(env, err_message.c_str());
@@ -293,9 +290,10 @@ int convertToDisk
                 s << "-depth";
                 s << output_filename.substr(output_filename.find('.'));
 
+                printf("Encoding to %s.\n", s.str().c_str());
                 written = encoder->Encode(depth_handle, depth_image, s.str());
                 if (!written) {
-                    printf("could not write depth image");
+                    printf("could not write depth image\n");
                 }
                 else {
                     printf("Depth image written to %s\n", s.str().c_str());
@@ -306,15 +304,14 @@ int convertToDisk
             }
 
 
+            printf("checking for aux images...\n");
+            
             // --- aux images
 
             int nAuxImages = heif_image_handle_get_number_of_auxiliary_images(handle, LIBHEIF_AUX_IMAGE_FILTER_OMIT_ALPHA | LIBHEIF_AUX_IMAGE_FILTER_OMIT_DEPTH);
 
-            //char numImages[256];
-            //sprintf(numImages, "Found %d images", nAuxImages);
-            //throwIllegalArgument(env, numImages);
-
             if (nAuxImages > 0) {
+                printf("found %d aux images.\n", nAuxImages);
 
                 std::vector<heif_item_id> auxIDs(nAuxImages);
                 heif_image_handle_get_list_of_auxiliary_image_IDs(handle,
@@ -322,16 +319,18 @@ int convertToDisk
                     auxIDs.data(), nAuxImages);
 
                 for (heif_item_id auxId : auxIDs) {
+                    printf("getting aux handle...\n");
 
                     struct heif_image_handle* aux_handle;
                     err = heif_image_handle_get_auxiliary_image_handle(handle, auxId, &aux_handle);
                     if (err.code) {
                         heif_image_handle_release(handle);
-                        env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+                        // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
                         throwIllegalState(env, "Could not read auxiliary image");
                         return 1;
                     }
 
+                    printf("decoding aux handle image...\n");
                     int aux_bit_depth = heif_image_handle_get_luma_bits_per_pixel(aux_handle);
 
                     struct heif_image* aux_image;
@@ -343,19 +342,20 @@ int convertToDisk
                     if (err.code) {
                         heif_image_handle_release(aux_handle);
                         heif_image_handle_release(handle);
-                        env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+                        // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
                         std::string err_message = "Could not decode auxiliary image: ";
                         err_message += err.message;
                         throwIllegalState(env, err_message.c_str());
                         return 1;
                     }
 
+                    printf("decoding aux image handle auxiliary type...\n");
                     const char* auxTypeC = nullptr;
                     err = heif_image_handle_get_auxiliary_type(aux_handle, &auxTypeC);
                     if (err.code) {
                         heif_image_handle_release(aux_handle);
                         heif_image_handle_release(handle);
-                        env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+                        // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
                         std::string err_message = "Could not get type of auxiliary image: ";
                         err_message += err.message;
                         throwIllegalState(env, err_message.c_str());
@@ -364,6 +364,7 @@ int convertToDisk
 
                     std::string auxType = std::string(auxTypeC);
 
+                    printf("freeing auxiliary type.\n");
                     heif_image_handle_free_auxiliary_types(aux_handle, &auxTypeC);
 
                     std::ostringstream s;
@@ -372,13 +373,11 @@ int convertToDisk
                     s << output_filename.substr(output_filename.find('.'));
                     throwIllegalArgument(env, s.str().c_str());
 
-
-                    std::string output_message = "Writing to output: ";
-                    output_message += s.str();
+                    printf("Writing aux to output: %s\n", s.str().c_str());
 
                     written = encoder->Encode(aux_handle, aux_image, s.str());
                     if (!written) {
-                        printf("could not write auxiliary image");
+                        printf("could not write auxiliary image\n");
                     }
                     else {
                         printf("Auxiliary image written to %s\n", s.str().c_str());
@@ -396,7 +395,7 @@ int convertToDisk
         image_index++;
     }
 
-    env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
+    // env->ReleaseByteArrayElements(byteArr, nativeByteArr, 0);
     return 0;
 }
 
