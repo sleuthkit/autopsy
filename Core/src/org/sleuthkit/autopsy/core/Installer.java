@@ -301,7 +301,7 @@ public class Installer extends ModuleInstall {
             }
 
             Path gstreamerBasePath = Paths.get(gstreamerPath.toString(), "1.0", arch);
-            Path gstreamerBinPath = Paths.get(gstreamerBasePath.toString(), "bin");
+//            Path gstreamerBinPath = Paths.get(gstreamerBasePath.toString(), "bin");
             Path gstreamerLibPath = Paths.get(gstreamerBasePath.toString(), "lib", "gstreamer-1.0");
 
             // Update the PATH environment variable to contain the GStreamer
@@ -316,7 +316,7 @@ public class Installer extends ModuleInstall {
                  * binaries associated with the current release are found rather
                  * than binaries associated with an earlier version of Autopsy.
                  */
-                k32.SetEnvironmentVariable("PATH", gstreamerBinPath.toString() + File.pathSeparator + gstreamerLibPath.toString() + path);
+                k32.SetEnvironmentVariable("PATH", gstreamerLibPath.toString() + path);
             }
         }
     }
