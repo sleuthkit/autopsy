@@ -34,7 +34,8 @@
 class Encoder
 {
 public:
-  virtual ~Encoder() = default;
+  virtual ~Encoder()
+  {}
 
   virtual heif_colorspace colorspace(bool has_alpha) const = 0;
 

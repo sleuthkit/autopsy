@@ -59,12 +59,11 @@ void JpegEncoder::OnJpegError(j_common_ptr cinfo)
   longjmp(handler->setjmp_buffer, 1);
 }
 
-#define MAX_BYTES_IN_MARKER  65533      /* maximum data len of a JPEG marker */
-
 #if !defined(HAVE_JPEG_WRITE_ICC_PROFILE)
 
 #define ICC_MARKER  (JPEG_APP0 + 2)     /* JPEG marker code for ICC */
 #define ICC_OVERHEAD_LEN  14            /* size of non-profile data in APP2 */
+#define MAX_BYTES_IN_MARKER  65533      /* maximum data len of a JPEG marker */
 #define MAX_DATA_BYTES_IN_MARKER (MAX_BYTES_IN_MARKER - ICC_OVERHEAD_LEN)
 
 /*
@@ -167,33 +166,10 @@ bool JpegEncoder::Encode(const struct heif_image_handle* handle,
 
   size_t exifsize = 0;
   uint8_t* exifdata = GetExifMetaData(handle, &exifsize);
-  if (exifdata) {
-    if (exifsize > 4) {
-      static const uint8_t kExifMarker = JPEG_APP0 + 1;
-
-      uint32_t skip = (exifdata[0]<<24) | (exifdata[1]<<16) | (exifdata[2]<<8) | exifdata[3];
-      if (skip>=6) {
-        skip = 4 + skip-6;
-      }
-      else {
-        skip = 4;
-      }
-
-      uint8_t* ptr = exifdata + skip;
-      size_t size = exifsize - skip;
-
-      while (size > MAX_BYTES_IN_MARKER) {
-        jpeg_write_marker(&cinfo, kExifMarker, ptr,
-                          static_cast<unsigned int>(MAX_BYTES_IN_MARKER));
-
-        ptr += MAX_BYTES_IN_MARKER;
-        size -= MAX_BYTES_IN_MARKER;
-      }
-
-      jpeg_write_marker(&cinfo, kExifMarker, ptr,
-                        static_cast<unsigned int>(size));
-    }
-
+  if (exifdata && exifsize > 4) {
+    static const uint8_t kExifMarker = JPEG_APP0 + 1;
+    jpeg_write_marker(&cinfo, kExifMarker, exifdata + 4,
+                      static_cast<unsigned int>(exifsize - 4));
     free(exifdata);
   }
 

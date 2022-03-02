@@ -37,6 +37,10 @@ public class HeifJNI {
         }
         return instance;
     }
+
+    public static void init() throws UnsatisfiedLinkError {
+        getInstance();
+    }
     
     private HeifJNI() {}
 

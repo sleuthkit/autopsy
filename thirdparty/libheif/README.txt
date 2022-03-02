@@ -3,7 +3,7 @@ This project relies heavily on libheif: https://github.com/strukturag/libheif/ a
 In order to build this, the project requires vcpkg (directions here: https://vcpkg.io/en/getting-started.html), cmake (https://cmake.org/download/), and visual studio build tools for cmake (I downloaded visual studio 17 2022).  This project will require the following vcpkg dependencies:
 
 libde265:x64-windows
-libheif:x64-windows
+libheif:x64-windows (files in project were grabbed from the libheif examples folder as of v1.12.0)
 libjpeg-turbo:x64-windows
 x265:x64-windows
 vcpkg-cmake-config:x64-windows

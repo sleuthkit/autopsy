@@ -76,6 +76,8 @@ public class Installer extends ModuleInstall {
         
         // This will cause OpenCvLoader to load its library instead of 
         OpenCvLoader.openCvIsLoaded();
+        
+        HeifJNI.init();
     }
 
     private static void loadDynLibraries() {
