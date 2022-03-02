@@ -51,7 +51,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
-import org.sleuthkit.autopsy.modules.pictureanalyzer.impls.HeifJNI;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 
@@ -76,8 +75,6 @@ public class Installer extends ModuleInstall {
         
         // This will cause OpenCvLoader to load its library instead of 
         OpenCvLoader.openCvIsLoaded();
-        
-        HeifJNI.init();
     }
 
     private static void loadDynLibraries() {

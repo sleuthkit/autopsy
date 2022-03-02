@@ -26,6 +26,10 @@ public class HeifJNI {
 
     private static HeifJNI instance = null;
     
+    /**
+     * @return The singleton instance of this class.
+     * @throws UnsatisfiedLinkError 
+     */
     public static HeifJNI getInstance() throws UnsatisfiedLinkError {
         if (instance == null) {
             System.loadLibrary("libx265");
@@ -37,12 +41,14 @@ public class HeifJNI {
         }
         return instance;
     }
-
-    public static void init() throws UnsatisfiedLinkError {
-        getInstance();
-    }
     
     private HeifJNI() {}
 
+    /**
+     * Native method found in heif_convert.dll in third party libheif.  Converts a heic/heif file to one or many jpegs.
+     * @param data The heic/heif binary data.
+     * @param jpgOutputPath The jpeg output file.  A new file name will be calculated if multiple jpegs are generated.
+     * @return The dll return code.
+     */
     public native int convertToDisk(byte[] data, String jpgOutputPath);
 }
