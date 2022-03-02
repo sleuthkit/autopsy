@@ -316,6 +316,7 @@ public class Installer extends ModuleInstall {
                  * binaries associated with the current release are found rather
                  * than binaries associated with an earlier version of Autopsy.
                  */
+//                k32.SetEnvironmentVariable("PATH", gstreamerBinPath.toString() + File.pathSeparator + gstreamerLibPath.toString() + path);
                 k32.SetEnvironmentVariable("PATH", gstreamerLibPath.toString() + path);
             }
         }
