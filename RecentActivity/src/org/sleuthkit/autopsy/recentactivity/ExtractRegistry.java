@@ -658,30 +658,6 @@ class ExtractRegistry extends Extract {
                         osInfo.setProductId(productId);
                         osInfo.setRegOwner(regOwner);
                         osInfo.setRegOrg(regOrg);
-//                        try {
-//                            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-//                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME, parentModuleName, version));
-//                            if (installtime != null) {
-//                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, installtime));
-//                            }
-//                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, parentModuleName, systemRoot));
-//                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PRODUCT_ID, parentModuleName, productId));
-//                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_OWNER, parentModuleName, regOwner));
-//                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ORGANIZATION, parentModuleName, regOrg));
-//
-//                            // Check if there is already an OS_INFO artifact for this file, and add to that if possible.
-//                            ArrayList<BlackboardArtifact> results = tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
-//                            if (results.isEmpty()) {
-//                                newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, regFile, bbattributes));
-//                            } else {
-//                                results.get(0).addAttributes(bbattributes);
-//                            }
-
-                            
-
-//                        } catch (TskCoreException ex) {
-//                            logger.log(Level.SEVERE, String.format("Error adding installed program artifact to blackboard for file %d.", regFile.getId()), ex); //NON-NLS
-//                        }
                         break;
                     case "Profiler": // NON-NLS
                         String os = "";
@@ -735,7 +711,7 @@ class ExtractRegistry extends Extract {
                             }
                         }
                         
-                        osInfo.setOsName(compName);
+                        osInfo.setCompName(compName);
                         osInfo.setDomain(domainName);
                         
                         for (Map.Entry<String, String> userMap : getUserNameMap().entrySet()) {
@@ -2351,7 +2327,7 @@ class ExtractRegistry extends Extract {
     // of TSK_OS_INFO is created per RA run.
     private class OSInfo {
         private String compName = null;
-        private String progName = "Window";
+        private String progName = "Windows";
         private String processorArchitecture = null;
         private String tempDir = null;
         private String domain = null;
@@ -2415,7 +2391,7 @@ class ExtractRegistry extends Extract {
         }
 
         void setOsName(String progName) {
-            if(this.progName == null || this.progName.isEmpty()) {
+            if(progName != null && !progName.isEmpty()) {
                 this.progName = progName;
             }
         }
