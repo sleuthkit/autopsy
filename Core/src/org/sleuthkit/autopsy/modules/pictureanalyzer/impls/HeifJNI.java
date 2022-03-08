@@ -32,7 +32,7 @@ public class HeifJNI {
      */
     public static HeifJNI getInstance() throws UnsatisfiedLinkError {
         if (instance == null) {
-            System.loadLibrary("vcruntime140_1.dll");
+            System.loadLibrary("vcruntime140_1");
             System.loadLibrary("libx265");
             System.loadLibrary("libde265");
             System.loadLibrary("heif");
