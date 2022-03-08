@@ -367,7 +367,7 @@ public class CorrelationAttributeUtil {
                 logger.log(Level.WARNING, String.format("Error normalizing correlation attribute (%s): %s", artifact, ex.getMessage())); // NON-NLS
                 return correlationAttrs;
             } catch (InvalidAccountIDException ex) {
-                logger.log(Level.SEVERE, String.format("Invalid account identifier (artifactID: %d)", artifact.getId())); // NON-NLS
+                logger.log(Level.WARNING, String.format("Invalid account identifier (artifactID: %d)", artifact.getId())); // NON-NLS
                 return correlationAttrs;
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
