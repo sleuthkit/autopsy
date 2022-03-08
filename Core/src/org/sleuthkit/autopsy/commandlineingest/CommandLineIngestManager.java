@@ -174,16 +174,10 @@ public class CommandLineIngestManager extends CommandLineManager {
 
                                 // open the case, if it hasn't been already opened by CREATE_CASE command
                                 if (caseForJob == null) {
-                                    String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                    if (caseDirPath != null && !(caseDirPath.isEmpty())) {
-                                        // user specified a case directory to open
-                                        caseForJob = CommandLineIngestManager.this.openCase(caseDirPath);
-                                    } else {
-                                        // find case output directory by name and open the case
-                                        String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
-                                        String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
-                                        caseForJob = openExistingCase(baseCaseName, rootOutputDirectory);
-                                    }
+                                    // find case output directory by name and open the case
+                                    String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
+                                    String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
+                                    caseForJob = openExistingCase(baseCaseName, rootOutputDirectory);
                                 }
 
                                 String dataSourcePath = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
@@ -206,10 +200,12 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 System.out.println("Processing 'Run Ingest' command");
                                 Map<String, String> inputs = command.getInputs();
 
-                                // open the case, if it hasn't been already opened by CREATE_CASE or ADD_DATA_SOURCE commands
+                                // open the case, if it hasn't been already opened by CREATE_CASE command
                                 if (caseForJob == null) {
-                                    String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                    caseForJob = CommandLineIngestManager.this.openCase(caseDirPath);
+                                    // find case output directory by name and open the case
+                                    String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
+                                    String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
+                                    caseForJob = openExistingCase(baseCaseName, rootOutputDirectory);
                                 }
 
                                 // populate the AutoIngestDataSource structure, if that hasn't been done by ADD_DATA_SOURCE command
@@ -261,18 +257,22 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 System.out.println("Processing 'List All Data Sources' command");
                                 Map<String, String> inputs = command.getInputs();
 
-                                // open the case, if it hasn't been already opened by previous command
+                                // open the case, if it hasn't been already opened by CREATE_CASE command
                                 if (caseForJob == null) {
-                                    String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                    caseForJob = CommandLineIngestManager.this.openCase(caseDirPath);
+                                    // find case output directory by name and open the case
+                                    String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
+                                    String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
+                                    caseForJob = openExistingCase(baseCaseName, rootOutputDirectory);
                                 }
 
                                 String outputDirPath = getOutputDirPath(caseForJob);
                                 OutputGenerator.listAllDataSources(caseForJob, outputDirPath);
                             } catch (CaseActionException ex) {
-                                String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                LOGGER.log(Level.SEVERE, "Error opening case in case directory: " + caseDirPath, ex);
-                                System.out.println("Error opening case in case directory: " + caseDirPath);
+                                String baseCaseName = command.getInputs().get(CommandLineCommand.InputType.CASE_NAME.name());
+                                String rootOutputDirectory = command.getInputs().get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
+                                String msg = "Error opening case " + baseCaseName + " in directory: " + rootOutputDirectory;
+                                LOGGER.log(Level.SEVERE, msg, ex);
+                                System.out.println(msg);
                                 // Do not process any other commands
                                 return;
                             }
@@ -284,10 +284,12 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 System.out.println("Processing 'Generate Reports' command");
                                 Map<String, String> inputs = command.getInputs();
 
-                                // open the case, if it hasn't been already opened by previous command
+                                // open the case, if it hasn't been already opened by CREATE_CASE command
                                 if (caseForJob == null) {
-                                    String caseDirPath = inputs.get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                    caseForJob = CommandLineIngestManager.this.openCase(caseDirPath);
+                                    // find case output directory by name and open the case
+                                    String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
+                                    String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
+                                    caseForJob = openExistingCase(baseCaseName, rootOutputDirectory);
                                 }
                                 // generate reports
                                 String reportName = inputs.get(CommandLineCommand.InputType.REPORT_PROFILE_NAME.name());
@@ -300,9 +302,11 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 ReportGenerator generator = new ReportGenerator(reportName, progressIndicator);
                                 generator.generateReports();
                             } catch (CaseActionException ex) {
-                                String caseDirPath = command.getInputs().get(CommandLineCommand.InputType.CASE_FOLDER_PATH.name());
-                                LOGGER.log(Level.SEVERE, "Error opening case in case directory: " + caseDirPath, ex);
-                                System.out.println("Error opening case in case directory: " + caseDirPath);
+                                String baseCaseName = command.getInputs().get(CommandLineCommand.InputType.CASE_NAME.name());
+                                String rootOutputDirectory = command.getInputs().get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
+                                String msg = "Error opening case " + baseCaseName + " in directory: " + rootOutputDirectory;
+                                LOGGER.log(Level.SEVERE, msg, ex);
+                                System.out.println(msg);
                                 // Do not process any other commands
                                 return;
                             }
@@ -338,7 +342,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                 // shut down Autopsy
                 stop();
             }
-        }       
+        }
 
         /**
          * Passes the data source for the current job through a data source
@@ -348,13 +352,10 @@ public class CommandLineIngestManager extends CommandLineManager {
          * @param dataSource The data source.
          *
          * @throws AutoIngestDataSourceProcessorException if there was a DSP
-         *                                                processing error.
+         * processing error.
          *
-         * @throws InterruptedException                   running the job
-         *                                                processing task while
-         *                                                blocking, i.e., if
-         *                                                auto ingest is
-         *                                                shutting down.
+         * @throws InterruptedException running the job processing task while
+         * blocking, i.e., if auto ingest is shutting down.
          */
         private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 
@@ -455,15 +456,14 @@ public class CommandLineIngestManager extends CommandLineManager {
          * profile (profile = ingest context + ingest filter) for ingest.
          * Otherwise use baseline configuration.
          *
-         * @param dataSource        The data source to analyze.
+         * @param dataSource The data source to analyze.
          * @param ingestProfileName Name of ingest profile to use (optional)
          *
          * @throws AnalysisStartupException if there is an error analyzing the
-         *                                  data source.
-         * @throws InterruptedException     if the thread running the job
-         *                                  processing task is interrupted while
-         *                                  blocked, i.e., if auto ingest is
-         *                                  shutting down.
+         * data source.
+         * @throws InterruptedException if the thread running the job processing
+         * task is interrupted while blocked, i.e., if auto ingest is shutting
+         * down.
          */
         private void analyze(AutoIngestDataSource dataSource, String ingestProfileName) throws AnalysisStartupException, InterruptedException {
 
