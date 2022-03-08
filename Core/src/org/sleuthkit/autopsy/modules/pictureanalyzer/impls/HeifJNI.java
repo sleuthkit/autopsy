@@ -32,11 +32,11 @@ public class HeifJNI {
      */
     public static HeifJNI getInstance() throws UnsatisfiedLinkError {
         if (instance == null) {
-            System.loadLibrary("libx265");
-            System.loadLibrary("libde265");
-            System.loadLibrary("heif");
-            System.loadLibrary("jpeg62");
-            System.loadLibrary("heif-convert");
+//            System.loadLibrary("libx265");
+//            System.loadLibrary("libde265");
+//            System.loadLibrary("heif");
+//            System.loadLibrary("jpeg62");
+            System.loadLibrary("heifconvert");
             instance = new HeifJNI();
         }
         return instance;
