@@ -201,13 +201,13 @@ JAVA_INCLUDE_PATH2:PATH=C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-
 JAVA_JVM_LIBRARY:FILEPATH=C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/lib/jvm.lib
 
 //Path to a file.
-JPEG_INCLUDE_DIR:PATH=C:/Users/gregd/vcpkg/installed/x64-windows-static/include
+JPEG_INCLUDE_DIR:PATH=C:/Users/gregd/vcpkg/installed/x64-windows/include
 
 //Path to a library.
-JPEG_LIBRARY_DEBUG:FILEPATH=C:/Users/gregd/vcpkg/installed/x64-windows-static/debug/lib/jpeg.lib
+JPEG_LIBRARY_DEBUG:FILEPATH=C:/Users/gregd/vcpkg/installed/x64-windows/debug/lib/jpeg.lib
 
 //Path to a library.
-JPEG_LIBRARY_RELEASE:FILEPATH=C:/Users/gregd/vcpkg/installed/x64-windows-static/lib/jpeg.lib
+JPEG_LIBRARY_RELEASE:FILEPATH=C:/Users/gregd/vcpkg/installed/x64-windows/lib/jpeg.lib
 
 //Path to a program.
 Java_IDLJ_EXECUTABLE:FILEPATH=C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/bin/idlj.exe
@@ -229,9 +229,6 @@ Java_JAVAH_EXECUTABLE:FILEPATH=C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8
 
 //Path to a program.
 Java_JAVA_EXECUTABLE:FILEPATH=C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/bin/java.exe
-
-//Path to a file.
-MSVC_REDIST_DIR:PATH=C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Redist/MSVC/14.31.31103
 
 //Automatically copy dependencies into the output directory for
 // executables.
@@ -256,7 +253,7 @@ VCPKG_PREFER_SYSTEM_LIBS:BOOL=OFF
 VCPKG_SETUP_CMAKE_PROGRAM_PATH:BOOL=ON
 
 //Vcpkg target triplet (ex. x86-windows)
-VCPKG_TARGET_TRIPLET:STRING=x64-windows-static
+VCPKG_TARGET_TRIPLET:STRING=x64-windows
 
 //Setup CMAKE_PROGRAM_PATH to use host tools
 VCPKG_USE_HOST_TOOLS:BOOL=ON
@@ -272,6 +269,12 @@ X_VCPKG_APPLOCAL_DEPS_INSTALL:BOOL=OFF
 // serialization.
 X_VCPKG_APPLOCAL_DEPS_SERIALIZED:BOOL=OFF
 
+//Path to a program.
+Z_VCPKG_BUILTIN_POWERSHELL_PATH:FILEPATH=C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
+
+//Path to a program.
+Z_VCPKG_PWSH_PATH:FILEPATH=Z_VCPKG_PWSH_PATH-NOTFOUND
+
 //The directory which contains the installed libraries for each
 // triplet
 _VCPKG_INSTALLED_DIR:PATH=C:/Users/gregd/vcpkg/installed
@@ -285,11 +288,8 @@ heifconvert_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 heifconvert_SOURCE_DIR:STATIC=C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI
 
-//The directory containing a CMake configuration file for libde265.
-libde265_DIR:PATH=C:/Users/gregd/vcpkg/installed/x64-windows-static/share/libde265
-
 //The directory containing a CMake configuration file for libheif.
-libheif_DIR:PATH=C:/Users/gregd/vcpkg/installed/x64-windows-static/share/libheif
+libheif_DIR:PATH=C:/Users/gregd/vcpkg/installed/x64-windows/share/libheif
 
 
 ########################
@@ -427,7 +427,7 @@ CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //Details about finding JNI
 FIND_PACKAGE_MESSAGE_DETAILS_JNI:INTERNAL=[C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/lib/jawt.lib][C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/lib/jvm.lib][C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/include][C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/include/win32][C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/include][v()]
 //Details about finding JPEG
-FIND_PACKAGE_MESSAGE_DETAILS_JPEG:INTERNAL=[optimized;C:/Users/gregd/vcpkg/installed/x64-windows-static/lib/jpeg.lib;debug;C:/Users/gregd/vcpkg/installed/x64-windows-static/debug/lib/jpeg.lib][C:/Users/gregd/vcpkg/installed/x64-windows-static/include][v62()]
+FIND_PACKAGE_MESSAGE_DETAILS_JPEG:INTERNAL=[optimized;C:/Users/gregd/vcpkg/installed/x64-windows/lib/jpeg.lib;debug;C:/Users/gregd/vcpkg/installed/x64-windows/debug/lib/jpeg.lib][C:/Users/gregd/vcpkg/installed/x64-windows/include][v62()]
 //Details about finding Java
 FIND_PACKAGE_MESSAGE_DETAILS_Java:INTERNAL=[C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/bin/java.exe][C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/bin/jar.exe][C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/bin/javac.exe][C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/bin/javah.exe][C:/Program Files/ojdkbuild/java-1.8.0-openjdk-1.8.0.222-1/bin/javadoc.exe][v1.8.0_222-1-ojdkbuild()]
 //ADVANCED property for variable: JAVA_AWT_INCLUDE_PATH
@@ -460,8 +460,6 @@ Java_JAVADOC_EXECUTABLE-ADVANCED:INTERNAL=1
 Java_JAVAH_EXECUTABLE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: Java_JAVA_EXECUTABLE
 Java_JAVA_EXECUTABLE-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: MSVC_REDIST_DIR
-MSVC_REDIST_DIR-ADVANCED:INTERNAL=1
 //Install the dependencies listed in your manifest:
 //\n    If this is off, you will have to manually install your dependencies.
 //\n    See https://github.com/microsoft/vcpkg/tree/master/docs/specifications/manifests.md
@@ -472,6 +470,8 @@ VCPKG_MANIFEST_INSTALL:INTERNAL=OFF
 VCPKG_VERBOSE-ADVANCED:INTERNAL=1
 //Making sure VCPKG_MANIFEST_MODE doesn't change
 Z_VCPKG_CHECK_MANIFEST_MODE:INTERNAL=OFF
+//The path to the PowerShell implementation to use.
+Z_VCPKG_POWERSHELL_PATH:INTERNAL=C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
 //Vcpkg root directory
 Z_VCPKG_ROOT_DIR:INTERNAL=C:/Users/gregd/vcpkg
 

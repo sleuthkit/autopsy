@@ -93,7 +93,6 @@ C:/Program Files/CMake/share/cmake-3.23/Modules/FindJPEG.cmake
 C:/Program Files/CMake/share/cmake-3.23/Modules/FindJava.cmake
 C:/Program Files/CMake/share/cmake-3.23/Modules/FindPackageHandleStandardArgs.cmake
 C:/Program Files/CMake/share/cmake-3.23/Modules/FindPackageMessage.cmake
-C:/Program Files/CMake/share/cmake-3.23/Modules/InstallRequiredSystemLibraries.cmake
 C:/Program Files/CMake/share/cmake-3.23/Modules/Internal/CheckSourceCompiles.cmake
 C:/Program Files/CMake/share/cmake-3.23/Modules/Internal/FeatureTesting.cmake
 C:/Program Files/CMake/share/cmake-3.23/Modules/Platform/Windows-Determine-CXX.cmake
@@ -108,13 +107,9 @@ C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/C
 C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/CMakeFiles/3.23.0-rc2/CMakeCXXCompiler.cmake
 C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/CMakeFiles/3.23.0-rc2/CMakeRCCompiler.cmake
 C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/CMakeFiles/3.23.0-rc2/CMakeSystem.cmake
-C:/Users/gregd/vcpkg/installed/x64-windows-static/share/jpeg/vcpkg-cmake-wrapper.cmake
-C:/Users/gregd/vcpkg/installed/x64-windows-static/share/libde265/libde265Config-debug.cmake
-C:/Users/gregd/vcpkg/installed/x64-windows-static/share/libde265/libde265Config-release.cmake
-C:/Users/gregd/vcpkg/installed/x64-windows-static/share/libde265/libde265Config.cmake
-C:/Users/gregd/vcpkg/installed/x64-windows-static/share/libde265/libde265ConfigVersion.cmake
-C:/Users/gregd/vcpkg/installed/x64-windows-static/share/libheif/libheif-config-debug.cmake
-C:/Users/gregd/vcpkg/installed/x64-windows-static/share/libheif/libheif-config-release.cmake
-C:/Users/gregd/vcpkg/installed/x64-windows-static/share/libheif/libheif-config-version.cmake
-C:/Users/gregd/vcpkg/installed/x64-windows-static/share/libheif/libheif-config.cmake
+C:/Users/gregd/vcpkg/installed/x64-windows/share/jpeg/vcpkg-cmake-wrapper.cmake
+C:/Users/gregd/vcpkg/installed/x64-windows/share/libheif/libheif-config-debug.cmake
+C:/Users/gregd/vcpkg/installed/x64-windows/share/libheif/libheif-config-release.cmake
+C:/Users/gregd/vcpkg/installed/x64-windows/share/libheif/libheif-config-version.cmake
+C:/Users/gregd/vcpkg/installed/x64-windows/share/libheif/libheif-config.cmake
 C:/Users/gregd/vcpkg/scripts/buildsystems/vcpkg.cmake

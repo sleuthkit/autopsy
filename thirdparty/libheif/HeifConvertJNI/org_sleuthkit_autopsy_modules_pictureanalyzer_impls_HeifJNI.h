@@ -15,8 +15,6 @@ extern "C" {
 JNIEXPORT int JNICALL Java_org_sleuthkit_autopsy_modules_pictureanalyzer_impls_HeifJNI_convertToDisk
   (JNIEnv *, jclass, jbyteArray, jstring);
 
-
-jint JNIEXPORT JNI_OnLoad_heifconvert(JavaVM*, void*);
 #ifdef __cplusplus
 }
 #endif

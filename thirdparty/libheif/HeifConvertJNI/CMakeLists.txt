@@ -1,11 +1,9 @@
 # Can be called with something like cmake -G "Visual Studio 17 2022" -A x64 -S .. "-DCMAKE_TOOLCHAIN_FILE=C:/Users/gregd/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static
 
 cmake_minimum_required (VERSION 3.15)
-cmake_policy(SET CMP0091 NEW)
 
 project ("heifconvert")
 
-find_package(libde265 CONFIG REQUIRED)
 find_package(libheif CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(Java REQUIRED)
@@ -65,12 +63,6 @@ if(UNIX OR MINGW)
   include (${CMAKE_ROOT}/Modules/FindPkgConfig.cmake)
 endif()
 
-#set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
-#set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION TRUE)
-#set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS TRUE)
-#set(CMAKE_INSTALL_MFC_LIBRARIES TRUE)
-#set(CMAKE_INSTALL_OPENMP_LIBRARIES TRUE)
-
 #set(CompilerFlags
 #        CMAKE_CXX_FLAGS
 #        CMAKE_CXX_FLAGS_DEBUG
@@ -83,10 +75,10 @@ endif()
 #  string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
 #endforeach()
 
-add_library(heifconvert STATIC ${heif_convert_sources})
+add_library(heifconvert SHARED ${heif_convert_sources})
 
-set_property(TARGET heifconvert PROPERTY
-  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+#set_property(TARGET heifconvert PROPERTY
+#  MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 target_link_directories (heifconvert PRIVATE ${additional_link_directories})
 target_link_libraries (heifconvert ${additional_libraries})
@@ -94,4 +86,4 @@ target_include_directories(heifconvert PRIVATE ${additional_includes})
 
 message("Installing to: ${CMAKE_INSTALL_BINDIR}")
 install(TARGETS heifconvert RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-include(InstallRequiredSystemLibraries)
+# include(InstallRequiredSystemLibraries)

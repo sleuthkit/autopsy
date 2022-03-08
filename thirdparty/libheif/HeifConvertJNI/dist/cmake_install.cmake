@@ -34,31 +34,26 @@ endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
   if("${CMAKE_INSTALL_CONFIG_NAME}" MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/Debug/heifconvert.lib")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY OPTIONAL FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/Debug/heifconvert.lib")
   elseif("${CMAKE_INSTALL_CONFIG_NAME}" MATCHES "^([Rr][Ee][Ll][Ee][Aa][Ss][Ee])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/Release/heifconvert.lib")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY OPTIONAL FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/Release/heifconvert.lib")
   elseif("${CMAKE_INSTALL_CONFIG_NAME}" MATCHES "^([Mm][Ii][Nn][Ss][Ii][Zz][Ee][Rr][Ee][Ll])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/MinSizeRel/heifconvert.lib")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY OPTIONAL FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/MinSizeRel/heifconvert.lib")
   elseif("${CMAKE_INSTALL_CONFIG_NAME}" MATCHES "^([Rr][Ee][Ll][Ww][Ii][Tt][Hh][Dd][Ee][Bb][Ii][Nn][Ff][Oo])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/RelWithDebInfo/heifconvert.lib")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY OPTIONAL FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/RelWithDebInfo/heifconvert.lib")
   endif()
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE PROGRAM FILES
-    "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Redist/MSVC/14.31.31103/x64/Microsoft.VC143.CRT/msvcp140.dll"
-    "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Redist/MSVC/14.31.31103/x64/Microsoft.VC143.CRT/msvcp140_1.dll"
-    "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Redist/MSVC/14.31.31103/x64/Microsoft.VC143.CRT/msvcp140_2.dll"
-    "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Redist/MSVC/14.31.31103/x64/Microsoft.VC143.CRT/msvcp140_atomic_wait.dll"
-    "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Redist/MSVC/14.31.31103/x64/Microsoft.VC143.CRT/msvcp140_codecvt_ids.dll"
-    "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Redist/MSVC/14.31.31103/x64/Microsoft.VC143.CRT/vcruntime140_1.dll"
-    "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Redist/MSVC/14.31.31103/x64/Microsoft.VC143.CRT/vcruntime140.dll"
-    "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Redist/MSVC/14.31.31103/x64/Microsoft.VC143.CRT/concrt140.dll"
-    )
-endif()
-
-if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE DIRECTORY FILES "")
+  if("${CMAKE_INSTALL_CONFIG_NAME}" MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE SHARED_LIBRARY FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/Debug/heifconvert.dll")
+  elseif("${CMAKE_INSTALL_CONFIG_NAME}" MATCHES "^([Rr][Ee][Ll][Ee][Aa][Ss][Ee])$")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE SHARED_LIBRARY FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/Release/heifconvert.dll")
+  elseif("${CMAKE_INSTALL_CONFIG_NAME}" MATCHES "^([Mm][Ii][Nn][Ss][Ii][Zz][Ee][Rr][Ee][Ll])$")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE SHARED_LIBRARY FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/MinSizeRel/heifconvert.dll")
+  elseif("${CMAKE_INSTALL_CONFIG_NAME}" MATCHES "^([Rr][Ee][Ll][Ww][Ii][Tt][Hh][Dd][Ee][Bb][Ii][Nn][Ff][Oo])$")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE SHARED_LIBRARY FILES "C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/RelWithDebInfo/heifconvert.dll")
+  endif()
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)

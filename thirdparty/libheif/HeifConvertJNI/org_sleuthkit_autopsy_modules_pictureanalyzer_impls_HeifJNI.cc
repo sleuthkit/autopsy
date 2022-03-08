@@ -426,9 +426,4 @@ extern "C" {
 	(JNIEnv* env, jclass cls, jbyteArray byteArr, jstring outputPath) {
 		return convertToDisk(env, cls, byteArr, outputPath);
 	}
-
-	jint JNIEXPORT JNI_OnLoad_heifconvert(JavaVM* vm, void*)
-	{
-		return JNI_VERSION_1_8;
-	}
 }
