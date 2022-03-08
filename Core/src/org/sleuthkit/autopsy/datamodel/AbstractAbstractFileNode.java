@@ -449,7 +449,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, "Error getting count of datasources with correlation attribute", ex);
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, "Unable to normalize data to get count of datasources with correlation attribute", ex);
+            logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
         return Pair.of(count, description);
     }

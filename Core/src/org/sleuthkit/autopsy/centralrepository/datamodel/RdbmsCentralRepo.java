@@ -1276,7 +1276,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException {
         if (value == null) {
-            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances for null value");
+            throw new CentralRepoException("Cannot get artifact instances for null value");
         }
         return getArtifactInstancesByTypeValues(aType, Arrays.asList(value));
     }
@@ -1284,10 +1284,10 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws CentralRepoException, CorrelationAttributeNormalizationException {
         if (aType == null) {
-            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances for null type");
+            throw new CentralRepoException("Cannot get artifact instances for null type");
         }
         if (values == null || values.isEmpty()) {
-            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances without specified values");
+            throw new CentralRepoException("Cannot get artifact instances without specified values");
         }
         return getCorrAttrInstances(prepareGetInstancesSql(aType, values), aType);
     }
@@ -1295,13 +1295,13 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws CentralRepoException, CorrelationAttributeNormalizationException {
         if (aType == null) {
-            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances for null type");
+            throw new CentralRepoException("Cannot get artifact instances for null type");
         }
         if (values == null || values.isEmpty()) {
-            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances without specified values");
+            throw new CentralRepoException("Cannot get artifact instances without specified values");
         }
         if (caseIds == null || caseIds.isEmpty()) {
-            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances without specified cases");
+            throw new CentralRepoException("Cannot get artifact instances without specified cases");
         }
         String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
@@ -1327,7 +1327,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
      *
      * @throws CorrelationAttributeNormalizationException
      */
-    private String prepareGetInstancesSql(CorrelationAttributeInstance.Type aType, List<String> values) throws CorrelationAttributeNormalizationException {
+    private String prepareGetInstancesSql(CorrelationAttributeInstance.Type aType, List<String> values) throws CorrelationAttributeNormalizationException, CentralRepoException {
         String tableName = CentralRepoDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
                 = "SELECT "
