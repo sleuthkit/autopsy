@@ -81,7 +81,7 @@ class CentralRepoIngestModuleUtils {
                 }
             }
         } catch (CorrelationAttributeNormalizationException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Error normalizing correlation attribute value for 's' (job ID=%d)", corrAttr, ingestJobId), ex); // NON-NLS
+            LOGGER.log(Level.WARNING, String.format("Error normalizing correlation attribute value for 's' (job ID=%d)", corrAttr, ingestJobId), ex); // NON-NLS
         } catch (CentralRepoException ex) {
             LOGGER.log(Level.SEVERE, String.format("Error getting previous occurences of correlation attribute 's' (job ID=%d)", corrAttr, ingestJobId), ex); // NON-NLS
         }

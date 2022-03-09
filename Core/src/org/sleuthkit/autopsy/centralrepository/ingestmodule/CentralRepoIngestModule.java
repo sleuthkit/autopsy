@@ -112,7 +112,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
+                logger.log(Level.INFO, "Error searching database for artifact: " +  ex.getMessage()); // NON-NLS
             }
         }
 
