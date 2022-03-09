@@ -94,11 +94,6 @@
         <copy todir="${basedir}/release/OfficialHashSets" >
             <fileset dir="${thirdparty.dir}/OfficialHashSets"/>
         </copy>
-        
-        <!--Copy ImageMagick to release-->
-        <copy todir="${basedir}/release/ImageMagick-7.0.10-27-portable-Q16-x64" >
-            <fileset dir="${thirdparty.dir}/ImageMagick-7.0.10-27-portable-Q16-x64"/>
-        </copy>
 
         <!--Copy DomainCategorization to release-->
         <copy todir="${basedir}/release/DomainCategorization" >
