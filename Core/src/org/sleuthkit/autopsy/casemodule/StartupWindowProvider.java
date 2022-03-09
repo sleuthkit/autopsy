@@ -77,8 +77,6 @@ public class StartupWindowProvider implements StartupWindowInterface {
         "# {0} - autFilePath",
         "StartupWindowProvider.openCase.cantOpen=Unable to open previously open case with metadata file: {0}"})
     private void init() {
-        Frame frame = WindowManager.getDefault().getMainWindow();
-        System.out.println("MainFrame isVisible" + frame.isVisible());
         if (startupWindowToUse == null) {
             // first check whether we are running from command line
             // or if we are running headless. Assume headless if the top level

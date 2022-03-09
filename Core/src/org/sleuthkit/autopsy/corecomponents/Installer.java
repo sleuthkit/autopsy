@@ -20,6 +20,10 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Font;
 import java.awt.Insets;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -29,10 +33,14 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.netbeans.spi.sendopts.OptionProcessor;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineOptionProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -59,14 +67,39 @@ public class Installer extends ModuleInstall {
     @Override
     public void restored() {
         super.restored();
+        Collection<? extends CommandLineOptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(CommandLineOptionProcessor.class);
+        CommandLineOptionProcessor processor = null;
+        if(!optionProcessors.isEmpty()) {
+            Iterator<? extends CommandLineOptionProcessor> iter = optionProcessors.iterator();
+             while (iter.hasNext() || processor == null) {
+                 processor = iter.next();
+             }
+        }
+        
+        
         SwingUtilities.invokeLater(() -> {
             setLookAndFeel();  
         });
         UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+        
+        final CommandLineOptionProcessor finalprocessor = processor;
+        
         WindowManager.getDefault().invokeWhenUIReady(() -> {
-            StartupWindowProvider.getInstance().open();
+            if(WindowManager.getDefault().getMainWindow().isVisible() || finalprocessor.getState() == CommandLineOptionProcessor.ProcessState.COMPLETED) {
+                StartupWindowProvider.getInstance().open();
+            } else {
+                finalprocessor.addPropertyChangeListener(new PropertyChangeListener(){
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if(evt.getPropertyName().equals(CommandLineOptionProcessor.PROCESSING_COMPLETED)) {
+                            StartupWindowProvider.getInstance().open();
+                        }
+                    }
+                
+                });
+            }
         });
     }
 
