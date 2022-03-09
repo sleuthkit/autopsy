@@ -24,31 +24,27 @@ import java.util.logging.Level;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
-import java.nio.file.DirectoryIteratorException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.text.MessageFormat;
+import java.util.List;
+import org.apache.commons.io.FileUtils;
 
 import org.apache.commons.io.FilenameUtils;
 
-import org.openide.modules.InstalledFileLocator;
 import org.openide.util.lookup.ServiceProvider;
 
 import org.sleuthkit.autopsy.modules.pictureanalyzer.spi.PictureProcessor;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.FileIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -70,85 +66,46 @@ public class HEICProcessor implements PictureProcessor {
 
     private static final Logger logger = Logger.getLogger(HEICProcessor.class.getName());
 
-    private static final int EXIT_SUCCESS = 0;
     private static final String HEIC_MODULE_FOLDER = "HEIC";
-    private static final long TIMEOUT_IN_SEC = TimeUnit.SECONDS.convert(2, TimeUnit.MINUTES);
-
-    // Windows location
-    private static final String IMAGE_MAGICK_FOLDER = "ImageMagick-7.0.10-27-portable-Q16-x64";
-    private static final String IMAGE_MAGICK_EXE = "magick.exe";
-    private static final String IMAGE_MAGICK_ERROR_FILE = "magick_error.txt";
-
-    // Actual path of ImageMagick on the system
-    private final Path IMAGE_MAGICK_PATH;
+    private final HeifJNI heifJNI;
 
     public HEICProcessor() {
-        IMAGE_MAGICK_PATH = findImageMagick();
-
-        if (IMAGE_MAGICK_PATH == null) {
-            logger.log(Level.WARNING, "ImageMagick executable not found. "
-                    + "HEIC functionality will be automatically disabled.");
+        HeifJNI heifJNI;
+        try {
+            heifJNI = HeifJNI.getInstance();
+        } catch (UnsatisfiedLinkError ex) {
+            logger.log(Level.SEVERE, "libheif native dependencies not found. HEIC functionality will be automatically disabled.", ex);
+            heifJNI = null;
         }
-    }
-
-    private Path findImageMagick() {
-        final Path windowsLocation = Paths.get(IMAGE_MAGICK_FOLDER, IMAGE_MAGICK_EXE);
-        final Path macAndLinuxLocation = Paths.get("/usr", "local", "bin", "magick");
-
-        final String osName = PlatformUtil.getOSName().toLowerCase();
-
-        if (PlatformUtil.isWindowsOS() && PlatformUtil.is64BitJVM()) {
-            final File locatedExec = InstalledFileLocator.getDefault().locate(
-                windowsLocation.toString(), HEICProcessor.class.getPackage().getName(), false);
-
-            return (locatedExec != null) ? locatedExec.toPath() : null;        
-        } else if ((osName.equals("linux") || osName.startsWith("mac")) && 
-                    Files.isExecutable(macAndLinuxLocation) && 
-                    !Files.isDirectory(macAndLinuxLocation)) {
-            return macAndLinuxLocation;      
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Give each file its own folder in module output. This makes scanning for
-     * ImageMagick output fast.
-     */
-    private Path getModuleOutputFolder(AbstractFile file) throws NoCurrentCaseException {
-        final String moduleOutputDirectory = Case.getCurrentCaseThrows().getModuleDirectory();
-
-        return Paths.get(moduleOutputDirectory,
-                HEIC_MODULE_FOLDER,
-                String.valueOf(file.getId()));
-    }
-
-    /**
-     * Create any sub directories within the module output folder.
-     */
-    private void createModuleOutputFolder(AbstractFile file) throws IOException, NoCurrentCaseException {
-        final Path moduleOutputFolder = getModuleOutputFolder(file);
-
-        if (!Files.exists(moduleOutputFolder)) {
-            Files.createDirectories(moduleOutputFolder);
-        }
+        this.heifJNI = heifJNI;
     }
 
     @Override
     public void process(IngestJobContext context, AbstractFile file) {
         try {
-            if (IMAGE_MAGICK_PATH == null) {
+            if (heifJNI == null) {
                 return;
             }
-            createModuleOutputFolder(file);
 
             if (context.fileIngestIsCancelled()) {
                 return;
             }
+            
+            if (file == null || file.getId() <= 0) {
+                return;
+            }
 
-            final Path localDiskCopy = extractToDisk(file);
+            byte[] heifBytes;
+            try (InputStream is = new ReadContentInputStream(file)) {
+                heifBytes = new byte[is.available()];
+                is.read(heifBytes);
+            }
 
-            convertToJPEG(context, localDiskCopy, file);
+            if (heifBytes == null || heifBytes.length == 0) {
+                return;
+            }
+            
+            convertToJPEG(context, heifBytes, file);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "I/O error encountered during HEIC photo processing.", ex);
         } catch (TskCoreException ex) {
@@ -159,83 +116,76 @@ public class HEICProcessor implements PictureProcessor {
     }
 
     /**
-     * Copies the HEIC container to disk in order to run ImageMagick.
+     * Create any sub directories within the module output folder.
+     *
+     * @param file The relevant heic/heif file.
+     *
+     * @return the parent folder path for any derived images.
      */
-    private Path extractToDisk(AbstractFile heicFile) throws IOException, NoCurrentCaseException {
-        final String tempDir = Case.getCurrentCaseThrows().getTempDirectory();
-        final String heicFileName = FileUtil.escapeFileName(heicFile.getName());
+    private Path createModuleOutputFolder(AbstractFile file) throws IOException, NoCurrentCaseException {
+        final String moduleOutputDirectory = Case.getCurrentCaseThrows().getModuleDirectory();
 
-        final Path localDiskCopy = Paths.get(tempDir, heicFileName);
+        Path moduleOutputFolder = Paths.get(moduleOutputDirectory,
+                HEIC_MODULE_FOLDER,
+                String.valueOf(file.getId()));
 
-        try (BufferedInputStream heicInputStream = new BufferedInputStream(new ReadContentInputStream(heicFile))) {
-            Files.copy(heicInputStream, localDiskCopy, StandardCopyOption.REPLACE_EXISTING);
-            return localDiskCopy;
+        if (!Files.exists(moduleOutputFolder)) {
+            Files.createDirectories(moduleOutputFolder);
         }
+
+        return moduleOutputFolder;
     }
 
-    private void convertToJPEG(IngestJobContext context, Path localDiskCopy,
+    private void convertToJPEG(IngestJobContext context, byte[] heifBytes,
             AbstractFile heicFile) throws IOException, TskCoreException, NoCurrentCaseException {
 
-        // First step, run ImageMagick against this heic container.
-        final Path moduleOutputFolder = getModuleOutputFolder(heicFile);
+        Path outputFolder = createModuleOutputFolder(heicFile);
 
         final String baseFileName = FilenameUtils.getBaseName(FileUtil.escapeFileName(heicFile.getName()));
-        final Path outputFile = moduleOutputFolder.resolve(baseFileName + ".jpg");
-        
-        final Path imageMagickErrorOutput = moduleOutputFolder.resolve(IMAGE_MAGICK_ERROR_FILE);
-        Files.deleteIfExists(imageMagickErrorOutput);
-        Files.createFile(imageMagickErrorOutput);
-
-        // ImageMagick will write the primary image to the output file.
-        // Any additional images found within the HEIC container will be
-        // formatted as fileName-1.jpg, fileName-2.jpg, etc.
-        final ProcessBuilder processBuilder = new ProcessBuilder()
-                .command(IMAGE_MAGICK_PATH.toString(),
-                        localDiskCopy.toString(),
-                        outputFile.toString());
-        
-        processBuilder.redirectError(imageMagickErrorOutput.toFile());
-
-        final int exitStatus = ExecUtil.execute(processBuilder, new FileIngestModuleProcessTerminator(context, TIMEOUT_IN_SEC));
+        final Path outputFile = outputFolder.resolve(baseFileName + ".jpg");
 
         if (context.fileIngestIsCancelled()) {
             return;
         }
-        
-        if (exitStatus != EXIT_SUCCESS) {
-            logger.log(Level.INFO, "Non-zero exit status for HEIC file [id: {0}]. Skipping...", heicFile.getId());
+
+        try {
+            this.heifJNI.convertToDisk(heifBytes, outputFile.toString());
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            logger.log(Level.WARNING, MessageFormat.format("There was an error processing {0} (id: {1}).", heicFile.getName(), heicFile.getId()), ex);
+            return;
+        } catch (Throwable ex) {
+            logger.log(Level.SEVERE, MessageFormat.format("A severe error occurred while processing {0} (id: {1}).", heicFile.getName(), heicFile.getId()), ex);
             return;
         }
 
-        // Second step, visit all the output files and create derived files.
-        // Glob for the pattern mentioned above.
-        final String glob = String.format("{%1$s.jpg,%1$s-*.jpg}", baseFileName);
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(moduleOutputFolder, glob)) {
+        if (context.fileIngestIsCancelled()) {
+            return;
+        }
 
-            final Path caseDirectory = Paths.get(Case.getCurrentCaseThrows().getCaseDirectory());
-            for (Path candidate : stream) {
-                if (context.fileIngestIsCancelled()) {
-                    return;
-                }
-
-                final BasicFileAttributes attrs = Files.readAttributes(candidate, BasicFileAttributes.class);
-                final Path localCasePath = caseDirectory.relativize(candidate);
-
-                final DerivedFile jpegFile = Case.getCurrentCaseThrows().getSleuthkitCase()
-                        .addDerivedFile(candidate.getFileName().toString(),
-                                localCasePath.toString(), attrs.size(), 0L,
-                                attrs.creationTime().to(TimeUnit.SECONDS),
-                                attrs.lastAccessTime().to(TimeUnit.SECONDS),
-                                attrs.lastModifiedTime().to(TimeUnit.SECONDS),
-                                attrs.isRegularFile(), heicFile, "",
-                                "", "", "", TskData.EncodingType.NONE);
-
-                context.addFilesToJob(Arrays.asList(jpegFile));
-                IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(jpegFile));
+        final Path caseDirectory = Paths.get(Case.getCurrentCaseThrows().getCaseDirectory());
+        
+        List<File> files = (List<File>) FileUtils.listFiles(outputFolder.toFile(), new String[]{"jpg", "jpeg"}, true);
+        for (File file : files) {
+            if (context.fileIngestIsCancelled()) {
+                return;
             }
+            
+            Path candidate = file.toPath();
+            
+            final BasicFileAttributes attrs = Files.readAttributes(candidate, BasicFileAttributes.class);
+            final Path localCasePath = caseDirectory.relativize(candidate);
 
-        } catch (DirectoryIteratorException ex) {
-            throw ex.getCause();
+            final DerivedFile jpegFile = Case.getCurrentCaseThrows().getSleuthkitCase()
+                    .addDerivedFile(candidate.getFileName().toString(),
+                            localCasePath.toString(), attrs.size(), 0L,
+                            attrs.creationTime().to(TimeUnit.SECONDS),
+                            attrs.lastAccessTime().to(TimeUnit.SECONDS),
+                            attrs.lastModifiedTime().to(TimeUnit.SECONDS),
+                            attrs.isRegularFile(), heicFile, "",
+                            "", "", "", TskData.EncodingType.NONE);
+
+            context.addFilesToJob(Arrays.asList(jpegFile));
+            IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(jpegFile));
         }
     }
 

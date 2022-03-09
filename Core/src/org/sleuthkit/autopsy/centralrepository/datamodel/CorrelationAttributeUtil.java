@@ -144,7 +144,7 @@ public class CorrelationAttributeUtil {
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, String.format("Error getting current case for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
                 } catch (CorrelationAttributeNormalizationException ex) {
-                    logger.log(Level.SEVERE, String.format("Error normalizing correlation attribute for OS account '%s'", accountAddr.get()), ex);  //NON-NLS
+                    logger.log(Level.WARNING, String.format("Error normalizing correlation attribute for OS account '%s': %s", accountAddr.get(), ex.getMessage()));  //NON-NLS
                 }
             }
         }
@@ -364,10 +364,10 @@ public class CorrelationAttributeUtil {
                     correlationAttrs.addAll(makeCorrAttrsFromCommunicationArtifact(artifact, attributes));
                 }
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.SEVERE, String.format("Error normalizing correlation attribute (%s)", artifact), ex); // NON-NLS
+                logger.log(Level.WARNING, String.format("Error normalizing correlation attribute (%s): %s", artifact, ex.getMessage())); // NON-NLS
                 return correlationAttrs;
             } catch (InvalidAccountIDException ex) {
-                logger.log(Level.SEVERE, String.format("Invalid account identifier (artifactID: %d)", artifact.getId())); // NON-NLS
+                logger.log(Level.WARNING, String.format("Invalid account identifier (artifactID: %d): %s", artifact.getId(), ex.getMessage())); // NON-NLS
                 return correlationAttrs;
             } catch (CentralRepoException ex) {
                 logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
@@ -651,7 +651,7 @@ public class CorrelationAttributeUtil {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", artifact), ex); // NON-NLS
             return null;
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", artifact), ex); // NON-NLS
+            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s): %s", artifact, ex.getMessage())); // NON-NLS
             return null;
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
@@ -715,7 +715,7 @@ public class CorrelationAttributeUtil {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
             return null;
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s): %s", file, ex.getMessage())); // NON-NLS
             return null;
         }
 
@@ -733,7 +733,7 @@ public class CorrelationAttributeUtil {
                 logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
                 return null;
             } catch (CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+                logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s): %s", file, ex.getMessage())); // NON-NLS
                 return null;
             }
         }
@@ -791,7 +791,7 @@ public class CorrelationAttributeUtil {
         } catch (CentralRepoException ex) {
             logger.log(Level.SEVERE, String.format("Error querying central repository (%s)", file), ex); // NON-NLS
         } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.SEVERE, String.format("Error creating correlation attribute instance (%s)", file), ex); // NON-NLS
+            logger.log(Level.WARNING, String.format("Error creating correlation attribute instance (%s): %s", file, ex.getMessage())); // NON-NLS
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Error getting current case", ex); // NON-NLS
         }

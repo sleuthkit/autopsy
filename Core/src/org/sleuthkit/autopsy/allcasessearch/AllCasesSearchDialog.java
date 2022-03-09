@@ -111,7 +111,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
                     } catch (CentralRepoException ex) {
                         logger.log(Level.SEVERE, "Unable to connect to the Central Repository database.", ex);
                     } catch (CorrelationAttributeNormalizationException ex) {
-                        logger.log(Level.SEVERE, "Unable to retrieve data from the Central Repository.", ex);
+                        logger.log(Level.WARNING, "Unable to retrieve data from the Central Repository.", ex);
                     }
                 }
 
@@ -337,7 +337,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
              for (String value : values) {
                 CorrelationAttributeNormalizer.normalize(type, value);
              }
-        } catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CorrelationAttributeNormalizationException | CentralRepoException ex) {
             // No need to log this.
             return false;
         }

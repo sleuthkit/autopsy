@@ -1,0 +1,4 @@
+C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/CMakeFiles/heifconvert.dir
+C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/CMakeFiles/INSTALL.dir
+C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/CMakeFiles/ALL_BUILD.dir
+C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/CMakeFiles/ZERO_CHECK.dir
