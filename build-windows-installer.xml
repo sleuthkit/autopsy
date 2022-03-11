@@ -41,6 +41,10 @@
             </else>
         </if>
 
+        <property name="lib-rel-path" value="${app.name}\modules\lib" />
+        <!-- where libs are in build folder; forward slashes because not used directly by advanced installer -->
+        <property name="lib-inst-path" value="${inst-path}/${app.name}/modules/lib" />
+
         <!-- Where photo rec is installed within installer -->
         <var name="photorec-rel-path" value="${app.name}\photorec_exec"/>
         <!-- Where the photo rec build folder is placed in the dist folder currently -->
@@ -144,14 +148,12 @@
         <var name="aut-bin-name-todelete" value="${app.name}.exe"/>
 
         <var name="gstreamer-path-todelete" value="autopsy\gstreamer\1.0\x86"/>
-        <!-- only keep amd64,x86_64 -->
-        <var name="libs-to-delete" value="i386,i586,i686,ia64,x86"/> 
-
         <var name="ewfexport-path-todelete" value="autopsy\ewfexport_exec\32-bit"/>
         <var name="plaso-path-todelete" value="autopsy\plaso\plaso-20180818-Win32"/>
 
         <!-- The path to the correct version of photorec to use. -->
         <var name="photorec-path-to-use" value="${photorec-inst-path}\64-bit\bin"/>
+        <var name="lib-path-to-use" value="${lib-inst-path}/amd64"/>
 
         <var name="jvm.max.mem" value="4G"/>
         
@@ -223,7 +225,6 @@
             <arg line="/edit ${aip-path} /AddFolder APPDIR\${photorec-rel-path} ${photorec-path-to-use}"/>
         </exec>
 
-
         <echo message="Removing extra ewfexport_exec binaries..."/>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /DelFolder APPDIR\${ewfexport-path-todelete}"/>
@@ -234,12 +235,19 @@
             <arg line="/edit ${aip-path} /DelFolder APPDIR\${plaso-path-todelete}"/>
         </exec>
 
-        <property name="base-lib-folder" value="autopsy\modules\lib" />
-        <echo message="Removing extra module lib binaries..."/>
-        <for list="${libs-to-delete}" param="lib-to-delete">
+        <echo message="Placing correct lib native binaries..."/>
+        <!-- 'Delete' the folder being relayed to advanced installer for lib binaries -->
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /DelFolder APPDIR\${lib-rel-path}"/>
+        </exec>
+
+        <for param="file">
+            <path>
+                <fileset dir="${lib-path-to-use}"/>
+            </path>
             <sequential>
                 <exec executable="${ai-exe-path}">
-                    <arg line="/edit ${aip-path} /DelFolder APPDIR\${base-lib-folder}\@{lib-to-delete}"/>
+                    <arg line="/edit ${aip-path} /AddFile APPDIR\${lib-rel-path} @{file}"/>
                 </exec>
             </sequential>
         </for>
