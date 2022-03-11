@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -29,6 +30,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.apputils.ResetWindowsAction;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineIngestManager;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineOpenCaseManager;
@@ -77,7 +79,10 @@ public class StartupWindowProvider implements StartupWindowInterface {
     private void init() {
         if (startupWindowToUse == null) {
             // first check whether we are running from command line
-            if (isRunningFromCommandLine()) {
+            // or if we are running headless. Assume headless if the top level
+            // window is not visible.
+            boolean headless = !WindowManager.getDefault().getMainWindow().isVisible();
+            if (isRunningFromCommandLine() || headless) {
 
                 String defaultArg = getDefaultArgument();
                 if (defaultArg != null) {
@@ -86,7 +91,9 @@ public class StartupWindowProvider implements StartupWindowInterface {
                 } else {
                     // Autopsy is running from command line
                     logger.log(Level.INFO, "Running from command line"); //NON-NLS
-                    startupWindowToUse = new CommandLineStartupWindow();
+                    if(!headless) {
+                        startupWindowToUse = new CommandLineStartupWindow();
+                    }
                     // kick off command line processing
                     new CommandLineIngestManager().start();
                     return;
