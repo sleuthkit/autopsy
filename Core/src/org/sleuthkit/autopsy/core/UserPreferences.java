@@ -342,6 +342,11 @@ public final class UserPreferences {
     private static Boolean multiUserSupported = null;
     
     /**
+     * Checks to see if SolrSearchService is a registered AutopsyService. If the
+     * module is not found, the keyword search module and solr services have
+     * likely been excluded from the build. In that event, services relying on
+     * Solr (a.k.a. multiuser cases) will be disabled.
+     *
      * @return True if multi user cases are supported.
      */
     public static boolean isMultiUserSupported() {
