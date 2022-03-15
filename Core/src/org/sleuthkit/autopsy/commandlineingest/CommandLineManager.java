@@ -119,7 +119,7 @@ class CommandLineManager {
             caseDirectoryPath = createCaseFolderPath(Paths.get(rootOutputDirectory), baseCaseName);
 
             // Create the case directory
-            Case.createCaseDirectory(caseDirectoryPath.toString(), Case.CaseType.SINGLE_USER_CASE);
+            Case.createCaseDirectory(caseDirectoryPath.toString(), caseType);
 
             CaseDetails caseDetails = new CaseDetails(baseCaseName);
             Case.createAsCurrentCase(caseType, caseDirectoryPath.toString(), caseDetails);
