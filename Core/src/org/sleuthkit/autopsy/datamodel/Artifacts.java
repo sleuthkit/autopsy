@@ -248,7 +248,7 @@ public class Artifacts {
                 return new TypeNodeKey(emailNode, TSK_EMAIL_MSG);
 
             } else if (TSK_ACCOUNT.getTypeID() == typeId) {
-                Accounts.AccountsRootNode accountsNode = new Accounts(skCase, dsObjId).new AccountsRootNode();
+                Accounts.AccountsRootNode accountsNode = new Accounts(dsObjId).new AccountsRootNode();
                 return new TypeNodeKey(accountsNode, TSK_ACCOUNT);
 
             } else if (TSK_KEYWORD_HIT.getTypeID() == typeId) {

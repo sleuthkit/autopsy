@@ -20,6 +20,10 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Font;
 import java.awt.Insets;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -29,10 +33,14 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.netbeans.spi.sendopts.OptionProcessor;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineOptionProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -59,14 +67,49 @@ public class Installer extends ModuleInstall {
     @Override
     public void restored() {
         super.restored();
+        Collection<? extends CommandLineOptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(CommandLineOptionProcessor.class);
+        CommandLineOptionProcessor processor = null;
+        if(!optionProcessors.isEmpty()) {
+            Iterator<? extends CommandLineOptionProcessor> iter = optionProcessors.iterator();
+             while (iter.hasNext() || processor == null) {
+                 processor = iter.next();
+             }
+        }
+        
+        
         SwingUtilities.invokeLater(() -> {
             setLookAndFeel();  
         });
         UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+        
+        final CommandLineOptionProcessor finalprocessor = processor;
+        
+        
+        // When the --nogui flag is supplied invokeWhenUIReady happens a lot sooner
+        // than it would when running wiht the gui. Makes sense. That means that 
+        // the starupWindowprovider may get kicked off before the command line
+        // options have been processed. To solve this issue, check to see if 
+        // the command line options have been processed if they haven't, wait for them.
+        // Why || instead of &&. If the main window is visible assume that the -nogui
+        // switch was not supplied and that things are running normally.
+        // Why not just listen to the command processor instead of using the invokeWhen? 
+        // If there were no command line options supplied then the process method will never
+        // be called. 
         WindowManager.getDefault().invokeWhenUIReady(() -> {
-            StartupWindowProvider.getInstance().open();
+            if(WindowManager.getDefault().getMainWindow().isVisible() || finalprocessor == null || finalprocessor.getState() == CommandLineOptionProcessor.ProcessState.COMPLETED) {
+                StartupWindowProvider.getInstance().open();
+            } else {
+                finalprocessor.addPropertyChangeListener(new PropertyChangeListener(){
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if(evt.getPropertyName().equals(CommandLineOptionProcessor.PROCESSING_COMPLETED)) {
+                            StartupWindowProvider.getInstance().open();
+                        }
+                    }       
+                });
+            }
         });
     }
 

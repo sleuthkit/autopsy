@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.commandlineingest;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,6 +65,18 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     final static String CASETYPE_SINGLE = "single";
 
     private String defaultArgumentValue = null;
+    
+    private PropertyChangeSupport changes = new PropertyChangeSupport(this); 
+    public static String PROCESSING_STARTED = "command line process started";
+    public static String PROCESSING_COMPLETED = "command line process completed";
+    
+    public enum ProcessState {
+        NOT_STARTED,
+        RUNNING,
+        COMPLETED
+    }
+    
+    private ProcessState state = ProcessState.NOT_STARTED;
 
     @Override
     protected Set<Option> getOptions() {
@@ -85,10 +99,12 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     protected void process(Env env, Map<Option, String[]> values) throws CommandException {
         logger.log(Level.INFO, "Processing Autopsy command line options"); //NON-NLS
         System.out.println("Processing Autopsy command line options");
+        setState(ProcessState.RUNNING);
+        changes.firePropertyChange(PROCESSING_STARTED, false, true);
 
         if (values.containsKey(defaultArgument)) {
             defaultArgumentValue = values.get(defaultArgument)[0];
-            runFromCommandLine = true;
+            runFromCommandLine(true);
             return;
         }
 
@@ -208,7 +224,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_TYPE.name(), caseType);
             commands.add(newCommand);
-            runFromCommandLine = true;
+            runFromCommandLine(true);
         }
 
         // Add ADD_DATA_SOURCE command, if present
@@ -224,7 +240,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
             newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_PATH.name(), dataSourcePath);
             commands.add(newCommand);
-            runFromCommandLine = true;
+            runFromCommandLine(true);
         }
 
         String ingestProfile = "";
@@ -248,7 +264,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_ID.name(), dataSourceId);
             newCommand.addInputValue(CommandLineCommand.InputType.INGEST_PROFILE_NAME.name(), ingestProfile);
             commands.add(newCommand);
-            runFromCommandLine = true;
+            runFromCommandLine(true);
         }
 
         // Add "LIST_ALL_DATA_SOURCES" command, if present
@@ -258,7 +274,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             newCommand.addInputValue(CommandLineCommand.InputType.CASE_NAME.name(), inputCaseName);
             newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
             commands.add(newCommand);
-            runFromCommandLine = true;
+            runFromCommandLine(true);
         }
 
         // Add "GENERATE_REPORTS" command, if present
@@ -293,8 +309,12 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 commands.add(newCommand);
             }
 
-            runFromCommandLine = true;
+            runFromCommandLine(true);
         }
+        
+        setState(ProcessState.COMPLETED);
+        System.out.println("Completed processing Autopsy command line options");
+        changes.firePropertyChange(PROCESSING_COMPLETED, false, true);
     }
 
     /**
@@ -302,8 +322,12 @@ public class CommandLineOptionProcessor extends OptionProcessor {
      *
      * @return true if running in command line mode, false otherwise.
      */
-    public boolean isRunFromCommandLine() {
+    public synchronized boolean isRunFromCommandLine() {
         return runFromCommandLine;
+    }
+    
+    public synchronized void runFromCommandLine(boolean runFromCommandLine) {
+        this.runFromCommandLine = runFromCommandLine;
     }
 
     /**
@@ -334,5 +358,22 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private void handleError(String errorMessage) throws CommandException {
         logger.log(Level.SEVERE, errorMessage);
         throw new CommandException(1, errorMessage);
+    }
+    
+    public void addPropertyChangeListener(
+        PropertyChangeListener l) {
+        changes.addPropertyChangeListener(l);
+    }
+    public void removePropertyChangeListener(
+        PropertyChangeListener l) {
+        changes.removePropertyChangeListener(l);
+    }
+    
+    private synchronized void setState(ProcessState state) {
+        this.state = state;
+    }
+    
+    public synchronized ProcessState getState() {
+        return state;
     }
 }

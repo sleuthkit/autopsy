@@ -327,7 +327,7 @@ public class DiscoveryAttributes {
                 if (context.searchIsCancelled()) {
                     throw new SearchCancellationException("Search was cancelled while orgainizing domains by their normalized value.");
                 }
-            } catch (CorrelationAttributeNormalizationException ex) {
+            } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
                 logger.log(Level.INFO, String.format("Domain [%s] failed normalization, skipping...", domainInstance.getDomain()));
             }
         }
