@@ -256,6 +256,12 @@
         </condition>
     </target>
     
+    <target name="build-minimal-platform" description="Builds a minimal autopsy platform (i.e. just Core, CoreLibs, and Tika)">
+        <antcall inheritAll="false" target="suite.build-zip">
+            <param name="modules" value="CoreLibs:Tika:Core" />
+        </antcall>
+    </target>
+    
     <!-- override build to add branding -->
     <target name="build" depends="build-brand,suite.build,chmod_executables" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
  
