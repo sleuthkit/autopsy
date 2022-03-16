@@ -256,7 +256,7 @@
         </condition>
     </target>
     
-    <target name="build-minimal-platform" description="Builds a minimal autopsy platform (i.e. just Core, CoreLibs, and Tika)">
+    <target name="-build-minimal-platform" description="Builds a minimal autopsy platform (i.e. just Core, CoreLibs, and Tika)">
         <antcall inheritAll="false" target="suite.build-zip">
             <param name="modules" value="CoreLibs:Tika:Core" />
         </antcall>
