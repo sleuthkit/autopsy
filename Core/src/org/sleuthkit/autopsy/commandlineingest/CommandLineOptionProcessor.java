@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2021 Basis Technology Corp.
+ * Copyright 2019-2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +52,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option dataSourcePathOption = Option.requiredArgument('s', "dataSourcePath");
     private final Option dataSourceObjectIdOption = Option.requiredArgument('i', "dataSourceObjectId");
     private final Option addDataSourceCommandOption = Option.withoutArgument('a', "addDataSource");
-    private final Option caseDirOption = Option.requiredArgument('d', "caseDir");
     private final Option runIngestCommandOption = Option.optionalArgument('r', "runIngest");
     private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
     private final Option generateReportsOption = Option.optionalArgument('g', "generateReports");
@@ -89,7 +88,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         set.add(dataSourcePathOption);
         set.add(addDataSourceCommandOption);
         set.add(dataSourceObjectIdOption);
-        set.add(caseDirOption);
         set.add(runIngestCommandOption);
         set.add(listAllDataSourcesCommandOption);
         set.add(generateReportsOption);
@@ -133,6 +131,11 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
         }
 
+        // 'caseName' must always be specified
+        if (inputCaseName == null || inputCaseName.isEmpty()) {
+            handleError("'caseName' argument is empty");
+        }
+
         String caseType = "";
         if (values.containsKey(caseTypeOption)) {
             argDirs = values.get(caseTypeOption);
@@ -149,7 +152,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             } else if (caseType.equalsIgnoreCase(CASETYPE_MULTI) && !FeatureAccessUtils.canCreateMultiUserCases()) {
                 handleError("Unable to create multi user case. Confirm that multi user settings are configured correctly.");
             }
-        }
+        } 
 
         String caseBaseDir = "";
         if (values.containsKey(caseBaseDirOption)) {
@@ -166,6 +169,11 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             if (!(new File(caseBaseDir).exists()) || !(new File(caseBaseDir).isDirectory())) {
                 handleError("'caseBaseDir' directory doesn't exist or is not a directory: " + caseBaseDir);
             }
+        } 
+        
+        // 'caseBaseDir' must always be specified
+        if (caseBaseDir == null || caseBaseDir.isEmpty()) {
+            handleError("Missing argument 'caseBaseDir' option");
         }
 
         String dataSourcePath = "";
@@ -202,25 +210,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
         }
 
-        String caseDir = "";
-        if (values.containsKey(caseDirOption)) {
-
-            argDirs = values.get(caseDirOption);
-            if (argDirs.length < 1) {
-                handleError("Argument missing from 'caseDir' option");
-            }
-            caseDir = argDirs[0];
-
-            // verify inputs
-            if (caseDir == null || caseDir.isEmpty()) {
-                handleError("Argument missing from 'caseDir'");
-            }
-
-            if (!(new File(caseDir).exists()) || !(new File(caseDir).isDirectory())) {
-                handleError("Case directory " + caseDir + " does not exist or is not a directory");
-            }
-        }
-
         // Create commands in order in which they should be executed:
         // First create the "CREATE_CASE" command, if present
         if (values.containsKey(createCaseCommandOption)) {
@@ -228,11 +217,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             // 'caseName' must always be specified for "CREATE_CASE" command
             if (inputCaseName == null || inputCaseName.isEmpty()) {
                 handleError("'caseName' argument is empty");
-            }
-
-            // 'caseBaseDir' must always be specified for "CREATE_CASE" command
-            if (caseBaseDir == null || caseBaseDir.isEmpty()) {
-                handleError("'caseBaseDir' argument is empty");
             }
 
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.CREATE_CASE);
@@ -246,19 +230,14 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         // Add ADD_DATA_SOURCE command, if present
         if (values.containsKey(addDataSourceCommandOption)) {
 
-            // 'caseDir' must only be specified if the case is not being created during the current run
-            if (!values.containsKey(createCaseCommandOption) && caseDir.isEmpty()) {
-                // new case is not being created during this run, so 'caseDir' should have been specified
-                handleError("'caseDir' argument is empty");
-            }
-
             // 'dataSourcePath' must always be specified for "ADD_DATA_SOURCE" command
             if (dataSourcePath == null || dataSourcePath.isEmpty()) {
                 handleError("'dataSourcePath' argument is empty");
             }
 
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.ADD_DATA_SOURCE);
-            newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASE_NAME.name(), inputCaseName);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
             newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_PATH.name(), dataSourcePath);
             commands.add(newCommand);
             runFromCommandLine(true);
@@ -273,12 +252,6 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 ingestProfile = argDirs[0];
             }
 
-            // 'caseDir' must only be specified if the case is not being created during the current run
-            if (!values.containsKey(createCaseCommandOption) && caseDir.isEmpty()) {
-                // new case is not being created during this run, so 'caseDir' should have been specified
-                handleError("'caseDir' argument is empty");
-            }
-
             // if new data source is being added during this run, then 'dataSourceId' is not specified
             if (!values.containsKey(addDataSourceCommandOption) && dataSourceId.isEmpty()) {
                 // data source is not being added during this run, so 'dataSourceId' should have been specified
@@ -286,7 +259,8 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             }
 
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.RUN_INGEST);
-            newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASE_NAME.name(), inputCaseName);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
             newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_ID.name(), dataSourceId);
             newCommand.addInputValue(CommandLineCommand.InputType.INGEST_PROFILE_NAME.name(), ingestProfile);
             commands.add(newCommand);
@@ -296,27 +270,15 @@ public class CommandLineOptionProcessor extends OptionProcessor {
         // Add "LIST_ALL_DATA_SOURCES" command, if present
         if (values.containsKey(listAllDataSourcesCommandOption)) {
 
-            // 'caseDir' must only be specified if the case is not being created during the current run
-            if (!values.containsKey(createCaseCommandOption) && (caseDir == null || caseDir.isEmpty())) {
-                // new case is not being created during this run, so 'caseDir' should have been specified
-                handleError("'caseDir' argument is empty");
-            }
-
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.LIST_ALL_DATA_SOURCES);
-            newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASE_NAME.name(), inputCaseName);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
             commands.add(newCommand);
             runFromCommandLine(true);
         }
 
         // Add "GENERATE_REPORTS" command, if present
         if (values.containsKey(generateReportsOption)) {
-
-            // 'caseDir' must only be specified if the case is not being created during the current run
-            if (!values.containsKey(createCaseCommandOption) && caseDir.isEmpty()) {
-                // new case is not being created during this run, so 'caseDir' should have been specified
-                handleError("'caseDir' argument is empty");
-            }
-
             List<String> reportProfiles;
             argDirs = values.get(generateReportsOption);
             if (argDirs.length > 0) {
@@ -334,14 +296,16 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                         handleError("Empty report profile name");
                     }
                     CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.GENERATE_REPORTS);
-                    newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
+                    newCommand.addInputValue(CommandLineCommand.InputType.CASE_NAME.name(), inputCaseName);
+                    newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
                     newCommand.addInputValue(CommandLineCommand.InputType.REPORT_PROFILE_NAME.name(), reportProfile);
                     commands.add(newCommand);
                 }
             } else {
                 // use default report configuration
                 CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.GENERATE_REPORTS);
-                newCommand.addInputValue(CommandLineCommand.InputType.CASE_FOLDER_PATH.name(), caseDir);
+                newCommand.addInputValue(CommandLineCommand.InputType.CASE_NAME.name(), inputCaseName);
+                newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
                 commands.add(newCommand);
             }
 
