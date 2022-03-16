@@ -416,6 +416,14 @@ class ExtractRegistry extends Extract {
             // delete the hive
             regFileNameLocalFile.delete();
         }
+        
+        // RA can be run on non-window images. We are going to assume that
+        // the data source was from windows if there was registry files. 
+        // Therefore we will only create the OSInfo object if there are 
+        // registry files.
+        if(allRegistryFiles.size() > 0) {
+            osInfo.createOSInfo();
+        }
 
         try {
             if (logFile != null) {
@@ -1976,8 +1984,6 @@ class ExtractRegistry extends Extract {
 
         progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
         analyzeRegistryFiles(context.getJobId());
-        
-        osInfo.createOSInfo();
     }
 
     /**
