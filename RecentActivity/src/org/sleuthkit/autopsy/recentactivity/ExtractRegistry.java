@@ -2444,7 +2444,7 @@ class ExtractRegistry extends Extract {
             }
         }
 
-        public void setRegOrg(String regOrg) {
+        void setRegOrg(String regOrg) {
             if(this.regOrg == null || this.regOrg.isEmpty()) {
                 this.regOrg = regOrg;
             }
