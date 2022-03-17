@@ -256,10 +256,14 @@
         </condition>
     </target>
     
-    <target name="-build-minimal-platform" description="Builds a minimal autopsy platform (i.e. just Core, CoreLibs, and Tika)">
+    <target name="-build-minimal-platform" depends="-init,clean" description="Builds a minimal autopsy platform (i.e. just Core, CoreLibs, and Tika)">
         <antcall inheritAll="false" target="suite.build-zip">
             <param name="modules" value="CoreLibs:Tika:Core" />
         </antcall>
+        
+        <move file="${dist.dir}/${app.name}.zip" tofile="${dist.dir}/${app.name}-minimal.zip"/>
+        <property name="build-minimal-platform-renamed" location="${dist.dir}/${app.name}-minimal.zip" />
+        <echo>File moved to ${build-minimal-platform-renamed}</echo>
     </target>
     
     <!-- override build to add branding -->
