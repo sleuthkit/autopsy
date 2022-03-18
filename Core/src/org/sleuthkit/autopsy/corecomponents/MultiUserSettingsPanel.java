@@ -861,7 +861,7 @@ public final class MultiUserSettingsPanel extends javax.swing.JPanel {
         
         // When a case is open, prevent the user from changing
         // multi-user settings.
-        cbEnableMultiUser.setEnabled(!caseOpen);
+        cbEnableMultiUser.setEnabled(UserPreferences.isMultiUserSupported() && !caseOpen);
         enableMultiUserComponents(textBoxes, cbEnableMultiUser.isSelected() && !caseOpen);
                
         this.valid(caseOpen); // trigger validation to enable buttons based on current settings
