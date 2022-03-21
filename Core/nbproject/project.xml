@@ -269,6 +269,11 @@
                         <code-name-base>org.netbeans.modules.nbjunit</code-name-base>
                         <compile-dependency/>
                     </test-dependency>
+                    <test-dependency>
+                        <code-name-base>org.sleuthkit.autopsy.coretestlibs</code-name-base>
+                        <recursive/>
+                        <compile-dependency/>
+                    </test-dependency>
                 </test-type>
                 <test-type>
                     <name>qa-functional</name>
@@ -404,10 +409,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/proto-google-cloud-translate-v3beta1-0.53.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\proto-google-cloud-translate-v3beta1-0.53.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/byte-buddy-1.10.13.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\byte-buddy-1.10.13.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/error_prone_annotations-2.3.2.jar</runtime-relative-path>
@@ -606,10 +607,6 @@
                 <binary-origin>release\modules\ext\decodetect-core-0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/mockito-core-3.5.7.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\mockito-core-3.5.7.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/httpclient-4.5.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\httpclient-4.5.5.jar</binary-origin>
             </class-path-extension>
@@ -620,10 +617,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jackson-annotations-2.9.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jackson-annotations-2.9.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/objenesis-3.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\objenesis-3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jackson-core-2.9.7.jar</runtime-relative-path>
@@ -808,10 +801,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jutf7-1.0.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/byte-buddy-agent-1.10.13.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\byte-buddy-agent-1.10.13.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/batik-awt-util-1.6.jar</runtime-relative-path>

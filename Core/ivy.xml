@@ -51,9 +51,6 @@
         <!-- map support for geolocation -->
         <dependency conf="core->default" org="org.jxmapviewer" name="jxmapviewer2" rev="2.4"/>
 
-        <!-- For Discovery testing -->
-        <dependency conf="core->default" org="org.mockito" name="mockito-core" rev="3.5.7"/>
-
         <!-- for handling diffs -->
         <dependency org="io.github.java-diff-utils" name="java-diff-utils" rev="4.8"/>
 
