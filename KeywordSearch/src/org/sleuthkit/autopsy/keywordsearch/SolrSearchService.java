@@ -48,6 +48,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * An implementation of the KeywordSearchService interface that uses Solr for
  * text indexing and search.
+ *
+ * NOTE: UserPreferences.isMultiUserSupported relies on this class being found.
+ * Changes to the name or package of this class will need to be reflected in
+ * UserPreferences.isMultiUserSupported.
  */
 @ServiceProviders(value = {
     @ServiceProvider(service = KeywordSearchService.class),

@@ -1,0 +1,12 @@
+This folder contains gstreamer native binaries to be used with [gst1-java](https://github.com/gstreamer-java/gst1-java-core).  The binaries were procured by:
+- Installing the latest version of [gstreamer](https://gstreamer.freedesktop.org/download/) (at time of writing, this is the `MSVC 64-bit (VS 2019, Release CRT) - 1.20.0 runtime installer`)
+- Do a custom install selecting only the following packages:
+  - core
+  - system plugins
+  - plugins for playback
+  - codecs
+  - codecs under the GPL license and/or with patents issues
+  - restricted codecs with potential patent issues in some countries
+  - libav wrapper
+  - visual studio build scripts
+- Copy the install files (i.e. `C:\gstreamer`) into the lib folder (`<repo>\thirdparty\gstreamer\1.0\x86_64`)

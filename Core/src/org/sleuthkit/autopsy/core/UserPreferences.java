@@ -26,8 +26,10 @@ import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Lookup;
 import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
+import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -333,7 +335,28 @@ public final class UserPreferences {
     }
 
     public static boolean getIsMultiUserModeEnabled() {
-        return preferences.getBoolean(IS_MULTI_USER_MODE_ENABLED, false);
+        return isMultiUserSupported() && preferences.getBoolean(IS_MULTI_USER_MODE_ENABLED, false);
+    }
+    
+    
+    private static Boolean multiUserSupported = null;
+    
+    /**
+     * Checks to see if SolrSearchService is a registered AutopsyService. If the
+     * module is not found, the keyword search module and solr services have
+     * likely been excluded from the build. In that event, services relying on
+     * Solr (a.k.a. multiuser cases) will be disabled.
+     *
+     * @return True if multi user cases are supported.
+     */
+    public static boolean isMultiUserSupported() {
+        if (multiUserSupported == null) {
+            // looks for any SolrSearchService present in AutopsyService.
+            multiUserSupported = Lookup.getDefault().lookupAll(AutopsyService.class).stream()
+                    .anyMatch(obj -> obj.getClass().getName().equalsIgnoreCase("org.sleuthkit.autopsy.keywordsearch.SolrSearchService"));
+        }
+        
+        return multiUserSupported;
     }
 
     public static String getIndexingServerHost() {
