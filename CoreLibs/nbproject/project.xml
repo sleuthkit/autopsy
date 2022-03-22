@@ -33,6 +33,8 @@
                 </test-type>
             </test-dependencies>
             <public-packages>
+                <package>org.apache.commons.collections</package>
+                <package>org.apache.xmlbeans</package>
                 <package>org.sqlite</package>
                 <package>com.dd.plist</package>
                 <package>com.fasterxml.jackson.core</package>
@@ -653,6 +655,10 @@
                 <binary-origin>release/modules/ext/LGoodDatePicker-10.3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-digester-1.8.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-digester-1.8.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
             </class-path-extension>
@@ -681,6 +687,10 @@
                 <binary-origin>release/modules/ext/imageio-iff-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-beanutils-1.9.2.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-beanutils-1.9.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/imageio-icns-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-icns-3.2.jar</binary-origin>
             </class-path-extension>
@@ -697,8 +707,8 @@
                 <binary-origin>release/modules/ext/jfxtras-common-8.0-r4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jsr305-1.3.9.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jsr305-1.3.9.jar</binary-origin>
+                <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jsr305-3.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imgscalr-lib-4.2.jar</runtime-relative-path>
@@ -713,8 +723,8 @@
                 <binary-origin>release/modules/ext/common-io-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/xmlbeans-3.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/xmlbeans-3.0.2.jar</binary-origin>
+                <runtime-relative-path>ext/xmlbeans-3.1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmlbeans-3.1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-tga-3.2.jar</runtime-relative-path>
@@ -725,16 +735,16 @@
                 <binary-origin>release/modules/ext/imageio-pnm-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-scratchpad-4.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-scratchpad-4.0.1.jar</binary-origin>
+                <runtime-relative-path>ext/poi-scratchpad-4.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-scratchpad-4.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-psd-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-psd-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-4.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-4.0.1.jar</binary-origin>
+                <runtime-relative-path>ext/poi-ooxml-4.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-4.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pcx-3.2.jar</runtime-relative-path>
@@ -781,16 +791,20 @@
                 <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-io-2.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-io-2.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-collections4-4.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-collections4-4.2.jar</binary-origin>
+                <runtime-relative-path>ext/commons-collections-3.2.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-collections-3.2.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-collections4-4.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-collections4-4.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/guava-31.0.1-jre.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-31.0.1-jre.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.2.jar</runtime-relative-path>
@@ -813,12 +827,12 @@
                 <binary-origin>release/modules/ext/imageio-core-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-4.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-4.0.1.jar</binary-origin>
+                <runtime-relative-path>ext/poi-4.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-4.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-excelant-4.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-excelant-4.0.1.jar</binary-origin>
+                <runtime-relative-path>ext/poi-excelant-4.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-excelant-4.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
@@ -833,8 +847,8 @@
                 <binary-origin>release/modules/ext/common-image-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-schemas-4.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-schemas-4.0.1.jar</binary-origin>
+                <runtime-relative-path>ext/poi-ooxml-schemas-4.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-schemas-4.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pict-3.2.jar</runtime-relative-path>

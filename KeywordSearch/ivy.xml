@@ -21,13 +21,7 @@
         
         <!-- Autopsy -->
         <dependency conf="autopsy->default" org="org.apache.solr" name="solr-solrj" rev="8.11.1"/>
-        <dependency conf="autopsy->default" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>
-        <!-- Exclude the version of cxf-rt-rs-client from Tika 1.20, one of its depedencies breaks Ivy -->
-        <dependency conf="autopsy->default" org="org.apache.tika" name="tika-parsers" rev="1.20">
-            <exclude module="cxf-rt-rs-client"/>
-            <exclude module="cleartk-ml"/>
-        </dependency>
-        
+        <dependency conf="autopsy->default" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>       
         <dependency conf="autopsy->default" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.3.0"/>
         <dependency conf="autopsy->default" org="org.cleartk" name="cleartk-ml" rev="2.0.0"/>
         

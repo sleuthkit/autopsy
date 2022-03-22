@@ -29,7 +29,7 @@
 
         <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.11.0"/>
 
-        <dependency conf="core->default" org="com.google.cloud" name="google-cloud-translate" rev="1.70.0"/>
+        <dependency conf="core->default" org="com.google.cloud" name="google-cloud-translate" rev="2.1.11"/>
 
         <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
 

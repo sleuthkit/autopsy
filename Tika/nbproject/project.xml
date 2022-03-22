@@ -119,10 +119,6 @@
                 <binary-origin>release\modules\ext\asm-7.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/xmlbeans-3.1.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\xmlbeans-3.1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/gson-2.8.6.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\gson-2.8.6.jar</binary-origin>
             </class-path-extension>
@@ -161,10 +157,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jakarta.ws.rs-api-2.1.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jakarta.ws.rs-api-2.1.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-schemas-4.1.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\poi-ooxml-schemas-4.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/fontbox-2.0.17.jar</runtime-relative-path>
@@ -311,10 +303,6 @@
                 <binary-origin>release\modules\ext\xml-apis-1.4.01.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-4.1.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\poi-ooxml-4.1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/curvesapi-1.06.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\curvesapi-1.06.jar</binary-origin>
             </class-path-extension>
@@ -325,10 +313,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sis-utility-1.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\sis-utility-1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/guava-28.1-jre.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\guava-28.1-jre.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/woodstox-core-5.0.3.jar</runtime-relative-path>
@@ -415,10 +399,6 @@
                 <binary-origin>release\modules\ext\rome-1.12.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-4.1.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\poi-4.1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/udunits-4.5.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\udunits-4.5.5.jar</binary-origin>
             </class-path-extension>
@@ -445,10 +425,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/netcdf4-4.5.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\netcdf4-4.5.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-scratchpad-4.1.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\poi-scratchpad-4.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/cxf-rt-transports-http-3.3.4.jar</runtime-relative-path>
@@ -497,10 +473,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jcip-annotations-1.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jcip-annotations-1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-collections4-4.4.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-collections4-4.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/cxf-core-3.3.4.jar</runtime-relative-path>
