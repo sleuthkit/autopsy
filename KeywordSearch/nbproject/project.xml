@@ -257,8 +257,8 @@
                 <binary-origin>release/modules/ext/quartz-2.2.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/slf4j-api-1.7.25.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-api-1.7.25.jar</binary-origin>
+                <runtime-relative-path>ext/slf4j-api-1.7.24.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-api-1.7.24.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/icu4j-3.8.jar</runtime-relative-path>
