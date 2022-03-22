@@ -22,37 +22,31 @@
         <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess-encrypt" rev="2.1.4"/>
 
         <dependency conf="core->default" org="org.apache.commons" name="commons-dbcp2" rev="2.1.1"/>
-        <dependency conf="core->default" org="org.apache.commons" name="commons-pool2" rev="2.4.2"/>
-        <dependency conf="core->default" org="commons-codec" name="commons-codec" rev="1.11"/>
 
         <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.10.3"/>
 
-        <dependency conf="core->default" org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.9.7"/>
-        <dependency org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.9.7"/>
+        <dependency conf="core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.9.7"/>
 
         <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.11.0"/>
 
         <dependency conf="core->default" org="com.google.cloud" name="google-cloud-translate" rev="1.70.0"/>
-        <dependency conf="core->default" org="org.apache.opennlp" name="opennlp-tools" rev="1.9.1"/>
 
         <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
 
         <dependency conf="core->default" org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
         <dependency conf="core->default" org="com.googlecode.libphonenumber" name="libphonenumber" rev="3.5" />
-        <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
-        <dependency conf="core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
 
         <dependency conf="core->default" org="com.squareup.okhttp" name="okhttp" rev="2.7.5"/>
         <dependency conf="core->default" org="org.jfree" name="jfreechart" rev="1.0.19"/>
 
         <!-- for yaml reading/writing -->
-        <dependency org="org.yaml" name="snakeyaml" rev="1.27"/>
+        <dependency conf="core->default" org="org.yaml" name="snakeyaml" rev="1.27"/>
 
         <!-- map support for geolocation -->
         <dependency conf="core->default" org="org.jxmapviewer" name="jxmapviewer2" rev="2.4"/>
 
         <!-- for handling diffs -->
-        <dependency org="io.github.java-diff-utils" name="java-diff-utils" rev="4.8"/>
+        <dependency conf="core->default" org="io.github.java-diff-utils" name="java-diff-utils" rev="4.8"/>
 
 
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->

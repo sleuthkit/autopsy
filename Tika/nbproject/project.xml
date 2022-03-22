@@ -167,10 +167,6 @@
                 <binary-origin>release\modules\ext\poi-ooxml-schemas-4.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-codec-1.13.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-codec-1.13.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/fontbox-2.0.17.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\fontbox-2.0.17.jar</binary-origin>
             </class-path-extension>
@@ -275,10 +271,6 @@
                 <binary-origin>release\modules\ext\jaxb-runtime-2.3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackson-core-2.10.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackson-core-2.10.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/opennlp-tools-1.9.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\opennlp-tools-1.9.1.jar</binary-origin>
             </class-path-extension>
@@ -349,10 +341,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jempbox-1.8.16.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jempbox-1.8.16.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackson-annotations-2.10.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackson-annotations-2.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/httpmime-4.5.10.jar</runtime-relative-path>
@@ -517,10 +505,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/cxf-core-3.3.4.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\cxf-core-3.3.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackson-databind-2.10.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackson-databind-2.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.7.28.jar</runtime-relative-path>

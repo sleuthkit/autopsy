@@ -217,10 +217,6 @@
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/findstructapi-0.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/findstructapi-0.0.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-digester-1.8.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-digester-1.8.1.jar</binary-origin>
             </class-path-extension>
@@ -231,18 +227,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-core-0.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/vorbis-java-core-0.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/lucene-sandbox-4.0.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/lucene-sandbox-4.0.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpmime-4.5.10.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpmime-4.5.10.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jericho-html-3.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jericho-html-3.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/netcdf4-4.5.5.jar</runtime-relative-path>
@@ -265,10 +249,6 @@
                 <binary-origin>release/modules/ext/protobuf-java-2.5.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/lucene-queries-4.0.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/lucene-queries-4.0.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/boilerpipe-1.1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/boilerpipe-1.1.0.jar</binary-origin>
             </class-path-extension>
@@ -277,16 +257,8 @@
                 <binary-origin>release/modules/ext/juniversalchardet-1.0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-lang-2.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang-2.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/quartz-2.2.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/quartz-2.2.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/libsvm-3.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/libsvm-3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.7.25.jar</runtime-relative-path>
@@ -317,14 +289,6 @@
                 <binary-origin>release/modules/ext/jcip-annotations-1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-validator-1.5.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-validator-1.5.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-logging-1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/bzip2-0.9.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/bzip2-0.9.1.jar</binary-origin>
             </class-path-extension>
@@ -341,14 +305,6 @@
                 <binary-origin>release/modules/ext/httpcore-4.4.12.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jdom-1.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jdom-1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-beanutils-1.9.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-beanutils-1.9.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/ehcache-core-2.6.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/ehcache-core-2.6.2.jar</binary-origin>
             </class-path-extension>
@@ -361,20 +317,12 @@
                 <binary-origin>release/modules/ext/zookeeper-3.6.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-collections-3.2.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-collections-3.2.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-io-2.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-io-2.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/annotations-12.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\annotations-12.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/openaifsm-0.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/openaifsm-0.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/stax2-api-3.1.4.jar</runtime-relative-path>
