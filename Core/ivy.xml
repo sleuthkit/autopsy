@@ -25,12 +25,9 @@
 
         <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.14.3"/>
 
-        <dependency conf="core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.13.2"/>
-
         <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.17.0"/>
         <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
 
-        <dependency conf="core->default" org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
         <dependency conf="core->default" org="com.googlecode.libphonenumber" name="libphonenumber" rev="8.12.45" />
 
         <dependency conf="core->default" org="com.squareup.okhttp" name="okhttp" rev="2.7.5"/>

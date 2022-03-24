@@ -6,8 +6,11 @@
         
     </configurations>
     <dependencies>       
-        <dependency conf="autopsy_core->default" org="com.google.code.gson" name="gson" rev="2.9.0"/>     
+        <!-- <dependency conf="autopsy_core->default" org="com.google.code.gson" name="gson" rev="2.9.0"/>      -->
         
+        <!-- apple for swing -->
+        <dependency conf="autopsy_core->default" org="com.apple" name="AppleJavaExtensions" rev="1.4"/>
+
         <!-- for viewers -->
         <dependency conf="autopsy_core->default" org="org.freedesktop.gstreamer" name="gst1-java-core" rev="1.4.0"/>
         <dependency conf="autopsy_core->default" org="net.java.dev.jna" name="jna-platform" rev="5.10.0"/>
@@ -31,16 +34,17 @@
         <dependency conf="autopsy_core->default" org="commons-io" name="commons-io" rev="2.11.0"/>
         <dependency conf="autopsy_core->default" org="log4j" name="log4j" rev="1.2.17"/>
         <dependency conf="autopsy_core->default" org="org.apache.poi" name="ooxml-schemas" rev="1.4"/>
-        <dependency conf="autopsy_core->default" org="org.apache.poi" name="poi-excelant" rev="5.2.2"/>
-        <dependency conf="autopsy_core->default" org="org.apache.poi" name="poi-scratchpad" rev="5.2.2"/>
+        <!-- <dependency conf="autopsy_core->default" org="org.apache.poi" name="poi-excelant" rev="5.2.2"/>
+        <dependency conf="autopsy_core->default" org="org.apache.poi" name="poi-scratchpad" rev="5.2.2"/> -->
         <dependency conf="autopsy_core->default" org="commons-validator" name="commons-validator" rev="1.7"/>
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-collections4" rev="4.4"/>
         <dependency conf="autopsy_core->default" org="commons-collections" name="commons-collections" rev="3.2.2"/>
 
         <dependency conf="autopsy_core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.4"/>
 
-        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.13.2"/>
-        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.13.2"/>
+        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.13.1"/>
+        <!-- <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.13.2"/>
+        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.13.2"/> -->
 
         <!-- process and system monitoring, note: matching native libs pulled from thirdparty -->
         <dependency conf="autopsy_core->default" org="org.fusesource" name="sigar" rev="1.6.4" />
@@ -77,6 +81,7 @@
         <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-thumbsdb" rev="3.8.2" />
         <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-core" rev="3.8.2" />
         <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.8.2" />
+        <dependency conf="autopsy_core->default" org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
         <dependency conf="autopsy_core->default" org="com.googlecode.plist" name="dd-plist" rev="1.23"/>
         
         <exclude org="*" ext="*" type="javadoc"/>

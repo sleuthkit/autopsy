@@ -7,8 +7,6 @@
      
     </configurations>
     <dependencies>
-        <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-core" rev="0.8.6"/>
-        <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-dom" rev="0.8.6"/>
         <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-mbox-iterator" rev="0.8.6"/>
         <dependency conf="autopsy->default" org="com.googlecode.ez-vcard" name="ez-vcard" rev="0.11.3"/>
     </dependencies>

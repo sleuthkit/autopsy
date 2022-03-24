@@ -7,6 +7,10 @@
             <suite-component/>
             <module-dependencies/>
             <public-packages>
+                <package>org.apache.james.mime4j</package>
+                <package>org.apache.james.mime4j.dom</package>
+                <package>org.apache.james.mime4j.message</package>
+                <package>org.apache.james.mime4j.stream</package>
                 <package>org.apache.tika</package>
                 <package>org.apache.tika.concurrent</package>
                 <package>org.apache.tika.config</package>
