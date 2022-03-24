@@ -55,6 +55,15 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.Tika</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>23</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.sleuthkit.autopsy.core</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>

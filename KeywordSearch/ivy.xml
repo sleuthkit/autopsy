@@ -22,7 +22,7 @@
         <!-- Autopsy -->
         <dependency conf="autopsy->default" org="org.apache.solr" name="solr-solrj" rev="8.11.1"/>
         <dependency conf="autopsy->default" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>       
-        <dependency conf="autopsy->default" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.5.1"/>
+        <!-- <dependency conf="autopsy->default" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.5.0"/> -->
         <!-- <dependency conf="autopsy->default" org="org.cleartk" name="cleartk-ml" rev="2.0.0"/> -->
         
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
@@ -33,7 +33,13 @@
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="8.1.16.v20140903"/>
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="8.1.16.v20140903"/>
         <dependency conf="servlet->default" org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016"/> -->
-        
+
         <exclude org="*" ext="*" type="javadoc"/>
+        <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
+        <override org="org.apache.zookeeper" module="zookeeper" rev="3.8.0"/>
+        <override org="org.apache.zookeeper" module="zookeeper-jute" rev="3.8.0"/>
+        <override org="com.google.code.gson" module="gson" rev="2.9.0"/>
+        <override org="com.google.guava" module="guava" rev="31.1-jre"/>
+        <override org="joda-time" module="joda-time" rev="2.10.14" />
     </dependencies>
 </ivy-module>

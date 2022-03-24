@@ -8,6 +8,9 @@
     <dependencies>       
         <!-- <dependency conf="autopsy_core->default" org="com.google.code.gson" name="gson" rev="2.9.0"/>      -->
         
+        <dependency conf="autopsy_core->default" org="org.apache.ant" name="ant-launcher" rev="1.10.12"/>
+        <dependency conf="autopsy_core->default" org="org.apache.ant" name="ant" rev="1.10.12"/>
+
         <!-- apple for swing -->
         <dependency conf="autopsy_core->default" org="com.apple" name="AppleJavaExtensions" rev="1.4"/>
 
@@ -42,9 +45,7 @@
 
         <dependency conf="autopsy_core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.4"/>
 
-        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.13.1"/>
-        <!-- <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.13.2"/>
-        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.13.2"/> -->
+        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.13.2"/>
 
         <!-- process and system monitoring, note: matching native libs pulled from thirdparty -->
         <dependency conf="autopsy_core->default" org="org.fusesource" name="sigar" rev="1.6.4" />
@@ -85,5 +86,10 @@
         <dependency conf="autopsy_core->default" org="com.googlecode.plist" name="dd-plist" rev="1.23"/>
         
         <exclude org="*" ext="*" type="javadoc"/>
+
+        <override org="com.google.code.gson" module="gson" rev="2.9.0"/>
+        <override org="com.google.guava" module="guava" rev="31.1-jre"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-databind" rev="2.13.2"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.13.2"/>
     </dependencies>
 </ivy-module>

@@ -285,8 +285,8 @@
                 <binary-origin>release/modules/ext/jcommander-1.82.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/joda-time-2.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/joda-time-2.2.jar</binary-origin>
+                <runtime-relative-path>ext/joda-time-2.10.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/joda-time-2.10.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/json-simple-1.1.1.jar</runtime-relative-path>

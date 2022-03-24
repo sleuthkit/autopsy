@@ -7,7 +7,9 @@
      
     </configurations>
     <dependencies>
-        <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-mbox-iterator" rev="0.8.6"/>
+        <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-mbox-iterator" rev="0.8.4"/>
         <dependency conf="autopsy->default" org="com.googlecode.ez-vcard" name="ez-vcard" rev="0.11.3"/>
+        <override org="org.jsoup" module="jsoup" rev="1.14.3"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.13.2"/>
     </dependencies>
 </ivy-module>
