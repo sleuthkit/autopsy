@@ -45,12 +45,17 @@
 
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency conf="core->default" org="javax.ws.rs" name="javax.ws.rs-api" rev="2.1.1"/>
-        
-        <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>
-        <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
+
         <override org="org.apache.zookeeper" module="zookeeper" rev="3.8.0"/>
         <override org="org.apache.zookeeper" module="zookeeper-jute" rev="3.8.0"/>
+        <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>
+        <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
         <override org="com.google.guava" module="guava" rev="31.1-jre"/>
         <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.13.2"/>
+
+        <!-- changes to bouncy castle version may also be reflected in thirdparty/IcePDF 6.2.2 -->
+        <override org="org.bouncycastle" module="bcprov-ext-jdk15on" rev="1.70"/>
+        <override org="org.bouncycastle" module="bcprov-jdk15on" rev="1.70"/>
+        <override org="org.bouncycastle" module="bcpkix-jdk15on" rev="1.70"/>
     </dependencies>
 </ivy-module>

@@ -13,5 +13,10 @@
         <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.13.2"/>
         <override org="com.fasterxml.jackson.core" module="jackson-databind" rev="2.13.2"/>
         <override org="com.fasterxml.jackson.core" module="jackson-annotations" rev="2.13.2"/>
+        
+        <!-- changes to bouncy castle version may also be reflected in thirdparty/IcePDF 6.2.2 -->
+        <override org="org.bouncycastle" module="bcmail-jdk15on" rev="1.70"/>
+        <override org="org.bouncycastle" module="bcprov-jdk15on" rev="1.70"/>
+        <override org="org.bouncycastle" module="bcpkix-jdk15on" rev="1.70"/>
     </dependencies>
 </ivy-module>
