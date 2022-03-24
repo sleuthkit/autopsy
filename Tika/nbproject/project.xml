@@ -299,14 +299,6 @@
                 <package>org.apache.xmlbeans.xml.stream.events</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/HikariCP-java7-2.4.13.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/HikariCP-java7-2.4.13.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/animal-sniffer-annotations-1.21.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/animal-sniffer-annotations-1.21.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-core-0.8.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-mime4j-core-0.8.4.jar</binary-origin>
             </class-path-extension>
@@ -331,6 +323,10 @@
                 <binary-origin>release/modules/ext/bcprov-jdk15on-1.70.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/bcutil-jdk15on-1.70.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcutil-jdk15on-1.70.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/boilerpipe-1.1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/boilerpipe-1.1.0.jar</binary-origin>
             </class-path-extension>
@@ -351,6 +347,14 @@
                 <binary-origin>release/modules/ext/checker-qual-3.12.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-codec-1.15.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.15.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-collections4-4.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-collections4-4.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-compress-1.21.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-compress-1.21.jar</binary-origin>
             </class-path-extension>
@@ -369,6 +373,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.12.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang3-3.12.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-math3-3.6.1.jar</runtime-relative-path>
@@ -399,6 +407,10 @@
                 <binary-origin>release/modules/ext/cxf-rt-transports-http-3.5.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/dd-plist-1.23.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/dd-plist-1.23.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/dec-0.1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/dec-0.1.2.jar</binary-origin>
             </class-path-extension>
@@ -407,8 +419,8 @@
                 <binary-origin>release/modules/ext/ehcache-core-2.6.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/error_prone_annotations-2.7.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/error_prone_annotations-2.7.1.jar</binary-origin>
+                <runtime-relative-path>ext/error_prone_annotations-2.11.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/error_prone_annotations-2.11.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/failureaccess-1.0.1.jar</runtime-relative-path>
@@ -427,8 +439,16 @@
                 <binary-origin>release/modules/ext/grib-4.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gson-2.8.9.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gson-2.8.9.jar</binary-origin>
+                <runtime-relative-path>ext/gson-2.9.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gson-2.9.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/guava-31.1-jre.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-31.1-jre.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/HikariCP-java7-2.4.13.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/HikariCP-java7-2.4.13.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/httpclient-4.5.13.jar</runtime-relative-path>
@@ -467,12 +487,32 @@
                 <binary-origin>release/modules/ext/jackcess-encrypt-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jackson-annotations-2.13.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-annotations-2.13.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackson-core-2.13.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-core-2.13.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackson-databind-2.13.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-databind-2.13.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jai-imageio-core-1.4.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jai-imageio-core-1.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jakarta.activation-1.2.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jakarta.activation-1.2.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jakarta.activation-api-1.2.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.activation-api-1.2.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jakarta.annotation-api-1.3.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.annotation-api-1.3.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jakarta.ws.rs-api-2.1.6.jar</runtime-relative-path>
@@ -483,12 +523,8 @@
                 <binary-origin>release/modules/ext/jakarta.xml.bind-api-2.3.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/java-libpst-0.9.5-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/java-libpst-0.9.5-SNAPSHOT.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/javax.annotation-api-1.3.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/javax.annotation-api-1.3.2.jar</binary-origin>
+                <runtime-relative-path>ext/java-libpst-0.9.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/java-libpst-0.9.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jaxb-runtime-2.3.5.jar</runtime-relative-path>
@@ -531,16 +567,12 @@
                 <binary-origin>release/modules/ext/jna-5.10.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/joda-time-2.10.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/joda-time-2.10.4.jar</binary-origin>
+                <runtime-relative-path>ext/joda-time-2.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/joda-time-2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/json-simple-1.1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/json-simple-1.1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jsoup-1.14.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jsoup-1.14.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
@@ -559,8 +591,12 @@
                 <binary-origin>release/modules/ext/junrar-7.4.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/mchange-commons-java-0.2.20.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/mchange-commons-java-0.2.20.jar</binary-origin>
+                <runtime-relative-path>ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/mchange-commons-java-0.2.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mchange-commons-java-0.2.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.15.0.1.jar</runtime-relative-path>
@@ -605,6 +641,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/poi-scratchpad-4.1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-scratchpad-4.1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/preflight-2.0.25.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/preflight-2.0.25.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/protobuf-java-3.19.4.jar</runtime-relative-path>
@@ -655,8 +695,8 @@
                 <binary-origin>release/modules/ext/slf4j-api-1.7.36.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sqlite-jdbc-3.25.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.25.2.jar</binary-origin>
+                <runtime-relative-path>ext/SparseBitSet-1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/SparseBitSet-1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/stax2-api-4.2.1.jar</runtime-relative-path>
@@ -715,8 +755,12 @@
                 <binary-origin>release/modules/ext/xmlschema-core-2.3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/xmpcore-6.1.11.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/xmpcore-6.1.11.jar</binary-origin>
+                <runtime-relative-path>ext/xmpbox-2.0.25.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmpbox-2.0.25.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xmpcore-shaded-6.1.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmpcore-shaded-6.1.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xz-1.9.jar</runtime-relative-path>
