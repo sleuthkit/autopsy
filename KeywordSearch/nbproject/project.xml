@@ -229,8 +229,8 @@
                 <binary-origin>release/modules/ext/bzip2-0.9.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/c3p0-0.9.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/c3p0-0.9.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/c3p0-0.9.5.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/c3p0-0.9.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/cdm-4.5.5.jar</runtime-relative-path>
@@ -273,16 +273,16 @@
                 <binary-origin>release/modules/ext/icu4j-70.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/java-libpst-0.8.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/java-libpst-0.8.1.jar</binary-origin>
+                <runtime-relative-path>ext/java-libpst-0.9.5-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/java-libpst-0.9.5-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jcip-annotations-1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jcip-annotations-1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jcommander-1.35.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jcommander-1.35.jar</binary-origin>
+                <runtime-relative-path>ext/jcommander-1.82.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jcommander-1.82.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.2.jar</runtime-relative-path>
@@ -309,24 +309,20 @@
                 <binary-origin>release/modules/ext/log4j-1.2.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/lucene-core-4.0.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/lucene-core-4.0.0.jar</binary-origin>
+                <runtime-relative-path>ext/mchange-commons-java-0.2.20.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mchange-commons-java-0.2.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/netcdf4-4.5.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/netcdf4-4.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/opennlp-maxent-3.0.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opennlp-maxent-3.0.3.jar</binary-origin>
+                <runtime-relative-path>ext/protobuf-java-3.19.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/protobuf-java-3.19.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/protobuf-java-2.5.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/protobuf-java-2.5.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/quartz-2.2.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/quartz-2.2.0.jar</binary-origin>
+                <runtime-relative-path>ext/quartz-2.3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/quartz-2.3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.7.24.jar</runtime-relative-path>
@@ -335,10 +331,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/solr-solrj-8.11.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/solr-solrj-8.11.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sqlwrapper-0.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlwrapper-0.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/stax2-api-4.2.1.jar</runtime-relative-path>
@@ -357,12 +349,8 @@
                 <binary-origin>release/modules/ext/vorbis-java-core-0.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/woodstox-core-asl-4.4.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/woodstox-core-asl-4.4.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/xmpcore-5.1.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/xmpcore-5.1.3.jar</binary-origin>
+                <runtime-relative-path>ext/xmpcore-6.1.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmpcore-6.1.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/zookeeper-3.6.2.jar</runtime-relative-path>

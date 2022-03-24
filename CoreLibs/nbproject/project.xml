@@ -71,12 +71,95 @@
                 <package>com.github.mustachejava.reflect.guards</package>
                 <package>com.github.mustachejava.resolver</package>
                 <package>com.github.mustachejava.util</package>
+                <package>com.google.api</package>
+                <package>com.google.api.client.auth.oauth</package>
+                <package>com.google.api.client.auth.oauth2</package>
+                <package>com.google.api.client.auth.openidconnect</package>
+                <package>com.google.api.client.extensions.appengine.datastore</package>
+                <package>com.google.api.client.extensions.appengine.http</package>
+                <package>com.google.api.client.googleapis</package>
+                <package>com.google.api.client.googleapis.apache</package>
+                <package>com.google.api.client.googleapis.apache.v2</package>
+                <package>com.google.api.client.googleapis.auth.oauth2</package>
+                <package>com.google.api.client.googleapis.batch</package>
+                <package>com.google.api.client.googleapis.batch.json</package>
+                <package>com.google.api.client.googleapis.compute</package>
+                <package>com.google.api.client.googleapis.javanet</package>
+                <package>com.google.api.client.googleapis.json</package>
+                <package>com.google.api.client.googleapis.media</package>
+                <package>com.google.api.client.googleapis.mtls</package>
+                <package>com.google.api.client.googleapis.notifications</package>
+                <package>com.google.api.client.googleapis.notifications.json</package>
+                <package>com.google.api.client.googleapis.services</package>
+                <package>com.google.api.client.googleapis.services.json</package>
+                <package>com.google.api.client.googleapis.testing</package>
+                <package>com.google.api.client.googleapis.testing.auth.oauth2</package>
+                <package>com.google.api.client.googleapis.testing.compute</package>
+                <package>com.google.api.client.googleapis.testing.json</package>
+                <package>com.google.api.client.googleapis.testing.notifications</package>
+                <package>com.google.api.client.googleapis.testing.services</package>
+                <package>com.google.api.client.googleapis.testing.services.json</package>
+                <package>com.google.api.client.googleapis.util</package>
+                <package>com.google.api.client.http</package>
+                <package>com.google.api.client.http.apache</package>
+                <package>com.google.api.client.http.javanet</package>
+                <package>com.google.api.client.http.json</package>
+                <package>com.google.api.client.json</package>
+                <package>com.google.api.client.json.jackson2</package>
+                <package>com.google.api.client.json.rpc2</package>
+                <package>com.google.api.client.json.webtoken</package>
+                <package>com.google.api.client.testing.http</package>
+                <package>com.google.api.client.testing.http.apache</package>
+                <package>com.google.api.client.testing.http.javanet</package>
+                <package>com.google.api.client.testing.json</package>
+                <package>com.google.api.client.testing.json.webtoken</package>
+                <package>com.google.api.client.testing.util</package>
+                <package>com.google.api.client.util</package>
+                <package>com.google.api.client.util.escape</package>
+                <package>com.google.api.client.util.store</package>
+                <package>com.google.api.core</package>
+                <package>com.google.api.gax.batching</package>
+                <package>com.google.api.gax.core</package>
+                <package>com.google.api.gax.grpc</package>
+                <package>com.google.api.gax.httpjson</package>
+                <package>com.google.api.gax.httpjson.longrunning</package>
+                <package>com.google.api.gax.httpjson.longrunning.stub</package>
+                <package>com.google.api.gax.longrunning</package>
+                <package>com.google.api.gax.paging</package>
+                <package>com.google.api.gax.retrying</package>
+                <package>com.google.api.gax.rpc</package>
+                <package>com.google.api.gax.rpc.internal</package>
+                <package>com.google.api.gax.rpc.mtls</package>
+                <package>com.google.api.gax.tracing</package>
+                <package>com.google.api.pathtemplate</package>
+                <package>com.google.api.resourcenames</package>
+                <package>com.google.api.services.translate</package>
+                <package>com.google.api.services.translate.model</package>
+                <package>com.google.auth</package>
+                <package>com.google.auth.http</package>
+                <package>com.google.auth.oauth2</package>
+                <package>com.google.cloud</package>
+                <package>com.google.cloud.audit</package>
+                <package>com.google.cloud.http</package>
+                <package>com.google.cloud.location</package>
+                <package>com.google.cloud.spi</package>
+                <package>com.google.cloud.testing</package>
+                <package>com.google.cloud.translate</package>
+                <package>com.google.cloud.translate.spi</package>
+                <package>com.google.cloud.translate.spi.v2</package>
+                <package>com.google.cloud.translate.testing</package>
+                <package>com.google.cloud.translate.v3</package>
+                <package>com.google.cloud.translate.v3.stub</package>
+                <package>com.google.cloud.translate.v3beta1</package>
+                <package>com.google.cloud.translate.v3beta1.stub</package>
                 <package>com.google.common.annotations</package>
                 <package>com.google.common.base</package>
+                <package>com.google.common.base.internal</package>
                 <package>com.google.common.cache</package>
                 <package>com.google.common.collect</package>
                 <package>com.google.common.escape</package>
                 <package>com.google.common.eventbus</package>
+                <package>com.google.common.graph</package>
                 <package>com.google.common.hash</package>
                 <package>com.google.common.html</package>
                 <package>com.google.common.io</package>
@@ -85,16 +168,33 @@
                 <package>com.google.common.primitives</package>
                 <package>com.google.common.reflect</package>
                 <package>com.google.common.util.concurrent</package>
+                <package>com.google.common.util.concurrent.internal</package>
                 <package>com.google.common.xml</package>
+                <package>com.google.errorprone.annotations</package>
+                <package>com.google.errorprone.annotations.concurrent</package>
+                <package>com.google.geo.type</package>
                 <package>com.google.gson</package>
                 <package>com.google.gson.annotations</package>
                 <package>com.google.gson.internal</package>
                 <package>com.google.gson.internal.bind</package>
                 <package>com.google.gson.internal.bind.util</package>
+                <package>com.google.gson.internal.reflect</package>
+                <package>com.google.gson.internal.sql</package>
                 <package>com.google.gson.reflect</package>
                 <package>com.google.gson.stream</package>
-                <package>com.microsoft.schemas.compatibility</package>
-                <package>com.microsoft.schemas.compatibility.impl</package>
+                <package>com.google.iam.v1</package>
+                <package>com.google.iam.v1.logging</package>
+                <package>com.google.j2objc.annotations</package>
+                <package>com.google.logging.type</package>
+                <package>com.google.longrunning</package>
+                <package>com.google.longrunning.stub</package>
+                <package>com.google.protobuf</package>
+                <package>com.google.protobuf.compiler</package>
+                <package>com.google.protobuf.util</package>
+                <package>com.google.rpc</package>
+                <package>com.google.rpc.context</package>
+                <package>com.google.thirdparty.publicsuffix</package>
+                <package>com.google.type</package>
                 <package>com.microsoft.schemas.office.excel</package>
                 <package>com.microsoft.schemas.office.excel.impl</package>
                 <package>com.microsoft.schemas.office.office</package>
@@ -595,8 +695,8 @@
                 <package>schemaorg_apache_xmlbeans.system.sD023D6490046BA0250A839A9AD24C443</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/LGoodDatePicker-11.2.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/LGoodDatePicker-11.2.1.jar</binary-origin>
+                <runtime-relative-path>ext/animal-sniffer-annotations-1.21.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/animal-sniffer-annotations-1.21.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/ant-1.10.12.jar</runtime-relative-path>
@@ -607,8 +707,20 @@
                 <binary-origin>release/modules/ext/ant-launcher-1.10.12.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
+                <runtime-relative-path>ext/api-common-2.1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/api-common-2.1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/bcpkix-jdk15on-1.67.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcpkix-jdk15on-1.67.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/bcprov-ext-jdk15on-1.54.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcprov-ext-jdk15on-1.54.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/bcprov-jdk15on-1.67.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcprov-jdk15on-1.67.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/common-image-3.8.2.jar</runtime-relative-path>
@@ -683,6 +795,106 @@
                 <binary-origin>release/modules/ext/dd-plist-1.23.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/error_prone_annotations-2.11.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/error_prone_annotations-2.11.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/failureaccess-1.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/failureaccess-1.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/gax-2.12.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gax-2.12.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/gax-grpc-2.12.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gax-grpc-2.12.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/gax-httpjson-0.97.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gax-httpjson-0.97.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-api-client-1.33.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-api-client-1.33.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-api-services-translate-v2-rev20170525-1.32.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-api-services-translate-v2-rev20170525-1.32.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-auth-library-credentials-1.5.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-auth-library-credentials-1.5.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-auth-library-oauth2-http-1.5.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-auth-library-oauth2-http-1.5.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-cloud-core-2.5.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-cloud-core-2.5.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-cloud-core-http-2.5.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-cloud-core-http-2.5.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-cloud-translate-2.1.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-cloud-translate-2.1.11.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-http-client-1.41.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-http-client-1.41.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-http-client-appengine-1.41.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-http-client-appengine-1.41.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-http-client-jackson2-1.41.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-http-client-jackson2-1.41.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/google-oauth-client-1.33.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/google-oauth-client-1.33.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grpc-alts-1.44.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grpc-alts-1.44.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grpc-auth-1.44.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grpc-auth-1.44.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grpc-context-1.44.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grpc-context-1.44.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grpc-core-1.44.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grpc-core-1.44.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grpc-grpclb-1.44.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grpc-grpclb-1.44.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grpc-netty-shaded-1.44.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grpc-netty-shaded-1.44.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grpc-protobuf-1.44.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grpc-protobuf-1.44.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grpc-protobuf-lite-1.44.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grpc-protobuf-lite-1.44.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grpc-stub-1.44.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grpc-stub-1.44.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/gson-2.9.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gson-2.9.0.jar</binary-origin>
             </class-path-extension>
@@ -691,8 +903,16 @@
                 <binary-origin>release/modules/ext/gst1-java-core-1.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-31.1-jre.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-31.1-jre.jar</binary-origin>
+                <runtime-relative-path>ext/guava-31.0.1-jre.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-31.0.1-jre.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpclient-4.5.13.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpclient-4.5.13.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpcore-4.4.15.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpcore-4.4.15.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.8.2.jar</runtime-relative-path>
@@ -755,12 +975,20 @@
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/j2objc-annotations-1.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/j2objc-annotations-1.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jackson-core-2.13.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jackson-core-2.13.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jackson-databind-2.13.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jackson-databind-2.13.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javax.annotation-api-1.3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javax.annotation-api-1.3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jericho-html-3.4.jar</runtime-relative-path>
@@ -795,24 +1023,36 @@
                 <binary-origin>release/modules/ext/jsr305-3.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/LGoodDatePicker-11.2.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/LGoodDatePicker-11.2.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/log4j-1.2.17.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/log4j-1.2.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
+                <runtime-relative-path>ext/mchange-commons-java-0.2.20.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mchange-commons-java-0.2.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/ooxml-schemas-1.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/ooxml-schemas-1.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
+                <runtime-relative-path>ext/opencensus-api-0.31.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencensus-api-0.31.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/openjfx-dialogs-1.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/openjfx-dialogs-1.0.2.jar</binary-origin>
+                <runtime-relative-path>ext/opencensus-contrib-http-util-0.31.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencensus-contrib-http-util-0.31.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-5.2.2.jar</runtime-relative-path>
@@ -823,16 +1063,40 @@
                 <binary-origin>release/modules/ext/poi-ooxml-5.2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-schemas-4.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-schemas-4.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/poi-ooxml-schemas-4.1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-schemas-4.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-scratchpad-5.2.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-scratchpad-5.2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/proto-google-cloud-translate-v3beta1-0.83.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/proto-google-cloud-translate-v3beta1-0.83.11.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/proto-google-common-protos-2.7.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/proto-google-common-protos-2.7.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/proto-google-iam-v1-1.2.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/proto-google-iam-v1-1.2.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/protobuf-java-3.19.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/protobuf-java-3.19.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/protobuf-java-util-3.19.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/protobuf-java-util-3.19.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/sigar-1.6.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sigar-1.6.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/threetenbp-1.5.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/threetenbp-1.5.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xmlbeans-5.0.3.jar</runtime-relative-path>

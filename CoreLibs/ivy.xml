@@ -17,8 +17,10 @@
         
         <dependency conf="autopsy_core->default" org="commons-codec" name="commons-codec" rev="1.15"/>
 
+        <!-- Google dependencies (translate needs to be kept with guava because translate depends on guava)-->
+        <dependency conf="autopsy_core->default" org="com.google.cloud" name="google-cloud-translate" rev="2.1.11"/>
+        
         <!-- commmon -->
-        <dependency conf="autopsy_core->default" org="com.google.guava" name="guava" rev="31.1-jre"/>
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-lang3" rev="3.12.0"/>
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-csv" rev="1.9.0"/>
     

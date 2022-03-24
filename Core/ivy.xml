@@ -28,9 +28,6 @@
         <dependency conf="core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.13.2"/>
 
         <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.17.0"/>
-
-        <dependency conf="core->default" org="com.google.cloud" name="google-cloud-translate" rev="2.1.11"/>
-
         <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
 
         <dependency conf="core->default" org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
