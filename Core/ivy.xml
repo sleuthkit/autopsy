@@ -42,6 +42,26 @@
         <!-- for handling diffs -->
         <dependency conf="core->default" org="io.github.java-diff-utils" name="java-diff-utils" rev="4.11"/>
 
+        <dependency conf="core->default" org="org.icepdf.os" name="icepdf-viewer" rev="6.2.2">
+            <!-- get the new latest batik items below, override bouncy castle -->
+            <exclude org="batik" module="batik-awt-util"/>
+            <exclude org="batik" module="batik-dom"/>
+            <exclude org="batik" module="batik-svg-dom"/>
+            <exclude org="batik" module="batik-svggen"/>
+            <exclude org="batik" module="batik-util"/>
+            <exclude org="batik" module="batik-xml"/>
+            <exclude org="batik" module="batik-xml"/>
+            <!-- doesn't work with ivy; will be added separately -->
+            <exclude org="javax.media" module="jai_core"/>
+            <exclude org="com.sun.media" module="jai_imageio"/>
+        </dependency>
+
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-awt-util" rev="1.14"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-dom" rev="1.14"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-svg-dom" rev="1.14"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-svggen" rev="1.14"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-util" rev="1.14"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-xml" rev="1.14"/>
 
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency conf="core->default" org="javax.ws.rs" name="javax.ws.rs-api" rev="2.1.1"/>

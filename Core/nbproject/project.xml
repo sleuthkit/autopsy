@@ -355,28 +355,28 @@
                 <binary-origin>release/modules/ext/audience-annotations-0.12.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-awt-util-1.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-awt-util-1.6.jar</binary-origin>
+                <runtime-relative-path>ext/batik-awt-util-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-awt-util-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-dom-1.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-dom-1.6.jar</binary-origin>
+                <runtime-relative-path>ext/batik-dom-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-dom-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-svg-dom-1.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-svg-dom-1.6.jar</binary-origin>
+                <runtime-relative-path>ext/batik-svg-dom-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-svg-dom-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-svggen-1.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-svggen-1.6.jar</binary-origin>
+                <runtime-relative-path>ext/batik-svggen-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-svggen-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-util-1.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-util-1.6.jar</binary-origin>
+                <runtime-relative-path>ext/batik-util-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-util-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-xml-1.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-xml-1.6.jar</binary-origin>
+                <runtime-relative-path>ext/batik-xml-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-xml-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/bcpkix-jdk15on-1.70.jar</runtime-relative-path>
@@ -617,10 +617,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sleuthkit-caseuco-4.11.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sleuthkit-caseuco-4.11.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-api-1.7.36.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/snakeyaml-1.30.jar</runtime-relative-path>

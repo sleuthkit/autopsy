@@ -488,6 +488,10 @@
                 <package>org.openxmlformats.schemas.wordprocessingml.x2006.main</package>
                 <package>org.openxmlformats.schemas.wordprocessingml.x2006.main.impl</package>
                 <package>org.sleuthkit.autopsy.corelibs</package>
+                <package>org.slf4j</package>
+                <package>org.slf4j.event</package>
+                <package>org.slf4j.helpers</package>
+                <package>org.slf4j.spi</package>
                 <package>schemaorg_apache_xmlbeans.system.sD023D6490046BA0250A839A9AD24C443</package>
             </public-packages>
             <class-path-extension>
@@ -927,8 +931,20 @@
                 <binary-origin>release/modules/ext/re2j-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/reload4j-1.2.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/reload4j-1.2.19.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/sigar-1.6.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sigar-1.6.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-api-1.7.36.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/slf4j-reload4j-1.7.36.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-reload4j-1.7.36.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/threetenbp-1.5.2.jar</runtime-relative-path>

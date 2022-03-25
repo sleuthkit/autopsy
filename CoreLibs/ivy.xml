@@ -85,8 +85,12 @@
         <dependency conf="autopsy_core->default" org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
         <dependency conf="autopsy_core->default" org="com.googlecode.plist" name="dd-plist" rev="1.23"/>
         
+        <dependency conf="autopsy_core->default" org="org.slf4j" name="slf4j-reload4j" rev="1.7.36"/>
+        
         <exclude org="*" ext="*" type="javadoc"/>
 
+        <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
+        
         <override org="com.google.code.gson" module="gson" rev="2.9.0"/>
         <override org="com.google.guava" module="guava" rev="31.1-jre"/>
         <override org="com.fasterxml.jackson.core" module="jackson-databind" rev="2.13.2"/>

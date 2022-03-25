@@ -5,7 +5,17 @@
         <data xmlns="http://www.netbeans.org/ns/nb-module-project/3">
             <code-name-base>org.sleuthkit.autopsy.Tika</code-name-base>
             <suite-component/>
-            <module-dependencies/>
+            <module-dependencies>
+                <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.corelibs</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>3</release-version>
+                        <specification-version>1.4</specification-version>
+                    </run-dependency>
+                </dependency>
+            </module-dependencies>
             <public-packages>
                 <package>org.apache.james.mime4j</package>
                 <package>org.apache.james.mime4j.dom</package>
@@ -689,10 +699,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sis-utility-1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sis-utility-1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-api-1.7.36.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/SparseBitSet-1.2.jar</runtime-relative-path>

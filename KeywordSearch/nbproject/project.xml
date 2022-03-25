@@ -381,10 +381,6 @@
                 <binary-origin>release/modules/ext/netty-transport-native-unix-common-4.1.68.Final.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-api-1.7.36.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/snappy-java-1.1.7.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/snappy-java-1.1.7.6.jar</binary-origin>
             </class-path-extension>
