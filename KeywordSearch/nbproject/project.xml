@@ -321,10 +321,6 @@
                 <binary-origin>release/modules/ext/jsonic-1.2.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jsr305-3.0.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/language-detector-0.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/language-detector-0.6.jar</binary-origin>
             </class-path-extension>

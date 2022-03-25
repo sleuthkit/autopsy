@@ -66,8 +66,12 @@
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency conf="core->default" org="javax.ws.rs" name="javax.ws.rs-api" rev="2.1.1"/>
 
+        <!-- used by zookeeper -->
+        <dependency org="com.github.spotbugs" name="spotbugs-annotations" rev="4.6.0"/>
+
         <override org="org.apache.zookeeper" module="zookeeper" rev="3.8.0"/>
         <override org="org.apache.zookeeper" module="zookeeper-jute" rev="3.8.0"/>
+        
         <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>
         <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
         <override org="com.google.guava" module="guava" rev="31.1-jre"/>

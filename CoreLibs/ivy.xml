@@ -29,6 +29,7 @@
         <!-- commmon -->
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-lang3" rev="3.12.0"/>
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-csv" rev="1.9.0"/>
+        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-text" rev="1.9"/>
     
         <!-- keep old commons-lang because some deps may need it at runtime. 
         Note there is no namespace collision with ver 3 -->

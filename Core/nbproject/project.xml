@@ -503,10 +503,6 @@
                 <binary-origin>release/modules/ext/jsoup-1.14.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jsr305-3.0.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jutf7-1.0.0.jar</binary-origin>
             </class-path-extension>
@@ -625,6 +621,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/SparseBitSet-1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/spotbugs-annotations-4.6.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/spotbugs-annotations-4.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.25.2.jar</runtime-relative-path>

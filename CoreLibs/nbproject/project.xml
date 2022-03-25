@@ -323,6 +323,7 @@
                 <package>org.apache.commons.lang3.tuple</package>
                 <package>org.apache.commons.logging</package>
                 <package>org.apache.commons.logging.impl</package>
+                <package>org.apache.commons.text</package>
                 <package>org.apache.commons.validator.routines</package>
                 <package>org.apache.commons.validator.routines.checkdigit</package>
                 <package>org.apache.log4j</package>
@@ -589,6 +590,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-logging-1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-text-1.9.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-text-1.9.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-validator-1.7.jar</runtime-relative-path>

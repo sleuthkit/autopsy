@@ -585,10 +585,6 @@
                 <binary-origin>release/modules/ext/json-simple-1.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jsr305-3.0.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jul-to-slf4j-1.7.36.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jul-to-slf4j-1.7.36.jar</binary-origin>
             </class-path-extension>
