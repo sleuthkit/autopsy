@@ -201,12 +201,6 @@
                 <package>com.google.rpc.context</package>
                 <package>com.google.thirdparty.publicsuffix</package>
                 <package>com.google.type</package>
-                <package>com.microsoft.schemas.office.excel</package>
-                <package>com.microsoft.schemas.office.excel.impl</package>
-                <package>com.microsoft.schemas.office.office</package>
-                <package>com.microsoft.schemas.office.office.impl</package>
-                <package>com.microsoft.schemas.office.visio.x2012.main</package>
-                <package>com.microsoft.schemas.office.visio.x2012.main.impl</package>
                 <package>com.microsoft.schemas.vml</package>
                 <package>com.microsoft.schemas.vml.impl</package>
                 <package>com.sun.jna</package>
@@ -464,36 +458,11 @@
                 <package>org.opencv.photo</package>
                 <package>org.opencv.utils</package>
                 <package>org.opencv.video</package>
-                <package>org.openxmlformats.schemas.drawingml.x2006.chart</package>
-                <package>org.openxmlformats.schemas.drawingml.x2006.chart.impl</package>
-                <package>org.openxmlformats.schemas.drawingml.x2006.main</package>
-                <package>org.openxmlformats.schemas.drawingml.x2006.main.impl</package>
-                <package>org.openxmlformats.schemas.drawingml.x2006.picture</package>
-                <package>org.openxmlformats.schemas.drawingml.x2006.picture.impl</package>
-                <package>org.openxmlformats.schemas.drawingml.x2006.spreadsheetDrawing</package>
-                <package>org.openxmlformats.schemas.drawingml.x2006.spreadsheetDrawing.impl</package>
-                <package>org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing</package>
-                <package>org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.impl</package>
-                <package>org.openxmlformats.schemas.officeDocument.x2006.customProperties</package>
-                <package>org.openxmlformats.schemas.officeDocument.x2006.customProperties.impl</package>
-                <package>org.openxmlformats.schemas.officeDocument.x2006.docPropsVTypes</package>
-                <package>org.openxmlformats.schemas.officeDocument.x2006.docPropsVTypes.impl</package>
-                <package>org.openxmlformats.schemas.officeDocument.x2006.extendedProperties</package>
-                <package>org.openxmlformats.schemas.officeDocument.x2006.extendedProperties.impl</package>
-                <package>org.openxmlformats.schemas.officeDocument.x2006.relationships</package>
-                <package>org.openxmlformats.schemas.officeDocument.x2006.relationships.impl</package>
-                <package>org.openxmlformats.schemas.presentationml.x2006.main</package>
-                <package>org.openxmlformats.schemas.presentationml.x2006.main.impl</package>
-                <package>org.openxmlformats.schemas.spreadsheetml.x2006.main</package>
-                <package>org.openxmlformats.schemas.spreadsheetml.x2006.main.impl</package>
-                <package>org.openxmlformats.schemas.wordprocessingml.x2006.main</package>
-                <package>org.openxmlformats.schemas.wordprocessingml.x2006.main.impl</package>
                 <package>org.sleuthkit.autopsy.corelibs</package>
                 <package>org.slf4j</package>
                 <package>org.slf4j.event</package>
                 <package>org.slf4j.helpers</package>
                 <package>org.slf4j.spi</package>
-                <package>schemaorg_apache_xmlbeans.system.sD023D6490046BA0250A839A9AD24C443</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/animal-sniffer-annotations-1.21.jar</runtime-relative-path>
@@ -958,10 +927,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/webp-imageio-sejda-0.1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/webp-imageio-sejda-0.1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/xmlbeans-3.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/xmlbeans-3.0.1.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

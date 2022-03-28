@@ -5,6 +5,8 @@
     </configurations>
     <dependencies >
         <dependency conf="tika->default" org="org.apache.tika" name="tika-parsers" rev="1.28.1"/>
+        <dependency conf="tika->default" org="org.apache.poi" name="ooxml-schemas" rev="1.4"/>
+        
         <override org="org.jsoup" module="jsoup" rev="1.14.3"/>
         <override org="org.apache.poi" module="poi-ooxml-schemas" rev="4.1.2"/>
         <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>

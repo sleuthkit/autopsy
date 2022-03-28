@@ -17,6 +17,12 @@
                 </dependency>
             </module-dependencies>
             <public-packages>
+                <package>com.microsoft.schemas.office.excel</package>
+                <package>com.microsoft.schemas.office.excel.impl</package>
+                <package>com.microsoft.schemas.office.office</package>
+                <package>com.microsoft.schemas.office.office.impl</package>
+                <package>com.microsoft.schemas.office.visio.x2012.main</package>
+                <package>com.microsoft.schemas.office.visio.x2012.main.impl</package>
                 <package>org.apache.james.mime4j</package>
                 <package>org.apache.james.mime4j.dom</package>
                 <package>org.apache.james.mime4j.dom.address</package>
@@ -138,9 +144,9 @@
                 <package>org.apache.poi.ss.formula.ptg</package>
                 <package>org.apache.poi.ss.formula.udf</package>
                 <package>org.apache.poi.ss.usermodel</package>
+                <package>org.apache.poi.ss.usermodel.charts</package>
                 <package>org.apache.poi.ss.usermodel.helpers</package>
                 <package>org.apache.poi.ss.util</package>
-                <package>org.apache.poi.ss.usermodel.charts</package>
                 <package>org.apache.poi.ss.util.cellwalk</package>
                 <package>org.apache.poi.util</package>
                 <package>org.apache.poi.wp.usermodel</package>
@@ -281,7 +287,19 @@
                 <package>org.apache.xmlbeans.impl.config</package>
                 <package>org.apache.xmlbeans.impl.inst2xsd</package>
                 <package>org.apache.xmlbeans.impl.inst2xsd.util</package>
+                <package>org.apache.xmlbeans.impl.jam</package>
+                <package>org.apache.xmlbeans.impl.jam.annotation</package>
+                <package>org.apache.xmlbeans.impl.jam.internal</package>
+                <package>org.apache.xmlbeans.impl.jam.internal.classrefs</package>
+                <package>org.apache.xmlbeans.impl.jam.internal.elements</package>
+                <package>org.apache.xmlbeans.impl.jam.internal.javadoc</package>
+                <package>org.apache.xmlbeans.impl.jam.internal.parser</package>
+                <package>org.apache.xmlbeans.impl.jam.internal.reflect</package>
+                <package>org.apache.xmlbeans.impl.jam.provider</package>
+                <package>org.apache.xmlbeans.impl.jam.visitor</package>
+                <package>org.apache.xmlbeans.impl.jam.xml</package>
                 <package>org.apache.xmlbeans.impl.regex</package>
+                <package>org.apache.xmlbeans.impl.repackage</package>
                 <package>org.apache.xmlbeans.impl.richParser</package>
                 <package>org.apache.xmlbeans.impl.schema</package>
                 <package>org.apache.xmlbeans.impl.soap</package>
@@ -302,11 +320,40 @@
                 <package>org.apache.xmlbeans.impl.xb.xsdownload.impl</package>
                 <package>org.apache.xmlbeans.impl.xb.xsdschema</package>
                 <package>org.apache.xmlbeans.impl.xb.xsdschema.impl</package>
+                <package>org.apache.xmlbeans.impl.xpath.saxon</package>
                 <package>org.apache.xmlbeans.impl.xpathgen</package>
+                <package>org.apache.xmlbeans.impl.xquery.saxon</package>
                 <package>org.apache.xmlbeans.impl.xsd2inst</package>
                 <package>org.apache.xmlbeans.soap</package>
                 <package>org.apache.xmlbeans.xml.stream</package>
                 <package>org.apache.xmlbeans.xml.stream.events</package>
+                <package>org.apache.xmlbeans.xml.stream.utils</package>
+                <package>org.apache.xmlcommons</package>
+                <package>org.openxmlformats.schemas.drawingml.x2006.chart</package>
+                <package>org.openxmlformats.schemas.drawingml.x2006.chart.impl</package>
+                <package>org.openxmlformats.schemas.drawingml.x2006.main</package>
+                <package>org.openxmlformats.schemas.drawingml.x2006.main.impl</package>
+                <package>org.openxmlformats.schemas.drawingml.x2006.picture</package>
+                <package>org.openxmlformats.schemas.drawingml.x2006.picture.impl</package>
+                <package>org.openxmlformats.schemas.drawingml.x2006.spreadsheetDrawing</package>
+                <package>org.openxmlformats.schemas.drawingml.x2006.spreadsheetDrawing.impl</package>
+                <package>org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing</package>
+                <package>org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.impl</package>
+                <package>org.openxmlformats.schemas.officeDocument.x2006.customProperties</package>
+                <package>org.openxmlformats.schemas.officeDocument.x2006.customProperties.impl</package>
+                <package>org.openxmlformats.schemas.officeDocument.x2006.docPropsVTypes</package>
+                <package>org.openxmlformats.schemas.officeDocument.x2006.docPropsVTypes.impl</package>
+                <package>org.openxmlformats.schemas.officeDocument.x2006.extendedProperties</package>
+                <package>org.openxmlformats.schemas.officeDocument.x2006.extendedProperties.impl</package>
+                <package>org.openxmlformats.schemas.officeDocument.x2006.relationships</package>
+                <package>org.openxmlformats.schemas.officeDocument.x2006.relationships.impl</package>
+                <package>org.openxmlformats.schemas.presentationml.x2006.main</package>
+                <package>org.openxmlformats.schemas.presentationml.x2006.main.impl</package>
+                <package>org.openxmlformats.schemas.spreadsheetml.x2006.main</package>
+                <package>org.openxmlformats.schemas.spreadsheetml.x2006.main.impl</package>
+                <package>org.openxmlformats.schemas.wordprocessingml.x2006.main</package>
+                <package>org.openxmlformats.schemas.wordprocessingml.x2006.main.impl</package>
+                <package>schemaorg_apache_xmlbeans.system.sD023D6490046BA0250A839A9AD24C443</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-core-0.8.4.jar</runtime-relative-path>
@@ -585,6 +632,10 @@
                 <binary-origin>release/modules/ext/json-simple-1.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jsr305-3.0.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jul-to-slf4j-1.7.36.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jul-to-slf4j-1.7.36.jar</binary-origin>
             </class-path-extension>
@@ -611,6 +662,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/netcdf4-4.5.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/netcdf4-4.5.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/ooxml-schemas-1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/ooxml-schemas-1.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/openjson-1.0.12.jar</runtime-relative-path>
@@ -695,6 +750,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sis-utility-1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sis-utility-1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-api-1.7.36.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/SparseBitSet-1.2.jar</runtime-relative-path>

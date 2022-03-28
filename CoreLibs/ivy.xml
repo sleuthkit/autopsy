@@ -5,9 +5,7 @@
         <conf name="autopsy_core"/>
         
     </configurations>
-    <dependencies>       
-        <!-- <dependency conf="autopsy_core->default" org="com.google.code.gson" name="gson" rev="2.9.0"/>      -->
-        
+    <dependencies>              
         <dependency conf="autopsy_core->default" org="org.apache.ant" name="ant-launcher" rev="1.10.12"/>
         <dependency conf="autopsy_core->default" org="org.apache.ant" name="ant" rev="1.10.12"/>
 
@@ -37,9 +35,6 @@
         <dependency conf="autopsy_core->default" org="commons-logging" name="commons-logging" rev="1.2"/>
         <dependency conf="autopsy_core->default" org="commons-io" name="commons-io" rev="2.11.0"/>
         <dependency conf="autopsy_core->default" org="log4j" name="log4j" rev="1.2.17"/>
-        <dependency conf="autopsy_core->default" org="org.apache.poi" name="ooxml-schemas" rev="1.4"/>
-        <!-- <dependency conf="autopsy_core->default" org="org.apache.poi" name="poi-excelant" rev="5.2.2"/>
-        <dependency conf="autopsy_core->default" org="org.apache.poi" name="poi-scratchpad" rev="5.2.2"/> -->
         <dependency conf="autopsy_core->default" org="commons-validator" name="commons-validator" rev="1.7"/>
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-collections4" rev="4.4"/>
         <dependency conf="autopsy_core->default" org="commons-collections" name="commons-collections" rev="3.2.2"/>
