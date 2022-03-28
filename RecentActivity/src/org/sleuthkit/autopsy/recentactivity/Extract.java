@@ -35,8 +35,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -317,33 +319,44 @@ abstract class Extract {
 
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-                RecentActivityExtracterModuleFactory.getModuleName(),
-                (url != null) ? url : "")); //NON-NLS
+                RecentActivityExtracterModuleFactory.getModuleName(), url)); //NON-NLS
 
         if (accessTime != null) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                    RecentActivityExtracterModuleFactory.getModuleName(), accessTime));
+                    RecentActivityExtracterModuleFactory.getModuleName(), 
+                    accessTime));
         }
 
-        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER,
-                RecentActivityExtracterModuleFactory.getModuleName(),
-                (referrer != null) ? referrer : "")); //NON-NLS
+        if (StringUtils.isNotBlank(referrer)) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    referrer)); //NON-NLS
+        }
 
-        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
-                RecentActivityExtracterModuleFactory.getModuleName(),
-                (title != null) ? title : "")); //NON-NLS
+        if (StringUtils.isNotBlank(title)) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    title)); //NON-NLS
+        }
 
-        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                RecentActivityExtracterModuleFactory.getModuleName(),
-                (programName != null) ? programName : "")); //NON-NLS
+        if (StringUtils.isNotBlank(programName)) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    programName)); //NON-NLS
+        }
 
-        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
-                RecentActivityExtracterModuleFactory.getModuleName(),
-                (domain != null) ? domain : "")); //NON-NLS
+        
+        if (StringUtils.isNotBlank(url)) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    domain)); //NON-NLS
+        }
 
-        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME,
-                RecentActivityExtracterModuleFactory.getModuleName(),
-                (user != null) ? user : "")); //NON-NLS
+        if (StringUtils.isNotBlank(user)) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    user)); //NON-NLS
+        }
 
         return bbattributes;
     }

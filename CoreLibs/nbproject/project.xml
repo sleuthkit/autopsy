@@ -775,8 +775,8 @@
                 <binary-origin>release/modules/ext/logkit-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gst1-java-core-1.0.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\gst1-java-core-1.0.0.jar</binary-origin>
+                <runtime-relative-path>ext/gst1-java-core-1.4.0.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\gst1-java-core-1.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-jpeg-3.2.jar</runtime-relative-path>
@@ -911,8 +911,8 @@
                 <binary-origin>release/modules/ext/commons-compress-1.18.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jna-platform-5.10.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jna-platform-5.10.0.jar</binary-origin>
+                <runtime-relative-path>ext/jna-platform-5.11.0.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\jna-platform-5.11.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
@@ -939,8 +939,8 @@
                 <binary-origin>release/modules/ext/imageio-bmp-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jna-5.10.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jna-5.10.0.jar</binary-origin>
+                <runtime-relative-path>ext/jna-5.11.0.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\jna-5.11.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.6.jar</runtime-relative-path>

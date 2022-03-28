@@ -27,6 +27,11 @@
         <copy todir="${modules.dir}" >
             <fileset dir="${thirdparty.dir}/opencv" />
         </copy>
+
+        <!--Copy libheif dependencies to release-->
+        <copy todir="${modules.dir}" >
+            <fileset dir="${thirdparty.dir}/libheif/Release" />
+        </copy>
     </target>
     
     <target name="get-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs,get-thirdparty-dependencies">
