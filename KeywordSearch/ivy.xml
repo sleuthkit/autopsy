@@ -22,16 +22,16 @@
         <!-- Autopsy -->
         <dependency conf="autopsy->default" org="org.apache.solr" name="solr-solrj" rev="8.11.1"/>
         <dependency conf="autopsy->default" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>       
-        <!-- <dependency conf="autopsy->default" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.5.0"/> -->
+        <!-- <dependency conf="autopsy->default" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.5.1"/> -->
         <!-- <dependency conf="autopsy->default" org="org.cleartk" name="cleartk-ml" rev="2.0.0"/> -->
         
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
         <dependency conf="autopsy->default" org="com.ibm.icu" name="icu4j" rev="70.1"/>
         
         <!-- Jetty -->
-		<!-- <dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="8.1.16.v20140903"/>
-        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="8.1.16.v20140903"/>
-        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="8.1.16.v20140903"/>
+		<!-- <dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="11.0.8"/>
+        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="11.0.8"/>
+        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="11.0.8"/>
         <dependency conf="servlet->default" org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016"/> -->
 
         <exclude org="*" ext="*" type="javadoc"/>
