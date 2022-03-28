@@ -54,14 +54,17 @@
         <!-- better image resizing -->
         <dependency conf="autopsy_core->default" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />
         
-        <!-- timeline and image analyzer -->
-        <dependency conf="autopsy_core->default" org="org.controlsfx" name="controlsfx" rev="8.40.18" />
+        <dependency conf="autopsy_core->default" org="joda-time" name="joda-time" rev="2.10.14" />
+
 
         <!-- timeline  -->
-        <dependency conf="autopsy_core->default" org="joda-time" name="joda-time" rev="2.10.14" />
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-fxml" rev="8.0-r6" />
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-controls" rev="8.0-r6" />
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-common" rev="8.0-r6" />
+        <!-- NOTE: the version of these dependencies appears to be tied to javafx / java version -->
+        <dependency conf="autopsy_core->default" org="org.controlsfx" name="controlsfx" rev="8.40.11" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-fxml" rev="8.0-r4" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-controls" rev="8.0-r4" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-common" rev="8.0-r4" />
+
+
         <!-- templateing engine used by timeline to generate its snapshot report -->
         <dependency conf="autopsy_core->default" org="com.github.spullara.mustache.java" name="compiler" rev="0.9.10" />
         
