@@ -154,22 +154,14 @@ class ExtractIE extends Extract {
             datetime = Long.valueOf(Tempdate);
             String domain = extractDomain(url);
 
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                    RecentActivityExtracterModuleFactory.getModuleName(), url));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
-                    RecentActivityExtracterModuleFactory.getModuleName(), name));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                    RecentActivityExtracterModuleFactory.getModuleName(), datetime));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
-            if (domain != null && domain.isEmpty() == false) {
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
-            }
-
             try {
+                Collection<BlackboardAttribute> bbattributes = createBookmarkAttributes(
+                        url, 
+                        name,
+                        datetime, 
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text"), 
+                        domain);
+                            
                 bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, fav, bbattributes));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to create %s for file %d", ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getDisplayName(), fav.getId()), ex);
@@ -567,28 +559,16 @@ class ExtractIE extends Extract {
                 }
             }
 
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                    RecentActivityExtracterModuleFactory.getModuleName(), realurl));
-            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
-
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                    RecentActivityExtracterModuleFactory.getModuleName(), ftime));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
-                    RecentActivityExtracterModuleFactory.getModuleName(), ""));
-            // @@@ NOte that other browser modules are adding TITLE in here for the title
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.moduleName.text")));
-            if (domain != null && domain.isEmpty() == false) {
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
-            }
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                    RecentActivityExtracterModuleFactory.getModuleName(), user));
-
             try {
+                Collection<BlackboardAttribute> bbattributes = createHistoryAttributes(
+                        realurl, 
+                        ftime, 
+                        null, 
+                        null, 
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text"), 
+                        domain, 
+                        user);
+                
                 bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_HISTORY, origFile, bbattributes));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to create %s for file %d", BlackboardArtifact.Type.TSK_WEB_HISTORY.getDisplayName(), origFile.getId()), ex);
