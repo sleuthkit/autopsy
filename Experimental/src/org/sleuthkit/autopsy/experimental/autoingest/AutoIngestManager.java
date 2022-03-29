@@ -1947,6 +1947,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     processJob();
                 } finally {
                     manifestLock.release();
+                    
+                    // force garbage collection to release file handles
+                    System.gc();
                 }
                 if (jobProcessingTaskFuture.isCancelled()) {
                     return;
