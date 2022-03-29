@@ -66,8 +66,8 @@
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency conf="core->default" org="javax.ws.rs" name="javax.ws.rs-api" rev="2.1.1"/>
 
-        <!-- used by zookeeper -->
-        <dependency org="com.github.spotbugs" name="spotbugs-annotations" rev="4.6.0"/>
+        <!-- annotations like guarded by -->
+        <dependency conf="core->default" org="com.github.spotbugs" name="spotbugs-annotations" rev="4.6.0"/>
 
         <override org="org.apache.zookeeper" module="zookeeper" rev="3.8.0"/>
         <override org="org.apache.zookeeper" module="zookeeper-jute" rev="3.8.0"/>
