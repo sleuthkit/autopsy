@@ -347,484 +347,304 @@
                 <package>org.sleuthkit.datamodel.blackboardutils.attributes</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-xml-1.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\batik-xml-1.6.jar</binary-origin>
+                <runtime-relative-path>ext/activemq-all-5.16.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/activemq-all-5.16.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-digester-1.8.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-digester-1.8.1.jar</binary-origin>
+                <runtime-relative-path>ext/audience-annotations-0.12.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/audience-annotations-0.12.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jai_core-1.1.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jai_core-1.1.3.jar</binary-origin>
+                <runtime-relative-path>ext/batik-awt-util-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-awt-util-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gax-grpc-1.44.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\gax-grpc-1.44.0.jar</binary-origin>
+                <runtime-relative-path>ext/batik-dom-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-dom-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/failureaccess-1.0.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\failureaccess-1.0.1.jar</binary-origin>
+                <runtime-relative-path>ext/batik-svg-dom-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-svg-dom-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/grpc-protobuf-1.19.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\grpc-protobuf-1.19.0.jar</binary-origin>
+                <runtime-relative-path>ext/batik-svggen-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-svggen-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/opencensus-api-0.19.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\opencensus-api-0.19.2.jar</binary-origin>
+                <runtime-relative-path>ext/batik-util-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-util-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-svg-dom-1.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\batik-svg-dom-1.6.jar</binary-origin>
+                <runtime-relative-path>ext/batik-xml-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-xml-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gax-httpjson-0.61.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\gax-httpjson-0.61.0.jar</binary-origin>
+                <runtime-relative-path>ext/bcpkix-jdk15on-1.70.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcpkix-jdk15on-1.70.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sevenzipjbinding.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\sevenzipjbinding.jar</binary-origin>
+                <runtime-relative-path>ext/bcprov-ext-jdk15on-1.70.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcprov-ext-jdk15on-1.70.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\mchange-commons-java-0.2.9.jar</binary-origin>
+                <runtime-relative-path>ext/bcprov-jdk15on-1.70.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcprov-jdk15on-1.70.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/api-common-1.7.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\api-common-1.7.0.jar</binary-origin>
+                <runtime-relative-path>ext/c3p0-0.9.5.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/c3p0-0.9.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackson-databind-2.9.7.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackson-databind-2.9.7.jar</binary-origin>
+                <runtime-relative-path>ext/checker-qual-3.12.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/checker-qual-3.12.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackson-dataformat-csv-2.9.7.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackson-dataformat-csv-2.9.7.jar</binary-origin>
+                <runtime-relative-path>ext/commons-dbcp2-2.9.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-dbcp2-2.9.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/okhttp-2.7.5.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\okhttp-2.7.5.jar</binary-origin>
+                <runtime-relative-path>ext/commons-io-2.11.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-io-2.11.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/proto-google-cloud-translate-v3beta1-0.53.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\proto-google-cloud-translate-v3beta1-0.53.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/error_prone_annotations-2.3.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\error_prone_annotations-2.3.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/libphonenumber-3.5.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\libphonenumber-3.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/StixLib.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\StixLib.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/google-auth-library-credentials-0.15.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-auth-library-credentials-0.15.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/grpc-auth-1.19.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\grpc-auth-1.19.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/j2objc-annotations-1.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\j2objc-annotations-1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/metadata-extractor-2.11.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\metadata-extractor-2.11.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-codec-1.11.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-codec-1.11.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/postgresql-42.2.18.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\postgresql-42.2.18.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-pool2-2.4.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-pool2-2.4.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jxmapviewer2-2.4.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jxmapviewer2-2.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jdom-2.0.5-contrib.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jdom-2.0.5-contrib.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/xmpcore-5.1.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\xmpcore-5.1.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/batik-util-1.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\batik-util-1.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/javax.annotation-api-1.3.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\javax.annotation-api-1.3.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jgraphx-4.1.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jgraphx-4.1.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jline-0.9.94.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jline-0.9.94.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/DatCon.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\DatCon.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/okio-1.6.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\okio-1.6.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/bcprov-jdk15on-1.54.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\bcprov-jdk15on-1.54.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/curator-framework-2.8.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\curator-framework-2.8.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-dbcp2-2.1.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-dbcp2-2.1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/google-http-client-appengine-1.29.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-http-client-appengine-1.29.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/proto-google-iam-v1-0.12.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\proto-google-iam-v1-0.12.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackcess-encrypt-2.1.4.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackcess-encrypt-2.1.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/google-http-client-1.29.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-http-client-1.29.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/opennlp-tools-1.9.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\opennlp-tools-1.9.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/bcprov-ext-jdk15on-1.54.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\bcprov-ext-jdk15on-1.54.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/google-cloud-core-1.70.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-cloud-core-1.70.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/protobuf-java-3.7.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\protobuf-java-3.7.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/bcpkix-jdk15on-1.54.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\bcpkix-jdk15on-1.54.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sqlite-jdbc-3.25.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\sqlite-jdbc-3.25.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/grpc-protobuf-lite-1.19.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\grpc-protobuf-lite-1.19.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpcore-4.4.9.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpcore-4.4.9.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/guava-27.1-android.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\guava-27.1-android.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/bcprov-jdk15on-1.52.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\bcprov-jdk15on-1.52.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/checker-compat-qual-2.5.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\checker-compat-qual-2.5.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/animal-sniffer-annotations-1.17.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\animal-sniffer-annotations-1.17.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/gax-1.44.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\gax-1.44.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jsoup-1.10.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jsoup-1.10.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/YaraJNIWrapper.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/YaraJNIWrapper.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/grpc-context-1.19.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\grpc-context-1.19.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackcess-2.2.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackcess-2.2.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/slf4j-log4j12-1.7.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\slf4j-log4j12-1.7.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jericho-html-3.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jericho-html-3.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/google-cloud-core-grpc-1.70.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-cloud-core-grpc-1.70.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-validator-1.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-validator-1.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/slf4j-api-1.7.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\slf4j-api-1.7.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/decodetect-core-0.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\decodetect-core-0.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpclient-4.5.5.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpclient-4.5.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/curator-recipes-2.8.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\curator-recipes-2.8.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackson-annotations-2.9.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackson-annotations-2.9.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackson-core-2.9.7.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jackson-core-2.9.7.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.5.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-lang3-3.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/log4j-1.2.16.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\log4j-1.2.16.jar</binary-origin>
+                <runtime-relative-path>ext/commons-lang3-3.10.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang3-3.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-logging-1.2.jar</binary-origin>
+                <binary-origin>release/modules/ext/commons-logging-1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</binary-origin>
+                <runtime-relative-path>ext/commons-pool2-2.10.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-pool2-2.10.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/protobuf-java-util-3.7.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\protobuf-java-util-3.7.0.jar</binary-origin>
+                <runtime-relative-path>ext/curator-client-5.2.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-client-5.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-collections-3.2.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-collections-3.2.2.jar</binary-origin>
+                <runtime-relative-path>ext/curator-framework-5.2.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-framework-5.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/java-diff-utils-4.8.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\java-diff-utils-4.8.jar</binary-origin>
+                <runtime-relative-path>ext/curator-recipes-5.2.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-recipes-5.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\SparseBitSet-1.1.jar</binary-origin>
+                <runtime-relative-path>ext/DatCon.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/DatCon.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/grpc-grpclb-1.19.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\grpc-grpclb-1.19.0.jar</binary-origin>
+                <runtime-relative-path>ext/decodetect-core-0.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/decodetect-core-0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-svggen-1.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\batik-svggen-1.6.jar</binary-origin>
+                <runtime-relative-path>ext/error_prone_annotations-2.11.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/error_prone_annotations-2.11.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\c3p0-0.9.5.jar</binary-origin>
+                <runtime-relative-path>ext/failureaccess-1.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/failureaccess-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/zookeeper-3.4.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\zookeeper-3.4.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/grpc-alts-1.19.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\grpc-alts-1.19.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-caseuco-4.11.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.11.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jdom-2.0.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/gson-2.7.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\gson-2.7.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/google-api-client-1.27.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-api-client-1.27.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/opencensus-contrib-http-util-0.19.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\opencensus-contrib-http-util-0.19.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/google-auth-library-oauth2-http-0.15.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-auth-library-oauth2-http-0.15.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jython-standalone-2.7.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jython-standalone-2.7.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang-2.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-lang-2.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jsr305-3.0.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/proto-google-common-protos-1.15.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\proto-google-common-protos-1.15.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/netty-3.7.0.Final.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\netty-3.7.0.Final.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jfreechart-1.0.19.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfreechart-1.0.19.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/opencensus-contrib-grpc-metrics-0.19.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\opencensus-contrib-grpc-metrics-0.19.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jai_imageio-1.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jai_imageio-1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/curator-client-2.8.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\curator-client-2.8.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/grpc-core-1.19.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\grpc-core-1.19.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/javax.ws.rs-api-2.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\javax.ws.rs-api-2.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jcommon-1.0.23.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jcommon-1.0.23.jar</binary-origin>
+                <runtime-relative-path>ext/guava-31.1-jre.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-31.1-jre.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/icepdf-core-6.2.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\icepdf-core-6.2.2.jar</binary-origin>
+                <binary-origin>release/modules/ext/icepdf-core-6.2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/activemq-all-5.11.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\activemq-all-5.11.1.jar</binary-origin>
+                <runtime-relative-path>ext/icepdf-viewer-6.2.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/icepdf-viewer-6.2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/google-cloud-core-http-1.70.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-cloud-core-http-1.70.0.jar</binary-origin>
+                <runtime-relative-path>ext/j2objc-annotations-1.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/j2objc-annotations-1.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackcess-4.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-4.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackcess-encrypt-4.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-encrypt-4.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jai_core-1.1.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jai_core-1.1.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jai_imageio-1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jai_imageio-1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/java-diff-utils-4.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/java-diff-utils-4.11.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javax.ws.rs-api-2.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javax.ws.rs-api-2.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfreechart-1.5.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfreechart-1.5.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jgraphx-4.2.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jgraphx-4.2.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jsoup-1.14.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jsoup-1.14.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jutf7-1.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jxmapviewer2-2.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jxmapviewer2-2.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jython-standalone-2.7.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jython-standalone-2.7.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/libphonenumber-8.12.45.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/libphonenumber-8.12.45.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/listenablefuture-1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/listenablefuture-1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/logback-classic-1.2.10.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/logback-classic-1.2.10.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/logback-core-1.2.10.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/logback-core-1.2.10.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/mchange-commons-java-0.2.20.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mchange-commons-java-0.2.20.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/metadata-extractor-2.17.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/metadata-extractor-2.17.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-buffer-4.1.73.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-buffer-4.1.73.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-codec-4.1.73.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-codec-4.1.73.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-common-4.1.73.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-common-4.1.73.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-handler-4.1.73.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-handler-4.1.73.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-resolver-4.1.73.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-resolver-4.1.73.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-tcnative-2.0.48.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-tcnative-2.0.48.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-tcnative-classes-2.0.48.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-tcnative-classes-2.0.48.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-transport-4.1.73.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-transport-4.1.73.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-transport-classes-epoll-4.1.73.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-transport-classes-epoll-4.1.73.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-transport-native-epoll-4.1.73.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-transport-native-epoll-4.1.73.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/netty-transport-native-unix-common-4.1.73.Final.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/netty-transport-native-unix-common-4.1.73.Final.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/okhttp-2.7.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/okhttp-2.7.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/okio-1.6.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/okio-1.6.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/postgresql-42.2.18.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/postgresql-42.2.18.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/Rejistry-1.1-SNAPSHOT.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\Rejistry-1.1-SNAPSHOT.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-beanutils-1.9.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-beanutils-1.9.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/batik-dom-1.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\batik-dom-1.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/google-http-client-jackson2-1.29.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-http-client-jackson2-1.29.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/threetenbp-1.3.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\threetenbp-1.3.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/google-cloud-translate-1.70.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-cloud-translate-1.70.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/grpc-stub-1.19.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\grpc-stub-1.19.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/google-oauth-client-1.28.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-oauth-client-1.28.0.jar</binary-origin>
+                <binary-origin>release/modules/ext/Rejistry-1.1-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\sevenzipjbinding-AllPlatforms.jar</binary-origin>
+                <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sevenzipjbinding.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/sleuthkit-4.11.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sleuthkit-4.11.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jutf7-1.0.0.jar</binary-origin>
+                <runtime-relative-path>ext/sleuthkit-caseuco-4.11.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.11.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-awt-util-1.6.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\batik-awt-util-1.6.jar</binary-origin>
+                <runtime-relative-path>ext/snakeyaml-1.30.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/snakeyaml-1.30.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/google-api-services-translate-v2-rev20170525-1.27.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\google-api-services-translate-v2-rev20170525-1.27.0.jar</binary-origin>
+                <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/SparseBitSet-1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/icepdf-viewer-6.2.2.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\icepdf-viewer-6.2.2.jar</binary-origin>
+                <runtime-relative-path>ext/spotbugs-annotations-4.6.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/spotbugs-annotations-4.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/webp-imageio-sejda-0.1.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\webp-imageio-sejda-0.1.0.jar</binary-origin>
+                <runtime-relative-path>ext/sqlite-jdbc-3.25.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sqlite-jdbc-3.25.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/grpc-netty-shaded-1.19.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\grpc-netty-shaded-1.19.0.jar</binary-origin>
+                <runtime-relative-path>ext/xmpcore-6.1.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmpcore-6.1.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/snakeyaml-1.27.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\snakeyaml-1.27.jar</binary-origin>
+                <runtime-relative-path>ext/YaraJNIWrapper.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/YaraJNIWrapper.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/zookeeper-3.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/zookeeper-3.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/zookeeper-jute-3.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/zookeeper-jute-3.8.0.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

@@ -934,13 +934,11 @@ class Firefox extends Extract {
                 continue;
             }
 
-            final JsonParser parser = new JsonParser();
-
             JsonObject jsonRootObject;
             JsonArray jAddressesArray;
 
             try {
-                jsonRootObject = parser.parse(tempReader).getAsJsonObject();
+                jsonRootObject = JsonParser.parseReader(tempReader).getAsJsonObject();
                 jAddressesArray = jsonRootObject.getAsJsonArray("addresses"); //NON-NLS
             } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
                 logger.log(Level.WARNING, "Error parsing Json for Firefox Autofill profiles.", ex); //NON-NLS
@@ -955,7 +953,8 @@ class Firefox extends Extract {
                 helper = new WebBrowserArtifactsHelper(
                         Case.getCurrentCaseThrows().getSleuthkitCase(),
                         NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                        profileFile
+                        profileFile,
+                        ingestJobId
                 );
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "No case open, bailing.", ex); //NON-NLS

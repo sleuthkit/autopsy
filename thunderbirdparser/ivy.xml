@@ -7,13 +7,9 @@
      
     </configurations>
     <dependencies>
-        <dependency conf="autopsy->default" org="org.apache.commons" name="commons-lang3" rev="3.8.1"/>
-        <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-core" rev="0.8.0"/>
-        <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-dom" rev="0.8.0"/>
-        <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-mbox-iterator" rev="0.8.0"/>
-        <dependency conf="autopsy->default" org="com.googlecode.ez-vcard" name="ez-vcard" rev="0.10.5"/>
-        <dependency conf="autopsy->default" org="com.github.mangstadt" name="vinnie" rev="2.0.2"/>
-        <dependency org="com.google.guava" name="guava" rev="19.0"/>
-        <dependency org="commons-validator" name="commons-validator" rev="1.6"/>
+        <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-mbox-iterator" rev="0.8.4"/>
+        <dependency conf="autopsy->default" org="com.googlecode.ez-vcard" name="ez-vcard" rev="0.11.3"/>
+        <override org="org.jsoup" module="jsoup" rev="1.14.3"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.13.2"/>
     </dependencies>
 </ivy-module>

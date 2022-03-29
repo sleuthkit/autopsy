@@ -10,20 +10,20 @@
                 <package>org.mockito</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/mockito-core-3.5.7.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\mockito-core-3.5.7.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/byte-buddy-1.10.13.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\byte-buddy-1.10.13.jar</binary-origin>
+                <binary-origin>release/modules/ext/byte-buddy-1.10.13.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/byte-buddy-agent-1.10.13.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\byte-buddy-agent-1.10.13.jar</binary-origin>
+                <binary-origin>release/modules/ext/byte-buddy-agent-1.10.13.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/mockito-core-3.5.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mockito-core-3.5.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/objenesis-3.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\objenesis-3.1.jar</binary-origin>
+                <binary-origin>release/modules/ext/objenesis-3.1.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

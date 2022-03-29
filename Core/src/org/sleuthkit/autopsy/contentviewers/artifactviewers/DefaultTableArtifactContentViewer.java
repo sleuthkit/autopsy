@@ -348,8 +348,7 @@ public class DefaultTableArtifactContentViewer extends AbstractArtifactDetailsPa
                         case JSON:
                             // Get the attribute's JSON value and convert to indented multiline display string
                             String jsonVal = attr.getValueString();
-                            JsonParser parser = new JsonParser();
-                            JsonObject json = parser.parse(jsonVal).getAsJsonObject();
+                            JsonObject json = JsonParser.parseString(jsonVal).getAsJsonObject();
 
                             value = toJsonDisplayString(json, "");
                             break;
