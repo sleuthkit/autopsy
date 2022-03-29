@@ -36,7 +36,6 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Data Sources Area
      */
-    T visit(DataSourceFilesNode in);
 
     T visit(LayoutFileNode lfn);
 
@@ -50,10 +49,6 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(FileNode fn);
 
-    T visit(ImageNode in);
-
-    T visit(VolumeNode vn);
-
     T visit(PoolNode pn);
 
     T visit(SlackFileNode sfn);
@@ -64,11 +59,7 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(ViewsNode vn);
 
-    T visit(DataSourceGroupingNode dataSourceGroupingNode);
-
     T visit(BlackboardArtifactNode ban);
-
-    T visit(Artifacts.BaseArtifactNode ecn);
 
     T visit(CommonAttributeValueNode cavn);
 
@@ -91,36 +82,10 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(Tags.RootNode node);
 
-
-    /*
-     * Reports
-     */
-    T visit(Reports.ReportsListNode reportsNode);
-
-    T visit(Reports.ReportNode reportNode);
-
-    T visit(EmptyNode.MessageNode emptyNode);
-
     /*
      * Attachments
      */
     T visit(AttachmentNode node);
-
-    T visit(OsAccounts.OsAccountListNode node);
-
-    T visit(PersonNode node);
-
-    T visit(HostNode node);
-
-    T visit(DataSourcesNode node);
-
-    /*
-     * Unsupported node
-     */
-    T visit(UnsupportedContentNode ucn);
-
-    T visit(LocalFilesDataSourceNode lfdsn);
-    
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -188,20 +153,10 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(FileNode fn) {
             return defaultVisit(fn);
         }
-
-        @Override
-        public T visit(ImageNode in) {
-            return defaultVisit(in);
-        }
-
+        
         @Override
         public T visit(PoolNode pn) {
             return defaultVisit(pn);
-        }
-
-        @Override
-        public T visit(VolumeNode vn) {
-            return defaultVisit(vn);
         }
 
         @Override
@@ -215,28 +170,8 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(Artifacts.BaseArtifactNode ecn) {
-            return defaultVisit(ecn);
-        }
-
-        @Override
-        public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
-            return defaultVisit(ftByMimeTypeEmptyNode);
-        }
-
-        @Override
         public T visit(ViewsNode vn) {
             return defaultVisit(vn);
-        }
-
-        @Override
-        public T visit(DataSourceGroupingNode dataSourceGroupingNode) {
-            return defaultVisit(dataSourceGroupingNode);
-        }
-
-        @Override
-        public T visit(DataSourceFilesNode in) {
-            return defaultVisit(in);
         }
 
         @Override
@@ -265,47 +200,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(Reports.ReportsListNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Reports.ReportNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
         public T visit(AttachmentNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(OsAccounts.OsAccountListNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(HostNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(DataSourcesNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(PersonNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(UnsupportedContentNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(LocalFilesDataSourceNode node) {
             return defaultVisit(node);
         }
     }

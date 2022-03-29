@@ -46,11 +46,10 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
-import org.sleuthkit.autopsy.datamodel.DataSourceFilesNode;
-import org.sleuthkit.autopsy.datamodel.PersonNode;
-import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.ContentNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.AllDataSourcesNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.DataSourceFilesNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.PersonNode;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -242,7 +241,7 @@ public class ViewContextAction extends AbstractAction {
         // Classic view
         // Start the search at the DataSourcesNode
         Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
-        Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(DataSourcesNode.getNameIdentifier());
+        Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(AllDataSourcesNode.getNameIdentifier());
         if (rootDsNode != null) {
             for (Node dataSourceLevelNode : getDataSourceLevelNodes(rootDsNode)) {
                 DataSource dataSource = dataSourceLevelNode.getLookup().lookup(DataSource.class);
@@ -383,7 +382,7 @@ public class ViewContextAction extends AbstractAction {
             return Collections.emptyList();
         } else if (node.getLookup().lookup(Host.class) != null
                 || node.getLookup().lookup(Person.class) != null
-                || DataSourcesNode.getNameIdentifier().equals(node.getLookup().lookup(String.class))
+                || AllDataSourcesNode.getNameIdentifier().equals(node.getLookup().lookup(String.class))
                 || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
             Children children = node.getChildren();
             Node[] childNodes = children == null ? null : children.getNodes(true);

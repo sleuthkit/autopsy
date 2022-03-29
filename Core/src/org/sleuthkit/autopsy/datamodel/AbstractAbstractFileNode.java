@@ -50,8 +50,6 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStat
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
-import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
-import org.sleuthkit.autopsy.datamodel.BaseChildFactory.RefreshKeysEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.CONTENT_CHANGED;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;

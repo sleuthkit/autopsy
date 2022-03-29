@@ -48,7 +48,6 @@ import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CentralRepoCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
-import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.commonpropertiessearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -247,12 +246,6 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public List<Action> visit(Reports.ReportsListNode ditem) {
-            // The base class Action is "Collapse All", inappropriate.
-            return null;
-        }
-
-        @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             return Arrays.asList(ditem.getActions(true));
         }
@@ -343,11 +336,6 @@ public class DataResultFilterNode extends FilterNode {
             } else {
                 return null;
             }
-        }
-
-        @Override
-        public AbstractAction visit(Reports.ReportNode reportNode) {
-            return reportNode.getPreferredAction();
         }
 
         @Override

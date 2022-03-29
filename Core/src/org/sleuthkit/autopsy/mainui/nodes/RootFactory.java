@@ -111,6 +111,7 @@ public class RootFactory {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         protected Node createNodeForKey(TreeItemDTO<?> key) {
             if (key.getSearchParams() instanceof HostSearchParams) {
                 return new HostNode((TreeItemDTO<? extends HostSearchParams>) key);
@@ -140,15 +141,46 @@ public class RootFactory {
     @Messages({"RootFactory_AllDataSourcesNode_displayName=Data Sources"})
     public static class AllDataSourcesNode extends StaticTreeNode {
 
+        private static final String NAME_ID = "ALL_DATA_SOURCES";
+
+        /**
+         * Returns the name identifier of this node.
+         *
+         * @return The name identifier.
+         */
+        public static final String getNameIdentifier() {
+            return NAME_ID;
+        }
+
         public AllDataSourcesNode() {
-            super("ALL_DATA_SOURCES",
+            super(NAME_ID,
                     Bundle.RootFactory_AllDataSourcesNode_displayName(),
                     "org/sleuthkit/autopsy/images/image.png",
                     new AllHostsFactory());
         }
     }
 
+    @Messages(value = {"PersonNode_unknownPersonNode_title=Unknown Persons"})
     public static class PersonNode extends TreeNode<PersonSearchParams> {
+
+        /**
+         * Returns the name identifier of this node.
+         *
+         * @return The name identifier.
+         */
+        public static final String getNameIdentifier() {
+            return PersonSearchParams.getTypeId();
+        }
+
+        /**
+         * Returns the id of an unknown persons node. This can be used with a
+         * node lookup.
+         *
+         * @return The id of an unknown persons node.
+         */
+        public static String getUnknownPersonId() {
+            return Bundle.PersonNode_unknownPersonNode_title();
+        }
 
         public PersonNode(TreeResultsDTO.TreeItemDTO<? extends PersonSearchParams> itemData) {
             super(PersonSearchParams.getTypeId(),
@@ -249,8 +281,19 @@ public class RootFactory {
     @Messages({"RootFactory_DataSourceFilesNode_displayName=Data Source Files"})
     public static class DataSourceFilesNode extends StaticTreeNode {
 
+        private static final String NAME_ID = "DATA_SOURCE_FILES";
+
+        /**
+         * Returns the name identifier of this node.
+         *
+         * @return The name identifier.
+         */
+        public static final String getNameIdentifier() {
+            return NAME_ID;
+        }
+        
         public DataSourceFilesNode(long dataSourceObjId) {
-            super("DATA_SOURCE_FILES_" + dataSourceObjId,
+            super(NAME_ID,
                     Bundle.RootFactory_DataSourceFilesNode_displayName(),
                     "org/sleuthkit/autopsy/images/image.png",
                     new FileSystemFactory(dataSourceObjId));

@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -64,19 +63,23 @@ public class DeleteReportAction extends AbstractAction {
     @NbBundle.Messages({
         "DeleteReportAction.showConfirmDialog.single.explanation=The report will remain on disk.",
         "DeleteReportAction.showConfirmDialog.multiple.explanation=The reports will remain on disk.",
-        "DeleteReportAction.showConfirmDialog.errorMsg=An error occurred while deleting the reports."})
+        "DeleteReportAction.showConfirmDialog.errorMsg=An error occurred while deleting the reports.",
+        "DeleteReportAction.actionPerformed.showConfirmDialog.title=Confirm Deletion",
+        "DeleteReportAction.actionPerformed.showConfirmDialog.single.msg=Do you want to delete 1 report from the case?",
+        "# {0} - reportNum",
+        "DeleteReportAction.actionPerformed.showConfirmDialog.multiple.msg=Do you want to delete {0} reports from the case?"})
     @Override
     public void actionPerformed(ActionEvent e) {
         Collection<? extends Report> selectedReportsCollection = Utilities.actionsGlobalContext().lookupAll(Report.class);
         String message = selectedReportsCollection.size() > 1
-                ? NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.multiple.msg", selectedReportsCollection.size())
-                : NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.single.msg");
+                ? Bundle.DeleteReportAction_actionPerformed_showConfirmDialog_multiple_msg(selectedReportsCollection.size())
+                : Bundle.DeleteReportAction_actionPerformed_showConfirmDialog_single_msg();
         String explanation = selectedReportsCollection.size() > 1
                 ? Bundle.DeleteReportAction_showConfirmDialog_multiple_explanation()
                 : Bundle.DeleteReportAction_showConfirmDialog_single_explanation();
         Object[] jOptionPaneContent = {message, explanation};
         if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null, jOptionPaneContent,
-                NbBundle.getMessage(Reports.class, "DeleteReportAction.actionPerformed.showConfirmDialog.title"),
+                Bundle.DeleteReportAction_actionPerformed_showConfirmDialog_title(),
                 JOptionPane.YES_NO_OPTION)) {
             try {
                 Case.getCurrentCaseThrows().deleteReports(selectedReportsCollection);
