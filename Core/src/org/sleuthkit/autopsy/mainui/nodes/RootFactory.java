@@ -31,9 +31,11 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.HostPersonDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.HostSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
@@ -46,7 +48,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.HostPersonEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode.StaticTreeNode;
-import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.datamodel.Person;
 
 /**
@@ -164,11 +165,11 @@ public class RootFactory {
     public static class PersonNode extends TreeNode<PersonSearchParams> {
 
         /**
-         * Returns the name identifier of this node.
+         * Returns the name prefix of this node type.
          *
-         * @return The name identifier.
+         * @return The name prefix.
          */
-        public static final String getNameIdentifier() {
+        public static final String getNamePrefix() {
             return PersonSearchParams.getTypeId();
         }
 
@@ -183,11 +184,16 @@ public class RootFactory {
         }
 
         public PersonNode(TreeResultsDTO.TreeItemDTO<? extends PersonSearchParams> itemData) {
-            super(PersonSearchParams.getTypeId(),
+            super(PersonSearchParams.getTypeId() + getLongString(
+                    itemData.getSearchParams().getPerson() == null 
+                            ? 0 
+                            : itemData.getSearchParams().getPerson().getPersonId()),
                     "org/sleuthkit/autopsy/images/person.png",
                     itemData,
                     Children.create(new HostFactory(itemData.getSearchParams().getPerson()), true),
-                    getDefaultLookup(itemData));
+                    itemData.getSearchParams().getPerson() != null
+                    ? Lookups.fixed(itemData.getSearchParams(), itemData.getSearchParams().getPerson())
+                    : Lookups.fixed(itemData.getSearchParams(), HostPersonDAO.getUnknownPersonsName()));
         }
     }
 
@@ -242,20 +248,40 @@ public class RootFactory {
     }
 
     public static class HostNode extends TreeNode<HostSearchParams> {
-
+        
+        /**
+         * Returns the name prefix of this node.
+         *
+         * @return The name prefix.
+         */
+        public static final String getNamePrefix() {
+            return HostSearchParams.getTypeId();
+        }
+        
         public HostNode(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> itemData) {
-            super(HostSearchParams.getTypeId(),
+            super(HostSearchParams.getTypeId() + "_" + getLongString(itemData.getSearchParams().getHost().getHostId()),
                     "org/sleuthkit/autopsy/images/host.png",
                     itemData,
                     Children.create(new FileSystemFactory(itemData.getSearchParams().getHost()), true),
-                    getDefaultLookup(itemData));
+                    Lookups.fixed(itemData.getSearchParams(), itemData.getSearchParams().getHost()));
         }
     }
 
     public static class DataSourceGroupedNode extends StaticTreeNode {
 
+        private static final String NAME_PREFIX = "DATA_SOURCE_GROUPED";
+
+        /**
+         * Returns the name prefix of this node.
+         *
+         * @return The name prefix.
+         */
+        public static final String getNamePrefix() {
+            return NAME_PREFIX;
+        }
+        
         public DataSourceGroupedNode(long dataSourceObjId, String dsName, boolean isImage) {
-            super("DATA_SOURCE_GROUPED_" + dataSourceObjId,
+            super(NAME_PREFIX + "_" + dataSourceObjId,
                     dsName,
                     isImage ? "org/sleuthkit/autopsy/images/image.png" : "org/sleuthkit/autopsy/images/fileset-icon-16.png",
                     new DataSourceGroupedFactory(dataSourceObjId));
@@ -281,19 +307,19 @@ public class RootFactory {
     @Messages({"RootFactory_DataSourceFilesNode_displayName=Data Source Files"})
     public static class DataSourceFilesNode extends StaticTreeNode {
 
-        private static final String NAME_ID = "DATA_SOURCE_FILES";
+        private static final String NAME_PREFIX = "DATA_SOURCE_FILES";
 
         /**
-         * Returns the name identifier of this node.
+         * Returns the name prefix of this node.
          *
-         * @return The name identifier.
+         * @return The name prefix.
          */
-        public static final String getNameIdentifier() {
-            return NAME_ID;
+        public static final String getNamePrefix() {
+            return NAME_PREFIX;
         }
         
         public DataSourceFilesNode(long dataSourceObjId) {
-            super(NAME_ID,
+            super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_DataSourceFilesNode_displayName(),
                     "org/sleuthkit/autopsy/images/image.png",
                     new FileSystemFactory(dataSourceObjId));
@@ -303,8 +329,19 @@ public class RootFactory {
     @Messages({"RootFactory_ViewsRootNode_displayName=Views"})
     public static class ViewsRootNode extends StaticTreeNode {
 
+        private static final String NAME_PREFIX = "VIEWS";
+
+        /**
+         * Returns the name prefix of this node.
+         *
+         * @return The name prefix.
+         */
+        public static final String getNamePrefix() {
+            return NAME_PREFIX;
+        }
+        
         public ViewsRootNode(Long dataSourceObjId) {
-            super("VIEWS_" + getLongString(dataSourceObjId),
+            super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_ViewsRootNode_displayName(),
                     "org/sleuthkit/autopsy/images/views.png",
                     new ViewsTypeFactory.ViewsChildren(dataSourceObjId));
@@ -314,8 +351,19 @@ public class RootFactory {
     @Messages({"RootFactory_DataArtifactsRootNode_displayName=Data Artifacts"})
     public static class DataArtifactsRootNode extends StaticTreeNode {
 
+        private static final String NAME_PREFIX = "DATA_ARTIFACT";
+
+        /**
+         * Returns the name prefix of this node.
+         *
+         * @return The name prefix.
+         */
+        public static final String getNamePrefix() {
+            return NAME_PREFIX;
+        }
+        
         public DataArtifactsRootNode(Long dataSourceObjId) {
-            super("DATA_ARTIFACT_" + getLongString(dataSourceObjId),
+            super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_DataArtifactsRootNode_displayName(),
                     "org/sleuthkit/autopsy/images/extracted_content.png",
                     new DataArtifactTypeFactory(dataSourceObjId));
@@ -325,8 +373,19 @@ public class RootFactory {
     @Messages({"RootFactory_AnalysisResultsRootNode_displayName=Analysis Results"})
     public static class AnalysisResultsRootNode extends StaticTreeNode {
 
+        private static final String NAME_PREFIX = "DATA_SOURCE_BY_TYPE";
+
+        /**
+         * Returns the name identifier of this node.
+         *
+         * @return The name identifier.
+         */
+        public static final String getNamePrefix() {
+            return NAME_PREFIX;
+        }
+        
         public AnalysisResultsRootNode(Long dataSourceObjId) {
-            super("DATA_SOURCE_BY_TYPE_" + getLongString(dataSourceObjId),
+            super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_AnalysisResultsRootNode_displayName(),
                     "org/sleuthkit/autopsy/images/analysis_result.png",
                     new AnalysisResultTypeFactory(dataSourceObjId));
@@ -336,10 +395,21 @@ public class RootFactory {
     @Messages({"RootFactory_OsAccountsRootNode_displayName=OS Accounts"})
     public static class OsAccountsRootNode extends StaticTreeNode {
 
+        private static final String NAME_PREFIX = "OS_ACCOUNTS";
+
+        /**
+         * Returns the name prefix of this node.
+         *
+         * @return The name prefix.
+         */
+        public static final String getNamePrefix() {
+            return NAME_PREFIX;
+        }
+        
         private final Long dataSourceObjId;
 
         public OsAccountsRootNode(Long dataSourceObjId) {
-            super("DATA_SOURCE_BY_TYPE_" + getLongString(dataSourceObjId),
+            super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_OsAccountsRootNode_displayName(),
                     "org/sleuthkit/autopsy/images/os-account.png");
 
@@ -356,8 +426,19 @@ public class RootFactory {
     @Messages({"RootFactory_TagsRootNode_displayName=Tags"})
     public static class TagsRootNode extends StaticTreeNode {
 
+        private static final String NAME_PREFIX = "DATA_SOURCE_BY_TYPE";
+
+        /**
+         * Returns the name prefix of this node.
+         *
+         * @return The name prefix.
+         */
+        public static final String getNamePrefix() {
+            return NAME_PREFIX;
+        }
+        
         public TagsRootNode(Long dataSourceObjId) {
-            super("DATA_SOURCE_BY_TYPE_" + getLongString(dataSourceObjId),
+            super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_TagsRootNode_displayName(),
                     "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png",
                     new TagNameFactory(dataSourceObjId));
@@ -367,8 +448,19 @@ public class RootFactory {
     @Messages({"RootFactory_ReportsRootNode_displayName=Reports"})
     public static class ReportsRootNode extends StaticTreeNode {
 
+        private static final String NAME_ID = "REPORTS";
+
+        /**
+         * Returns the name identifier of this node.
+         *
+         * @return The name identifier.
+         */
+        public static final String getNameIdentifier() {
+            return NAME_ID;
+        }
+        
         public ReportsRootNode() {
-            super("REPORTS",
+            super(NAME_ID,
                     Bundle.RootFactory_ReportsRootNode_displayName(),
                     "org/sleuthkit/autopsy/images/report_16.png");
         }

@@ -48,6 +48,10 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(FileNode fn);
 
+    T visit(ImageNode in);
+
+    T visit(VolumeNode vn);
+
     T visit(PoolNode pn);
 
     T visit(SlackFileNode sfn);
@@ -56,8 +60,6 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Views Area
      */
-    T visit(ViewsNode vn);
-
     T visit(BlackboardArtifactNode ban);
 
     T visit(CommonAttributeValueNode cavn);
@@ -85,7 +87,6 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Reports
      */
-
     T visit(EmptyNode.MessageNode emptyNode);
 
     /*
@@ -93,12 +94,12 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(AttachmentNode node);
 
-
     /*
      * Unsupported node
      */
     T visit(UnsupportedContentNode ucn);
 
+    T visit(LocalFilesDataSourceNode lfdsn);
     
 
     /**
@@ -169,8 +170,18 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
+        public T visit(ImageNode in) {
+            return defaultVisit(in);
+        }
+
+        @Override
         public T visit(PoolNode pn) {
             return defaultVisit(pn);
+        }
+
+        @Override
+        public T visit(VolumeNode vn) {
+            return defaultVisit(vn);
         }
 
         @Override
@@ -186,11 +197,6 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
             return defaultVisit(ftByMimeTypeEmptyNode);
-        }
-
-        @Override
-        public T visit(ViewsNode vn) {
-            return defaultVisit(vn);
         }
 
         @Override
@@ -225,6 +231,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(UnsupportedContentNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(LocalFilesDataSourceNode node) {
             return defaultVisit(node);
         }
     }

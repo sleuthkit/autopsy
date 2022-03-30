@@ -25,7 +25,7 @@ import org.sleuthkit.datamodel.Person;
  * Search parameters for a given person.
  */
 public class PersonSearchParams {
-    private static final String TYPE_ID = "Host";
+    private static final String TYPE_ID = "Person";
     
     public static String getTypeId() {
         return TYPE_ID;

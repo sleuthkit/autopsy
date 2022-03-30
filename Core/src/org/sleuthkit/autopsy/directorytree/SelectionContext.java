@@ -67,7 +67,9 @@ enum SelectionContext {
             // Parent of root node or root node. Occurs during case open / close.
             return SelectionContext.OTHER;
         } else if ((!Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) && AllDataSourcesNode.getNameIdentifier().equals(n.getParentNode().getName()))
-                || (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) && DataSourceFilesNode.getNameIdentifier().equals(n.getParentNode().getName()))) {
+                || (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) 
+                    && n.getParentNode().getName() != null
+                    && n.getParentNode().getName().startsWith(DataSourceFilesNode.getNamePrefix()))) {
             // if group by data type and root is the DataSourcesNode or
             // if group by persons/hosts and parent of DataSourceFilesNode
             // then it is a data source node

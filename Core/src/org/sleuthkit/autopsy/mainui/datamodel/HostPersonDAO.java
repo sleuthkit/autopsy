@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
@@ -41,8 +41,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * Dao for hosts.
+ * Dao for hosts and persons.
  */
+@Messages({"HostPersonDAO_unknownPersons_displayName=Unknown Persons"})
 public class HostPersonDAO extends AbstractDAO {
 
     private static HostPersonDAO instance = null;
@@ -52,6 +53,10 @@ public class HostPersonDAO extends AbstractDAO {
             instance = new HostPersonDAO();
         }
         return instance;
+    }
+    
+    public static String getUnknownPersonsName() {
+        return Bundle.HostPersonDAO_unknownPersons_displayName();
     }
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
@@ -110,7 +115,7 @@ public class HostPersonDAO extends AbstractDAO {
                 TreeDisplayCount.NOT_SHOWN);
     }
 
-    @NbBundle.Messages({"HostPersonDAO_unknownPersons_displayName=Unknown Persons"})
+    
     private TreeItemDTO<PersonSearchParams> createPersonTreeItem(Person person) {
         return new TreeItemDTO<>(
                 PersonSearchParams.getTypeId(),

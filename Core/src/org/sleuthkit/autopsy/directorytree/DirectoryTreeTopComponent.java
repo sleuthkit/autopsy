@@ -77,7 +77,6 @@ import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -87,6 +86,11 @@ import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetFactory;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.RootFactory;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.AnalysisResultsRootNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.DataArtifactsRootNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.OsAccountsRootNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.PersonNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.ViewsRootNode;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.MimeParentNode;
 import org.sleuthkit.datamodel.Account;
@@ -126,7 +130,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
 
     // nodes to be opened if present at top level
-    private static final Set<String> NODES_TO_EXPAND = Stream.of(AnalysisResults.getName(), DataArtifacts.getName(), ViewsNode.NAME)
+    private static final Set<String> NODES_TO_EXPAND_PREFIXES = Stream.of(
+            AnalysisResultsRootNode.getNamePrefix(), 
+            DataArtifactsRootNode.getNamePrefix(), 
+            ViewsRootNode.getNamePrefix())
             .collect(Collectors.toSet());
 
     /**
@@ -195,7 +202,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     .forEach(tree::expandNode);
         } else {
             Stream.of(rootChildrenNodes)
-                    .filter(n -> n != null && NODES_TO_EXPAND.contains(n.getName()))
+                    .filter(n -> {
+                        // find any where node name is present in prefixes
+                        return n != null
+                                && n.getName() != null
+                                && NODES_TO_EXPAND_PREFIXES.stream()
+                                        .filter(prefix -> n.getName().startsWith(prefix))
+                                        .findAny()
+                                        .isPresent();
+                    })
                     .forEach(tree::expandNode);
         }
     }
@@ -1134,9 +1149,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private Optional<Node> getCategoryNodeChild(Children children, Category category) {
         switch (category) {
             case DATA_ARTIFACT:
-                return Optional.ofNullable(children.findChild(DataArtifacts.getName()));
+                return Stream.of(children.getNodes(true))
+                        .filter(n -> n.getName() != null && n.getName().startsWith(DataArtifactsRootNode.getNamePrefix()))
+                        .findFirst();
             case ANALYSIS_RESULT:
-                return Optional.ofNullable(children.findChild(AnalysisResults.getName()));
+                return Stream.of(children.getNodes(true))
+                        .filter(n -> n.getName() != null && n.getName().startsWith(AnalysisResultsRootNode.getNamePrefix()))
+                        .findFirst();
             default:
                 LOGGER.log(Level.WARNING, "Unbale to find category of type: " + category.name());
                 return Optional.empty();
@@ -1246,7 +1265,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         }
 
-        if (OsAccounts.getListName().equals(node.getName())) {
+        if (node.getName() != null && node.getName().startsWith(OsAccountsRootNode.getNamePrefix())) {
             return Optional.of(node);
         }
 

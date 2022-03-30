@@ -299,7 +299,14 @@ public class ViewContextAction extends AbstractAction {
                 }
 
                 // for this data source, get the "Data Sources" child node
-                Node datasourceGroupingNode = treeNode.getChildren().findChild(DataSourceFilesNode.getNameIdentifier());
+                Node datasourceGroupingNode = Stream.of(treeNode.getChildren().getNodes(true))
+                        .filter(nd -> nd != null && nd.getName() != null && nd.getName().startsWith(DataSourceFilesNode.getNamePrefix()))
+                        .findAny()
+                        .orElse(null);
+                
+                if (datasourceGroupingNode != null) {
+                    continue;
+                }
 
                 // check whether this is the data source we are looking for
                 Node parentTreeViewNode = findParentNodeInTree(parentContent, datasourceGroupingNode);
