@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016-2021 Basis Technology Corp.
+ * Copyright 2016-2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -96,6 +97,7 @@ import org.sleuthkit.autopsy.datasourceprocessors.AddDataSourceCallback;
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.AutoIngestJobException;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.ControlEventType;
+import org.sleuthkit.autopsy.experimental.cleanup.AutoIngestCleanup;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -178,6 +180,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private Path rootOutputDirectory;
     private volatile State state;
     private volatile ErrorState errorState;
+    
+    private static final int NUM_CLEANUP_SCHEDULING_THREADS = 1;
+    private static final String CLEANUP_SCHEDULER_THREAD_NAME = "AIM-cleanup-scheduler-%d";
+    private final ScheduledThreadPoolExecutor cleanupSchedulingExecutor;
+    private final ExecutorService cleanupExecutor;
+    private static final long CLEANUP_INTERVAL_HOURS = 3;
+    private static final String CLEANUP_THREAD_NAME = "AIM-cleanup-%d";
 
     private volatile AutoIngestNodeStateEvent lastPublishedStateEvent;
 
@@ -219,6 +228,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         inputScanExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(INPUT_SCAN_THREAD_NAME).build());
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(AUTO_INGEST_THREAD_NAME).build());
         jobStatusPublishingExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(JOB_STATUS_PUBLISHING_THREAD_NAME).build());
+        
+        cleanupSchedulingExecutor = new ScheduledThreadPoolExecutor(NUM_CLEANUP_SCHEDULING_THREADS, new ThreadFactoryBuilder().setNameFormat(CLEANUP_SCHEDULER_THREAD_NAME).build());
+        cleanupExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(CLEANUP_THREAD_NAME).build());     
+        
         hostNamesToRunningJobs = new ConcurrentHashMap<>();
         hostNamesToLastMsgTime = new ConcurrentHashMap<>();
         jobsLock = new Object();
@@ -258,6 +271,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         jobProcessingTask = new JobProcessingTask();
         jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
         jobStatusPublishingExecutor.scheduleWithFixedDelay(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        cleanupSchedulingExecutor.scheduleWithFixedDelay(new CleanupSchedulingTask(), 0, AutoIngestUserPreferences.getHoursOfCleanupInterval(), TimeUnit.HOURS);
         eventPublisher.addSubscriber(EVENT_LIST, instance);
         state = State.RUNNING;
 
@@ -3103,6 +3117,36 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             }
         }
 
+    }
+            
+    /**
+     * An instance of this runnable is responsible for periodically cleaning up
+     * input and output directories for jobs and cases that have been processed,
+     * as well as deleting corresponding ZK nodes. 
+     */
+    private final class CleanupSchedulingTask implements Runnable {
+
+        private CleanupSchedulingTask() {
+            sysLogger.log(Level.INFO, "Periodic automated cleanup task started");
+        }
+
+        @Override
+        public void run() {
+
+            try {
+                //discover the registered implementations of automated cleanup 
+                Collection<? extends AutoIngestCleanup> cleanups
+                        = Lookup.getDefault().lookupAll(AutoIngestCleanup.class);
+                
+                if (!cleanups.isEmpty()) {
+                    AutoIngestCleanup cleanup = cleanups.iterator().next();
+                    cleanup.runCleanupTask();
+                }
+
+            } catch (Exception ex) {
+                sysLogger.log(Level.SEVERE, "Unexpected exception in CleanupSchedulingTask", ex); //NON-NLS
+            }
+        }
     }
 
     /**

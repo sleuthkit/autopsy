@@ -40,6 +40,7 @@ public final class AutoIngestUserPreferences {
     private static final int DEFAULT_MAX_TIMES_TO_PROCESS_IMAGE = 0;
     private static final String MAX_CONCURRENT_NODES_FOR_ONE_CASE = "MaxConcurrentNodesForOneCase"; // NON-NLS
     private static final String INPUT_SCAN_INTERVAL_TIME = "IntervalBetweenInputScan"; // NON-NLS
+    private static final String CLEANUP_INTERVAL_TIME = "IntervalBetweenCleanupHrs"; // NON-NLS
 
     // Prevent instantiation.
     private AutoIngestUserPreferences() {
@@ -280,6 +281,16 @@ public final class AutoIngestUserPreferences {
     public static int getMinutesOfInputScanInterval() {
         String value = getPreferenceValue(INPUT_SCAN_INTERVAL_TIME);
         return value.isEmpty() ? 60 : Integer.parseInt(value);
+    }
+    
+    /**
+     * Get the configured time for automated input and output cleanup interval
+     *
+     * @return int the value in hours, default is 3 hours.
+     */
+    public static int getHoursOfCleanupInterval() {
+        String value = getPreferenceValue(CLEANUP_INTERVAL_TIME);
+        return value.isEmpty() ? 3 : Integer.parseInt(value);
     }
 
     /**
