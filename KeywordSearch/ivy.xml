@@ -45,7 +45,7 @@
         <!-- logging -->
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="slf4j-log4j12" rev="1.7.36"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.36"/>
-        <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.36"/>
+        <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.36"/> 
         
         <!-- Remnants of a past Tika dependency. These jars were being exported from Tika, which has since 
              moved into it's own NBM. For sake of backwards compatibility, these are still provided. -->
