@@ -42,14 +42,12 @@ import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardBinSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardFileSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.CreditCardSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.EmailSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
@@ -58,6 +56,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
+import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -532,9 +531,10 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      * parameters query.
      *
      * @param osAccountParams The search parameter query.
+     * @param nodeSelectionInfo The os account selected or null if no selection.
      */
-    public void displayOsAccounts(OsAccountsSearchParams osAccountParams) {
-        dataResultPanel.displayOsAccount(osAccountParams);
+    public void displayOsAccounts(OsAccountsSearchParams osAccountParams, ChildNodeSelectionInfo nodeSelectionInfo) {
+        dataResultPanel.displayOsAccount(osAccountParams, nodeSelectionInfo);
     }
 
     /**

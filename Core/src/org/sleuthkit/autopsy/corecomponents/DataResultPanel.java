@@ -1536,12 +1536,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * query.
      *
      * @param osAccountKey The search parameters.
+     * @param nodeSelectionInfo The selected node or null for no selection.
      */
-    void displayOsAccount(OsAccountsSearchParams osAccountKey) {
+    void displayOsAccount(OsAccountsSearchParams osAccountKey, ChildNodeSelectionInfo nodeSelectionInfo) {
         try {
             this.searchResultManager = new SearchManager(new AccountFetcher(osAccountKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, nodeSelectionInfo);
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for Os Account filter: {0}.",

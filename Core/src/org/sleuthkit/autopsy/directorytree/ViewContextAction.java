@@ -23,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -46,6 +47,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.ContentNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.RootFactory.AllDataSourcesNode;
 import org.sleuthkit.autopsy.mainui.nodes.RootFactory.DataSourceFilesNode;
@@ -241,13 +243,26 @@ public class ViewContextAction extends AbstractAction {
         // Classic view
         // Start the search at the DataSourcesNode
         Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
+        long parentContentDsId;
+        
+        if (parentContent instanceof AbstractFile) {
+            parentContentDsId = ((AbstractFile) parentContent).getDataSourceObjectId();
+        } else {
+            try {
+                parentContentDsId = parentContent.getDataSource().getId();
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching data source for content with id: " + parentContent.getId(), ex);
+                return null;
+            }
+        }
+        
         Node rootDsNode = rootChildren == null ? null : rootChildren.findChild(AllDataSourcesNode.getNameIdentifier());
         if (rootDsNode != null) {
             for (Node dataSourceLevelNode : getDataSourceLevelNodes(rootDsNode)) {
                 DataSource dataSource = dataSourceLevelNode.getLookup().lookup(DataSource.class);
-                if (dataSource != null) {
+                if (dataSource != null && dataSource.getId() == parentContentDsId) {
                     // the tree view needs to be searched to find the parent treeview node.
-                    Node potentialParentTreeViewNode = findParentNodeInTree(parentContent, dataSourceLevelNode);
+                    Node potentialParentTreeViewNode = findContentNodeInDS(dataSourceLevelNode, parentContent);
                     if (potentialParentTreeViewNode != null) {
                         return potentialParentTreeViewNode;
                     }
@@ -308,8 +323,15 @@ public class ViewContextAction extends AbstractAction {
                     continue;
                 }
 
+                DataSource nodeDs = datasourceGroupingNode.getLookup().lookup(DataSource.class);
+                
+                // if not data source continue
+                if (nodeDs == null || nodeDs.getId() != contentDSObjid) {
+                    continue;
+                }
+                
                 // check whether this is the data source we are looking for
-                Node parentTreeViewNode = findParentNodeInTree(parentContent, datasourceGroupingNode);
+                Node parentTreeViewNode = findContentNodeInDS(datasourceGroupingNode, parentContent);
                 if (parentTreeViewNode != null) {
                     // found the data source node
                     return parentTreeViewNode;
@@ -406,64 +428,58 @@ public class ViewContextAction extends AbstractAction {
     }
 
     /**
-     * Searches tree for parent node by getting an ordered list of the ancestors
-     * of the specified content.
-     *
-     * @param parentContent parent content for the content to be searched for
-     * @param node          Node tree to search
-     *
-     * @return Node object of the matching parent, NULL if not found
+     * Find content node for specified content within a data source level node.  
+     * 
+     * NOTE: it is probably a good idea to check that the content is in the 
+     * data source for the data source node before traversal (for performance 
+     * reasons).
+     * 
+     * @param dataSourceNode The data source level node.
+     * @param content The content whose node is to be found.
+     * @return The found node or null.
      */
-    private Node findParentNodeInTree(Content parentContent, Node node) {
+    private Node findContentNodeInDS(Node dataSourceNode, Content content) {
         /*
          * Get an ordered list of the ancestors of the specified
          * content, starting with its data source.
-         *
          */
-        AncestorVisitor ancestorVisitor = new AncestorVisitor();
-        List<Content> contentBranch = parentContent.accept(ancestorVisitor);
-        Collections.reverse(contentBranch);
-
+        List<Content> path = content.accept(new AncestorVisitor());
+        Collections.reverse(path);
+                
         /**
-         * Convert the list of ancestors into a list of tree nodes.
-         *
-         * IMPORTANT: The "dummy" root node used to create this single layer of
-         * children needs to be wrapped in a DirectoryTreeFilterNode so that its
-         * child nodes will also be wrapped in DirectoryTreeFilterNodes, via
-         * DirectoryTreeFilterNodeChildren. Otherwise, the display names of the
-         * nodes in the branch will not have child node counts and will not
-         * match the display names of the corresponding nodes in the actual tree
-         * view.
+         * For each path element in path, find matching content.
          */
-        Node dummyRootNode = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(contentBranch)), true);
-        Children ancestorChildren = dummyRootNode.getChildren();
-
-        // if content is the data source provided, return that.
-        if (ancestorChildren.getNodesCount() == 1 && StringUtils.equals(ancestorChildren.getNodeAt(0).getName(), node.getName())) {
-            return node;
-        }
-
-        /*
-        * Search the tree for the parent node. Note that this algorithm
-        * simply discards "extra" ancestor nodes not shown in the tree,
-        * such as the root directory of the file system for file system
-        * content.
-         */
-        Children treeNodeChildren = node.getChildren();
-        Node parentTreeViewNode = null;
-        for (int i = 0; i < ancestorChildren.getNodesCount(); i++) {
-            Node ancestorNode = ancestorChildren.getNodeAt(i);
-            Node[] treeNodeChilds = treeNodeChildren.getNodes(true);
-            for (int j = 0; j < treeNodeChilds.length; j++) {
-                Node treeNode = treeNodeChilds[j];
-                if (ancestorNode.getName().equals(treeNode.getName())) {
-                    parentTreeViewNode = treeNode;
-                    treeNodeChildren = treeNode.getChildren();
+        Node curContentNode = dataSourceNode;
+        for (Content pathElement : path) {
+            // ensure curContentNode and its children exist
+            if (curContentNode == null || curContentNode.getChildren() == null) {
+                return null;
+            }
+            
+            // ensure node array returned from getNodes
+            Node[] curContentChildNodes = curContentNode.getChildren().getNodes(true);
+            if (curContentChildNodes == null) {
+                return null;
+            }
+            
+            // find child node in path to continue traversal
+            boolean found = false;
+            for (Node curContentChildNode : curContentChildNodes) {
+                TskContentItem<?> contentItem = curContentNode.getLookup().lookup(TskContentItem.class);
+                if (contentItem != null && contentItem.getTskContent() != null && contentItem.getTskContent().getId() == pathElement.getId()) {
+                    curContentNode = curContentChildNode;
+                    found = true;
                     break;
                 }
             }
+            
+            // if not found, we won't be able to identify the path.
+            if (!found) {
+                return null;
+            }
         }
-        return parentTreeViewNode;
+        
+        return curContentNode;
     }
 
     /**

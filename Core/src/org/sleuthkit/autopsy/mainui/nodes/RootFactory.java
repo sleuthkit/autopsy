@@ -418,7 +418,7 @@ public class RootFactory {
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
-            dataResultPanel.displayOsAccounts(new OsAccountsSearchParams(dataSourceObjId));
+            dataResultPanel.displayOsAccounts(new OsAccountsSearchParams(dataSourceObjId), getNodeSelectionInfo());
         }
 
     }

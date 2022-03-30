@@ -32,6 +32,13 @@ DeleteFileBlackboardArtifactTagAction.deleteTags.alert=Unable to untag artifact 
 DeleteFileContentTagAction.deleteTag=Remove File Tag
 # {0} - fileID
 DeleteFileContentTagAction.deleteTag.alert=Unable to untag file {0}.
+# {0} - reportNum
+DeleteReportAction.actionPerformed.showConfirmDialog.multiple.msg=Do you want to delete {0} reports from the case?
+DeleteReportAction.actionPerformed.showConfirmDialog.single.msg=Do you want to delete 1 report from the case?
+DeleteReportAction.actionPerformed.showConfirmDialog.title=Confirm Deletion
+DeleteReportAction.showConfirmDialog.errorMsg=An error occurred while deleting the reports.
+DeleteReportAction.showConfirmDialog.multiple.explanation=The reports will remain on disk.
+DeleteReportAction.showConfirmDialog.single.explanation=The report will remain on disk.
 ExitAction.confirmationDialog.message=Ingest is running, are you sure you want to exit?
 ExitAction.confirmationDialog.title=Ingest is Running
 # {0} - exception message

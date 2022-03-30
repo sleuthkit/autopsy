@@ -85,6 +85,7 @@ import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetFactory;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.OsAccountNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.RootFactory;
 import org.sleuthkit.autopsy.mainui.nodes.RootFactory.AnalysisResultsRootNode;
 import org.sleuthkit.autopsy.mainui.nodes.RootFactory.DataArtifactsRootNode;
@@ -1303,16 +1304,21 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         Node osAccountListNode = osAccountListNodeOpt.get();
 
-        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) osAccountListNode).getOriginal();
-        undecoratedParentNode.setChildNodeSelectionInfo((osAcctNd) -> {
-            OsAccount osAcctOfNd = osAcctNd.getLookup().lookup(OsAccount.class);
-            return osAcctOfNd != null && osAcctOfNd.getId() == osAccount.getId();
-        });
+        if (osAccountListNode instanceof TreeNode) {
+            TreeNode treeNode = (TreeNode) osAccountListNode;
+            treeNode.setNodeSelectionInfo(new OsAccountNodeSelectionInfo(osAccount.getId()));
+        }
+
         getTree().expandNode(osAccountListNode);
-        try {
-            em.setExploredContextAndSelection(osAccountListNode, new Node[]{osAccountListNode});
-        } catch (PropertyVetoException ex) {
-            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+        if (this.getSelectedNode().equals(osAccountListNode)) {
+            this.setDirectoryListingActive();
+            this.respondSelection(em.getSelectedNodes(), new Node[]{osAccountListNode});
+        } else {
+            try {
+                em.setExploredContextAndSelection(osAccountListNode, new Node[]{osAccountListNode});
+            } catch (PropertyVetoException ex) {
+                LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+            }
         }
     }
 
@@ -1388,9 +1394,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         if (treeNode == null) {
             return;
         }
-
-//        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
-//        undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
 
         if(treeNode instanceof TreeNode) {
             ((TreeNode)treeNode).setNodeSelectionInfo(new BlackboardArtifactNodeSelectionInfo(art));
