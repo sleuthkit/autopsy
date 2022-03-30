@@ -36,7 +36,6 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Data Sources Area
      */
-
     T visit(LayoutFileNode lfn);
 
     T visit(LocalFileNode dfn);
@@ -82,10 +81,25 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(Tags.RootNode node);
 
+
+    /*
+     * Reports
+     */
+
+    T visit(EmptyNode.MessageNode emptyNode);
+
     /*
      * Attachments
      */
     T visit(AttachmentNode node);
+
+
+    /*
+     * Unsupported node
+     */
+    T visit(UnsupportedContentNode ucn);
+
+    
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -153,7 +167,7 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(FileNode fn) {
             return defaultVisit(fn);
         }
-        
+
         @Override
         public T visit(PoolNode pn) {
             return defaultVisit(pn);
@@ -167,6 +181,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(BlackboardArtifactNode ban) {
             return defaultVisit(ban);
+        }
+
+        @Override
+        public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
+            return defaultVisit(ftByMimeTypeEmptyNode);
         }
 
         @Override
@@ -201,6 +220,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(AttachmentNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(UnsupportedContentNode node) {
             return defaultVisit(node);
         }
     }
