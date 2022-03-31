@@ -621,14 +621,10 @@ public final class ActionsFactory {
     private static Optional<ActionGroup> getPersonActions(ActionContext actionContext) {
         return actionContext.getPerson()
                 .flatMap(person -> {
-                    if (person == null) {
-                        return Optional.empty();
-                    } else {
-                        return Optional.of(new ActionGroup(Arrays.asList(
-                                new EditPersonAction(person),
-                                new DeletePersonAction(person)
-                        )));
-                    }
+                    return Optional.of(new ActionGroup(Arrays.asList(
+                            new EditPersonAction(person),
+                            new DeletePersonAction(person)
+                    )));
                 });
     }
     

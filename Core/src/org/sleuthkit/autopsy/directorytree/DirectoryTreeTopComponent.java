@@ -124,7 +124,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
     private Children autopsyTreeChildren;
-    private Accounts accounts;
     private boolean showRejectedResults;
     private static final long DEFAULT_DATASOURCE_GROUPING_THRESHOLD = 5; // Threshold for prompting the user about grouping by data source
     private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";

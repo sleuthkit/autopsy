@@ -279,7 +279,7 @@ public interface ActionContext {
     default Optional<Person> getPerson() {
         return Optional.empty();
     }
-    
+
     /**
      * @return The host relevant to the node if present.
      */

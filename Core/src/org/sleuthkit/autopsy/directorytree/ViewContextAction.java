@@ -23,7 +23,6 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -32,16 +31,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
-import org.apache.commons.lang3.StringUtils;
-import org.openide.nodes.AbstractNode;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.TreeView;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
@@ -51,6 +46,7 @@ import org.sleuthkit.autopsy.datamodel.TskContentItem;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.ContentNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.RootFactory.AllDataSourcesNode;
 import org.sleuthkit.autopsy.mainui.nodes.RootFactory.DataSourceFilesNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.DataSourceGroupedNode;
 import org.sleuthkit.autopsy.mainui.nodes.RootFactory.PersonNode;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -61,10 +57,8 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Person;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.UnsupportedContent;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -285,45 +279,21 @@ public class ViewContextAction extends AbstractAction {
      * @return The node if found or null.
      */
     private Node getParentNodeGroupedByPersonHost(ExplorerManager treeViewExplorerMgr, Content parentContent) {
-        // 'Group by Data Source' view
+        // 'Group by Host/Person' view
 
-        SleuthkitCase skCase;
-        String dsname;
         try {
-            // get the objid/name of the datasource of the selected content.
-            skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             long contentDSObjid = parentContent.getDataSource().getId();
-            DataSource datasource = skCase.getDataSource(contentDSObjid);
-            dsname = datasource.getName();
+            
             Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
 
             // the tree view needs to be searched to find the parent treeview node.
-            /* NOTE: we can't do a lookup by data source name here, becase if there
-            are multiple data sources with the same name, then "getChildren().findChild(dsname)"
-            simply returns the first one that it finds. Instead we have to loop over all
-            data sources with that name, and make sure we find the correct one.
-             */
             List<Node> dataSourceLevelNodes = Stream.of(rootChildren.getNodes(true))
                     .flatMap(rootNode -> getDataSourceLevelNodes(rootNode).stream())
                     .collect(Collectors.toList());
 
             for (Node treeNode : dataSourceLevelNodes) {
                 // in the root, look for a data source node with the name of interest
-                if (!(treeNode.getName().equals(dsname))) {
-                    continue;
-                }
-
-                // for this data source, get the "Data Sources" child node
-                Node datasourceGroupingNode = Stream.of(treeNode.getChildren().getNodes(true))
-                        .filter(nd -> nd != null && nd.getName() != null && nd.getName().startsWith(DataSourceFilesNode.getNamePrefix()))
-                        .findAny()
-                        .orElse(null);
-                
-                if (datasourceGroupingNode != null) {
-                    continue;
-                }
-
-                DataSource nodeDs = datasourceGroupingNode.getLookup().lookup(DataSource.class);
+                DataSource nodeDs = treeNode.getLookup().lookup(DataSource.class);
                 
                 // if not data source continue
                 if (nodeDs == null || nodeDs.getId() != contentDSObjid) {
@@ -331,13 +301,13 @@ public class ViewContextAction extends AbstractAction {
                 }
                 
                 // check whether this is the data source we are looking for
-                Node parentTreeViewNode = findContentNodeInDS(datasourceGroupingNode, parentContent);
+                Node parentTreeViewNode = findContentNodeInDS(treeNode, parentContent);
                 if (parentTreeViewNode != null) {
                     // found the data source node
                     return parentTreeViewNode;
                 }
             }
-        } catch (NoCurrentCaseException | TskDataException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
             logger.log(Level.SEVERE, "Failed to locate data source node in tree.", ex); //NON-NLS
         }
@@ -412,7 +382,8 @@ public class ViewContextAction extends AbstractAction {
         } else if (node.getLookup().lookup(Host.class) != null
                 || node.getLookup().lookup(Person.class) != null
                 || AllDataSourcesNode.getNameIdentifier().equals(node.getName())
-                || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
+                || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))
+                || (node.getName() != null && (node.getName().startsWith(DataSourceGroupedNode.getNamePrefix()) || node.getName().startsWith(DataSourceFilesNode.getNamePrefix())))) {
             Children children = node.getChildren();
             Node[] childNodes = children == null ? null : children.getNodes(true);
             if (childNodes == null) {

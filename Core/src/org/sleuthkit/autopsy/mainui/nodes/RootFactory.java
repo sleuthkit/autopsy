@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -27,10 +28,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
@@ -40,7 +41,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
-import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.HostPersonDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.HostSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.PersonSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
@@ -57,7 +58,6 @@ import org.sleuthkit.autopsy.mainui.nodes.TreeNode.StaticTreeNode;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
@@ -93,56 +93,79 @@ public class RootFactory {
     /**
      * Factory for populating child nodes in a tree based on TreeResultsDTO
      */
-    static class HostPersonRootFactory extends ChildFactory.Detachable<TreeItemDTO<?>> {
+    static class HostPersonRootFactory extends TreeChildFactory<Object> {
 
         private static final Logger logger = Logger.getLogger(HostPersonRootFactory.class.getName());
 
-        private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
-            if (evt.getNewValue() instanceof DAOAggregateEvent) {
-                for (DAOEvent daoEvt : ((DAOAggregateEvent) evt.getNewValue()).getEvents()) {
-                    if (daoEvt instanceof HostPersonEvent) {
-                        HostPersonRootFactory.this.refresh(false);
-                        return;
-                    }
+        @Override
+        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
+            for (DAOEvent evt : aggEvt.getEvents()) {
+                if (evt instanceof HostPersonEvent) {
+                    super.update();
+                    return;
                 }
             }
-        };
+        }
 
-        private PropertyChangeListener weakPcl;
-
-        @Override
-        protected void addNotify() {
-            weakPcl = WeakListeners.propertyChange(pcl, MainDAO.getInstance().getTreeEventsManager());
-            MainDAO.getInstance().getTreeEventsManager().addPropertyChangeListener(weakPcl);
-            super.addNotify();
+        private TreeNode<Object> downCastNode(TreeNode<? extends Object> orig) {
+            return (TreeNode<Object>) orig;
         }
 
         @Override
-        protected boolean createKeys(List<TreeItemDTO<?>> toPopulate) {
+        protected TreeNode<Object> createNewNode(TreeItemDTO<? extends Object> rowData) {
+            if (rowData.getSearchParams() instanceof HostSearchParams) {
+                return downCastNode(HostNode.getPersonHostViewNode((TreeItemDTO<? extends HostSearchParams>) rowData));
+            } else if (rowData.getSearchParams() instanceof PersonSearchParams) {
+                return downCastNode(new PersonNode((TreeItemDTO<? extends PersonSearchParams>) rowData));
+            } else if (rowData.getSearchParams() instanceof ReportsSearchParams) {
+                return downCastNode(new ReportsRootNode());
+            } else {
+                return null;
+            }
+        }
+
+        private TreeItemDTO<Object> downCastTreeItem(TreeItemDTO<? extends Object> orig) {
+            return (TreeItemDTO<Object>) orig;
+        }
+
+        @Override
+        protected TreeResultsDTO<? extends Object> getChildResults() throws IllegalArgumentException, ExecutionException {
+            List<TreeItemDTO<Object>> toReturn = new ArrayList<>();
             try {
                 TreeResultsDTO<? extends PersonSearchParams> persons = MainDAO.getInstance().getHostPersonDAO().getAllPersons();
                 if (persons.getItems().isEmpty() || (persons.getItems().size() == 1 && persons.getItems().get(0).getSearchParams().getPerson() == null)) {
-                    toPopulate.addAll(MainDAO.getInstance().getHostPersonDAO().getAllHosts().getItems());
+                    toReturn.addAll(MainDAO.getInstance().getHostPersonDAO().getAllHosts().getItems().stream()
+                            .map(this::downCastTreeItem)
+                            .collect(Collectors.toList()));
                 } else {
-                    toPopulate.addAll(persons.getItems());
+                    toReturn.addAll(persons.getItems().stream()
+                            .map(this::downCastTreeItem)
+                            .collect(Collectors.toList()));
                 }
             } catch (ExecutionException | IllegalArgumentException ex) {
                 logger.log(Level.WARNING, "Error acquiring top-level host/person data", ex);
             }
 
-            return true;
+            toReturn.add(new TreeItemDTO<Object>(
+                    ReportsSearchParams.getTypeId(),
+                    ReportsSearchParams.getInstance(),
+                    ReportsSearchParams.class.getSimpleName(),
+                    Bundle.RootFactory_ReportsRootNode_displayName(),
+                    TreeDisplayCount.NOT_SHOWN));
+
+            return new TreeResultsDTO<Object>(toReturn);
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        protected Node createNodeForKey(TreeItemDTO<?> key) {
-            if (key.getSearchParams() instanceof HostSearchParams) {
-                return HostNode.getPersonHostViewNode((TreeItemDTO<? extends HostSearchParams>) key);
-            } else if (key.getSearchParams() instanceof PersonSearchParams) {
-                return new PersonNode((TreeItemDTO<? extends PersonSearchParams>) key);
-            } else {
-                return null;
-            }
+        protected TreeItemDTO<? extends Object> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            // all events will be handled with a full refresh
+            return null;
+        }
+
+        @Override
+        public int compare(TreeItemDTO<? extends Object> o1, TreeItemDTO<? extends Object> o2) {
+            // all events will be handled with a full refresh
+            return 0;
         }
     }
 
@@ -240,7 +263,7 @@ public class RootFactory {
 
         @Override
         public Optional<Person> getPerson() {
-            return Optional.of(getItemData().getSearchParams().getPerson());
+            return Optional.ofNullable(getItemData().getSearchParams().getPerson());
         }
     }
 
@@ -349,7 +372,7 @@ public class RootFactory {
          * @return A host node.
          */
         public static HostNode getPersonHostViewNode(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> itemData) {
-            return new HostNode(itemData, Children.create(new FileSystemFactory(itemData.getSearchParams().getHost()), true));
+            return new HostNode(itemData, Children.create(new DataSourceGroupedFactory(itemData.getSearchParams().getHost()), true));
         }
 
         /**
@@ -446,7 +469,7 @@ public class RootFactory {
                             ? "org/sleuthkit/autopsy/images/image.png"
                             : "org/sleuthkit/autopsy/images/fileset-icon-16.png",
                     itemData,
-                    new DataSourceGroupedChildren(dataSource.getId()),
+                    new DataSourceGroupedChildren(itemData, dataSource),
                     Lookups.singleton(dataSource));
         }
     }
@@ -459,17 +482,21 @@ public class RootFactory {
         /**
          * Main constructor.
          *
-         * @param dataSourceObjId The data source object id.
+         * @param itemData   The row data.
+         * @param dataSource The data source.
          */
-        public DataSourceGroupedChildren(long dataSourceObjId) {
+        public DataSourceGroupedChildren(TreeItemDTO<? extends FileSystemContentSearchParam> itemData, DataSource dataSource) {
+            this(itemData, dataSource, dataSource.getId());
+        }
+
+        private DataSourceGroupedChildren(TreeItemDTO<? extends FileSystemContentSearchParam> itemData, DataSource dataSource, long dataSourceObjId) {
             super(Arrays.asList(
-                    new DataSourceFilesNode(dataSourceObjId),
+                    new DataSourceFilesNode(itemData, dataSource),
                     new ViewsRootNode(dataSourceObjId),
                     new DataArtifactsRootNode(dataSourceObjId),
                     new AnalysisResultsRootNode(dataSourceObjId),
                     new OsAccountsRootNode(dataSourceObjId),
-                    new TagsRootNode(dataSourceObjId),
-                    new ReportsRootNode()
+                    new TagsRootNode(dataSourceObjId)
             ));
         }
     }
@@ -494,14 +521,32 @@ public class RootFactory {
         /**
          * Main constructor.
          *
-         * @param dataSourceObjId The data source object id.
+         * @param itemData   The row data.
+         * @param dataSource The data source.
          */
-        public DataSourceFilesNode(long dataSourceObjId) {
-            super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
+        public DataSourceFilesNode(TreeItemDTO<? extends FileSystemContentSearchParam> itemData, DataSource dataSource) {
+            super(NAME_PREFIX + "_" + getLongString(dataSource.getId()),
                     Bundle.RootFactory_DataSourceFilesNode_displayName(),
                     "org/sleuthkit/autopsy/images/image.png",
-                    new FileSystemFactory(dataSourceObjId));
+                    new DataSourcesChildren(FileSystemFactory.getContentNode(itemData, dataSource))
+            );
         }
+    }
+
+    /**
+     * A children object with just the specified node.
+     */
+    public static class DataSourcesChildren extends Children.Array {
+
+        /**
+         * Main constructor.
+         *
+         * @param node The node of this children object.
+         */
+        public DataSourcesChildren(Node node) {
+            super(Arrays.asList(node));
+        }
+
     }
 
     /**
@@ -597,7 +642,6 @@ public class RootFactory {
         }
     }
 
-    
     /**
      * Root node for OS accounts in the tree.
      */
@@ -638,7 +682,6 @@ public class RootFactory {
 
     }
 
-    
     /**
      * Root node for tags in the tree.
      */
@@ -670,7 +713,6 @@ public class RootFactory {
         }
     }
 
-    
     /**
      * Root node for reports in the tree.
      */
