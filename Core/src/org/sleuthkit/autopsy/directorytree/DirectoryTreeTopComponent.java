@@ -1312,7 +1312,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Node osAccountListNode = osAccountListNodeOpt.get();
 
         if (osAccountListNode instanceof TreeNode) {
-            TreeNode treeNode = (TreeNode) osAccountListNode;
+            TreeNode<?> treeNode = (TreeNode<?>) osAccountListNode;
             treeNode.setNodeSelectionInfo(new OsAccountNodeSelectionInfo(osAccount.getId()));
         }
 

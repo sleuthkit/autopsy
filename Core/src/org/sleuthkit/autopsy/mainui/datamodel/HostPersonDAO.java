@@ -48,13 +48,19 @@ public class HostPersonDAO extends AbstractDAO {
 
     private static HostPersonDAO instance = null;
 
+    /**
+     * @return The singleton instance of this class.
+     */
     public static HostPersonDAO getInstance() {
         if (instance == null) {
             instance = new HostPersonDAO();
         }
         return instance;
     }
-    
+
+    /**
+     * @return Identifier used for unknown persons.
+     */
     public static String getUnknownPersonsName() {
         return Bundle.HostPersonDAO_unknownPersons_displayName();
     }
@@ -63,6 +69,13 @@ public class HostPersonDAO extends AbstractDAO {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
 
+    /**
+     * Returns tree items for all hosts in the case.
+     *
+     * @return All hosts in the case.
+     *
+     * @throws ExecutionException
+     */
     public TreeResultsDTO<HostSearchParams> getAllHosts() throws ExecutionException {
         try {
             return new TreeResultsDTO<>(getCase().getHostManager().getAllHosts().stream()
@@ -73,12 +86,23 @@ public class HostPersonDAO extends AbstractDAO {
         }
     }
 
+    /**
+     * Queries for all hosts belonging to the person or all hosts without a
+     * person association if person parameter is null.
+     *
+     * @param person The person to which hosts belong to or null for hosts with
+     *               no associated person.
+     *
+     * @return The results in tree item form.
+     *
+     * @throws ExecutionException
+     */
     public TreeResultsDTO<HostSearchParams> getHosts(Person person) throws ExecutionException {
         try {
-            List<Host> hosts = person == null 
-                    ? getCase().getPersonManager().getHostsWithoutPersons() 
+            List<Host> hosts = person == null
+                    ? getCase().getPersonManager().getHostsWithoutPersons()
                     : getCase().getPersonManager().getHostsForPerson(person);
-            
+
             return new TreeResultsDTO<>(hosts.stream()
                     .map(h -> createHostTreeItem(h))
                     .collect(Collectors.toList()));
@@ -87,19 +111,24 @@ public class HostPersonDAO extends AbstractDAO {
         }
     }
 
+    /**
+     * Returns all persons associated with the case.
+     * @return The person tree results.
+     * @throws ExecutionException 
+     */
     public TreeResultsDTO<PersonSearchParams> getAllPersons() throws ExecutionException {
         try {
             List<Person> persons = getCase().getPersonManager().getPersons();
-            
+
             List<TreeItemDTO<PersonSearchParams>> personSearchParams = new ArrayList<>();
             for (Person person : persons) {
                 personSearchParams.add(createPersonTreeItem(person));
             }
-            
+
             if (!getCase().getPersonManager().getHostsWithoutPersons().isEmpty()) {
                 personSearchParams.add(createPersonTreeItem(null));
             }
-            
+
             return new TreeResultsDTO<>(personSearchParams);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             throw new ExecutionException("Error while fetching all hosts.", ex);
@@ -115,7 +144,6 @@ public class HostPersonDAO extends AbstractDAO {
                 TreeDisplayCount.NOT_SHOWN);
     }
 
-    
     private TreeItemDTO<PersonSearchParams> createPersonTreeItem(Person person) {
         return new TreeItemDTO<>(
                 PersonSearchParams.getTypeId(),
@@ -138,10 +166,9 @@ public class HostPersonDAO extends AbstractDAO {
             .map(caseEvent -> caseEvent.toString())
             .collect(Collectors.toSet());
 
-    
     @Override
     Set<? extends DAOEvent> processEvent(PropertyChangeEvent evt) {
-        return caseEvents.contains(evt.getPropertyName()) 
+        return caseEvents.contains(evt.getPropertyName())
                 ? Collections.singleton(new HostPersonEvent())
                 : Collections.emptySet();
     }

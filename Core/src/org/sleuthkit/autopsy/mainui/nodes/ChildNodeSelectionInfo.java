@@ -75,10 +75,17 @@ public interface ChildNodeSelectionInfo {
         }
     }
 
+    /**
+     * The selection of an os account.
+     */
     public class OsAccountNodeSelectionInfo implements ChildNodeSelectionInfo {
 
         private final long osAccountId;
 
+        /**
+         * Main constructor.
+         * @param osAccountId The os account id.
+         */
         public OsAccountNodeSelectionInfo(long osAccountId) {
             this.osAccountId = osAccountId;
         }

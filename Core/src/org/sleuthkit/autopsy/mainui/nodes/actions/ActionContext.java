@@ -26,6 +26,8 @@ import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory.ActionGroup;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.Report;
 
 /**
@@ -269,5 +271,19 @@ public interface ActionContext {
      */
     default Optional<Report> getReport() {
         return Optional.empty();
+    }
+    
+    /**
+     * @return The person relevant to the node if present.
+     */    
+    default Optional<Person> getPerson() {
+        return Optional.empty();
+    }
+    
+    /**
+     * @return The host relevant to the node if present.
+     */
+    default Optional<Host> getHost() {
+       return Optional.empty(); 
     }
 }

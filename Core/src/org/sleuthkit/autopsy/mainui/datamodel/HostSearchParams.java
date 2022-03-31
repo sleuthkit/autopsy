@@ -33,10 +33,17 @@ public class HostSearchParams {
     
     private final Host host;
 
+    /**
+     * Main constructor.
+     * @param host The host.
+     */
     public HostSearchParams(Host host) {
         this.host = host;
     }
 
+    /**
+     * @return The host.
+     */
     public Host getHost() {
         return host;
     }

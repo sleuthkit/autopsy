@@ -48,6 +48,9 @@ public class ReportsDAO extends AbstractDAO {
 
     private static ReportsDAO instance = null;
 
+    /**
+     * @return A singleton instance of this class.
+     */
     public static ReportsDAO getInstance() {
         if (instance == null) {
             instance = new ReportsDAO();
@@ -57,6 +60,7 @@ public class ReportsDAO extends AbstractDAO {
 
     private final Cache<SearchParams<ReportsSearchParams>, SearchResultsDTO> cache = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
 
+    
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
     }
@@ -97,6 +101,15 @@ public class ReportsDAO extends AbstractDAO {
                 totalResultCount);
     }
 
+    /**
+     * Queries the case based on the report search params and returns search results.
+     * @param repSearchParams The report search params.
+     * @param startItem The paged starting item.
+     * @param maxResultsCount The maximum result count for the page.
+     * @return The search results.
+     * @throws ExecutionException
+     * @throws IllegalArgumentException 
+     */
     public SearchResultsDTO getReports(ReportsSearchParams repSearchParams, long startItem, Long maxResultsCount) throws ExecutionException, IllegalArgumentException {
         SearchParams<ReportsSearchParams> searchParams = new SearchParams<>(repSearchParams, startItem, maxResultsCount);
         return cache.get(searchParams, () -> fetchReports(searchParams));

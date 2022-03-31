@@ -36,6 +36,9 @@ public class ReportsSearchParams {
 
     private static ReportsSearchParams instance = null;
 
+    /**
+     * @return A singleton instance of this class.
+     */
     public static ReportsSearchParams getInstance() {
         if (instance == null) {
             instance = new ReportsSearchParams();

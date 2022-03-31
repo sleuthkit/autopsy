@@ -51,6 +51,9 @@ public class ReportsRowDTO extends BaseRowDTO {
 
     private static final String TYPE_ID = "REPORTS";
 
+    /**
+     * @return The type identifier of this class.
+     */
     public static String getTypeIdForClass() {
         return TYPE_ID;
     }
@@ -61,6 +64,15 @@ public class ReportsRowDTO extends BaseRowDTO {
     private final String reportFilePath;
     private final Report report;
 
+    /**
+     * Main constructor.
+     * @param report The report.
+     * @param id The report id.
+     * @param sourceModuleName The source module name.
+     * @param reportName The report name.
+     * @param createdTime The created time.
+     * @param reportFilePath The report file path.
+     */
     public ReportsRowDTO(Report report, long id, String sourceModuleName, String reportName, Date createdTime, String reportFilePath) {
         super(ImmutableList.of(sourceModuleName, reportName, createdTime, reportFilePath), TYPE_ID, id);
         this.sourceModuleName = sourceModuleName;
@@ -70,22 +82,37 @@ public class ReportsRowDTO extends BaseRowDTO {
         this.report = report;
     }
 
+    /**
+     * @return The source module name.
+     */
     public String getSourceModuleName() {
         return sourceModuleName;
     }
 
+    /**
+     * @return The report name.
+     */
     public String getReportName() {
         return reportName;
     }
 
+    /**
+     * @return The created time.
+     */
     public Date getCreatedTime() {
         return createdTime;
     }
 
+    /**
+     * @return The report file path.
+     */
     public String getReportFilePath() {
         return reportFilePath;
     }
 
+    /**
+     * @return The report.
+     */
     public Report getReport() {
         return report;
     }

@@ -24,17 +24,23 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.HostPersonDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.HostSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
@@ -48,7 +54,13 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.HostPersonEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode.StaticTreeNode;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.Person;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  *
@@ -56,14 +68,24 @@ import org.sleuthkit.datamodel.Person;
  */
 public class RootFactory {
 
+    /**
+     * @return The root children to be displayed in the tree.
+     */
     public static Children getRootChildren() {
         if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
             return Children.create(new HostPersonRootFactory(), true);
         } else {
-            return new DefaultViewRootFactory();
+            return new DefaultViewRootChildren();
         }
     }
 
+    /**
+     * Returns a string of the safely converted long to be used in a name id.
+     *
+     * @param l The number or null.
+     *
+     * @return The safely stringified number.
+     */
     private static String getLongString(Long l) {
         return l == null ? "" : l.toString();
     }
@@ -115,7 +137,7 @@ public class RootFactory {
         @SuppressWarnings("unchecked")
         protected Node createNodeForKey(TreeItemDTO<?> key) {
             if (key.getSearchParams() instanceof HostSearchParams) {
-                return new HostNode((TreeItemDTO<? extends HostSearchParams>) key);
+                return HostNode.getPersonHostViewNode((TreeItemDTO<? extends HostSearchParams>) key);
             } else if (key.getSearchParams() instanceof PersonSearchParams) {
                 return new PersonNode((TreeItemDTO<? extends PersonSearchParams>) key);
             } else {
@@ -124,9 +146,15 @@ public class RootFactory {
         }
     }
 
-    public static class DefaultViewRootFactory extends Children.Array {
+    /**
+     * The root children for the default view preference.
+     */
+    public static class DefaultViewRootChildren extends Children.Array {
 
-        public DefaultViewRootFactory() {
+        /**
+         * Main constructor.
+         */
+        public DefaultViewRootChildren() {
             super(Arrays.asList(
                     new AllDataSourcesNode(),
                     new ViewsRootNode(null),
@@ -139,6 +167,9 @@ public class RootFactory {
         }
     }
 
+    /**
+     * Node in default view displaying all hosts/data sources.
+     */
     @Messages({"RootFactory_AllDataSourcesNode_displayName=Data Sources"})
     public static class AllDataSourcesNode extends StaticTreeNode {
 
@@ -153,6 +184,9 @@ public class RootFactory {
             return NAME_ID;
         }
 
+        /**
+         * Main constructor.
+         */
         public AllDataSourcesNode() {
             super(NAME_ID,
                     Bundle.RootFactory_AllDataSourcesNode_displayName(),
@@ -161,6 +195,9 @@ public class RootFactory {
         }
     }
 
+    /**
+     * A person node.
+     */
     @Messages(value = {"PersonNode_unknownPersonNode_title=Unknown Persons"})
     public static class PersonNode extends TreeNode<PersonSearchParams> {
 
@@ -183,11 +220,16 @@ public class RootFactory {
             return Bundle.PersonNode_unknownPersonNode_title();
         }
 
+        /**
+         * Main constructor.
+         *
+         * @param itemData The row data for the person.
+         */
         public PersonNode(TreeResultsDTO.TreeItemDTO<? extends PersonSearchParams> itemData) {
             super(PersonSearchParams.getTypeId() + getLongString(
-                    itemData.getSearchParams().getPerson() == null 
-                            ? 0 
-                            : itemData.getSearchParams().getPerson().getPersonId()),
+                    itemData.getSearchParams().getPerson() == null
+                    ? 0
+                    : itemData.getSearchParams().getPerson().getPersonId()),
                     "org/sleuthkit/autopsy/images/person.png",
                     itemData,
                     Children.create(new HostFactory(itemData.getSearchParams().getPerson()), true),
@@ -195,20 +237,43 @@ public class RootFactory {
                     ? Lookups.fixed(itemData.getSearchParams(), itemData.getSearchParams().getPerson())
                     : Lookups.fixed(itemData.getSearchParams(), HostPersonDAO.getUnknownPersonsName()));
         }
+
+        @Override
+        public Optional<Person> getPerson() {
+            return Optional.of(getItemData().getSearchParams().getPerson());
+        }
     }
 
+    /**
+     * Factory displaying all hosts in default view.
+     */
     public static class AllHostsFactory extends BaseHostFactory {
 
         @Override
         protected TreeResultsDTO<? extends HostSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
             return MainDAO.getInstance().getHostPersonDAO().getAllHosts();
         }
+
+        @Override
+        protected TreeNode<HostSearchParams> createNewNode(TreeItemDTO<? extends HostSearchParams> rowData) {
+            return HostNode.getDefaultViewNode(rowData);
+        }
     }
 
+    /**
+     * Factory displaying hosts belonging to a person (or null).
+     */
     public static class HostFactory extends BaseHostFactory {
 
         private final Person parentPerson;
 
+        /**
+         * Main constructor.
+         *
+         * @param parentPerson The person whose hosts will be shown. Null
+         *                     indicates showing any host with no person
+         *                     associated.
+         */
         public HostFactory(Person parentPerson) {
             this.parentPerson = parentPerson;
         }
@@ -217,14 +282,17 @@ public class RootFactory {
         protected TreeResultsDTO<? extends HostSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
             return MainDAO.getInstance().getHostPersonDAO().getHosts(parentPerson);
         }
-    }
-
-    public abstract static class BaseHostFactory extends TreeChildFactory<HostSearchParams> {
 
         @Override
-        protected TreeNode<HostSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> rowData) {
-            return new HostNode(rowData);
+        protected TreeNode<HostSearchParams> createNewNode(TreeItemDTO<? extends HostSearchParams> rowData) {
+            return HostNode.getPersonHostViewNode(rowData);
         }
+    }
+
+    /**
+     * Base factory for displaying hosts.
+     */
+    public abstract static class BaseHostFactory extends TreeChildFactory<HostSearchParams> {
 
         @Override
         protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
@@ -247,8 +315,11 @@ public class RootFactory {
         }
     }
 
+    /**
+     * Node for a host.
+     */
     public static class HostNode extends TreeNode<HostSearchParams> {
-        
+
         /**
          * Returns the name prefix of this node.
          *
@@ -257,17 +328,78 @@ public class RootFactory {
         public static final String getNamePrefix() {
             return HostSearchParams.getTypeId();
         }
-        
-        public HostNode(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> itemData) {
+
+        /**
+         * Returns a host node whose children will be used in the default view.
+         *
+         * @param itemData The data associated with the host.
+         *
+         * @return A host node.
+         */
+        public static HostNode getDefaultViewNode(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> itemData) {
+            return new HostNode(itemData, Children.create(new FileSystemFactory(itemData.getSearchParams().getHost()), true));
+        }
+
+        /**
+         * Returns a host node whose children will be used in the person/host
+         * view.
+         *
+         * @param itemData The data associated with the host.
+         *
+         * @return A host node.
+         */
+        public static HostNode getPersonHostViewNode(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> itemData) {
+            return new HostNode(itemData, Children.create(new FileSystemFactory(itemData.getSearchParams().getHost()), true));
+        }
+
+        /**
+         * Private constructor.
+         *
+         * @param itemData The data for the host.
+         * @param children The children to use with this host.
+         */
+        private HostNode(TreeResultsDTO.TreeItemDTO<? extends HostSearchParams> itemData, Children children) {
             super(HostSearchParams.getTypeId() + "_" + getLongString(itemData.getSearchParams().getHost().getHostId()),
                     "org/sleuthkit/autopsy/images/host.png",
                     itemData,
-                    Children.create(new FileSystemFactory(itemData.getSearchParams().getHost()), true),
+                    children,
                     Lookups.fixed(itemData.getSearchParams(), itemData.getSearchParams().getHost()));
+        }
+
+        @Override
+        public Optional<Host> getHost() {
+            return Optional.of(getItemData().getSearchParams().getHost());
         }
     }
 
-    public static class DataSourceGroupedNode extends StaticTreeNode {
+    /**
+     * The factory to use to create data source grouping nodes to display in the
+     * host/person view.
+     */
+    public static class DataSourceGroupedFactory extends FileSystemFactory {
+
+        /**
+         * Main constructor.
+         *
+         * @param host The parent host.
+         */
+        public DataSourceGroupedFactory(Host host) {
+            super(host);
+        }
+
+        @Override
+        protected TreeNode<FileSystemContentSearchParam> createNewNode(TreeItemDTO<? extends FileSystemContentSearchParam> rowData) {
+            return DataSourceGroupedNode.getInstance(rowData);
+        }
+
+    }
+
+    /**
+     * A data source grouping node to display in host/person view.
+     */
+    public static class DataSourceGroupedNode extends TreeNode<FileSystemContentSearchParam> {
+
+        private static final Logger logger = Logger.getLogger(DataSourceGroupedNode.class.getName());
 
         private static final String NAME_PREFIX = "DATA_SOURCE_GROUPED";
 
@@ -279,19 +411,57 @@ public class RootFactory {
         public static final String getNamePrefix() {
             return NAME_PREFIX;
         }
-        
-        public DataSourceGroupedNode(long dataSourceObjId, String dsName, boolean isImage) {
-            super(NAME_PREFIX + "_" + dataSourceObjId,
-                    dsName,
-                    isImage ? "org/sleuthkit/autopsy/images/image.png" : "org/sleuthkit/autopsy/images/fileset-icon-16.png",
-                    new DataSourceGroupedFactory(dataSourceObjId));
+
+        /**
+         * Returns an instance of the data source grouping node.
+         *
+         * @param itemData The row data.
+         *
+         * @return The node.
+         */
+        public static DataSourceGroupedNode getInstance(TreeItemDTO<? extends FileSystemContentSearchParam> itemData) {
+            long dataSourceId = itemData.getSearchParams().getContentObjectId();
+            try {
+
+                DataSource ds = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(dataSourceId);
+                return (ds == null) ? null : new DataSourceGroupedNode(itemData, ds);
+            } catch (NoCurrentCaseException ex) {
+                // Case is likely closing
+                return null;
+            } catch (TskCoreException | TskDataException ex) {
+                logger.log(Level.SEVERE, "Error creating node from data source with ID: " + dataSourceId, ex);
+                return null;
+            }
+        }
+
+        /**
+         * Private constructor.
+         *
+         * @param itemData   The row data.
+         * @param dataSource The relevant data source instance.
+         */
+        private DataSourceGroupedNode(TreeItemDTO<? extends FileSystemContentSearchParam> itemData, DataSource dataSource) {
+            super(NAME_PREFIX + "_" + getLongString(dataSource.getId()),
+                    dataSource instanceof Image
+                            ? "org/sleuthkit/autopsy/images/image.png"
+                            : "org/sleuthkit/autopsy/images/fileset-icon-16.png",
+                    itemData,
+                    new DataSourceGroupedChildren(dataSource.getId()),
+                    Lookups.singleton(dataSource));
         }
     }
 
-    // shows all content related to data sources
-    public static class DataSourceGroupedFactory extends Children.Array {
+    /**
+     * Shows all content related to a data source in host/person view.
+     */
+    public static class DataSourceGroupedChildren extends Children.Array {
 
-        public DataSourceGroupedFactory(long dataSourceObjId) {
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceObjId The data source object id.
+         */
+        public DataSourceGroupedChildren(long dataSourceObjId) {
             super(Arrays.asList(
                     new DataSourceFilesNode(dataSourceObjId),
                     new ViewsRootNode(dataSourceObjId),
@@ -304,6 +474,9 @@ public class RootFactory {
         }
     }
 
+    /**
+     * Node for showing data source files in person/host view.
+     */
     @Messages({"RootFactory_DataSourceFilesNode_displayName=Data Source Files"})
     public static class DataSourceFilesNode extends StaticTreeNode {
 
@@ -317,7 +490,12 @@ public class RootFactory {
         public static final String getNamePrefix() {
             return NAME_PREFIX;
         }
-        
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceObjId The data source object id.
+         */
         public DataSourceFilesNode(long dataSourceObjId) {
             super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_DataSourceFilesNode_displayName(),
@@ -326,6 +504,9 @@ public class RootFactory {
         }
     }
 
+    /**
+     * Root node for displaying "View" for file types.
+     */
     @Messages({"RootFactory_ViewsRootNode_displayName=Views"})
     public static class ViewsRootNode extends StaticTreeNode {
 
@@ -339,7 +520,13 @@ public class RootFactory {
         public static final String getNamePrefix() {
             return NAME_PREFIX;
         }
-        
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceObjId The data source object id or null for no
+         *                        filter.
+         */
         public ViewsRootNode(Long dataSourceObjId) {
             super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_ViewsRootNode_displayName(),
@@ -348,6 +535,9 @@ public class RootFactory {
         }
     }
 
+    /**
+     * Root node for "Data Artifacts" in the tree.
+     */
     @Messages({"RootFactory_DataArtifactsRootNode_displayName=Data Artifacts"})
     public static class DataArtifactsRootNode extends StaticTreeNode {
 
@@ -361,7 +551,13 @@ public class RootFactory {
         public static final String getNamePrefix() {
             return NAME_PREFIX;
         }
-        
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceObjId The data source object id or null for no
+         *                        filter.
+         */
         public DataArtifactsRootNode(Long dataSourceObjId) {
             super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_DataArtifactsRootNode_displayName(),
@@ -370,6 +566,9 @@ public class RootFactory {
         }
     }
 
+    /**
+     * Root node for "Analysis Results" in the tree.
+     */
     @Messages({"RootFactory_AnalysisResultsRootNode_displayName=Analysis Results"})
     public static class AnalysisResultsRootNode extends StaticTreeNode {
 
@@ -383,7 +582,13 @@ public class RootFactory {
         public static final String getNamePrefix() {
             return NAME_PREFIX;
         }
-        
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceObjId The data source object id or null for no
+         *                        filter.
+         */
         public AnalysisResultsRootNode(Long dataSourceObjId) {
             super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_AnalysisResultsRootNode_displayName(),
@@ -392,6 +597,10 @@ public class RootFactory {
         }
     }
 
+    
+    /**
+     * Root node for OS accounts in the tree.
+     */
     @Messages({"RootFactory_OsAccountsRootNode_displayName=OS Accounts"})
     public static class OsAccountsRootNode extends StaticTreeNode {
 
@@ -405,9 +614,15 @@ public class RootFactory {
         public static final String getNamePrefix() {
             return NAME_PREFIX;
         }
-        
+
         private final Long dataSourceObjId;
 
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceObjId The data source object id or null for no
+         *                        filter.
+         */
         public OsAccountsRootNode(Long dataSourceObjId) {
             super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_OsAccountsRootNode_displayName(),
@@ -423,6 +638,10 @@ public class RootFactory {
 
     }
 
+    
+    /**
+     * Root node for tags in the tree.
+     */
     @Messages({"RootFactory_TagsRootNode_displayName=Tags"})
     public static class TagsRootNode extends StaticTreeNode {
 
@@ -436,7 +655,13 @@ public class RootFactory {
         public static final String getNamePrefix() {
             return NAME_PREFIX;
         }
-        
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceObjId The data source object id or null for no
+         *                        filter.
+         */
         public TagsRootNode(Long dataSourceObjId) {
             super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
                     Bundle.RootFactory_TagsRootNode_displayName(),
@@ -445,6 +670,10 @@ public class RootFactory {
         }
     }
 
+    
+    /**
+     * Root node for reports in the tree.
+     */
     @Messages({"RootFactory_ReportsRootNode_displayName=Reports"})
     public static class ReportsRootNode extends StaticTreeNode {
 
@@ -458,7 +687,10 @@ public class RootFactory {
         public static final String getNameIdentifier() {
             return NAME_ID;
         }
-        
+
+        /**
+         * Main constructor.
+         */
         public ReportsRootNode() {
             super(NAME_ID,
                     Bundle.RootFactory_ReportsRootNode_displayName(),
