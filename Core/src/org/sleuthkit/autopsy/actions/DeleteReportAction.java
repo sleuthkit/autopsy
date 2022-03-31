@@ -22,8 +22,10 @@ import java.awt.event.ActionEvent;
 import java.util.Collection;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -35,12 +37,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Action for deleting selected reports.
  */
+@Messages({
+    "DeleteReportAction.actionDisplayName.singleReport=Delete Report",
+    "DeleteReportAction.actionDisplayName.multipleReports=Delete Reports"
+})
 public class DeleteReportAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
- 
+
     private static DeleteReportAction instance = null;
-    
+
     /**
      * @return Singleton instance of this class.
      */
@@ -48,11 +54,15 @@ public class DeleteReportAction extends AbstractAction {
         if (instance == null) {
             instance = new DeleteReportAction();
         }
-        
+
+        if (Utilities.actionsGlobalContext().lookupAll(Report.class).size() == 1) {
+            instance.putValue(Action.NAME, Bundle.DeleteReportAction_actionDisplayName_singleReport());
+        } else {
+            instance.putValue(Action.NAME, Bundle.DeleteReportAction_actionDisplayName_multipleReports());
+        }
         return instance;
     }
-    
-    
+
     /**
      * Do not instantiate directly. Use DeleteReportAction.getInstance(),
      * instead.

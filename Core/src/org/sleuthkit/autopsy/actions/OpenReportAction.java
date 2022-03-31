@@ -21,12 +21,15 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import javax.swing.AbstractAction;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 
 /**
  * Action to open report.
  */
+@Messages({
+    "OpenReportAction_actionDisplayName=Open Report"
+})
 public class OpenReportAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
@@ -38,7 +41,7 @@ public class OpenReportAction extends AbstractAction {
      * @param reportPath Path to report.s
      */
     public OpenReportAction(String reportPath) {
-        super(NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionDisplayName"));
+        super(Bundle.OpenReportAction_actionDisplayName());
         this.reportPath = reportPath;
     }
 

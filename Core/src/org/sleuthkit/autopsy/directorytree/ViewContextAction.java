@@ -411,7 +411,7 @@ public class ViewContextAction extends AbstractAction {
             return Collections.emptyList();
         } else if (node.getLookup().lookup(Host.class) != null
                 || node.getLookup().lookup(Person.class) != null
-                || AllDataSourcesNode.getNameIdentifier().equals(node.getLookup().lookup(String.class))
+                || AllDataSourcesNode.getNameIdentifier().equals(node.getName())
                 || PersonNode.getUnknownPersonId().equals(node.getLookup().lookup(String.class))) {
             Children children = node.getChildren();
             Node[] childNodes = children == null ? null : children.getNodes(true);
@@ -444,6 +444,12 @@ public class ViewContextAction extends AbstractAction {
          * content, starting with its data source.
          */
         List<Content> path = content.accept(new AncestorVisitor());
+        // last item should be the data source, which can be ignored
+        if (path.size() == 0) {
+            return null;
+        } else {
+            path = path.subList(0, path.size() - 1);
+        }
         Collections.reverse(path);
                 
         /**
@@ -465,7 +471,7 @@ public class ViewContextAction extends AbstractAction {
             // find child node in path to continue traversal
             boolean found = false;
             for (Node curContentChildNode : curContentChildNodes) {
-                TskContentItem<?> contentItem = curContentNode.getLookup().lookup(TskContentItem.class);
+                TskContentItem<?> contentItem = curContentChildNode.getLookup().lookup(TskContentItem.class);
                 if (contentItem != null && contentItem.getTskContent() != null && contentItem.getTskContent().getId() == pathElement.getId()) {
                     curContentNode = curContentChildNode;
                     found = true;
@@ -486,6 +492,9 @@ public class ViewContextAction extends AbstractAction {
      * A ContentVisitor that returns a list of content objects by starting with
      * a given content and following its chain of ancestors to the root content
      * of the lineage.
+     * 
+     * NOTE: This should be kept in sync with 
+     * FileSystemColumnUtils.getDisplayableContentForTableAndTree
      */
     private static class AncestorVisitor extends ContentVisitor.Default<List<Content>> {
 
@@ -493,10 +502,14 @@ public class ViewContextAction extends AbstractAction {
 
         @Override
         protected List<Content> defaultVisit(Content content) {
+            if (content instanceof AbstractFile && ((AbstractFile) content).isRoot()) {
+                return skipToParent(content);
+            }
+            
             lineage.add(content);
             Content parent = null;
             try {
-                parent = content.getParent();
+                parent = content.getParent();    
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Could not get parent of Content object: %s", content), ex); //NON-NLS
             }

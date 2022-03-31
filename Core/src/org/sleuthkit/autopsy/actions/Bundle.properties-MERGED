@@ -32,6 +32,8 @@ DeleteFileBlackboardArtifactTagAction.deleteTags.alert=Unable to untag artifact 
 DeleteFileContentTagAction.deleteTag=Remove File Tag
 # {0} - fileID
 DeleteFileContentTagAction.deleteTag.alert=Unable to untag file {0}.
+DeleteReportAction.actionDisplayName.multipleReports=Delete Reports
+DeleteReportAction.actionDisplayName.singleReport=Delete Report
 # {0} - reportNum
 DeleteReportAction.actionPerformed.showConfirmDialog.multiple.msg=Do you want to delete {0} reports from the case?
 DeleteReportAction.actionPerformed.showConfirmDialog.single.msg=Do you want to delete 1 report from the case?
@@ -91,6 +93,7 @@ CTL_OpenOutputFolder=Open Case Folder
 OpenOutputFolder.error1=Case Folder Not Found: {0}
 OpenOutputFolder.noCaseOpen=No open case, therefore no current case folder available.
 OpenOutputFolder.CouldNotOpenOutputFolder=Could not open case folder 
+OpenReportAction_actionDisplayName=Open Report
 # {0} - old tag name
 # {1} - artifactID
 ReplaceBlackboardArtifactTagAction.replaceTag.alert=Unable to replace tag {0} for artifact {1}.

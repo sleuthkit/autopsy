@@ -586,33 +586,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }.execute();
             }
 
-            // if there's at least one image, load the image and open the top componen
-            autopsyTreeChildren = RootFactory.getRootChildren();
-            Node root = new AbstractNode(autopsyTreeChildren) {
-                //JIRA-2807: What is the point of these overrides?
-                /**
-                 * to override the right click action in the white blank space
-                 * area on the directory tree window
-                 */
-                @Override
-                public Action[] getActions(boolean popup) {
-                    return new Action[]{};
-                }
-
-                // Overide the AbstractNode use of DefaultHandle to return
-                // a handle which can be serialized without a parent
-                @Override
-                public Node.Handle getHandle() {
-                    return new Node.Handle() {
-                        @Override
-                        public Node getNode() throws IOException {
-                            return em.getRootContext();
-                        }
-                    };
-                }
-            };
-
-            em.setRootContext(root);
+            setRootContextChildren();
             em.getRootContext().setName(currentCase.getName());
             em.getRootContext().setDisplayName(currentCase.getName());
             getTree().setRootVisible(false); // hide the root
@@ -669,6 +643,39 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }.execute();
         }
+    }
+
+    /**
+     * Set root context to the root children.
+     */
+    private void setRootContextChildren() {
+        // if there's at least one image, load the image and open the top componen
+        autopsyTreeChildren = RootFactory.getRootChildren();
+        Node root = new AbstractNode(autopsyTreeChildren) {
+            //JIRA-2807: What is the point of these overrides?
+            /**
+             * to override the right click action in the white blank space
+             * area on the directory tree window
+             */
+            @Override
+            public Action[] getActions(boolean popup) {
+                return new Action[]{};
+            }
+            
+            // Overide the AbstractNode use of DefaultHandle to return
+            // a handle which can be serialized without a parent
+            @Override
+            public Node.Handle getHandle() {
+                return new Node.Handle() {
+                    @Override
+                    public Node getNode() throws IOException {
+                        return em.getRootContext();
+                    }
+                };
+            }
+        };
+        
+        em.setRootContext(root);
     }
 
     /**
@@ -1031,8 +1038,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
 
         // refresh all children of the root.
-        autopsyTreeChildren = RootFactory.getRootChildren();
-
+        setRootContextChildren();
+        
         // Select the first node and reset the selection history
         // This should happen on the EDT once the tree has been rebuilt.
         // hence the SwingWorker that does this in the done() method
