@@ -70,7 +70,6 @@ public class ReportsDAO extends AbstractDAO {
     })
     private SearchResultsDTO fetchReports(SearchParams<ReportsSearchParams> params) throws NoCurrentCaseException, TskCoreException {
         long startItem = params.getStartItem();
-        Long totalResultCount = params.getMaxResultsCount();
 
         List<Report> reports = getCase().getAllReports();
 
@@ -98,7 +97,7 @@ public class ReportsDAO extends AbstractDAO {
                 pagedReportsStream.collect(Collectors.toList()), 
                 ReportsRowDTO.getTypeIdForClass(), 
                 startItem, 
-                totalResultCount);
+                reports.size());
     }
 
     /**
