@@ -262,6 +262,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayAccounts(super.getItemData().getSearchParams());
         }
     }
@@ -353,6 +354,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             if (Children.LEAF.equals(getChildren())) {
                 dataResultPanel.displayEmailMessages(super.getItemData().getSearchParams());
             } else {
@@ -577,6 +579,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayCreditCardsByBin(this.getItemData().getSearchParams());
         }
     }

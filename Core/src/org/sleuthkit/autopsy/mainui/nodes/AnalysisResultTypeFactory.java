@@ -158,6 +158,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayAnalysisResult(this.getItemData().getSearchParams());
         }
 
@@ -333,6 +334,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayAnalysisResultConfig(this.getItemData().getSearchParams());
         }
 
@@ -598,6 +600,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             KeywordSearchTermParams searchTermParams = this.getItemData().getSearchParams();
 
             if (!searchTermParams.hasChildren()) {
@@ -752,6 +755,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayKeywordHits(this.getItemData().getSearchParams());
         }
 

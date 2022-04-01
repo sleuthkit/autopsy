@@ -1249,7 +1249,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             this.searchResultManager = new SearchManager(new CommAccountFetcher(accountParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, accountParams.getNodeSelectionInfo());
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
                     MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}, account type: {2}]",
@@ -1269,7 +1269,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             this.searchResultManager = new SearchManager(new CreditCardByBinFetcher(searchParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, searchParams.getNodeSelectionInfo());
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
                     MessageFormat.format("There was an error displaying search results for [credit cards, data source id: {0}, bin prefix: {1}, show rejected: {2}]",
@@ -1309,7 +1309,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             this.searchResultManager = new SearchManager(new EmailFetcher(searchParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, searchParams.getNodeSelectionInfo());
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
                     MessageFormat.format("There was an error displaying search results for [data source id: {0}, folder: {1}]",
@@ -1323,7 +1323,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             this.searchResultManager = new SearchManager(new AnalysisResultFetcher(analysisResultParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, analysisResultParams.getNodeSelectionInfo());
         } catch (ExecutionException ex) {
             logger.log(Level.WARNING,
                     MessageFormat.format("There was an error displaying search results for [artifact type: {0}, data source id: {1}]",
@@ -1403,7 +1403,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             this.searchResultManager = new SearchManager(new KeywordHitResultFetcher(keywordHitKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, keywordHitKey.getNodeSelectionInfo());
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for keyword filter: {0} and data source id: {1}.",
@@ -1443,7 +1443,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         try {
             this.searchResultManager = new SearchManager(new AnalysisResultConfigFetcher(setKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, setKey.getNodeSelectionInfo());
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for hash set filter: {0} and data source id: {1}.",
