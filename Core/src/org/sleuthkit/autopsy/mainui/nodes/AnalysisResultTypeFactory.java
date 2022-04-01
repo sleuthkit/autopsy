@@ -305,8 +305,19 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
     /**
      * A node for a set within an artifact type.
      */
-    static class TreeConfigTypeNode extends TreeNode<AnalysisResultSearchParam> {
+    public static class TreeConfigTypeNode extends TreeNode<AnalysisResultSearchParam> {
 
+        /**
+         * Returns the node name to be used given the artifact type name and configuration.
+         * @param artifactTypeName The artifact type name (non-null).
+         * @param configuration The configuration name (can be null).
+         * @return The node name.
+         */
+        public static String getNodeName(String artifactTypeName, String configuration) {
+            return configuration == null ?
+                    artifactTypeName + "_NULL_CONFIG" :
+                    artifactTypeName + "_CONFIG_" + configuration;
+        }
         /**
          * Main constructor.
          *
@@ -412,10 +423,22 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
         }
     }
 
-    static class KeywordSetNode extends TreeNode<KeywordListSearchParam> {
+    public static class KeywordSetNode extends TreeNode<KeywordListSearchParam> {
 
         private static final Logger logger = Logger.getLogger(KeywordSetNode.class.getName());
 
+        
+        /**
+         * Returns the name that will be used with a set node based on the configuration.
+         * @param config The analysis result configuration.
+         * @return The name to be used.
+         */
+        public static String getNodeName(String config) {
+            return (config == null)
+                    ? BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeName() + "_ADHOC_SET"
+                    : BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeName() + "_SET_" + config;
+        }
+        
         /**
          * Main constructor.
          *

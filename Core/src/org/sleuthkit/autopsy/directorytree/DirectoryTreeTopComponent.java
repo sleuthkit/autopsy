@@ -90,10 +90,13 @@ import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetFactory;
+import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.TreeConfigTypeNode;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeFactory.CreditCardByBinParentNode;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.MimeParentNode;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -1362,16 +1365,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Children typesChildren = categoryChildrenOpt.get();
 
         Node treeNode = null;
-        if (typeID == BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID()) {
-            treeNode = getHashsetNode(typesChildren, art);
-        } else if (typeID == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
-            treeNode = getKeywordHitNode(typesChildren, art);
-        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()) {
-            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, art);
-        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, art);
-        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()) {
-            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ITEM, art);
+        if (art instanceof AnalysisResult) {
+            treeNode = getAnalysisResultNode(typesChildren, (AnalysisResult) art);    
         } else if (typeID == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
             treeNode = getEmailNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
@@ -1404,35 +1399,33 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
         // Another thread is needed because we have to wait for dataResult to populate
     }
-
+    
     /**
-     * Returns the hashset hit artifact's parent node or null if cannot be
-     * found.
-     *
-     * @param typesChildren The children object of the same category as hashset
-     *                      hits.
-     * @param art           The artifact.
-     *
-     * @return The hashset hit artifact's parent node or null if cannot be
-     *         found.
+     * Returns the parent tree node of the analysis result if one exists.
+     * @param analysisResultTypeChildren The analysis result type node children.
+     * @param analysisResult The analysis result to find.
+     * @return The parent tree node or null.
      */
-    private Node getHashsetNode(Children typesChildren, final BlackboardArtifact art) {
-        Node hashsetRootNode = typesChildren.findChild(art.getArtifactTypeName());
-        Children hashsetRootChilds = hashsetRootNode.getChildren();
-        try {
-            String setName = null;
-            List<BlackboardAttribute> attributes = art.getAttributes();
-            for (BlackboardAttribute att : attributes) {
-                int typeId = att.getAttributeType().getTypeID();
-                if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                    setName = att.getValueString();
-                }
-            }
-            return hashsetRootChilds.findChild(setName);
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
+    private Node getAnalysisResultNode(Children analysisResultTypeChildren, final AnalysisResult analysisResult) {
+        if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() == analysisResult.getArtifactTypeID()) {
+            return getKeywordHitNode(analysisResultTypeChildren, analysisResult);
+        } 
+        
+        Node analysisResultTypeNode = analysisResultTypeChildren.findChild(analysisResult.getArtifactTypeName());
+        if (analysisResultTypeNode == null) {
             return null;
         }
+        
+        Node[] childConfigNodes = analysisResultTypeNode.getChildren() == null ? null : analysisResultTypeNode.getChildren().getNodes(true);
+        if (childConfigNodes == null || childConfigNodes.length == 0) {
+            return analysisResultTypeNode;
+        }
+        
+        String expectedName = TreeConfigTypeNode.getNodeName(analysisResult.getArtifactTypeName(), analysisResult.getConfiguration());
+        return Stream.of(childConfigNodes)
+                .filter(childNode -> expectedName.equals(childNode.getName()))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -1441,105 +1434,72 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @param typesChildren The children object of the same category as keyword
      *                      hits.
-     * @param art           The artifact.
+     * @param kwh           The artifact.
      *
      * @return The keyword hit artifact's parent node or null if cannot be
      *         found.
      */
-    private Node getKeywordHitNode(Children typesChildren, BlackboardArtifact art) {
-        Node keywordRootNode = typesChildren.findChild(art.getArtifactTypeName());
-        Children keywordRootChilds = keywordRootNode.getChildren();
+    private Node getKeywordHitNode(Children typesChildren, AnalysisResult kwh) {
+        Node keywordRootNode = typesChildren.findChild(kwh.getArtifactTypeName());
+        if (keywordRootNode == null
+                || keywordRootNode.getChildren() == null
+                || keywordRootNode.getChildren().getNodesCount(true) == 0) {
+
+            return null;
+        }
+
+        Node configNode = keywordRootNode.getChildren().findChild(kwh.getConfiguration());
+        if (configNode == null
+                || configNode.getChildren() == null
+                || configNode.getChildren().getNodesCount(true) == 0) {
+
+            return null;
+        }
+
+        Node toRet = configNode;
         try {
-            String listName = null;
             String keywordName = null;
             String regex = null;
-            List<BlackboardAttribute> attributes = art.getAttributes();
+            List<BlackboardAttribute> attributes = kwh.getAttributes();
             for (BlackboardAttribute att : attributes) {
                 int typeId = att.getAttributeType().getTypeID();
-                if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                    listName = att.getValueString();
-                } else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
+                if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                     keywordName = att.getValueString();
                 } else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
                     regex = att.getValueString();
                 }
             }
-            if (listName == null) {
-                listName = NbBundle.getMessage(KeywordSetFactory.class, "AnalysisResultTypeFactory_adHocName");
-            }
-            Node listNode = keywordRootChilds.findChild(listName);
-            if (listNode == null) {
-                return null;
-            }
-            Children listChildren = listNode.getChildren();
-            if (listChildren == null) {
-                return null;
-            }
+            
+            
             if (regex != null) {  //For support of regex nodes such as URLs, IPs, Phone Numbers, and Email Addrs as they are down another level
-                Node regexNode = listChildren.findChild(listName);
-                regexNode = (regexNode == null) ? listChildren.findChild(listName + "_" + regex) : regexNode;
-                if (regexNode == null) {
+                Node regexNode = toRet.getChildren().findChild(regex);
+                if (regexNode == null
+                        || regexNode.getChildren() == null
+                        || regexNode.getChildren().getNodesCount(true) == 0) {
+
                     return null;
                 }
-                listChildren = regexNode.getChildren();
-                if (listChildren == null) {
-                    return null;
-                }
+                
+                toRet = regexNode;
             }
+            
+            if (keywordName != null) {
+                Node keywordNameNode = toRet.getChildren().findChild(keywordName);
+                if (keywordNameNode == null
+                        || keywordNameNode.getChildren() == null
+                        || keywordNameNode.getChildren().getNodesCount(true) == 0) {
 
-            return listChildren.findChild(keywordName);
+                    return null;
+                }
+                
+                toRet = keywordNameNode;
+            }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;
         }
-    }
-
-    /**
-     * Returns the interesting item artifact's parent node or null if cannot be
-     * found.
-     *
-     * @param typesChildren The children object of the same category as
-     *                      interesting item.
-     * @param artifactType  The type of the artifact (interesting hit or
-     *                      artifact).
-     * @param art           The artifact.
-     *
-     * @return The interesting item artifact's parent node or null if cannot be
-     *         found.
-     */
-    private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact.Type artifactType, BlackboardArtifact art) {
-        Node interestingItemsRootNode = typesChildren.findChild(artifactType.getDisplayName());
-        Children setNodeChildren = (interestingItemsRootNode == null) ? null : interestingItemsRootNode.getChildren();
-
-        // set node children for type could not be found, so return null.
-        if (setNodeChildren == null) {
-            return null;
-        }
-
-        String setName = null;
-        try {
-            setName = art.getAttributes().stream()
-                    .filter(attr -> attr.getAttributeType().getTypeID() == BlackboardAttribute.Type.TSK_SET_NAME.getTypeID())
-                    .map(attr -> attr.getValueString())
-                    .findFirst()
-                    .orElse(null);
-
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
-            return null;
-        }
-
-        // if no set name, no set node will be identified.
-        if (setName == null) {
-            return null;
-        }
-
-        // make sure data is fully loaded
-        final String finalSetName = setName;
-        return Stream.of(setNodeChildren.getNodes(true))
-                .filter(setNode -> finalSetName.equals(setNode.getLookup().lookup(String.class)))
-                .findFirst()
-                .orElse(null);
+        
+        return toRet;
     }
 
     /**
@@ -1598,13 +1558,17 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * @return The account artifact's parent node or null if cannot be found.
      */
     private Node getAccountNode(Children typesChildren, BlackboardArtifact art) {
-        Node accountRootNode = typesChildren.findChild(art.getDisplayName());
-        Children accountRootChilds = accountRootNode.getChildren();
-        List<BlackboardAttribute> attributes;
-        String accountType = null;
-        String ccNumberName = null;
         try {
-            attributes = art.getAttributes();
+            Node accountRootNode = typesChildren.findChild(art.getArtifactTypeName());
+            if (accountRootNode == null || accountRootNode.getChildren() == null) {
+                return null;
+            }
+        
+            Children accountRootChilds = accountRootNode.getChildren();
+            List<BlackboardAttribute> attributes = art.getAttributes();
+            String accountType = null;
+            String ccNumberName = null;
+
             for (BlackboardAttribute att : attributes) {
                 int typeId = att.getAttributeType().getTypeID();
                 if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID()) {
@@ -1640,22 +1604,22 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *         found.
      */
     private Node getCreditCardAccountNode(Children accountRootChildren, String ccNumberName) {
-        Node accountNode = accountRootChildren.findChild(Account.Type.CREDIT_CARD.getDisplayName());
-        if (accountNode == null) {
-            return null;
-        }
-        Children accountChildren = accountNode.getChildren();
-        if (accountChildren == null) {
-            return null;
-        }
-        Node binNode = accountChildren.findChild(NbBundle.getMessage(Accounts.class, "Accounts.ByBINNode.name"));
-        if (binNode == null) {
-            return null;
-        }
-        Children binChildren = binNode.getChildren();
         if (ccNumberName == null) {
             return null;
         }
+                
+        Node accountNode = accountRootChildren.findChild(Account.Type.CREDIT_CARD.getDisplayName());
+        if (accountNode == null || accountNode.getChildren() == null) {
+            return null;
+        }
+        Children accountChildren = accountNode.getChildren();
+        Node binNode = accountChildren.findChild(CreditCardByBinParentNode.getNameId());
+        if (binNode == null || binNode.getChildren() == null) {
+            return null;
+        }
+        
+        Children binChildren = binNode.getChildren();
+
         //right padded with 0s to 8 digits when single number
         //when a range of numbers, the first 6 digits are rightpadded with 0s to 8 digits then a dash then 3 digits, the 6,7,8, digits of the end number right padded with 9s
         String binName = StringUtils.rightPad(ccNumberName, 8, "0");
