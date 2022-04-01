@@ -1528,7 +1528,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             while (childNodes != null) {
                 boolean recursing = false;
                 for (Node child : childNodes) {
-                    if (MainDAO.getInstance().getEmailsDAO().getNextSubFolder(child.getName(), path).isPresent()) {
+                    if (MainDAO.getInstance().getEmailsDAO().getNextSubFolder(child.getName(), path).isChildInParent()) {
                         recursing = true;
                         parentNode = child;
                         childNodes = child.getChildren().getNodes(true);
