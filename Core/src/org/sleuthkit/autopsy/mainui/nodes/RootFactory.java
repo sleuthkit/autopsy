@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -29,11 +27,9 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
@@ -107,11 +103,13 @@ public class RootFactory {
             }
         }
 
+        @SuppressWarnings("unchecked")
         private TreeNode<Object> downCastNode(TreeNode<? extends Object> orig) {
             return (TreeNode<Object>) orig;
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         protected TreeNode<Object> createNewNode(TreeItemDTO<? extends Object> rowData) {
             if (rowData.getSearchParams() instanceof HostSearchParams) {
                 return downCastNode(HostNode.getPersonHostViewNode((TreeItemDTO<? extends HostSearchParams>) rowData));
@@ -124,8 +122,19 @@ public class RootFactory {
             }
         }
 
-        private TreeItemDTO<Object> downCastTreeItem(TreeItemDTO<? extends Object> orig) {
-            return (TreeItemDTO<Object>) orig;
+        /**
+         * This creates a modified tree item dto where the id has a prefix (to differentiate switches between person and host).
+         * @param orig The original tree item.
+         * @return The modified tree item
+         */
+        private TreeItemDTO<Object> getModifiedIdTreeItem(TreeItemDTO<? extends Object> orig) {
+            return new TreeItemDTO<Object>(
+                orig.getTypeId(), 
+                orig.getSearchParams(), 
+                orig.getTypeId() + "_" + orig.getId(), 
+                orig.getDisplayName(), 
+                orig.getDisplayCount()
+            );
         }
 
         @Override
@@ -135,11 +144,11 @@ public class RootFactory {
                 TreeResultsDTO<? extends PersonSearchParams> persons = MainDAO.getInstance().getHostPersonDAO().getAllPersons();
                 if (persons.getItems().isEmpty() || (persons.getItems().size() == 1 && persons.getItems().get(0).getSearchParams().getPerson() == null)) {
                     toReturn.addAll(MainDAO.getInstance().getHostPersonDAO().getAllHosts().getItems().stream()
-                            .map(this::downCastTreeItem)
+                            .map(this::getModifiedIdTreeItem)
                             .collect(Collectors.toList()));
                 } else {
                     toReturn.addAll(persons.getItems().stream()
-                            .map(this::downCastTreeItem)
+                            .map(this::getModifiedIdTreeItem)
                             .collect(Collectors.toList()));
                 }
             } catch (ExecutionException | IllegalArgumentException ex) {
