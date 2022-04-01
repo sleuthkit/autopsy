@@ -89,7 +89,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
-import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetFactory;
+import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetNode;
 import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.TreeConfigTypeNode;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeFactory.CreditCardByBinParentNode;
@@ -1448,11 +1448,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             return null;
         }
 
-        Node configNode = keywordRootNode.getChildren().findChild(kwh.getConfiguration());
-        if (configNode == null
-                || configNode.getChildren() == null
-                || configNode.getChildren().getNodesCount(true) == 0) {
-
+        Node configNode = keywordRootNode.getChildren().findChild(KeywordSetNode.getNodeName(kwh.getConfiguration()));
+        if (configNode == null) {
             return null;
         }
 
@@ -1470,12 +1467,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }
             
-            
             if (regex != null) {  //For support of regex nodes such as URLs, IPs, Phone Numbers, and Email Addrs as they are down another level
-                Node regexNode = toRet.getChildren().findChild(regex);
-                if (regexNode == null
-                        || regexNode.getChildren() == null
-                        || regexNode.getChildren().getNodesCount(true) == 0) {
+                Node regexNode = toRet.getChildren() == null || toRet.getChildren().getNodesCount(true) == 0 
+                        ? null 
+                        : toRet.getChildren().findChild(regex);
+                
+                if (regexNode == null) {
 
                     return null;
                 }
@@ -1484,11 +1481,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
             
             if (keywordName != null) {
-                Node keywordNameNode = toRet.getChildren().findChild(keywordName);
-                if (keywordNameNode == null
-                        || keywordNameNode.getChildren() == null
-                        || keywordNameNode.getChildren().getNodesCount(true) == 0) {
-
+                Node keywordNameNode = toRet.getChildren() == null || toRet.getChildren().getNodesCount(true) == 0 
+                        ? null 
+                        : toRet.getChildren().findChild(keywordName);
+                
+                if (keywordNameNode == null) {
                     return null;
                 }
                 

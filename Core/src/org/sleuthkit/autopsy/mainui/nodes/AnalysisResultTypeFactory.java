@@ -324,7 +324,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
          * @param itemData The data to display.
          */
         TreeConfigTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
-            super(itemData.getSearchParams().getArtifactType().getTypeName() + "_SET_" + itemData.getSearchParams().getConfiguration(),
+            super(getNodeName(itemData.getSearchParams().getArtifactType().getTypeName(), itemData.getSearchParams().getConfiguration()),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
                     Children.LEAF,
@@ -445,7 +445,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
          * @param itemData The data to display.
          */
         public KeywordSetNode(TreeResultsDTO.TreeItemDTO<? extends KeywordListSearchParam> itemData) {
-            super("TSK_KEYWORD_HIT_SET_" + itemData.getSearchParams().getSetName(),
+            super(getNodeName(itemData.getSearchParams().getSetName()),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
                     Children.create(new KeywordSearchTermFactory(itemData.getSearchParams()), true),
