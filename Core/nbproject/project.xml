@@ -634,10 +634,6 @@
                 <binary-origin>release\modules\ext\commons-lang3-3.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/log4j-1.2.16.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\log4j-1.2.16.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-logging-1.2.jar</binary-origin>
             </class-path-extension>
