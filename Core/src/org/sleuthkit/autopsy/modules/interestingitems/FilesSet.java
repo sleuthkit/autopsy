@@ -215,8 +215,16 @@ public final class FilesSet implements Serializable {
 
         String ruleName;
         if (inclusiveRules.isEmpty()) {
-            ruleName = Bundle.FileSet_fileIsMemberOf_noInclusiveRules_ruleName();
+            // in the event there are no rules, return null for no match
+            if (exclusiveRules.isEmpty()) {
+                return null;
+            // in the event there are exclusion rules, rely on those
+            } else {
+                ruleName = Bundle.FileSet_fileIsMemberOf_noInclusiveRules_ruleName();
+            }
+            
         } else {
+            // if there are inclusive rules, at least one should be matched
             ruleName = null;
             for (Rule rule : inclusiveRules.values()) {
                 if (rule.isSatisfied(file)) {
