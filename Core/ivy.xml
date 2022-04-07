@@ -3,7 +3,6 @@
     <configurations >
         <!-- module dependencies -->
         <conf name="core"/>
-
     </configurations>
     <dependencies >
         <dependency conf="core->default" org="com.github.vlsi.mxgraph" name="jgraphx" rev="4.2.2" />
