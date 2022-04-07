@@ -37,7 +37,10 @@
     <target name="get-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs,get-thirdparty-dependencies">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve log="quiet"/>
-        <ivy:retrieve pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
+        
+        <!-- Make a report that lists out the dependencies that our JARs have -->	
+        <ivy:report todir='${basedir}/build/ivy-reports' graph='true' xml='false'/>
+        <ivy:retrieve pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
     </target>
     
     <target name="init" depends="get-deps,harness.init"/>
