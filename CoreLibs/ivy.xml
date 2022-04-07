@@ -34,7 +34,6 @@
         <dependency conf="autopsy_core->default" org="commons-lang" name="commons-lang" rev="2.6"/> 
         <dependency conf="autopsy_core->default" org="commons-logging" name="commons-logging" rev="1.2"/>
         <dependency conf="autopsy_core->default" org="commons-io" name="commons-io" rev="2.11.0"/>
-        <dependency conf="autopsy_core->default" org="log4j" name="log4j" rev="1.2.17"/>
         <dependency conf="autopsy_core->default" org="commons-validator" name="commons-validator" rev="1.7"/>
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-collections4" rev="4.4"/>
         <dependency conf="autopsy_core->default" org="commons-collections" name="commons-collections" rev="3.2.2"/>
@@ -83,10 +82,13 @@
         <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.8.2" />
         <dependency conf="autopsy_core->default" org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
         <dependency conf="autopsy_core->default" org="com.googlecode.plist" name="dd-plist" rev="1.23"/>
-        
         <dependency conf="autopsy_core->default" org="org.slf4j" name="slf4j-reload4j" rev="1.7.36"/>
         
+        <dependency conf="autopsy_core->default" org="org.apache.logging.log4j" name="log4j-api" rev="2.17.2" transitive="false"/>
+        <dependency conf="autopsy_core->default" org="org.apache.logging.log4j" name="log4j-core" rev="2.17.2" transitive="false"/>
+        
         <exclude org="*" ext="*" type="javadoc"/>
+        <exclude org="log4j" module="log4j"/>
 
         <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
         

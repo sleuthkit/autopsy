@@ -849,8 +849,12 @@
                 <binary-origin>release/modules/ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/log4j-1.2.17.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/log4j-1.2.17.jar</binary-origin>
+                <runtime-relative-path>ext/log4j-api-2.17.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/log4j-api-2.17.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/log4j-core-2.17.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/log4j-core-2.17.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/ooxml-schemas-1.4.jar</runtime-relative-path>

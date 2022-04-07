@@ -29,13 +29,27 @@
         <dependency conf="autopsy->default" org="com.ibm.icu" name="icu4j" rev="70.1"/>
         
         <!-- Jetty -->
-		<!-- <dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="11.0.8"/>
+		<dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="11.0.8"/>
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="11.0.8"/>
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="11.0.8"/>
-        <dependency conf="servlet->default" org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016"/> -->
+        <dependency conf="servlet->default" org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016"/>
+
+
+        <dependency conf="slf4j-libs->default" org="org.slf4j" name="slf4j-log4j12" rev="1.7.36"/>
+        <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.36"/>
+        <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.36"/> 
 
         <exclude org="*" ext="*" type="javadoc"/>
+        
+        
+        <override org="org.apache.logging.log4j" module="log4j-api" rev="2.17.2"/>
+        <override org="org.apache.logging.log4j" module="log4j-core" rev="2.17.2"/>
+        <override org="org.apache.logging.log4j" module="log4j-1.2-api" rev="2.17.2"/>        
+        <override org="org.apache.logging.log4j" module="log4j-layout-template-json" rev="2.17.2"/>
+        <override org="org.apache.logging.log4j" module="log4j-slf4j-impl" rev="2.17.2"/>
+        <override org="org.apache.logging.log4j" module="log4j-web" rev="2.17.2"/>
         <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
+        
         <override org="org.apache.zookeeper" module="zookeeper" rev="3.8.0"/>
         <override org="org.apache.zookeeper" module="zookeeper-jute" rev="3.8.0"/>
         <override org="com.google.code.gson" module="gson" rev="2.9.0"/>
