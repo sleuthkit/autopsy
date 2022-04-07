@@ -38,7 +38,7 @@ public class ReportNode extends BaseNode<SearchResultsDTO, ReportsRowDTO> {
                 backgroundTasksPool);
             
             setName(rowData.getReportName() + rowData.getId());
-            setDisplayName(rowData.getReportName());
+            setDisplayName(rowData.getSourceModuleName());
             setIconBaseWithExtension("org/sleuthkit/autopsy/images/report_16.png");
     }
     
