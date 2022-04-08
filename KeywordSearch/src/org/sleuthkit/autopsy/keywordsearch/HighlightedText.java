@@ -32,7 +32,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -532,14 +532,14 @@ class HighlightedText implements IndexedText {
         // Must be done before highlighting tags are added. If we were to 
         // perform HTML escaping after adding the highlighting tags we would
         // not see highlighted text in the content viewer.
-        text = StringEscapeUtils.escapeHtml(text);
+        text = StringEscapeUtils.escapeHtml4(text);
 
         TreeRangeSet<Integer> highlights = TreeRangeSet.create();
 
         //for each keyword find the locations of hits and record them in the RangeSet
         for (String keyword : keywords) {
             //we also need to escape the keyword so that it matches the escaped text
-            final String escapedKeyword = StringEscapeUtils.escapeHtml(keyword);
+            final String escapedKeyword = StringEscapeUtils.escapeHtml4(keyword);
             int searchOffset = 0;
             int hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, searchOffset);
             while (hitOffset != -1) {

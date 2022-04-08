@@ -7,4 +7,5 @@
             <ibiblio name="xerial" m2compatible="true" root="http://www.xerial.org/maven/repository/snapshot" />
         </chain>
     </resolvers>
+    <property name="packaging.type" value="jar" />
 </ivysettings>

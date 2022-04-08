@@ -52,7 +52,7 @@ import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
