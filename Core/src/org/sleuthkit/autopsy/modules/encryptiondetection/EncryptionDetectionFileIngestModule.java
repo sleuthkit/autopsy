@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
-import com.healthmarketscience.jackcess.CryptCodecProvider;
+import com.healthmarketscience.jackcess.crypt.CryptCodecProvider;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
-import com.healthmarketscience.jackcess.InvalidCredentialsException;
+import com.healthmarketscience.jackcess.crypt.InvalidCredentialsException;
 import com.healthmarketscience.jackcess.impl.CodecProvider;
 import com.healthmarketscience.jackcess.impl.UnsupportedCodecException;
 import com.healthmarketscience.jackcess.util.MemFileChannel;

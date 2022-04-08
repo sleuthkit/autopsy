@@ -59,10 +59,16 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartItem>>
                     "{0}: {1} ({2})", new DecimalFormat("#,###"), new DecimalFormat("0.0%"));
 
     private final ChartMessageOverlay overlay = new ChartMessageOverlay();
-    private final DefaultPieDataset dataset = new DefaultPieDataset();
+    private final DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
     private final JFreeChart chart;
-    private final PiePlot plot;
+    private final PiePlot<String> plot;
 
+    @SuppressWarnings("unchecked")
+    private static PiePlot<String> getTypedPlot(JFreeChart chart) {
+        return ((PiePlot<String>) chart.getPlot());
+    }
+    
+    
     /**
      * Main constructor.
      */
@@ -86,8 +92,7 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartItem>>
 
         chart.setBackgroundPaint(null);
         chart.getTitle().setFont(DEFAULT_HEADER_FONT);
-
-        this.plot = ((PiePlot) chart.getPlot());
+        this.plot = getTypedPlot(chart);
         plot.setInteriorGap(DEFAULT_CHART_PADDING);
         plot.setLabelGenerator(DEFAULT_LABEL_GENERATOR);
         plot.setLabelFont(DEFAULT_FONT);

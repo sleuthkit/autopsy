@@ -77,7 +77,7 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartSeries
         chart.getTitle().setFont(DEFAULT_HEADER_FONT);
 
         this.plot = ((CategoryPlot) chart.getPlot());
-        this.plot.getRenderer().setBaseItemLabelFont(DEFAULT_FONT);
+        this.plot.getRenderer().setDefaultItemLabelFont(DEFAULT_FONT);
         plot.setBackgroundPaint(null);
         plot.setOutlinePaint(null);
 

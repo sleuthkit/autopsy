@@ -61,6 +61,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -1098,7 +1099,7 @@ class ExtractRegistry extends Extract {
                 Map<String, String> userInfo = userInfoMap.remove(sid);
                 if (userInfo != null) {
                     addAccountInstance(accountMgr, osAccount, (DataSource) dataSource);
-                    updateOsAccount(osAccount, userInfo, groupMap.get(sid), regAbstractFile);
+                    updateOsAccount(osAccount, userInfo, groupMap.get(sid), regAbstractFile, ingestJobId);
                 }
             }
 
@@ -1106,7 +1107,7 @@ class ExtractRegistry extends Extract {
             for (Map<String, String> userInfo : userInfoMap.values()) {
                 OsAccount osAccount = accountMgr.newWindowsOsAccount(userInfo.get(SID_KEY), null, null, host, OsAccountRealm.RealmScope.LOCAL);
                 accountMgr.newOsAccountInstance(osAccount, (DataSource) dataSource, OsAccountInstance.OsAccountInstanceType.LAUNCHED);
-                updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile);
+                updateOsAccount(osAccount, userInfo, groupMap.get(userInfo.get(SID_KEY)), regAbstractFile, ingestJobId);
             }
             return true;
         } catch (FileNotFoundException ex) {
@@ -2041,13 +2042,16 @@ class ExtractRegistry extends Extract {
      *
      * @param regFile      File the account was found in
      * @param emailAddress The emailAddress
+     * @param ingestJobId  The ingest job id.
      */
-    private void addEmailAccount(AbstractFile regFile, String emailAddress) {
+    private void addEmailAccount(AbstractFile regFile, String emailAddress, long ingestJobId) {
         try {
             currentCase.getSleuthkitCase()
                     .getCommunicationsManager()
                     .createAccountFileInstance(Account.Type.EMAIL,
-                            emailAddress, getRAModuleName(), regFile);
+                            emailAddress, getRAModuleName(), regFile,
+                            Collections.emptyList(),
+                            ingestJobId);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE,
                     String.format("Error adding email account with value "
@@ -2080,13 +2084,13 @@ class ExtractRegistry extends Extract {
      * @param userInfo  userInfo map from SAM file parsing.
      * @param groupList Group list from the SAM file parsing.
      * @param regFile   Source file.
+     * @param ingestJobId
      *
      * @throws TskDataException
      * @throws TskCoreException
      */
-    private void updateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile) throws TskDataException, TskCoreException, NotUserSIDException {
+    private void updateOsAccount(OsAccount osAccount, Map<String, String> userInfo, List<String> groupList, AbstractFile regFile, long ingestJobId) throws TskDataException, TskCoreException, NotUserSIDException {
         Host host = ((DataSource) dataSource).getHost();
-
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
 
@@ -2139,7 +2143,7 @@ class ExtractRegistry extends Extract {
 
         value = userInfo.get(INTERNET_NAME_KEY);
         if (value != null && !value.isEmpty()) {
-            addEmailAccount(regFile, value);
+            addEmailAccount(regFile, value, ingestJobId);
 
             attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_EMAIL,
                     value, osAccount, host, regFile));
