@@ -107,9 +107,8 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
                 .url(GET_TARGET_LANGUAGES_URL).build();
         try {
             Response response = new OkHttpClient().newCall(get_request).execute();
-            JsonParser parser = new JsonParser();
             String responseBody = response.body().string();
-            JsonElement elementBody = parser.parse(responseBody);
+            JsonElement elementBody = JsonParser.parseString(responseBody);
             JsonObject asObject = elementBody.getAsJsonObject();
             JsonElement translationElement = asObject.get("translation");
             JsonObject responses = translationElement.getAsJsonObject();
@@ -368,8 +367,7 @@ public class BingTranslatorSettingsPanel extends javax.swing.JPanel {
                 .addHeader("Content-type", "application/json").build();
         try {
             Response response = new OkHttpClient().newCall(request).execute();
-            JsonParser parser = new JsonParser();
-            JsonArray responses = parser.parse(response.body().string()).getAsJsonArray();
+            JsonArray responses = JsonParser.parseString(response.body().string()).getAsJsonArray();
             //As far as I know, there's always exactly one item in the array.
             JsonObject response0 = responses.get(0).getAsJsonObject();
             JsonArray translations = response0.getAsJsonArray("translations");

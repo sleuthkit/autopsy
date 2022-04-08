@@ -232,7 +232,7 @@ final class VcardParser {
         org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
         try {
             // Create artifact if it doesn't already exist.
-            if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, attributes)) {
+            if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.Type.TSK_CONTACT, attributes)) {
                 artifact = abstractFile.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), attributes);
                 
                 extractPhotos(vcard, abstractFile, artifact);

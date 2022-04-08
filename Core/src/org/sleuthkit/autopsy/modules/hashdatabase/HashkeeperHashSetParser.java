@@ -53,7 +53,9 @@ public class HashkeeperHashSetParser implements HashSetParser {
 
             // Create the parser
             inputStreamReader = new InputStreamReader(new FileInputStream(filename)); //NON-NLS
-            csvParser = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(inputStreamReader);
+            
+            csvParser = CSVFormat.RFC4180.builder().setHeader().setSkipHeaderRecord(true).build().parse(inputStreamReader);
+            
             if (!csvParser.getHeaderMap().keySet().contains("hash")) {
                 close();
                 throw new TskCoreException("Hashkeeper file format invalid - does not contain 'hash' column");
