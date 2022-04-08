@@ -6,4 +6,5 @@
         <ibiblio name="maven.restlet.org" root="http://maven.restlet.com" m2compatible="true" />        
     </chain>
   </resolvers>
+  <property name="packaging.type" value="jar" />
 </ivysettings>
