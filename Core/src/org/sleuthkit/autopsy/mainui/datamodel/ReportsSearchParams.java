@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,45 +16,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
-import org.sleuthkit.datamodel.DataSource;
 
 /**
- * A top level UI grouping of Files, Views, Results, Tags for 'Group by Data
- * Source' view of the tree.
- *
+ * Key for accessing data about reports from the DAO.
  */
-public class DataSourceGrouping {
+public class ReportsSearchParams {
 
-    private final DataSource dataSource;
+    private static final String TYPE_ID = "REPORTS";
 
-    public DataSourceGrouping(DataSource dataSource) {
-        this.dataSource = dataSource;
+    /**
+     * @return The type id for this search parameter.
+     */
+    public static String getTypeId() {
+        return TYPE_ID;
     }
 
-    DataSource getDataSource() {
-        return this.dataSource;
+    private static ReportsSearchParams instance = null;
+
+    /**
+     * @return A singleton instance of this class.
+     */
+    public static ReportsSearchParams getInstance() {
+        if (instance == null) {
+            instance = new ReportsSearchParams();
+        }
+        return instance;
     }
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
         if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final DataSourceGrouping other = (DataSourceGrouping) obj;
-        return this.dataSource.getId() == other.getDataSource().getId();
+        return Objects.equals(getClass(), obj.getClass());
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 17 * hash + Objects.hashCode(this.dataSource);
-        return hash;
+        return 7;
     }
-
+    
+    
 }

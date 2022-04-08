@@ -103,6 +103,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeMimeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.FileTypeSizeFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.DeletedFileFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.ReportsDAO.ReportsFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
 
@@ -1452,6 +1454,22 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ex);
         }
     }
+ 
+    /**
+     * Displays results of querying the DAO for given search parameters (set and
+     * artifact type) query.
+     *
+     * @param searchParams The search parameter query.
+     */
+    void displayReports(ReportsSearchParams searchParams) {
+        try {
+            this.searchResultManager = new SearchManager(new ReportsFetcher(searchParams), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, "There was an error fetching data for reports", ex);
+        }        
+    }
 
     /**
      * Displays results of querying the DAO for the given search parameters
@@ -1518,12 +1536,13 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * query.
      *
      * @param osAccountKey The search parameters.
+     * @param nodeSelectionInfo The selected node or null for no selection.
      */
-    void displayOsAccount(OsAccountsSearchParams osAccountKey) {
+    void displayOsAccount(OsAccountsSearchParams osAccountKey, ChildNodeSelectionInfo nodeSelectionInfo) {
         try {
             this.searchResultManager = new SearchManager(new AccountFetcher(osAccountKey), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
-            displaySearchResults(results, true);
+            displaySearchResults(results, true, nodeSelectionInfo);
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
                     "There was an error fetching data for Os Account filter: {0}.",

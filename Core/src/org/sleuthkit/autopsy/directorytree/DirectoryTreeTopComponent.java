@@ -73,17 +73,10 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.corecomponents.ViewPreferencesPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.datamodel.AnalysisResults;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
-import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
-import org.sleuthkit.autopsy.datamodel.DataArtifacts;
-import org.sleuthkit.autopsy.datamodel.OsAccounts;
-import org.sleuthkit.autopsy.datamodel.PersonNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.datamodel.ViewsNode;
-import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
@@ -93,6 +86,13 @@ import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetNo
 import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.TreeConfigTypeNode;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeFactory.CreditCardByBinParentNode;
+import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.OsAccountNodeSelectionInfo;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.AnalysisResultsRootNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.DataArtifactsRootNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.OsAccountsRootNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.PersonNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.ViewsRootNode;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
 import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.MimeParentNode;
 import org.sleuthkit.datamodel.Account;
@@ -125,16 +125,17 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
-    private AutopsyTreeChildFactory autopsyTreeChildFactory;
     private Children autopsyTreeChildren;
-    private Accounts accounts;
     private boolean showRejectedResults;
     private static final long DEFAULT_DATASOURCE_GROUPING_THRESHOLD = 5; // Threshold for prompting the user about grouping by data source
     private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
     private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
 
     // nodes to be opened if present at top level
-    private static final Set<String> NODES_TO_EXPAND = Stream.of(AnalysisResults.getName(), DataArtifacts.getName(), ViewsNode.NAME)
+    private static final Set<String> NODES_TO_EXPAND_PREFIXES = Stream.of(
+            AnalysisResultsRootNode.getNamePrefix(), 
+            DataArtifactsRootNode.getNamePrefix(), 
+            ViewsRootNode.getNamePrefix())
             .collect(Collectors.toSet());
 
     /**
@@ -203,7 +204,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     .forEach(tree::expandNode);
         } else {
             Stream.of(rootChildrenNodes)
-                    .filter(n -> n != null && NODES_TO_EXPAND.contains(n.getName()))
+                    .filter(n -> {
+                        // find any where node name is present in prefixes
+                        return n != null
+                                && n.getName() != null
+                                && NODES_TO_EXPAND_PREFIXES.stream()
+                                        .filter(prefix -> n.getName().startsWith(prefix))
+                                        .findAny()
+                                        .isPresent();
+                    })
                     .forEach(tree::expandNode);
         }
     }
@@ -578,36 +587,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }.execute();
             }
 
-            // if there's at least one image, load the image and open the top componen
-            autopsyTreeChildFactory = new AutopsyTreeChildFactory();
-            autopsyTreeChildren = Children.create(autopsyTreeChildFactory, true);
-            Node root = new AbstractNode(autopsyTreeChildren) {
-                //JIRA-2807: What is the point of these overrides?
-                /**
-                 * to override the right click action in the white blank space
-                 * area on the directory tree window
-                 */
-                @Override
-                public Action[] getActions(boolean popup) {
-                    return new Action[]{};
-                }
-
-                // Overide the AbstractNode use of DefaultHandle to return
-                // a handle which can be serialized without a parent
-                @Override
-                public Node.Handle getHandle() {
-                    return new Node.Handle() {
-                        @Override
-                        public Node getNode() throws IOException {
-                            return em.getRootContext();
-                        }
-                    };
-                }
-            };
-
-            root = new DirectoryTreeFilterNode(root, true);
-
-            em.setRootContext(root);
+            setRootContextChildren();
             em.getRootContext().setName(currentCase.getName());
             em.getRootContext().setDisplayName(currentCase.getName());
             getTree().setRootVisible(false); // hide the root
@@ -664,6 +644,39 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }.execute();
         }
+    }
+
+    /**
+     * Set root context to the root children.
+     */
+    private void setRootContextChildren() {
+        // if there's at least one image, load the image and open the top componen
+        autopsyTreeChildren = RootFactory.getRootChildren();
+        Node root = new AbstractNode(autopsyTreeChildren) {
+            //JIRA-2807: What is the point of these overrides?
+            /**
+             * to override the right click action in the white blank space
+             * area on the directory tree window
+             */
+            @Override
+            public Action[] getActions(boolean popup) {
+                return new Action[]{};
+            }
+            
+            // Overide the AbstractNode use of DefaultHandle to return
+            // a handle which can be serialized without a parent
+            @Override
+            public Node.Handle getHandle() {
+                return new Node.Handle() {
+                    @Override
+                    public Node getNode() throws IOException {
+                        return em.getRootContext();
+                    }
+                };
+            }
+        };
+        
+        em.setRootContext(root);
     }
 
     /**
@@ -861,13 +874,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             try {
                 Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                 if (treeNode != null) {
-
-                    Node originNode;
-                    if (treeNode instanceof DirectoryTreeFilterNode) {
-                        originNode = ((DirectoryTreeFilterNode) treeNode).getOriginal();
-                    } else {
-                        originNode = treeNode;
-                    }
+                    Node originNode = treeNode;
 
                     //set node, wrap in filter node first to filter out children
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
@@ -1032,8 +1039,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
 
         // refresh all children of the root.
-        autopsyTreeChildFactory.refreshChildren();
-
+        setRootContextChildren();
+        
         // Select the first node and reset the selection history
         // This should happen on the EDT once the tree has been rebuilt.
         // hence the SwingWorker that does this in the done() method
@@ -1151,9 +1158,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private Optional<Node> getCategoryNodeChild(Children children, Category category) {
         switch (category) {
             case DATA_ARTIFACT:
-                return Optional.ofNullable(children.findChild(DataArtifacts.getName()));
+                return Stream.of(children.getNodes(true))
+                        .filter(n -> n.getName() != null && n.getName().startsWith(DataArtifactsRootNode.getNamePrefix()))
+                        .findFirst();
             case ANALYSIS_RESULT:
-                return Optional.ofNullable(children.findChild(AnalysisResults.getName()));
+                return Stream.of(children.getNodes(true))
+                        .filter(n -> n.getName() != null && n.getName().startsWith(AnalysisResultsRootNode.getNamePrefix()))
+                        .findFirst();
             default:
                 LOGGER.log(Level.WARNING, "Unbale to find category of type: " + category.name());
                 return Optional.empty();
@@ -1263,7 +1274,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         }
 
-        if (OsAccounts.getListName().equals(node.getName())) {
+        if (node.getName() != null && node.getName().startsWith(OsAccountsRootNode.getNamePrefix())) {
             return Optional.of(node);
         }
 
@@ -1301,16 +1312,21 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         Node osAccountListNode = osAccountListNodeOpt.get();
 
-        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) osAccountListNode).getOriginal();
-        undecoratedParentNode.setChildNodeSelectionInfo((osAcctNd) -> {
-            OsAccount osAcctOfNd = osAcctNd.getLookup().lookup(OsAccount.class);
-            return osAcctOfNd != null && osAcctOfNd.getId() == osAccount.getId();
-        });
+        if (osAccountListNode instanceof TreeNode) {
+            TreeNode<?> treeNode = (TreeNode<?>) osAccountListNode;
+            treeNode.setNodeSelectionInfo(new OsAccountNodeSelectionInfo(osAccount.getId()));
+        }
+
         getTree().expandNode(osAccountListNode);
-        try {
-            em.setExploredContextAndSelection(osAccountListNode, new Node[]{osAccountListNode});
-        } catch (PropertyVetoException ex) {
-            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+        if (this.getSelectedNode().equals(osAccountListNode)) {
+            this.setDirectoryListingActive();
+            this.respondSelection(em.getSelectedNodes(), new Node[]{osAccountListNode});
+        } else {
+            try {
+                em.setExploredContextAndSelection(osAccountListNode, new Node[]{osAccountListNode});
+            } catch (PropertyVetoException ex) {
+                LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+            }
         }
     }
 
@@ -1378,9 +1394,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         if (treeNode == null) {
             return;
         }
-
-//        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
-//        undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
 
         if(treeNode instanceof TreeNode) {
             ((TreeNode)treeNode).setNodeSelectionInfo(new BlackboardArtifactNodeSelectionInfo(art));

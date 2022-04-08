@@ -36,8 +36,6 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Data Sources Area
      */
-    T visit(DataSourceFilesNode in);
-
     T visit(LayoutFileNode lfn);
 
     T visit(LocalFileNode dfn);
@@ -62,13 +60,7 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Views Area
      */
-    T visit(ViewsNode vn);
-
-    T visit(DataSourceGroupingNode dataSourceGroupingNode);
-
     T visit(BlackboardArtifactNode ban);
-
-    T visit(Artifacts.BaseArtifactNode ecn);
 
     T visit(CommonAttributeValueNode cavn);
 
@@ -95,24 +87,12 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Reports
      */
-    T visit(Reports.ReportsListNode reportsNode);
-
-    T visit(Reports.ReportNode reportNode);
-
     T visit(EmptyNode.MessageNode emptyNode);
 
     /*
      * Attachments
      */
     T visit(AttachmentNode node);
-
-    T visit(OsAccounts.OsAccountListNode node);
-
-    T visit(PersonNode node);
-
-    T visit(HostNode node);
-
-    T visit(DataSourcesNode node);
 
     /*
      * Unsupported node
@@ -215,28 +195,8 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(Artifacts.BaseArtifactNode ecn) {
-            return defaultVisit(ecn);
-        }
-
-        @Override
         public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
             return defaultVisit(ftByMimeTypeEmptyNode);
-        }
-
-        @Override
-        public T visit(ViewsNode vn) {
-            return defaultVisit(vn);
-        }
-
-        @Override
-        public T visit(DataSourceGroupingNode dataSourceGroupingNode) {
-            return defaultVisit(dataSourceGroupingNode);
-        }
-
-        @Override
-        public T visit(DataSourceFilesNode in) {
-            return defaultVisit(in);
         }
 
         @Override
@@ -265,37 +225,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(Reports.ReportsListNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Reports.ReportNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
         public T visit(AttachmentNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(OsAccounts.OsAccountListNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(HostNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(DataSourcesNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(PersonNode node) {
             return defaultVisit(node);
         }
 

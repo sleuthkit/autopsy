@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.mainui.nodes.actions;
 
-import java.awt.event.ActionEvent;
-import java.text.MessageFormat;
 import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,31 +28,36 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JOptionPane;
 import org.openide.actions.PropertiesAction;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.openide.util.actions.SystemAction;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteReportAction;
+import org.sleuthkit.autopsy.actions.OpenReportAction;
 import org.sleuthkit.autopsy.actions.ReplaceContentTagAction;
 import org.sleuthkit.autopsy.actions.ViewArtifactAction;
 import org.sleuthkit.autopsy.actions.ViewOsAccountAction;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactItem;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
+import org.sleuthkit.autopsy.datamodel.hosts.AssociatePersonsMenuAction;
+import org.sleuthkit.autopsy.datamodel.hosts.MergeHostMenuAction;
+import org.sleuthkit.autopsy.datamodel.hosts.RemoveParentPersonAction;
+import org.sleuthkit.autopsy.datamodel.persons.DeletePersonAction;
+import org.sleuthkit.autopsy.datamodel.persons.EditPersonAction;
 import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.directorytree.CollapseAction;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
@@ -64,7 +67,6 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.FileSearchTreeAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.autopsy.filesearch.FileSearchAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
@@ -73,7 +75,9 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -173,7 +177,22 @@ public final class ActionsFactory {
         if (optionalFile.isPresent()) {
             actionGroups.add(new ActionGroup(new ExtractArchiveWithPasswordAction(optionalFile.get())));
         }
+        
+        // handle report actions if report is present.
+        actionContext.getReport()
+                .map(report -> {
+                    ActionGroup actions = new ActionGroup();
+                    actions.add(new OpenReportAction(report.getPath()));
+                    actions.add(DeleteReportAction.getInstance());
+                    return actions;
+                })
+                .ifPresent(ag -> actionGroups.add(ag));
+                
 
+        getHostActions(actionContext).ifPresent(ag -> actionGroups.add(ag));
+        
+        getPersonActions(actionContext).ifPresent(ag -> actionGroups.add(ag));
+        
         List<Action> actionList = new ArrayList<>();
         for (ActionGroup aGroup : actionGroups) {
             if (aGroup != null) {
@@ -549,6 +568,66 @@ public final class ActionsFactory {
             return Bundle.ActionsFactory_getAssociatedTypeStr_associated();
         }
     }
+    
+    /**
+     * Returns an action group of host actions if host is present in action
+     * context. Otherwise, returns empty.
+     *
+     * @param actionContext The action context.
+     *
+     * @return The action group or empty.
+     */
+    private static Optional<ActionGroup> getHostActions(ActionContext actionContext) {
+        return actionContext.getHost()
+                .flatMap(host -> {
+                    // if there is a host, then provide actions
+                    if (host != null) {
+                        List<Action> actionsList = new ArrayList<>();
+
+                        // Add the appropriate Person action
+                        Optional<Person> parent;
+                        try {
+                            parent = Case.getCurrentCaseThrows().getSleuthkitCase().getPersonManager().getPerson(host);
+                        } catch (NoCurrentCaseException | TskCoreException ex) {
+                            logger.log(Level.WARNING, String.format("Error fetching parent person of host: %s", host.getName() == null ? "<null>" : host.getName()), ex);
+                            return Optional.empty();
+                        }
+
+                        // if there is a parent, only give option to remove parent person.
+                        if (parent.isPresent()) {
+                            actionsList.add(new RemoveParentPersonAction(host, parent.get()));
+                        } else {
+                            actionsList.add(new AssociatePersonsMenuAction(host));
+                        }
+
+                        // Add option to merge hosts
+                        actionsList.add(new MergeHostMenuAction(host));
+
+                        return Optional.of(new ActionGroup(actionsList));
+                    } else {
+                        return Optional.empty();
+                    }
+                });
+    }
+
+    /**
+     * Returns an action group of person actions if person is present in action
+     * context. Otherwise, returns empty.
+     *
+     * @param actionContext The action context.
+     *
+     * @return The action group or empty.
+     */
+    private static Optional<ActionGroup> getPersonActions(ActionContext actionContext) {
+        return actionContext.getPerson()
+                .flatMap(person -> {
+                    return Optional.of(new ActionGroup(Arrays.asList(
+                            new EditPersonAction(person),
+                            new DeletePersonAction(person)
+                    )));
+                });
+    }
+    
 
     /**
      * Represents a group of related actions.
