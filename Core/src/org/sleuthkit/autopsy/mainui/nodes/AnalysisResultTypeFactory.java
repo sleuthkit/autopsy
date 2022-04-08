@@ -158,6 +158,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayAnalysisResult(this.getItemData().getSearchParams());
         }
 
@@ -305,15 +306,26 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
     /**
      * A node for a set within an artifact type.
      */
-    static class TreeConfigTypeNode extends TreeNode<AnalysisResultSearchParam> {
+    public static class TreeConfigTypeNode extends TreeNode<AnalysisResultSearchParam> {
 
+        /**
+         * Returns the node name to be used given the artifact type name and configuration.
+         * @param artifactTypeName The artifact type name (non-null).
+         * @param configuration The configuration name (can be null).
+         * @return The node name.
+         */
+        public static String getNodeName(String artifactTypeName, String configuration) {
+            return configuration == null ?
+                    artifactTypeName + "_NULL_CONFIG" :
+                    artifactTypeName + "_CONFIG_" + configuration;
+        }
         /**
          * Main constructor.
          *
          * @param itemData The data to display.
          */
         TreeConfigTypeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
-            super(itemData.getSearchParams().getArtifactType().getTypeName() + "_SET_" + itemData.getSearchParams().getConfiguration(),
+            super(getNodeName(itemData.getSearchParams().getArtifactType().getTypeName(), itemData.getSearchParams().getConfiguration()),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
                     Children.LEAF,
@@ -322,6 +334,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayAnalysisResultConfig(this.getItemData().getSearchParams());
         }
 
@@ -412,17 +425,29 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
         }
     }
 
-    static class KeywordSetNode extends TreeNode<KeywordListSearchParam> {
+    public static class KeywordSetNode extends TreeNode<KeywordListSearchParam> {
 
         private static final Logger logger = Logger.getLogger(KeywordSetNode.class.getName());
 
+        
+        /**
+         * Returns the name that will be used with a set node based on the configuration.
+         * @param config The analysis result configuration.
+         * @return The name to be used.
+         */
+        public static String getNodeName(String config) {
+            return (config == null)
+                    ? BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeName() + "_ADHOC_SET"
+                    : BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeName() + "_SET_" + config;
+        }
+        
         /**
          * Main constructor.
          *
          * @param itemData The data to display.
          */
         public KeywordSetNode(TreeResultsDTO.TreeItemDTO<? extends KeywordListSearchParam> itemData) {
-            super("TSK_KEYWORD_HIT_SET_" + itemData.getSearchParams().getSetName(),
+            super(getNodeName(itemData.getSearchParams().getSetName()),
                     getIconPath(itemData.getSearchParams().getArtifactType()),
                     itemData,
                     Children.create(new KeywordSearchTermFactory(itemData.getSearchParams()), true),
@@ -575,6 +600,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             KeywordSearchTermParams searchTermParams = this.getItemData().getSearchParams();
 
             if (!searchTermParams.hasChildren()) {
@@ -729,6 +755,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayKeywordHits(this.getItemData().getSearchParams());
         }
 

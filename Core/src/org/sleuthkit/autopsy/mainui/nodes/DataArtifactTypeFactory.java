@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.mainui.nodes;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
@@ -263,6 +262,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayAccounts(super.getItemData().getSearchParams());
         }
     }
@@ -354,6 +354,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             if (Children.LEAF.equals(getChildren())) {
                 dataResultPanel.displayEmailMessages(super.getItemData().getSearchParams());
             } else {
@@ -472,9 +473,16 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
      * The tree credit card by file node.
      */
     static class CreditCardByFileNode extends TreeNode<CreditCardSearchParams> {
-
+        /**
+         * @return The name id of this node.
+         */
+        public static String getNameId() {
+            return CreditCardFileSearchParams.getTypeId();
+        }
+        
+        
         CreditCardByFileNode(TreeItemDTO<? extends CreditCardSearchParams> rowData) {
-            super(rowData.getDisplayName(),
+            super(CreditCardFileSearchParams.getTypeId(),
                     NodeIconUtil.FILE.getPath(),
                     rowData);
         }
@@ -489,10 +497,16 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
     /**
      * The root node for credit cards by bin.
      */
-    static class CreditCardByBinParentNode extends TreeNode<CreditCardSearchParams> {
-
+    public static class CreditCardByBinParentNode extends TreeNode<CreditCardSearchParams> {
+        /**
+         * @return The name id of this node.
+         */
+        public static String getNameId() {
+            return CreditCardBinSearchParams.getTypeId();
+        }
+        
         CreditCardByBinParentNode(TreeResultsDTO.TreeItemDTO<? extends CreditCardSearchParams> rowData) {
-            super(rowData.getDisplayName(),
+            super(CreditCardBinSearchParams.getTypeId(),
                     BANK_ICON,
                     rowData,
                     Children.create(new CreditCardByBinFactory(rowData.getSearchParams().getDataSourceId(), rowData.getSearchParams().isRejectedIncluded()), true),
@@ -565,6 +579,7 @@ public class DataArtifactTypeFactory extends TreeChildFactory<DataArtifactSearch
 
         @Override
         public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
             dataResultPanel.displayCreditCardsByBin(this.getItemData().getSearchParams());
         }
     }

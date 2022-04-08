@@ -320,7 +320,7 @@ public class EmailsDAO extends AbstractDAO {
         String normalizedPath = getNormalizedPath(fullPath);
         return new EmailTreeItem(normalizedPath, displayName, dataSourceId, count, hasChildren);
     }
-        
+
     /**
      * Creates a tree item dto if full path is a subfolder of parent path.
      *
@@ -335,22 +335,128 @@ public class EmailsDAO extends AbstractDAO {
      *         parent path.
      */
     public TreeItemDTO<EmailSearchParams> createEmailTreeItem(String fullPath, String parentPath, Long dataSourceId, TreeDisplayCount count) {
-        Optional<String> subFolderOpt = getNextSubFolder(parentPath, fullPath);
-        if (!subFolderOpt.isPresent()) {
+        NextSubFolderResult subFolderOpt = getNextSubFolder(parentPath, fullPath);
+        if (!subFolderOpt.isChildInParent()) {
             return null;
         }
 
-        String subFolder = subFolderOpt.get();
-        boolean equalPaths = Objects.equals(subFolder, getNormalizedPath(parentPath));
-
         // if full path has further children, then has children is true, otherwise we don't know.
-        Optional<Boolean> hasChildren = Objects.equals(subFolder, getNormalizedPath(fullPath)) ? Optional.empty() : Optional.of(true);
-        String displayName = equalPaths
+        Optional<Boolean> hasChildren = subFolderOpt.hasMoreChildren() ? Optional.empty() : Optional.of(true);
+        String displayName = subFolderOpt.isMatched()
                 ? Bundle.EmailsDAO_getFolderDisplayName_defaultName()
-                : getFolderDisplayName(getLastFolderSegment(subFolder));
+                : getFolderDisplayName(subFolderOpt.getSubfolder());
 
-        return new EmailTreeItem(subFolder, displayName, dataSourceId, count, hasChildren);
+        return new EmailTreeItem(subFolderOpt.getSubfolderPath(), displayName, dataSourceId, count, hasChildren);
 
+    }
+
+    /**
+     * Result of calling getNextSubFolder.
+     */
+    public static class NextSubFolderResult {
+
+        /**
+         * The type of result.
+         */
+        public enum NextSubFolderType {
+            /**
+             * The normalized child and parent path are an exact match.
+             */
+            MATCHED,
+            /**
+             * The child path is not an ancestor of the parent.
+             */
+            CHILD_NOT_IN_PARENT,
+            /**
+             * There is a next folder segment moving from the parent to the
+             * child, but not the last.
+             */
+            NEXT_SEGMENT,
+            /**
+             * This is the last folder segment moving from the parent to the
+             * child.
+             */
+            LAST_SEGMENT
+        }
+
+        private final NextSubFolderType type;
+        private final String subFolderPath;
+        private final String subfolder;
+
+        /**
+         * Main constructor.
+         *
+         * @param type          The type of result.
+         * @param subFolderPath The full sub folder path. This path will be the
+         *                      normalized child path provided or a path with
+         *                      exactly one more subfolder than the parent if
+         *                      there is a subfolder of the child in the parent.
+         * @param subfolder     If there is at least one subfolder of the child
+         *                      in the parent, this is the next subfolder of the
+         *                      parent in the child.
+         */
+        NextSubFolderResult(NextSubFolderType type, String subFolderPath, String subfolder) {
+            this.type = type;
+            this.subFolderPath = subFolderPath;
+            this.subfolder = subfolder;
+        }
+
+        /**
+         * @return The type of result.
+         */
+        NextSubFolderType getType() {
+            return type;
+        }
+
+        /**
+         * @return The full sub folder path. This path will be the normalized
+         *         child path provided or a path with exactly one more subfolder
+         *         than the parent if there is a subfolder of the child in the
+         *         parent.
+         */
+        public String getSubfolderPath() {
+            return subFolderPath;
+        }
+
+        /**
+         * @return If there is at least one subfolder of the child in the
+         *         parent, this is the next subfolder of the parent in the
+         *         child.
+         */
+        public String getSubfolder() {
+            return subfolder;
+        }
+
+        /**
+         * @return True if 1) child path is within parent path, 2) child path
+         *         has > 1 subfolders within parent path.
+         */
+        public boolean hasMoreChildren() {
+            return type == NextSubFolderType.NEXT_SEGMENT;
+        }
+
+        /**
+         * @return True if the normalized child and parent path are an exact
+         *         match.
+         */
+        public boolean isMatched() {
+            return type == NextSubFolderType.MATCHED;
+        }
+
+        /**
+         * @return True if child path is contained within parent path.
+         */
+        public boolean isChildInParent() {
+            return type != NextSubFolderType.CHILD_NOT_IN_PARENT;
+        }
+
+        /**
+         * @return True if 1) child path is within parent path, 2) child path
+         *         has >= 1 subfolders within parent path.
+         */
+        public boolean hasSubfolder() {
+            return type == NextSubFolderType.NEXT_SEGMENT || type == NextSubFolderType.LAST_SEGMENT;
+        }
     }
 
     /**
@@ -362,14 +468,14 @@ public class EmailsDAO extends AbstractDAO {
      *
      * @return The next subfolder or empty.
      */
-    public Optional<String> getNextSubFolder(String parentPath, String childPath) {
+    public NextSubFolderResult getNextSubFolder(String parentPath, String childPath) {
         String normalizedParent = getNormalizedPath(parentPath);
         String normalizedChild = getNormalizedPath(childPath);
 
         if (normalizedChild == null) {
             return (normalizedParent == null)
-                    ? Optional.of(null)
-                    : Optional.empty();
+                    ? new NextSubFolderResult(NextSubFolderResult.NextSubFolderType.MATCHED, normalizedChild, null)
+                    : new NextSubFolderResult(NextSubFolderResult.NextSubFolderType.CHILD_NOT_IN_PARENT, normalizedChild, null);
         }
 
         if (normalizedParent == null) {
@@ -379,12 +485,24 @@ public class EmailsDAO extends AbstractDAO {
         // ensure that child is a sub path of parent
         if (normalizedChild.toLowerCase().startsWith(normalizedParent.toLowerCase())) {
             int nextDelimiter = normalizedChild.indexOf(PATH_DELIMITER, normalizedParent.length());
-            return nextDelimiter >= 0
-                    ? Optional.of(getNormalizedPath(normalizedChild.substring(0, nextDelimiter + 1)))
-                    : Optional.of(normalizedChild);
 
+            if (nextDelimiter >= 0) {
+                String nextSubfolderPath = getNormalizedPath(normalizedChild.substring(0, nextDelimiter + 1));
+                return new NextSubFolderResult(
+                        NextSubFolderResult.NextSubFolderType.NEXT_SEGMENT,
+                        nextSubfolderPath,
+                        getLastFolderSegment(nextSubfolderPath)
+                );
+            } else {
+                return new NextSubFolderResult(
+                        NextSubFolderResult.NextSubFolderType.LAST_SEGMENT,
+                        normalizedChild,
+                        getLastFolderSegment(normalizedChild)
+                );
+            }
+        } else {
+            return new NextSubFolderResult(NextSubFolderResult.NextSubFolderType.CHILD_NOT_IN_PARENT, normalizedChild, null);
         }
-        return Optional.empty();
     }
 
     /**
@@ -488,8 +606,8 @@ public class EmailsDAO extends AbstractDAO {
         Set<String> indeterminateTypes = this.emailCounts.getEnqueued().stream()
                 .filter(evt -> (dataSourceId == null || Objects.equals(evt.getDataSourceId(), dataSourceId)))
                 .map(evt -> getNextSubFolder(normalizedParent, evt.getFolder()))
-                .filter(opt -> opt.isPresent())
-                .map(opt -> opt.get())
+                .filter(opt -> opt.isChildInParent())
+                .map(opt -> opt.getSubfolder())
                 .collect(Collectors.toSet());
 
         String query = null;
@@ -538,7 +656,7 @@ public class EmailsDAO extends AbstractDAO {
                                     ? TreeDisplayCount.INDETERMINATE
                                     : TreeResultsDTO.TreeDisplayCount.getDeterminate(resultSet.getLong("count"));
 
-                            accumulatedData.add(createEmailTreeItem(rsPath, getFolderDisplayName(rsFolderSegment), 
+                            accumulatedData.add(createEmailTreeItem(rsPath, getFolderDisplayName(rsFolderSegment),
                                     dataSourceId, treeDisplayCount, Optional.of(hasChildren)));
                         }
                     } catch (SQLException ex) {
@@ -657,7 +775,7 @@ public class EmailsDAO extends AbstractDAO {
         if (evt instanceof EmailEvent) {
             EmailEvent emailEvt = (EmailEvent) evt;
             // determines if sub folder or not.  if equivalent, will return present
-            return (getNextSubFolder(parameters.getFolder(), emailEvt.getFolder()).isPresent()
+            return (getNextSubFolder(parameters.getFolder(), emailEvt.getFolder()).isChildInParent()
                     && (parameters.getDataSourceId() == null || Objects.equals(parameters.getDataSourceId(), emailEvt.getDataSourceId())));
         } else {
             return false;
