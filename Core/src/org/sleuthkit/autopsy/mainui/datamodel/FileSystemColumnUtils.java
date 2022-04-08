@@ -540,6 +540,8 @@ public class FileSystemColumnUtils {
      * - If content is a file system, return the displayable children of the root folder
      * - If content is the root folder, return the displayable children of the root folder
      *
+     * NOTE: This should be kept in sync with the visitor ViewContextAction.AncestorVisitor
+     * 
      * @param content The base content.
      * 
      * @return List of content to add to the table/tree.

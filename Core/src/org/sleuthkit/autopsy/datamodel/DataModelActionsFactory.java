@@ -31,14 +31,12 @@ import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.datamodel.Reports.ReportNode;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.autopsy.mainui.nodes.OsAccountNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -337,26 +335,6 @@ public class DataModelActionsFactory {
         }
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
-        }
-        if (isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList
-                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if (selectedArtifactsList.size() == 1) {
-                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
-            }
-        }
-        actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        return actionsList;
-    }
-
-    public static List<Action> getActions(Report report, boolean isArtifactSource) {
-        List<Action> actionsList = new ArrayList<>();
-        final ReportNode reportNode = new ReportNode(report);
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, reportNode));
-        actionsList.add(null); // creates a menu separator
-        if (isArtifactSource) {
-            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
         if (isArtifactSource) {
             final Collection<BlackboardArtifact> selectedArtifactsList
