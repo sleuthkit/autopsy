@@ -201,8 +201,6 @@
                 <package>com.google.rpc.context</package>
                 <package>com.google.thirdparty.publicsuffix</package>
                 <package>com.google.type</package>
-                <package>com.microsoft.schemas.vml</package>
-                <package>com.microsoft.schemas.vml.impl</package>
                 <package>com.sun.jna</package>
                 <package>com.sun.jna.platform</package>
                 <package>com.sun.jna.platform.dnd</package>
@@ -267,6 +265,17 @@
                 <package>org.apache.commons.codec.language.bm</package>
                 <package>org.apache.commons.codec.net</package>
                 <package>org.apache.commons.collections</package>
+                <package>org.apache.commons.collections.bag</package>
+                <package>org.apache.commons.collections.bidimap</package>
+                <package>org.apache.commons.collections.buffer</package>
+                <package>org.apache.commons.collections.collection</package>
+                <package>org.apache.commons.collections.comparators</package>
+                <package>org.apache.commons.collections.functors</package>
+                <package>org.apache.commons.collections.iterators</package>
+                <package>org.apache.commons.collections.keyvalue</package>
+                <package>org.apache.commons.collections.list</package>
+                <package>org.apache.commons.collections.map</package>
+                <package>org.apache.commons.collections.set</package>
                 <package>org.apache.commons.collections4</package>
                 <package>org.apache.commons.collections4.bag</package>
                 <package>org.apache.commons.collections4.bidimap</package>
@@ -318,21 +327,16 @@
                 <package>org.apache.commons.logging</package>
                 <package>org.apache.commons.logging.impl</package>
                 <package>org.apache.commons.text</package>
+                <package>org.apache.commons.validator</package>
                 <package>org.apache.commons.validator.routines</package>
                 <package>org.apache.commons.validator.routines.checkdigit</package>
+                <package>org.apache.commons.validator.util</package>
                 <package>org.apache.log4j</package>
                 <package>org.apache.log4j.chainsaw</package>
                 <package>org.apache.log4j.config</package>
                 <package>org.apache.log4j.helpers</package>
                 <package>org.apache.log4j.jdbc</package>
-                <package>org.apache.log4j.jmx</package>
-                <package>org.apache.log4j.lf5</package>
-                <package>org.apache.log4j.lf5.util</package>
-                <package>org.apache.log4j.lf5.viewer</package>
-                <package>org.apache.log4j.lf5.viewer.categoryexplorer</package>
-                <package>org.apache.log4j.lf5.viewer.configure</package>
                 <package>org.apache.log4j.net</package>
-                <package>org.apache.log4j.nt</package>
                 <package>org.apache.log4j.or</package>
                 <package>org.apache.log4j.or.jms</package>
                 <package>org.apache.log4j.or.sax</package>
