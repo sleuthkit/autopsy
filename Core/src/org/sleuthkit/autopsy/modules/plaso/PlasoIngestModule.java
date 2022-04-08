@@ -151,7 +151,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             currentCase = Case.getCurrentCase();
             fileManager = currentCase.getServices().getFileManager();
 
-            String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
+            // Use Z here for timezone since the other formats can include a colon on some systems
+            String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss Z", Locale.US).format(System.currentTimeMillis());//NON-NLS
             Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO, currentTime);
             try {
                 Files.createDirectories(moduleOutputPath);
