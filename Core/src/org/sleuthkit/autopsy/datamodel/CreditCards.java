@@ -132,7 +132,8 @@ public class CreditCards {
         if (binsLoaded == false) {
             try {
                 InputStreamReader in = new InputStreamReader(CreditCards.class.getResourceAsStream("ranges.csv")); //NON-NLS
-                CSVParser rangesParser = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(in);
+                
+                CSVParser rangesParser = CSVFormat.RFC4180.builder().setHeader().setSkipHeaderRecord(true).build().parse(in);
 
                 //parse each row and add to range map
                 for (CSVRecord record : rangesParser) {
