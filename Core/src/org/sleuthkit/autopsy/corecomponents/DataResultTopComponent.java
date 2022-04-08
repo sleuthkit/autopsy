@@ -42,21 +42,21 @@ import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeExtensionsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileSystemHostSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardBinSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardFileSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.CreditCardSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.EmailSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
+import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -389,9 +389,10 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void displayAnalysisResult(AnalysisResultSearchParam analysisResultParams) {
         dataResultPanel.displayAnalysisResult(analysisResultParams);
     }
-    
+
     /**
      * Displays credit cards by bin number prefix.
+     *
      * @param searchParams The search parameters.
      */
     public void displayCreditCardsByBin(CreditCardBinSearchParams searchParams) {
@@ -400,6 +401,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
 
     /**
      * Displays credit cards by file name.
+     *
      * @param searchParams The search parameters.
      */
     public void displayCreditCardsByFile(CreditCardFileSearchParams searchParams) {
@@ -415,9 +417,10 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void displayDataArtifact(DataArtifactSearchParam dataArtifactParams) {
         dataResultPanel.displayDataArtifact(dataArtifactParams);
     }
-    
+
     /**
      * Displays deleted content in the file views section.
+     *
      * @param deletedSearchParams The deleted content search params.
      */
     public void displayDeletedContent(DeletedContentSearchParams deletedSearchParams) {
@@ -425,11 +428,11 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     }
 
     /**
-     * Displays results of querying the DAO for demails matching the
-     * search parameters query.
+     * Displays results of querying the DAO for demails matching the search
+     * parameters query.
      *
      * @param dataArtifactParams The search parameter query.
-     */    
+     */
     public void displayEmailMessages(EmailSearchParams searchParams) {
         dataResultPanel.displayEmailMessages(searchParams);
     }
@@ -466,6 +469,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
 
     /**
      * Displays results of querying the DAO for an artifact type and set name.
+     *
      * @param params The search parameters.
      */
     public void displayAnalysisResultConfig(AnalysisResultSearchParam params) {
@@ -481,7 +485,17 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void displayKeywordHits(KeywordHitSearchParam keywordParams) {
         dataResultPanel.displayKeywordHits(keywordParams);
     }
-    
+
+    /**
+     * Displays results of querying the DAO for reports matching the search
+     * parameters query.
+     *
+     * @param searchParams The search parameter query.
+     */
+    public void displayReports(ReportsSearchParams searchParams) {
+        dataResultPanel.displayReports(searchParams);
+    }
+
     /**
      * Displays results for querying the DAO for tags matching the search
      * parameters query.
@@ -491,7 +505,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void displayTags(TagsSearchParams tagParams) {
         dataResultPanel.displayTags(tagParams);
     }
-    
+
     /**
      * Displays results for querying the DAO for tags matching the search
      * parameters query.
@@ -517,11 +531,12 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      * parameters query.
      *
      * @param osAccountParams The search parameter query.
+     * @param nodeSelectionInfo The os account selected or null if no selection.
      */
-    public void displayOsAccounts(OsAccountsSearchParams osAccountParams) {
-        dataResultPanel.displayOsAccount(osAccountParams);
+    public void displayOsAccounts(OsAccountsSearchParams osAccountParams, ChildNodeSelectionInfo nodeSelectionInfo) {
+        dataResultPanel.displayOsAccount(osAccountParams, nodeSelectionInfo);
     }
-    
+
     /**
      * Displays results for querying the DAO for accounts matching the search
      * parameters query.

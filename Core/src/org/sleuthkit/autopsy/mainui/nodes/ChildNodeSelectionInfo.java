@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.mainui.nodes;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.OsAccount;
 
 /**
  * An interface for nodes that support the view selected file\directory.
@@ -55,7 +56,8 @@ public interface ChildNodeSelectionInfo {
         }
     }
 
-    public class BlackboardArtifactNodeSelectionInfo implements ChildNodeSelectionInfo { 
+    public class BlackboardArtifactNodeSelectionInfo implements ChildNodeSelectionInfo {
+
         private final long objId;
 
         public BlackboardArtifactNodeSelectionInfo(BlackboardArtifact artifact) {
@@ -70,6 +72,28 @@ public interface ChildNodeSelectionInfo {
             }
 
             return false;
+        }
+    }
+
+    /**
+     * The selection of an os account.
+     */
+    public class OsAccountNodeSelectionInfo implements ChildNodeSelectionInfo {
+
+        private final long osAccountId;
+
+        /**
+         * Main constructor.
+         * @param osAccountId The os account id.
+         */
+        public OsAccountNodeSelectionInfo(long osAccountId) {
+            this.osAccountId = osAccountId;
+        }
+
+        @Override
+        public boolean matches(Node node) {
+            OsAccount osAccount = node.getLookup().lookup(OsAccount.class);
+            return osAccount != null && osAccount.getId() == osAccountId;
         }
     }
 }
