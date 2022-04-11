@@ -351,13 +351,12 @@ class Chromium extends Extract {
                 continue;
             }
 
-            final JsonParser parser = new JsonParser();
             JsonElement jsonElement;
             JsonObject jElement, jRoot, jBookmark;
             JsonArray jBookmarkArray;
 
             try {
-                jsonElement = parser.parse(tempReader);
+                jsonElement = JsonParser.parseReader(tempReader);
                 jElement = jsonElement.getAsJsonObject();
                 jRoot = jElement.get("roots").getAsJsonObject(); //NON-NLS
                 jBookmark = jRoot.get("bookmark_bar").getAsJsonObject(); //NON-NLS
