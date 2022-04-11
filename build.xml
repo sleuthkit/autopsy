@@ -79,6 +79,12 @@
         <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${basedir}/docs/doxygen-dev/build-docs" includes="**/*"/>
         </delete>
+
+        <!-- build core test libs -->
+        <subant buildpath="${basedir}/CoreTestLibs/build.xml" target="clean" inheritrefs="false" inheritall="false">
+            <property name="nbplatform.active.dir" value="${nbplatform.active.dir}" />
+            <property name="nbplatform.default.harness.dir" value="${nbplatform.default.harness.dir}" />
+        </subant>
     </target>
     
     <!-- This target is similar to the regular test target that calls test on all nbm's, 
@@ -265,9 +271,16 @@
         <property name="build-minimal-platform-renamed" location="${dist.dir}/${app.name}-minimal.zip" />
         <echo>File moved to ${build-minimal-platform-renamed}</echo>
     </target>
+
+    <target name="build-core-test-libs">
+        <subant buildpath="${basedir}/CoreTestLibs/build.xml" target="build" inheritrefs="false" inheritall="false">
+            <property name="nbplatform.active.dir" value="${nbplatform.active.dir}" />
+            <property name="nbplatform.default.harness.dir" value="${nbplatform.default.harness.dir}" />
+        </subant>
+    </target>
     
     <!-- override build to add branding -->
-    <target name="build" depends="build-brand,suite.build,chmod_executables" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
+    <target name="build" depends="build-core-test-libs,build-brand,suite.build,chmod_executables" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
  
     <target name="build-brand" depends="-init">
         
