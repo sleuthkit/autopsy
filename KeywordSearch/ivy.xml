@@ -27,7 +27,8 @@
         
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
         <dependency conf="autopsy->default" org="com.ibm.icu" name="icu4j" rev="70.1"/>
-        
+        <dependency conf="autopsy->default" org="junit" name="junit" rev="4.13.2"/>
+
         <!-- Jetty -->
 		<dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="11.0.8"/>
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="11.0.8"/>
