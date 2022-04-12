@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobNodeData.InvalidDataException;
+import org.sleuthkit.autopsy.experimental.cleanup.AutoIngestCleanup.DeleteOptions;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -58,7 +59,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * directed to the dedicated auto ingest dashboard log instead of to the general
  * application log.
  */
-final class DeleteCaseTask implements Runnable {
+public final class DeleteCaseTask implements Runnable {
 
     private static final int MANIFEST_FILE_LOCKING_TIMEOUT_MINS = 5;
     private static final int MANIFEST_DELETE_TRIES = 3;
@@ -71,41 +72,6 @@ final class DeleteCaseTask implements Runnable {
     private CaseMetadata caseMetadata;
 
     /**
-     * Options to support implementing different case deletion use cases.
-     */
-    enum DeleteOptions {
-        /**
-         * Delete the auto ingest job manifests and corresponding data sources,
-         * while leaving the manifest file coordination service nodes and the
-         * rest of the case intact. The use case is freeing auto ingest input
-         * directory space while retaining the option to restore the data
-         * sources, effectively restoring the case.
-         */
-        DELETE_INPUT,
-        /**
-         * Delete the manifest file coordination service nodes and the output
-         * for a case, while leaving the auto ingest job manifests and
-         * corresponding data sources intact. The use case is auto ingest
-         * reprocessing of a case with a clean slate without having to restore
-         * the manifests and data sources.
-         */
-        DELETE_OUTPUT,
-        /**
-         * Delete everything.
-         */
-        DELETE_INPUT_AND_OUTPUT,
-        /**
-         * Delete only the case components that the application created. This is
-         * DELETE_OUTPUT with the additional feature that manifest file
-         * coordination service nodes are marked as deleted, rather than
-         * actually deleted. This eliminates the requirement that manifests and
-         * data sources have to be deleted before deleting the case to avoid an
-         * unwanted, automatic reprocessing of the case.
-         */
-        DELETE_CASE
-    }
-
-    /**
      * Constructs a task that deletes part or all of a given case. Note that all
      * logging is directed to the dedicated auto ingest dashboard log instead of
      * to the general application log.
@@ -115,7 +81,7 @@ final class DeleteCaseTask implements Runnable {
      * @param deleteOption The deletion option for the task.
      * @param progress     A progress indicator.
      */
-    DeleteCaseTask(CaseNodeData caseNodeData, DeleteOptions deleteOption, ProgressIndicator progress) {
+    public DeleteCaseTask(CaseNodeData caseNodeData, DeleteOptions deleteOption, ProgressIndicator progress) {
         this.caseNodeData = caseNodeData;
         this.deleteOption = deleteOption;
         this.progress = progress;
