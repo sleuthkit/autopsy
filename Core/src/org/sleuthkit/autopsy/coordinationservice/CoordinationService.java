@@ -33,6 +33,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
 import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
@@ -305,6 +306,11 @@ public final class CoordinationService {
     public byte[] getNodeData(CategoryNode category, String nodePath) throws CoordinationServiceException, InterruptedException {
         String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
         try {
+            String mkDirsPath = fullNodePath;
+            while(mkDirsPath.endsWith("/")) {
+                mkDirsPath = mkDirsPath.substring(0, mkDirsPath.length() - 1);
+            }
+            ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), mkDirsPath);
             return curator.getData().forPath(fullNodePath);
         } catch (NoNodeException ex) {
             return null;
