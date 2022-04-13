@@ -305,12 +305,18 @@ public final class CoordinationService {
      */
     public byte[] getNodeData(CategoryNode category, String nodePath) throws CoordinationServiceException, InterruptedException {
         String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
+        // Ensure parent path leading to node exists by calling ZKPaths.mkdirs
         try {
-            String mkDirsPath = fullNodePath;
-            while(mkDirsPath.endsWith("/")) {
-                mkDirsPath = mkDirsPath.substring(0, mkDirsPath.length() - 1);
+            // ZKPaths.mkdirs throws an exception with trailing slash.  
+            // Remove trailing slash if slash is present to prevent this issue.
+            while(fullNodePath.endsWith("/")) {
+                fullNodePath = fullNodePath.substring(0, fullNodePath.length() - 1);
             }
-            ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), mkDirsPath);
+            
+            // ensure leading path is present
+            ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), fullNodePath, true);
+            
+            // return node data path
             return curator.getData().forPath(fullNodePath);
         } catch (NoNodeException ex) {
             return null;
