@@ -74,6 +74,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
 import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
@@ -1982,8 +1983,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
             }
         }
-        
-        
+
         private void cleanup() {
             try {
                 //discover the registered implementations of automated cleanup 
@@ -1992,11 +1992,75 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
                 if (!cleanups.isEmpty()) {
                     AutoIngestCleanup cleanup = cleanups.iterator().next();
-                    // ELTODO cleanup.runCleanupTask();
-                }
-                
-                // loop over all completed jobs and delete input and output for that job
 
+                    sysLogger.log(Level.INFO, "CleanupSchedulingTask - trying to get ingest job lock");
+                    synchronized (jobsLock) {
+
+                        sysLogger.log(Level.INFO, "CleanupSchedulingTask - got ingest job lock");
+                        String deletedCaseName = "";
+                        for (AutoIngestJob job : completedJobs) {
+                            // do cleanup for each job
+                            Path casePath = job.getCaseDirectoryPath();
+                            Path dsPath = job.getManifest().getDataSourcePath();
+                            boolean success = true;
+                            if (casePath.toFile().exists()) {
+                                sysLogger.log(Level.INFO, "Cleaning up case {0} for job {1}", new Object[]{casePath.toString(), dsPath.toString()});
+                                success = cleanup.runCleanupTask(casePath, AutoIngestCleanup.DeleteOptions.DELETE_INPUT_AND_OUTPUT, new DoNothingProgressIndicator());
+                            } else {
+                                // case directory has been deleted, likely during cleanup of previous completed job.
+                                // make sure data source is deleted as well because we will never be able to run automated 
+                                // cleanup on a case directory that has been deleted.
+                                File dsFile = dsPath.toFile();
+                                if (dsFile.exists()) {
+                                    sysLogger.log(Level.INFO, "Cleaning up data source {0} for deleted case {1}", new Object[]{dsPath.toString(), casePath.toString()});
+                                    if (!FileUtil.deleteFileDir(dsFile)) {
+                                        sysLogger.log(Level.SEVERE, String.format("Failed to delete data source file at %s for %s", dsPath.toString(), job.getManifest().getCaseName()));
+                                        // there might be some file handles that remain open, try again after next job. 
+                                        continue;
+                                    }
+                                }
+                            }
+
+                            if (success) {
+                                sysLogger.log(Level.INFO, "Cleanup task successfully completed for this job");
+                            } else {
+                                sysLogger.log(Level.SEVERE, "Cleanup task completed for this job");
+                                continue;
+                            }
+
+                            // verify that the data source and case directory have indeed been deleted
+                            if (dsPath.toFile().exists()) {
+                                // data source have NOT ben deleted - keep the completed job so that we 
+                                // attempt the cleanup again later
+                                sysLogger.log(Level.SEVERE, "Data source has not been deleted: {0}", dsPath.toString());
+                                continue;
+                            }
+
+                            if (casePath.toFile().exists()) {
+                                // case output directory has NOT ben deleted - keep the completed job so that we 
+                                // attempt the cleanup again later
+                                sysLogger.log(Level.SEVERE, "Case directory has not been deleted: {0}", casePath.toString());
+                                continue;
+                            }
+                            
+                            deletedCaseName = job.getManifest().getCaseName();
+                        }
+
+                        if (!deletedCaseName.isEmpty()) {
+                            // send message that a at lease one case has been deleted. This message triggers input direcotry 
+                            // re-scan on other AINs so only send one message after all cleanup is complete
+                            final String name = deletedCaseName;
+                            new Thread(() -> {
+                                eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(LOCAL_HOST_NAME, name,
+                                        getSystemUserNameProperty()));
+                            }).start();
+
+                            // trigger input scan which will update the ZK nodes and tables
+                            scanInputDirsNow();
+                        }
+                    }
+
+                }
             } catch (Exception ex) {
                 sysLogger.log(Level.SEVERE, "Unexpected exception in CleanupSchedulingTask", ex); //NON-NLS
             }
@@ -3159,7 +3223,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         @Override
         public void run() {
 
-            try {
+            /*try {
                 //discover the registered implementations of automated cleanup 
                 Collection<? extends AutoIngestCleanup> cleanups
                         = Lookup.getDefault().lookupAll(AutoIngestCleanup.class);
@@ -3178,9 +3242,16 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             // do cleanup for each job
                             Path casePath = job.getCaseDirectoryPath();
                             Path dsPath = job.getManifest().getDataSourcePath();
-                            sysLogger.log(Level.INFO, "Cleaning up case {0} for job {1}", new Object[]{casePath.toString(), dsPath.toString()});
-                            cleanup.runCleanupTask(casePath, AutoIngestCleanup.DeleteOptions.DELETE_INPUT_AND_OUTPUT, new DoNothingProgressIndicator());
-                            
+                            if (casePath.toFile().exists()) {
+                                // ELTODO if paths don't exist that means case has already been cleaned
+                                sysLogger.log(Level.INFO, "Cleaning up case {0} for job {1}", new Object[]{casePath.toString(), dsPath.toString()});
+                                cleanup.runCleanupTask(casePath, AutoIngestCleanup.DeleteOptions.DELETE_INPUT_AND_OUTPUT, new DoNothingProgressIndicator());
+
+                            } else {
+                                // case directory has been deleted
+                                // ELTODO make sure data source is deleted as well
+                            }
+
                             sysLogger.log(Level.INFO, "Cleanup task completed for this job");
                             // ELTODO remove completed job?
                             // verify that the data source, manifest, and case directory have indeed been deleted
@@ -3218,7 +3289,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 }
             } catch (Exception ex) {
                 sysLogger.log(Level.SEVERE, "Unexpected exception in CleanupSchedulingTask", ex); //NON-NLS
-            }
+            }*/
         }
     }
     

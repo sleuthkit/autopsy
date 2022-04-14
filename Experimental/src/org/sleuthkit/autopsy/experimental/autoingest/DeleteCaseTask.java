@@ -61,7 +61,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class DeleteCaseTask implements Runnable {
 
-    private static final int MANIFEST_FILE_LOCKING_TIMEOUT_MINS = 5;
+    private static final int MANIFEST_FILE_LOCKING_TIMEOUT_MINS = 1; // ELTODO
     private static final int MANIFEST_DELETE_TRIES = 3;
     private static final Logger logger = AutoIngestDashboardLogger.getLogger();
     private final CaseNodeData caseNodeData;

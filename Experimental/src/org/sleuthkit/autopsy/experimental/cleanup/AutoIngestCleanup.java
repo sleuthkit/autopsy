@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.experimental.cleanup;
 
 import java.nio.file.Path;
-import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
@@ -63,5 +62,14 @@ public interface AutoIngestCleanup {
         DELETE_CASE
     }
     
-    void runCleanupTask(Path caseOutputDirectoryPath, DeleteOptions deleteOption, ProgressIndicator progress);
+    /**
+     * Performs auto ingest cleanup. For example, deletes input data sources,
+     * output directory, manifest file, and ZK nodes.
+     *
+     * @param caseOutputDirectoryPath Path to case output directory.
+     * @param deleteOption Cleanup options.
+     * @param progress Progress indicator.
+     * @return True if cleanup completed successfully, false otherwise.
+     */
+    boolean runCleanupTask(Path caseOutputDirectoryPath, DeleteOptions deleteOption, ProgressIndicator progress);
 }
