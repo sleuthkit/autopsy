@@ -182,13 +182,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private Path rootOutputDirectory;
     private volatile State state;
     private volatile ErrorState errorState;
-    
-    private static final int NUM_CLEANUP_SCHEDULING_THREADS = 1;
-    private static final String CLEANUP_SCHEDULER_THREAD_NAME = "AIM-cleanup-scheduler-%d";
-    private final ScheduledThreadPoolExecutor cleanupSchedulingExecutor;
-    private final ExecutorService cleanupExecutor;
-    private static final long CLEANUP_INTERVAL_HOURS = 15; // ELTODO 
-    private static final String CLEANUP_THREAD_NAME = "AIM-cleanup-%d";
 
     private volatile AutoIngestNodeStateEvent lastPublishedStateEvent;
 
@@ -231,9 +224,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(AUTO_INGEST_THREAD_NAME).build());
         jobStatusPublishingExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(JOB_STATUS_PUBLISHING_THREAD_NAME).build());
         
-        cleanupSchedulingExecutor = new ScheduledThreadPoolExecutor(NUM_CLEANUP_SCHEDULING_THREADS, new ThreadFactoryBuilder().setNameFormat(CLEANUP_SCHEDULER_THREAD_NAME).build());
-        cleanupExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(CLEANUP_THREAD_NAME).build());     
-        
         hostNamesToRunningJobs = new ConcurrentHashMap<>();
         hostNamesToLastMsgTime = new ConcurrentHashMap<>();
         jobsLock = new Object();
@@ -271,11 +261,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         rootOutputDirectory = Paths.get(AutoIngestUserPreferences.getAutoModeResultsFolder());
         inputScanSchedulingExecutor.scheduleWithFixedDelay(new InputDirScanSchedulingTask(), 0, AutoIngestUserPreferences.getMinutesOfInputScanInterval(), TimeUnit.MINUTES);
         jobProcessingTask = new JobProcessingTask();
-        jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
-        
-         // ELTODO SWITCH TO HOURS
+        jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);        
         jobStatusPublishingExecutor.scheduleWithFixedDelay(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
-        cleanupSchedulingExecutor.scheduleWithFixedDelay(new CleanupSchedulingTask(), 0, AutoIngestUserPreferences.getHoursOfCleanupInterval(), TimeUnit.MINUTES);
         
         eventPublisher.addSubscriber(EVENT_LIST, instance);
         state = State.RUNNING;
@@ -2018,13 +2005,16 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                         // there might be some file handles that remain open, try again after next job. 
                                         continue;
                                     }
+                                } else {
+                                    // the data source has already been deleted
+                                    continue;
                                 }
                             }
 
                             if (success) {
-                                sysLogger.log(Level.INFO, "Cleanup task successfully completed for this job");
+                                sysLogger.log(Level.INFO, "Cleanup task successfully completed for job: {0}", dsPath.toString());
                             } else {
-                                sysLogger.log(Level.SEVERE, "Cleanup task completed for this job");
+                                sysLogger.log(Level.WARNING, "Cleanup task failed for job: {0}", dsPath.toString());
                                 continue;
                             }
 
@@ -2032,14 +2022,14 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             if (dsPath.toFile().exists()) {
                                 // data source have NOT ben deleted - keep the completed job so that we 
                                 // attempt the cleanup again later
-                                sysLogger.log(Level.SEVERE, "Data source has not been deleted: {0}", dsPath.toString());
+                                sysLogger.log(Level.SEVERE, "Data source has not been deleted during cleanup: {0}", dsPath.toString());
                                 continue;
                             }
 
                             if (casePath.toFile().exists()) {
                                 // case output directory has NOT ben deleted - keep the completed job so that we 
                                 // attempt the cleanup again later
-                                sysLogger.log(Level.SEVERE, "Case directory has not been deleted: {0}", casePath.toString());
+                                sysLogger.log(Level.SEVERE, "Case directory has not been deleted during cleanup: {0}", casePath.toString());
                                 continue;
                             }
                             
@@ -3208,95 +3198,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
     }
-            
-    /**
-     * An instance of this runnable is responsible for periodically cleaning up
-     * input and output directories for jobs and cases that have been processed,
-     * as well as deleting corresponding ZK nodes. 
-     */
-    private final class CleanupSchedulingTask implements Runnable {
-
-        private CleanupSchedulingTask() {
-            sysLogger.log(Level.INFO, "Periodic automated cleanup task started");
-        }
-
-        @Override
-        public void run() {
-
-            /*try {
-                //discover the registered implementations of automated cleanup 
-                Collection<? extends AutoIngestCleanup> cleanups
-                        = Lookup.getDefault().lookupAll(AutoIngestCleanup.class);
-                
-                if (!cleanups.isEmpty()) {
-                    AutoIngestCleanup cleanup = cleanups.iterator().next();
-
-                    sysLogger.log(Level.INFO, "CleanupSchedulingTask - trying to get ingest job lock");
-                    synchronized (jobsLock) {
-                        
-                        sysLogger.log(Level.INFO, "CleanupSchedulingTask - got ingest job lock");
-                        
-                        for (Iterator<AutoIngestJob> iterator = completedJobs.iterator(); iterator.hasNext();) {
-                            AutoIngestJob job = iterator.next();
-
-                            // do cleanup for each job
-                            Path casePath = job.getCaseDirectoryPath();
-                            Path dsPath = job.getManifest().getDataSourcePath();
-                            if (casePath.toFile().exists()) {
-                                // ELTODO if paths don't exist that means case has already been cleaned
-                                sysLogger.log(Level.INFO, "Cleaning up case {0} for job {1}", new Object[]{casePath.toString(), dsPath.toString()});
-                                cleanup.runCleanupTask(casePath, AutoIngestCleanup.DeleteOptions.DELETE_INPUT_AND_OUTPUT, new DoNothingProgressIndicator());
-
-                            } else {
-                                // case directory has been deleted
-                                // ELTODO make sure data source is deleted as well
-                            }
-
-                            sysLogger.log(Level.INFO, "Cleanup task completed for this job");
-                            // ELTODO remove completed job?
-                            // verify that the data source, manifest, and case directory have indeed been deleted
-
-                            if (dsPath.toFile().exists()) {
-                                // data source have NOT ben deleted - keep the completed job so that we 
-                                // attempt the cleanup again later
-                                sysLogger.log(Level.SEVERE, "Data source has not been deleted: {0}", dsPath.toString());
-                                continue;
-                            }
-                            
-                            if (casePath.toFile().exists()) {
-                                // case output directory has NOT ben deleted - keep the completed job so that we 
-                                // attempt the cleanup again later
-                                sysLogger.log(Level.SEVERE, "Case directory has not been deleted: {0}", casePath.toString());
-                                continue;
-                            }
-                            
-                            // if we are here then everything got deleted - remove the completed job
-                            // ELTODO do we need this, since we are doing input folder scan at the end? 
-                            iterator.remove();
-                            
-                            // send message that case has been deleted
-                            new Thread(() -> {
-                                eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(LOCAL_HOST_NAME, job.getManifest().getCaseName(),
-                                        getSystemUserNameProperty()));
-                            }).start();
-                        }
-
-                        // trigger input scan which will update the ZK nodes and tables
-                        // ELTODO should we do this inside the jobsLock or outside?
-                        scanInputDirsNow();
-                    }
-
-                }
-            } catch (Exception ex) {
-                sysLogger.log(Level.SEVERE, "Unexpected exception in CleanupSchedulingTask", ex); //NON-NLS
-            }*/
-        }
-    }
     
-        /**
-     * A data source processor progress monitor does nothing. There is currently
-     * no mechanism for showing or recording data source processor progress
-     * during an ingest job.
+     /**
+     * A progress monitor that does nothing. 
      */
     private class DoNothingProgressIndicator implements ProgressIndicator {
 
