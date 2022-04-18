@@ -154,6 +154,31 @@ public final class CoordinationService {
             categoryNodeToPath.put(node.getDisplayName(), nodePath);
         }
     }
+    
+    /**
+     * Given the category and nodePath, create node if it does not already exist.
+     * @param category The category.
+     * @param nodePath The node path.
+     * @return The sanitized path used to create the node.
+     * @throws CoordinationServiceException
+     */
+    private String upsertNodePath(CategoryNode category, String nodePath) throws CoordinationServiceException {
+        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
+
+        // ZKPaths.mkdirs throws an exception with trailing slash.  
+        // Remove trailing slash if slash is present to prevent this issue.
+        while(fullNodePath.endsWith("/")) {
+            fullNodePath = fullNodePath.substring(0, fullNodePath.length() - 1);
+        }
+            
+        try {
+            // ensure leading path is present
+            ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), fullNodePath);
+            return fullNodePath;
+        } catch (Exception ex) {
+            throw new CoordinationServiceException("An error occurred while creating node path at: " + fullNodePath, ex);
+        }   
+    }
 
     /**
      * Tries to get an exclusive lock on a node path appended to a category path
@@ -176,8 +201,10 @@ public final class CoordinationService {
      *                                      lock acquisition.
      */
     public Lock tryGetExclusiveLock(CategoryNode category, String nodePath, int timeOut, TimeUnit timeUnit) throws CoordinationServiceException, InterruptedException {
-        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
+        String fullNodePath = "";
         try {
+            // ensure node is present
+            fullNodePath = upsertNodePath(category, nodePath);
             InterProcessReadWriteLock lock = new InterProcessReadWriteLock(curator, fullNodePath);
             if (lock.writeLock().acquire(timeOut, timeUnit)) {
                 return new Lock(nodePath, lock.writeLock());
@@ -210,8 +237,10 @@ public final class CoordinationService {
      *                                      acquisition.
      */
     public Lock tryGetExclusiveLock(CategoryNode category, String nodePath) throws CoordinationServiceException {
-        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
+        String fullNodePath = "";
         try {
+            // ensure node is present
+            fullNodePath = upsertNodePath(category, nodePath);
             InterProcessReadWriteLock lock = new InterProcessReadWriteLock(curator, fullNodePath);
             if (!lock.writeLock().acquire(0, TimeUnit.SECONDS)) {
                 return null;
@@ -243,8 +272,10 @@ public final class CoordinationService {
      *                                      lock acquisition.
      */
     public Lock tryGetSharedLock(CategoryNode category, String nodePath, int timeOut, TimeUnit timeUnit) throws CoordinationServiceException, InterruptedException {
-        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
+        String fullNodePath = "";
         try {
+            // ensure node is present
+            fullNodePath = upsertNodePath(category, nodePath);
             InterProcessReadWriteLock lock = new InterProcessReadWriteLock(curator, fullNodePath);
             if (lock.readLock().acquire(timeOut, timeUnit)) {
                 return new Lock(nodePath, lock.readLock());
@@ -277,8 +308,10 @@ public final class CoordinationService {
      *                                      acquisition.
      */
     public Lock tryGetSharedLock(CategoryNode category, String nodePath) throws CoordinationServiceException {
-        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
+        String fullNodePath = "";
         try {
+            // ensure node is present
+            fullNodePath = upsertNodePath(category, nodePath);
             InterProcessReadWriteLock lock = new InterProcessReadWriteLock(curator, fullNodePath);
             if (!lock.readLock().acquire(0, TimeUnit.SECONDS)) {
                 return null;
@@ -304,13 +337,12 @@ public final class CoordinationService {
      *                                      setting of node data.
      */
     public byte[] getNodeData(CategoryNode category, String nodePath) throws CoordinationServiceException, InterruptedException {
-        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
+        String fullNodePath = "";
         try {
-            String mkDirsPath = fullNodePath;
-            while(mkDirsPath.endsWith("/")) {
-                mkDirsPath = mkDirsPath.substring(0, mkDirsPath.length() - 1);
-            }
-            ZKPaths.mkdirs(curator.getZookeeperClient().getZooKeeper(), mkDirsPath);
+            // ensure node is present
+            fullNodePath = upsertNodePath(category, nodePath);
+            
+            // return node data path
             return curator.getData().forPath(fullNodePath);
         } catch (NoNodeException ex) {
             return null;
