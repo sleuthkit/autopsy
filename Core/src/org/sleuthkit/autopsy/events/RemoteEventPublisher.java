@@ -76,6 +76,7 @@ final class RemoteEventPublisher {
         try {
             this.localPublisher = localPublisher;
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(info.getUserName(), info.getPassword(), info.getURI());
+            connectionFactory.setTrustAllPackages(true);
             connection = connectionFactory.createConnection();
             connection.start();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
