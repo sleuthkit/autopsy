@@ -105,6 +105,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.DeletedFileFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsDAO.ReportsFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.events.CacheClearEvent;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
 
@@ -189,10 +190,19 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private final PropertyChangeListener DAOListener = evt -> {
         SearchManager manager = this.searchResultManager;
-        if (manager != null && evt != null && evt.getNewValue() instanceof DAOAggregateEvent) {
-            DAOAggregateEvent daoAggrEvt = (DAOAggregateEvent) evt.getNewValue();
-            if (daoAggrEvt.getEvents().stream().anyMatch((daoEvt) -> manager.isRefreshRequired(daoEvt))) {
-                refreshSearchResultChildren();
+        if (manager != null && evt != null) {
+            if (evt.getNewValue() instanceof DAOAggregateEvent) {
+                DAOAggregateEvent daoAggrEvt = (DAOAggregateEvent) evt.getNewValue();
+                if (daoAggrEvt.getEvents().stream().anyMatch((daoEvt) -> manager.isRefreshRequired(daoEvt))) {
+                    refreshSearchResultChildren();
+                }
+            } else if (evt.getNewValue() instanceof CacheClearEvent) {
+                try {
+                    this.searchResultManager = new SearchManager(this.searchResultManager.getDaoFetcher(), getPageSize());
+                    displaySearchResults(this.searchResultManager.getResults(), true);    
+                } catch (ExecutionException ex) {
+                    logger.log(Level.WARNING, "An exception occurred while handling cache clear event.", ex);
+                }
             }
         }
     };
