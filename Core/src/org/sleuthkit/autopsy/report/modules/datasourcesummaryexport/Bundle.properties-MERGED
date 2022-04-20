@@ -1,6 +1,6 @@
 DataSourceSummaryReport.error.noDataSources=No data sources selected for report.
 DataSourceSummaryReport.error.noOpenCase=No currently open case.
-DataSourceSummaryReport.excelFileWriteError=Could not write the KML file.
+DataSourceSummaryReport.excelFileWriteError=Could not write the xlsx file.
 DataSourceSummaryReport.failedToCompleteReport=Failed to complete report.
 DataSourceSummaryReport.getName.text=Data Source Summary Report
 DataSourceSummaryReport.getDesc.text=Data source summary report in Excel (XLS) format.

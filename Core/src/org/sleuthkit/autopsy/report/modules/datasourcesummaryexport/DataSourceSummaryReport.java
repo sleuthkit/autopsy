@@ -89,7 +89,7 @@ public class DataSourceSummaryReport implements GeneralReportModule {
         "DataSourceSummaryReport.error.noOpenCase=No currently open case.",
         "DataSourceSummaryReport.error.noDataSources=No data sources selected for report.",
         "DataSourceSummaryReport.failedToCompleteReport=Failed to complete report.",
-        "DataSourceSummaryReport.excelFileWriteError=Could not write the KML file.",})
+        "DataSourceSummaryReport.excelFileWriteError=Could not write the xlsx file.",})
     @Override
     public void generateReport(GeneralReportSettings settings, ReportProgressPanel progressPanel) {
         progressPanel.start();
