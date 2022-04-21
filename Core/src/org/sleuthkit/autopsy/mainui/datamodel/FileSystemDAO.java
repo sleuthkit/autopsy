@@ -140,7 +140,7 @@ public class FileSystemDAO extends AbstractDAO {
             return false;
         }
 
-        return key.getHostObjectId() == ((FileSystemHostEvent) daoEvent).getHostObjectId();
+        return key.getHostObjectId() == ((FileSystemHostEvent) daoEvent).getHost().getHostId();
     }
 
     private BaseSearchResultsDTO fetchContentForTableFromContent(SearchParams<FileSystemContentSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
@@ -381,6 +381,7 @@ public class FileSystemDAO extends AbstractDAO {
                 affectedParentContent = parentContent;
             }
         } else if (evt instanceof DataSourceAddedEvent) {
+            affectedContent = ((DataSourceAddedEvent) evt).getDataSource();
             Host host = getHostFromDs(((DataSourceAddedEvent) evt).getDataSource());
             affectedParentHost = host;
 
@@ -430,7 +431,7 @@ public class FileSystemDAO extends AbstractDAO {
         }
 
         if (affectedHost != null) {
-            daoEvents.add(new FileSystemHostEvent(affectedHost.getHostId()));
+            daoEvents.add(new FileSystemHostEvent(affectedHost, affectedContent));
         }
 
         affectedPerson.ifPresent((person) -> {
@@ -585,14 +586,21 @@ public class FileSystemDAO extends AbstractDAO {
         if (daoEvent instanceof FileSystemContentEvent) {
             FileSystemContentEvent contentEvt = (FileSystemContentEvent) daoEvent;
 
+            TreeDisplayCount countToShow = contentEvt.getContent() instanceof DataSource ? TreeDisplayCount.NOT_SHOWN : count;
             return new FileSystemTreeEvent(
                     contentEvt.getParentObjId(),
                     contentEvt.getParentHost(),
-                    createDisplayableContentTreeItem(contentEvt.getContent(), count),
+                    createDisplayableContentTreeItem(contentEvt.getContent(), countToShow),
                     fullRefresh);
 
         } else if (daoEvent instanceof FileSystemHostEvent) {
-
+            FileSystemHostEvent hostEvt = (FileSystemHostEvent) daoEvent;
+            
+            return new FileSystemTreeEvent(
+                    null,
+                    hostEvt.getHost(),
+                    createDisplayableContentTreeItem(hostEvt.getDataSource(), TreeDisplayCount.NOT_SHOWN),
+                    true);
         } else if (daoEvent instanceof FileSystemPersonEvent) {
 
         }

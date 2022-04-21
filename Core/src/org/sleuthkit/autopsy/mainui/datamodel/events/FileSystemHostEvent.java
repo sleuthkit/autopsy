@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.mainui.datamodel.events;
 
 import java.util.Objects;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * An event signaling that a data source has been added or removed from the
@@ -26,20 +28,27 @@ import java.util.Objects;
  */
 public class FileSystemHostEvent implements DAOEvent {
 
-    private final Long hostObjectId;
+    private final Host host;
+    private final Content dataSource;
 
-    public FileSystemHostEvent(Long hostObjectId) {
-        this.hostObjectId = hostObjectId;
+    public FileSystemHostEvent(Host host, Content dataSource) {
+        this.host = host;
+        this.dataSource = dataSource;
     }
 
-    public Long getHostObjectId() {
-        return hostObjectId;
+    public Host getHost() {
+        return host;
+    }
+
+    public Content getDataSource() {
+        return dataSource;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 67 * hash + Objects.hashCode(this.hostObjectId);
+        int hash = 3;
+        hash = 59 * hash + Objects.hashCode(this.host);
+        hash = 59 * hash + Objects.hashCode(this.dataSource);
         return hash;
     }
 
@@ -55,12 +64,17 @@ public class FileSystemHostEvent implements DAOEvent {
             return false;
         }
         final FileSystemHostEvent other = (FileSystemHostEvent) obj;
-        if (!Objects.equals(this.hostObjectId, other.hostObjectId)) {
+        if (!Objects.equals(this.host, other.host)) {
+            return false;
+        }
+        if (!Objects.equals(this.dataSource, other.dataSource)) {
             return false;
         }
         return true;
     }
 
+    
+    
     @Override
     public DAOEvent.Type getType() {
         return DAOEvent.Type.RESULT;
