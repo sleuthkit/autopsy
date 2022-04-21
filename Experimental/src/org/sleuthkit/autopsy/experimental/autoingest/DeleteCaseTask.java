@@ -61,30 +61,56 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class DeleteCaseTask implements Runnable {
 
-    private static final int MANIFEST_FILE_LOCKING_TIMEOUT_MINS = 1; // ELTODO
+    private static final int MANIFEST_FILE_LOCKING_TIMEOUT_MINS = 1;
     private static final int MANIFEST_DELETE_TRIES = 3;
     private static final Logger logger = AutoIngestDashboardLogger.getLogger();
     private final CaseNodeData caseNodeData;
     private final DeleteOptions deleteOption;
     private final ProgressIndicator progress;
+    private final boolean bestEffortDeletion;
     private final List<ManifestFileLock> manifestFileLocks;
     private CoordinationService coordinationService;
     private CaseMetadata caseMetadata;
 
     /**
-     * Constructs a task that deletes part or all of a given case. Note that all
+     * Constructs a task that deletes part or all of a given case.Note that all
      * logging is directed to the dedicated auto ingest dashboard log instead of
      * to the general application log.
      *
      * @param caseNodeData The case directory coordination service node data for
-     *                     the case.
+     * the case.
      * @param deleteOption The deletion option for the task.
-     * @param progress     A progress indicator.
+     * @param progress A progress indicator.
+     * @param bestEffortDeletion A flag whether manifest/input deletion is "best
+     * effort". If the flag is set to true, then we will delete all manifest
+     * files for which we are able to get exclusive lock, and leave behind all
+     * manifest files and data sources for which we were unable to get exclusive
+     * lock. If the flag is set to false, then the algorithm will abort and exit
+     * unless it is able to get exclusive lock on all of the manifest files.
+     */
+    public DeleteCaseTask(CaseNodeData caseNodeData, DeleteOptions deleteOption, ProgressIndicator progress, boolean bestEffortDeletion) {
+        this.caseNodeData = caseNodeData;
+        this.deleteOption = deleteOption;
+        this.progress = progress;
+        this.bestEffortDeletion = bestEffortDeletion;
+        manifestFileLocks = new ArrayList<>();
+    }
+    
+    /**
+     * Constructs a task that deletes part or all of a given case.Note that all
+     * logging is directed to the dedicated auto ingest dashboard log instead of
+     * to the general application log.
+     *
+     * @param caseNodeData The case directory coordination service node data for
+     * the case.
+     * @param deleteOption The deletion option for the task.
+     * @param progress A progress indicator.
      */
     public DeleteCaseTask(CaseNodeData caseNodeData, DeleteOptions deleteOption, ProgressIndicator progress) {
         this.caseNodeData = caseNodeData;
         this.deleteOption = deleteOption;
         this.progress = progress;
+        this.bestEffortDeletion = false; //abort and exit unless we get exclusive lock on all of the manifest files.
         manifestFileLocks = new ArrayList<>();
     }
 
@@ -146,6 +172,8 @@ public final class DeleteCaseTask implements Runnable {
         logger.log(Level.INFO, String.format("Connecting to the coordination service for deletion of %s", caseNodeData.getDisplayName()));
         coordinationService = CoordinationService.getInstance();
         checkForCancellation();
+        
+        // ELTODO Reduce amount of INFO logging
 
         /*
          * Acquire an exclusive case name lock. The case name lock is the lock
@@ -361,10 +389,12 @@ public final class DeleteCaseTask implements Runnable {
                     if (null != manifestLock) {
                         manifestFileLocks.add(new ManifestFileLock(manifestPath, manifestLock));
                     } else {
-                        logger.log(Level.INFO, String.format("Failed to exclusively lock the manifest %s because it was already held by another host", manifestPath, caseNodeData.getDisplayName()));
-                        allLocksAcquired = false;
-                        releaseManifestFileLocks();
-                        break;
+                        logger.log(Level.WARNING, String.format("Failed to exclusively lock the manifest %s because it was already held by another host", manifestPath, caseNodeData.getDisplayName()));
+                        if (!bestEffortDeletion) {
+                            allLocksAcquired = false;
+                            releaseManifestFileLocks();
+                            break;
+                        }
                     }
                 }
             } catch (CoordinationServiceException | InterruptedException ex) {
