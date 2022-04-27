@@ -24,6 +24,10 @@
 !/CoreLibs/nbproject/project.xml
 !/CoreLibs/nbproject/project.properties
 
+/CoreTestLibs/release/
+/CoreTestLibs/build/
+/CoreTestLibs/dist/
+
 /Core/test/qa-functional/data/*
 !/Core/test/qa-functional/data/PasswordDetection_img1_v1.img
 
