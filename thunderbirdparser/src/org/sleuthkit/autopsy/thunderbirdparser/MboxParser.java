@@ -133,7 +133,12 @@ class MboxParser extends MimeJ4MessageParser implements Iterator<EmailMessage> {
         // That will usually be one of the first ones.
         for (CharsetEncoder encoder : encoders) {
             try {
-                mboxIterable = MboxIterator.fromFile(mboxFile).charset(encoder.charset()).build();
+                mboxIterable = MboxIterator
+                        .fromFile(mboxFile)
+                        // use more permissive from line from mbox iterator 0.8.0, but handling CRLF/LF
+                        .fromLine("^From .*\r?\n")
+                        .charset(encoder.charset())
+                        .build();
                 if (mboxIterable != null) {
                     emailIterator = new MBoxEmailIterator(mboxIterable.iterator(), encoder, fileID, wholeMsg);
                 }

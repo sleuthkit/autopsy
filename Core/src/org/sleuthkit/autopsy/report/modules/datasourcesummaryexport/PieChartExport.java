@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xddf.usermodel.chart.ChartTypes;
 import org.apache.poi.xddf.usermodel.chart.LegendPosition;
 import org.apache.poi.xddf.usermodel.chart.XDDFChartLegend;
 import org.apache.poi.xddf.usermodel.chart.XDDFDataSource;
@@ -157,23 +158,7 @@ class PieChartExport implements ExcelItemExportable, ExcelSheetExport {
                 new CellRangeAddress(tableDimensions.getRowStart() + 1, tableDimensions.getRowEnd(),
                         tableDimensions.getColStart() + 1, tableDimensions.getColStart() + 1));
 
-        // NOTE: There appears to be a classpath issue with POI (a version of 4.0.1 and 4.1.1 simultaneously) 
-        // that is causing conflicts for XDDFPieChartData creation (i.e. the compiler thinks its using 4.1.1 
-        // and the runtime thinks its using 4.0.1) Reflection is used below to use the 4.0.1 method while
-        // sidestepping compiler issues.
-        // XDDFPieChartData creation that can be used in poi >= 4.1.1:
-        // XDDFPieChartData data = (XDDFPieChartData) chart.createData(ChartTypes.PIE, bottomAxis, leftAxis);
-        // XDDFPieChartData creation that can be used in 4.0.1:
-        // XDDFPieChartData data = new XDDFPieChartData(chart.getCTChart().getPlotArea().addNewPieChart());
-        XDDFPieChartData data;
-        try {
-            Constructor<XDDFPieChartData> constructor = XDDFPieChartData.class.getConstructor(CTPieChart.class);
-            constructor.setAccessible(true);
-            data = constructor.newInstance(chart.getCTChart().getPlotArea().addNewPieChart());
-        } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException | IllegalArgumentException ex) {
-            throw new ExcelExportException("Error while instantiating chart data.", ex);
-        }
-
+        XDDFPieChartData data = (XDDFPieChartData) chart.createData(ChartTypes.PIE, null, null);
         data.setVaryColors(true);
         data.addSeries(cat, val);
 
