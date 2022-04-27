@@ -68,7 +68,8 @@ public final class DeleteCaseTask implements Runnable {
     private final DeleteOptions deleteOption;
     private final ProgressIndicator progress;
     private final boolean bestEffortDeletion;
-    private final List<ManifestFileLock> manifestFileLocks;
+    private final boolean deleteDataSourceDirectories;
+    private final List<ManifestFileLock> manifestFileLocks = new ArrayList<>();
     private CoordinationService coordinationService;
     private CaseMetadata caseMetadata;
 
@@ -87,13 +88,18 @@ public final class DeleteCaseTask implements Runnable {
      * manifest files and data sources for which we were unable to get exclusive
      * lock. If the flag is set to false, then the algorithm will abort and exit
      * unless it is able to get exclusive lock on all of the manifest files.
+     * @param deleteDataSourceDirectories A flag whether to delete the directory
+     * containing each data source. If the flag is false, only the data source
+     * file will be deleted. If the flag is true, The entire directory
+     * containing the data source will be deleted.
      */
-    public DeleteCaseTask(CaseNodeData caseNodeData, DeleteOptions deleteOption, ProgressIndicator progress, boolean bestEffortDeletion) {
+    public DeleteCaseTask(CaseNodeData caseNodeData, DeleteOptions deleteOption, ProgressIndicator progress, 
+            boolean bestEffortDeletion, boolean deleteDataSourceDirectories) {
         this.caseNodeData = caseNodeData;
         this.deleteOption = deleteOption;
         this.progress = progress;
         this.bestEffortDeletion = bestEffortDeletion;
-        manifestFileLocks = new ArrayList<>();
+        this.deleteDataSourceDirectories = deleteDataSourceDirectories;
     }
     
     /**
@@ -111,7 +117,7 @@ public final class DeleteCaseTask implements Runnable {
         this.deleteOption = deleteOption;
         this.progress = progress;
         this.bestEffortDeletion = false; //abort and exit unless we get exclusive lock on all of the manifest files.
-        manifestFileLocks = new ArrayList<>();
+        this.deleteDataSourceDirectories = false; // only data source files will be deleted
     }
 
     @Override
@@ -488,6 +494,13 @@ public final class DeleteCaseTask implements Runnable {
                             lock.setInputDeleted();
                         } else {
                             allInputDeleted = false;
+                        }
+                        
+                        if (deleteDataSourceDirectories) {
+                            File parentDir = manifestFile.getParentFile();
+                            if (parentDir.exists() && !FileUtil.deleteFileDir(parentDir)) {
+                                logger.log(Level.WARNING, String.format("Failed to delete data source directory %s for %s", parentDir.toString(), caseNodeData.getDisplayName()));
+                            }
                         }
                     } else {
                         logger.log(Level.WARNING, String.format("Failed to parse manifest file %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
