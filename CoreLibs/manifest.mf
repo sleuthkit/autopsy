@@ -5,4 +5,10 @@ OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/corelibs/Bundle.properti
 OpenIDE-Module-Specification-Version: 1.4
 AutoUpdate-Show-In-Client: true
 AutoUpdate-Essential-Module: true
-
+X-JENS-COMMENT: The following entries are to prevent image io loading issues in platforms that utilize Autopsy; See https://stackoverflow.com/a/18495658/2375948, https://stackoverflow.com/a/2026045/2375948, and JIRA-8337 for more information.
+Specification-Title: CoreLibs ImageIO Fields
+Specification-Version: 1.0
+Specification-Vendor: CoreLibs ImageIO Fields
+Implementation-Title: org.sleuthkit.autopsy.corelibs.ImageIO
+Implementation-Version: 1.0
+Implementation-Vendor: CoreLibs ImageIO Fields
