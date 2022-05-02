@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.mainui.datamodel.events.CacheClearEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 
 /**
@@ -172,7 +173,7 @@ public class MainDAO extends AbstractDAO {
     private final EmailsDAO emailsDAO = EmailsDAO.getInstance();
     private final HostPersonDAO hostPersonDAO = HostPersonDAO.getInstance();
     private final ReportsDAO reportsDAO = ReportsDAO.getInstance();
-    
+
     // NOTE: whenever adding a new sub-dao, it should be added to this list for event updates.
     private final List<AbstractDAO> allDAOs = ImmutableList.of(dataArtifactDAO,
             analysisResultDAO,
@@ -247,7 +248,7 @@ public class MainDAO extends AbstractDAO {
     public CommAccountsDAO getCommAccountsDAO() {
         return commAccountsDAO;
     }
-    
+
     public EmailsDAO getEmailsDAO() {
         return emailsDAO;
     }
@@ -262,7 +263,7 @@ public class MainDAO extends AbstractDAO {
 
     public ReportsDAO getReportsDAO() {
         return reportsDAO;
-    }    
+    }
 
     public PropertyChangeManager getResultEventsManager() {
         return this.resultEventsManager;
@@ -275,6 +276,9 @@ public class MainDAO extends AbstractDAO {
     @Override
     void clearCaches() {
         allDAOs.forEach((subDAO) -> subDAO.clearCaches());
+        resultEventsManager.firePropertyChange("DATA_CLEAR", null, CacheClearEvent.getInstance());
+        treeEventsManager.firePropertyChange("TREE_CLEAR", null, CacheClearEvent.getInstance());
+
     }
 
     @Override
