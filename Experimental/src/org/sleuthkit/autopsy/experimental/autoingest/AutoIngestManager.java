@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016-2021 Basis Technology Corp.
+ * Copyright 2016-2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,12 +37,15 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Set;
 import java.util.UUID;
@@ -73,6 +76,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
 import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
@@ -96,6 +100,7 @@ import org.sleuthkit.autopsy.datasourceprocessors.AddDataSourceCallback;
 import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.AutoIngestJobException;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.ControlEventType;
+import org.sleuthkit.autopsy.experimental.cleanup.AutoIngestCleanup;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -110,6 +115,7 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchJobSettings;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
  * An auto ingest manager is responsible for processing auto ingest jobs defined
@@ -219,6 +225,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         inputScanExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(INPUT_SCAN_THREAD_NAME).build());
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(AUTO_INGEST_THREAD_NAME).build());
         jobStatusPublishingExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(JOB_STATUS_PUBLISHING_THREAD_NAME).build());
+        
         hostNamesToRunningJobs = new ConcurrentHashMap<>();
         hostNamesToLastMsgTime = new ConcurrentHashMap<>();
         jobsLock = new Object();
@@ -256,8 +263,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         rootOutputDirectory = Paths.get(AutoIngestUserPreferences.getAutoModeResultsFolder());
         inputScanSchedulingExecutor.scheduleWithFixedDelay(new InputDirScanSchedulingTask(), 0, AutoIngestUserPreferences.getMinutesOfInputScanInterval(), TimeUnit.MINUTES);
         jobProcessingTask = new JobProcessingTask();
-        jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
+        jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);        
         jobStatusPublishingExecutor.scheduleWithFixedDelay(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        
         eventPublisher.addSubscriber(EVENT_LIST, instance);
         state = State.RUNNING;
 
@@ -1947,6 +1955,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     processJob();
                 } finally {
                     manifestLock.release();
+                    
+                    // force garbage collection to release file handles
+                    System.gc();
+                    
+                    // perform optional input and output directory cleanup
+                    cleanup();
                 }
                 if (jobProcessingTaskFuture.isCancelled()) {
                     return;
@@ -1956,6 +1970,110 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     return;
                 }
                 manifestLock = JobProcessingTask.this.dequeueAndLockNextJob();
+            }
+        }
+
+        private void cleanup() {
+            try {
+                //discover the registered implementations of automated cleanup 
+                Collection<? extends AutoIngestCleanup> cleanups
+                        = Lookup.getDefault().lookupAll(AutoIngestCleanup.class);
+
+                if (!cleanups.isEmpty()) {
+                    AutoIngestCleanup cleanup = cleanups.iterator().next();
+
+                    sysLogger.log(Level.INFO, "CleanupSchedulingTask - trying to get ingest job lock");
+                    // NOTE1: Make a copy of the completed jobs list. There is no need to hold the jobs
+                    // lock during the entire very lengthy cleanup operation. Jobs lock is also used 
+                    // to process incoming messages from other nodes so we don't want to hold it for hours.
+                    
+                    // NOTE2: Create a map of cases and data sources, so that we only attempt to clean
+                    // each case once. otherwise if there are many completed jobs for a case
+                    // that has jobs being processed by other AINs, we will be stuck attemping to clean 
+                    // that case over and over again, and unable to get locks. 
+                    Map<Path, List<Path>> casesToJobsMap = new HashMap<>();
+                    synchronized (jobsLock) {
+                        for (AutoIngestJob job : completedJobs) {
+                            Path casePath = job.getCaseDirectoryPath();
+                            Path dsPath = job.getManifest().getDataSourcePath();
+
+                            List<Path> list = casesToJobsMap.get(casePath);
+                            if (list == null) {
+                                list = new ArrayList<>();
+                                casesToJobsMap.put(casePath, list);
+                            }
+                            list.add(dsPath);
+                        }
+                    }
+
+                    sysLogger.log(Level.INFO, "CleanupSchedulingTask - got ingest job lock");                    
+                    String deletedCaseName = "";
+                    for (Map.Entry<Path, List<Path>> caseData : casesToJobsMap.entrySet()) {
+                        // do cleanup for each case and data source of the case
+                        Path casePath = caseData.getKey();
+                        boolean success = true;
+                        if (casePath.toFile().exists()) {
+                            sysLogger.log(Level.INFO, "Cleaning up case {0} ", casePath.toString());
+                            success = cleanup.runCleanupTask(casePath, AutoIngestCleanup.DeleteOptions.DELETE_INPUT_AND_OUTPUT, new DoNothingProgressIndicator());
+                        } else {
+                            // case directory has been deleted. make sure data source is deleted as well 
+                            // because we will never be able to run automated  cleanup on a case directory 
+                            // that has been deleted.
+                            for (Path dsPath : caseData.getValue()) {
+                                File dsFile = dsPath.toFile();
+                                if (dsFile.exists()) {
+                                    sysLogger.log(Level.INFO, "Cleaning up data source {0} for deleted case {1}", new Object[]{dsPath.toString(), casePath.toString()});
+                                    if (!FileUtil.deleteFileDir(dsFile)) {
+                                        sysLogger.log(Level.SEVERE, String.format("Failed to delete data source file at %s ", dsPath.toString()));
+                                    }
+                                }
+                            }
+                        }
+
+                        if (success) {
+                            sysLogger.log(Level.INFO, "Cleanup task successfully completed for case: {0}", casePath.toString());
+                        } else {
+                            sysLogger.log(Level.WARNING, "Cleanup task failed for case: {0}", casePath.toString());
+                            continue;
+                        }
+
+                        // NOTE: the code below asumes that case directory and all data sources are being deleted 
+                        // during cleanup. This may not be the case in future implementations of AutoIngestCleanup
+                        
+                        // verify that the data source and case directory have indeed been deleted
+                        for (Path dsPath : caseData.getValue()) {
+                            if (dsPath.toFile().exists()) {
+                                // data source have NOT ben deleted
+                                sysLogger.log(Level.SEVERE, "Data source has not been deleted during cleanup: {0}", dsPath.toString());
+                            }
+                        }
+
+                        if (casePath.toFile().exists()) {
+                            // case output directory has NOT ben deleted, or at least some contents of the 
+                            // case directory remain
+                            sysLogger.log(Level.SEVERE, "Case directory has not been deleted during cleanup: {0}", casePath.toString());
+                        }
+
+                        deletedCaseName = casePath.toString();
+                    }
+
+                    if (!deletedCaseName.isEmpty()) {
+                        // send message that a at lease one case has been deleted. This message triggers input direcotry 
+                        // re-scan on other AINs so only send one message after all cleanup is complete. The actual
+                        // case name is not relevant either and is not being tracked on the receiving side. 
+                        final String name = deletedCaseName;
+                        new Thread(() -> {
+                            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(LOCAL_HOST_NAME, name,
+                                    getSystemUserNameProperty()));
+                        }).start();
+
+                        // trigger input scan which will update the ZK nodes and tables
+                        scanInputDirsNow();
+                    }
+                }
+
+            } catch (Exception ex) {
+                sysLogger.log(Level.SEVERE, "Unexpected exception in CleanupSchedulingTask", ex); //NON-NLS
             }
         }
 
@@ -3100,6 +3218,44 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             }
         }
 
+    }
+    
+     /**
+     * A progress monitor that does nothing. 
+     */
+    private class DoNothingProgressIndicator implements ProgressIndicator {
+
+        @Override
+        public void start(String message, int totalWorkUnits) {
+        }
+
+        @Override
+        public void start(String message) {
+        }
+
+        @Override
+        public void switchToIndeterminate(String message) {
+        }
+
+        @Override
+        public void switchToDeterminate(String message, int workUnitsCompleted, int totalWorkUnits) {
+        }
+
+        @Override
+        public void progress(String message) {
+        }
+
+        @Override
+        public void progress(int workUnitsCompleted) {
+        }
+
+        @Override
+        public void progress(String message, int workUnitsCompleted) {
+        }
+
+        @Override
+        public void finish() {
+        }
     }
 
     /**
