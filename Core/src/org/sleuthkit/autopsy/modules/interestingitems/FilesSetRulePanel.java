@@ -712,11 +712,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ruleNameLabel.text")); // NOI18N
 
         ruleNameTextField.setText(org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ruleNameTextField.text")); // NOI18N
-        ruleNameTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ruleNameTextFieldActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.jLabel1.text")); // NOI18N
 
@@ -839,19 +834,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         ruleTypeButtonGroup.add(inclusiveRuleTypeRadio);
         inclusiveRuleTypeRadio.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(inclusiveRuleTypeRadio, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.inclusiveRuleTypeRadio.text")); // NOI18N
-        inclusiveRuleTypeRadio.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                inclusiveRuleTypeRadioActionPerformed(evt);
-            }
-        });
 
         ruleTypeButtonGroup.add(exclusiveRuleTypeRadio);
         org.openide.awt.Mnemonics.setLocalizedText(exclusiveRuleTypeRadio, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.exclusiveRuleTypeRadio.text")); // NOI18N
-        exclusiveRuleTypeRadio.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                exclusiveRuleTypeRadioActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -1082,18 +1067,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     private void fullNameRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullNameRadioButtonActionPerformed
         updateNameTextFieldPrompt();
     }//GEN-LAST:event_fullNameRadioButtonActionPerformed
-
-    private void inclusiveRuleTypeRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_inclusiveRuleTypeRadioActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_inclusiveRuleTypeRadioActionPerformed
-
-    private void exclusiveRuleTypeRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exclusiveRuleTypeRadioActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_exclusiveRuleTypeRadioActionPerformed
-
-    private void ruleNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ruleNameTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_ruleNameTextFieldActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allRadioButton;
