@@ -15,43 +15,46 @@
     </configurations>
     <dependencies>
         <!-- Solr -->
-	<dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file for embedded Solr 4 -->
-        <dependency name="solr-cell" rev="8.11.1" org="org.apache.solr" conf="solr-libs->default"/>
+	    <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.10.4" transitive="false" /> <!-- the war file for embedded Solr 4 -->
+        
+        <dependency conf="solr-libs->default" name="solr-cell" rev="8.11.1" org="org.apache.solr"/>
         
         <!-- Autopsy -->
-        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="8.11.1"/>
-        <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
-        <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
-        <dependency conf="autopsy->*" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>
-        <!-- Exclude the version of cxf-rt-rs-client from Tika 1.20, one of its depedencies breaks Ivy -->
-        <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.20">
-            <exclude module="cxf-rt-rs-client"/>
-            <exclude module="cleartk-ml"/>
-        </dependency>
-        
-        <dependency conf="autopsy->*" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.3.0"/>
-        <dependency conf="autopsy->*" org="org.cleartk" name="cleartk-ml" rev="2.0.0"/>
+        <dependency conf="autopsy->default" org="org.apache.solr" name="solr-solrj" rev="8.11.1"/>
+        <dependency conf="autopsy->default" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>       
+        <!-- <dependency conf="autopsy->default" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.5.1"/> -->
+        <!-- <dependency conf="autopsy->default" org="org.cleartk" name="cleartk-ml" rev="2.0.0"/> -->
         
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
-        <dependency conf="autopsy->default" org="com.ibm.icu" name="icu4j" rev="3.8"/>
-        <dependency conf="autopsy->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
-        
+        <dependency conf="autopsy->default" org="com.ibm.icu" name="icu4j" rev="70.1"/>
+        <dependency conf="autopsy->default" org="junit" name="junit" rev="4.13.2"/>
+
         <!-- Jetty -->
-		<dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="8.1.16.v20140903"/> <!-- for embedded Solr 4 -->
-        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="8.1.16.v20140903"/>
-        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="8.1.16.v20140903"/>
+		<dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="11.0.8"/>
+        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="11.0.8"/>
+        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="11.0.8"/>
         <dependency conf="servlet->default" org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016"/>
 
         <!-- logging -->
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="slf4j-log4j12" rev="1.7.36"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.36"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.36"/> 
-        
-        <!-- Remnants of a past Tika dependency. These jars were being exported from Tika, which has since 
-             moved into it's own NBM. For sake of backwards compatibility, these are still provided. -->
-        <dependency conf="autopsy->default" org="org.apache.httpcomponents" name="httpclient" rev="4.5.6"/>
-        <dependency conf="autopsy->default" org="org.apache.httpcomponents" name="httpmime" rev="4.5.6"/>
-        
+
         <exclude org="*" ext="*" type="javadoc"/>
+        
+        
+        <override org="org.apache.logging.log4j" module="log4j-api" rev="2.17.2"/>
+        <override org="org.apache.logging.log4j" module="log4j-core" rev="2.17.2"/>
+        <override org="org.apache.logging.log4j" module="log4j-1.2-api" rev="2.17.2"/>        
+        <override org="org.apache.logging.log4j" module="log4j-layout-template-json" rev="2.17.2"/>
+        <override org="org.apache.logging.log4j" module="log4j-slf4j-impl" rev="2.17.2"/>
+        <override org="org.apache.logging.log4j" module="log4j-web" rev="2.17.2"/>
+        <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
+
+        <override org="org.apache.zookeeper" module="zookeeper" rev="3.8.0"/>
+        <override org="org.apache.zookeeper" module="zookeeper-jute" rev="3.8.0"/>
+        <override org="com.google.code.gson" module="gson" rev="2.9.0"/>
+        <override org="com.google.guava" module="guava" rev="31.1-jre"/>
+        <override org="joda-time" module="joda-time" rev="2.10.14" />
     </dependencies>
 </ivy-module>

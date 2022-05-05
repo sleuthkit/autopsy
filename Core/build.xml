@@ -104,9 +104,9 @@
         <copy file="${thirdparty.dir}/rejistry/Rejistry-1.1-SNAPSHOT.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding-AllPlatforms.jar" todir="${ext.dir}" />
-        <copy file="${thirdparty.dir}/stix/StixLib.jar" todir="${ext.dir}" />
+        <!-- <copy file="${thirdparty.dir}/stix/StixLib.jar" todir="${ext.dir}" /> -->
         <copy todir="${ext.dir}">
-            <fileset dir="${thirdparty.dir}/IcePDF 6.2.2/"/> 
+            <fileset dir="${thirdparty.dir}/jai/"/> 
         </copy>
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5-contrib.jar" todir="${ext.dir}" />
@@ -138,10 +138,10 @@
               tofile="${ext.dir}/sqlite-jdbc-3.25.2.jar"/>
 		<copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-42.2.18.jar" 
               tofile="${ext.dir}/postgresql-42.2.18.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar"
-              tofile="${ext.dir}/mchange-commons-java-0.2.9.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"
-              tofile="${ext.dir}/c3p0-0.9.5.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.5.jar"
+              tofile="${ext.dir}/c3p0-0.9.5.5.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.20.jar"
+              tofile="${ext.dir}/mchange-commons-java-0.2.20.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
               tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	
         <copy file="${env.TSK_HOME}/case-uco/java/dist/sleuthkit-caseuco-${TSK_VERSION}.jar" 
@@ -189,9 +189,6 @@
         <!-- Make a report that lists out the dependencies that our JARs have -->	
         <ivy:report todir='${basedir}/build/ivy-reports' graph='true' xml='false'/>
         <ivy:retrieve conf="core" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
-	    
-	<!-- ZooKeeper is currently (Jan 2022) pulling down Log4J 1. Delete it so that we use only v2 -->
-        <delete file="${basedir}/release/modules/ext/log4j-1.2.16.jar"/>
     </target>
 
     <target name="init" depends="get-deps,harness.init"/>

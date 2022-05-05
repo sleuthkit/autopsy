@@ -2003,7 +2003,15 @@ public class Server {
 
             NamedList<?> cluster = (NamedList) statusResponse.getResponse().get("cluster");
             @SuppressWarnings("unchecked")
-            ArrayList<String> liveNodes = (ArrayList) cluster.get("live_nodes");
+            List<String> liveNodes = (ArrayList) cluster.get("live_nodes");
+            
+            if (liveNodes != null) {
+                liveNodes = liveNodes.stream()
+                        .map(serverStr -> serverStr.endsWith("_solr") 
+                                ? serverStr.substring(0, serverStr.length() - "_solr".length())
+                                : serverStr)
+                        .collect(Collectors.toList());
+            }
             return liveNodes;
         } catch (Exception ex) {
             // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
