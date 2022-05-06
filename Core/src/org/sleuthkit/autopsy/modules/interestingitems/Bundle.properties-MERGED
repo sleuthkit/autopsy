@@ -1,3 +1,4 @@
+FileSet_fileIsMemberOf_noInclusiveRules_ruleName=Not Excluded
 FilesIdentifierIngestJobSettingsPanel.getError=Error getting interesting files sets from settings file.
 FilesIdentifierIngestJobSettingsPanel.updateError=Error updating interesting files sets settings file.
 FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file.
@@ -179,6 +180,9 @@ FilesSetDefsPanel.ruleLabel.text=Rule Details
 FilesSetDefsPanel.pathLabel.text=Path Substring: 
 FilesSetDefsPanel.mimeTypeLabel.text=MIME Type:
 FilesSetDefsPanel.fileSizeLabel.text=File Size:
+FilesSetRulePanel.ruleTypeLabel.text=Rule Type:
+FilesSetRulePanel.inclusiveRuleTypeRadio.text=Include - files matching this rule will be included in results
+FilesSetRulePanel.exclusiveRuleTypeRadio.text=Exclude - files matching this rule will be excluded from results
 # {0} - filesSetName
 StandardInterestingFileSetsLoader.customSuffixed={0} (Custom)
 StandardInterestingFilesSetsLoader_cannotLoadStandard=Unable to properly read standard interesting files sets.
