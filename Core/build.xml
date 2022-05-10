@@ -134,10 +134,10 @@
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-${TSK_VERSION}.jar" 
               tofile="${ext.dir}/sleuthkit-${TSK_VERSION}.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.25.2.jar"
-              tofile="${ext.dir}/sqlite-jdbc-3.25.2.jar"/>
-		<copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-42.2.18.jar" 
-              tofile="${ext.dir}/postgresql-42.2.18.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.36.0.3.jar"
+              tofile="${ext.dir}/sqlite-jdbc-3.36.0.3.jar"/>
+		<copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-42.3.5.jar" 
+              tofile="${ext.dir}/postgresql-42.3.5.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.5.jar"
               tofile="${ext.dir}/c3p0-0.9.5.5.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.20.jar"

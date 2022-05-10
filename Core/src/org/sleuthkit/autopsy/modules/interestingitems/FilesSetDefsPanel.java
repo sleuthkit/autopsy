@@ -516,7 +516,11 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             if (selectedRule != null) {
                 rules.remove(selectedRule.getUuid());
             }
-            FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), panel.getFileNameCondition(), panel.getMetaTypeCondition(), panel.getPathCondition(), panel.getMimeTypeCondition(), panel.getFileSizeCondition(), panel.getDateCondition());
+            FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), 
+                    panel.getFileNameCondition(), panel.getMetaTypeCondition(), 
+                    panel.getPathCondition(), panel.getMimeTypeCondition(), 
+                    panel.getFileSizeCondition(), panel.getDateCondition(),
+                    panel.isExclusive());
             rules.put(newRule.getUuid(), newRule);
 
             // Add the new/edited files set definition, replacing any previous
