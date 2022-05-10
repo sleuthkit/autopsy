@@ -31,7 +31,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
-import org.opencv.highgui.VideoCapture;
+import org.opencv.videoio.VideoCapture;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
