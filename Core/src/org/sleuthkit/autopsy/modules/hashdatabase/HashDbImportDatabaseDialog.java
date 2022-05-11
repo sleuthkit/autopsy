@@ -423,7 +423,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             fileChooser.setMultiSelectionEnabled(false);
         }
         
-        String lastBaseDirectory = Paths.get(PlatformUtil.getUserConfigDirectory(), HashDbCreateDatabaseDialog.HASH_DATABASE_DIR_NAME).toString();
+        String lastBaseDirectory = Paths.get(HashLookupSettings.getBaseHashsetConfigPath(), HashDbCreateDatabaseDialog.HASH_DATABASE_DIR_NAME).toString();
         if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
             lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
         }
@@ -532,7 +532,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
         if (saveInUserConfigFolderCheckbox.isSelected()) {
             // copy the hash database to user configuration directory and use that path instead (JIRA-4177)
-            String locationInUserConfigDir = Paths.get(PlatformUtil.getUserConfigDirectory(), HashDbCreateDatabaseDialog.HASH_DATABASE_DIR_NAME, hashSetNameTextField.getText(), file.getName()).toString();
+            String locationInUserConfigDir = Paths.get(HashLookupSettings.getBaseHashsetConfigPath(), HashDbCreateDatabaseDialog.HASH_DATABASE_DIR_NAME, hashSetNameTextField.getText(), file.getName()).toString();
             try {
                 FileUtils.copyFile(file, new File(locationInUserConfigDir));
                 // update the hash database location

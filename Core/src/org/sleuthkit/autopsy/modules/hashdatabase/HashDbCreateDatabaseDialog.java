@@ -423,7 +423,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
     private void saveAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsButtonActionPerformed
         try {
-            String lastBaseDirectory = Paths.get(PlatformUtil.getUserConfigDirectory(), HASH_DATABASE_DIR_NAME).toString();
+            String lastBaseDirectory = Paths.get(HashLookupSettings.getBaseHashsetConfigPath(), HASH_DATABASE_DIR_NAME).toString();
             if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
                 lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
             }
