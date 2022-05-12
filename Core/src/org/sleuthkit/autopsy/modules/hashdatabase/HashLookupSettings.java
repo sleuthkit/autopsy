@@ -75,7 +75,8 @@ final class HashLookupSettings implements Serializable {
     /**
      * @return The base path of the hashset config folder.
      */
-    static String getBaseHashsetConfigPath() {
+    @Beta
+    public static String getBaseHashsetConfigPath() {
         return HASHSET_CONFIG_DIR;
     }
     

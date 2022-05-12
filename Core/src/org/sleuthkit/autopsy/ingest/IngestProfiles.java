@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import com.google.common.annotations.Beta;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,19 +37,30 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 public final class IngestProfiles {
 
-    private static final String PROFILE_FOLDER = "IngestProfiles";
+   private static final String PROFILE_FOLDER = "IngestProfiles";
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
     private static final String PROFILE_FILE_EXT = ".properties";
     private static final Logger logger = Logger.getLogger(IngestProfiles.class.getName());
+    private static final String BASE_PROFILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER).toString();
+    
+    /**
+     * @return The base path to profile settings.
+     */
+    @Beta
+    public static String getBaseProfilePath() {
+        return BASE_PROFILE_PATH;
+    }
+    
+    
     /**
      * Gets the collection of profiles which currently exist.
      *
      * @return profileList
      */
     public synchronized static List<IngestProfile> getIngestProfiles() {
-        File dir = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER).toFile();
+        File dir = new File(BASE_PROFILE_PATH);
         File[] directoryListing = dir.listFiles();
         List<IngestProfile> profileList = new ArrayList<>();
         if (directoryListing != null) {

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import com.google.common.annotations.Beta;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -63,6 +64,15 @@ public final class IngestJobSettings {
     private FilesSet fileFilter;
     private String moduleSettingsFolderPath;
 
+    
+    /**
+     * @return The base path to module settings.
+     */
+    @Beta
+    public static String getBaseModuleSettingsPath() {
+        return MODULE_SETTINGS_FOLDER_PATH;
+    }
+    
     /**
      * Gets the path to the module settings folder for a given execution
      * context.

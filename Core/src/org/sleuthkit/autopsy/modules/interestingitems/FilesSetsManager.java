@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import com.google.common.annotations.Beta;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,6 +83,22 @@ public final class FilesSetsManager extends Observable {
         return instance;
     }
 
+    /**
+     * @return The base path to file filter settings.
+     */
+    @Beta
+    public static String getBaseFileFilterPath() {
+        return FILE_FILTER_BASE_PATH;
+    }
+    
+    /**
+     * @return The base path to interesting item settings.
+     */
+    @Beta
+    public static String getBaseInterestingItemPath() {
+        return INTERESTING_ITEM_BASE_PATH;
+    }
+    
     /**
      * Gets the set of chars deemed to be illegal in file names (Windows).
      *
