@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
+import com.google.common.annotations.Beta;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -49,7 +50,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 /**
  * Class to represent the settings to be serialized for hash lookup.
  */
-final class HashLookupSettings implements Serializable {
+public final class HashLookupSettings implements Serializable {
 
     private static final String HASHSET_FOLDER = "HashLookup";
     private static final String HASHSET_CONFIG_DIR = Paths.get(PlatformUtil.getUserConfigDirectory(), HASHSET_FOLDER).toAbsolutePath().toString();

@@ -607,7 +607,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @returns True if the definitions are written to disk, false otherwise.
      */
     static boolean writeDefinitionsFile(String basePath, String fileName, Map<String, FilesSet> interestingFilesSets) throws FilesSetsManager.FilesSetsManagerException {
-        try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(Paths.get(basePath, fileName).toString()))) {
+        File outputFile = Paths.get(basePath, fileName).toFile();
+        outputFile.mkdirs();
+        try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(outputFile))) {
             out.writeObject(new InterestingItemsFilesSetSettings(interestingFilesSets));
         } catch (IOException ex) {
             throw new FilesSetsManager.FilesSetsManagerException(String.format("Failed to write settings to %s", fileName), ex);
