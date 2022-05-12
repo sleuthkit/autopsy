@@ -338,9 +338,11 @@
                 <package>org.sleuthkit.autopsy.modules.encryptiondetection</package>
                 <package>org.sleuthkit.autopsy.modules.filetypeid</package>
                 <package>org.sleuthkit.autopsy.modules.hashdatabase</package>
+                <package>org.sleuthkit.autopsy.modules.interestingitems</package>
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
+                <package>org.sleuthkit.autopsy.testutils</package>
                 <package>org.sleuthkit.autopsy.textextractors</package>
                 <package>org.sleuthkit.autopsy.textextractors.configs</package>
                 <package>org.sleuthkit.autopsy.textsummarizer</package>
@@ -595,8 +597,8 @@
                 <binary-origin>release/modules/ext/okio-1.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/postgresql-42.2.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/postgresql-42.2.18.jar</binary-origin>
+                <runtime-relative-path>ext/postgresql-42.3.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/postgresql-42.3.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/Rejistry-1.1-SNAPSHOT.jar</runtime-relative-path>
@@ -631,8 +633,8 @@
                 <binary-origin>release/modules/ext/spotbugs-annotations-4.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sqlite-jdbc-3.25.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.25.2.jar</binary-origin>
+                <runtime-relative-path>ext/sqlite-jdbc-3.36.0.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sqlite-jdbc-3.36.0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xmpcore-6.1.11.jar</runtime-relative-path>
