@@ -60,7 +60,9 @@ class FileSetsDefinitions implements Serializable {
      * @returns True if the definitions are written to disk, false otherwise.
      */
     static boolean writeDefinitionsFile(String basePath, String fileName, Map<String, FilesSet> interestingFilesSets) throws FilesSetsManager.FilesSetsManagerException {
-        try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(Paths.get(basePath, fileName).toString()))) {
+        File outputPath = Paths.get(basePath, fileName).toFile();
+        outputPath.mkdirs();
+        try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(outputPath))) {
             out.writeObject(new FileSetsDefinitions(interestingFilesSets));
         } catch (IOException ex) {
             throw new FilesSetsManager.FilesSetsManagerException(String.format("Failed to write settings to %s", fileName), ex);
