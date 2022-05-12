@@ -61,7 +61,7 @@ class FileSetsDefinitions implements Serializable {
      */
     static boolean writeDefinitionsFile(String basePath, String fileName, Map<String, FilesSet> interestingFilesSets) throws FilesSetsManager.FilesSetsManagerException {
         File outputPath = Paths.get(basePath, fileName).toFile();
-        outputPath.mkdirs();
+        outputPath.getParentFile().mkdirs();
         try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(outputPath))) {
             out.writeObject(new FileSetsDefinitions(interestingFilesSets));
         } catch (IOException ex) {

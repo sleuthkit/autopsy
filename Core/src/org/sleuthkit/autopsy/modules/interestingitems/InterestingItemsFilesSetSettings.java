@@ -608,7 +608,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
      */
     static boolean writeDefinitionsFile(String basePath, String fileName, Map<String, FilesSet> interestingFilesSets) throws FilesSetsManager.FilesSetsManagerException {
         File outputFile = Paths.get(basePath, fileName).toFile();
-        outputFile.mkdirs();
+        outputFile.getParentFile().mkdirs();
         try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(outputFile))) {
             out.writeObject(new InterestingItemsFilesSetSettings(interestingFilesSets));
         } catch (IOException ex) {

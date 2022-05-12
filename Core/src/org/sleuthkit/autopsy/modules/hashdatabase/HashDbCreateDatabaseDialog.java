@@ -432,7 +432,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
             File hashDbFolder = new File(path.toString());
             // create the folder if it doesn't exist
             if (!hashDbFolder.exists()) {
-                hashDbFolder.mkdir();
+                hashDbFolder.mkdirs();
             }
             if (!hashSetNameTextField.getText().isEmpty()) {
                 path.append(File.separator).append(hashSetNameTextField.getText());
