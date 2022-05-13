@@ -63,7 +63,7 @@ public final class IngestJobSettings {
     private String executionContext;
     private FilesSet fileFilter;
     private String moduleSettingsFolderPath;
-
+    
     
     /**
      * @return The base path to module settings.
@@ -73,6 +73,19 @@ public final class IngestJobSettings {
         return MODULE_SETTINGS_FOLDER_PATH;
     }
     
+
+    
+    /**
+     * Returns the string to use with ModuleSettings for resource identification.
+     * @param executionContext The execution context.
+     * @return 
+     */
+    private static String getModuleSettingsResource(String executionContext) {
+        return Paths.get(MODULE_SETTINGS_FOLDER, executionContext).toString();
+    }
+
+    
+    
     /**
      * Gets the path to the module settings folder for a given execution
      * context.
@@ -81,12 +94,12 @@ public final class IngestJobSettings {
      * the Run Ingest Modules dialog, and auto ingest. Different execution
      * contexts may have different ingest job settings.
      *
-     * @param The execution context identifier.
-     *
+     * @param executionContext The execution context identifier.
+     * 
      * @return The path to the module settings folder
      */
     static Path getSavedModuleSettingsFolder(String executionContext) {
-        return Paths.get(IngestJobSettings.MODULE_SETTINGS_FOLDER_PATH, executionContext);
+        return Paths.get(getBaseModuleSettingsPath(), executionContext);
     }
 
     /**
@@ -178,7 +191,7 @@ public final class IngestJobSettings {
      * @return The path to the ingest module settings folder.
      */
     public Path getSavedModuleSettingsFolder() {
-        return Paths.get(IngestJobSettings.MODULE_SETTINGS_FOLDER_PATH, executionContext);
+        return Paths.get(getBaseModuleSettingsPath(), executionContext);
     }
 
     /**
@@ -358,8 +371,8 @@ public final class IngestJobSettings {
          * Get the enabled/disabled ingest modules settings for this context. By
          * default, all loaded modules except Plaso are enabled.
          */
-        HashSet<String> enabledModuleNames = getModulesNames(executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(loadedModuleNames));
-        HashSet<String> disabledModuleNames = getModulesNames(executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, plasoModuleName); //NON-NLS
+        HashSet<String> enabledModuleNames = getModulesNames(this.executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(loadedModuleNames));
+        HashSet<String> disabledModuleNames = getModulesNames(this.executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, plasoModuleName); //NON-NLS
 
         // If plaso was loaded, but appears in neither the enabled nor the 
         // disabled list, add it to the disabled list.
@@ -419,14 +432,15 @@ public final class IngestJobSettings {
          * Update the enabled/disabled ingest module settings for this context
          * to reflect any missing modules or newly discovered modules.
          */
-        ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(enabledModuleNames));
-        ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, makeCsvList(disabledModuleNames));
+        String ingestModuleResource = getModuleSettingsResource(this.executionContext);
+        ModuleSettings.setConfigSetting(ingestModuleResource, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(enabledModuleNames));
+        ModuleSettings.setConfigSetting(ingestModuleResource, IngestJobSettings.DISABLED_MODULES_PROPERTY, makeCsvList(disabledModuleNames));
 
         /**
          * Restore the last used File Ingest Filter
          */
-        if (ModuleSettings.settingExists(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_PROPERTY) == false) {
-            ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_PROPERTY, FilesSetsManager.getDefaultFilter().getName());
+        if (ModuleSettings.settingExists(ingestModuleResource, IngestJobSettings.LAST_FILE_INGEST_FILTER_PROPERTY) == false) {
+            ModuleSettings.setConfigSetting(ingestModuleResource, IngestJobSettings.LAST_FILE_INGEST_FILTER_PROPERTY, FilesSetsManager.getDefaultFilter().getName());
         }
         try {
             Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance()
@@ -434,7 +448,7 @@ public final class IngestJobSettings {
             for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
                 fileIngestFilters.put(fSet.getName(), fSet);
             }
-            this.fileFilter = fileIngestFilters.get(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_PROPERTY));
+            this.fileFilter = fileIngestFilters.get(ModuleSettings.getConfigSetting(ingestModuleResource, IngestJobSettings.LAST_FILE_INGEST_FILTER_PROPERTY));
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             this.fileFilter = FilesSetsManager.getDefaultFilter();
             logger.log(Level.SEVERE, "Failed to get file filter from .properties file, default filter being used", ex); //NON-NLS
@@ -453,11 +467,12 @@ public final class IngestJobSettings {
      * @return
      */
     private static HashSet<String> getModulesNames(String executionContext, String propertyName, String defaultSetting) {
-        if (ModuleSettings.settingExists(executionContext, propertyName) == false) {
-            ModuleSettings.setConfigSetting(executionContext, propertyName, defaultSetting);
+        String ingestModuleResource = getModuleSettingsResource(executionContext);
+        if (ModuleSettings.settingExists(ingestModuleResource, propertyName) == false) {
+            ModuleSettings.setConfigSetting(ingestModuleResource, propertyName, defaultSetting);
         }
         HashSet<String> moduleNames = new HashSet<>();
-        String modulesSetting = ModuleSettings.getConfigSetting(executionContext, propertyName);
+        String modulesSetting = ModuleSettings.getConfigSetting(ingestModuleResource, propertyName);
         if (!modulesSetting.isEmpty()) {
             String[] settingNames = modulesSetting.split(", ");
             for (String name : settingNames) {
@@ -502,8 +517,8 @@ public final class IngestJobSettings {
      * Gets a set which contains all the names of enabled modules for the
      * specified context.
      *
-     * @param context -the execution context (profile name) to check
-     *
+     * @param context -the execution context (profile name) to check.
+     * 
      * @return the names of the enabled modules
      */
     static List<String> getEnabledModules(String context) {
@@ -582,13 +597,15 @@ public final class IngestJobSettings {
                 disabledModuleNames.add(moduleName);
             }
         }
-        ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(enabledModuleNames));
-        ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, makeCsvList(disabledModuleNames));
+        
+        String ingestModuleResource = getModuleSettingsResource(this.executionContext);
+        ModuleSettings.setConfigSetting(ingestModuleResource, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(enabledModuleNames));
+        ModuleSettings.setConfigSetting(ingestModuleResource, IngestJobSettings.DISABLED_MODULES_PROPERTY, makeCsvList(disabledModuleNames));
 
         /**
          * Save the last used File Ingest Filter setting for this context.
          */
-        ModuleSettings.setConfigSetting(this.executionContext, LAST_FILE_INGEST_FILTER_PROPERTY, fileFilter.getName());
+        ModuleSettings.setConfigSetting(ingestModuleResource, LAST_FILE_INGEST_FILTER_PROPERTY, fileFilter.getName());
     }
 
     /**

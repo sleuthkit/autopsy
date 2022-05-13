@@ -39,13 +39,14 @@ import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.report.GeneralReportSettings;
+import com.google.common.annotations.Beta;
 
 /**
  * Utility class responsible for managing serialization and deserialization of
  * all of the settings that make up a reporting configuration in an atomic,
  * thread safe way.
  */
-final class ReportingConfigLoader {
+public final class ReportingConfigLoader {
 
     private static final Logger logger = Logger.getLogger(ReportingConfigLoader.class.getName());
     private static final String REPORT_CONFIG_FOLDER = "ReportingConfigs"; //NON-NLS
@@ -61,6 +62,14 @@ final class ReportingConfigLoader {
     // existing in the configuration file.
     private static final List<String> DELETED_REPORT_MODULES = Arrays.asList("org.sleuthkit.autopsy.report.modules.stix.STIXReportModule");
 
+    /**
+     * @return The base path for reports.
+     */
+    @Beta
+    public static String getBaseReportPath() {
+        return REPORT_CONFIG_FOLDER_PATH;
+    }
+    
     /**
      * Deserialize all of the settings that make up a reporting configuration in
      * an atomic, thread safe way.
