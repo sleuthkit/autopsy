@@ -28,6 +28,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -88,7 +89,7 @@ public class Installer extends ModuleInstall {
      * (in other words, developers are exempt from seeing the notification).
      */
     private void setupDefaultCentralRepository() {
-        Map<String, String> centralRepoSettings = ModuleSettings.getConfigSettings("CentralRepository");
+        Map<String, String> centralRepoSettings = ModuleSettings.getConfigSettings(CentralRepoSettings.getInstance().getModuleSettingsKey());
         String initializedStr = centralRepoSettings.get("initialized");
 
         // check to see if the repo has been initialized asking to setup cr
@@ -100,7 +101,7 @@ public class Installer extends ModuleInstall {
             // if it has been previously set up and is in use, mark as previously initialized and save the settings
             if (prevRepo) {
                 initialized = true;
-                ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
+                ModuleSettings.setConfigSetting(CentralRepoSettings.getInstance().getModuleSettingsKey(), "initialized", "true");
             }
         }
         
@@ -126,7 +127,7 @@ public class Installer extends ModuleInstall {
             doMessageBoxIfRunningInGUI(ex);
         }
 
-        ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
+        ModuleSettings.setConfigSetting(CentralRepoSettings.getInstance().getModuleSettingsKey(), "initialized", "true");
     }
 
     /**

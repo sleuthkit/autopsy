@@ -316,6 +316,7 @@
                 <package>org.sleuthkit.autopsy.casemodule.multiusercases</package>
                 <package>org.sleuthkit.autopsy.casemodule.multiusercasesbrowser</package>
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
+                <package>org.sleuthkit.autopsy.centralrepository.settings</package>
                 <package>org.sleuthkit.autopsy.contentviewers</package>
                 <package>org.sleuthkit.autopsy.coordinationservice</package>
                 <package>org.sleuthkit.autopsy.core</package>

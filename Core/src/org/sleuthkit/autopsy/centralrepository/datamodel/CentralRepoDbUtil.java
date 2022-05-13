@@ -32,6 +32,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
+import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
 
 /**
  *
@@ -39,7 +40,7 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo
 public class CentralRepoDbUtil {
 
     private final static Logger LOGGER = Logger.getLogger(CentralRepoDbUtil.class.getName());
-    private static final String CENTRAL_REPO_NAME = "CentralRepository";
+    private static final String CENTRAL_REPO_NAME = CentralRepoSettings.getInstance().getModuleSettingsKey();
     private static final String CENTRAL_REPO_USE_KEY = "db.useCentralRepo";
     private static final String DEFAULT_ORG_NAME = "Not Specified";
 

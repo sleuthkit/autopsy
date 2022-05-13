@@ -29,6 +29,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
+import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -41,13 +42,13 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivityManager {
 
-    public final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
+    public final static String DEFAULT_DBNAME = CentralRepoSettings.getInstance().getDefaultDbName(); // NON-NLS
     private final static Logger LOGGER = Logger.getLogger(SqliteCentralRepoSettings.class.getName());
     private final Path userConfigDir = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath());
-    private final static String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
+    private final static String DEFAULT_DBDIRECTORY = CentralRepoSettings.getInstance().getDefaultDbPath();
     
     //property names
-    private static final String PROFILE_NAME = "CentralRepository";
+    private static final String PROFILE_NAME = CentralRepoSettings.getInstance().getModuleSettingsKey();
     private static final String DATABASE_NAME = "db.sqlite.dbName"; //NON-NLS
     private static final String DATABASE_PATH = "db.sqlite.dbDirectory"; //NON-NLS
     private static final String BULK_THRESHOLD = "db.sqlite.bulkThreshold"; //NON-NLS

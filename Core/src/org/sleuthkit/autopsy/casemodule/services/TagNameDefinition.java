@@ -31,6 +31,7 @@ import javax.annotation.concurrent.Immutable;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TagName;
@@ -375,7 +376,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @return A list of tag names, or empty list if none were found.
      */
     private static List<String> getCRNotableList() {
-        String notableTagsProp = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
+        String notableTagsProp = ModuleSettings.getConfigSetting(CentralRepoSettings.getInstance().getModuleSettingsKey(), "db.badTags"); // NON-NLS
         if (notableTagsProp != null && !notableTagsProp.isEmpty()) {
             return Arrays.asList(notableTagsProp.split(","));
         }

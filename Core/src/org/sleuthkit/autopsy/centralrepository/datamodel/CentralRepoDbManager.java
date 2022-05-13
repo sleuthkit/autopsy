@@ -24,6 +24,7 @@ import java.io.File;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -38,7 +39,7 @@ public class CentralRepoDbManager {
     private static final Logger logger = Logger.getLogger(CentralRepoDbManager.class.getName());
 
     private static final String CENTRAL_REPO_DB_NAME = "central_repository";
-    private static final String CENTRAL_REPOSITORY_SETTINGS_KEY = "CentralRepository";
+    private static final String CENTRAL_REPOSITORY_SETTINGS_KEY = CentralRepoSettings.getInstance().getModuleSettingsKey();
     private static final String DB_SELECTED_PLATFORM_KEY = "db.selectedPlatform";
     private static final String DISABLED_DUE_TO_FAILURE_KEY = "disabledDueToFailure";
 
