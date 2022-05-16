@@ -22,7 +22,6 @@ import com.google.common.annotations.Beta;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -30,46 +29,54 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Class for managing the access to the
  */
 public final class IngestProfiles {
 
-   private static final String PROFILE_FOLDER = "IngestProfiles";
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
-    private static final String PROFILE_FILE_EXT = ".properties";
+    private static final String SETTINGS_FILE_PREFIX = "IngestProfiles.";
     private static final Logger logger = Logger.getLogger(IngestProfiles.class.getName());
-    private static final String BASE_PROFILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER).toString();
-    
+
     /**
-     * @return The base path to profile settings.
+     * @return Prefix to append to an ingest profile name when saving to disk or
+     *         using with ingest job settings.
      */
     @Beta
-    public static String getBaseProfilePath() {
-        return BASE_PROFILE_PATH;
+    public static String getIngestProfilePrefix() {
+        return SETTINGS_FILE_PREFIX;
     }
-    
-    
+
+    /**
+     * Return the execution context name (to be used with IngestJobSettings)
+     * @param profileName The profile name.
+     * @return The execution context to use with IngestJobSettings.
+     */
+    static String getExecutionContext(String profileName) {
+        return SETTINGS_FILE_PREFIX + profileName;
+    }
+
     /**
      * Gets the collection of profiles which currently exist.
      *
      * @return profileList
      */
     public synchronized static List<IngestProfile> getIngestProfiles() {
-        File dir = new File(BASE_PROFILE_PATH);
-        File[] directoryListing = dir.listFiles();
+        File dir = new File(IngestJobSettings.getBaseModuleSettingsPath());
+        // find all settings files for ingest profiles (starts with ingest profiles prefix)
+        File[] directoryListing = dir.listFiles((file) -> file.getName() != null && file.getName().startsWith(SETTINGS_FILE_PREFIX) && file.isFile());
         List<IngestProfile> profileList = new ArrayList<>();
         if (directoryListing != null) {
             for (File child : directoryListing) {
-                String name = FilenameUtils.removeExtension(child.getName()); 
-                String context = PROFILE_FOLDER + File.separator + name;
-                String desc = ModuleSettings.getConfigSetting(context, PROFILE_DESC_KEY);
-                String fileIngestFilter = ModuleSettings.getConfigSetting(context, PROFILE_FILTER_KEY);
-                profileList.add(new IngestProfile(name, desc, fileIngestFilter));
+                String resourceName = FilenameUtils.removeExtension(child.getName());
+                String profileName = resourceName.substring(SETTINGS_FILE_PREFIX.length());
+                String moduleSettingsResource = IngestJobSettings.getModuleSettingsResource(resourceName);
+                String desc = ModuleSettings.getConfigSetting(moduleSettingsResource, PROFILE_DESC_KEY);
+                String fileIngestFilter = ModuleSettings.getConfigSetting(moduleSettingsResource, PROFILE_FILTER_KEY);
+                profileList.add(new IngestProfile(profileName, desc, fileIngestFilter));
             }
         }
         return profileList;
@@ -146,15 +153,40 @@ public final class IngestProfiles {
         }
 
         /**
+         * Returns the file location of the root settings file for this ingest
+         * profile.
+         *
+         * @param profileName The profile name.
+         *
+         * @return The file location for the root settings of that profile.
+         */
+        private static File getRootSettingsFile(String profileName) {
+            return ModuleSettings.getPropertyFile(IngestJobSettings.getModuleSettingsResource(getExecutionContext(profileName)));
+        }
+
+        /**
+         * Returns the settings directory for the profile containing ingest
+         * module specific settings for the ingest profile.
+         *
+         * @param profileName The profile name.
+         *
+         * @return The directory.
+         */
+        private static File getSettingsDirectory(String profileName) {
+            return IngestJobSettings.getSavedModuleSettingsFolder(getExecutionContext(profileName)).toFile();
+        }
+
+        /**
          * Deletes all of the files which are currently storing a profile.
          *
          * @param selectedProfile
          */
         synchronized static void deleteProfile(IngestProfile selectedProfile) {
             try {
-                Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, selectedProfile.getName() + PROFILE_FILE_EXT));
-                Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), selectedProfile.getName() + PROFILE_FILE_EXT));
-                FileUtils.deleteDirectory(IngestJobSettings.getSavedModuleSettingsFolder(selectedProfile.getName() + File.separator).toFile());
+                File rootSettingsFile = getRootSettingsFile(selectedProfile.getName());
+                File settingsDirectory = getSettingsDirectory(selectedProfile.getName());
+                Files.deleteIfExists(rootSettingsFile.toPath());
+                FileUtils.deleteDirectory(settingsDirectory);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error deleting directory for profile " + selectedProfile.getName(), ex);
             }
@@ -168,15 +200,13 @@ public final class IngestProfiles {
          */
         synchronized static void renameProfile(String oldName, String newName) {
             if (!oldName.equals(newName)) { //if renameProfile was called with the new name being the same as the old name, it is complete already
-                File oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, oldName + PROFILE_FILE_EXT).toFile();
-                File newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, newName + PROFILE_FILE_EXT).toFile();
-                oldFile.renameTo(newFile);
-                oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), oldName + PROFILE_FILE_EXT).toFile();
-                newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), newName + PROFILE_FILE_EXT).toFile();
-                oldFile.renameTo(newFile);
-                oldFile = IngestJobSettings.getSavedModuleSettingsFolder(oldName + File.separator).toFile();
-                newFile = IngestJobSettings.getSavedModuleSettingsFolder(newName + File.separator).toFile();
-                oldFile.renameTo(newFile);
+                File oldRootSettings = getRootSettingsFile(oldName);
+                File newRootSettings = getRootSettingsFile(newName);
+                oldRootSettings.renameTo(newRootSettings);
+
+                File oldSettingsFolder = getSettingsDirectory(oldName);
+                File newSettingsFolder = getSettingsDirectory(newName);
+                oldSettingsFolder.renameTo(newSettingsFolder);
             }
         }
 
@@ -186,7 +216,7 @@ public final class IngestProfiles {
          * @param profile
          */
         synchronized static void saveProfile(IngestProfile profile) {
-            String context = PROFILE_FOLDER + File.separator + profile.getName();
+            String context = IngestJobSettings.getModuleSettingsResource(getExecutionContext(profile.getName()));
             ModuleSettings.setConfigSetting(context, PROFILE_NAME_KEY, profile.getName());
             ModuleSettings.setConfigSetting(context, PROFILE_DESC_KEY, profile.getDescription());
             ModuleSettings.setConfigSetting(context, PROFILE_FILTER_KEY, profile.getFileIngestFilter());

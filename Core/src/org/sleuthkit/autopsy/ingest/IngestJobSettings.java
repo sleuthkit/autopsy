@@ -80,7 +80,7 @@ public final class IngestJobSettings {
      * @param executionContext The execution context.
      * @return 
      */
-    private static String getModuleSettingsResource(String executionContext) {
+    static String getModuleSettingsResource(String executionContext) {
         return Paths.get(MODULE_SETTINGS_FOLDER, executionContext).toString();
     }
 
@@ -191,7 +191,7 @@ public final class IngestJobSettings {
      * @return The path to the ingest module settings folder.
      */
     public Path getSavedModuleSettingsFolder() {
-        return Paths.get(getBaseModuleSettingsPath(), executionContext);
+        return getSavedModuleSettingsFolder(executionContext);
     }
 
     /**
