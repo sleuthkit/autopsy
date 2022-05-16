@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.texttranslation.translators;
 import com.google.cloud.translate.TranslateOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.texttranslation.translators.settings.TranslatorSettings;
 
 /**
  * Class to handle the settings associated with the GoogleTranslator
@@ -30,7 +31,7 @@ public final class GoogleTranslatorSettings {
     private static final String DEFAULT_TARGET_LANGUAGE = TranslateOptions.getDefaultInstance().getTargetLanguage();
     private static final String CREDENTIAL_PATH_KEY = "CredentialPath";
     private static final String TARGET_LANGUAGE_CODE_KEY = "TargetLanguageCode";
-    private static final String GOOGLE_TRANSLATE_NAME = "GoogleTranslate";
+    private static final String GOOGLE_TRANSLATE_NAME = TranslatorSettings.getInstance().getModuleSettingsResource("GoogleTranslate");
     private static final String DEFAULT_CREDENTIAL_PATH = "";
     private String targetLanguageCode;
     private String credentialPath;
