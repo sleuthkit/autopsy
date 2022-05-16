@@ -52,11 +52,50 @@ public final class IngestProfiles {
 
     /**
      * Return the execution context name (to be used with IngestJobSettings)
+     *
      * @param profileName The profile name.
+     *
      * @return The execution context to use with IngestJobSettings.
      */
     static String getExecutionContext(String profileName) {
         return SETTINGS_FILE_PREFIX + profileName;
+    }
+
+    /**
+     * Returns a profile name with no prefix (if included).
+     *
+     * @param executionContext The execution context.
+     *
+     * @return The sanitized profileName.
+     */
+    private static String getSanitizedProfile(String executionContext) {
+        return (executionContext != null && executionContext.startsWith(getIngestProfilePrefix()))
+                ? executionContext.substring(getIngestProfilePrefix().length())
+                : executionContext;
+    }
+
+    /**
+     * Returns the file location of the root settings file for this ingest
+     * profile.
+     *
+     * @param profileName The profile name.
+     *
+     * @return The file location for the root settings of that profile.
+     */
+    private static File getRootSettingsFile(String profileName) {
+        return new File(ModuleSettings.getSettingsFilePath(IngestJobSettings.getModuleSettingsResource(getExecutionContext(getSanitizedProfile(profileName)))));
+    }
+
+    /**
+     * Returns the settings directory for the profile containing ingest module
+     * specific settings for the ingest profile.
+     *
+     * @param profileName The profile name.
+     *
+     * @return The directory.
+     */
+    private static File getSettingsDirectory(String profileName) {
+        return IngestJobSettings.getSavedModuleSettingsFolder(getExecutionContext(getSanitizedProfile(profileName))).toFile();
     }
 
     /**
@@ -67,12 +106,12 @@ public final class IngestProfiles {
     public synchronized static List<IngestProfile> getIngestProfiles() {
         File dir = new File(IngestJobSettings.getBaseModuleSettingsPath());
         // find all settings files for ingest profiles (starts with ingest profiles prefix)
-        File[] directoryListing = dir.listFiles((file) -> file.getName() != null && file.getName().startsWith(SETTINGS_FILE_PREFIX) && file.isFile());
+        File[] directoryListing = dir.listFiles((file) -> file.getName() != null && file.getName().startsWith(getIngestProfilePrefix()) && file.isFile());
         List<IngestProfile> profileList = new ArrayList<>();
         if (directoryListing != null) {
             for (File child : directoryListing) {
                 String resourceName = FilenameUtils.removeExtension(child.getName());
-                String profileName = resourceName.substring(SETTINGS_FILE_PREFIX.length());
+                String profileName = getSanitizedProfile(resourceName);
                 String moduleSettingsResource = IngestJobSettings.getModuleSettingsResource(resourceName);
                 String desc = ModuleSettings.getConfigSetting(moduleSettingsResource, PROFILE_DESC_KEY);
                 String fileIngestFilter = ModuleSettings.getConfigSetting(moduleSettingsResource, PROFILE_FILTER_KEY);
@@ -150,30 +189,6 @@ public final class IngestProfiles {
          */
         public String getFileIngestFilter() {
             return fileIngestFilter;
-        }
-
-        /**
-         * Returns the file location of the root settings file for this ingest
-         * profile.
-         *
-         * @param profileName The profile name.
-         *
-         * @return The file location for the root settings of that profile.
-         */
-        private static File getRootSettingsFile(String profileName) {
-            return ModuleSettings.getPropertyFile(IngestJobSettings.getModuleSettingsResource(getExecutionContext(profileName)));
-        }
-
-        /**
-         * Returns the settings directory for the profile containing ingest
-         * module specific settings for the ingest profile.
-         *
-         * @param profileName The profile name.
-         *
-         * @return The directory.
-         */
-        private static File getSettingsDirectory(String profileName) {
-            return IngestJobSettings.getSavedModuleSettingsFolder(getExecutionContext(profileName)).toFile();
         }
 
         /**

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import com.google.common.annotations.Beta;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -131,7 +132,8 @@ public class ModuleSettings {
      *
      * @return The settings file path as a string.
      */
-    private static String getSettingsFilePath(String moduleName) {
+    @Beta
+    public static String getSettingsFilePath(String moduleName) {
         return Paths.get(MODULE_DIR_PATH, moduleName + SETTINGS_FILE_EXT).toString();
     }
 
