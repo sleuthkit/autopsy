@@ -780,8 +780,23 @@ public final class UserPreferences {
         return machineSpecificPreferences.get(HEALTH_MONITOR_REPORT_PATH, "");
     }
     
+    /**
+     * Stub class for saving view preferences.
+     */
     static class ViewPreferences {}
+    
+    /**
+     * Stub class for saving machine specific preferences.
+     */
     static class MachineSpecificPreferences {}
+    
+    /**
+     * Stub class for saving mode preferences.
+     */
     static class ModePreferences {}
+    
+    /**
+     * Stub class for saving external service preferences.
+     */
     static class ExternalServicePreferences {}
 }

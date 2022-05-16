@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.yara.rules;
 
+import com.google.common.annotations.Beta;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
@@ -32,21 +33,29 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  *
  * Yara Rule Set Manager. Manages the creation, deletion of yara rule sets.
  */
+@Beta
 public class RuleSetManager {
 
-    private final static String BASE_FOLDER = "yara";
-    private final static String RULE_SET_FOLDER = "ruleSets";
+    private static final String YARA_RULE_SET_FOLDER = "YaraRuleSets";
 
     /**
      * Rule Set Property names.
      */
     public final static String RULE_SET_ADDED = "YARARuleSetAdded";
     public final static String RULE_SET_DELETED = "YARARuleSetDeleted";
-
+    private static final String RULES_SET_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), YARA_RULE_SET_FOLDER).toString();
+    
     private final PropertyChangeSupport changeSupport;
 
     private static RuleSetManager instance;
 
+    /**
+     * @return The rules set path in the configuration path.
+     */
+    public static String getRulesSetPath() {
+        return RULES_SET_PATH;
+    }
+    
     /**
      * Private constructor for this singleton.
      */
@@ -185,7 +194,7 @@ public class RuleSetManager {
      * @return Yara rule set directory path.
      */
     private Path getRuleSetPath() {
-        Path basePath = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), BASE_FOLDER, RULE_SET_FOLDER);
+        Path basePath = Paths.get(getRulesSetPath());
         File baseFile = basePath.toFile();
 
         if (!baseFile.exists()) {
