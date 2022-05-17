@@ -241,7 +241,12 @@ public class VideoUtils {
     }
     
     boolean canCompressAndScale(AbstractFile file) {
-        return isVideoThumbnailSupported(file);
+
+        if (PlatformUtil.getOSName().toLowerCase().startsWith("Windows")) {
+            return isVideoThumbnailSupported(file);
+        }
+
+        return false;
     }
     
     static void compressVideo(Path inputPath, Path outputPath, ExecUtil.ProcessTerminator terminator) throws Exception {
