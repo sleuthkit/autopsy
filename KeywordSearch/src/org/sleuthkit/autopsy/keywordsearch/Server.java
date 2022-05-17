@@ -329,28 +329,28 @@ public class Server {
 
     private void initSettings() {
 
-        if (ModuleSettings.settingExists(KeywordSearchSettings.getModuleSettingsResource(PROPERTIES_FILE), PROPERTIES_CURRENT_SERVER_PORT)) {
+        if (ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT)) {
             try {
-                localSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(KeywordSearchSettings.getModuleSettingsResource(PROPERTIES_FILE), PROPERTIES_CURRENT_SERVER_PORT));
+                localSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
             } catch (NumberFormatException nfe) {
                 logger.log(Level.WARNING, "Could not decode indexing server port, value was not a valid port number, using the default. ", nfe); //NON-NLS
                 localSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
             }
         } else {
             localSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
-            ModuleSettings.setConfigSetting(KeywordSearchSettings.getModuleSettingsResource(PROPERTIES_FILE), PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(localSolrServerPort));
+            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(localSolrServerPort));
         }
 
-        if (ModuleSettings.settingExists(KeywordSearchSettings.getModuleSettingsResource(PROPERTIES_FILE), PROPERTIES_CURRENT_STOP_PORT)) {
+        if (ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT)) {
             try {
-                localSolrStopPort = Integer.decode(ModuleSettings.getConfigSetting(KeywordSearchSettings.getModuleSettingsResource(PROPERTIES_FILE), PROPERTIES_CURRENT_STOP_PORT));
+                localSolrStopPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT));
             } catch (NumberFormatException nfe) {
                 logger.log(Level.WARNING, "Could not decode indexing server stop port, value was not a valid port number, using default", nfe); //NON-NLS
                 localSolrStopPort = DEFAULT_SOLR_STOP_PORT;
             }
         } else {
             localSolrStopPort = DEFAULT_SOLR_STOP_PORT;
-            ModuleSettings.setConfigSetting(KeywordSearchSettings.getModuleSettingsResource(PROPERTIES_FILE), PROPERTIES_CURRENT_STOP_PORT, String.valueOf(localSolrStopPort));
+            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(localSolrStopPort));
         }
     }
     
@@ -827,7 +827,7 @@ public class Server {
      */
     void changeSolrServerPort(int port) {
         localSolrServerPort = port;
-        ModuleSettings.setConfigSetting(KeywordSearchSettings.getModuleSettingsResource(PROPERTIES_FILE), PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(port));
+        ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(port));
     }
 
     /**
@@ -837,7 +837,7 @@ public class Server {
      */
     void changeSolrStopPort(int port) {
         localSolrStopPort = port;
-        ModuleSettings.setConfigSetting(KeywordSearchSettings.getModuleSettingsResource(PROPERTIES_FILE), PROPERTIES_CURRENT_STOP_PORT, String.valueOf(port));
+        ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(port));
     }
 
     /**
