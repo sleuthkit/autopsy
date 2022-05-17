@@ -25,17 +25,36 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.prefs.AbstractPreferences;
 import java.util.prefs.BackingStoreException;
 
 /**
- * Implements java.util.prefs.Preferences API saving to a file.
+ * Implements java.util.prefs.Preferences API saving to a file after every
+ * change.
  */
-class ConfigPreferences extends AbstractPreferences {
+class ConfigProperties extends AbstractPreferences {
+
+    // use java util logger; 
+    // autopsy core logger relies on UserPreferences which relies on this class
+    private static java.util.logging.Logger logger = null;
+
+    /**
+     * Instantiates an autopsy logger (after instantiation and on demand to
+     * remove circular dependency between ConfigProperties, UserPreferences, and
+     * autopsy Logger).
+     *
+     * @return The autopsy logger for this class.
+     */
+    private static java.util.logging.Logger getLogger() {
+        if (logger == null) {
+            logger = org.sleuthkit.autopsy.coreutils.Logger.getLogger(ConfigProperties.class.getName());
+        }
+        return logger;
+    }
 
     private final Properties inMemoryProperties = new Properties();
     private final String configPath;
-    private boolean dirty = false;
 
     /**
      * Main constructor.
@@ -43,8 +62,8 @@ class ConfigPreferences extends AbstractPreferences {
      * @param configPath The path to the config file (if null, no properties
      *                   initially).
      */
-    public ConfigPreferences(String configPath) {
-        super(null, configPath);
+    public ConfigProperties(String configPath) {
+        super(null, "");
         this.configPath = configPath;
     }
 
@@ -62,7 +81,7 @@ class ConfigPreferences extends AbstractPreferences {
     @Override
     protected void putSpi(String key, String value) {
         inMemoryProperties.put(key, value);
-        dirty = true;
+        tryFlush();
     }
 
     @Override
@@ -76,13 +95,13 @@ class ConfigPreferences extends AbstractPreferences {
     @Override
     protected void removeSpi(String key) {
         inMemoryProperties.remove(key);
-        dirty = true;
+        tryFlush();
     }
 
     @Override
     protected void removeNodeSpi() throws BackingStoreException {
         inMemoryProperties.clear();
-        dirty = true;
+        tryFlush();
     }
 
     @Override
@@ -102,18 +121,23 @@ class ConfigPreferences extends AbstractPreferences {
 
     @Override
     protected void syncSpi() throws BackingStoreException {
-        Properties onDiskProps;
         try {
-            onDiskProps = loadSavedProperties(this.configPath);
+            Properties onDiskProps = loadSavedProperties(this.configPath);
+            mergeProperties(onDiskProps, this.inMemoryProperties, false);
+            flushSpi();
         } catch (IOException ex) {
             throw new BackingStoreException(new IOException("An error occurred while saving to: " + this.configPath, ex));
         }
-
-        mergeProperties(onDiskProps, this.inMemoryProperties, false);
-
-        if (dirty) {
+    }
+    
+    /**
+     * Attempts to flush setting logging any error that occurs.
+     */
+    private void tryFlush() {
+        try {
             flushSpi();
-            dirty = false;
+        } catch (BackingStoreException ex) {
+            getLogger().log(Level.SEVERE, "An error occurred when writing to disk at: " + this.configPath, ex);
         }
     }
 
@@ -121,7 +145,6 @@ class ConfigPreferences extends AbstractPreferences {
     protected void flushSpi() throws BackingStoreException {
         try (FileOutputStream fos = new FileOutputStream(this.configPath)) {
             this.inMemoryProperties.store(fos, "Set settings (batch)");
-            this.dirty = false;
         } catch (IOException ex) {
             throw new BackingStoreException(new IOException("An error occurred while saving to: " + this.configPath, ex));
 

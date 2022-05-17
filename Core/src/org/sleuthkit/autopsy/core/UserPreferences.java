@@ -21,16 +21,17 @@ package org.sleuthkit.autopsy.core;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.logging.Level;
+import java.util.prefs.AbstractPreferences;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
+import java.util.prefs.Preferences;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
+import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -45,8 +46,6 @@ import org.sleuthkit.datamodel.TskData.DbType;
  */
 public final class UserPreferences {
 
-    private static final Logger logger = Logger.getLogger(UserPreferences.class.getName());
-
     /**
      * Creates config preferences referencing a file on disk.
      *
@@ -55,16 +54,16 @@ public final class UserPreferences {
      *
      * @return The config preferences.
      */
-    private static ConfigPreferences getConfigPreferences(String identifier) {
+    private static ConfigProperties getConfigPreferences(String identifier) {
         String path = Paths.get(PlatformUtil.getUserConfigDirectory(), identifier + ".properties").toString();
-        return new ConfigPreferences(path);
+        return new ConfigProperties(path);
     }
 
-    private static final ConfigPreferences viewPreferences = getConfigPreferences("ViewPreferences");
-    private static final ConfigPreferences machineSpecificPreferences = getConfigPreferences("MachineSpecificPreferences");
-    private static final ConfigPreferences modePreferences = getConfigPreferences("ModePreferences");
-    private static final ConfigPreferences externalServicePreferences = getConfigPreferences("ExternalServices");
-
+    private static final ConfigProperties viewPreferences = getConfigPreferences("ViewPreferences");
+    private static final ConfigProperties machineSpecificPreferences = getConfigPreferences("MachineSpecificPreferences");
+    private static final ConfigProperties modePreferences = getConfigPreferences("ModePreferences");
+    private static final ConfigProperties externalServicePreferences = getConfigPreferences("ExternalServicePreferences");
+    
     static {
         // perform initial load to ensure disk preferences are loaded
         try {
@@ -73,7 +72,10 @@ public final class UserPreferences {
             modePreferences.load();
             externalServicePreferences.load();
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to load preferences", ex);
+            // can't log because logger requires UserPreferences.  
+            // This shouldn't really be thrown unless their is a file access 
+            // issue within the user config directory.
+            ex.printStackTrace();
         }
     }
 
