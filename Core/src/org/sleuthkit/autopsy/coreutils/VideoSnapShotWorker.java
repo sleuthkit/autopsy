@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.report.video;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +28,8 @@ import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.VideoWriter;
 import org.opencv.videoio.Videoio;
+import static org.sleuthkit.autopsy.coreutils.VideoUtils.isVideoThumbnailSupported;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * A SwingWorker that will create a video of screen captures.
@@ -77,6 +79,10 @@ public class VideoSnapShotWorker extends SwingWorker<Void, Void>{
         this.scale = scale;
         this.numFrames = numFrames;
         this.framesPerSecond = framesPerSecond;
+    }
+    
+    static boolean isSupported(AbstractFile file) {
+        return isVideoThumbnailSupported(file);
     }
 
     @Override

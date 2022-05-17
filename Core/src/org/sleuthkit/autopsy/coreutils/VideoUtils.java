@@ -22,6 +22,7 @@ import com.google.common.io.Files;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,6 +33,7 @@ import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
 import org.opencv.videoio.VideoCapture;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -44,6 +46,9 @@ import org.sleuthkit.datamodel.AbstractFile;
  *
  */
 public class VideoUtils {
+    
+    private static final String FFMPEG = "ffmpeg";
+    private static final String FFMPEG_EXE = "ffmpeg.exe";
 
     private static final List<String> SUPPORTED_VIDEO_EXTENSIONS
             = Arrays.asList("mov", "m4v", "flv", "mp4", "3gp", "avi", "mpg", //NON-NLS
@@ -233,6 +238,78 @@ public class VideoUtils {
             return null;
         }
         return bufferedImage == null ? null : ScalrWrapper.resizeFast(bufferedImage, iconSize);
+    }
+    
+    boolean canCompressAndScale(AbstractFile file) {
+        return isVideoThumbnailSupported(file);
+    }
+    
+    static void compressVideo(Path inputPath, Path outputPath, ExecUtil.ProcessTerminator terminator) throws Exception {
+        Path executablePath = Paths.get(FFMPEG, FFMPEG_EXE);
+        File exeFile = InstalledFileLocator.getDefault().locate(executablePath.toString(), VideoUtils.class.getPackage().getName(), true);
+        if(exeFile == null) {
+            throw new IOException("Unable to compress ffmpeg.exe was not found.");
+        } 
+        
+        if(!exeFile.canExecute()) {
+            throw new IOException("Unable to compress ffmpeg.exe could not be execute");
+        }
+        
+                
+        ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
+                "\"" + exeFile.getAbsolutePath() + "\"",
+                "-i", "\"" + inputPath.toAbsolutePath().toString() + "\"",
+                "-vf", "scale=1280:-1",
+                "-c:v", "libx264",
+                "-preset", "veryslow",
+                "-crf", "24",
+                "\"" + outputPath.toAbsolutePath().toString() + "\"");
+        
+        ExecUtil.execute(processBuilder, terminator);
+    }
+    
+    /**
+     * Create a new video with the given width and height.
+     * 
+     * @param inputPath Absolute path to input video.
+     * @param outputPath Path for scaled file.
+     * @param width New video width.
+     * @param height New video height.
+     * @param terminator A processTerminator for the ffmpeg executable.
+     * @throws Exception 
+     */
+    static void scaleVideo(Path inputPath, Path outputPath, int width, int height, ExecUtil.ProcessTerminator terminator) throws Exception{
+        Path executablePath = Paths.get(FFMPEG, FFMPEG_EXE);
+        File exeFile = InstalledFileLocator.getDefault().locate(executablePath.toString(), VideoUtils.class.getPackage().getName(), true);
+        if(exeFile == null) {
+            throw new IOException("Unable to compress ffmpeg.exe was not found.");
+        } 
+        
+        if(!exeFile.canExecute()) {
+            throw new IOException("Unable to compress ffmpeg.exe could not be execute");
+        }
+        
+        String scaleParam = Integer.toString(width) + ":" + Integer.toString(height);
+        
+        ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
+                "\"" + exeFile.getAbsolutePath() + "\"",
+                "-i", "\"" + inputPath.toAbsolutePath().toString() + "\"",
+                "-s", scaleParam,
+                "-c:a", "copy",
+                "\"" + outputPath.toAbsolutePath().toString() + "\"");
+        
+        ExecUtil.execute(processBuilder, terminator);
+
+    }
+    
+    static private ProcessBuilder buildProcessWithRunAsInvoker(String... commandLine) {
+        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+        /*
+         * Add an environment variable to force aLeapp to run with the same
+         * permissions Autopsy uses.
+         */
+        processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
+        return processBuilder;
     }
 
     /**
