@@ -29,8 +29,7 @@ import java.util.prefs.AbstractPreferences;
 import java.util.prefs.BackingStoreException;
 
 /**
- * Implements java.util.prefs.Preferences API while using ModuleSettings to
- * save.
+ * Implements java.util.prefs.Preferences API saving to a file.
  */
 class ConfigPreferences extends AbstractPreferences {
 
