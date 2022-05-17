@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.File;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -30,7 +30,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.w3c.dom.Document;
@@ -45,7 +44,7 @@ final class XmlKeywordSearchList extends KeywordSearchList {
 
     private static final Logger xmlListslogger = Logger.getLogger(XmlKeywordSearchList.class.getName());
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";     //NON-NLS
-    private static final String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;
+    private static final String CUR_LISTS_FILE = Paths.get(KeywordSearchSettings.getBaseSettingsPath(), CUR_LISTS_FILE_NAME).toString();
     private static final String ROOT_EL = "keyword_lists"; //NON-NLS
     private static final String LIST_EL = "keyword_list"; //NON-NLS
     private static final String LIST_NAME_ATTR = "name"; //NON-NLS

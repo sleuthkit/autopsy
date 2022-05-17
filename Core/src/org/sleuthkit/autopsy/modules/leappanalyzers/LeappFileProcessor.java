@@ -1286,7 +1286,7 @@ public final class LeappFileProcessor {
                     xmlFile, true);
 
             if (curFileLoc.exists()) {
-                newFileLoc.mkdirs();
+                newFileLoc.getParentFile().mkdirs();
                 curFileLoc.renameTo(newFileLoc);
             }
         }
