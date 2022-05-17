@@ -62,6 +62,22 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
     private String dbDirectory;
     private int bulkThreshold;
 
+    /**
+     * @return The settings key for the name of the database.
+     */
+    public static String getDatabaseNameKey() {
+        return DATABASE_NAME;
+    }
+
+    /**
+     * @return The settings key for the parent path of the database.
+     */
+    public static String getDatabasePathKey() {
+        return DATABASE_PATH;
+    }
+
+    
+    
     public SqliteCentralRepoSettings() {
         loadSettings();
     }

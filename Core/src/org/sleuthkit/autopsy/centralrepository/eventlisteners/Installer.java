@@ -18,21 +18,27 @@
  */
 package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.io.FileUtils;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Sets up a default, single-user SQLite central repository
@@ -41,6 +47,10 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  */
 public class Installer extends ModuleInstall {
 
+    private static final String LEGACY_DEFAULT_DB_PARENT_PATH = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "central_repository").toAbsolutePath().toString();
+    //private static final String LEGACY_DEFAULT_DB_NAME = "central_repository.db";
+    private static final String LEGACY_MODULE_SETTINGS_KEY = "CentralRepository";
+    
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static final long serialVersionUID = 1L;
     private static Installer instance;
@@ -79,7 +89,37 @@ public class Installer extends ModuleInstall {
      */
     @Override
     public void restored() {
+        // must happen first to move any legacy settings that exist.
+        upgradeSettingsPath();
         setupDefaultCentralRepository();
+    }
+    
+    /**
+     * Copies settings to new path location.
+     */
+    private void upgradeSettingsPath() {
+        File newSettingsFile = new File(ModuleSettings.getSettingsFilePath(CentralRepoSettings.getInstance().getModuleSettingsKey()));
+        File legacySettingsFile = new File(ModuleSettings.getSettingsFilePath(LEGACY_MODULE_SETTINGS_KEY));
+        // new config has not been created, but legacy has, copy it.
+        if (!newSettingsFile.exists() && legacySettingsFile.exists()) {
+            Map<String, String> prevSettings = ModuleSettings.getConfigSettings(LEGACY_MODULE_SETTINGS_KEY);
+            String prevPath = prevSettings.get(SqliteCentralRepoSettings.getDatabasePathKey());
+            // if old path is default path for sqlite db, copy it over to new location and update setting.
+            if (prevPath != null && Paths.get(LEGACY_DEFAULT_DB_PARENT_PATH).equals(Paths.get(prevPath).toAbsolutePath())) {
+                String prevDbName = prevSettings.get(SqliteCentralRepoSettings.getDatabaseNameKey());
+                File prevDir = new File(prevPath);
+                // copy all files starting with prevDbName in prevPath to new path location.
+                if (prevDir.exists() && prevDir.isDirectory()) {
+                    try {
+                        for (File childFile : prevDir.listFiles((dir, name) -> name.startsWith(prevDbName))) {
+                            FileUtils.copyFile(childFile, new File(CentralRepoSettings.getInstance().getDefaultDbPath(), childFile.getName()));
+                        }    
+                    } catch (IOException ex) {
+                        logger.log(Level.SEVERE, "There was an error upgrading settings.", ex);
+                    }
+                }
+            }
+        }
     }
 
     /**
