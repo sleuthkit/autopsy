@@ -19,17 +19,18 @@
 package org.sleuthkit.autopsy.core;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
-import java.util.prefs.Preferences;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
-import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -44,11 +45,38 @@ import org.sleuthkit.datamodel.TskData.DbType;
  */
 public final class UserPreferences {
 
-    private static final Preferences viewPreferences = NbPreferences.forModule(ViewPreferences.class);
-    private static final Preferences machineSpecificPreferences = NbPreferences.forModule(MachineSpecificPreferences.class);
-    private static final Preferences modePreferences = NbPreferences.forModule(ModePreferences.class);
-    private static final Preferences externalServicePreferences = NbPreferences.forModule(ExternalServicePreferences.class);
-        
+    private static final Logger logger = Logger.getLogger(UserPreferences.class.getName());
+
+    /**
+     * Creates config preferences referencing a file on disk.
+     *
+     * @param identifier The preference identifier which will serve as the file
+     *                   name for the properties file in the config directory.
+     *
+     * @return The config preferences.
+     */
+    private static ConfigPreferences getConfigPreferences(String identifier) {
+        String path = Paths.get(PlatformUtil.getUserConfigDirectory(), identifier + ".properties").toString();
+        return new ConfigPreferences(path);
+    }
+
+    private static final ConfigPreferences viewPreferences = getConfigPreferences("ViewPreferences");
+    private static final ConfigPreferences machineSpecificPreferences = getConfigPreferences("MachineSpecificPreferences");
+    private static final ConfigPreferences modePreferences = getConfigPreferences("ModePreferences");
+    private static final ConfigPreferences externalServicePreferences = getConfigPreferences("ExternalServices");
+
+    static {
+        // perform initial load to ensure disk preferences are loaded
+        try {
+            viewPreferences.load();
+            machineSpecificPreferences.load();
+            modePreferences.load();
+            externalServicePreferences.load();
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to load preferences", ex);
+        }
+    }
+
     // view preferences
     public static final String KEEP_PREFERRED_VIEWER = "KeepPreferredViewer"; // NON-NLS    
     public static final String HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE = "HideKnownFilesInDataSourcesTree"; //NON-NLS 
@@ -64,7 +92,7 @@ public final class UserPreferences {
     private static final boolean DISPLAY_TRANSLATED_NAMES_DEFAULT = true;
     public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
     public static final String RESULTS_TABLE_PAGE_SIZE = "ResultsTablePageSize";
-        
+
     // machine-specific settings
     public static final String NUMBER_OF_FILE_INGEST_THREADS = "NumberOfFileIngestThreads"; //NON-NLS
     public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS
@@ -79,7 +107,7 @@ public final class UserPreferences {
     private static final String TEMP_FOLDER = "Temp";
     private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
     private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
-    
+
     // mode and enabled
     public static final String SETTINGS_PROPERTIES = "AutoIngest";
     private static final String MODE = "AutopsyMode"; // NON-NLS
@@ -109,7 +137,7 @@ public final class UserPreferences {
     private static final String DEFAULT_PORT_STRING = "61616";
     private static final int DEFAULT_PORT_INT = 61616;
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
-    
+
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -360,10 +388,9 @@ public final class UserPreferences {
     public static boolean getIsMultiUserModeEnabled() {
         return isMultiUserSupported() && externalServicePreferences.getBoolean(IS_MULTI_USER_MODE_ENABLED, false);
     }
-    
-    
+
     private static Boolean multiUserSupported = null;
-    
+
     /**
      * Checks to see if SolrSearchService is a registered AutopsyService. If the
      * module is not found, the keyword search module and solr services have
@@ -378,7 +405,7 @@ public final class UserPreferences {
             multiUserSupported = Lookup.getDefault().lookupAll(AutopsyService.class).stream()
                     .anyMatch(obj -> obj.getClass().getName().equalsIgnoreCase("org.sleuthkit.autopsy.keywordsearch.SolrSearchService"));
         }
-        
+
         return multiUserSupported;
     }
 
@@ -779,24 +806,4 @@ public final class UserPreferences {
     public static String getHealthMonitorReportPath() {
         return machineSpecificPreferences.get(HEALTH_MONITOR_REPORT_PATH, "");
     }
-    
-    /**
-     * Stub class for saving view preferences.
-     */
-    static class ViewPreferences {}
-    
-    /**
-     * Stub class for saving machine specific preferences.
-     */
-    static class MachineSpecificPreferences {}
-    
-    /**
-     * Stub class for saving mode preferences.
-     */
-    static class ModePreferences {}
-    
-    /**
-     * Stub class for saving external service preferences.
-     */
-    static class ExternalServicePreferences {}
 }
