@@ -39,7 +39,6 @@ import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.report.GeneralReportSettings;
-import com.google.common.annotations.Beta;
 
 /**
  * Utility class responsible for managing serialization and deserialization of
@@ -65,7 +64,6 @@ public final class ReportingConfigLoader {
     /**
      * @return The base path for reports.
      */
-    @Beta
     public static String getBaseReportPath() {
         return REPORT_CONFIG_FOLDER_PATH;
     }
