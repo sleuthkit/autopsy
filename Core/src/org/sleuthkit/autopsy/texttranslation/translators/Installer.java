@@ -64,7 +64,10 @@ public class Installer extends ModuleInstall {
     }
 
     private void copyIfExists(String oldModuleSettingsPath, String newModuleSettingsPath) {
-        if (new File(ModuleSettings.getSettingsFilePath(oldModuleSettingsPath)).exists()) {
+        // only copy if old path exists and new path does not
+        if (new File(ModuleSettings.getSettingsFilePath(oldModuleSettingsPath)).exists() &&
+                !(new File(ModuleSettings.getSettingsFilePath(newModuleSettingsPath)).exists())) {
+            
             Map<String, String> settings = ModuleSettings.getConfigSettings(oldModuleSettingsPath);
             if (!settings.isEmpty()) {
                 ModuleSettings.setConfigSettings(newModuleSettingsPath, settings);    

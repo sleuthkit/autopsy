@@ -54,8 +54,7 @@ public final class HashLookupSettings implements Serializable {
 
     private static final String HASHSET_FOLDER = "HashLookup";
     private static final String HASHSET_CONFIG_DIR = Paths.get(PlatformUtil.getUserConfigDirectory(), HASHSET_FOLDER).toAbsolutePath().toString();
-    
-    private static final String SERIALIZATION_FILE_NAME = "hashLookup.settings"; //NON-NLS
+    private static final String SERIALIZATION_FILE_NAME = "hashLookup.settings"; //NON-NLS   
     private static final String SERIALIZATION_FILE_PATH = Paths.get(HASHSET_CONFIG_DIR, SERIALIZATION_FILE_NAME).toString(); //NON-NLS
     private static final String SET_ELEMENT = "hash_set"; //NON-NLS
     private static final String SET_NAME_ATTRIBUTE = "name"; //NON-NLS
@@ -66,6 +65,10 @@ public final class HashLookupSettings implements Serializable {
     private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number"; //NON-NLS
     private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
     private static final String CONFIG_FILE_PATH = Paths.get(HASHSET_CONFIG_DIR, CONFIG_FILE_NAME).toString();
+    private static final String HASH_DATABASE_DEFAULT_FOLDER = "HashDatabases";
+    private static final String HASH_DATABASE_DEFAULT_PATH = Paths.get(HASHSET_CONFIG_DIR, HASH_DATABASE_DEFAULT_FOLDER).toString();
+    
+    
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
     
     private static final String USER_DIR_PLACEHOLDER = "[UserConfigFolder]";
@@ -73,6 +76,23 @@ public final class HashLookupSettings implements Serializable {
     private static final long serialVersionUID = 1L;
     private final List<HashDbInfo> hashDbInfoList;
 
+    /**
+     * @return The path to the hash db settings file.
+     */
+    @Beta
+    public static String getSettingsPath() {
+        return SERIALIZATION_FILE_PATH;
+    }
+
+    /**
+     * @return The default database folder path.
+     */
+    @Beta
+    public static String getDefaultDbPath() {
+        return HASH_DATABASE_DEFAULT_PATH;
+    }
+
+    
     /**
      * @return The base path of the hashset config folder.
      */

@@ -37,7 +37,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
@@ -423,7 +422,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
             fileChooser.setMultiSelectionEnabled(false);
         }
         
-        String lastBaseDirectory = Paths.get(HashLookupSettings.getBaseHashsetConfigPath(), HashDbCreateDatabaseDialog.HASH_DATABASE_DIR_NAME).toString();
+        String lastBaseDirectory = HashLookupSettings.getDefaultDbPath();
         if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
             lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
         }
@@ -532,7 +531,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
         if (saveInUserConfigFolderCheckbox.isSelected()) {
             // copy the hash database to user configuration directory and use that path instead (JIRA-4177)
-            String locationInUserConfigDir = Paths.get(HashLookupSettings.getBaseHashsetConfigPath(), HashDbCreateDatabaseDialog.HASH_DATABASE_DIR_NAME, hashSetNameTextField.getText(), file.getName()).toString();
+            String locationInUserConfigDir = Paths.get(HashLookupSettings.getDefaultDbPath(), hashSetNameTextField.getText(), file.getName()).toString();
             try {
                 File newFileLoc = new File(locationInUserConfigDir);
                 newFileLoc.getParentFile().mkdirs();

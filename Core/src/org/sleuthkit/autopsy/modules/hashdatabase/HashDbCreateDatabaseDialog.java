@@ -37,7 +37,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoFileSet;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
@@ -423,7 +422,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
 
     private void saveAsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsButtonActionPerformed
         try {
-            String lastBaseDirectory = Paths.get(HashLookupSettings.getBaseHashsetConfigPath(), HASH_DATABASE_DIR_NAME).toString();
+            String lastBaseDirectory = HashLookupSettings.getDefaultDbPath();
             if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
                 lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
             }
