@@ -31,7 +31,11 @@ public final class GoogleTranslatorSettings {
     private static final String DEFAULT_TARGET_LANGUAGE = TranslateOptions.getDefaultInstance().getTargetLanguage();
     private static final String CREDENTIAL_PATH_KEY = "CredentialPath";
     private static final String TARGET_LANGUAGE_CODE_KEY = "TargetLanguageCode";
-    private static final String GOOGLE_TRANSLATE_NAME = TranslatorSettings.getInstance().getModuleSettingsResource("GoogleTranslate");
+    
+    // Legacy module settings key used.
+    static final String GOOGLE_TRANSLATE_SIMPLE_NAME = "GoogleTranslate";
+    // Module settings key to use (moved to new directory).
+    static final String GOOGLE_TRANSLATE_NAME = TranslatorSettings.getInstance().getModuleSettingsResource(GOOGLE_TRANSLATE_SIMPLE_NAME);
     private static final String DEFAULT_CREDENTIAL_PATH = "";
     private String targetLanguageCode;
     private String credentialPath;

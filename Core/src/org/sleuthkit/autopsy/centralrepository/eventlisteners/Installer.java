@@ -110,6 +110,7 @@ public class Installer extends ModuleInstall {
                 File prevDir = new File(prevPath);
                 // copy all files starting with prevDbName in prevPath to new path location.
                 if (prevDir.exists() && prevDir.isDirectory()) {
+                    new File(CentralRepoSettings.getInstance().getDefaultDbPath()).mkdirs();
                     try {
                         for (File childFile : prevDir.listFiles((dir, name) -> name.startsWith(prevDbName))) {
                             FileUtils.copyFile(childFile, new File(CentralRepoSettings.getInstance().getDefaultDbPath(), childFile.getName()));
@@ -118,7 +119,13 @@ public class Installer extends ModuleInstall {
                         logger.log(Level.SEVERE, "There was an error upgrading settings.", ex);
                     }
                 }
+                
+                // update path settings accordingly
+                prevSettings.put(SqliteCentralRepoSettings.getDatabasePathKey(), CentralRepoSettings.getInstance().getDefaultDbPath());
             }
+            
+            // copy settings
+            ModuleSettings.setConfigSettings(CentralRepoSettings.getInstance().getModuleSettingsKey(), prevSettings);
         }
     }
 

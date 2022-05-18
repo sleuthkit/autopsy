@@ -347,6 +347,7 @@
                 <package>org.sleuthkit.autopsy.textextractors.configs</package>
                 <package>org.sleuthkit.autopsy.textsummarizer</package>
                 <package>org.sleuthkit.autopsy.texttranslation</package>
+                <package>org.sleuthkit.autopsy.texttranslation.translators.settings</package>
                 <package>org.sleuthkit.autopsy.url.analytics</package>
                 <package>org.sleuthkit.datamodel</package>
                 <package>org.sleuthkit.datamodel.blackboardutils</package>
