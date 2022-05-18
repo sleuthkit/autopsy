@@ -92,8 +92,12 @@ public class VideoSnapShotWorker extends SwingWorker<Void, Void>{
             throw new IOException(String.format("Unable to read input file %s", input.toString()));
         }
 
-        File outputFile = outputPath.toFile();
+        File outputFile = outputPath.toFile();        
         outputFile.mkdirs();
+        
+        if(outputFile.exists()) {
+            throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputPath.toString(), outputPath.toString()));
+        }
 
         String file_name = inputPath.toString();//OpenCV API requires string for file name
         VideoCapture videoCapture = new VideoCapture(file_name); //VV will contain the videos

@@ -249,6 +249,14 @@ public class VideoUtils {
         return false;
     }
     
+    /**
+     * Compress the given the files.
+     * 
+     * @param inputPath Absolute path to input video.
+     * @param outputPath Path for scaled file.
+     * @param terminator A processTerminator for the ffmpeg executable.
+     * @throws Exception 
+     */
     static void compressVideo(Path inputPath, Path outputPath, ExecUtil.ProcessTerminator terminator) throws Exception {
         Path executablePath = Paths.get(FFMPEG, FFMPEG_EXE);
         File exeFile = InstalledFileLocator.getDefault().locate(executablePath.toString(), VideoUtils.class.getPackage().getName(), true);
@@ -260,14 +268,15 @@ public class VideoUtils {
             throw new IOException("Unable to compress ffmpeg.exe could not be execute");
         }
         
+        if(outputPath.toFile().exists()) {
+            throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputPath.toString(), outputPath.toString()));
+        }
                 
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
                 "\"" + exeFile.getAbsolutePath() + "\"",
                 "-i", "\"" + inputPath.toAbsolutePath().toString() + "\"",
-                "-vf", "scale=1280:-1",
-                "-c:v", "libx264",
-                "-preset", "veryslow",
-                "-crf", "24",
+                "-vcodec", "libx264",
+                "-crf", "28",
                 "\"" + outputPath.toAbsolutePath().toString() + "\"");
         
         ExecUtil.execute(processBuilder, terminator);
@@ -292,6 +301,10 @@ public class VideoUtils {
         
         if(!exeFile.canExecute()) {
             throw new IOException("Unable to compress ffmpeg.exe could not be execute");
+        }
+        
+        if(outputPath.toFile().exists()) {
+            throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputPath.toString(), outputPath.toString()));
         }
         
         String scaleParam = Integer.toString(width) + ":" + Integer.toString(height);
