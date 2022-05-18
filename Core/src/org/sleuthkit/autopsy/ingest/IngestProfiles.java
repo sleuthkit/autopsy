@@ -104,7 +104,7 @@ public final class IngestProfiles {
      * @return profileList
      */
     public synchronized static List<IngestProfile> getIngestProfiles() {
-        File dir = new File(IngestJobSettings.getBaseModuleSettingsPath());
+        File dir = new File(IngestJobSettings.getBaseSettingsPath());
         // find all settings files for ingest profiles (starts with ingest profiles prefix)
         File[] directoryListing = dir.listFiles((file) -> file.getName() != null && file.getName().startsWith(getIngestProfilePrefix()) && file.isFile());
         List<IngestProfile> profileList = new ArrayList<>();

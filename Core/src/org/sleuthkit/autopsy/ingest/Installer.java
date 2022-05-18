@@ -18,12 +18,27 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Properties;
 import org.openide.modules.ModuleInstall;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Initializes ingest manager when the module is loaded
  */
 public class Installer extends ModuleInstall {
+
+    private static final String LEGACY_INGEST_SETTINGS_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), "IngestModuleSettings").toString();
+    private static final String LEGACY_INGEST_PROFILES_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), "IngestProfiles").toString();
+    private static final String PROPERTIES_EXT = ".properties";
+
+    private static final Logger logger = Logger.getLogger(Installer.class.getName());
 
     private static Installer instance;
 
@@ -40,6 +55,7 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
+        upgradeSettings();
         // initialize ingest manager
         IngestManager.getInstance();
     }
@@ -49,5 +65,41 @@ public class Installer extends ModuleInstall {
         //force ingest inbox closed on exit and save state as such
         IngestMessageTopComponent.findInstance().close();
         return true;
+    }
+
+    private void upgradeSettings() {
+        File settingsFolder = new File(IngestJobSettings.getBaseSettingsPath());
+        File legacySettingsFolder = new File(LEGACY_INGEST_SETTINGS_PATH);
+        if (legacySettingsFolder.exists() && !settingsFolder.exists()) {
+            for (File moduleSettings : legacySettingsFolder.listFiles()) {
+                if (moduleSettings.isDirectory()) {
+                    // get the settings name from the folder name (will be the same for any properties files).
+                    String settingsName = moduleSettings.getName();
+                    
+                    Path configPropsPath = Paths.get(PlatformUtil.getUserConfigDirectory(), settingsName + PROPERTIES_EXT);
+                    Path profilePropsPath = Paths.get(LEGACY_INGEST_PROFILES_PATH, settingsName + PROPERTIES_EXT);
+                    boolean isProfile = profilePropsPath.toFile().exists();
+                    
+                    // load properties
+                    Properties configProps = loadProps(configPropsPath.toFile());
+                    
+                    if (isProfile) {
+                        configProps.putAll(loadProps(profilePropsPath.toFile()));
+                    }
+                    
+                    
+                }
+            }
+        }
+    }
+
+    private static Properties loadProps(File propFile) throws IOException {
+        Properties props = new Properties();
+        if (propFile.exists()) {
+            try (InputStream inputStream = new FileInputStream(propFile)) {
+                props.load(inputStream);
+            }
+        }
+        return props;
     }
 }

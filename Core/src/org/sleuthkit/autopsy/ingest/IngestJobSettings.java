@@ -52,7 +52,7 @@ public final class IngestJobSettings {
     private static final String ENABLED_MODULES_PROPERTY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_MODULES_PROPERTY = "Disabled_Ingest_Modules"; //NON-NLS
     private static final String LAST_FILE_INGEST_FILTER_PROPERTY = "Last_File_Ingest_Filter"; //NON-NLS
-    private static final String MODULE_SETTINGS_FOLDER = "IngestModuleSettings"; //NON-NLS
+    private static final String MODULE_SETTINGS_FOLDER = "IngestSettings"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final CharSequence PYTHON_CLASS_PROXY_PREFIX = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1); //NON-NLS
@@ -69,7 +69,7 @@ public final class IngestJobSettings {
      * @return The base path to module settings.
      */
     @Beta
-    public static String getBaseModuleSettingsPath() {
+    public static String getBaseSettingsPath() {
         return MODULE_SETTINGS_FOLDER_PATH;
     }
     
@@ -99,7 +99,7 @@ public final class IngestJobSettings {
      * @return The path to the module settings folder
      */
     static Path getSavedModuleSettingsFolder(String executionContext) {
-        return Paths.get(getBaseModuleSettingsPath(), executionContext);
+        return Paths.get(getBaseSettingsPath(), executionContext);
     }
 
     /**
