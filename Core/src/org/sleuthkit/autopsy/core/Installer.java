@@ -204,6 +204,7 @@ public class Installer extends ModuleInstall {
         System.setProperty("prism.allowhidpi", "false");
 
         // Update existing configuration in case of unsupported settings
+        UserPreferences.updateConfig();
         updateConfig();
 
         packageInstallers = new ArrayList<>();

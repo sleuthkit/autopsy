@@ -18,18 +18,22 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import com.google.common.annotations.Beta;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.prefs.AbstractPreferences;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
-import java.util.prefs.Preferences;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.openide.util.Lookup;
-import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
@@ -47,23 +51,58 @@ import org.sleuthkit.datamodel.TskData.DbType;
 public final class UserPreferences {
 
     /**
-     * Creates config preferences referencing a file on disk.
+     * Returns the path to the preferences for the identifier.
      *
-     * @param identifier The preference identifier which will serve as the file
-     *                   name for the properties file in the config directory.
+     * @param identifier The identifier.
      *
-     * @return The config preferences.
+     * @return The path to the preference file.
      */
-    private static ConfigProperties getConfigPreferences(String identifier) {
-        String path = Paths.get(PlatformUtil.getUserConfigDirectory(), identifier + ".properties").toString();
-        return new ConfigProperties(path);
+    private static String getConfigPreferencePath(String identifier) {
+        return Paths.get(PlatformUtil.getUserConfigDirectory(), identifier + ".properties").toString();
     }
 
-    private static final ConfigProperties viewPreferences = getConfigPreferences("ViewPreferences");
-    private static final ConfigProperties machineSpecificPreferences = getConfigPreferences("MachineSpecificPreferences");
-    private static final ConfigProperties modePreferences = getConfigPreferences("ModePreferences");
-    private static final ConfigProperties externalServicePreferences = getConfigPreferences("ExternalServicePreferences");
-    
+    private static final String VIEW_PREFERENCE_PATH = getConfigPreferencePath("ViewPreferences");
+    private static final String MACHINE_SPECIFIC_PREFERENCE_PATH = getConfigPreferencePath("MachineSpecificPreferences");
+    private static final String MODE_PREFERENCE_PATH = getConfigPreferencePath("ModePreferences");
+    private static final String EXTERNAL_SERVICE_PREFERENCE_PATH = getConfigPreferencePath("ExternalServicePreferences");
+
+    /**
+     * @return The path to machine specific preferences.
+     */
+    @Beta
+    public static String getMachineSpecificPreferencePath() {
+        return MACHINE_SPECIFIC_PREFERENCE_PATH;
+    }
+
+    /**
+     * @return The path to mode preferences.
+     */
+    @Beta
+    public static String getModePreferencePath() {
+        return MODE_PREFERENCE_PATH;
+    }
+
+    /**
+     * @return The path to external service preferences.
+     */
+    @Beta
+    public static String getExternalServicePreferencePath() {
+        return EXTERNAL_SERVICE_PREFERENCE_PATH;
+    }
+
+    /**
+     * @return The path to view preferences.
+     */
+    @Beta
+    public static String getViewPreferencePath() {
+        return VIEW_PREFERENCE_PATH;
+    }
+
+    private static final ConfigProperties viewPreferences = new ConfigProperties(VIEW_PREFERENCE_PATH);
+    private static final ConfigProperties machineSpecificPreferences = new ConfigProperties(MACHINE_SPECIFIC_PREFERENCE_PATH);
+    private static final ConfigProperties modePreferences = new ConfigProperties(MODE_PREFERENCE_PATH);
+    private static final ConfigProperties externalServicePreferences = new ConfigProperties(EXTERNAL_SERVICE_PREFERENCE_PATH);
+
     static {
         // perform initial load to ensure disk preferences are loaded
         try {
@@ -140,12 +179,113 @@ public final class UserPreferences {
     private static final int DEFAULT_PORT_INT = 61616;
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
 
+    // view preference keys used for moving from legacy files to new files
+    private static final List<String> VIEW_PREFERENCE_KEYS = Arrays.asList(
+            KEEP_PREFERRED_VIEWER,
+            HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE,
+            HIDE_KNOWN_FILES_IN_VIEWS_TREE,
+            HIDE_SLACK_FILES_IN_DATA_SRCS_TREE,
+            HIDE_SLACK_FILES_IN_VIEWS_TREE,
+            DISPLAY_TIMES_IN_LOCAL_TIME,
+            TIME_ZONE_FOR_DISPLAYS,
+            GROUP_ITEMS_IN_TREE_BY_DATASOURCE,
+            SHOW_ONLY_CURRENT_USER_TAGS,
+            HIDE_SCO_COLUMNS,
+            DISPLAY_TRANSLATED_NAMES,
+            EXTERNAL_HEX_EDITOR_PATH,
+            RESULTS_TABLE_PAGE_SIZE
+    );
+
+    // machine preference keys used for moving from legacy files to new files
+    private static final List<String> MACHINE_PREFERENCE_KEYS = Arrays.asList(
+            NUMBER_OF_FILE_INGEST_THREADS,
+            PROCESS_TIME_OUT_ENABLED,
+            PROCESS_TIME_OUT_HOURS,
+            MAX_NUM_OF_LOG_FILE,
+            SOLR_MAX_JVM_SIZE,
+            HEALTH_MONITOR_REPORT_PATH,
+            TEMP_FOLDER,
+            GEO_OSM_TILE_ZIP_PATH,
+            GEO_MBTILES_FILE_PATH
+    );
+
+    // mode preference keys used for moving from legacy files to new files
+    private static final List<String> MODE_PREFERENCE_KEYS = Arrays.asList(
+            SETTINGS_PROPERTIES,
+            MODE,
+            APP_NAME
+    );
+
+    // external service preference keys used for moving from legacy files to new files
+    private static final List<String> EXTERNAL_SERVICE_KEYS = Arrays.asList(
+            IS_MULTI_USER_MODE_ENABLED,
+            GEO_TILE_OPTION,
+            OCR_TRANSLATION_ENABLED,
+            EXTERNAL_DATABASE_HOSTNAME_OR_IP,
+            EXTERNAL_DATABASE_PORTNUMBER,
+            EXTERNAL_DATABASE_NAME,
+            EXTERNAL_DATABASE_USER,
+            EXTERNAL_DATABASE_PASSWORD,
+            EXTERNAL_DATABASE_TYPE,
+            SOLR8_SERVER_HOST,
+            SOLR8_SERVER_PORT,
+            SOLR4_SERVER_HOST,
+            SOLR4_SERVER_PORT,
+            ZK_SERVER_HOST,
+            ZK_SERVER_PORT,
+            MESSAGE_SERVICE_PASSWORD,
+            MESSAGE_SERVICE_USER,
+            MESSAGE_SERVICE_HOST,
+            MESSAGE_SERVICE_PORT,
+            TEXT_TRANSLATOR_NAME,
+            GEO_OSM_SERVER_ADDRESS
+    );
+
+    private static final String LEGACY_CONFIG_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), "Preferences", "org", "sleuthkit", "autopsy", "core.properties").toString();
+
+    static void updateConfig() {
+        List<Triple<File, ConfigProperties, List<String>>> fileAndKeys = Arrays.asList(
+                Triple.of(new File(MODE_PREFERENCE_PATH), modePreferences, MODE_PREFERENCE_KEYS),
+                Triple.of(new File(MACHINE_SPECIFIC_PREFERENCE_PATH), machineSpecificPreferences, MACHINE_PREFERENCE_KEYS),
+                Triple.of(new File(VIEW_PREFERENCE_PATH), viewPreferences, VIEW_PREFERENCE_KEYS),
+                Triple.of(new File(EXTERNAL_SERVICE_PREFERENCE_PATH), externalServicePreferences, EXTERNAL_SERVICE_KEYS)
+        );
+
+        boolean newSettingsExist = fileAndKeys.stream().anyMatch(triple -> triple.getLeft().exists());
+
+        File oldSettingsFile = new File(LEGACY_CONFIG_PATH);
+        // copy old settings to new location.
+        if (oldSettingsFile.exists() && !newSettingsExist) {
+            try {
+                Properties allProperties = new Properties();
+                try (FileInputStream oldPropsStream = new FileInputStream(oldSettingsFile)) {
+                    allProperties.load(oldPropsStream);
+                }
+
+                for (Triple<File, ConfigProperties, List<String>> fileKeys : fileAndKeys) {
+                    ConfigProperties newProperties = fileKeys.getMiddle();
+                    for (String key : fileKeys.getRight()) {
+                        String val = allProperties.getProperty(key);
+                        if (val != null) {
+                            newProperties.put(key, val);
+                        }
+                    }
+
+                }
+            } catch (IOException ex) {
+                // can't log because logger requires UserPreferences.  
+                // This shouldn't really be thrown unless their is a file access 
+                // issue within the user config directory.
+                ex.printStackTrace();
+            }
+        }
+    }
+
     // Prevent instantiation.
     private UserPreferences() {
     }
 
     public enum SelectedMode {
-
         STANDALONE,
         AUTOINGEST
     };

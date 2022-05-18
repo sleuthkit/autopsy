@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.openide.modules.ModuleInstall;
