@@ -43,7 +43,8 @@ public class CentralRepoSettings {
     private static final String DEFAULT_DB_PARENT_PATH = Paths.get(CENTRAL_REPO_BASE_PATH, "LocalDatabase").toString();
     private static final String DEFAULT_DB_NAME = "central_repository.db";
     private static final String MODULE_SETTINGS_KEY = Paths.get(CENTRAL_REPOSITORY_FOLDER, CENTRAL_REPOSITORY_SETTINGS_NAME).toString();
-
+    private static final String MODULE_SETTINGS_PROPERTIES = Paths.get(CENTRAL_REPO_BASE_PATH, CENTRAL_REPOSITORY_SETTINGS_NAME + ".properties").toString();
+    
     /**
      * @return The base path for central repository settings.
      */
@@ -57,6 +58,13 @@ public class CentralRepoSettings {
      */
     public String getModuleSettingsKey() {
         return MODULE_SETTINGS_KEY;
+    }
+    
+    /**
+     * @return The path to the central repo settings.
+     */
+    public String getModuleSettingsFile() {
+        return MODULE_SETTINGS_PROPERTIES;
     }
 
     /**

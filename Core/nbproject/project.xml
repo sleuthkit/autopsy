@@ -339,6 +339,7 @@
                 <package>org.sleuthkit.autopsy.modules.encryptiondetection</package>
                 <package>org.sleuthkit.autopsy.modules.filetypeid</package>
                 <package>org.sleuthkit.autopsy.modules.hashdatabase</package>
+                <package>org.sleuthkit.autopsy.modules.interestingitems</package>
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.modules.yara.rules</package>
                 <package>org.sleuthkit.autopsy.progress</package>
