@@ -89,8 +89,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
     private static final String EXTENSION_RULE_TAG = "EXTENSION"; //NON-NLS
     private static final String STANDARD_SET = "standardSet";
     private static final String VERSION_NUMBER = "versionNumber";
-   
-    
+
     private Map<String, FilesSet> filesSets;
 
     InterestingItemsFilesSetSettings(Map<String, FilesSet> filesSets) {
@@ -119,8 +118,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
 
     /**
      * Reads the definitions from the serialization file
-     * @param basePath       The base output directory.
-     * @param serialFileName Name of the set definitions file as a string.
+     *
      * @return the map representing settings saved to serialization file, empty
      *         set if the file does not exist.
      *
@@ -130,8 +128,8 @@ class InterestingItemsFilesSetSettings implements Serializable {
         "# {0} - filePathStr",
         "InterestingItemsFilesSetSettings.readSerializedDefinitions.failedReadSettings=Failed to read settings from ''{0}''"
     })
-    private static Map<String, FilesSet> readSerializedDefinitions(String basePath, String serialFileName) throws FilesSetsManager.FilesSetsManagerException {
-        Path filePath = Paths.get(basePath, serialFileName);
+    private static Map<String, FilesSet> readSerializedDefinitions(String serialFileName) throws FilesSetsManager.FilesSetsManagerException {
+        Path filePath = Paths.get(PlatformUtil.getUserConfigDirectory(), serialFileName);
         File fileSetFile = filePath.toFile();
         String filePathStr = filePath.toString();
         if (fileSetFile.exists()) {
@@ -511,7 +509,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
 
     /**
      * Reads FilesSet definitions from Serialized file or XML file.
-     * @param basePath       The base output directory.
+     *
      * @param fileName       The name of the file which is expected to store the
      *                       serialized definitions
      * @param legacyFileName Name of the xml set definitions file as a string.
@@ -521,14 +519,14 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @throws
      * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
-    static Map<String, FilesSet> readDefinitionsFile(String basePath, String fileName, String legacyFileName) throws FilesSetsManager.FilesSetsManagerException {
-        Map<String, FilesSet> filesSets = readSerializedDefinitions(basePath, fileName);
+    static Map<String, FilesSet> readDefinitionsFile(String fileName, String legacyFileName) throws FilesSetsManager.FilesSetsManagerException {
+        Map<String, FilesSet> filesSets = readSerializedDefinitions(fileName);
         if (!filesSets.isEmpty()) {
             return filesSets;
         }
         // Check if the legacy xml file exists.
         if (!legacyFileName.isEmpty()) {
-            return readDefinitionsXML(Paths.get(basePath, legacyFileName).toFile());
+            return readDefinitionsXML(Paths.get(PlatformUtil.getUserConfigDirectory(), legacyFileName).toFile());
         }
         return filesSets;
     }
@@ -601,15 +599,13 @@ class InterestingItemsFilesSetSettings implements Serializable {
     // definitions that ship with Autopsy and one for user definitions.
     /**
      * Writes FilesSet definitions to disk as an XML file, logging any errors.
-     * @param basePath       The base output directory.
+     *
      * @param fileName Name of the set definitions file as a string.
      *
      * @returns True if the definitions are written to disk, false otherwise.
      */
-    static boolean writeDefinitionsFile(String basePath, String fileName, Map<String, FilesSet> interestingFilesSets) throws FilesSetsManager.FilesSetsManagerException {
-        File outputFile = Paths.get(basePath, fileName).toFile();
-        outputFile.getParentFile().mkdirs();
-        try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(outputFile))) {
+    static boolean writeDefinitionsFile(String fileName, Map<String, FilesSet> interestingFilesSets) throws FilesSetsManager.FilesSetsManagerException {
+        try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(Paths.get(PlatformUtil.getUserConfigDirectory(), fileName).toString()))) {
             out.writeObject(new InterestingItemsFilesSetSettings(interestingFilesSets));
         } catch (IOException ex) {
             throw new FilesSetsManager.FilesSetsManagerException(String.format("Failed to write settings to %s", fileName), ex);

@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
-import com.google.common.annotations.Beta;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
 
@@ -68,11 +65,6 @@ public final class FilesSetsManager extends Observable {
         }
     });
 
-    private static final String FILE_FILTER_FOLDER = "FileIngestFilter";
-    private static final String FILE_FILTER_BASE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), FILE_FILTER_FOLDER).toAbsolutePath().toString();
-    private static final String INTERESTING_ITEM_FOLDER = "InterestingItems";
-    private static final String INTERESTING_ITEM_BASE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), INTERESTING_ITEM_FOLDER).toAbsolutePath().toString();
-
     /**
      * Gets the FilesSet definitions manager singleton.
      */
@@ -83,22 +75,6 @@ public final class FilesSetsManager extends Observable {
         return instance;
     }
 
-    /**
-     * @return The base path to file filter settings.
-     */
-    @Beta
-    public static String getBaseFileFilterPath() {
-        return FILE_FILTER_BASE_PATH;
-    }
-    
-    /**
-     * @return The base path to interesting item settings.
-     */
-    @Beta
-    public static String getBaseInterestingItemPath() {
-        return INTERESTING_ITEM_BASE_PATH;
-    }
-    
     /**
      * Gets the set of chars deemed to be illegal in file names (Windows).
      *
@@ -126,7 +102,7 @@ public final class FilesSetsManager extends Observable {
     public static List<FilesSet> getStandardFileIngestFilters() {
         return Arrays.asList(FILES_DIRS_UNALLOC_INGEST_FILTER, FILES_DIRS_INGEST_FILTER);
     }
-
+    
     /**
      * Gets a copy of the current ingest file set definitions.
      *
@@ -137,7 +113,7 @@ public final class FilesSetsManager extends Observable {
      */
     public Map<String, FilesSet> getCustomFileIngestFilters() throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
-            return FileSetsDefinitions.readSerializedDefinitions(FILE_FILTER_BASE_PATH, FILE_INGEST_FILTER_DEFS_NAME);
+            return FileSetsDefinitions.readSerializedDefinitions(FILE_INGEST_FILTER_DEFS_NAME);
         }
     }
 
@@ -150,7 +126,7 @@ public final class FilesSetsManager extends Observable {
     public static FilesSet getDefaultFilter() {
         return FILES_DIRS_UNALLOC_INGEST_FILTER;
     }
-
+    
     /**
      * Sets the current interesting file sets definitions, replacing any
      * previous definitions.
@@ -160,10 +136,11 @@ public final class FilesSetsManager extends Observable {
      */
     void setCustomFileIngestFilters(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
-            FileSetsDefinitions.writeDefinitionsFile(FILE_FILTER_BASE_PATH, FILE_INGEST_FILTER_DEFS_NAME, filesSets);
+            FileSetsDefinitions.writeDefinitionsFile(FILE_INGEST_FILTER_DEFS_NAME, filesSets);
         }
     }
 
+    
     /**
      * Gets a copy of the current interesting files set definitions.
      *
@@ -172,9 +149,10 @@ public final class FilesSetsManager extends Observable {
      */
     public Map<String, FilesSet> getInterestingFilesSets() throws FilesSetsManagerException {
         synchronized (INTERESTING_FILES_SET_LOCK) {
-            return InterestingItemsFilesSetSettings.readDefinitionsFile(INTERESTING_ITEM_BASE_PATH, INTERESTING_FILES_SET_DEFS_NAME, LEGACY_FILES_SET_DEFS_FILE_NAME);
+            return InterestingItemsFilesSetSettings.readDefinitionsFile(INTERESTING_FILES_SET_DEFS_NAME, LEGACY_FILES_SET_DEFS_FILE_NAME);
         }
     }
+
 
     /**
      * Sets the current interesting file sets definitions, replacing any
@@ -185,11 +163,13 @@ public final class FilesSetsManager extends Observable {
      */
     void setInterestingFilesSets(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (INTERESTING_FILES_SET_LOCK) {
-            InterestingItemsFilesSetSettings.writeDefinitionsFile(INTERESTING_ITEM_BASE_PATH, INTERESTING_FILES_SET_DEFS_NAME, filesSets);
+            InterestingItemsFilesSetSettings.writeDefinitionsFile(INTERESTING_FILES_SET_DEFS_NAME, filesSets);
             this.setChanged();
             this.notifyObservers();
         }
     }
+
+    
 
     public static class FilesSetsManagerException extends Exception {
 
