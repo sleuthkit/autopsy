@@ -24,9 +24,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
+import org.apache.commons.io.FileUtils;
 import org.openide.modules.ModuleInstall;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
@@ -71,23 +75,33 @@ public class Installer extends ModuleInstall {
         File settingsFolder = new File(IngestJobSettings.getBaseSettingsPath());
         File legacySettingsFolder = new File(LEGACY_INGEST_SETTINGS_PATH);
         if (legacySettingsFolder.exists() && !settingsFolder.exists()) {
-            for (File moduleSettings : legacySettingsFolder.listFiles()) {
-                if (moduleSettings.isDirectory()) {
+            for (File moduleSettingsFolder : legacySettingsFolder.listFiles()) {
+                if (moduleSettingsFolder.isDirectory()) {
                     // get the settings name from the folder name (will be the same for any properties files).
-                    String settingsName = moduleSettings.getName();
-                    
-                    Path configPropsPath = Paths.get(PlatformUtil.getUserConfigDirectory(), settingsName + PROPERTIES_EXT);
-                    Path profilePropsPath = Paths.get(LEGACY_INGEST_PROFILES_PATH, settingsName + PROPERTIES_EXT);
-                    boolean isProfile = profilePropsPath.toFile().exists();
-                    
-                    // load properties
-                    Properties configProps = loadProps(configPropsPath.toFile());
-                    
-                    if (isProfile) {
-                        configProps.putAll(loadProps(profilePropsPath.toFile()));
+                    String settingsName = moduleSettingsFolder.getName();
+
+                    try {
+                        Path configPropsPath = Paths.get(PlatformUtil.getUserConfigDirectory(), settingsName + PROPERTIES_EXT);
+                        Path profilePropsPath = Paths.get(LEGACY_INGEST_PROFILES_PATH, settingsName + PROPERTIES_EXT);
+                        boolean isProfile = profilePropsPath.toFile().exists();
+
+                        // load properties
+                        Properties configProps = loadProps(configPropsPath.toFile());
+
+                        if (isProfile) {
+                            configProps.putAll(loadProps(profilePropsPath.toFile()));
+                        }
+
+                        Map<String, String> moduleSettingsToSave = configProps.entrySet().stream()
+                                .filter(e -> e.getKey() != null)
+                                .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue() == null ? null : e.getValue().toString(), (v1, v2) -> v1));
+
+                        ModuleSettings.setConfigSettings(IngestJobSettings.getModuleSettingsResource(settingsName), moduleSettingsToSave);
+
+                        FileUtils.copyDirectory(moduleSettingsFolder, IngestJobSettings.getSavedModuleSettingsFolder(settingsName).toFile());
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "There was an error upgrading settings for: " + settingsName, ex);
                     }
-                    
-                    
                 }
             }
         }
