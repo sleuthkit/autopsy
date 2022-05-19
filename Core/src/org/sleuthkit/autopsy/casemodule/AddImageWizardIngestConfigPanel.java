@@ -31,6 +31,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.IngestProfileSelectionWizardPanel;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
@@ -189,7 +190,8 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
         }
         //Because this panel kicks off ingest during the wizard we need to 
         //swap out the ingestJobSettings for the ones of the chosen profile before
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
+        //use prefix to specify correct execution context for profiles.
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestProfiles.getIngestProfilePrefix() + lastProfileUsed);
         progressPanel.setIngestJobSettings(ingestJobSettings); //prepare ingest for being started
     }
 }

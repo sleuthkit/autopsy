@@ -89,6 +89,8 @@ public class SharedConfiguration {
     public static final String FILE_EXPORTER_FOLDER = "Automated File Exporter"; //NON-NLS
     private static final String UPLOAD_IN_PROGRESS_FILE = "uploadInProgress"; // NON-NLS
     private static final String moduleDirPath = PlatformUtil.getUserConfigDirectory();
+    private static final String INGEST_MODULES_PATH = IngestJobSettings.getBaseSettingsPath();
+    private static final String INGEST_MODULES_REL_PATH = new File(moduleDirPath).toURI().relativize(new File(INGEST_MODULES_PATH).toURI()).getPath();
     private static final Logger logger = Logger.getLogger(SharedConfiguration.class.getName());
 
     private final UpdateConfigSwingWorker swingWorker;
@@ -425,7 +427,7 @@ public class SharedConfiguration {
         // Check that the context directory exists and is not empty
         File contextDir;
         if (isSharedFolder) {
-            contextDir = new File(folder, AUTO_MODE_FOLDER);
+            contextDir = Paths.get(folder.getAbsolutePath(), INGEST_MODULES_REL_PATH, AUTO_MODE_FOLDER).toFile();
         } else {
             IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
             contextDir = ingestJobSettings.getSavedModuleSettingsFolder().toFile();
@@ -439,7 +441,7 @@ public class SharedConfiguration {
         }
 
         // Check that the automode context properties file exists
-        File contextProperties = new File(folder, AUTO_MODE_CONTEXT_FILE);
+        File contextProperties = Paths.get(folder.getAbsolutePath(), INGEST_MODULES_REL_PATH, AUTO_MODE_CONTEXT_FILE).toFile();
         return contextProperties.exists();
     }
     
@@ -640,7 +642,7 @@ public class SharedConfiguration {
         publishTask("Uploading AutoModeContext configuration files");
 
         // Make a subfolder
-        File remoteAutoConfFolder = new File(remoteFolder, AUTO_MODE_FOLDER);
+        File remoteAutoConfFolder = Paths.get(remoteFolder.getAbsolutePath(), INGEST_MODULES_REL_PATH, AUTO_MODE_FOLDER).toFile();
         try {
             if (remoteAutoConfFolder.exists()) {
                 FileUtils.deleteDirectory(remoteAutoConfFolder);
@@ -678,7 +680,7 @@ public class SharedConfiguration {
         publishTask("Downloading AutoModeContext configuration files");
 
         // Check that the remote subfolder exists
-        File remoteAutoConfFolder = new File(remoteFolder, AUTO_MODE_FOLDER);
+        File remoteAutoConfFolder = Paths.get(remoteFolder.getAbsolutePath(), INGEST_MODULES_REL_PATH, AUTO_MODE_FOLDER).toFile();
         if (!remoteAutoConfFolder.exists()) {
             logger.log(Level.SEVERE, "Shared configuration folder {0} does not exist", remoteAutoConfFolder.getAbsolutePath());
             throw new SharedConfigurationException("Shared configuration folder " + remoteAutoConfFolder.getAbsolutePath() + " does not exist");
@@ -714,7 +716,7 @@ public class SharedConfiguration {
      */
     private void uploadEnabledModulesSettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Uploading enabled module configuration");
-        copyToRemoteFolder(AUTO_MODE_CONTEXT_FILE, moduleDirPath, remoteFolder, false);
+        copyToRemoteFolder(AUTO_MODE_CONTEXT_FILE, INGEST_MODULES_PATH, Paths.get(remoteFolder.getAbsolutePath(), INGEST_MODULES_REL_PATH).toFile(), false);
     }
 
     /**
@@ -726,7 +728,7 @@ public class SharedConfiguration {
      */
     private void downloadEnabledModuleSettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Downloading enabled module configuration");
-        copyToLocalFolder(AUTO_MODE_CONTEXT_FILE, moduleDirPath, remoteFolder, false);
+        copyToLocalFolder(AUTO_MODE_CONTEXT_FILE, INGEST_MODULES_PATH, Paths.get(remoteFolder.getAbsolutePath(), INGEST_MODULES_REL_PATH).toFile(), false);
     }
 
     /**
@@ -902,7 +904,14 @@ public class SharedConfiguration {
     private void uploadCentralRepositorySettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Uploading central repository configuration");
         
-        copyToRemoteFolder(CentralRepoSettings.getInstance().getModuleSettingsFile(), remoteFolder, true);
+        // get relative cr path to config path.
+        String centralRepoRelPath = new File(moduleDirPath).toURI().relativize(
+                new File(CentralRepoSettings.getInstance().getModuleSettingsFile()).getParentFile().toURI()).getPath();
+        
+        copyToRemoteFolder(
+                CentralRepoSettings.getInstance().getModuleSettingsFile(), 
+                Paths.get(remoteFolder.getAbsolutePath(), centralRepoRelPath).toFile(), 
+                true);
     }
 
     /**
@@ -914,7 +923,12 @@ public class SharedConfiguration {
      */
     private void downloadCentralRepositorySettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Downloading central repository configuration");
-        copyToLocalFolder(CentralRepoSettings.getInstance().getModuleSettingsFile(), moduleDirPath, remoteFolder, true);
+        
+        // get relative cr path to config path.
+        String centralRepoRelPath = new File(moduleDirPath).toURI().relativize(
+                new File(CentralRepoSettings.getInstance().getModuleSettingsFile()).getParentFile().toURI()).getPath();
+        
+        copyToLocalFolder(CentralRepoSettings.getInstance().getModuleSettingsFile(), Paths.get(remoteFolder.getAbsolutePath(), centralRepoRelPath).toFile(), true);
     }
 
     /**
@@ -1027,7 +1041,7 @@ public class SharedConfiguration {
         Map<String, String> sharedVersions = readVersionsFromFile(sharedVersionFile);
 
         // Copy the settings file
-        copyToRemoteFolder(HashLookupSettings.getSettingsPath(), moduleDirPath, remoteFolder, true);
+        copyToRemoteFolder(HashLookupSettings.getSettingsPath(), remoteFolder, true);
         copyToRemoteFolder(HASHDB_CONFIG_FILE_NAME_LEGACY, moduleDirPath, remoteFolder, true);
 
         // Get the list of databases from the file
@@ -1276,7 +1290,7 @@ public class SharedConfiguration {
         }
 
         // Copy the settings filey
-        copyToLocalFolder(HashLookupSettings.getSettingsPath(), moduleDirPath, remoteFolder, true);
+        copyToLocalFolder(HashLookupSettings.getSettingsPath(), remoteFolder, true);
         copyToLocalFolder(HASHDB_CONFIG_FILE_NAME_LEGACY, moduleDirPath, remoteFolder, true);
         copyToLocalFolder(SHARED_CONFIG_VERSIONS, moduleDirPath, remoteFolder, true);
 

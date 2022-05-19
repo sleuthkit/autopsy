@@ -20,10 +20,12 @@ package org.sleuthkit.autopsy.texttranslation.translators.settings;
 
 import java.nio.file.Paths;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import com.google.common.annotations.Beta;
 
 /**
  * ModuleSettings keys and paths for translator settings.
  */
+ @Beta
 public class TranslatorSettings {
 
     private static final String TRANSLATION_FOLDER = "Translation";
