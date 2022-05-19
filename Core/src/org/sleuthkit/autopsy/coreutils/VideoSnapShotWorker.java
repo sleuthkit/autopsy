@@ -61,7 +61,7 @@ public class VideoSnapShotWorker extends SwingWorker<Void, Void>{
      * @param abstractFile The path to the existing video. 
      * @param outputFile The output path of the snapshot video.
      */
-    VideoSnapShotWorker(AbstractFile abstractFile, File outputFile) {
+    public VideoSnapShotWorker(AbstractFile abstractFile, File outputFile) {
         this(abstractFile, outputFile, DEFAULT_TOTAL_FRAMES, DEFAULT_SCALE, DEFAULT_FRAMES_PER_SECOND);
     }
     
@@ -82,7 +82,7 @@ public class VideoSnapShotWorker extends SwingWorker<Void, Void>{
         this.framesPerSecond = framesPerSecond;
     }
     
-    static boolean isSupported(AbstractFile file) {
+    public static boolean isSupported(AbstractFile file) {
         return isVideoThumbnailSupported(file);
     }
 
