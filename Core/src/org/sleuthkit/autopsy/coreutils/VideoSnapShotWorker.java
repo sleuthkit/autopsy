@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import javax.swing.SwingWorker;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
@@ -29,6 +29,7 @@ import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.VideoWriter;
 import org.opencv.videoio.Videoio;
 import static org.sleuthkit.autopsy.coreutils.VideoUtils.isVideoThumbnailSupported;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -48,8 +49,8 @@ public class VideoSnapShotWorker extends SwingWorker<Void, Void>{
     private static final int DEFAULT_TOTAL_FRAMES = 100;
     private static final int DEFAULT_SCALE = 100;
     
-    private final Path inputPath;
-    private final Path outputPath;
+    private final AbstractFile abstractFile;
+    private final File outputFile;
     private final long numFrames;
     private final double scale;
     private final int framesPerSecond;
@@ -57,25 +58,25 @@ public class VideoSnapShotWorker extends SwingWorker<Void, Void>{
     /**
      * Creates a new instance of the SwingWorker using the default parameters.
      * 
-     * @param inputPath The path to the existing video. 
-     * @param outputPath The output path of the snapshot video.
+     * @param abstractFile The path to the existing video. 
+     * @param outputFile The output path of the snapshot video.
      */
-    public VideoSnapShotWorker(Path inputPath, Path outputPath) {
-        this(inputPath, outputPath, DEFAULT_TOTAL_FRAMES, DEFAULT_SCALE, DEFAULT_FRAMES_PER_SECOND);
+    VideoSnapShotWorker(AbstractFile abstractFile, File outputFile) {
+        this(abstractFile, outputFile, DEFAULT_TOTAL_FRAMES, DEFAULT_SCALE, DEFAULT_FRAMES_PER_SECOND);
     }
     
     /**
      * Creates a new instance of the SwingWorker.
      * 
-     * @param inputPath The path to the existing video. 
-     * @param outputPath The output path of the snapshot video.
+     * @param abstractFile The path to the existing video. 
+     * @param outputFile The output path of the snapshot video.
      * @param numFrames The number of screen captures to include in the video.
      * @param scale % to scale from the original. Passing 0 or 100 will result in no change.
      * @param framesPerSecond Effects how long each frame will appear in the video.
      */
-    public VideoSnapShotWorker(Path inputPath, Path outputPath, long numFrames, double scale, int framesPerSecond) {
-        this.inputPath = inputPath;
-        this.outputPath = outputPath;
+    VideoSnapShotWorker(AbstractFile abstractFile, File outputFile, long numFrames, double scale, int framesPerSecond) {
+        this.abstractFile = abstractFile;
+        this.outputFile = outputFile;
         this.scale = scale;
         this.numFrames = numFrames;
         this.framesPerSecond = framesPerSecond;
@@ -86,20 +87,21 @@ public class VideoSnapShotWorker extends SwingWorker<Void, Void>{
     }
 
     @Override
-    protected Void doInBackground() throws Exception {
-        File input = inputPath.toFile();
-        if (!input.exists() || !input.isFile() || !input.canRead()) {
-            throw new IOException(String.format("Unable to read input file %s", input.toString()));
-        }
-
-        File outputFile = outputPath.toFile();        
+    protected Void doInBackground() throws Exception {  
         outputFile.mkdirs();
         
         if(outputFile.exists()) {
-            throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputPath.toString(), outputPath.toString()));
+            throw new IOException(String.format("Failed to compress %s, output file already exists %s", abstractFile.getName(), outputFile.toString()));
+        }
+        
+        File inputFile = VideoUtils.getVideoFileInTempDir(abstractFile);
+        
+        if (inputFile.exists() == false || inputFile.length() < abstractFile.getSize()) {
+            Files.createParentDirs(inputFile);
+            ContentUtils.writeToFile(abstractFile, inputFile, null, this, true);
         }
 
-        String file_name = inputPath.toString();//OpenCV API requires string for file name
+        String file_name = inputFile.toString();//OpenCV API requires string for file name
         VideoCapture videoCapture = new VideoCapture(file_name); //VV will contain the videos
 
         if (!videoCapture.isOpened()) //checks if file is not open
@@ -116,7 +118,7 @@ public class VideoSnapShotWorker extends SwingWorker<Void, Void>{
             long myDurationMillis = (long) milliseconds;
 
             if (myDurationMillis <= 0) {
-                throw new Exception(String.format("Failed to make snapshot video, original video has no duration. %s", inputPath.toAbsolutePath()));
+                throw new Exception(String.format("Failed to make snapshot video, original video has no duration. %s", inputFile.toString()));
             }
 
             // calculate the number of frames to capture

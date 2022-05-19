@@ -240,7 +240,7 @@ public class VideoUtils {
         return bufferedImage == null ? null : ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
     
-    boolean canCompressAndScale(AbstractFile file) {
+    public boolean canCompressAndScale(AbstractFile file) {
 
         if (PlatformUtil.getOSName().toLowerCase().startsWith("Windows")) {
             return isVideoThumbnailSupported(file);
@@ -252,12 +252,24 @@ public class VideoUtils {
     /**
      * Compress the given the files.
      * 
+     * @param inputFile The AbstractFile representing the video.
+     * @param outputFile Output file.
+     * @param terminator A processTerminator for the ffmpeg executable.
+     * @throws IOException 
+     */
+    static public void compressVideo(AbstractFile inputFile, File outputFile, ExecUtil.ProcessTerminator terminator) throws IOException {
+        compressVideo(getVideoFile(inputFile), outputFile, terminator);
+    }
+    
+    /**
+     * Compress the given the files.
+     * 
      * @param inputPath Absolute path to input video.
      * @param outputPath Path for scaled file.
      * @param terminator A processTerminator for the ffmpeg executable.
      * @throws Exception 
      */
-    static void compressVideo(Path inputPath, Path outputPath, ExecUtil.ProcessTerminator terminator) throws Exception {
+    static void compressVideo(File inputFile, File outputFile, ExecUtil.ProcessTerminator terminator) throws IOException {
         Path executablePath = Paths.get(FFMPEG, FFMPEG_EXE);
         File exeFile = InstalledFileLocator.getDefault().locate(executablePath.toString(), VideoUtils.class.getPackage().getName(), true);
         if(exeFile == null) {
@@ -268,31 +280,47 @@ public class VideoUtils {
             throw new IOException("Unable to compress ffmpeg.exe could not be execute");
         }
         
-        if(outputPath.toFile().exists()) {
-            throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputPath.toString(), outputPath.toString()));
+        if(outputFile.exists()) {
+            throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputFile.toString(), outputFile.toString()));
         }
                 
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
                 "\"" + exeFile.getAbsolutePath() + "\"",
-                "-i", "\"" + inputPath.toAbsolutePath().toString() + "\"",
+                "-i", "\"" + inputFile.toString() + "\"",
                 "-vcodec", "libx264",
                 "-crf", "28",
-                "\"" + outputPath.toAbsolutePath().toString() + "\"");
+                "\"" + outputFile.toString() + "\"");
         
         ExecUtil.execute(processBuilder, terminator);
     }
     
     /**
-     * Create a new video with the given width and height.
+     * Create a new video with the given width and height. An exception will
+     * be thrown if the output file exists.
      * 
-     * @param inputPath Absolute path to input video.
-     * @param outputPath Path for scaled file.
+     * @param inputFile The video AbstractFile.
+     * @param outputFile Path for scaled file.
      * @param width New video width.
      * @param height New video height.
      * @param terminator A processTerminator for the ffmpeg executable.
-     * @throws Exception 
+     * @throws IOException 
      */
-    static void scaleVideo(Path inputPath, Path outputPath, int width, int height, ExecUtil.ProcessTerminator terminator) throws Exception{
+    static public void scaleVideo(AbstractFile inputFile, File outputFile, int width, int height, ExecUtil.ProcessTerminator terminator) throws IOException {
+        scaleVideo(getVideoFile(inputFile), outputFile, width, height, terminator);
+    }
+    
+    /**
+     * Create a new video with the given width and height. An exception will be
+     * thrown if the output file exists.
+     * 
+     * @param inputPath Absolute path to input video.
+     * @param outputFile Path for scaled file.
+     * @param width New video width.
+     * @param height New video height.
+     * @param terminator A processTerminator for the ffmpeg executable.
+     * @throws IOException 
+     */
+    private static void scaleVideo(File inputFile, File outputFile, int width, int height, ExecUtil.ProcessTerminator terminator) throws IOException{
         Path executablePath = Paths.get(FFMPEG, FFMPEG_EXE);
         File exeFile = InstalledFileLocator.getDefault().locate(executablePath.toString(), VideoUtils.class.getPackage().getName(), true);
         if(exeFile == null) {
@@ -303,21 +331,55 @@ public class VideoUtils {
             throw new IOException("Unable to compress ffmpeg.exe could not be execute");
         }
         
-        if(outputPath.toFile().exists()) {
-            throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputPath.toString(), outputPath.toString()));
+        if(outputFile.exists()) {
+            throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputFile.toString(), outputFile.toString()));
         }
         
         String scaleParam = Integer.toString(width) + ":" + Integer.toString(height);
         
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
                 "\"" + exeFile.getAbsolutePath() + "\"",
-                "-i", "\"" + inputPath.toAbsolutePath().toString() + "\"",
+                "-i", "\"" + inputFile.toString() + "\"",
                 "-s", scaleParam,
                 "-c:a", "copy",
-                "\"" + outputPath.toAbsolutePath().toString() + "\"");
+                "\"" + outputFile.toString() + "\"");
         
         ExecUtil.execute(processBuilder, terminator);
-
+    }
+    
+    /**
+     * Returns a File object representing a temporary copy of the video file
+     * representing by the AbstractFile object.
+     * 
+     * @param file
+     * @return 
+     */
+    static File getVideoFile(AbstractFile file) {
+        java.io.File tempFile;
+        
+        try {
+            tempFile = getVideoFileInTempDir(file);
+        } catch (NoCurrentCaseException ex) {
+            LOGGER.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
+            return null;
+        }
+        if (tempFile.exists() == false || tempFile.length() < file.getSize()) {
+            ProgressHandle progress = ProgressHandle.createHandle(Bundle.VideoUtils_genVideoThumb_progress_text(file.getName()));
+            progress.start(100);
+            try {
+                Files.createParentDirs(tempFile);
+                if (Thread.interrupted()) {
+                    return null;
+                }
+                ContentUtils.writeToFile(file, tempFile, progress, null, true);
+            } catch (IOException ex) {
+                LOGGER.log(Level.WARNING, "Error extracting temporary file for " + ImageUtils.getContentPathSafe(file), ex); //NON-NLS
+            } finally {
+                progress.finish();
+            }
+        }
+        
+        return tempFile;
     }
     
     static private ProcessBuilder buildProcessWithRunAsInvoker(String... commandLine) {
