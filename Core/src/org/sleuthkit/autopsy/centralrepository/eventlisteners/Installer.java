@@ -47,7 +47,8 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 public class Installer extends ModuleInstall {
 
-    private static final String LEGACY_DEFAULT_DB_PARENT_PATH = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "central_repository").toAbsolutePath().toString();
+    private static final String LEGACY_DEFAULT_FOLDER = "central_repository";
+    private static final String LEGACY_DEFAULT_DB_PARENT_PATH = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), LEGACY_DEFAULT_FOLDER).toAbsolutePath().toString();
     //private static final String LEGACY_DEFAULT_DB_NAME = "central_repository.db";
     private static final String LEGACY_MODULE_SETTINGS_KEY = "CentralRepository";
     
@@ -104,8 +105,15 @@ public class Installer extends ModuleInstall {
         if (!newSettingsFile.exists() && legacySettingsFile.exists()) {
             Map<String, String> prevSettings = ModuleSettings.getConfigSettings(LEGACY_MODULE_SETTINGS_KEY);
             String prevPath = prevSettings.get(SqliteCentralRepoSettings.getDatabasePathKey());
+            File prevDirCheck = new File(prevPath);
+            // if a relative directory, make sure it is relative to user config.
+            if (!prevDirCheck.isAbsolute()) {
+                prevPath = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), prevPath).toAbsolutePath().toString();
+            }
+            
             // if old path is default path for sqlite db, copy it over to new location and update setting.
-            if (prevPath != null && Paths.get(LEGACY_DEFAULT_DB_PARENT_PATH).equals(Paths.get(prevPath).toAbsolutePath())) {
+            if (prevPath != null 
+                    && Paths.get(LEGACY_DEFAULT_DB_PARENT_PATH).toAbsolutePath().toString().equals(Paths.get(prevPath).toAbsolutePath().toString())) {
                 String prevDbName = prevSettings.get(SqliteCentralRepoSettings.getDatabaseNameKey());
                 File prevDir = new File(prevPath);
                 // copy all files starting with prevDbName in prevPath to new path location.

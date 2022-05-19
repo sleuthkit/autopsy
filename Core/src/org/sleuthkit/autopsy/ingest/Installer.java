@@ -97,7 +97,8 @@ public class Installer extends ModuleInstall {
                                 .filter(e -> e.getKey() != null)
                                 .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue() == null ? null : e.getValue().toString(), (v1, v2) -> v1));
 
-                        ModuleSettings.setConfigSettings(IngestJobSettings.getModuleSettingsResource(settingsName), moduleSettingsToSave);
+                        String resourceName = isProfile ? IngestProfiles.getExecutionContext(settingsName) : settingsName;
+                        ModuleSettings.setConfigSettings(IngestJobSettings.getModuleSettingsResource(resourceName), moduleSettingsToSave);
 
                         FileUtils.copyDirectory(moduleSettingsFolder, IngestJobSettings.getSavedModuleSettingsFolder(settingsName).toFile());
                     } catch (IOException ex) {
