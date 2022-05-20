@@ -240,7 +240,7 @@ public class VideoUtils {
         return bufferedImage == null ? null : ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
     
-    public boolean canCompressAndScale(AbstractFile file) {
+    public static boolean canCompressAndScale(AbstractFile file) {
 
         if (PlatformUtil.getOSName().toLowerCase().startsWith("Windows")) {
             return isVideoThumbnailSupported(file);
