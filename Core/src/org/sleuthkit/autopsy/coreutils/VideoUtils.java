@@ -242,7 +242,7 @@ public class VideoUtils {
     
     public static boolean canCompressAndScale(AbstractFile file) {
 
-        if (PlatformUtil.getOSName().toLowerCase().startsWith("Windows")) {
+        if (PlatformUtil.getOSName().toLowerCase().startsWith("windows")) {
             return isVideoThumbnailSupported(file);
         }
 
