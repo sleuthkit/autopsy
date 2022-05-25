@@ -20,8 +20,13 @@ package org.sleuthkit.autopsy.coreutils;
 
 import com.google.common.io.Files;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -32,7 +37,11 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
+import org.opencv.videoio.VideoWriter;
+import org.opencv.videoio.Videoio;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -46,7 +55,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  *
  */
 public class VideoUtils {
-    
+
     private static final String FFMPEG = "ffmpeg";
     private static final String FFMPEG_EXE = "ffmpeg.exe";
 
@@ -88,8 +97,8 @@ public class VideoUtils {
     private static final int CV_CAP_PROP_POS_MSEC = 0;
     private static final int CV_CAP_PROP_FRAME_COUNT = 7;
     private static final int CV_CAP_PROP_FPS = 5;
-    
-    private static final double[] FRAME_GRAB_POS_RATIO = { 0.50, 0.25, 0.75, 0.01 };
+
+    private static final double[] FRAME_GRAB_POS_RATIO = {0.50, 0.25, 0.75, 0.01};
 
     static final Logger LOGGER = Logger.getLogger(VideoUtils.class.getName());
 
@@ -116,10 +125,10 @@ public class VideoUtils {
 
     /**
      * Generate a thumbnail for the supplied video.
-     * 
-     * @param file The video file.
+     *
+     * @param file     The video file.
      * @param iconSize The target icon size in pixels.
-     * 
+     *
      * @return The generated thumbnail. Can return null if an error occurred
      *         trying to generate the thumbnail, or if the current thread was
      *         interrupted.
@@ -166,7 +175,7 @@ public class VideoUtils {
             if (Thread.interrupted()) {
                 return null;
             }
-            
+
             double duration = 1000 * (totalFrames / fps); //total milliseconds
 
             /*
@@ -177,19 +186,18 @@ public class VideoUtils {
              * be tried in a last-ditch effort, the idea being the video may be
              * corrupt and that our best chance at retrieving a frame is early
              * on in the video.
-             * 
+             *
              * If no frame can be retrieved, no thumbnail will be created.
              */
-            int[] framePositions = new int[] {
+            int[] framePositions = new int[]{
                 (int) (duration * FRAME_GRAB_POS_RATIO[0]),
                 (int) (duration * FRAME_GRAB_POS_RATIO[1]),
                 (int) (duration * FRAME_GRAB_POS_RATIO[2]),
-                (int) (duration * FRAME_GRAB_POS_RATIO[3]),
-            };
+                (int) (duration * FRAME_GRAB_POS_RATIO[3]),};
 
             Mat imageMatrix = new Mat();
-            
-            for (int i=0; i < framePositions.length; i++) {
+
+            for (int i = 0; i < framePositions.length; i++) {
                 if (!videoFile.set(CV_CAP_PROP_POS_MSEC, framePositions[i])) {
                     LOGGER.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
                     // If we can't set the time, continue to the next frame position and try again.
@@ -201,15 +209,15 @@ public class VideoUtils {
                     // If the image is bad for some reason, continue to the next frame position and try again.
                     continue;
                 }
-                
+
                 break;
             }
-            
+
             // If the image is empty, return since no buffered image can be created.
             if (imageMatrix.empty()) {
                 return null;
             }
-            
+
             int matrixColumns = imageMatrix.cols();
             int matrixRows = imageMatrix.rows();
 
@@ -239,7 +247,7 @@ public class VideoUtils {
         }
         return bufferedImage == null ? null : ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
-    
+
     public static boolean canCompressAndScale(AbstractFile file) {
 
         if (PlatformUtil.getOSName().toLowerCase().startsWith("windows")) {
@@ -248,115 +256,84 @@ public class VideoUtils {
 
         return false;
     }
-    
+
     /**
-     * Compress the given the files.
+     * Compress the given the files. This method takes advantage of the exiting
+     * getVideoFile method to create a temp copy of the inputFile. It does not 
+     * delete the temp file, it leaves it in the video temp file for future use.
      * 
-     * @param inputFile The AbstractFile representing the video.
-     * @param outputFile Output file.
-     * @param terminator A processTerminator for the ffmpeg executable.
-     * @throws IOException 
+     * When using this method there is no way to cancel the process between the 
+     * creation of the temp file and the launching of the process. For better
+     * control use the other compressVideo method.
+     *
+     * @param inputFile    The AbstractFile representing the video.
+     * @param outputFile   Output file.
+     * @param terminator   A processTerminator for the ffmpeg executable.
+     * @param ffmpegStdout A file to send the output of ffmpeg stdout.
+     * @param ffmpegStderr A file to send the output of ffmpeg stderr.
+     * 
+     * @return The ffmpeg process exit value.
+     *
+     * @throws IOException
      */
-    static public void compressVideo(AbstractFile inputFile, File outputFile, ExecUtil.ProcessTerminator terminator) throws IOException {
-        compressVideo(getVideoFile(inputFile), outputFile, terminator);
+    static public int compressVideo(AbstractFile inputFile, File outputFile, ExecUtil.ProcessTerminator terminator, File ffmpegStdout, File ffmpegStderr) throws IOException {
+        return compressVideo(getVideoFile(inputFile), outputFile, terminator, ffmpegStdout, ffmpegStderr);
     }
-    
+
     /**
      * Compress the given the files.
      * 
-     * @param inputPath Absolute path to input video.
-     * @param outputPath Path for scaled file.
+     * The output from ffmpeg seem to go to the error file not the
+     * out file. Text in the err file does not mean an issue occurred.
+     *
+     * @param inputFile  Absolute path to input video.
+     * @param outputFile Path for scaled file.
      * @param terminator A processTerminator for the ffmpeg executable.
-     * @throws Exception 
+     * @param ffmpegStdout A file to send the output of ffmpeg stdout.
+     * @param ffmpegStderr A file to send the output of ffmpeg stderr.
+     * 
+     * @return The ffmpeg process exit value.
+     *
+     * @throws IOException
      */
-    static void compressVideo(File inputFile, File outputFile, ExecUtil.ProcessTerminator terminator) throws IOException {
+    static public int compressVideo(File inputFile, File outputFile, ExecUtil.ProcessTerminator terminator, File ffmpegStdout, File ffmpegStderr) throws IOException {
         Path executablePath = Paths.get(FFMPEG, FFMPEG_EXE);
         File exeFile = InstalledFileLocator.getDefault().locate(executablePath.toString(), VideoUtils.class.getPackage().getName(), true);
-        if(exeFile == null) {
+        if (exeFile == null) {
             throw new IOException("Unable to compress ffmpeg.exe was not found.");
-        } 
-        
-        if(!exeFile.canExecute()) {
+        }
+
+        if (!exeFile.canExecute()) {
             throw new IOException("Unable to compress ffmpeg.exe could not be execute");
         }
-        
-        if(outputFile.exists()) {
+
+        if (outputFile.exists()) {
             throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputFile.toString(), outputFile.toString()));
         }
-                
+
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
                 "\"" + exeFile.getAbsolutePath() + "\"",
                 "-i", "\"" + inputFile.toString() + "\"",
                 "-vcodec", "libx264",
                 "-crf", "28",
                 "\"" + outputFile.toString() + "\"");
-        
-        ExecUtil.execute(processBuilder, terminator);
+
+        processBuilder.redirectError(ffmpegStderr);
+        processBuilder.redirectOutput(ffmpegStdout);
+
+        return ExecUtil.execute(processBuilder, terminator);
     }
-    
-    /**
-     * Create a new video with the given width and height. An exception will
-     * be thrown if the output file exists.
-     * 
-     * @param inputFile The video AbstractFile.
-     * @param outputFile Path for scaled file.
-     * @param width New video width.
-     * @param height New video height.
-     * @param terminator A processTerminator for the ffmpeg executable.
-     * @throws IOException 
-     */
-    static public void scaleVideo(AbstractFile inputFile, File outputFile, int width, int height, ExecUtil.ProcessTerminator terminator) throws IOException {
-        scaleVideo(getVideoFile(inputFile), outputFile, width, height, terminator);
-    }
-    
-    /**
-     * Create a new video with the given width and height. An exception will be
-     * thrown if the output file exists.
-     * 
-     * @param inputPath Absolute path to input video.
-     * @param outputFile Path for scaled file.
-     * @param width New video width.
-     * @param height New video height.
-     * @param terminator A processTerminator for the ffmpeg executable.
-     * @throws IOException 
-     */
-    private static void scaleVideo(File inputFile, File outputFile, int width, int height, ExecUtil.ProcessTerminator terminator) throws IOException{
-        Path executablePath = Paths.get(FFMPEG, FFMPEG_EXE);
-        File exeFile = InstalledFileLocator.getDefault().locate(executablePath.toString(), VideoUtils.class.getPackage().getName(), true);
-        if(exeFile == null) {
-            throw new IOException("Unable to compress ffmpeg.exe was not found.");
-        } 
-        
-        if(!exeFile.canExecute()) {
-            throw new IOException("Unable to compress ffmpeg.exe could not be execute");
-        }
-        
-        if(outputFile.exists()) {
-            throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputFile.toString(), outputFile.toString()));
-        }
-        
-        String scaleParam = Integer.toString(width) + ":" + Integer.toString(height);
-        
-        ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
-                "\"" + exeFile.getAbsolutePath() + "\"",
-                "-i", "\"" + inputFile.toString() + "\"",
-                "-s", scaleParam,
-                "-c:a", "copy",
-                "\"" + outputFile.toString() + "\"");
-        
-        ExecUtil.execute(processBuilder, terminator);
-    }
-    
+
     /**
      * Returns a File object representing a temporary copy of the video file
      * representing by the AbstractFile object.
-     * 
+     *
      * @param file
-     * @return 
+     * @return
      */
     static File getVideoFile(AbstractFile file) {
         java.io.File tempFile;
-        
+
         try {
             tempFile = getVideoFileInTempDir(file);
         } catch (NoCurrentCaseException ex) {
@@ -378,10 +355,10 @@ public class VideoUtils {
                 progress.finish();
             }
         }
-        
+
         return tempFile;
     }
-    
+
     static private ProcessBuilder buildProcessWithRunAsInvoker(String... commandLine) {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
@@ -390,6 +367,111 @@ public class VideoUtils {
          */
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
         return processBuilder;
+    }
+    
+    // Defaults for the screen capture methods.
+    private static final long MIN_FRAME_INTERVAL_MILLIS = 500;
+    private static final int DEFAULT_FRAMES_PER_SECOND = 1;
+    private static final int DEFAULT_TOTAL_FRAMES = 100;
+    private static final int DEFAULT_SCALE = 100;
+    
+    /**
+     * Creates an output video containing a series of screen captures from the 
+     * input video.
+     * 
+     * @param inputFile
+     * @param outputFile
+     * 
+     * @throws IOException 
+     */
+    static public void createScreenCaptureVideo(File inputFile, File outputFile)  throws IOException{
+        createScreenCaptureVideo(inputFile, outputFile, DEFAULT_TOTAL_FRAMES, DEFAULT_SCALE, DEFAULT_FRAMES_PER_SECOND);
+    }
+    
+    /**
+     * Creates a video containing a series of screen captures from the input
+     * video.
+     * @param inputFile File representing the input video.
+     * @param outputFile File representing the output video. 
+     *                  An exception will be thrown if the output video exists.
+     * @param numFrames Total number of screen captures to included in the video.
+     * @param scale     Percentage to scale the screen captures. The value of
+     *                  0 or 100 will cause no change.
+     * @param framesPerSecond The number of frames to show in the video each second
+     *                        The lower this value the longer the image will appear on the screen.
+     * @throws IOException 
+     */
+    static public void createScreenCaptureVideo(File inputFile, File outputFile, long numFrames, double scale, int framesPerSecond) throws IOException{
+
+        if(outputFile.exists()) {
+            throw new IOException(String.format("Failed to compress %s, output file already exists %s", inputFile.getName(), outputFile.toString()));
+        }
+        
+        if (!inputFile.exists() || !inputFile.canRead()) {
+            throw new IOException(String.format("Failed to compress %s, input file cannot be read.", inputFile.getName()));
+        }
+        
+        outputFile.mkdirs();
+
+        String file_name = inputFile.toString();//OpenCV API requires string for file name
+        VideoCapture videoCapture = new VideoCapture(file_name); //VV will contain the videos
+
+        if (!videoCapture.isOpened()) //checks if file is not open
+        {
+            // add this file to the set of known bad ones
+            throw new IOException("Problem with video file; problem when attempting to open file.");
+        }
+        VideoWriter writer = null;
+        try {
+            // get the duration of the video
+            double fps = framesPerSecond == 0 ? videoCapture.get(Videoio.CAP_PROP_FPS) : framesPerSecond; // gets frame per second
+            double total_frames = videoCapture.get(7); // gets total frames
+            double milliseconds = 1000 * (total_frames / fps); //convert to ms duration
+            long myDurationMillis = (long) milliseconds;
+
+            if (myDurationMillis <= 0) {
+                throw new IOException(String.format("Failed to make snapshot video, original video has no duration. %s", inputFile.toString()));
+            }
+
+            // calculate the number of frames to capture
+            int numFramesToGet = (int) numFrames;
+            long frameInterval = myDurationMillis / numFrames;
+
+            if (frameInterval < MIN_FRAME_INTERVAL_MILLIS) {
+                numFramesToGet = 1;
+            }
+
+            // for each timeStamp, grab a frame
+            Mat mat = new Mat(); // holds image received from video in mat format (opencv format)
+
+            Size s = new Size((int) videoCapture.get(Videoio.CAP_PROP_FRAME_WIDTH), (int) videoCapture.get(Videoio.CAP_PROP_FRAME_HEIGHT));
+            Size newSize = (scale == 0 || scale == 100) ? s : new Size((int) (videoCapture.get(Videoio.CAP_PROP_FRAME_WIDTH) * scale), (int) (videoCapture.get(Videoio.CAP_PROP_FRAME_HEIGHT) * scale));
+
+            writer = new VideoWriter(outputFile.toString(), VideoWriter.fourcc('M', 'J', 'P', 'G'), 1, newSize, true);
+
+            if (!writer.isOpened()) {
+                throw new IOException(String.format("Problem with video file; problem when attempting to open output file. %s", outputFile.toString()));
+            }
+
+            for (int frame = 0; frame < numFramesToGet; ++frame) {                
+                long timeStamp = frame * frameInterval;
+                videoCapture.set(0, timeStamp); //set video in timeStamp ms
+
+                if (!videoCapture.read(mat)) { // on Wav files, usually the last frame we try to read does not succeed.
+                    continue;
+                }
+
+                Mat resized = new Mat();
+                Imgproc.resize(mat, resized, newSize, 0, 0, Imgproc.INTER_CUBIC);
+                writer.write(resized);
+            }
+
+        } finally {
+            videoCapture.release();
+            if (writer != null) {
+                writer.release();
+            }
+        }
     }
 
     /**
@@ -411,5 +493,5 @@ public class VideoUtils {
             throw new IllegalStateException(ex);
         }
     }
-    
+
 }
