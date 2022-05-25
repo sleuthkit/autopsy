@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
+import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 
 /**

@@ -84,16 +84,14 @@ public final class FilesSetsManager extends Observable {
     /**
      * @return The path to file filter settings.
      */
-    @Beta
-    public static String getFileFilterPath() {
+    static String getFileFilterPath() {
         return FILE_FILTER_PATH;
     }
     
     /**
      * @return The path to interesting item settings.
      */
-    @Beta
-    public static String getInterestingItemPath() {
+    static String getInterestingItemPath() {
         return INTERESTING_ITEM_PATH;
     }
     

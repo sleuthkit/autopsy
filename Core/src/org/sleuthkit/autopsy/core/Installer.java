@@ -216,7 +216,7 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.healthmonitor.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.casemodule.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.texttranslation.translators.Installer.getDefault());
-        packageInstallers.add(org.sleuthkit.autopsy.modules.hashdatabase.installer.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.modules.hashdatabase.infrastructure.Installer.getDefault());
 
         /**
          * This is a temporary workaround for the following bug in Tika that

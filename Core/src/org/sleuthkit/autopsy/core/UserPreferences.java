@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.core;
 
-import com.google.common.annotations.Beta;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -36,6 +35,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.openide.util.Lookup;
 import org.python.icu.util.TimeZone;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
+import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -51,7 +51,8 @@ import org.sleuthkit.datamodel.TskData.DbType;
 public final class UserPreferences {
 
     /**
-     * Returns the path to the preferences for the identifier.
+     * Returns the path to the preferences for the identifier in the user config
+     * directory.
      *
      * @param identifier The identifier.
      *
@@ -61,42 +62,22 @@ public final class UserPreferences {
         return Paths.get(PlatformUtil.getUserConfigDirectory(), identifier + ".properties").toString();
     }
 
-    private static final String VIEW_PREFERENCE_PATH = getConfigPreferencePath("ViewPreferences");
+    /**
+     * Returns the path to the preferences for the identifier in the shared
+     * preference directory.
+     *
+     * @param identifier The identifier.
+     *
+     * @return The path to the preference file.
+     */
+    private static String getSharedPreferencePath(String identifier) {
+        return Paths.get(SharedConfigPath.getInstance().getSharedConfigPath(), identifier + ".properties").toString();
+    }
+        
+    private static final String VIEW_PREFERENCE_PATH = getSharedPreferencePath("ViewPreferences");
     private static final String MACHINE_SPECIFIC_PREFERENCE_PATH = getConfigPreferencePath("MachineSpecificPreferences");
     private static final String MODE_PREFERENCE_PATH = getConfigPreferencePath("ModePreferences");
-    private static final String EXTERNAL_SERVICE_PREFERENCE_PATH = getConfigPreferencePath("ExternalServicePreferences");
-
-    /**
-     * @return The path to machine specific preferences.
-     */
-    @Beta
-    public static String getMachineSpecificPreferencePath() {
-        return MACHINE_SPECIFIC_PREFERENCE_PATH;
-    }
-
-    /**
-     * @return The path to mode preferences.
-     */
-    @Beta
-    public static String getModePreferencePath() {
-        return MODE_PREFERENCE_PATH;
-    }
-
-    /**
-     * @return The path to external service preferences.
-     */
-    @Beta
-    public static String getExternalServicePreferencePath() {
-        return EXTERNAL_SERVICE_PREFERENCE_PATH;
-    }
-
-    /**
-     * @return The path to view preferences.
-     */
-    @Beta
-    public static String getViewPreferencePath() {
-        return VIEW_PREFERENCE_PATH;
-    }
+    private static final String EXTERNAL_SERVICE_PREFERENCE_PATH = getSharedPreferencePath("ExternalServicePreferences");
 
     private static final ConfigProperties viewPreferences = new ConfigProperties(VIEW_PREFERENCE_PATH);
     private static final ConfigProperties machineSpecificPreferences = new ConfigProperties(MACHINE_SPECIFIC_PREFERENCE_PATH);

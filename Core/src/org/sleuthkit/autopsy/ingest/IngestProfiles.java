@@ -45,8 +45,7 @@ public final class IngestProfiles {
      * @return Prefix to append to an ingest profile name when saving to disk or
      *         using with ingest job settings.
      */
-    @Beta
-    public static String getIngestProfilePrefix() {
+    static String getIngestProfilePrefix() {
         return SETTINGS_FILE_PREFIX;
     }
 

@@ -16,16 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.centralrepository.settings;
+package org.sleuthkit.autopsy.centralrepository;
 
-import com.google.common.annotations.Beta;
 import java.nio.file.Paths;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 
 /**
  * Location for central repo settings and paths.
  */
-@Beta
 public class CentralRepoSettings {
 
     private static final CentralRepoSettings instance = new CentralRepoSettings();
@@ -39,12 +37,21 @@ public class CentralRepoSettings {
 
     private static final String CENTRAL_REPOSITORY_FOLDER = "CentralRepository";
     private static final String CENTRAL_REPOSITORY_SETTINGS_NAME = "CentralRepository";
-    private static final String CENTRAL_REPO_BASE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), CENTRAL_REPOSITORY_FOLDER).toString();
+    private static final String CENTRAL_REPO_BASE_PATH = Paths.get(
+            SharedConfigPath.getInstance().getSharedConfigPath(),
+            CENTRAL_REPOSITORY_FOLDER).toString();
+
     private static final String DEFAULT_DB_PARENT_PATH = Paths.get(CENTRAL_REPO_BASE_PATH, "LocalDatabase").toString();
     private static final String DEFAULT_DB_NAME = "central_repository.db";
-    private static final String MODULE_SETTINGS_KEY = Paths.get(CENTRAL_REPOSITORY_FOLDER, CENTRAL_REPOSITORY_SETTINGS_NAME).toString();
-    private static final String MODULE_SETTINGS_PROPERTIES = Paths.get(CENTRAL_REPO_BASE_PATH, CENTRAL_REPOSITORY_SETTINGS_NAME + ".properties").toString();
-    
+    private static final String MODULE_SETTINGS_KEY = Paths.get(
+            SharedConfigPath.getInstance().getSharedConfigFolder(),
+            CENTRAL_REPOSITORY_FOLDER,
+            CENTRAL_REPOSITORY_SETTINGS_NAME).toString();
+
+    private static final String MODULE_SETTINGS_PROPERTIES = Paths.get(
+            CENTRAL_REPO_BASE_PATH,
+            CENTRAL_REPOSITORY_SETTINGS_NAME + ".properties").toString();
+
     /**
      * @return The base path for central repository settings.
      */
@@ -59,7 +66,7 @@ public class CentralRepoSettings {
     public String getModuleSettingsKey() {
         return MODULE_SETTINGS_KEY;
     }
-    
+
     /**
      * @return The path to the central repo settings.
      */

@@ -89,8 +89,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
     private static final String EXTENSION_RULE_TAG = "EXTENSION"; //NON-NLS
     private static final String STANDARD_SET = "standardSet";
     private static final String VERSION_NUMBER = "versionNumber";
-   
-    
+
     private Map<String, FilesSet> filesSets;
 
     InterestingItemsFilesSetSettings(Map<String, FilesSet> filesSets) {

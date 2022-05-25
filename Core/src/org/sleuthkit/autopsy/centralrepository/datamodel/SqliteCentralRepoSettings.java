@@ -29,7 +29,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
-import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
+import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -62,22 +62,6 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
     private String dbDirectory;
     private int bulkThreshold;
 
-    /**
-     * @return The settings key for the name of the database.
-     */
-    public static String getDatabaseNameKey() {
-        return DATABASE_NAME;
-    }
-
-    /**
-     * @return The settings key for the parent path of the database.
-     */
-    public static String getDatabasePathKey() {
-        return DATABASE_PATH;
-    }
-
-    
-    
     public SqliteCentralRepoSettings() {
         loadSettings();
     }

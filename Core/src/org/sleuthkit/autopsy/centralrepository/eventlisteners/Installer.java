@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
-import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
+import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -49,7 +49,6 @@ public class Installer extends ModuleInstall {
 
     private static final String LEGACY_DEFAULT_FOLDER = "central_repository";
     private static final String LEGACY_DEFAULT_DB_PARENT_PATH = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), LEGACY_DEFAULT_FOLDER).toAbsolutePath().toString();
-    //private static final String LEGACY_DEFAULT_DB_NAME = "central_repository.db";
     private static final String LEGACY_MODULE_SETTINGS_KEY = "CentralRepository";
     
     private static final Logger logger = Logger.getLogger(Installer.class.getName());

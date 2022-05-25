@@ -32,7 +32,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
-import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
+import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 
 /**
  *

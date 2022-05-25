@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.hashdatabase.installer;
+package org.sleuthkit.autopsy.modules.hashdatabase.infrastructure;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,13 +27,13 @@ import org.openide.modules.ModuleInstall;
 import org.python.icu.text.MessageFormat;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettings;
 
 /**
  * Installer for hash databases that copies legacy settings to new location.
  */
 public class Installer extends ModuleInstall {
 
+    private static final String LEGACY_SERIALIZATION_XML_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), "hashsets.xml").toString();
     private static final String LEGACY_SERIALIZATION_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), "hashLookup.settings").toString(); //NON-NLS
     private static final String LEGACY_HASH_DATABASE_DEFAULT_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), "HashDatabases").toString();
 
@@ -69,19 +69,18 @@ public class Installer extends ModuleInstall {
     public void restored() {
         // copy user dir hash dbs from legacy to new if old path exists and new does not.
         File legacyDbPath = new File(LEGACY_HASH_DATABASE_DEFAULT_PATH);
-        File dbPath = new File(HashLookupSettings.getDefaultDbPath());
+        File dbPath = new File(HashConfigPaths.getInstance().getDefaultDbPath());
         if (legacyDbPath.exists() && !dbPath.exists()) {
             try {
                 FileUtils.copyDirectory(legacyDbPath, dbPath);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, MessageFormat.format("There was an error copying legacy path hash dbs from {0} to {1}", legacyDbPath, dbPath), ex);
             }
-
         }
 
         // copy hash db settings to new location.
         File legacySettingsFile = new File(LEGACY_SERIALIZATION_FILE_PATH);
-        File settingsFile = new File(HashLookupSettings.getSettingsPath());
+        File settingsFile = new File(HashConfigPaths.getInstance().getSettingsPath());
         if (legacySettingsFile.exists() && !settingsFile.exists()) {
             try {
                 FileUtils.copyFile(legacySettingsFile, settingsFile);
@@ -89,6 +88,17 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.WARNING, MessageFormat.format("There was an error copying legacy hash db settings from {0} to {1}", legacySettingsFile, settingsFile), ex);
             }
         }
+
+        File legacyXmlSettingsFile = new File(LEGACY_SERIALIZATION_XML_FILE_PATH);
+        File xmlSettingsFile = new File(HashConfigPaths.getInstance().getXmlSettingsPath());
+        if (legacyXmlSettingsFile.exists() && !xmlSettingsFile.exists()) {
+            try {
+                FileUtils.copyFile(legacyXmlSettingsFile, xmlSettingsFile);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, MessageFormat.format("There was an error copying legacy xml hash db settings from {0} to {1}", legacyXmlSettingsFile, xmlSettingsFile), ex);
+            }
+        }
+
     }
 
 }

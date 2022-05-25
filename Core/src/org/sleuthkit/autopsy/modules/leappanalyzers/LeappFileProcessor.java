@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -196,20 +195,6 @@ public final class LeappFileProcessor {
             .put("sms - imessage.tsv", "message")
             .put("call history.tsv", "calllog")
             .build();
-
-    private static final String BASE_FOLDER = "LeappProcessor";
-    private static final String BASE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), BASE_FOLDER).toString();
-
-    /**
-     * The path to an xml file config file on disk.
-     *
-     * @param xmlFileName The xml file name.
-     *
-     * @return The path to the xml file.
-     */
-    private static String getXmlPath(String xmlFileName) {
-        return Paths.get(BASE_PATH, xmlFileName).toString();
-    }
 
     private final Blackboard blkBoard;
 
@@ -1093,7 +1078,7 @@ public final class LeappFileProcessor {
     private void loadConfigFile() throws IngestModuleException {
         Document xmlinput;
         try {
-            String path = getXmlPath(xmlFile);
+            String path = PlatformUtil.getUserConfigDirectory() + File.separator + xmlFile;
             File f = new File(path);
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
@@ -1278,18 +1263,8 @@ public final class LeappFileProcessor {
      * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
      */
     private void configExtractor() throws IOException {
-        File curFileLoc = Paths.get(PlatformUtil.getUserConfigDirectory(), xmlFile).toFile();
-        File newFileLoc = new File(getXmlPath(xmlFile));
-
-        if (!newFileLoc.exists()) {
-            PlatformUtil.extractResourceToUserConfigDir(LeappFileProcessor.class,
-                    xmlFile, true);
-
-            if (curFileLoc.exists()) {
-                newFileLoc.getParentFile().mkdirs();
-                curFileLoc.renameTo(newFileLoc);
-            }
-        }
+        PlatformUtil.extractResourceToUserConfigDir(LeappFileProcessor.class,
+                xmlFile, true);
     }
 
     private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList("zip", "tar", "tgz"));

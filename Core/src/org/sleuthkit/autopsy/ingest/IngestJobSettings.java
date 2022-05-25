@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import com.google.common.annotations.Beta;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -37,9 +36,9 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
+import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
@@ -52,8 +51,18 @@ public final class IngestJobSettings {
     private static final String ENABLED_MODULES_PROPERTY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_MODULES_PROPERTY = "Disabled_Ingest_Modules"; //NON-NLS
     private static final String LAST_FILE_INGEST_FILTER_PROPERTY = "Last_File_Ingest_Filter"; //NON-NLS
-    private static final String MODULE_SETTINGS_FOLDER = "IngestSettings"; //NON-NLS
-    private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
+    private static final String MODULE_SETTINGS_FOLDER_NAME = "IngestSettings"; //NON-NLS
+    
+    private static final String MODULE_SETTINGS_FOLDER = Paths.get(
+            SharedConfigPath.getInstance().getSharedConfigFolder(),
+            MODULE_SETTINGS_FOLDER_NAME
+    ).toString();
+
+    private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(
+            SharedConfigPath.getInstance().getSharedConfigPath(),
+            IngestJobSettings.MODULE_SETTINGS_FOLDER_NAME
+    ).toAbsolutePath().toString();
+
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final CharSequence PYTHON_CLASS_PROXY_PREFIX = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1); //NON-NLS
     private static final Logger logger = Logger.getLogger(IngestJobSettings.class.getName());
@@ -63,29 +72,26 @@ public final class IngestJobSettings {
     private String executionContext;
     private FilesSet fileFilter;
     private String moduleSettingsFolderPath;
-    
-    
+
     /**
      * @return The base path to module settings.
      */
-    @Beta
-    public static String getBaseSettingsPath() {
+    static String getBaseSettingsPath() {
         return MODULE_SETTINGS_FOLDER_PATH;
     }
-    
 
-    
     /**
-     * Returns the string to use with ModuleSettings for resource identification.
+     * Returns the string to use with ModuleSettings for resource
+     * identification.
+     *
      * @param executionContext The execution context.
-     * @return 
+     *
+     * @return
      */
     static String getModuleSettingsResource(String executionContext) {
         return Paths.get(MODULE_SETTINGS_FOLDER, executionContext).toString();
     }
 
-    
-    
     /**
      * Gets the path to the module settings folder for a given execution
      * context.
@@ -95,7 +101,7 @@ public final class IngestJobSettings {
      * contexts may have different ingest job settings.
      *
      * @param executionContext The execution context identifier.
-     * 
+     *
      * @return The path to the module settings folder
      */
     static Path getSavedModuleSettingsFolder(String executionContext) {
@@ -518,7 +524,7 @@ public final class IngestJobSettings {
      * specified context.
      *
      * @param context -the execution context (profile name) to check.
-     * 
+     *
      * @return the names of the enabled modules
      */
     static List<String> getEnabledModules(String context) {
@@ -597,7 +603,7 @@ public final class IngestJobSettings {
                 disabledModuleNames.add(moduleName);
             }
         }
-        
+
         String ingestModuleResource = getModuleSettingsResource(this.executionContext);
         ModuleSettings.setConfigSetting(ingestModuleResource, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(enabledModuleNames));
         ModuleSettings.setConfigSetting(ingestModuleResource, IngestJobSettings.DISABLED_MODULES_PROPERTY, makeCsvList(disabledModuleNames));

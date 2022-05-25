@@ -36,8 +36,8 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
+import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.report.GeneralReportSettings;
 
 /**
@@ -45,11 +45,15 @@ import org.sleuthkit.autopsy.report.GeneralReportSettings;
  * all of the settings that make up a reporting configuration in an atomic,
  * thread safe way.
  */
-public final class ReportingConfigLoader {
+final class ReportingConfigLoader {
 
     private static final Logger logger = Logger.getLogger(ReportingConfigLoader.class.getName());
     private static final String REPORT_CONFIG_FOLDER = "ReportingConfigs"; //NON-NLS
-    private static final String REPORT_CONFIG_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ReportingConfigLoader.REPORT_CONFIG_FOLDER).toAbsolutePath().toString();
+    private static final String REPORT_CONFIG_FOLDER_PATH = Paths.get(
+            SharedConfigPath.getInstance().getSharedConfigPath(), 
+            ReportingConfigLoader.REPORT_CONFIG_FOLDER
+    ).toAbsolutePath().toString();
+    
     private static final String REPORT_SETTINGS_FILE_EXTENSION = ".settings";
     private static final String TABLE_REPORT_CONFIG_FILE = "TableReportSettings.settings";
     private static final String FILE_REPORT_CONFIG_FILE = "FileReportSettings.settings";
@@ -61,13 +65,6 @@ public final class ReportingConfigLoader {
     // existing in the configuration file.
     private static final List<String> DELETED_REPORT_MODULES = Arrays.asList("org.sleuthkit.autopsy.report.modules.stix.STIXReportModule");
 
-    /**
-     * @return The base path for reports.
-     */
-    public static String getBaseReportPath() {
-        return REPORT_CONFIG_FOLDER_PATH;
-    }
-    
     /**
      * Deserialize all of the settings that make up a reporting configuration in
      * an atomic, thread safe way.

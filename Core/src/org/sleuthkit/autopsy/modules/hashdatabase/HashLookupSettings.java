@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
-import com.google.common.annotations.Beta;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -37,7 +35,6 @@ import org.openide.util.io.NbObjectOutputStream;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.CentralRepoHashSet;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.SleuthkitHashSet;
@@ -46,16 +43,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.autopsy.modules.hashdatabase.infrastructure.HashConfigPaths;
 
 /**
  * Class to represent the settings to be serialized for hash lookup.
  */
-public final class HashLookupSettings implements Serializable {
-
-    private static final String HASHSET_FOLDER = "HashLookup";
-    private static final String HASHSET_CONFIG_DIR = Paths.get(PlatformUtil.getUserConfigDirectory(), HASHSET_FOLDER).toAbsolutePath().toString();
-    private static final String SERIALIZATION_FILE_NAME = "hashLookup.settings"; //NON-NLS   
-    private static final String SERIALIZATION_FILE_PATH = Paths.get(HASHSET_CONFIG_DIR, SERIALIZATION_FILE_NAME).toString(); //NON-NLS
+final class HashLookupSettings implements Serializable {
     private static final String SET_ELEMENT = "hash_set"; //NON-NLS
     private static final String SET_NAME_ATTRIBUTE = "name"; //NON-NLS
     private static final String SET_TYPE_ATTRIBUTE = "type"; //NON-NLS
@@ -63,11 +56,6 @@ public final class HashLookupSettings implements Serializable {
     private static final String SEND_INGEST_MESSAGES_ATTRIBUTE = "show_inbox_messages"; //NON-NLS
     private static final String PATH_ELEMENT = "hash_set_path"; //NON-NLS
     private static final String LEGACY_PATH_NUMBER_ATTRIBUTE = "number"; //NON-NLS
-    private static final String CONFIG_FILE_NAME = "hashsets.xml"; //NON-NLS
-    private static final String CONFIG_FILE_PATH = Paths.get(HASHSET_CONFIG_DIR, CONFIG_FILE_NAME).toString();
-    private static final String HASH_DATABASE_DEFAULT_FOLDER = "HashDatabases";
-    private static final String HASH_DATABASE_DEFAULT_PATH = Paths.get(HASHSET_CONFIG_DIR, HASH_DATABASE_DEFAULT_FOLDER).toString();
-    
     
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
     
@@ -79,26 +67,23 @@ public final class HashLookupSettings implements Serializable {
     /**
      * @return The path to the hash db settings file.
      */
-    @Beta
-    public static String getSettingsPath() {
-        return SERIALIZATION_FILE_PATH;
+    static String getSettingsPath() {
+        return HashConfigPaths.getInstance().getSettingsPath();
     }
 
     /**
      * @return The default database folder path.
      */
-    @Beta
-    public static String getDefaultDbPath() {
-        return HASH_DATABASE_DEFAULT_PATH;
+    static String getDefaultDbPath() {
+        return HashConfigPaths.getInstance().getDefaultDbPath();
     }
 
     
     /**
      * @return The base path of the hashset config folder.
      */
-    @Beta
-    public static String getBaseHashsetConfigPath() {
-        return HASHSET_CONFIG_DIR;
+    static String getBaseHashsetConfigPath() {
+        return HashConfigPaths.getInstance().getBasePath();
     }
     
     /**
@@ -140,7 +125,7 @@ public final class HashLookupSettings implements Serializable {
      *                                     settings.
      */
     static HashLookupSettings readSettings() throws HashLookupSettingsException {
-        File fileSetFile = new File(SERIALIZATION_FILE_PATH);
+        File fileSetFile = new File(HashConfigPaths.getInstance().getSettingsPath());
         if (fileSetFile.exists()) {
             return readSerializedSettings();
         }
@@ -159,7 +144,7 @@ public final class HashLookupSettings implements Serializable {
      */
     private static HashLookupSettings readSerializedSettings() throws HashLookupSettingsException {        
         try {
-            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(SERIALIZATION_FILE_PATH))) {
+            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(HashConfigPaths.getInstance().getSettingsPath()))) {
                 HashLookupSettings filesSetsSettings = (HashLookupSettings) in.readObject();
 
                 /* NOTE: to support JIRA-4177, we need to check if any of the hash 
@@ -185,12 +170,12 @@ public final class HashLookupSettings implements Serializable {
      *                                     settings
      */
     private static HashLookupSettings readXmlSettings() throws HashLookupSettingsException {
-        File xmlFile = new File(CONFIG_FILE_PATH);
+        File xmlFile = new File(HashConfigPaths.getInstance().getXmlSettingsPath());
         if (xmlFile.exists()) {
             boolean updatedSchema = false;
 
             // Open the XML document that implements the configuration file.
-            final Document doc = XMLUtil.loadDoc(HashDbManager.class, CONFIG_FILE_PATH);
+            final Document doc = XMLUtil.loadDoc(HashDbManager.class, HashConfigPaths.getInstance().getXmlSettingsPath());
             if (doc == null) {
                 throw new HashLookupSettingsException("Could not open xml document.");
             }
@@ -285,13 +270,13 @@ public final class HashLookupSettings implements Serializable {
             }
 
             if (updatedSchema) {
-                String backupFilePath = CONFIG_FILE_PATH + ".v1_backup"; //NON-NLS
+                String backupFilePath = HashConfigPaths.getInstance().getXmlSettingsPath() + ".v1_backup"; //NON-NLS
                 String messageBoxTitle = NbBundle.getMessage(HashLookupSettings.class,
                         "HashDbManager.msgBoxTitle.confFileFmtChanged");
                 String baseMessage = NbBundle.getMessage(HashLookupSettings.class,
                         "HashDbManager.baseMessage.updatedFormatHashDbConfig");
                 try {
-                    FileUtils.copyFile(new File(CONFIG_FILE_PATH), new File(backupFilePath));
+                    FileUtils.copyFile(new File(HashConfigPaths.getInstance().getXmlSettingsPath()), new File(backupFilePath));
                     logger.log(Level.INFO, "Updated the schema, backup saved at: " + backupFilePath);
                     if (RuntimeProperties.runningWithGUI()) {
                         JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
@@ -330,7 +315,7 @@ public final class HashLookupSettings implements Serializable {
         the current user directory path. 
          */
         convertPathToPlaceholder(settings);
-        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(SERIALIZATION_FILE_PATH))) {
+        try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(HashConfigPaths.getInstance().getSettingsPath()))) {
             out.writeObject(settings);
             // restore the paths, in case they are going to be used somewhere
             convertPlaceholderToPath(settings);
@@ -352,9 +337,9 @@ public final class HashLookupSettings implements Serializable {
         for (HashDbInfo hashDbInfo : settings.getHashDbInfo()) {
             if (hashDbInfo.isFileDatabaseType()) {
                 String dbPath = hashDbInfo.getPath();
-                if (dbPath.startsWith(HASHSET_CONFIG_DIR)) {
+                if (dbPath.startsWith(HashConfigPaths.getInstance().getBasePath())) {
                     // replace the current user directory with place holder
-                    String remainingPath = dbPath.substring(HASHSET_CONFIG_DIR.length());
+                    String remainingPath = dbPath.substring(HashConfigPaths.getInstance().getBasePath().length());
                     hashDbInfo.setPath(USER_DIR_PLACEHOLDER + remainingPath);
                 }
             }
@@ -375,7 +360,7 @@ public final class HashLookupSettings implements Serializable {
                 if (dbPath.startsWith(USER_DIR_PLACEHOLDER)) {
                     // replace the place holder with current user directory
                     String remainingPath = dbPath.substring(USER_DIR_PLACEHOLDER.length());
-                    hashDbInfo.setPath(HASHSET_CONFIG_DIR + remainingPath);
+                    hashDbInfo.setPath(HashConfigPaths.getInstance().getBasePath() + remainingPath);
                 }
             }
         }

@@ -16,17 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.texttranslation.translators.settings;
+package org.sleuthkit.autopsy.texttranslation.translators;
 
 import java.nio.file.Paths;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import com.google.common.annotations.Beta;
 
 /**
  * ModuleSettings keys and paths for translator settings.
  */
- @Beta
-public class TranslatorSettings {
+class TranslatorSettings {
 
     private static final String TRANSLATION_FOLDER = "Translation";
     private static final String TRANSLATION_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), TRANSLATION_FOLDER).toString();
@@ -36,7 +34,7 @@ public class TranslatorSettings {
     /**
      * @return The singular instance.
      */
-    public static TranslatorSettings getInstance() {
+    static TranslatorSettings getInstance() {
         return instance;
     }
 
@@ -51,14 +49,14 @@ public class TranslatorSettings {
      *
      * @return The resource name to use with ModuleSettings.
      */
-    public String getModuleSettingsResource(String translationResource) {
+    String getModuleSettingsResource(String translationResource) {
         return Paths.get(TRANSLATION_FOLDER, translationResource).toString();
     }
 
     /**
      * @return The base translation folder.
      */
-    public String getBaseTranslationFolder() {
+    String getBaseTranslationFolder() {
         return TRANSLATION_PATH;
     }
 }

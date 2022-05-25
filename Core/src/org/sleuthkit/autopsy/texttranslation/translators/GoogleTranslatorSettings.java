@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.texttranslation.translators;
 import com.google.cloud.translate.TranslateOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.texttranslation.translators.settings.TranslatorSettings;
+import org.sleuthkit.autopsy.texttranslation.translators.TranslatorSettings;
 
 /**
  * Class to handle the settings associated with the GoogleTranslator

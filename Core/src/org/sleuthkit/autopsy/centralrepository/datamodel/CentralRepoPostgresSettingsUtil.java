@@ -25,7 +25,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
+import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;

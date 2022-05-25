@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.BackingStoreException;
 import org.apache.commons.io.FileUtils;
-import org.sleuthkit.autopsy.centralrepository.settings.CentralRepoSettings;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -53,8 +52,6 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupSettings;
-import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 
 /*
  * A utility class for loading and saving shared configuration data
@@ -65,8 +62,8 @@ public class SharedConfiguration {
     private static final String AUTO_MODE_CONTEXT_FILE = "AutoModeContext.properties"; //NON-NLS
     private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE = "UserFileTypeDefinitions.settings"; //NON-NLS
     private static final String USER_DEFINED_TYPE_DEFINITIONS_FILE_LEGACY = "UserFileTypeDefinitions.xml"; //NON-NLS
+    private static final String INTERESTING_FILES_SET_DEFS_FILE = "InterestingFileSets.settings"; //NON-NLS
     private static final String INTERESTING_FILES_SET_DEFS_FILE_LEGACY = "InterestingFilesSetDefs.xml"; //NON-NLS
-    
     private static final String KEYWORD_SEARCH_SETTINGS = "keywords.settings"; //NON-NLS
     private static final String KEYWORD_SEARCH_SETTINGS_LEGACY = "keywords.xml"; //NON-NLS
     private static final String KEYWORD_SEARCH_GENERAL_LEGACY = "KeywordSearch.properties"; //NON-NLS
@@ -77,22 +74,30 @@ public class SharedConfiguration {
     private static final String FILE_EXT_MISMATCH_SETTINGS_LEGACY = "mismatch_config.xml"; //NON-NLS
     private static final String ANDROID_TRIAGE = "AndroidTriage_Options.properties"; //NON-NLS
     private static final String AUTO_INGEST_PROPERTIES = "AutoIngest.properties"; //NON-NLS
-    
-    private static final String REMOTE_HASH_FOLDER = "hashDb"; //NON-NLS
-    
+    private static final String HASHDB_CONFIG_FILE_NAME = "hashLookup.settings"; //NON-NLS
     private static final String HASHDB_CONFIG_FILE_NAME_LEGACY = "hashsets.xml"; //NON-NLS
     public static final String FILE_EXPORTER_SETTINGS_FILE = "fileexporter.settings"; //NON-NLS
+    private static final String CENTRAL_REPOSITORY_PROPERTIES_FILE = "CentralRepository.properties"; //NON-NLS
     private static final String SHARED_CONFIG_VERSIONS = "SharedConfigVersions.txt"; //NON-NLS
 
     // Folders
     private static final String AUTO_MODE_FOLDER = "AutoModeContext"; //NON-NLS
+    private static final String REMOTE_HASH_FOLDER = "hashDb"; //NON-NLS
     public static final String FILE_EXPORTER_FOLDER = "Automated File Exporter"; //NON-NLS
+
     private static final String UPLOAD_IN_PROGRESS_FILE = "uploadInProgress"; // NON-NLS
     private static final String moduleDirPath = PlatformUtil.getUserConfigDirectory();
     private static final String INGEST_MODULES_PATH = IngestJobSettings.getBaseSettingsPath();
     private static final String INGEST_MODULES_REL_PATH = new File(moduleDirPath).toURI().relativize(new File(INGEST_MODULES_PATH).toURI()).getPath();
     private static final Logger logger = Logger.getLogger(SharedConfiguration.class.getName());
-
+    private static final String SHARED_DIR_PATH = Paths.get(moduleDirPath, "SharableConfig").toAbsolutePath().toString();
+    private static final String CENTRAL_REPO_DIR_PATH = Paths.get(SHARED_DIR_PATH, "CentralRepository").toAbsolutePath().toString();
+    private static final String VIEW_PREFERENCE_FILE = Paths.get(SHARED_DIR_PATH, "ViewPreferences").toAbsolutePath().toString();
+    private static final String MACHINE_SPECIFIC_PREFERENCE_FILE = Paths.get(moduleDirPath, "MachineSpecificPreferences").toAbsolutePath().toString();
+    private static final String MODE_PREFERENCE_FILE = Paths.get(moduleDirPath, "ModePreferences").toAbsolutePath().toString();
+    private static final String EXTERNAL_SERVICE_PREFERENCE_FILE = Paths.get(moduleDirPath, "ExternalServicePreferences").toAbsolutePath().toString();
+    
+    
     private final UpdateConfigSwingWorker swingWorker;
     private UserPreferences.SelectedMode mode;
     private String sharedConfigFolder;
@@ -105,6 +110,8 @@ public class SharedConfiguration {
     private boolean hideSlackFilesInDataSource;
     private boolean hideSlackFilesInViews;
     private boolean keepPreferredViewer;
+
+    
 
     /**
      * Exception type thrown by shared configuration.
@@ -444,24 +451,6 @@ public class SharedConfiguration {
         File contextProperties = Paths.get(folder.getAbsolutePath(), INGEST_MODULES_REL_PATH, AUTO_MODE_CONTEXT_FILE).toFile();
         return contextProperties.exists();
     }
-    
-    /**
-     * Copy a local settings file to the remote folder.
-     *
-     * @param fullLocalPathStr Full local path.
-     * @param localFolder      Local settings folder
-     * @param remoteFolder     Shared settings folder
-     * @param missingFileOk    True if it's not an error if the source file is
-     *                         not found
-     *
-     * @throws SharedConfigurationException
-     */
-    private static void copyToRemoteFolder(String fullLocalPathStr, File remoteFolder, boolean missingFileOk) throws SharedConfigurationException {
-        Path fullLocalPath = Paths.get(fullLocalPathStr);
-        String fileName = fullLocalPath.toFile().getName();
-        String parentPath = fullLocalPath.getParent().toString();
-        copyToRemoteFolder(fileName, parentPath, remoteFolder, missingFileOk);
-    }
 
     /**
      * Copy a local settings file to the remote folder.
@@ -501,23 +490,6 @@ public class SharedConfiguration {
         } catch (IOException ex) {
             throw new SharedConfigurationException(String.format("Failed to copy %s to %s", localFile.getAbsolutePath(), remoteFolder.getAbsolutePath()), ex);
         }
-    }
-    
-    /**
-     * Copy a shared settings file to the local settings folder.
-     *
-     * @param fullLocalPathStr Full local path.
-     * @param remoteFolder     Shared settings folder
-     * @param missingFileOk    True if it's not an error if the source file is
-     *                         not found
-     *
-     * @throws SharedConfigurationException
-     */
-    private static void copyToLocalFolder(String fullLocalPathStr, File remoteFolder, boolean missingFileOk) throws SharedConfigurationException {
-        Path fullLocalPath = Paths.get(fullLocalPathStr);
-        String fileName = fullLocalPath.toFile().getName();
-        String parentPath = fullLocalPath.getParent().toString();
-        copyToLocalFolder(fileName, parentPath, remoteFolder, missingFileOk);
     }
 
     /**
@@ -767,7 +739,7 @@ public class SharedConfiguration {
     private void uploadInterestingFilesSettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Uploading InterestingFiles module configuration");
         copyToRemoteFolder(INTERESTING_FILES_SET_DEFS_FILE_LEGACY, moduleDirPath, remoteFolder, true);
-        copyToRemoteFolder(FilesSetsManager.getInstance().getInterestingItemPath(), remoteFolder, true);
+        copyToRemoteFolder(INTERESTING_FILES_SET_DEFS_FILE, SHARED_DIR_PATH, remoteFolder, true);
     }
 
     /**
@@ -780,7 +752,7 @@ public class SharedConfiguration {
     private void downloadInterestingFilesSettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Downloading InterestingFiles module configuration");
         copyToLocalFolder(INTERESTING_FILES_SET_DEFS_FILE_LEGACY, moduleDirPath, remoteFolder, true);
-        copyToLocalFolder(FilesSetsManager.getInstance().getInterestingItemPath(), remoteFolder, true);
+        copyToLocalFolder(INTERESTING_FILES_SET_DEFS_FILE, SHARED_DIR_PATH, remoteFolder, true);
     }
 
     /**
@@ -903,15 +875,7 @@ public class SharedConfiguration {
      */
     private void uploadCentralRepositorySettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Uploading central repository configuration");
-        
-        // get relative cr path to config path.
-        String centralRepoRelPath = new File(moduleDirPath).toURI().relativize(
-                new File(CentralRepoSettings.getInstance().getModuleSettingsFile()).getParentFile().toURI()).getPath();
-        
-        copyToRemoteFolder(
-                CentralRepoSettings.getInstance().getModuleSettingsFile(), 
-                Paths.get(remoteFolder.getAbsolutePath(), centralRepoRelPath).toFile(), 
-                true);
+        copyToRemoteFolder(CENTRAL_REPOSITORY_PROPERTIES_FILE, CENTRAL_REPO_DIR_PATH, remoteFolder, true);
     }
 
     /**
@@ -923,12 +887,7 @@ public class SharedConfiguration {
      */
     private void downloadCentralRepositorySettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Downloading central repository configuration");
-        
-        // get relative cr path to config path.
-        String centralRepoRelPath = new File(moduleDirPath).toURI().relativize(
-                new File(CentralRepoSettings.getInstance().getModuleSettingsFile()).getParentFile().toURI()).getPath();
-        
-        copyToLocalFolder(CentralRepoSettings.getInstance().getModuleSettingsFile(), Paths.get(remoteFolder.getAbsolutePath(), centralRepoRelPath).toFile(), true);
+        copyToLocalFolder(CENTRAL_REPOSITORY_PROPERTIES_FILE, CENTRAL_REPO_DIR_PATH, remoteFolder, true);
     }
 
     /**
@@ -941,11 +900,11 @@ public class SharedConfiguration {
     private void uploadMultiUserAndGeneralSettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Uploading multi user configuration");
         
-        copyToRemoteFolder(UserPreferences.getViewPreferencePath(), remoteFolder, false);
-        copyToRemoteFolder(UserPreferences.getMachineSpecificPreferencePath(), remoteFolder, false);
-        copyToRemoteFolder(UserPreferences.getModePreferencePath(), remoteFolder, false);
-        copyToRemoteFolder(UserPreferences.getExternalServicePreferencePath(), remoteFolder, false);
-        
+        copyToRemoteFolder(VIEW_PREFERENCE_FILE, SHARED_DIR_PATH, remoteFolder, false);
+        copyToRemoteFolder(MACHINE_SPECIFIC_PREFERENCE_FILE, moduleDirPath, remoteFolder, false);
+        copyToRemoteFolder(MODE_PREFERENCE_FILE, moduleDirPath, remoteFolder, false);
+        copyToRemoteFolder(EXTERNAL_SERVICE_PREFERENCE_FILE, SHARED_DIR_PATH, remoteFolder, false);
+
         copyToRemoteFolder(AUTO_INGEST_PROPERTIES, moduleDirPath, remoteFolder, false);
     }
 
@@ -959,10 +918,10 @@ public class SharedConfiguration {
     private void downloadMultiUserAndGeneralSettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Downloading multi user configuration");
         
-        copyToLocalFolder(UserPreferences.getViewPreferencePath(), remoteFolder, false);
-        copyToLocalFolder(UserPreferences.getMachineSpecificPreferencePath(), remoteFolder, false);
-        copyToLocalFolder(UserPreferences.getModePreferencePath(), remoteFolder, false);
-        copyToLocalFolder(UserPreferences.getExternalServicePreferencePath(), remoteFolder, false);
+        copyToLocalFolder(VIEW_PREFERENCE_FILE, SHARED_DIR_PATH, remoteFolder, false);
+        copyToLocalFolder(MACHINE_SPECIFIC_PREFERENCE_FILE, moduleDirPath, remoteFolder, false);
+        copyToLocalFolder(MODE_PREFERENCE_FILE, moduleDirPath, remoteFolder, false);
+        copyToLocalFolder(EXTERNAL_SERVICE_PREFERENCE_FILE, SHARED_DIR_PATH, remoteFolder, false);
         
         copyToLocalFolder(AUTO_INGEST_PROPERTIES, moduleDirPath, remoteFolder, false);
     }
@@ -1041,7 +1000,7 @@ public class SharedConfiguration {
         Map<String, String> sharedVersions = readVersionsFromFile(sharedVersionFile);
 
         // Copy the settings file
-        copyToRemoteFolder(HashLookupSettings.getSettingsPath(), remoteFolder, true);
+        copyToRemoteFolder(HASHDB_CONFIG_FILE_NAME, SHARED_DIR_PATH, remoteFolder, true);
         copyToRemoteFolder(HASHDB_CONFIG_FILE_NAME_LEGACY, moduleDirPath, remoteFolder, true);
 
         // Get the list of databases from the file
@@ -1290,7 +1249,7 @@ public class SharedConfiguration {
         }
 
         // Copy the settings filey
-        copyToLocalFolder(HashLookupSettings.getSettingsPath(), remoteFolder, true);
+        copyToLocalFolder(HASHDB_CONFIG_FILE_NAME, SHARED_DIR_PATH, remoteFolder, true);
         copyToLocalFolder(HASHDB_CONFIG_FILE_NAME_LEGACY, moduleDirPath, remoteFolder, true);
         copyToLocalFolder(SHARED_CONFIG_VERSIONS, moduleDirPath, remoteFolder, true);
 
