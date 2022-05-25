@@ -87,10 +87,10 @@ public class SharedConfiguration {
 
     private static final String UPLOAD_IN_PROGRESS_FILE = "uploadInProgress"; // NON-NLS
     private static final String moduleDirPath = PlatformUtil.getUserConfigDirectory();
-    private static final String INGEST_MODULES_PATH = IngestJobSettings.getBaseSettingsPath();
+    private static final String SHARED_DIR_PATH = Paths.get(moduleDirPath, "SharableConfig").toAbsolutePath().toString();
+    private static final String INGEST_MODULES_PATH = Paths.get(SHARED_DIR_PATH, "IngestSettings").toString();
     private static final String INGEST_MODULES_REL_PATH = new File(moduleDirPath).toURI().relativize(new File(INGEST_MODULES_PATH).toURI()).getPath();
     private static final Logger logger = Logger.getLogger(SharedConfiguration.class.getName());
-    private static final String SHARED_DIR_PATH = Paths.get(moduleDirPath, "SharableConfig").toAbsolutePath().toString();
     private static final String CENTRAL_REPO_DIR_PATH = Paths.get(SHARED_DIR_PATH, "CentralRepository").toAbsolutePath().toString();
     private static final String VIEW_PREFERENCE_FILE = Paths.get(SHARED_DIR_PATH, "ViewPreferences").toAbsolutePath().toString();
     private static final String MACHINE_SPECIFIC_PREFERENCE_FILE = Paths.get(moduleDirPath, "MachineSpecificPreferences").toAbsolutePath().toString();

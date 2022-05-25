@@ -52,6 +52,9 @@ public class CentralRepoSettings {
             CENTRAL_REPO_BASE_PATH,
             CENTRAL_REPOSITORY_SETTINGS_NAME + ".properties").toString();
 
+    private static final String DATABASE_NAME_KEY = "db.sqlite.dbName"; //NON-NLS
+    private static final String DATABASE_PATH_KEY = "db.sqlite.dbDirectory"; //NON-NLS
+    
     /**
      * @return The base path for central repository settings.
      */
@@ -87,4 +90,20 @@ public class CentralRepoSettings {
     public String getDefaultDbName() {
         return DEFAULT_DB_NAME;
     }
+
+    /**
+     * @return The properties key for the sqlite database name in the settings.
+     */
+    public String getDatabaseNameKey() {
+        return DATABASE_NAME_KEY;
+    }
+
+    /**
+     * @return The properties key for the sqlite database path in the settings.
+     */
+    public String getDatabasePathKey() {
+        return DATABASE_PATH_KEY;
+    }
+    
+    
 }

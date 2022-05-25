@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.texttranslation.translators;
 import java.io.File;
 import java.util.Map;
 import org.openide.modules.ModuleInstall;
+import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -65,8 +66,8 @@ public class Installer extends ModuleInstall {
 
     private void copyIfExists(String oldModuleSettingsPath, String newModuleSettingsPath) {
         // only copy if old path exists and new path does not
-        if (new File(ModuleSettings.getSettingsFilePath(oldModuleSettingsPath)).exists() &&
-                !(new File(ModuleSettings.getSettingsFilePath(newModuleSettingsPath)).exists())) {
+        if (new File(SharedConfigPath.getInstance().getSettingsFilePath(oldModuleSettingsPath)).exists() &&
+                !(new File(SharedConfigPath.getInstance().getSettingsFilePath(newModuleSettingsPath)).exists())) {
             
             Map<String, String> settings = ModuleSettings.getConfigSettings(oldModuleSettingsPath);
             if (!settings.isEmpty()) {

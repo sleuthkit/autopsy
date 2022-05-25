@@ -30,6 +30,7 @@ public class SharedConfigPath {
 
     private static final String SHARED_FOLDER = "SharableConfig";
     private static final String SHARED_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), SHARED_FOLDER).toAbsolutePath().toString();
+    private static final String INGEST_PROFILE_PREFIX = "IngestProfiles.";
 
     private SharedConfigPath() {
     }
@@ -48,11 +49,32 @@ public class SharedConfigPath {
     public String getSharedConfigPath() {
         return SHARED_PATH;
     }
-    
+
     /**
      * @return The folder in user config for shared config.
      */
     public String getSharedConfigFolder() {
         return SHARED_FOLDER;
+    }
+
+    /**
+     * Path to module settings path.
+     *
+     * @param moduleName The full name of the module provided to ModuleSettings.
+     *
+     * @return The path on disk for that object. NOTE: This must be in sync with
+     *         ModuleSettings.
+     */
+    public String getSettingsFilePath(String moduleName) {
+        return Paths.get(PlatformUtil.getUserConfigDirectory(), moduleName + ".properties").toString();
+    }
+
+    /**
+     * @return The prefix in front of all ingest profiles to differentiate
+     *         between this and other ingest settings (i.e. command line, add
+     *         image ingest wizard, etc.).
+     */
+    public String getIngestProfilePrefix() {
+        return INGEST_PROFILE_PREFIX;
     }
 }

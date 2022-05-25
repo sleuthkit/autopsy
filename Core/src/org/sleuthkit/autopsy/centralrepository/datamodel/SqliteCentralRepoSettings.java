@@ -49,8 +49,8 @@ public final class SqliteCentralRepoSettings implements CentralRepoDbConnectivit
     
     //property names
     private static final String PROFILE_NAME = CentralRepoSettings.getInstance().getModuleSettingsKey();
-    private static final String DATABASE_NAME = "db.sqlite.dbName"; //NON-NLS
-    private static final String DATABASE_PATH = "db.sqlite.dbDirectory"; //NON-NLS
+    private static final String DATABASE_NAME = CentralRepoSettings.getInstance().getDatabaseNameKey(); //NON-NLS
+    private static final String DATABASE_PATH = CentralRepoSettings.getInstance().getDatabasePathKey(); //NON-NLS
     private static final String BULK_THRESHOLD = "db.sqlite.bulkThreshold"; //NON-NLS
     
     private final static String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS

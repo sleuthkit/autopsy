@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettin
 import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -93,17 +94,17 @@ public class Installer extends ModuleInstall {
         upgradeSettingsPath();
         setupDefaultCentralRepository();
     }
-    
+            
     /**
      * Copies settings to new path location.
      */
     private void upgradeSettingsPath() {
-        File newSettingsFile = new File(ModuleSettings.getSettingsFilePath(CentralRepoSettings.getInstance().getModuleSettingsKey()));
-        File legacySettingsFile = new File(ModuleSettings.getSettingsFilePath(LEGACY_MODULE_SETTINGS_KEY));
+        File newSettingsFile = new File(SharedConfigPath.getInstance().getSettingsFilePath(CentralRepoSettings.getInstance().getModuleSettingsKey()));
+        File legacySettingsFile = new File(SharedConfigPath.getInstance().getSettingsFilePath(LEGACY_MODULE_SETTINGS_KEY));
         // new config has not been created, but legacy has, copy it.
         if (!newSettingsFile.exists() && legacySettingsFile.exists()) {
             Map<String, String> prevSettings = ModuleSettings.getConfigSettings(LEGACY_MODULE_SETTINGS_KEY);
-            String prevPath = prevSettings.get(SqliteCentralRepoSettings.getDatabasePathKey());
+            String prevPath = prevSettings.get(CentralRepoSettings.getInstance().getDatabasePathKey());
             File prevDirCheck = new File(prevPath);
             // if a relative directory, make sure it is relative to user config.
             if (!prevDirCheck.isAbsolute()) {
@@ -113,7 +114,7 @@ public class Installer extends ModuleInstall {
             // if old path is default path for sqlite db, copy it over to new location and update setting.
             if (prevPath != null 
                     && Paths.get(LEGACY_DEFAULT_DB_PARENT_PATH).toAbsolutePath().toString().equals(Paths.get(prevPath).toAbsolutePath().toString())) {
-                String prevDbName = prevSettings.get(SqliteCentralRepoSettings.getDatabaseNameKey());
+                String prevDbName = prevSettings.get(CentralRepoSettings.getInstance().getDatabaseNameKey());
                 File prevDir = new File(prevPath);
                 // copy all files starting with prevDbName in prevPath to new path location.
                 if (prevDir.exists() && prevDir.isDirectory()) {
@@ -128,7 +129,7 @@ public class Installer extends ModuleInstall {
                 }
                 
                 // update path settings accordingly
-                prevSettings.put(SqliteCentralRepoSettings.getDatabasePathKey(), CentralRepoSettings.getInstance().getDefaultDbPath());
+                prevSettings.put(CentralRepoSettings.getInstance().getDatabasePathKey(), CentralRepoSettings.getInstance().getDefaultDbPath());
             }
             
             // copy settings

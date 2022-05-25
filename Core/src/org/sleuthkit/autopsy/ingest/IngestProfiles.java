@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
@@ -38,7 +39,7 @@ public final class IngestProfiles {
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
-    private static final String SETTINGS_FILE_PREFIX = "IngestProfiles.";
+    private static final String SETTINGS_FILE_PREFIX = SharedConfigPath.getInstance().getIngestProfilePrefix();
     private static final Logger logger = Logger.getLogger(IngestProfiles.class.getName());
 
     /**
@@ -82,7 +83,10 @@ public final class IngestProfiles {
      * @return The file location for the root settings of that profile.
      */
     private static File getRootSettingsFile(String profileName) {
-        return new File(ModuleSettings.getSettingsFilePath(IngestJobSettings.getModuleSettingsResource(getExecutionContext(getSanitizedProfile(profileName)))));
+        return new File(
+                SharedConfigPath.getInstance().getSettingsFilePath(
+                        IngestJobSettings.getModuleSettingsResource(
+                                getExecutionContext(getSanitizedProfile(profileName)))));
     }
 
     /**
