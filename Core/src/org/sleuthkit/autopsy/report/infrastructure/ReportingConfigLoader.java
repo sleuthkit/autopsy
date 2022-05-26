@@ -34,10 +34,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.report.GeneralReportSettings;
 
 /**
@@ -49,17 +51,23 @@ final class ReportingConfigLoader {
 
     private static final Logger logger = Logger.getLogger(ReportingConfigLoader.class.getName());
     private static final String REPORT_CONFIG_FOLDER = "ReportingConfigs"; //NON-NLS
-    private static final String REPORT_CONFIG_FOLDER_PATH = Paths.get(
-            SharedConfigPath.getInstance().getSharedConfigPath(), 
+
+    private static final String REPORT_CONFIG_FOLDER_PATH_LEGACY = Paths.get(
+            PlatformUtil.getUserConfigDirectory(),
             ReportingConfigLoader.REPORT_CONFIG_FOLDER
     ).toAbsolutePath().toString();
-    
+
+    private static final String REPORT_CONFIG_FOLDER_PATH = Paths.get(
+            SharedConfigPath.getInstance().getSharedConfigPath(),
+            ReportingConfigLoader.REPORT_CONFIG_FOLDER
+    ).toAbsolutePath().toString();
+
     private static final String REPORT_SETTINGS_FILE_EXTENSION = ".settings";
     private static final String TABLE_REPORT_CONFIG_FILE = "TableReportSettings.settings";
     private static final String FILE_REPORT_CONFIG_FILE = "FileReportSettings.settings";
     private static final String GENERAL_REPORT_CONFIG_FILE = "GeneralReportSettings.settings";
     private static final String MODULE_CONFIG_FILE = "ModuleConfigs.settings";
-    
+
     // Collection of standard report modules that are no longer in Autopsy. We keep
     // track to suppress any errors when searching for the module since it may still
     // existing in the configuration file.
@@ -111,7 +119,7 @@ final class ReportingConfigLoader {
         } catch (IOException | ClassNotFoundException ex) {
             throw new ReportConfigException("Unable to read file report settings " + filePath, ex);
         }
-        
+
         filePath = reportDirPath.resolve(GENERAL_REPORT_CONFIG_FILE).toString();
         try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
             config.setGeneralReportSettings((GeneralReportSettings) in.readObject());
@@ -199,7 +207,7 @@ final class ReportingConfigLoader {
         } catch (IOException ex) {
             throw new ReportConfigException("Unable to save file report configuration " + filePath, ex);
         }
-        
+
         filePath = pathToConfigDir.resolve(GENERAL_REPORT_CONFIG_FILE).toString();
         try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
             out.writeObject(reportConfig.getGeneralReportSettings());
@@ -236,13 +244,13 @@ final class ReportingConfigLoader {
             }
         }
     }
-    
+
     /**
      * Return a list of the names of the report profiles in the
      * REPORT_CONFIG_FOLDER_PATH.
      *
-     * @return Naturally ordered list of report profile names. If none were found
-     *         the list will be empty.
+     * @return Naturally ordered list of report profile names. If none were
+     *         found the list will be empty.
      */
     static synchronized Set<String> getListOfReportConfigs() {
         File reportDirPath = new File(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH);
@@ -258,22 +266,34 @@ final class ReportingConfigLoader {
 
         return reportNameList;
     }
-    
+
     /**
      * Returns whether or not a config with the given name exists. The config is
-     * assumed to exist if there is a folder in 
+     * assumed to exist if there is a folder in
      * ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH with the given name.
-     * 
+     *
      * @param configName Name of the report config.
-     * 
+     *
      * @return True if the report config exists.
      */
     static synchronized boolean configExists(String configName) {
         // construct the configuration directory path
         Path reportDirPath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName);
         File reportDirectory = reportDirPath.toFile();
-        
+
         return reportDirectory.exists();
+    }
+
+    static void upgradeConfig() throws IOException {
+        File oldPath = new File(REPORT_CONFIG_FOLDER_PATH_LEGACY);
+        File newPath = new File(REPORT_CONFIG_FOLDER_PATH);
+
+        if (oldPath.exists() && Files.list(oldPath.toPath()).findFirst().isPresent()
+                && (!newPath.exists() || !Files.list(newPath.toPath()).findFirst().isPresent())) {
+            newPath.mkdirs();
+            FileUtils.copyDirectory(oldPath, newPath);
+        }
+
     }
 
 }

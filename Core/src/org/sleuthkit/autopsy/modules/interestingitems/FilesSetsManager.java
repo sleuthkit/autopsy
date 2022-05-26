@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
-import com.google.common.annotations.Beta;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +28,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
@@ -47,8 +50,10 @@ public final class FilesSetsManager extends Observable {
     private static final String LEGACY_FILES_SET_DEFS_FILE_NAME = "InterestingFilesSetDefs.xml"; //NON-NLS
     private static final String INTERESTING_FILES_SET_DEFS_NAME = "InterestingFileSets.settings";
     private static final String FILE_INGEST_FILTER_DEFS_NAME = "FileIngestFilterDefs.settings";
-    private static final String FILE_FILTER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), FILE_INGEST_FILTER_DEFS_NAME).toAbsolutePath().toString();
-    private static final String INTERESTING_ITEM_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), INTERESTING_FILES_SET_DEFS_NAME).toAbsolutePath().toString();
+    private static final String LEGACY_SETTINGS_PATH = PlatformUtil.getUserConfigDirectory();
+    private static final String SETTINGS_PATH = SharedConfigPath.getInstance().getSharedConfigPath();
+    private static final String FILE_FILTER_PATH = Paths.get(SETTINGS_PATH, FILE_INGEST_FILTER_DEFS_NAME).toAbsolutePath().toString();
+    private static final String INTERESTING_ITEM_PATH = Paths.get(SETTINGS_PATH, INTERESTING_FILES_SET_DEFS_NAME).toAbsolutePath().toString();
     private static final Object FILE_INGEST_FILTER_LOCK = new Object();
     private static final Object INTERESTING_FILES_SET_LOCK = new Object();
     private static FilesSetsManager instance;
@@ -133,7 +138,7 @@ public final class FilesSetsManager extends Observable {
      */
     public Map<String, FilesSet> getCustomFileIngestFilters() throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
-            return FileSetsDefinitions.readSerializedDefinitions(PlatformUtil.getUserConfigDirectory(), FILE_INGEST_FILTER_DEFS_NAME);
+            return FileSetsDefinitions.readSerializedDefinitions(SharedConfigPath.getInstance().getSharedConfigPath(), FILE_INGEST_FILTER_DEFS_NAME);
         }
     }
 
@@ -156,7 +161,7 @@ public final class FilesSetsManager extends Observable {
      */
     void setCustomFileIngestFilters(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
-            FileSetsDefinitions.writeDefinitionsFile(PlatformUtil.getUserConfigDirectory(), FILE_INGEST_FILTER_DEFS_NAME, filesSets);
+            FileSetsDefinitions.writeDefinitionsFile(SharedConfigPath.getInstance().getSharedConfigPath(), FILE_INGEST_FILTER_DEFS_NAME, filesSets);
         }
     }
 
@@ -168,7 +173,7 @@ public final class FilesSetsManager extends Observable {
      */
     public Map<String, FilesSet> getInterestingFilesSets() throws FilesSetsManagerException {
         synchronized (INTERESTING_FILES_SET_LOCK) {
-            return InterestingItemsFilesSetSettings.readDefinitionsFile(PlatformUtil.getUserConfigDirectory(), INTERESTING_FILES_SET_DEFS_NAME, LEGACY_FILES_SET_DEFS_FILE_NAME);
+            return InterestingItemsFilesSetSettings.readDefinitionsFile(SharedConfigPath.getInstance().getSharedConfigPath(), INTERESTING_FILES_SET_DEFS_NAME, LEGACY_FILES_SET_DEFS_FILE_NAME);
         }
     }
 
@@ -181,9 +186,24 @@ public final class FilesSetsManager extends Observable {
      */
     void setInterestingFilesSets(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (INTERESTING_FILES_SET_LOCK) {
-            InterestingItemsFilesSetSettings.writeDefinitionsFile(PlatformUtil.getUserConfigDirectory(), INTERESTING_FILES_SET_DEFS_NAME, filesSets);
+            InterestingItemsFilesSetSettings.writeDefinitionsFile(SharedConfigPath.getInstance().getSharedConfigPath(), INTERESTING_FILES_SET_DEFS_NAME, filesSets);
             this.setChanged();
             this.notifyObservers();
+        }
+    }
+
+    /**
+     * Moves config files to current expected location.
+     */
+    void upgradeConfig() throws IOException {
+        for (String fileName : new String[]{LEGACY_FILES_SET_DEFS_FILE_NAME, FILE_INGEST_FILTER_DEFS_NAME, INTERESTING_FILES_SET_DEFS_NAME }) {
+            File oldPath = Paths.get(LEGACY_SETTINGS_PATH, fileName).toFile();
+            File newPath = Paths.get(SETTINGS_PATH, fileName).toFile();
+            
+            if (oldPath.exists() && !newPath.exists()) {
+                newPath.getParentFile().mkdirs();
+                FileUtils.copyFile(oldPath, newPath);
+            }
         }
     }
 

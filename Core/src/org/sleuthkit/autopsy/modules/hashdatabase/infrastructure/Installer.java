@@ -27,6 +27,7 @@ import org.openide.modules.ModuleInstall;
 import org.python.icu.text.MessageFormat;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 
 /**
  * Installer for hash databases that copies legacy settings to new location.
@@ -47,7 +48,7 @@ public class Installer extends ModuleInstall {
      * package.
      *
      * @return The "package installer" singleton for the
-     *         org.sleuthkit.autopsy.centralrepository.eventlisteners package.
+     *         org.sleuthkit.autopsy.modules.hashdatabase package.
      */
     public synchronized static Installer getDefault() {
         if (instance == null) {
@@ -72,6 +73,7 @@ public class Installer extends ModuleInstall {
         File dbPath = new File(HashConfigPaths.getInstance().getDefaultDbPath());
         if (legacyDbPath.exists() && !dbPath.exists()) {
             try {
+                dbPath.getParentFile().mkdirs();
                 FileUtils.copyDirectory(legacyDbPath, dbPath);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, MessageFormat.format("There was an error copying legacy path hash dbs from {0} to {1}", legacyDbPath, dbPath), ex);
@@ -83,6 +85,7 @@ public class Installer extends ModuleInstall {
         File settingsFile = new File(HashConfigPaths.getInstance().getSettingsPath());
         if (legacySettingsFile.exists() && !settingsFile.exists()) {
             try {
+                settingsFile.getParentFile().mkdirs();
                 FileUtils.copyFile(legacySettingsFile, settingsFile);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, MessageFormat.format("There was an error copying legacy hash db settings from {0} to {1}", legacySettingsFile, settingsFile), ex);
@@ -93,12 +96,14 @@ public class Installer extends ModuleInstall {
         File xmlSettingsFile = new File(HashConfigPaths.getInstance().getXmlSettingsPath());
         if (legacyXmlSettingsFile.exists() && !xmlSettingsFile.exists()) {
             try {
+                xmlSettingsFile.getParentFile().mkdirs();
                 FileUtils.copyFile(legacyXmlSettingsFile, xmlSettingsFile);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, MessageFormat.format("There was an error copying legacy xml hash db settings from {0} to {1}", legacyXmlSettingsFile, xmlSettingsFile), ex);
             }
         }
-
+        
+        HashDbManager.getInstance().loadLastSavedConfiguration();
     }
 
 }

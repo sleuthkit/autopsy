@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.texttranslation.translators;
 
 import java.nio.file.Paths;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 
 /**
  * ModuleSettings keys and paths for translator settings.
@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 class TranslatorSettings {
 
     private static final String TRANSLATION_FOLDER = "Translation";
-    private static final String TRANSLATION_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), TRANSLATION_FOLDER).toString();
+    private static final String TRANSLATION_PATH = Paths.get(SharedConfigPath.getInstance().getSharedConfigPath(), TRANSLATION_FOLDER).toString();
 
     private static TranslatorSettings instance = new TranslatorSettings();
 
@@ -50,7 +50,7 @@ class TranslatorSettings {
      * @return The resource name to use with ModuleSettings.
      */
     String getModuleSettingsResource(String translationResource) {
-        return Paths.get(TRANSLATION_FOLDER, translationResource).toString();
+        return Paths.get(SharedConfigPath.getInstance().getSharedConfigFolder(), TRANSLATION_FOLDER, translationResource).toString();
     }
 
     /**

@@ -92,10 +92,11 @@ public class SharedConfiguration {
     private static final String INGEST_MODULES_REL_PATH = new File(moduleDirPath).toURI().relativize(new File(INGEST_MODULES_PATH).toURI()).getPath();
     private static final Logger logger = Logger.getLogger(SharedConfiguration.class.getName());
     private static final String CENTRAL_REPO_DIR_PATH = Paths.get(SHARED_DIR_PATH, "CentralRepository").toAbsolutePath().toString();
-    private static final String VIEW_PREFERENCE_FILE = Paths.get(SHARED_DIR_PATH, "ViewPreferences").toAbsolutePath().toString();
-    private static final String MACHINE_SPECIFIC_PREFERENCE_FILE = Paths.get(moduleDirPath, "MachineSpecificPreferences").toAbsolutePath().toString();
-    private static final String MODE_PREFERENCE_FILE = Paths.get(moduleDirPath, "ModePreferences").toAbsolutePath().toString();
-    private static final String EXTERNAL_SERVICE_PREFERENCE_FILE = Paths.get(moduleDirPath, "ExternalServicePreferences").toAbsolutePath().toString();
+    private static final String HASH_SETTINGS_PATH = Paths.get(SHARED_DIR_PATH, "HashLookup").toAbsolutePath().toString();
+    private static final String VIEW_PREFERENCE_FILE = "ViewPreferences.properties";
+    private static final String MACHINE_SPECIFIC_PREFERENCE_FILE = "MachineSpecificPreferences.properties";
+    private static final String MODE_PREFERENCE_FILE = "ModePreferences.properties";
+    private static final String EXTERNAL_SERVICE_PREFERENCE_FILE = "ExternalServicePreferences.properties";
     
     
     private final UpdateConfigSwingWorker swingWorker;
@@ -1000,8 +1001,8 @@ public class SharedConfiguration {
         Map<String, String> sharedVersions = readVersionsFromFile(sharedVersionFile);
 
         // Copy the settings file
-        copyToRemoteFolder(HASHDB_CONFIG_FILE_NAME, SHARED_DIR_PATH, remoteFolder, true);
-        copyToRemoteFolder(HASHDB_CONFIG_FILE_NAME_LEGACY, moduleDirPath, remoteFolder, true);
+        copyToRemoteFolder(HASHDB_CONFIG_FILE_NAME, HASH_SETTINGS_PATH, remoteFolder, true);
+        copyToRemoteFolder(HASHDB_CONFIG_FILE_NAME_LEGACY, HASH_SETTINGS_PATH, remoteFolder, true);
 
         // Get the list of databases from the file
         List<String> databases = getHashFileNamesFromSettingsFile();
@@ -1249,8 +1250,8 @@ public class SharedConfiguration {
         }
 
         // Copy the settings filey
-        copyToLocalFolder(HASHDB_CONFIG_FILE_NAME, SHARED_DIR_PATH, remoteFolder, true);
-        copyToLocalFolder(HASHDB_CONFIG_FILE_NAME_LEGACY, moduleDirPath, remoteFolder, true);
+        copyToLocalFolder(HASHDB_CONFIG_FILE_NAME, HASH_SETTINGS_PATH, remoteFolder, true);
+        copyToLocalFolder(HASHDB_CONFIG_FILE_NAME_LEGACY, HASH_SETTINGS_PATH, remoteFolder, true);
         copyToLocalFolder(SHARED_CONFIG_VERSIONS, moduleDirPath, remoteFolder, true);
 
         // Refresh HashDbManager with the new settings

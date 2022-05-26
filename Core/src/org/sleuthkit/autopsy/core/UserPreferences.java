@@ -87,6 +87,8 @@ public final class UserPreferences {
     static {
         // perform initial load to ensure disk preferences are loaded
         try {
+            // make shared directory paths if they don't exist.
+            new File(SharedConfigPath.getInstance().getSharedConfigPath()).mkdirs();
             viewPreferences.load();
             machineSpecificPreferences.load();
             modePreferences.load();
