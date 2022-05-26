@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.texttranslation.translators;
 
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.texttranslation.translators.TranslatorSettings;
 
 /**
  * Class to handle the settings associated with the BingTranslator
@@ -28,11 +27,7 @@ import org.sleuthkit.autopsy.texttranslation.translators.TranslatorSettings;
 public final class BingTranslatorSettings {
 
     private static final String AUTHENTICATION_KEY = "Credentials";
-    
-    // Legacy ModuleSettings key to use.
-    static final String BING_TRANSLATE_SIMPLE_NAME = "BingTranslate";
-    // ModuleSettings key to use (moved to new directory).
-    static final String BING_TRANSLATE_NAME = TranslatorSettings.getInstance().getModuleSettingsResource(BING_TRANSLATE_SIMPLE_NAME);
+    private static final String BING_TRANSLATE_NAME = "BingTranslate";
     private static final String DEFAULT_AUTHENTICATION = "";
     private static final String DEFAULT_TARGET_LANGUAGE = "en";
     private static final String TARGET_LANGUAGE_CODE_KEY = "TargetLanguageCode";
