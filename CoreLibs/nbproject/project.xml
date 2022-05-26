@@ -451,13 +451,14 @@
                 <package>org.opencv.core</package>
                 <package>org.opencv.features2d</package>
                 <package>org.opencv.gpu</package>
-                <package>org.opencv.highgui</package>
                 <package>org.opencv.imgproc</package>
                 <package>org.opencv.ml</package>
                 <package>org.opencv.objdetect</package>
                 <package>org.opencv.photo</package>
                 <package>org.opencv.utils</package>
                 <package>org.opencv.video</package>
+                <package>org.opencv.videoio</package>
+                <package>org.opencv.imgcodecs</package>
                 <package>org.sleuthkit.autopsy.corelibs</package>
                 <package>org.slf4j</package>
                 <package>org.slf4j.event</package>
@@ -873,8 +874,8 @@
                 <binary-origin>release/modules/ext/opencensus-proto-0.2.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
+                <runtime-relative-path>ext/opencv-3416.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencv-3416.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/perfmark-api-0.23.0.jar</runtime-relative-path>
