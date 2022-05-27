@@ -109,6 +109,9 @@ public final class IngestMonitor {
      * @return Free space in bytes or -1 if free sapce could not be determined.
      */
     long getFreeSpace() {
+        if (timerAction == null) {
+            timerAction = new MonitorTimerAction();
+        }
         try {
             return timerAction.getFreeSpace();
         } catch (SecurityException e) {
