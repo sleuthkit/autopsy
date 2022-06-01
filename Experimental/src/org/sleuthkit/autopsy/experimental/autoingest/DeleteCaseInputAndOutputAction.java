@@ -23,7 +23,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.experimental.autoingest.DeleteCaseTask.DeleteOptions;
+import org.sleuthkit.autopsy.experimental.cleanup.AutoIngestCleanup.DeleteOptions;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
