@@ -81,6 +81,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
     private static final String FS_COMPARATOR_ATTR = "comparatorSymbol";
     private static final String FS_SIZE_ATTR = "sizeValue";
     private static final String FS_UNITS_ATTR = "sizeUnits";
+    private static final String EXCLUSIVE_ATTR = "isExclusive";
     private static final String TYPE_FILTER_VALUE_FILES = "file"; //NON-NLS
     private static final String XML_ENCODING = "UTF-8"; //NON-NLS
     private static final Logger logger = Logger.getLogger(InterestingItemsFilesSetSettings.class.getName());
@@ -268,13 +269,14 @@ class InterestingItemsFilesSetSettings implements Serializable {
         MimeTypeCondition mimeCondition = readMimeCondition(elem);
         FileSizeCondition sizeCondition = readSizeCondition(elem);
         DateCondition dateCondition = readDateCondition(elem); //if meta type condition or all four types of conditions the user can create are all null then don't make the rule
+        Boolean isExclusive = readExclusive(elem);
         if (metaCondition == null || (nameCondition == null && pathCondition == null && mimeCondition == null && sizeCondition == null && dateCondition == null)) {
             logger.log(Level.WARNING, "Error Reading Rule, " + ruleName + " was either missing a meta condition or contained only a meta condition. No rule was imported."); // NON-NLS
 
             throw new FilesSetsManager.FilesSetsManagerException(
                     Bundle.InterestingItemsFilesSetSettings_readRule_missingNecessary(ruleName));
         }
-        return new FilesSet.Rule(ruleName, nameCondition, metaCondition, pathCondition, mimeCondition, sizeCondition, dateCondition);
+        return new FilesSet.Rule(ruleName, nameCondition, metaCondition, pathCondition, mimeCondition, sizeCondition, dateCondition, isExclusive);
     }
 
     /**
@@ -336,6 +338,22 @@ class InterestingItemsFilesSetSettings implements Serializable {
             }
         }
         return nameCondition;
+    }
+    
+    /**
+     * Construct a MIME type condition for a FilesSet membership rule from data
+     * in an XML element.
+     *
+     * @param ruleElement The XML element.
+     *
+     * @return The mime TYPE condition, or null if none existed
+     */
+    private static Boolean readExclusive(Element elem) {
+        Boolean isExclusive = null;
+        if (!elem.getAttribute(EXCLUSIVE_ATTR).isEmpty()) {
+            isExclusive = Boolean.parseBoolean(elem.getAttribute(EXCLUSIVE_ATTR));
+        }
+        return isExclusive;
     }
 
     /**
@@ -724,6 +742,8 @@ class InterestingItemsFilesSetSettings implements Serializable {
                     if (dateCondition != null) {
                         ruleElement.setAttribute(DAYS_INCLUDED_ATTR, Integer.toString(dateCondition.getDaysIncluded()));
                     }
+                    
+                    ruleElement.setAttribute(EXCLUSIVE_ATTR, Boolean.toString(rule.isExclusive()));
 
                     setElement.appendChild(ruleElement);
                 }

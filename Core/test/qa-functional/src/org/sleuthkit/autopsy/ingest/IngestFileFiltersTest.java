@@ -90,7 +90,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
             HashMap<String, Rule> rule = new HashMap<>();
-            rule.put("Rule", new Rule("testFileType", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
+            rule.put("Rule", new Rule("testFileType", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null, null));
             //Filter for dir1 and no unallocated space
             FilesSet dirFilter = new FilesSet("Filter", "Filter to find all files in dir1.", false, true, rule);
 
@@ -131,7 +131,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
             HashMap<String, Rule> rules = new HashMap<>();
-            rules.put("Rule", new Rule("testExtAndDirWithOneRule", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
+            rules.put("Rule", new Rule("testExtAndDirWithOneRule", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null, null));
             //Build the filter that ignore unallocated space and with one rule
             FilesSet filesExtDirsFilter = new FilesSet("Filter", "Filter to find all jpg files in dir1.", false, true, rules);
 
@@ -167,8 +167,8 @@ public class IngestFileFiltersTest extends NbTestCase {
             IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
             HashMap<String, Rule> rules = new HashMap<>();
-            rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
-            rules.put("rule2", new Rule("FindDir1Directory", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null));
+            rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null, null));
+            rules.put("rule2", new Rule("FindDir1Directory", null, new MetaTypeCondition(MetaTypeCondition.Type.FILES), new ParentPathCondition("dir1"), null, null, null, null));
             //Build the filter that ingnore unallocated space and with 2 rules
             FilesSet filesExtDirsFilter = new FilesSet("Filter", "Filter to find all files in dir1 and all files with jpg extention.", false, true, rules);
 
@@ -211,7 +211,7 @@ public class IngestFileFiltersTest extends NbTestCase {
             IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
             HashMap<String, Rule> rules = new HashMap<>();
-            rules.put("rule", new Rule("FindFileWithFullName", new FullNameCondition("file.docx"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+            rules.put("rule", new Rule("FindFileWithFullName", new FullNameCondition("file.docx"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null, null));
             //Build the filter to find file: file.docx
             FilesSet fullNameFilter = new FilesSet("Filter", "Filter to find file.docx.", false, true, rules);
 
@@ -246,8 +246,8 @@ public class IngestFileFiltersTest extends NbTestCase {
             IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
             HashMap<String, Rule> rules = new HashMap<>();
-            rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
-            rules.put("rule2", new Rule("FindGifExtention", new ExtensionCondition("gif"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+            rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null, null));
+            rules.put("rule2", new Rule("FindGifExtention", new ExtensionCondition("gif"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null, null));
 
             //Build the filter to find files with .jpg and .gif extension and unallocated space
             FilesSet extensionFilter = new FilesSet("Filter", "Filter to files with .jpg and .gif extension.", false, false, rules);
@@ -294,8 +294,8 @@ public class IngestFileFiltersTest extends NbTestCase {
             IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
             HashMap<String, Rule> rules = new HashMap<>();
-            rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
-            rules.put("rule2", new Rule("FindGifExtention", new ExtensionCondition("gif"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+            rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null, null));
+            rules.put("rule2", new Rule("FindGifExtention", new ExtensionCondition("gif"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null, null));
 
             //Build the filter to find files with .jpg and .gif extension
             FilesSet extensionFilter = new FilesSet("Filter", "Filter to files with .jpg and .gif extension.", false, true, rules);
@@ -330,9 +330,9 @@ public class IngestFileFiltersTest extends NbTestCase {
             //Build the filter to find jpg files
             HashMap<String, Rule> rules = new HashMap<>();
             //Extension condition for jpg files
-            rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+            rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null, null));
             //Extension condition for zip files, because we want test jpg extension filter for extracted files from a zip file 
-            rules.put("rule2", new Rule("ZipExtention", new ExtensionCondition("zip"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+            rules.put("rule2", new Rule("ZipExtention", new ExtensionCondition("zip"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null, null));
             FilesSet embeddedFilter = new FilesSet("Filter", "Filter to files with .jpg extension.", false, false, rules);
 
             ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
