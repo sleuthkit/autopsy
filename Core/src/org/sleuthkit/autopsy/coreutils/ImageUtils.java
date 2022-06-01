@@ -61,6 +61,15 @@ import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.opencv.core.CvException;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.dnn.Dnn;
+import org.opencv.dnn.Net;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -1025,6 +1034,97 @@ public class ImageUtils {
             LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NON-NLS
             return contentName;
         }
+    }
+    
+    /**
+     * Tests the given image for text. This method used openCV and the EAST text
+     * detector.
+     *
+     * @param absolutePath The absolute path to an image file.
+     *
+     * @return True if the image has text in it.
+     *
+     * @throws IOException
+     * @throws CvException
+     */
+    public static boolean imageHasText(String absolutePath) throws IOException, CvException {
+        File file = new File(absolutePath);
+
+        if (!file.exists()) {
+            throw new IOException("The given file does not exist " + absolutePath);
+        } else if (file.length() < 1) {
+            throw new IOException("The given file has a size of 0 " + absolutePath);
+        } else if (!file.isFile()) {
+            throw new IOException("The given file is not a file " + absolutePath);
+        }
+
+        return imageHasText(file);
+    }
+
+    /**
+     * Tests the given image for text. This method used openCV and the EAST text
+     * detector.
+     *
+     * Based on code from berak found here:
+     * https://gist.github.com/berak/788da80d1dd5bade3f878210f45d6742
+     *
+     * @param image The image to check.
+     *
+     * @return True if the image has text.
+     *
+     * @throws IOException
+     * @throws CvException
+     */
+    public static boolean imageHasText(File image) throws IOException, CvException {
+        float scoreThresh = 0.5f;
+        Mat frame = Imgcodecs.imread(image.getAbsolutePath());
+
+        if (frame.empty()) {
+            throw new IOException("Failed to read image. Image is empty." + image.getAbsolutePath());
+        }
+
+        Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2RGB);
+
+        // Model from https://github.com/argman/EAST
+        // You can find it here : https://github.com/opencv/opencv_extra/blob/master/testdata/dnn/download_models.py#L309
+        Path eastFilePath = Paths.get("textdetection", "frozen_east_text_detection.pb");
+        File eastFile = InstalledFileLocator.getDefault().locate(eastFilePath.toString(), ImageUtils.class.getPackage().getName(), true);
+        
+        if(!eastFile.exists()) {
+            throw new CvException("Unable to find EAST model file at location " + eastFile.getAbsolutePath());
+        }
+        
+        Net net = Dnn.readNetFromTensorflow(eastFile.getAbsolutePath());
+
+        Size siz = new Size(320, 320);
+        Mat blob = Dnn.blobFromImage(frame, 1.0, siz, new Scalar(123.68, 116.78, 103.94), true, false);
+
+        List<String> outNames = new ArrayList<>();
+        // The output layer name which outputs the probabilities that there is 
+        // a text in a particular location.
+        outNames.add("feature_fusion/Conv_7/Sigmoid");
+
+        List<Mat> outs = new ArrayList<>(1);
+
+        net.setInput(blob);
+        net.forward(outs, outNames);
+
+        int H = (int) (siz.height / 4); // height of those. the geometry has 4, vertically stacked maps, the score one 1
+
+        // My lord and savior : http://answers.opencv.org/question/175676/javaandroid-access-4-dim-mat-planes/
+        Mat scores = outs.get(0).reshape(1, H);
+
+        // Search the scores for on above the threshold.
+        for (int y = 0; y < H; ++y) {
+            Mat scoresData = scores.row(y);
+            for (int x = 0; x < scores.rows(); ++x) {
+                double score = scoresData.get(0, x)[0];
+                if (score >= scoreThresh) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
