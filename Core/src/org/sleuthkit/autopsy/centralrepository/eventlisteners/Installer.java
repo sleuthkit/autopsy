@@ -128,8 +128,10 @@ public class Installer extends ModuleInstall {
                     }
                 }
                 
+                // get the new relative path to store
+                String newRelPath = PlatformUtil.getUserDirectory().toPath().relativize(Paths.get(CentralRepoSettings.getInstance().getDefaultDbPath())).toString();
                 // update path settings accordingly
-                prevSettings.put(CentralRepoSettings.getInstance().getDatabasePathKey(), CentralRepoSettings.getInstance().getDefaultDbPath());
+                prevSettings.put(CentralRepoSettings.getInstance().getDatabasePathKey(), newRelPath);
             }
             
             // copy settings
