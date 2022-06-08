@@ -37,7 +37,6 @@ import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
-import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.report.GeneralReportSettings;
@@ -58,7 +57,7 @@ final class ReportingConfigLoader {
     ).toAbsolutePath().toString();
 
     private static final String REPORT_CONFIG_FOLDER_PATH = Paths.get(
-            SharedConfigPath.getInstance().getSharedConfigPath(),
+            PlatformUtil.getModuleConfigDirectory(),
             ReportingConfigLoader.REPORT_CONFIG_FOLDER
     ).toAbsolutePath().toString();
 

@@ -36,9 +36,9 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
-import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 import org.sleuthkit.autopsy.python.FactoryClassNameNormalizer;
@@ -54,12 +54,12 @@ public final class IngestJobSettings {
     private static final String MODULE_SETTINGS_FOLDER_NAME = "IngestSettings"; //NON-NLS
     
     private static final String MODULE_SETTINGS_FOLDER = Paths.get(
-            SharedConfigPath.getInstance().getSharedConfigFolder(),
+            Paths.get(PlatformUtil.getUserConfigDirectory()).relativize(Paths.get(PlatformUtil.getModuleConfigDirectory())).toString(),
             MODULE_SETTINGS_FOLDER_NAME
     ).toString();
 
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(
-            SharedConfigPath.getInstance().getSharedConfigPath(),
+            PlatformUtil.getModuleConfigDirectory(),
             IngestJobSettings.MODULE_SETTINGS_FOLDER_NAME
     ).toAbsolutePath().toString();
 
