@@ -231,6 +231,15 @@ public class PlatformUtil {
     }
 
     /**
+     * Get module config directory path
+     *
+     * @return Get module config directory path string
+     */
+    public static String getModuleConfigDirectory() {
+        return Paths.get(getUserConfigDirectory(), "ModuleConfig").toString();
+    }
+    
+    /**
      * Get log directory path
      *
      * @return Get log directory path string

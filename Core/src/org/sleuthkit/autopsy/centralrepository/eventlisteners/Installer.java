@@ -32,11 +32,9 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteCentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -94,13 +92,27 @@ public class Installer extends ModuleInstall {
         upgradeSettingsPath();
         setupDefaultCentralRepository();
     }
+    
+    
+    
+    /**
+    * Path to module settings path.
+    *
+    * @param moduleName The full name of the module provided to ModuleSettings.
+    *
+    * @return The path on disk for that object. NOTE: This must be in sync with
+    *         ModuleSettings.
+    */
+    private String getSettingsFilePath(String moduleName) {
+        return Paths.get(PlatformUtil.getUserConfigDirectory(), moduleName + ".properties").toString();
+    }
             
     /**
      * Copies settings to new path location.
      */
     private void upgradeSettingsPath() {
-        File newSettingsFile = new File(SharedConfigPath.getInstance().getSettingsFilePath(CentralRepoSettings.getInstance().getModuleSettingsKey()));
-        File legacySettingsFile = new File(SharedConfigPath.getInstance().getSettingsFilePath(LEGACY_MODULE_SETTINGS_KEY));
+        File newSettingsFile = new File(getSettingsFilePath(CentralRepoSettings.getInstance().getModuleSettingsKey()));
+        File legacySettingsFile = new File(getSettingsFilePath(LEGACY_MODULE_SETTINGS_KEY));
         // new config has not been created, but legacy has, copy it.
         if (!newSettingsFile.exists() && legacySettingsFile.exists()) {
             Map<String, String> prevSettings = ModuleSettings.getConfigSettings(LEGACY_MODULE_SETTINGS_KEY);
@@ -128,8 +140,10 @@ public class Installer extends ModuleInstall {
                     }
                 }
                 
+                // get the new relative path to store
+                String newRelPath = PlatformUtil.getUserDirectory().toPath().relativize(Paths.get(CentralRepoSettings.getInstance().getDefaultDbPath())).toString();
                 // update path settings accordingly
-                prevSettings.put(CentralRepoSettings.getInstance().getDatabasePathKey(), CentralRepoSettings.getInstance().getDefaultDbPath());
+                prevSettings.put(CentralRepoSettings.getInstance().getDatabasePathKey(), newRelPath);
             }
             
             // copy settings

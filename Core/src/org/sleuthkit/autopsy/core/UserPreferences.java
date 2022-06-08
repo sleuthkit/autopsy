@@ -30,12 +30,10 @@ import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.openide.util.Lookup;
 import org.python.icu.util.TimeZone;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
-import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -71,7 +69,7 @@ public final class UserPreferences {
      * @return The path to the preference file.
      */
     private static String getSharedPreferencePath(String identifier) {
-        return Paths.get(SharedConfigPath.getInstance().getSharedConfigPath(), identifier + ".properties").toString();
+        return Paths.get(PlatformUtil.getModuleConfigDirectory(), identifier + ".properties").toString();
     }
         
     private static final String VIEW_PREFERENCE_PATH = getSharedPreferencePath("ViewPreferences");
@@ -88,7 +86,7 @@ public final class UserPreferences {
         // perform initial load to ensure disk preferences are loaded
         try {
             // make shared directory paths if they don't exist.
-            new File(SharedConfigPath.getInstance().getSharedConfigPath()).mkdirs();
+            new File(PlatformUtil.getModuleConfigDirectory()).mkdirs();
             viewPreferences.load();
             machineSpecificPreferences.load();
             modePreferences.load();

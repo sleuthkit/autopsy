@@ -18,8 +18,9 @@
  */
 package org.sleuthkit.autopsy.centralrepository;
 
+import java.io.File;
 import java.nio.file.Paths;
-import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Location for central repo settings and paths.
@@ -38,13 +39,13 @@ public class CentralRepoSettings {
     private static final String CENTRAL_REPOSITORY_FOLDER = "CentralRepository";
     private static final String CENTRAL_REPOSITORY_SETTINGS_NAME = "CentralRepository";
     private static final String CENTRAL_REPO_BASE_PATH = Paths.get(
-            SharedConfigPath.getInstance().getSharedConfigPath(),
+            PlatformUtil.getModuleConfigDirectory(),
             CENTRAL_REPOSITORY_FOLDER).toString();
 
     private static final String DEFAULT_DB_PARENT_PATH = Paths.get(CENTRAL_REPO_BASE_PATH, "LocalDatabase").toString();
     private static final String DEFAULT_DB_NAME = "central_repository.db";
     private static final String MODULE_SETTINGS_KEY = Paths.get(
-            SharedConfigPath.getInstance().getSharedConfigFolder(),
+            Paths.get(PlatformUtil.getUserConfigDirectory()).relativize(Paths.get(PlatformUtil.getModuleConfigDirectory())).toString(),
             CENTRAL_REPOSITORY_FOLDER,
             CENTRAL_REPOSITORY_SETTINGS_NAME).toString();
 

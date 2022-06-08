@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.modules.hashdatabase.infrastructure;
 
 import java.nio.file.Paths;
-import org.sleuthkit.autopsy.core.configpath.SharedConfigPath;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Paths for hash config files.
@@ -31,7 +31,7 @@ public class HashConfigPaths {
     private static final String HASHSET_FOLDER = "HashLookup";
     private static final String SERIALIZATION_FILE_NAME = "hashLookup.settings"; //NON-NLS   
     
-    private static final String HASH_CONFIG_PATH = Paths.get(SharedConfigPath.getInstance().getSharedConfigPath(), HASHSET_FOLDER).toAbsolutePath().toString();
+    private static final String HASH_CONFIG_PATH = Paths.get(PlatformUtil.getModuleConfigDirectory(), HASHSET_FOLDER).toAbsolutePath().toString();
 
     private static final String XML_FILE_NAME = "hashsets.xml"; //NON-NLS
     private static final String XML_FILE_PATH = Paths.get(HASH_CONFIG_PATH, XML_FILE_NAME).toAbsolutePath().toString();
