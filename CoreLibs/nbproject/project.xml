@@ -459,6 +459,7 @@
                 <package>org.opencv.video</package>
                 <package>org.opencv.videoio</package>
                 <package>org.opencv.imgcodecs</package>
+                <package>org.opencv.dnn</package>
                 <package>org.sleuthkit.autopsy.corelibs</package>
                 <package>org.slf4j</package>
                 <package>org.slf4j.event</package>

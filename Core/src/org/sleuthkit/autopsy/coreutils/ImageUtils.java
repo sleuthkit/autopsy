@@ -61,6 +61,15 @@ import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.opencv.core.CvException;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.dnn.Dnn;
+import org.opencv.dnn.Net;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -100,6 +109,17 @@ public class ImageUtils {
     private static final SortedSet<String> SUPPORTED_IMAGE_MIME_TYPES;
 
     private static final boolean FFMPEG_LOADED;
+    
+    
+    // Model for finding text in an image from https://github.com/argman/EAST
+    // You can find it here : https://github.com/opencv/opencv_extra/blob/master/testdata/dnn/download_models.py#L309
+    static final Path EAST_FILE_PATH = Paths.get("textdetection", "frozen_east_text_detection.pb");
+    static final File EAST_FILE = InstalledFileLocator.getDefault().locate(EAST_FILE_PATH.toString(), ImageUtils.class.getPackage().getName(), true);
+    
+    static final float IMAGE_TEXT_CONFIDENCE_THRESHOLD = 0.5f;
+    static final Size BLOB_SIZE = new Size(320, 320);
+    // The mean values for the ImageNet training set. 
+    static final Scalar MEAN_SUBTRACTION_VALUE = new Scalar(123.68, 116.78, 103.94);
 
     /**
      * Map from tsk object id to Java File object. Used to get the same File for
@@ -1025,6 +1045,117 @@ public class ImageUtils {
             LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NON-NLS
             return contentName;
         }
+    }
+    
+    /**
+     * Tests the given image for text. This method used openCV and the EAST text
+     * detector to determine if there is text in the image at the given path.
+     * 
+     * The default confidence threshold will be used which seems to produce 
+     * some false positives.
+     * 
+     * @param absolutePath
+     * @return
+     * @throws IOException
+     * @throws CvException 
+     */
+    public static boolean imageHasText(String absolutePath) throws IOException, CvException {
+        return imageHasText(absolutePath, IMAGE_TEXT_CONFIDENCE_THRESHOLD);
+    }
+    
+    /**
+     * Tests the given image for text. This method used openCV and the EAST text
+     * detector.
+     * 
+     * Change the scoreThresh to tweak the balance of false positives
+     * and false negatives.
+     *
+     * @param absolutePath The absolute path to an image file.
+     * @param scoreThresh The confidence threshold.
+     *
+     * @return True if the image has text in it.
+     *
+     * @throws IOException
+     * @throws CvException
+     */
+    public static boolean imageHasText(String absolutePath, float scoreThresh) throws IOException, CvException {
+        return imageHasText(new File(absolutePath), scoreThresh);
+    }
+   
+    /**
+     * Tests the given image for text. This method used openCV and the EAST text
+     * detector.
+     * 
+     * Change the scoreThresh to tweak the balance of false positives
+     * and false negatives.
+     *
+     * Based on code from berak found here:
+     * https://gist.github.com/berak/788da80d1dd5bade3f878210f45d6742
+     *
+     * @param image The image to check.
+     * @param scoreThresh The confidence threshold.
+     *
+     * @return True if the image has text.
+     *
+     * @throws IOException
+     * @throws CvException
+     */
+    private static boolean imageHasText(File image, float scoreThresh) throws IOException, CvException {
+        if (!image.exists()) {
+            throw new IOException("The given file does not exist " + image.getAbsolutePath());
+        } else if (image.length() < 1) {
+            throw new IOException("The given file has a size of 0 " + image.getAbsolutePath());
+        } else if (!image.isFile()) {
+            throw new IOException("The given file is not a file " + image.getAbsolutePath());
+        }
+
+        Mat frame = Imgcodecs.imread(image.getAbsolutePath());
+
+        if (frame.empty()) {
+            throw new IOException("Failed to read image. Image is empty." + image.getAbsolutePath());
+        }
+
+        Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGBA2RGB);
+
+        if (!EAST_FILE.exists()) {
+            throw new CvException("Unable to find EAST model file at location " + EAST_FILE.getAbsolutePath());
+        }
+
+        Net net = Dnn.readNetFromTensorflow(EAST_FILE.getAbsolutePath());
+
+        // Resize the image in the blob to simplify the processing.
+        Size siz = BLOB_SIZE;
+
+        // For details on deep learning and how blobFromImage works see:
+        // https://pyimagesearch.com/2017/11/06/deep-learning-opencvs-blobfromimage-works/
+        Mat blob = Dnn.blobFromImage(frame, 1.0, siz, MEAN_SUBTRACTION_VALUE, true, false);
+
+        List<String> outNames = new ArrayList<>();
+        // The output layer name which outputs the probabilities that there is 
+        // a text in a particular location.
+        outNames.add("feature_fusion/Conv_7/Sigmoid");
+
+        List<Mat> outs = new ArrayList<>(1);
+
+        net.setInput(blob);
+        net.forward(outs, outNames);
+
+        int H = (int) (siz.height / 4); // height of those. the geometry has 4, vertically stacked maps, the score one 1
+
+        // My lord and savior : http://answers.opencv.org/question/175676/javaandroid-access-4-dim-mat-planes/
+        Mat scores = outs.get(0).reshape(1, H);
+
+        // Search the scores for on above the threshold.
+        for (int y = 0; y < H; ++y) {
+            Mat scoresData = scores.row(y);
+            for (int x = 0; x < scores.rows(); ++x) {
+                double score = scoresData.get(0, x)[0];
+                if (score >= scoreThresh) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

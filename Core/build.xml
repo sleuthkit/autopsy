@@ -120,6 +120,9 @@
         <copy todir="${basedir}/release/ffmpeg" >
             <fileset dir="${thirdparty.dir}/ffmpeg"/>
         </copy>
+        <copy todir="${basedir}/release/textdetection">
+            <fileset dir="${thirdparty.dir}/textdetection"/>
+        </copy>
     </target>
     
     
