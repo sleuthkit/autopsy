@@ -204,6 +204,7 @@ public class Installer extends ModuleInstall {
         System.setProperty("prism.allowhidpi", "false");
 
         // Update existing configuration in case of unsupported settings
+        UserPreferences.updateConfig();
         updateConfig();
 
         packageInstallers = new ArrayList<>();
@@ -214,6 +215,8 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.centralrepository.eventlisteners.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.healthmonitor.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.casemodule.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.modules.hashdatabase.infrastructure.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.report.infrastructure.Installer.getDefault());
 
         /**
          * This is a temporary workaround for the following bug in Tika that

@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,7 +28,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
+import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
 
@@ -44,6 +49,10 @@ public final class FilesSetsManager extends Observable {
     private static final String LEGACY_FILES_SET_DEFS_FILE_NAME = "InterestingFilesSetDefs.xml"; //NON-NLS
     private static final String INTERESTING_FILES_SET_DEFS_NAME = "InterestingFileSets.settings";
     private static final String FILE_INGEST_FILTER_DEFS_NAME = "FileIngestFilterDefs.settings";
+    private static final String LEGACY_SETTINGS_PATH = PlatformUtil.getUserConfigDirectory();
+    private static final String SETTINGS_PATH = PlatformUtil.getModuleConfigDirectory();
+    private static final String FILE_FILTER_PATH = Paths.get(SETTINGS_PATH, FILE_INGEST_FILTER_DEFS_NAME).toAbsolutePath().toString();
+    private static final String INTERESTING_ITEM_PATH = Paths.get(SETTINGS_PATH, INTERESTING_FILES_SET_DEFS_NAME).toAbsolutePath().toString();
     private static final Object FILE_INGEST_FILTER_LOCK = new Object();
     private static final Object INTERESTING_FILES_SET_LOCK = new Object();
     private static FilesSetsManager instance;
@@ -65,6 +74,7 @@ public final class FilesSetsManager extends Observable {
         }
     });
 
+
     /**
      * Gets the FilesSet definitions manager singleton.
      */
@@ -75,6 +85,20 @@ public final class FilesSetsManager extends Observable {
         return instance;
     }
 
+    /**
+     * @return The path to file filter settings.
+     */
+    static String getFileFilterPath() {
+        return FILE_FILTER_PATH;
+    }
+    
+    /**
+     * @return The path to interesting item settings.
+     */
+    static String getInterestingItemPath() {
+        return INTERESTING_ITEM_PATH;
+    }
+    
     /**
      * Gets the set of chars deemed to be illegal in file names (Windows).
      *
@@ -102,7 +126,7 @@ public final class FilesSetsManager extends Observable {
     public static List<FilesSet> getStandardFileIngestFilters() {
         return Arrays.asList(FILES_DIRS_UNALLOC_INGEST_FILTER, FILES_DIRS_INGEST_FILTER);
     }
-    
+
     /**
      * Gets a copy of the current ingest file set definitions.
      *
@@ -113,7 +137,7 @@ public final class FilesSetsManager extends Observable {
      */
     public Map<String, FilesSet> getCustomFileIngestFilters() throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
-            return FileSetsDefinitions.readSerializedDefinitions(FILE_INGEST_FILTER_DEFS_NAME);
+            return FileSetsDefinitions.readSerializedDefinitions(PlatformUtil.getModuleConfigDirectory(), FILE_INGEST_FILTER_DEFS_NAME);
         }
     }
 
@@ -126,7 +150,7 @@ public final class FilesSetsManager extends Observable {
     public static FilesSet getDefaultFilter() {
         return FILES_DIRS_UNALLOC_INGEST_FILTER;
     }
-    
+
     /**
      * Sets the current interesting file sets definitions, replacing any
      * previous definitions.
@@ -136,11 +160,10 @@ public final class FilesSetsManager extends Observable {
      */
     void setCustomFileIngestFilters(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
-            FileSetsDefinitions.writeDefinitionsFile(FILE_INGEST_FILTER_DEFS_NAME, filesSets);
+            FileSetsDefinitions.writeDefinitionsFile(PlatformUtil.getModuleConfigDirectory(), FILE_INGEST_FILTER_DEFS_NAME, filesSets);
         }
     }
 
-    
     /**
      * Gets a copy of the current interesting files set definitions.
      *
@@ -149,10 +172,9 @@ public final class FilesSetsManager extends Observable {
      */
     public Map<String, FilesSet> getInterestingFilesSets() throws FilesSetsManagerException {
         synchronized (INTERESTING_FILES_SET_LOCK) {
-            return InterestingItemsFilesSetSettings.readDefinitionsFile(INTERESTING_FILES_SET_DEFS_NAME, LEGACY_FILES_SET_DEFS_FILE_NAME);
+            return InterestingItemsFilesSetSettings.readDefinitionsFile(PlatformUtil.getModuleConfigDirectory(), INTERESTING_FILES_SET_DEFS_NAME, LEGACY_FILES_SET_DEFS_FILE_NAME);
         }
     }
-
 
     /**
      * Sets the current interesting file sets definitions, replacing any
@@ -163,13 +185,26 @@ public final class FilesSetsManager extends Observable {
      */
     void setInterestingFilesSets(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (INTERESTING_FILES_SET_LOCK) {
-            InterestingItemsFilesSetSettings.writeDefinitionsFile(INTERESTING_FILES_SET_DEFS_NAME, filesSets);
+            InterestingItemsFilesSetSettings.writeDefinitionsFile(PlatformUtil.getModuleConfigDirectory(), INTERESTING_FILES_SET_DEFS_NAME, filesSets);
             this.setChanged();
             this.notifyObservers();
         }
     }
 
-    
+    /**
+     * Moves config files to current expected location.
+     */
+    void upgradeConfig() throws IOException {
+        for (String fileName : new String[]{LEGACY_FILES_SET_DEFS_FILE_NAME, FILE_INGEST_FILTER_DEFS_NAME, INTERESTING_FILES_SET_DEFS_NAME }) {
+            File oldPath = Paths.get(LEGACY_SETTINGS_PATH, fileName).toFile();
+            File newPath = Paths.get(SETTINGS_PATH, fileName).toFile();
+            
+            if (oldPath.exists() && !newPath.exists()) {
+                newPath.getParentFile().mkdirs();
+                FileUtils.copyFile(oldPath, newPath);
+            }
+        }
+    }
 
     public static class FilesSetsManagerException extends Exception {
 
