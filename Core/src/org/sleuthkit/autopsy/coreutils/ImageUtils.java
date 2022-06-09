@@ -119,7 +119,7 @@ public class ImageUtils {
     static final float IMAGE_TEXT_CONFIDENCE_THRESHOLD = 0.5f;
     static final Size BLOB_SIZE = new Size(320, 320);
     // The mean values for the ImageNet training set. 
-    static final Scalar MEAN_SUBTRACTION_VALUE = new Scalar(123.68, 116.78, 103.94)
+    static final Scalar MEAN_SUBTRACTION_VALUE = new Scalar(123.68, 116.78, 103.94);
 
     /**
      * Map from tsk object id to Java File object. Used to get the same File for
