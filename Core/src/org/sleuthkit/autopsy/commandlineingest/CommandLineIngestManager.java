@@ -515,7 +515,10 @@ public class CommandLineIngestManager extends CommandLineManager {
                              * listener or until interrupted because auto ingest
                              * is shutting down.
                              */
-                            ingestLock.wait();
+                            do {
+                                ingestLock.wait();
+                            } while (IngestManager.getInstance().isIngestRunning());
+
                             LOGGER.log(Level.INFO, "Finished ingest modules analysis for {0} ", dataSource.getPath());
                             IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
                             IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot = jobSnapshot.getDataSourceProcessingSnapshot();
