@@ -509,13 +509,18 @@ public class CommandLineIngestManager extends CommandLineManager {
                     if (settingsWarnings.isEmpty()) {
                         IngestJobStartResult ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
                         IngestJob ingestJob = ingestJobStartResult.getJob();
-                        if (null != ingestJob) {
+                            if (null != ingestJob) {
                             /*
-                             * Block until notified by the ingest job event
-                             * listener or until interrupted because auto ingest
-                             * is shutting down.
+                             * Block until notified by the ingest job event listener
+                             * or until interrupted because auto ingest is shutting
+                             * down. For very small jobs, it is possible that ingest has
+                             * completed by the time we get here, so check periodically
+                             * in case the event was missed.
                              */
-                            ingestLock.wait();
+                            while (IngestManager.getInstance().isIngestRunning()) {
+                                ingestLock.wait(60000);  // Check every minute
+                            }
+
                             LOGGER.log(Level.INFO, "Finished ingest modules analysis for {0} ", dataSource.getPath());
                             IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
                             IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot = jobSnapshot.getDataSourceProcessingSnapshot();
