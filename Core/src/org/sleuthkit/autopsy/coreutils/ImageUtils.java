@@ -61,6 +61,13 @@ import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import org.opencv.core.Core;
+import org.opencv.core.CvException;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -1025,6 +1032,95 @@ public class ImageUtils {
             LOGGER.log(Level.SEVERE, "Failed to get unique path for " + contentName, tskCoreException); //NON-NLS
             return contentName;
         }
+    }
+    
+    // The correlation compare method returns values between 0 and 1 where
+    // 1 is an identical match. The closer the value is to 1 the better the 
+    // match.
+    private static final int CORRELATION_METHOD = 0;
+
+    // Normalization range boundries.
+    private static final int LOWER_RANGE_BOUNDARY = 0;
+    private static final int UPPER_RANGE_BOUNDARY = 1;
+    
+    // This value may need to be tweaked when it goes into production.
+    private static final double DEFAULT_COMPARE_THRESHOLD = 0.90;
+
+    /**
+     * Returns true if the two given images are similar.
+     * 
+     * @param image1 Absolute path to image.
+     * @param image2 Absolute path to image.
+     * 
+     * @return True if the images are similar.
+     */
+    public static boolean areImagesSimilar(String image1, String image2) {
+        return areImagesSimilar(image1, image2, DEFAULT_COMPARE_THRESHOLD);
+    }
+    
+    /**
+     * Returns true if the two given images are similar.
+     * 
+     * The given images must be the same size, if the size of the images differs
+     * false will be returned.
+     * 
+     * @param image1 Absolute path to image.
+     * @param image2 Absolute path to image.
+     * 
+     * @param threshold
+     * 
+     * @return True if the images are similar.
+     * 
+     * @throws CvException 
+     */
+    private static boolean areImagesSimilar(String image1, String image2, double threshold) throws CvException{
+        Mat srcImage1 = Imgcodecs.imread(image1); 
+	Mat srcImage2 = Imgcodecs.imread(image2); 
+		
+        if(srcImage1.empty()) {
+            throw new CvException("Image1 is an empty image. " + image1);
+        }
+        
+        if(srcImage2.empty()) {
+            throw new CvException("Image2 is an empty image. " + image1);
+        }
+        
+        if(srcImage1.width() != srcImage2.width() || srcImage1.height() != srcImage2.height()) {
+            return false; // Not throwing an error here as this just means they are different.
+        }
+        		
+        Mat hsvImage1 = new Mat();
+        Mat hsvImage2 = new Mat();
+		
+        // Converts an image from one color space to another. To compare the 
+        // images histograms they must be converted to HSV.
+        Imgproc.cvtColor(srcImage1, hsvImage1, Imgproc.COLOR_BGR2HSV);
+        Imgproc.cvtColor(srcImage2, hsvImage2, Imgproc.COLOR_BGR2HSV);
+	 
+        // Intialize the arguments to calcuate the histograms. 
+        
+        // The histogram size. Quantize the hue to 50 levels and the
+        // saturation to 60 levels.
+	int hBins = 50, sBins = 60;
+        // An array of histogram sizes.
+        int[] histSize = { hBins, sBins };
+        // hue varies from 0 to 179, saturation from 0 to 255
+        float[] ranges = { 0, 180, 0, 256 };
+        // Use the 0-th and 1-st channels
+        int[] channels = { 0, 1 };
+        Mat histImage1 = new Mat(), histImage2 = new Mat();
+          
+        List<Mat> hsvImage1List = Arrays.asList(hsvImage1);
+        Imgproc.calcHist(hsvImage1List, new MatOfInt(channels), new Mat(), histImage1, new MatOfInt(histSize), new MatOfFloat(ranges), false);
+        Core.normalize(histImage1, histImage1, LOWER_RANGE_BOUNDARY, UPPER_RANGE_BOUNDARY, Core.NORM_MINMAX);
+        
+        List<Mat> hsvImage2List = Arrays.asList(hsvImage2);
+        Imgproc.calcHist(hsvImage2List, new MatOfInt(channels), new Mat(), histImage2, new MatOfInt(histSize), new MatOfFloat(ranges), false);
+        Core.normalize(histImage2, histImage2, LOWER_RANGE_BOUNDARY, UPPER_RANGE_BOUNDARY , Core.NORM_MINMAX);
+
+        double compareValue = Imgproc.compareHist( histImage1, histImage2, CORRELATION_METHOD );
+        
+        return compareValue >= threshold;
     }
 
     /**
