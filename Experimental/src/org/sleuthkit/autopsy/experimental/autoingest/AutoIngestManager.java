@@ -2937,7 +2937,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                          * in case the event was missed.
                          */
                         while (IngestManager.getInstance().isIngestRunning()) {
-                            ingestLock.wait(300000);  // Check every five minutes
+                            ingestLock.wait(60000);  // Check every minute
                         }
                         IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
                         IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot = jobSnapshot.getDataSourceProcessingSnapshot();
