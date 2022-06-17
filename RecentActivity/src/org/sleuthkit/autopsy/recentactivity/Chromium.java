@@ -93,7 +93,7 @@ class Chromium extends Extract {
     private static final String WEB_DATA_FILE_NAME = "Web Data";
     private static final String UC_BROWSER_NAME = "UC Browser";
     private static final String ENCRYPTED_FIELD_MESSAGE = "The data was encrypted.";
-    private static final String GOOGLE_PROFILE_NAME = "Google Chrome Profile";
+    private static final String GOOGLE_PROFILE_NAME = "Profile";
     private static final String GOOGLE_PROFILE = "Google Chrome ";
 
     private Boolean databaseEncrypted = false;
@@ -112,6 +112,7 @@ class Chromium extends Extract {
             .put("Brave", "BraveSoftware/Brave-Browser/User Data/Default")
             .put("Google Chrome", "Chrome/User Data/Default")
             .put("Google Chrome Profile", "Chrome/User Data/Profile %")
+            .put("Google Chrome System Profile", "Chrome/User Data/System Profile")
             .build();
 
     @Messages({"# {0} - browserName",
@@ -227,7 +228,7 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < allocatedHistoryFiles.size()) {
-            if (browser.equals(GOOGLE_PROFILE_NAME)) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(allocatedHistoryFiles.get(j).getParentPath());
                 browserName = GOOGLE_PROFILE + " " + FilenameUtils.getBaseName(parentPath);
             }
@@ -321,7 +322,7 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < bookmarkFiles.size()) {
-            if (browser.equals(GOOGLE_PROFILE_NAME)) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(bookmarkFiles.get(j).getParentPath());
                 browserName = GOOGLE_PROFILE + " " + FilenameUtils.getBaseName(parentPath);
             }
@@ -474,7 +475,7 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < cookiesFiles.size()) {
-            if (browser.equals(GOOGLE_PROFILE_NAME)) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(cookiesFiles.get(j).getParentPath());
                 browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
             }
@@ -577,7 +578,7 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < downloadFiles.size()) {
-            if (browser.equals(GOOGLE_PROFILE_NAME)) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(downloadFiles.get(j).getParentPath());
                 browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
             }
@@ -703,7 +704,7 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < loginDataFiles.size()) {
-            if (browser.equals(GOOGLE_PROFILE_NAME)) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(loginDataFiles.get(j).getParentPath());
                 browserName = GOOGLE_PROFILE_NAME + FilenameUtils.getBaseName(parentPath);
             }
@@ -815,7 +816,7 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < webDataFiles.size()) {
-            if (browser.equals(GOOGLE_PROFILE_NAME)) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(webDataFiles.get(j).getParentPath());
                 browserName = GOOGLE_PROFILE_NAME + FilenameUtils.getBaseName(parentPath);
             }
