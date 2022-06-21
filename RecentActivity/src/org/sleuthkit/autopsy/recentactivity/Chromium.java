@@ -86,15 +86,19 @@ class Chromium extends Extract {
     private static final String WEBFORM_ADDRESS_QUERY_V8X = "SELECT first_name, middle_name, last_name, full_name, street_address, city, state, zipcode, country_code, number, email, date_modified, use_date, use_count"
             + " FROM autofill_profiles, autofill_profile_names, autofill_profile_emails, autofill_profile_phones"
             + " WHERE autofill_profiles.guid = autofill_profile_names.guid AND autofill_profiles.guid = autofill_profile_emails.guid AND autofill_profiles.guid = autofill_profile_phones.guid";
+    private static final String FAVICON_QUERY = "SELECT page_url, last_updated, last_requested FROM icon_mapping, favicon_bitmaps "
+            + " WHERE icon_mapping.icon_id = favicon_bitmaps.icon_id";
     private static final String HISTORY_FILE_NAME = "History";
     private static final String BOOKMARK_FILE_NAME = "Bookmarks";
     private static final String COOKIE_FILE_NAME = "Cookies";
     private static final String LOGIN_DATA_FILE_NAME = "Login Data";
     private static final String WEB_DATA_FILE_NAME = "Web Data";
+    private static final String FAVICON_DATA_FILE_NAME = "Favicons";
     private static final String UC_BROWSER_NAME = "UC Browser";
     private static final String ENCRYPTED_FIELD_MESSAGE = "The data was encrypted.";
     private static final String GOOGLE_PROFILE_NAME = "Profile";
     private static final String GOOGLE_PROFILE = "Google Chrome ";
+    private static final String FAVICON_ARTIFACT_NAME = "TSK_FAVICON"; //NON-NLS
 
     private Boolean databaseEncrypted = false;
     private Boolean fieldEncrypted = false;
@@ -123,6 +127,7 @@ class Chromium extends Extract {
         "Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}",
         "# {0} - browserName",
         "Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}",
+        "Progress_Message_Chrome_Favicons=Chrome Downloads Favicons {0}",
         "Progress_Message_Chrome_FormHistory=Chrome Form History",
         "# {0} - browserName",
         "Progress_Message_Chrome_AutoFill=Chrome Auto Fill Browser {0}",
@@ -175,6 +180,12 @@ class Chromium extends Extract {
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Downloads", browserName));
             this.getDownload(browser.getKey(), browser.getValue(), ingestJobId);
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+
+            progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Favicons", browserName));
+            this.getFavicons(browser.getKey(), browser.getValue(), ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
@@ -670,6 +681,116 @@ class Chromium extends Extract {
     }
 
     /**
+     * Queries the Favicons table and adds artifacts
+     *
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId     The ingest job id.
+     */
+    private void getFavicons(String browser, String browserLocation, long ingestJobId) {
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> faviconFiles;
+        String browserName = browser;
+        try {
+            faviconFiles = fileManager.findFiles(dataSource, FAVICON_DATA_FILE_NAME, browserLocation); //NON-NLS
+        } catch (TskCoreException ex) {
+            String msg = NbBundle.getMessage(this.getClass(), "Chrome.getFavicon.errMsg.errGettingFiles");
+            logger.log(Level.SEVERE, msg, ex);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
+            return;
+        }
+
+        if (faviconFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome favicon files."); //NON-NLS
+            return;
+        }
+
+        dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        int j = 0;
+        while (j < faviconFiles.size()) {
+            if (browser.equals(GOOGLE_PROFILE_NAME)) {
+                String parentPath = FilenameUtils.normalizeNoEndSeparator(faviconFiles.get(j).getParentPath());
+                browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
+            }
+            AbstractFile faviconFile = faviconFiles.get(j++);
+            if ((faviconFile.getSize() == 0) || (faviconFile.getName().toLowerCase().contains("-slack"))
+                    || (faviconFile.getName().toLowerCase().contains("cache")) || (faviconFile.getName().toLowerCase().contains("index"))) {
+                continue;
+            }
+
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + faviconFile.getName() + j + ".db"; //NON-NLS
+            try {
+                ContentUtils.writeToFile(faviconFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome favicons artifacts file '%s' (id=%d).",
+                        faviconFile.getName(), faviconFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getFavicon.errMsg.errAnalyzeFiles1",
+                        this.getDisplayName(), faviconFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome favicon artifacts file '%s' (id=%d).",
+                        temps, faviconFile.getName(), faviconFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getfavicon.errMsg.errAnalyzeFiles1",
+                        this.getDisplayName(), faviconFile.getName()));
+                continue;
+            }
+            File dbFile = new File(temps);
+            if (context.dataSourceIngestIsCancelled()) {
+                dbFile.delete();
+                break;
+            }
+
+            BlackboardArtifact.Type faviconArtifactType;
+
+            try {
+                faviconArtifactType = createFaviconArtifactType();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error creating artifact type for Chrome favicon."), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getfavicon.errMsg.errCreateArtifact"));
+                continue;
+                
+            }
+            
+            List<HashMap<String, Object>> tempList;
+
+            tempList = this.querySQLiteDb(temps, FAVICON_QUERY);
+
+            logger.log(Level.INFO, "{0}- Now getting favicons from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
+            for (HashMap<String, Object> result : tempList) {
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        ((result.get("page_url").toString() != null) ? result.get("page_url").toString() : ""))); //NON-NLS
+                Long updatedTime = (Long.valueOf(result.get("last_updated").toString()) / 1000000) - Long.valueOf("11644473600"); //NON-NLS
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED,
+                        RecentActivityExtracterModuleFactory.getModuleName(), updatedTime));
+                Long requestedTime = (Long.valueOf(result.get("last_requested").toString()) / 1000000) - Long.valueOf("11644473600"); //NON-NLS
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                        RecentActivityExtracterModuleFactory.getModuleName(), requestedTime));
+                String domain = NetworkUtils.extractDomain((result.get("page_url").toString() != null) ? result.get("page_url").toString() : ""); //NON-NLS
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+
+                try {
+                    bbartifacts.add(createArtifactWithAttributes(faviconArtifactType, faviconFile, bbattributes));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to create cookie artifact for file (%d)", faviconFile.getId()), ex);
+                }
+
+            }
+
+            dbFile.delete();
+        }
+
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+
+    /**
      * Gets user logins from Login Data sqlite database
      *
      * @param browser
@@ -1068,4 +1189,24 @@ class Chromium extends Extract {
 
         return false;
     }
+    
+        @Messages({
+        "ExtractFavicon_Display_Name=Favicon"
+    })
+    /**
+     * Create TSK_FAVICON artifact type.
+     *
+     * @return the BlackboardArtifact.type of the artifact created
+     * @throws TskCoreException
+     */
+    private BlackboardArtifact.Type createFaviconArtifactType() throws TskCoreException {
+        BlackboardArtifact.Type faviconArtifactType;
+        try {
+            faviconArtifactType = tskCase.getBlackboard().getOrAddArtifactType(FAVICON_ARTIFACT_NAME, Bundle.ExtractFavicon_Display_Name()); //NON-NLS
+        } catch (Blackboard.BlackboardException ex) {
+            throw new TskCoreException(String.format("An exception was thrown while defining artifact type %s", FAVICON_ARTIFACT_NAME), ex);
+        }
+        return faviconArtifactType;
+    }
+
 }
