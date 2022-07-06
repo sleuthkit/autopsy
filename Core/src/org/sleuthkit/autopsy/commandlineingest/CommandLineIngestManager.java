@@ -74,9 +74,10 @@ public class CommandLineIngestManager extends CommandLineManager {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private Case caseForJob = null;
     private AutoIngestDataSource dataSource = null;
-    
-    private static int CL_SUCCESS = 0;
-    private static int CL_FAILURE = 1;
+
+    static int CL_SUCCESS = 0;
+    static int CL_RUN_FAILURE = -1;
+    static int CL_PROCESS_FAILURE = 1;
 
     public CommandLineIngestManager() {
     }
@@ -88,7 +89,7 @@ public class CommandLineIngestManager extends CommandLineManager {
     void stop() {
         stop(CL_SUCCESS);
     }
-    
+
     void stop(int errorCode) {
         try {
             // close current case if there is one open
@@ -98,7 +99,7 @@ public class CommandLineIngestManager extends CommandLineManager {
         }
 
         // shut down Autopsy
-        if(errorCode == CL_SUCCESS) {
+        if (errorCode == CL_SUCCESS) {
             LifecycleManager.getDefault().exit();
         } else {
             LifecycleManager.getDefault().exit(errorCode);
@@ -148,6 +149,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                     if (commands == null || commands.isEmpty()) {
                         LOGGER.log(Level.SEVERE, "No command line commands specified");
                         System.out.println("No command line commands specified");
+                        errorCode = CL_RUN_FAILURE;
                         return;
                     }
 
@@ -156,7 +158,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                         CommandLineCommand.CommandType type = command.getType();
                         switch (type) {
                             case CREATE_CASE:
-                                try {
+                            try {
                                 LOGGER.log(Level.INFO, "Processing 'Create Case' command");
                                 System.out.println("Processing 'Create Case' command");
                                 Map<String, String> inputs = command.getInputs();
@@ -176,6 +178,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 LOGGER.log(Level.SEVERE, "Error creating or opening case " + baseCaseName, ex);
                                 System.out.println("Error creating or opening case " + baseCaseName);
                                 // Do not process any other commands
+                                errorCode = CL_RUN_FAILURE;
                                 return;
                             }
                             break;
@@ -204,6 +207,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 LOGGER.log(Level.SEVERE, "Error adding data source " + dataSourcePath, ex);
                                 System.out.println("Error adding data source " + dataSourcePath);
                                 // Do not process any other commands
+                                errorCode = CL_RUN_FAILURE;
                                 return;
                             }
                             break;
@@ -235,6 +239,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                                         LOGGER.log(Level.SEVERE, "Exception while trying to find data source with object ID " + dataSourceId, ex);
                                         System.out.println("Exception while trying to find data source with object ID " + dataSourceId);
                                         // Do not process any other commands
+                                        errorCode = CL_RUN_FAILURE;
                                         return;
                                     }
 
@@ -260,6 +265,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 LOGGER.log(Level.SEVERE, "Error running ingest on data source " + dataSourcePath, ex);
                                 System.out.println("Error running ingest on data source " + dataSourcePath);
                                 // Do not process any other commands
+                                errorCode = CL_RUN_FAILURE;
                                 return;
                             }
                             break;
@@ -286,6 +292,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 String msg = "Error opening case " + baseCaseName + " in directory: " + rootOutputDirectory;
                                 LOGGER.log(Level.SEVERE, msg, ex);
                                 System.out.println(msg);
+                                errorCode = CL_RUN_FAILURE;
                                 // Do not process any other commands
                                 return;
                             }
@@ -320,6 +327,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 String msg = "Error opening case " + baseCaseName + " in directory: " + rootOutputDirectory;
                                 LOGGER.log(Level.SEVERE, msg, ex);
                                 System.out.println(msg);
+                                errorCode = CL_RUN_FAILURE;
                                 // Do not process any other commands
                                 return;
                             }
@@ -328,12 +336,12 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 List<IngestProfile> profiles = IngestProfiles.getIngestProfiles();
                                 GsonBuilder gb = new GsonBuilder();
                                 System.out.println("Listing ingest profiles");
-                                for(IngestProfile profile: profiles) {
+                                for (IngestProfile profile : profiles) {
                                     String jsonText = gb.create().toJson(profile);
                                     System.out.println(jsonText);
                                 }
                                 System.out.println("Ingest profile list complete");
-                            break;
+                                break;
                             default:
                                 break;
                         }
@@ -348,11 +356,10 @@ public class CommandLineIngestManager extends CommandLineManager {
                      */
                     LOGGER.log(Level.SEVERE, "Unexpected error", ex);
                     System.out.println("Unexpected error. Exiting...");
-
+                    errorCode = CL_RUN_FAILURE;
                 } finally {
                     try {
                         Case.closeCurrentCase();
-                        errorCode = CL_FAILURE;
                     } catch (CaseActionException ex) {
                         LOGGER.log(Level.WARNING, "Exception while closing case", ex);
                         System.out.println("Exception while closing case");
@@ -376,10 +383,13 @@ public class CommandLineIngestManager extends CommandLineManager {
          * @param dataSource The data source.
          *
          * @throws AutoIngestDataSourceProcessorException if there was a DSP
-         * processing error.
+         *                                                processing error.
          *
-         * @throws InterruptedException running the job processing task while
-         * blocking, i.e., if auto ingest is shutting down.
+         * @throws InterruptedException                   running the job
+         *                                                processing task while
+         *                                                blocking, i.e., if
+         *                                                auto ingest is
+         *                                                shutting down.
          */
         private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 
@@ -480,14 +490,15 @@ public class CommandLineIngestManager extends CommandLineManager {
          * profile (profile = ingest context + ingest filter) for ingest.
          * Otherwise use baseline configuration.
          *
-         * @param dataSource The data source to analyze.
+         * @param dataSource        The data source to analyze.
          * @param ingestProfileName Name of ingest profile to use (optional)
          *
          * @throws AnalysisStartupException if there is an error analyzing the
-         * data source.
-         * @throws InterruptedException if the thread running the job processing
-         * task is interrupted while blocked, i.e., if auto ingest is shutting
-         * down.
+         *                                  data source.
+         * @throws InterruptedException     if the thread running the job
+         *                                  processing task is interrupted while
+         *                                  blocked, i.e., if auto ingest is
+         *                                  shutting down.
          */
         private void analyze(AutoIngestDataSource dataSource, String ingestProfileName) throws AnalysisStartupException, InterruptedException {
 
@@ -533,13 +544,14 @@ public class CommandLineIngestManager extends CommandLineManager {
                     if (settingsWarnings.isEmpty()) {
                         IngestJobStartResult ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
                         IngestJob ingestJob = ingestJobStartResult.getJob();
-                            if (null != ingestJob) {
+                        if (null != ingestJob) {
                             /*
-                             * Block until notified by the ingest job event listener
-                             * or until interrupted because auto ingest is shutting
-                             * down. For very small jobs, it is possible that ingest has
-                             * completed by the time we get here, so check periodically
-                             * in case the event was missed.
+                             * Block until notified by the ingest job event
+                             * listener or until interrupted because auto ingest
+                             * is shutting down. For very small jobs, it is
+                             * possible that ingest has completed by the time we
+                             * get here, so check periodically in case the event
+                             * was missed.
                              */
                             while (IngestManager.getInstance().isIngestRunning()) {
                                 ingestLock.wait(60000);  // Check every minute
