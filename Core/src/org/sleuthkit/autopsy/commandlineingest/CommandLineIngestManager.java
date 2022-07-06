@@ -74,6 +74,9 @@ public class CommandLineIngestManager extends CommandLineManager {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.CANCELLED, IngestManager.IngestJobEvent.COMPLETED);
     private Case caseForJob = null;
     private AutoIngestDataSource dataSource = null;
+    
+    private static int CL_SUCCESS = 0;
+    private static int CL_FAILURE = 1;
 
     public CommandLineIngestManager() {
     }
@@ -82,7 +85,11 @@ public class CommandLineIngestManager extends CommandLineManager {
         new Thread(new JobProcessingTask()).start();
     }
 
-    public void stop() {
+    void stop() {
+        stop(CL_SUCCESS);
+    }
+    
+    void stop(int errorCode) {
         try {
             // close current case if there is one open
             Case.closeCurrentCase();
@@ -91,7 +98,11 @@ public class CommandLineIngestManager extends CommandLineManager {
         }
 
         // shut down Autopsy
-        LifecycleManager.getDefault().exit();
+        if(errorCode == CL_SUCCESS) {
+            LifecycleManager.getDefault().exit();
+        } else {
+            LifecycleManager.getDefault().exit(errorCode);
+        }
     }
 
     private final class JobProcessingTask implements Runnable {
@@ -115,6 +126,7 @@ public class CommandLineIngestManager extends CommandLineManager {
         @Override
         public void run() {
             LOGGER.log(Level.INFO, "Job processing task started");
+            int errorCode = CL_SUCCESS;
 
             try {
                 // read command line inputs
@@ -132,14 +144,13 @@ public class CommandLineIngestManager extends CommandLineManager {
                         commands = ((CommandLineOptionProcessor) processor).getCommands();
                     }
                 }
-
-                if (commands == null || commands.isEmpty()) {
-                    LOGGER.log(Level.SEVERE, "No command line commands specified");
-                    System.out.println("No command line commands specified");
-                    return;
-                }
-
                 try {
+                    if (commands == null || commands.isEmpty()) {
+                        LOGGER.log(Level.SEVERE, "No command line commands specified");
+                        System.out.println("No command line commands specified");
+                        return;
+                    }
+
                     // Commands are already stored in order in which they should be executed                
                     for (CommandLineCommand command : commands) {
                         CommandLineCommand.CommandType type = command.getType();
@@ -341,6 +352,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                 } finally {
                     try {
                         Case.closeCurrentCase();
+                        errorCode = CL_FAILURE;
                     } catch (CaseActionException ex) {
                         LOGGER.log(Level.WARNING, "Exception while closing case", ex);
                         System.out.println("Exception while closing case");
@@ -352,7 +364,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                 System.out.println("Job processing task finished");
 
                 // shut down Autopsy
-                stop();
+                stop(errorCode);
             }
         }
 
