@@ -316,10 +316,12 @@ public class CommandLineIngestManager extends CommandLineManager {
                             case LIST_ALL_INGEST_PROFILES:
                                 List<IngestProfile> profiles = IngestProfiles.getIngestProfiles();
                                 GsonBuilder gb = new GsonBuilder();
+                                System.out.println("Listing ingest profiles");
                                 for(IngestProfile profile: profiles) {
                                     String jsonText = gb.create().toJson(profile);
                                     System.out.println(jsonText);
-                                }    
+                                }
+                                System.out.println("Ingest profile list complete");
                             break;
                             default:
                                 break;
