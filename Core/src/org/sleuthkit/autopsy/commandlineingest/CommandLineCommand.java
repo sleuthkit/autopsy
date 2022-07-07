@@ -35,7 +35,8 @@ class CommandLineCommand {
         RUN_INGEST,
         LIST_ALL_DATA_SOURCES,
         GENERATE_REPORTS,
-        OPEN_CASE_IN_UI;
+        OPEN_CASE_IN_UI,
+        LIST_ALL_INGEST_PROFILES;
     }
 
     /**

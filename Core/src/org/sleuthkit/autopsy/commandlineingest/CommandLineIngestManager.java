@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.commandlineingest;
 
+import com.google.gson.GsonBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.nio.file.Paths;
@@ -54,6 +55,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
+import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 import org.sleuthkit.autopsy.report.infrastructure.ReportGenerator;
@@ -310,6 +312,16 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 // Do not process any other commands
                                 return;
                             }
+                            break;
+                            case LIST_ALL_INGEST_PROFILES:
+                                List<IngestProfile> profiles = IngestProfiles.getIngestProfiles();
+                                GsonBuilder gb = new GsonBuilder();
+                                System.out.println("Listing ingest profiles");
+                                for(IngestProfile profile: profiles) {
+                                    String jsonText = gb.create().toJson(profile);
+                                    System.out.println(jsonText);
+                                }
+                                System.out.println("Ingest profile list complete");
                             break;
                             default:
                                 break;
