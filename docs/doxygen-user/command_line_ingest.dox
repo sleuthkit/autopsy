@@ -172,24 +172,29 @@ You can add the --listAllDataSources at any time to output a list of all data so
 autopsy64.exe --caseBaseDir="C:\work\cases\test6_2019_09_20_13_00_51" --listAllDataSources
 \endverbatim
 
-\subsection command_line_listds Listing All Ingest Profiles
+\subsection command_line_listip Listing All Ingest Profiles
 
 You can add the --listAllIngestProfiles at any time to output a list of all ingest profiles. This command can be run alone without other options.
 
 \verbatim
-autopsy64.exe --listAllDataSources
+autopsy64.exe --listAllIngestProfiles
 \endverbatim
 
 If there are ingest profiles the output will be similar to:
 
 \verbatim
+Listing ingest profiles
 {
-  "@dataSourceName" : "blue_images.img",
-  "@dataSourceObjectId" : "1"
-} {
-  "@dataSourceName" : "green_images.img",
-  "@dataSourceObjectId" : "84"
+  "name" : "IngestProfile1",
+  "description" : "This is a description of IngestProfile1",
+  "fileIngestFilter" : "All Files, Directories, and Unallocated Space"
+} 
+{
+  "name" : "IngestProfile2",
+  "description" : "This is a description of IngestProfile2",
+  "fileIngestFilter" : "All Files, Directories, and Unallocated Space"
 }
+Ingest profile list complete
 \endverbatim
 
 \section command_line_ingest_run Running Autopsy
