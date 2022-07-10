@@ -129,12 +129,12 @@ class SampleJythonFileIngestModule(FileIngestModule):
             self.log(Level.INFO, "Found a text file: " + file.getName())
             self.filesFound+=1
 
-            # Make an artifact on the blackboard.  TSK_INTERESTING_ITEM is a generic type of
+            # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artifact.  Refer to the developer docs for other examples.
             attrs = Arrays.asList(BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
                   SampleJythonFileIngestModuleFactory.moduleName, "Text Files"))
 
-            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE,
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, Score.SCORE_LIKELY_NOTABLE,
                                          None, "Text Files", None, attrs).getAnalysisResult()
 
             try:
