@@ -45,7 +45,7 @@ The table below shows a summary of the command line operations. You can run one 
 --caseType (optional)</pre></td><td><pre>--createCase --caseName="test5" --caseBaseDir="C:\work\cases"
 --createCase --caseName="test_multi" --caseBaseDir="\\WIN-2913\work\cases" --caseType="multi"</pre></td></tr>
 
-<tr><td><b>Open Existing Case</b></td><td>&nbsp;</td><td><pre>--caseBaseDir</pre></td><td><pre>--caseBaseDir="C:\work\Cases\test5_2019_09_20_11_01_29"</pre></td></tr>
+<tr><td><b>Open Existing Case</b></td><td>&nbsp;</td><td><pre>--caseBaseDir</pre></td><td><pre>--caseBaseDir="C:\work\Cases"</pre></td></tr>
 
 <tr><td><b>Add a Data Source</b></td><td><pre>--addDataSource
 --runIngest (optional)
@@ -87,7 +87,7 @@ autopsy64.exe --createCase --caseName="test_multi" --caseBaseDir="\\WIN-2913\wor
 Once a case is created you will need to use the full path to the case instead of the case name and base folder. For example, if we created the empty case "test5" as above, we could use the following command to add a data source to it:
 
 \verbatim
-autopsy64.exe --caseName="test5" --caseBaseDir="C:\work\Cases\test5" --addDataSource 
+autopsy64.exe --caseName="test5" --caseBaseDir="C:\work\Cases" --addDataSource 
    --dataSourcePath="R:\work\images\small2.img"
 \endverbatim
 
