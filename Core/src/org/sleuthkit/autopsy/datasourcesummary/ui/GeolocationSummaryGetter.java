@@ -22,10 +22,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.GeolocationSummaryException;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.GeolocationSummary.CityData;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultArtifactUpdateGovernor;
-import org.sleuthkit.autopsy.geolocation.datamodel.GeoLocationDataException;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.DataSource;
 
@@ -68,11 +68,10 @@ public class GeolocationSummaryGetter implements DefaultArtifactUpdateGovernor {
      * @return The sorted list.
      *
      * @throws SleuthkitCaseProviderException
-     * @throws GeoLocationDataException
      * @throws InterruptedException
      */
     public CityData getCityCounts(DataSource dataSource, int daysCount, int maxCount)
-            throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException, IOException {
+            throws SleuthkitCaseProviderException, GeolocationSummaryException, InterruptedException, IOException {
         return geoSummary.getCityCounts(dataSource, daysCount, maxCount);
     }
 }

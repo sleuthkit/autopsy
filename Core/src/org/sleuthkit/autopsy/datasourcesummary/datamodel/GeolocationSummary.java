@@ -80,6 +80,28 @@ public class GeolocationSummary {
         public int getCount() {
             return count;
         }
+
+        /**
+         * @return The name of the city.
+         */
+        public String getCityName() {
+            return cityRecord == null ? null : cityRecord.getCityName();
+        }
+
+        /**
+         * @return The name of the state.
+         */
+        public String getState() {
+            return cityRecord == null ? null : cityRecord.getState();
+        }
+
+        /**
+         * @return The name of the country.
+         */
+        public String getCountry() {
+            return cityRecord == null ? null : cityRecord.getCountry();
+        }
+
     }
 
     /**
@@ -266,8 +288,8 @@ public class GeolocationSummary {
      * Main constructor.
      *
      * @param cityMapper A means of acquiring a ClosestCityMapper that can throw
-     * an IOException.
-     * @param provider A means of acquiring a SleuthkitCaseProvider.
+     *                   an IOException.
+     * @param provider   A means of acquiring a SleuthkitCaseProvider.
      */
     public GeolocationSummary(SupplierWithException<ClosestCityMapper, IOException> cityMapper, SleuthkitCaseProvider provider) {
         this.cityMapper = cityMapper;
@@ -435,11 +457,10 @@ public class GeolocationSummary {
      * @return The sorted list.
      *
      * @throws SleuthkitCaseProviderException
-     * @throws GeoLocationDataException
      * @throws InterruptedException
      */
     public CityData getCityCounts(DataSource dataSource, int daysCount, int maxCount)
-            throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException, IOException {
+            throws SleuthkitCaseProviderException, GeolocationSummaryException, InterruptedException, IOException {
 
         ClosestCityMapper closestCityMapper = this.cityMapper.get();
         GeoResult geoResult = getGeoResult(dataSource);
@@ -540,12 +561,12 @@ public class GeolocationSummary {
      * @param dataSource The data source.
      *
      * @return The GPS data pertaining to the data source.
+     *
      * @throws SleuthkitCaseProviderException
-     * @throws GeoLocationDataException
      * @throws InterruptedException
      */
     private GeoResult getGeoResult(DataSource dataSource)
-            throws SleuthkitCaseProviderException, GeoLocationDataException, InterruptedException {
+            throws SleuthkitCaseProviderException, GeolocationSummaryException, InterruptedException {
 
         // make asynchronous callback synchronous (the callback nature will be handled in a different level)
         // see the following: https://stackoverflow.com/questions/20659961/java-synchronous-callback
@@ -553,6 +574,7 @@ public class GeolocationSummary {
 
         GeoFilter geoFilter = new GeoFilter(true, false, 0, Arrays.asList(dataSource), GPS_ARTIFACT_TYPES);
 
+        try {
         WaypointBuilder.getAllWaypoints(provider.get(),
                 Arrays.asList(dataSource),
                 GPS_ARTIFACT_TYPES,
@@ -560,7 +582,34 @@ public class GeolocationSummary {
                 -1,
                 false,
                 new PointFetcher(asyncResult, geoFilter));
-
+        } catch (GeoLocationDataException ex) {
+            throw new GeolocationSummaryException("An exception occurred while fetching geolocation data.", ex);
+        }
+        
         return asyncResult.take();
+    }
+    
+    /**
+     * Exception for geolocation summary.
+     */
+    public static class GeolocationSummaryException extends Exception {
+
+        /**
+         * Constructor.
+         * @param message The exception message.
+         */
+        GeolocationSummaryException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructor.
+         * @param message The exception message.
+         * @param thrwbl The exception.
+         */
+        GeolocationSummaryException(String message, Throwable thrwbl) {
+            super(message, thrwbl);
+        }
+        
     }
 }
