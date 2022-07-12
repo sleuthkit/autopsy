@@ -366,7 +366,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
      */
     private void handleError(String errorMessage) throws CommandException {
         logger.log(Level.SEVERE, errorMessage);
-        throw new CommandException(1, errorMessage);
+        throw new CommandException(CommandLineIngestManager.CL_PROCESS_FAILURE, errorMessage);
     }
     
     public void addPropertyChangeListener(
