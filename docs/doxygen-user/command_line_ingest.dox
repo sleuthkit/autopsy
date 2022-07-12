@@ -45,7 +45,7 @@ The table below shows a summary of the command line operations. You can run one 
 --caseType (optional)</pre></td><td><pre>--createCase --caseName="test5" --caseBaseDir="C:\work\cases"
 --createCase --caseName="test_multi" --caseBaseDir="\\WIN-2913\work\cases" --caseType="multi"</pre></td></tr>
 
-<tr><td><b>Open Existing Case</b></td><td>&nbsp;</td><td><pre>--caseDir</pre></td><td><pre>--caseDir="C:\work\Cases\test5_2019_09_20_11_01_29"</pre></td></tr>
+<tr><td><b>Open Existing Case</b></td><td>&nbsp;</td><td><pre>--caseBaseDir</pre></td><td><pre>--caseBaseDir="C:\work\Cases"</pre></td></tr>
 
 <tr><td><b>Add a Data Source</b></td><td><pre>--addDataSource
 --runIngest (optional)
@@ -60,6 +60,7 @@ The table below shows a summary of the command line operations. You can run one 
 --generateReports="kmlReport"</pre></td></tr>
 
 <tr><td><b>Create List of Data Sources</b></td><td><pre>--listAllDataSources</pre></td><td>&nbsp;</td><td></td><pre>--listAllDataSources</pre></tr>
+<tr><td><b>Create List Ingest Profiles</b></td><td><pre>--listAllIngestProfiles</pre></td><td>&nbsp;</td><td></td><pre>--listAllIngestProfiles</pre></tr>
 </table>
 
 
@@ -86,7 +87,7 @@ autopsy64.exe --createCase --caseName="test_multi" --caseBaseDir="\\WIN-2913\wor
 Once a case is created you will need to use the full path to the case instead of the case name and base folder. For example, if we created the empty case "test5" as above, we could use the following command to add a data source to it:
 
 \verbatim
-autopsy64.exe --caseDir="C:\work\Cases\test5_2019_09_20_11_01_29" --addDataSource 
+autopsy64.exe --caseName="test5" --caseBaseDir="C:\work\Cases" --addDataSource 
    --dataSourcePath="R:\work\images\small2.img"
 \endverbatim
 
@@ -106,14 +107,14 @@ autopsy64.exe --createCase --caseName="test6" --caseBaseDir="C:\work\cases" --ad
 And here we'll add another data source ("green_images.img") to the case we just made and run ingest on it. Note that ingest will only run on the new data source ("green_images.img"), not the one already in the case ("blue_images.img").
 
 \verbatim
-autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest 
+autopsy64.exe --caseName="test6" --caseBaseDir="C:\work\cases" --addDataSource --runIngest 
    --dataSourcePath="R:\work\images\green_images.img"
 \endverbatim
 
 Next we'll add a third data source ("red_images.img") to the case and run ingest using a custom ingest profile "imageAnalysis" created as described in the \ref command_line_ingest_profile "Configuring Ingest Profiles" section above. 
 
 \verbatim
-autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest="imageAnalysis"
+autopsy64.exe --caseName="test6" --caseBaseDir="C:\work\cases" --addDataSource --runIngest="imageAnalysis"
    --dataSourcePath="R:\work\images\red_images.img"
 \endverbatim
 
@@ -145,7 +146,7 @@ If you've run with the --listAllDataSources option, there will be at least one f
 You can also look through the addDataSource files to find the one corresponding to the file you want to ingest. The format will be the same. Once you know the data source object ID, you can use the --dataSourceObjectId option to specify it. For example, this will run ingest on "blue_images.img":
 
 \verbatim
-autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --runIngest --dataSourceObjectId=1
+autopsy64.exe --caseName="test6" --caseBaseDir="C:\work\cases" --runIngest --dataSourceObjectId=1
 \endverbatim
 
 \subsection command_line_report Generating Reports
@@ -153,14 +154,14 @@ autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --runIngest --
 You can generate a report on the case using the --generateReports option. You can select which report type to export through the Autopsy options panel (see the \ref command_line_ingest_config "configuration section"). This option can be run alone or at the same time as you're processing a data source. In this example we're adding a new data source ("small2.img") and generating a report.
 
 \verbatim
-autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource
+autopsy64.exe --caseName="test6" --caseBaseDir="C:\work\cases" --addDataSource
    --dataSourcePath="R:\work\images\small2.img" --runIngest --generateReports
 \endverbatim
 
 The example above uses the default report profile. If you set up a custom report profile as described in the \ref command_line_report_profile "Configuring Ingest Profiles section" above, you can specify that profile after the --generateReports option.
 
 \verbatim
-autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --generateReports="html"
+autopsy64.exe --caseName="test6" --caseBaseDir="C:\work\cases" --generateReports="html"
 \endverbatim
 
 \subsection command_line_listds Listing All Data Sources
@@ -168,9 +169,33 @@ autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --generateRepo
 You can add the --listAllDataSources at any time to output a list of all data sources currently in the case along with their object IDs, to be used when \ref command_line_existing_ds "running on an existing data source". This command can even be run alone with just the path to the case.
 
 \verbatim
-autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --listAllDataSources
+autopsy64.exe --caseName="test6" --caseBaseDir="C:\work\cases\" --listAllDataSources
 \endverbatim
 
+\subsection command_line_listip Listing All Ingest Profiles
+
+You can add the --listAllIngestProfiles at any time to output a list of all ingest profiles. This command can be run alone without other options.
+
+\verbatim
+autopsy64.exe --listAllIngestProfiles
+\endverbatim
+
+If there are ingest profiles the output will be similar to:
+
+\verbatim
+Listing ingest profiles
+{
+  "name" : "IngestProfile1",
+  "description" : "This is a description of IngestProfile1",
+  "fileIngestFilter" : "All Files, Directories, and Unallocated Space"
+} 
+{
+  "name" : "IngestProfile2",
+  "description" : "This is a description of IngestProfile2",
+  "fileIngestFilter" : "All Files, Directories, and Unallocated Space"
+}
+Ingest profile list complete
+\endverbatim
 
 \section command_line_ingest_run Running Autopsy
 
