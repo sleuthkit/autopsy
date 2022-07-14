@@ -330,6 +330,13 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 errorCode = CL_RUN_FAILURE;
                                 // Do not process any other commands
                                 return;
+                            } catch (Exception ex) {
+                                String msg = "An exception occurred while generating report: " + ex.getMessage();
+                                LOGGER.log(Level.WARNING, msg, ex);
+                                System.out.println(msg);
+                                errorCode = CL_RUN_FAILURE;
+                                // Do not process any other commands
+                                return;
                             }
                             break;
                             case LIST_ALL_INGEST_PROFILES:
