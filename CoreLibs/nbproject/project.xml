@@ -36,12 +36,15 @@
                 <package>com.dd.plist</package>
                 <package>com.fasterxml.jackson.annotation</package>
                 <package>com.fasterxml.jackson.core</package>
+                <package>com.fasterxml.jackson.core.async</package>
                 <package>com.fasterxml.jackson.core.base</package>
                 <package>com.fasterxml.jackson.core.exc</package>
                 <package>com.fasterxml.jackson.core.filter</package>
                 <package>com.fasterxml.jackson.core.format</package>
                 <package>com.fasterxml.jackson.core.io</package>
                 <package>com.fasterxml.jackson.core.json</package>
+                <package>com.fasterxml.jackson.core.json.async</package>
+                <package>com.fasterxml.jackson.core.sym</package>
                 <package>com.fasterxml.jackson.core.type</package>
                 <package>com.fasterxml.jackson.core.util</package>
                 <package>com.fasterxml.jackson.databind</package>
@@ -54,6 +57,9 @@
                 <package>com.fasterxml.jackson.databind.ext</package>
                 <package>com.fasterxml.jackson.databind.introspect</package>
                 <package>com.fasterxml.jackson.databind.json</package>
+                <package>com.fasterxml.jackson.databind.jsonFormatVisitors</package>
+                <package>com.fasterxml.jackson.databind.jsonschema</package>
+                <package>com.fasterxml.jackson.databind.jsontype</package>
                 <package>com.fasterxml.jackson.databind.jsontype.impl</package>
                 <package>com.fasterxml.jackson.databind.module</package>
                 <package>com.fasterxml.jackson.databind.node</package>
@@ -451,6 +457,7 @@
                 <package>org.opencv.core</package>
                 <package>org.opencv.features2d</package>
                 <package>org.opencv.gpu</package>
+                <package>org.opencv.imgcodecs</package>
                 <package>org.opencv.imgproc</package>
                 <package>org.opencv.ml</package>
                 <package>org.opencv.objdetect</package>
@@ -458,7 +465,6 @@
                 <package>org.opencv.utils</package>
                 <package>org.opencv.video</package>
                 <package>org.opencv.videoio</package>
-                <package>org.opencv.imgcodecs</package>
                 <package>org.sleuthkit.autopsy.corelibs</package>
                 <package>org.slf4j</package>
                 <package>org.slf4j.event</package>
