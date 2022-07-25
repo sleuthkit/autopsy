@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.openide.modules.ModuleInstall;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -68,7 +69,9 @@ public class Installer extends ModuleInstall {
     @Override
     public boolean closing() {
         //force ingest inbox closed on exit and save state as such
-        IngestMessageTopComponent.findInstance().close();
+        if (RuntimeProperties.runningWithGUI()) {
+            IngestMessageTopComponent.findInstance().close();
+        }
         return true;
     }
 

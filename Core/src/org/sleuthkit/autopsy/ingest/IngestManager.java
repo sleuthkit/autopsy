@@ -574,15 +574,18 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
         // initialize IngestMessageInbox, if it hasn't been initialized yet. This can't be done in
         // the constructor because that ends up freezing the UI on startup (JIRA-7345).
-        if (SwingUtilities.isEventDispatchThread()) {
-            initIngestMessageInbox();
-        } else {
-            try {
-                SwingUtilities.invokeAndWait(() -> initIngestMessageInbox());
-            } catch (InterruptedException ex) {
-                // ignore interruptions
-            } catch (InvocationTargetException ex) {
-                logger.log(Level.WARNING, "There was an error starting ingest message inbox", ex);
+        
+        if (RuntimeProperties.runningWithGUI()) {
+            if (SwingUtilities.isEventDispatchThread()) {
+                initIngestMessageInbox();
+            } else {
+                try {
+                    SwingUtilities.invokeAndWait(() -> initIngestMessageInbox());
+                } catch (InterruptedException ex) {
+                    // ignore interruptions
+                } catch (InvocationTargetException ex) {
+                    logger.log(Level.WARNING, "There was an error starting ingest message inbox", ex);
+                }
             }
         }
 
