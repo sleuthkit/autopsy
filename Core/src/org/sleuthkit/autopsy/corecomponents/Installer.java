@@ -23,6 +23,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -128,7 +129,11 @@ public class Installer extends ModuleInstall {
                         @Override
                         public void propertyChange(PropertyChangeEvent evt) {
                             if (evt.getPropertyName().equals(CommandLineOptionProcessor.PROCESSING_COMPLETED)) {
-                                StartupWindowProvider.getInstance().open();
+                                try {
+                                    SwingUtilities.invokeAndWait(() -> StartupWindowProvider.getInstance().open());
+                                } catch (InterruptedException | InvocationTargetException ex) {
+                                    logger.log(Level.WARNING, "An error occurred while starting the startup window.", ex);
+                                }
                             }
                         }
                     });
