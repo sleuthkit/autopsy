@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -34,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * When the interesting items module loads, this runnable loads standard
- * interesting file set rules.
+ * interesting file set rules and performs upgrades.
  */
 @OnStart
 public class StandardInterestingFilesSetsLoader implements Runnable {
@@ -57,6 +58,8 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
         "StandardInterestingFilesSetsLoader_cannotUpdateInterestingFilesSets=Unable to write updated configuration for interesting files sets to config directory."
     })
     public void run() {
+        upgradeConfig();
+        
         Map<String, FilesSet> standardInterestingFileSets = null;
         try {
             standardInterestingFileSets = readStandardFileXML();
@@ -83,6 +86,17 @@ public class StandardInterestingFilesSetsLoader implements Runnable {
             FilesSetsManager.getInstance().setInterestingFilesSets(userConfiguredSettings);
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             handleError(Bundle.StandardInterestingFilesSetsLoader_cannotUpdateInterestingFilesSets(), ex);
+        }
+    }
+
+    /**
+     * Moves settings to new location.
+     */
+    private void upgradeConfig() {
+        try {
+            FilesSetsManager.getInstance().upgradeConfig();
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, "There was an error while upgrading config paths.", ex);
         }
     }
 

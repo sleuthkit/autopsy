@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -82,7 +84,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private IngestJobContext context;
     private Blackboard blackboard;
     private CommunicationArtifactsHelper communicationArtifactsHelper;
-
+    
+    // A cache of custom attributes for the VcardParser unique to each ingest run, but consistent across threads.
+    private static ConcurrentMap<String, BlackboardAttribute.Type> customAttributeCache = new ConcurrentHashMap<>();
+    private static Object customAttributeCacheLock = new Object();
+    
     private static final int MBOX_SIZE_TO_SPLIT = 1048576000;
     private Case currentCase;
 
@@ -96,6 +102,13 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     @Messages({"ThunderbirdMboxFileIngestModule.noOpenCase.errMsg=Exception while getting open case."})
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
+        
+        synchronized(customAttributeCacheLock) {
+            if (!customAttributeCache.isEmpty()) {
+                customAttributeCache.clear();
+            }
+        }
+        
         try {
             currentCase = Case.getCurrentCaseThrows();
             fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
@@ -152,7 +165,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         if (isMbox || isEMLFile || isPstFile || isVcardFile) {
             try {
                 communicationArtifactsHelper = new CommunicationArtifactsHelper(currentCase.getSleuthkitCase(),
-                        EmailParserModuleFactory.getModuleName(), abstractFile, Account.Type.EMAIL);
+                        EmailParserModuleFactory.getModuleName(), abstractFile, Account.Type.EMAIL, context.getJobId());
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to create CommunicationArtifactsHelper for file with object id = %d", abstractFile.getId()), ex);
                 return ProcessResult.ERROR;
@@ -255,7 +268,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
                     try {
                         // index the artifact for keyword search
-                        blackboard.postArtifact(artifact, EmailParserModuleFactory.getModuleName());
+                        blackboard.postArtifact(artifact, EmailParserModuleFactory.getModuleName(), context.getJobId());
                     } catch (Blackboard.BlackboardException ex) {
                         MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_processPst_indexError_message(), artifact.getDisplayName());
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
@@ -441,7 +454,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     })
     private ProcessResult processVcard(AbstractFile abstractFile) {
         try {
-            VcardParser parser = new VcardParser(currentCase, context);
+            VcardParser parser = new VcardParser(currentCase, context, customAttributeCache);
             parser.parse(abstractFile);
         } catch (IOException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, String.format("Exception while parsing the file '%s' (id=%d).", abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
@@ -713,7 +726,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         if (senderAddressList.size() == 1) {
             senderAddress = senderAddressList.get(0);
             try {
-                senderAccountInstance = accountFileInstanceCache.getAccountInstance(senderAddress);
+                senderAccountInstance = accountFileInstanceCache.getAccountInstance(senderAddress, context);
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to create account for email address  " + senderAddress, ex); //NON-NLS
             }
@@ -736,7 +749,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 return null;
             }
             try {
-                AccountFileInstance recipientAccountInstance = accountFileInstanceCache.getAccountInstance(addr);
+                AccountFileInstance recipientAccountInstance = accountFileInstanceCache.getAccountInstance(addr, context);
                 recipientAccountInstances.add(recipientAccountInstance);
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Failed to create account for email address  " + addr, ex); //NON-NLS
@@ -786,7 +799,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
             try {
                 // index the artifact for keyword search
-                blackboard.postArtifact(bbart, EmailParserModuleFactory.getModuleName());
+                blackboard.postArtifact(bbart, EmailParserModuleFactory.getModuleName(), context.getJobId());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_addArtifact_indexError_message(), bbart.getDisplayName());
@@ -864,19 +877,20 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
          * Get the account file instance from the cache or the database.
          *
          * @param email The email for this account.
+         * @param context The current ingest job context.
          *
          * @return The corresponding AccountFileInstance
          *
          * @throws TskCoreException
          */
-        AccountFileInstance getAccountInstance(String email) throws TskCoreException {
+        AccountFileInstance getAccountInstance(String email, IngestJobContext context) throws TskCoreException {
             if (cacheMap.containsKey(email)) {
                 return cacheMap.get(email);
             }
 
             AccountFileInstance accountInstance
                     = currentCase.getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, email,
-                            EmailParserModuleFactory.getModuleName(), file);
+                            EmailParserModuleFactory.getModuleName(), file, null, context.getJobId());
             cacheMap.put(email, accountInstance);
             return accountInstance;
         }
@@ -911,7 +925,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        // nothing to shut down
+        synchronized(customAttributeCacheLock) {
+            if (!customAttributeCache.isEmpty()) {
+                customAttributeCache.clear();
+            }
+        }
     }
 
 }

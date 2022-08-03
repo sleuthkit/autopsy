@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,17 +25,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang.StringUtils;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestServices;;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -56,6 +56,8 @@ class QueryResults {
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
     private final KeywordSearchQuery query;
     private final Map<Keyword, List<KeywordHit>> results = new HashMap<>();
+    
+    private static final int MAX_INBOX_NOTIFICATIONS_PER_KW_TERM = 20;
 
     /**
      * Constructs a object that stores and processes the results of a keyword
@@ -64,7 +66,7 @@ class QueryResults {
      * and publishing an event to notify subscribers of the blackboard posts.
      *
      * The KeywordSearchQuery is used to do the blackboard posts.
-     * 
+     *
      * @param query The query.
      */
     QueryResults(KeywordSearchQuery query) {
@@ -130,57 +132,29 @@ class QueryResults {
      * All calls to the addResult method MUST be completed before calling this
      * method.
      *
-     * @param progress    A progress indicator that reports the number of
-     *                    keywords processed. Can be null.
-     * @param subProgress A progress contributor that reports the keyword
-     *                    currently being processed. Can be null.
      * @param worker      The SwingWorker that is being used to do the
      *                    processing, will be checked for task cancellation
      *                    before processing each keyword.
      * @param notifyInbox Whether or not to write a message to the ingest
      *                    messages inbox if there is a keyword hit in the text
      *                    exrtacted from the text source object.
-     * @param saveResults Flag whether to save search results as KWS artifacts.
-     *
+     * @param saveResults Whether or not to create keyword hit analysis results.
+     * @param ingestJobId The numeric identifier of the ingest job within which
+     *                    the artifacts are being created, may be null.
      */
-    void process(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<?, ?> worker, boolean notifyInbox, boolean saveResults) {
-        /*
-         * Initialize the progress indicator to the number of keywords that will
-         * be processed.
-         */
-        if (null != progress) {
-            progress.start(getKeywords().size());
-        }
-
-        /*
-         * Process the keyword hits for each keyword.
-         */
-        int keywordsProcessed = 0;
+    void process(SwingWorker<?, ?> worker, boolean notifyInbox, boolean saveResults, Long ingestJobId) {
         final Collection<BlackboardArtifact> hitArtifacts = new ArrayList<>();
+        
+        int notificationCount = 0;
         for (final Keyword keyword : getKeywords()) {
             /*
              * Cancellation check.
              */
             if (worker.isCancelled()) {
                 logger.log(Level.INFO, "Processing cancelled, exiting before processing search term {0}", keyword.getSearchTerm()); //NON-NLS
-                break;
+                return;
             }
-
-            /*
-             * Update the progress indicator and the show the current keyword
-             * via the progress contributor.
-             */
-            if (progress != null) {
-                progress.progress(keyword.toString(), keywordsProcessed);
-            }
-            if (subProgress != null) {
-                String hitDisplayStr = keyword.getSearchTerm();
-                if (hitDisplayStr.length() > 50) {
-                    hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
-                }
-                subProgress.progress(query.getKeywordList().getName() + ": " + hitDisplayStr, keywordsProcessed);
-            }
-
+            
             /*
              * Reduce the hits for this keyword to one hit per text source
              * object so that only one hit artifact is generated per text source
@@ -200,7 +174,7 @@ class QueryResults {
                         snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !query.isLiteral(), true);
                     } catch (NoOpenCoreException e) {
                         logger.log(Level.SEVERE, "Solr core closed while executing snippet query " + snippetQuery, e); //NON-NLS
-                        break; // Stop processing.
+                        return; // Stop processing.
                     } catch (Exception e) {
                         logger.log(Level.SEVERE, "Error executing snippet query " + snippetQuery, e); //NON-NLS
                         continue; // Try processing the next hit.
@@ -218,20 +192,24 @@ class QueryResults {
                 } catch (TskCoreException | NoCurrentCaseException tskCoreException) {
                     logger.log(Level.SEVERE, "Failed to get text source object for keyword hit", tskCoreException); //NON-NLS
                 }
-                
+
                 if ((content != null) && saveResults) {
                     /*
-                    * Post an artifact for the hit to the blackboard.
+                     * Post an artifact for the hit to the blackboard.
                      */
-                    BlackboardArtifact artifact = query.createKeywordHitArtifact(content, keyword, hit, snippet, query.getKeywordList().getName());
+                    BlackboardArtifact artifact = query.createKeywordHitArtifact(content, keyword, hit, snippet, query.getKeywordList().getName(), ingestJobId);
 
                     /*
-                    * Send an ingest inbox message for the hit.
+                     * Send an ingest inbox message for the hit.
                      */
                     if (null != artifact) {
                         hitArtifacts.add(artifact);
-                        if (notifyInbox) {
+                        if (notifyInbox && notificationCount < MAX_INBOX_NOTIFICATIONS_PER_KW_TERM) {
+                            // only send ingest inbox messages for the first MAX_INBOX_NOTIFICATIONS_PER_KW_TERM hits
+                            // for every KW term (per ingest job, aka data source). Otherwise we can have a situation
+                            // where we send tens of thousands of notifications. 
                             try {
+                                notificationCount++;
                                 writeSingleFileInboxMessage(artifact, content);
                             } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, "Error sending message to ingest messages inbox", ex); //NON-NLS
@@ -240,8 +218,6 @@ class QueryResults {
                     }
                 }
             }
-
-            ++keywordsProcessed;
         }
 
         /*
@@ -253,7 +229,7 @@ class QueryResults {
                 SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                 Blackboard blackboard = tskCase.getBlackboard();
 
-                blackboard.postArtifacts(hitArtifacts, MODULE_NAME);
+                blackboard.postArtifacts(hitArtifacts, MODULE_NAME, ingestJobId);
             } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Failed to post KWH artifact to blackboard.", ex); //NON-NLS
             }
@@ -296,69 +272,74 @@ class QueryResults {
      * @throws TskCoreException If there is a problem generating or send the
      *                          inbox message.
      */
-    private void writeSingleFileInboxMessage(BlackboardArtifact artifact, Content hitContent) throws TskCoreException {
-        StringBuilder subjectSb = new StringBuilder(1024);
-        if (!query.isLiteral()) {
-            subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
-        } else {
-            subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
-        }
+    private void writeSingleFileInboxMessage(final BlackboardArtifact artifact, final Content hitContent) throws TskCoreException {
+        if (artifact != null && hitContent != null && RuntimeProperties.runningWithGUI()) {
+            final StringBuilder subjectSb = new StringBuilder(1024);
+            if (!query.isLiteral()) {
+                subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
+            } else {
+                subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
+            }
 
-        StringBuilder detailsSb = new StringBuilder(1024);
-        String uniqueKey = null;
-        BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD));
-        if (attr != null) {
-            final String keyword = attr.getValueString();
-            subjectSb.append(keyword);
-            uniqueKey = keyword.toLowerCase();
-            detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
-            detailsSb.append("<tr>"); //NON-NLS
-            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
-            detailsSb.append("<td>").append(EscapeUtil.escapeHtml(keyword)).append("</td>"); //NON-NLS
-            detailsSb.append("</tr>"); //NON-NLS
-        }
+            final StringBuilder detailsSb = new StringBuilder(1024);
+            String uniqueKey = null;
+            BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD));
+            if (attr != null) {
+                final String keyword = attr.getValueString();
+                subjectSb.append(keyword);
+                uniqueKey = keyword.toLowerCase();
+                detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+                detailsSb.append("<tr>"); //NON-NLS
+                detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
+                detailsSb.append("<td>").append(EscapeUtil.escapeHtml(keyword)).append("</td>"); //NON-NLS
+                detailsSb.append("</tr>"); //NON-NLS
+            }
 
-        //preview
-        attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW));
-        if (attr != null) {
-            detailsSb.append("<tr>"); //NON-NLS
-            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
-            detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
-            detailsSb.append("</tr>"); //NON-NLS
-        }
-
-        //file
-        detailsSb.append("<tr>"); //NON-NLS
-        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
-        if (hitContent instanceof AbstractFile) {
-            AbstractFile hitFile = (AbstractFile) hitContent;
-            detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
-        } else {
-            detailsSb.append("<td>").append(hitContent.getName()).append("</td>"); //NON-NLS
-        }
-        detailsSb.append("</tr>"); //NON-NLS
-
-        //list
-        attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
-        if (attr != null) {
-            detailsSb.append("<tr>"); //NON-NLS
-            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
-            detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
-            detailsSb.append("</tr>"); //NON-NLS
-        }
-
-        //regex
-        if (!query.isLiteral()) {
-            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP));
+            //preview
+            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW));
             if (attr != null) {
                 detailsSb.append("<tr>"); //NON-NLS
-                detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
+                detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
+                detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
+                detailsSb.append("</tr>"); //NON-NLS
+            }
+
+            //file
+            detailsSb.append("<tr>"); //NON-NLS
+            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
+            if (hitContent instanceof AbstractFile) {
+                AbstractFile hitFile = (AbstractFile) hitContent;
+                detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>"); //NON-NLS
+            } else {
+                detailsSb.append("<td>").append(hitContent.getName()).append("</td>"); //NON-NLS
+            }
+            detailsSb.append("</tr>"); //NON-NLS
+
+            //list
+            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+            if (attr != null) {
+                detailsSb.append("<tr>"); //NON-NLS
+                detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
                 detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
                 detailsSb.append("</tr>"); //NON-NLS
             }
-        }
-        detailsSb.append("</table>"); //NON-NLS
 
-        IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(MODULE_NAME, subjectSb.toString(), detailsSb.toString(), uniqueKey, artifact));
+            //regex
+            if (!query.isLiteral()) {
+                attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP));
+                if (attr != null) {
+                    detailsSb.append("<tr>"); //NON-NLS
+                    detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
+                    detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
+                    detailsSb.append("</tr>"); //NON-NLS
+                }
+            }
+            detailsSb.append("</table>"); //NON-NLS
+
+            final String key = uniqueKey; // Might be null, but that's supported.
+            SwingUtilities.invokeLater(() -> {
+                IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(MODULE_NAME, subjectSb.toString(), detailsSb.toString(), key, artifact));
+            });
+        }
     }
 }

@@ -327,7 +327,7 @@ public class DiscoveryAttributes {
                 if (context.searchIsCancelled()) {
                     throw new SearchCancellationException("Search was cancelled while orgainizing domains by their normalized value.");
                 }
-            } catch (CorrelationAttributeNormalizationException ex) {
+            } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {
                 logger.log(Level.INFO, String.format("Domain [%s] failed normalization, skipping...", domainInstance.getDomain()));
             }
         }
@@ -791,8 +791,8 @@ public class DiscoveryAttributes {
                 CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
             // Get pairs of (object ID, interesting item set name) for all files in the list of files that have
-            // interesting file set hits.
-            String selectQuery = createSetNameClause(results, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+            // interesting item set hits.
+            String selectQuery = createSetNameClause(results, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID(),
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
 
             InterestingFileSetNamesCallback callback = new InterestingFileSetNamesCallback(results);

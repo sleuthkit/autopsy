@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2018 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.modules.encryptiondetection;
 
-import com.healthmarketscience.jackcess.CryptCodecProvider;
+import com.healthmarketscience.jackcess.crypt.CryptCodecProvider;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
-import com.healthmarketscience.jackcess.InvalidCredentialsException;
+import com.healthmarketscience.jackcess.crypt.InvalidCredentialsException;
 import com.healthmarketscience.jackcess.impl.CodecProvider;
 import com.healthmarketscience.jackcess.impl.UnsupportedCodecException;
 import com.healthmarketscience.jackcess.util.MemFileChannel;
@@ -212,7 +212,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                  * post the artifact which will index the artifact for keyword
                  * search, and fire an event to notify UI of this new artifact
                  */
-                blackboard.postArtifact(artifact, EncryptionDetectionModuleFactory.getModuleName());
+                blackboard.postArtifact(artifact, EncryptionDetectionModuleFactory.getModuleName(), context.getJobId());
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
             }

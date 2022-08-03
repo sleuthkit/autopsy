@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,7 +75,7 @@ class InstalledApplicationsAnalyzer(general.AndroidComponentAnalyzer):
             try:
                 current_case = Case.getCurrentCaseThrows()
                 libraryDbHelper = ArtifactsHelper(current_case.getSleuthkitCase(),
-                                    self._MODULE_NAME, libraryDb.getDBFile())
+                                    self._MODULE_NAME, libraryDb.getDBFile(), context.getJobId())
                 queryString = "SELECT doc_id, purchase_time FROM ownership"
                 ownershipResultSet = libraryDb.runQuery(queryString)
                 if ownershipResultSet is not None:

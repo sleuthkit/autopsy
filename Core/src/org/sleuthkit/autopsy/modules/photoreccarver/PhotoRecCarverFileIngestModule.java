@@ -32,8 +32,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
@@ -60,9 +62,13 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ProcTerminationCode;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * A file ingest module that runs the Unallocated Carver executable with
@@ -395,6 +401,16 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
             if (carvedItems != null && !carvedItems.isEmpty()) { // if there were any results from carving, add the unallocated carving event to the reports list.
                 totals.totalItemsRecovered.addAndGet(carvedItems.size());
                 context.addFilesToJob(new ArrayList<>(carvedItems));
+                
+                // Fire events for all virtual directory parents that may have just been created
+                try {
+                    List<AbstractFile> virtualParentDirs = getVirtualDirectoryParents(carvedItems);
+                    for (AbstractFile virtualDir : virtualParentDirs) {
+                        services.fireModuleContentEvent(new ModuleContentEvent(virtualDir));
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error collecting carved file parent directories", ex);
+                }
                 services.fireModuleContentEvent(new ModuleContentEvent(carvedItems.get(0))); // fire an event to update the tree
             }
         } catch (ReadContentInputStreamException ex) {
@@ -415,6 +431,46 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
         }
         return IngestModule.ProcessResult.OK;
 
+    }
+    
+    /**
+     * Return a list of all virtual directory parents of the list of carved files.
+     * These directories were likely just created while adding the carved files to the
+     * case database. The directories will include the main "$CarvedFiles" folder and
+     * any subfolders.
+     * 
+     * @param layoutFiles List of carved files.
+     * 
+     * @return List of virtual directory parents of the carved files.
+     * 
+     * @throws TskCoreException 
+     */
+    private List<AbstractFile> getVirtualDirectoryParents(List<LayoutFile> layoutFiles) throws TskCoreException {
+        // Keep track of which parent IDs we've already looked at to avoid unneccessary database lookups
+        Set<Long> processedParentIds = new HashSet<>();
+        
+        // For each layout file, go up its parent structure until we:
+        // - Find a parent that we've already looked at
+        // - Find a parent that is not a normal virtual directory
+        // Add all new parents to the list.
+        List<AbstractFile> parentFiles = new ArrayList<>();
+        for (LayoutFile file : layoutFiles) {
+            AbstractFile currentFile = file;
+            while (currentFile.getParentId().isPresent() && !processedParentIds.contains(currentFile.getParentId().get())) {
+                Content parent = currentFile.getParent();
+                processedParentIds.add(parent.getId());
+                if (! (parent instanceof VirtualDirectory)
+                        || (currentFile instanceof DataSource)) {
+                    // Stop if we hit a non-virtual directory
+                    break;
+                }
+                
+                // Move up to the next level and save the current virtual directory to the list.
+                currentFile = (AbstractFile)parent;
+                parentFiles.add(currentFile);
+            }
+        }
+        return parentFiles;
     }
 
     private void cleanup(Path outputDirPath, Path tempFilePath) {

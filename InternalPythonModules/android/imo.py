@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -109,12 +109,12 @@ class IMOAnalyzer(general.AndroidComponentAnalyzer):
                     friendsDBHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                                     self._PARSER_NAME,
                                                     friendsDb.getDBFile(),
-                                                    Account.Type.IMO, Account.Type.IMO, selfAccountId )
+                                                    Account.Type.IMO, Account.Type.IMO, selfAccountId, context.getJobId())
                 else:
                    friendsDBHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                                     self._PARSER_NAME,
                                                     friendsDb.getDBFile(),
-                                                    Account.Type.IMO ) 
+                                                    Account.Type.IMO, context.getJobId()) 
                 contactsResultSet = friendsDb.runQuery("SELECT buid, name FROM friends")
                 if contactsResultSet is not None:
                     while contactsResultSet.next():

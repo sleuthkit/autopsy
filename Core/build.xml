@@ -94,37 +94,19 @@
         <copy todir="${basedir}/release/OfficialHashSets" >
             <fileset dir="${thirdparty.dir}/OfficialHashSets"/>
         </copy>
-        
-        <!--Copy ImageMagick to release-->
-        <copy todir="${basedir}/release/ImageMagick-7.0.10-27-portable-Q16-x64" >
-            <fileset dir="${thirdparty.dir}/ImageMagick-7.0.10-27-portable-Q16-x64"/>
-        </copy>
 
         <!--Copy DomainCategorization to release-->
         <copy todir="${basedir}/release/DomainCategorization" >
             <fileset dir="${thirdparty.dir}/DomainCategorization"/>
         </copy>
 
-        <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
-        have it stored in a ZIP file. We'll extract it in place and remove
-        the ZIP file afterward. -->
-        <property name="gstreamer-base-path" value="${basedir}/release/gstreamer/1.0/" />
-
-        <unzip src="${gstreamer-base-path}/x86_64/lib/gstreamer-1.0/libgstlibav.zip"
-               dest="${gstreamer-base-path}/x86_64/lib/gstreamer-1.0/"/>
-        <delete file="${gstreamer-base-path}/x86_64/lib/gstreamer-1.0/libgstlibav.zip" />
-
-        <unzip src="${gstreamer-base-path}/x86/lib/gstreamer-1.0/libgstlibav.zip"
-               dest="${gstreamer-base-path}/x86/lib/gstreamer-1.0/"/>
-        <delete file="${gstreamer-base-path}/x86/lib/gstreamer-1.0/libgstlibav.zip" />
-
         <!--Copy other jars-->
         <copy file="${thirdparty.dir}/rejistry/Rejistry-1.1-SNAPSHOT.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding-AllPlatforms.jar" todir="${ext.dir}" />
-        <copy file="${thirdparty.dir}/stix/StixLib.jar" todir="${ext.dir}" />
+        <!-- <copy file="${thirdparty.dir}/stix/StixLib.jar" todir="${ext.dir}" /> -->
         <copy todir="${ext.dir}">
-            <fileset dir="${thirdparty.dir}/IcePDF 6.2.2/"/> 
+            <fileset dir="${thirdparty.dir}/jai/"/> 
         </copy>
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/jdom/jdom-2.0.5-contrib.jar" todir="${ext.dir}" />
@@ -152,14 +134,14 @@
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-${TSK_VERSION}.jar" 
               tofile="${ext.dir}/sleuthkit-${TSK_VERSION}.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.25.2.jar"
-              tofile="${ext.dir}/sqlite-jdbc-3.25.2.jar"/>
-		<copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-42.2.18.jar" 
-              tofile="${ext.dir}/postgresql-42.2.18.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar"
-              tofile="${ext.dir}/mchange-commons-java-0.2.9.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"
-              tofile="${ext.dir}/c3p0-0.9.5.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.36.0.3.jar"
+              tofile="${ext.dir}/sqlite-jdbc-3.36.0.3.jar"/>
+		<copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-42.3.5.jar" 
+              tofile="${ext.dir}/postgresql-42.3.5.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.5.jar"
+              tofile="${ext.dir}/c3p0-0.9.5.5.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.20.jar"
+              tofile="${ext.dir}/mchange-commons-java-0.2.20.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
               tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	
         <copy file="${env.TSK_HOME}/case-uco/java/dist/sleuthkit-caseuco-${TSK_VERSION}.jar" 
@@ -203,6 +185,9 @@
         <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />        
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve log="quiet"/>
+	    
+        <!-- Make a report that lists out the dependencies that our JARs have -->	
+        <ivy:report todir='${basedir}/build/ivy-reports' graph='true' xml='false'/>
         <ivy:retrieve conf="core" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
     </target>
 

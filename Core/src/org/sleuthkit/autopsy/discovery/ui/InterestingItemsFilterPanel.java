@@ -58,7 +58,7 @@ final class InterestingItemsFilterPanel extends AbstractDiscoveryFilterPanel {
     private void setUpInterestingItemsFilter() {
         try {
             interestingItemsList.clearList();
-            List<String> setNames = DiscoveryUiUtils.getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT,
+            List<String> setNames = DiscoveryUiUtils.getSetNames(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM,
                     BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME);
             for (String name : setNames) {
                 interestingItemsList.addElement(name, null, name);

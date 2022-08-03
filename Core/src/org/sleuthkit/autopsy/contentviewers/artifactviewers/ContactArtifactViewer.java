@@ -48,6 +48,7 @@ import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
@@ -65,6 +66,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.InvalidAccountIDException;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -85,6 +87,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     private BlackboardArtifact contactArtifact;
     private String contactName;
     private String datasourceName;
+    private String hostName;
 
     private List<BlackboardAttribute> phoneNumList = new ArrayList<>();
     private List<BlackboardAttribute> emailList = new ArrayList<>();
@@ -134,7 +137,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         if (artifact != null) {
             try {
                 extractArtifactData(artifact);
-            } catch (TskCoreException ex) {
+            } catch (NoCurrentCaseException | TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Error getting attributes for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
                 return;
             }
@@ -148,7 +151,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
     @Override
     public Component getComponent() {
         // Slap a vertical scrollbar on the panel.
-        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        return new JScrollPane(this, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     }
 
     @Override
@@ -164,7 +167,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      *
      * @throws TskCoreException
      */
-    private void extractArtifactData(BlackboardArtifact artifact) throws TskCoreException {
+    private void extractArtifactData(BlackboardArtifact artifact) throws NoCurrentCaseException, TskCoreException {
 
         this.contactArtifact = artifact;
 
@@ -193,6 +196,10 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         }
 
         datasourceName = contactArtifact.getDataSource().getName();
+
+        hostName = Optional.ofNullable(Case.getCurrentCaseThrows().getSleuthkitCase().getHostManager().getHostByDataSource((DataSource) contactArtifact.getDataSource()))
+                .map(h -> h.getName())
+                .orElse(null);
     }
 
     /**
@@ -248,7 +255,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         int prevGridWidth = contactPanelConstraints.gridwidth;
         contactPanelConstraints.gridwidth = 3;
         contactPanelConstraints.anchor = GridBagConstraints.LINE_START;
-        
+
         javax.swing.JLabel contactImage = new javax.swing.JLabel();
         contactImage.setIcon(getImageFromArtifact(contactArtifact));
         contactImage.setText(Bundle.ContactArtifactViewer_contactImage_text());
@@ -317,9 +324,12 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
      */
     @NbBundle.Messages({
         "ContactArtifactViewer_heading_Source=Source",
-        "ContactArtifactViewer_label_datasource=Data Source",})
+        "ContactArtifactViewer_label_datasource=Data Source",
+        "ContactArtifactViewer_label_host=Host",})
     private void updateSource() {
         CommunicationArtifactViewerHelper.addHeader(this, this.m_gridBagLayout, m_constraints, ContentViewerDefaults.getSectionSpacing(), Bundle.ContactArtifactViewer_heading_Source());
+        CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_label_host());
+        CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, m_constraints, StringUtils.defaultString(hostName));
         CommunicationArtifactViewerHelper.addKey(this, m_gridBagLayout, m_constraints, Bundle.ContactArtifactViewer_label_datasource());
         CommunicationArtifactViewerHelper.addValue(this, m_gridBagLayout, m_constraints, datasourceName);
     }
@@ -350,7 +360,7 @@ public class ContactArtifactViewer extends javax.swing.JPanel implements Artifac
         this.personaSearchStatusLabel = new javax.swing.JLabel();
         personaSearchStatusLabel.setText(personaStatusLabelText);
         personaSearchStatusLabel.setFont(ContentViewerDefaults.getMessageFont());
-        
+
         m_constraints.gridx = 0;
         m_constraints.anchor = GridBagConstraints.LINE_START;
 

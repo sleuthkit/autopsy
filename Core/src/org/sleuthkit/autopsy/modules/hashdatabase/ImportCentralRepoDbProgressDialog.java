@@ -30,7 +30,6 @@ import javax.swing.WindowConstants;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.Executors;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -291,16 +290,13 @@ class ImportCentralRepoDbProgressDialog extends javax.swing.JDialog implements P
             if (referenceSetID.get() >= 0) {
 
                 // This can be slow on large reference sets
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            CentralRepository.getInstance().deleteReferenceSet(referenceSetID.get());
-                        } catch (CentralRepoException ex2) {
-                            Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
-                        }
+                new Thread(() -> {
+                    try {
+                        CentralRepository.getInstance().deleteReferenceSet(referenceSetID.get());
+                    } catch (CentralRepoException ex2) {
+                        Logger.getLogger(ImportCentralRepoDbProgressDialog.class.getName()).log(Level.SEVERE, "Error deleting incomplete hash set from central repository", ex2);
                     }
-                });
+                }).start();
             }
         }
 

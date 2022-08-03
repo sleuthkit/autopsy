@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,11 +91,11 @@ class XenderAnalyzer(general.AndroidComponentAnalyzer):
                 if selfAccountId is not None:
                     transactionDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                             self._MODULE_NAME, transactionDb.getDBFile(),
-                                            Account.Type.XENDER, Account.Type.XENDER, selfAccountId )
+                                            Account.Type.XENDER, Account.Type.XENDER, selfAccountId, context.getJobId())
                 else:
                     transactionDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                             self._MODULE_NAME, transactionDb.getDBFile(),
-                                            Account.Type.XENDER)
+                                            Account.Type.XENDER, context.getJobId())
 
                 queryString = """
                                 SELECT f_path, f_display_name, f_size_str, c_start_time, c_direction, c_session_id,

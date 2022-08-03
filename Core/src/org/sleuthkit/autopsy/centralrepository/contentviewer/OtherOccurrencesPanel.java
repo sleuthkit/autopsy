@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.sleuthkit.autopsy.centralrepository.application.NodeData;
 import org.sleuthkit.autopsy.centralrepository.application.UniquePathKey;
 import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
@@ -102,7 +103,7 @@ public final class OtherOccurrencesPanel extends javax.swing.JPanel {
         initComponents();
         customizeComponents();
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("JFileChooser-background-thread-OtherOccurrencesPanel").build());
         executor.execute(futureFileChooser);
     }
 

@@ -648,7 +648,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 }
                 if (!bbartifacts.isEmpty()) {
                     try {
-                        Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, moduleName);
+                        Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().postArtifacts(bbartifacts, moduleName, jobId);
                     } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
                         // Log error and return to continue processing
                         logger.log(Level.WARNING, String.format("Unable to post blackboard artifacts for file $s.", aFile.getParentPath() + aFile.getName()), ex); //NON-NLS

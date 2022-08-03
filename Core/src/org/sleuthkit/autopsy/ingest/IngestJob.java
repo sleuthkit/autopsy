@@ -19,28 +19,26 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.python.google.common.collect.ImmutableList;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.AnalysisResult;
+import org.sleuthkit.datamodel.DataArtifact;
+import org.sleuthkit.datamodel.DataSource;
 
 /**
- * Analyzes one or more data sources using a set of ingest modules specified via
- * ingest job settings.
+ * Analyzes a data sources using a set of ingest modules specified via ingest
+ * job settings.
  */
 public final class IngestJob {
 
-    /*
+    /**
      * An ingest job can be cancelled for various reasons.
      */
     public enum CancellationReason {
@@ -64,7 +62,7 @@ public final class IngestJob {
     }
 
     /**
-     * Ingest job mode.
+     * Ingest job modes.
      */
     enum Mode {
         BATCH,
@@ -74,74 +72,87 @@ public final class IngestJob {
     private static final Logger logger = Logger.getLogger(IngestJob.class.getName());
     private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
-    private final List<Content> dataSources = new ArrayList<>();
+    private final DataSource dataSource;
     private final List<AbstractFile> files = new ArrayList<>();
     private final Mode ingestMode;
-    private final Map<Long, IngestJobPipeline> ingestJobPipelines;
-    private final AtomicInteger incompleteJobsCount;
     private final IngestJobSettings settings;
+    private volatile IngestJobExecutor ingestModuleExecutor;
     private volatile CancellationReason cancellationReason;
 
     /**
-     * Constructs an ingest job that analyzes one or more data sources using a
-     * set of ingest modules specified via ingest settings.
-     *
-     * @param dataSources The data sources to be ingested.
-     * @param settings    The ingest settings.
-     */
-    IngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
-        this.id = IngestJob.nextId.getAndIncrement();
-        this.settings = settings;
-        this.ingestJobPipelines = new ConcurrentHashMap<>();
-        this.ingestMode = Mode.BATCH;
-        this.dataSources.addAll(dataSources);
-        incompleteJobsCount = new AtomicInteger(dataSources.size());
-        cancellationReason = CancellationReason.NOT_CANCELLED;
-    }
-
-    /**
-     * Constructs an ingest job that analyzes one data source using a set of
-     * ingest modules specified via ingest job settings. Either all of the files
-     * in the data source or a given subset of the files will be analyzed.
+     * Constructs a batch mode ingest job that analyzes a data source using a
+     * set of ingest modules specified via ingest job settings.
      *
      * @param dataSource The data source to be analyzed.
-     * @param files      A subset of the files for the data source.
+     * @param files      A subset of the files from the data source to be
+     *                   analyzed, may be empty if all of the files should be
+     *                   analyzed.
      * @param settings   The ingest job settings.
      */
-    IngestJob(Content dataSource, List<AbstractFile> files, IngestJobSettings settings) {
-        this(Arrays.asList(dataSource), settings);
+    IngestJob(DataSource dataSource, List<AbstractFile> files, IngestJobSettings settings) {
+        this(dataSource, Mode.BATCH, settings);
         this.files.addAll(files);
     }
 
     /**
-     * Constructs an ingest job that analyzes one data source, possibly using an
+     * Constructs an ingest job that analyzes a data source using a set of
+     * ingest modules specified via ingest job settings, possibly using an
      * ingest stream.
      *
-     * @param settings The ingest job settings.
+     * @param dataSource The data source to be analyzed.
+     * @param ingestMode The ingest job mode.
+     * @param settings   The ingest job settings.
      */
-    IngestJob(Content dataSource, Mode ingestMode, IngestJobSettings settings) {
-        this.id = IngestJob.nextId.getAndIncrement();
-        this.ingestJobPipelines = new ConcurrentHashMap<>();
-        this.dataSources.add(dataSource);
+    IngestJob(DataSource dataSource, Mode ingestMode, IngestJobSettings settings) {
+        id = IngestJob.nextId.getAndIncrement();
+        this.dataSource = dataSource;
         this.settings = settings;
         this.ingestMode = ingestMode;
-        incompleteJobsCount = new AtomicInteger(1);
         cancellationReason = CancellationReason.NOT_CANCELLED;
     }
 
     /**
-     * Gets the unique identifier assigned to this ingest job.
+     * Gets the unique identifier assigned to this ingest job. For a multi-user
+     * case, this ID is only unique on the host where the ingest job is running.
      *
      * @return The job identifier.
      */
     public long getId() {
         return this.id;
     }
-    
+
+    /**
+     * Gets the data source to be analyzed by this job.
+     *
+     * @return The data source.
+     */
+    DataSource getDataSource() {
+        return dataSource;
+    }
+
+    /**
+     * Gets the subset of files from the data source to be analyzed for this
+     * job.
+     *
+     * @return The subset of files or an empty list if all the files in the data
+     *         source shuld be analyzed.
+     */
+    List<AbstractFile> getFiles() {
+        return ImmutableList.copyOf(files);
+    }
+
+    /**
+     * Gets the ingest job settings.
+     *
+     * @return The settings.
+     */
+    IngestJobSettings getSettings() {
+        return settings;
+    }
+
     /**
      * Checks to see if this ingest job has at least one non-empty ingest module
-     * pipeline (first or second stage data-source-level pipeline or file-level
-     * pipeline).
+     * pipeline.
      *
      * @return True or false.
      */
@@ -150,31 +161,57 @@ public final class IngestJob {
     }
 
     /**
-     * Add a set of files (by object ID) to be ingested.
+     * Adds a set of files to this ingest job, if it is running in streaming
+     * ingest mode.
      *
-     * @param fileObjIds the list of file IDs
+     * @param fileObjIds The object IDs of the files.
      */
-    void addStreamingIngestFiles(List<Long> fileObjIds) {
-        if (ingestJobPipelines.isEmpty()) {
-            logger.log(Level.SEVERE, "Attempted to add streaming ingest files with no IngestJobPipeline");
-            return;
+    void addStreamedFiles(List<Long> fileObjIds) {
+        if (ingestMode == Mode.STREAMING) {
+            if (ingestModuleExecutor != null) {
+                ingestModuleExecutor.addStreamedFiles(fileObjIds);
+            } else {
+                logger.log(Level.SEVERE, "Attempted to add streamed files with no ingest pipeline");
+            }
+        } else {
+            logger.log(Level.SEVERE, "Attempted to add streamed files to batch ingest job");
         }
-        // Streaming ingest jobs will only have one data source
-        IngestJobPipeline streamingIngestPipeline = ingestJobPipelines.values().iterator().next();
-        streamingIngestPipeline.addStreamedFiles(fileObjIds);
     }
 
     /**
-     * Start data source processing for streaming ingest.
+     * Adds one or more data artifacts to this ingest job for processing by its
+     * data artifact ingest modules.
+     *
+     * @param dataArtifacts The data artifacts.
      */
-    void processStreamingIngestDataSource() {
-        if (ingestJobPipelines.isEmpty()) {
-            logger.log(Level.SEVERE, "Attempted to start data source ingest with no IngestJobPipeline");
-            return;
+    void addDataArtifacts(List<DataArtifact> dataArtifacts) {
+        ingestModuleExecutor.addDataArtifacts(dataArtifacts);
+    }
+
+    /**
+     * Adds one or more analysis results to this ingest job for processing by
+     * its analysis result ingest modules.
+     *
+     * @param results The analysis results.
+     */
+    void addAnalysisResults(List<AnalysisResult> results) {
+        ingestModuleExecutor.addAnalysisResults(results);
+    }
+
+    /**
+     * Starts data source level analysis for this job if it is running in
+     * streaming ingest mode.
+     */
+    void addStreamedDataSource() {
+        if (ingestMode == Mode.STREAMING) {
+            if (ingestModuleExecutor != null) {
+                ingestModuleExecutor.addStreamedDataSource();
+            } else {
+                logger.log(Level.SEVERE, "Attempted to start data source analaysis with no ingest pipeline");
+            }
+        } else {
+            logger.log(Level.SEVERE, "Attempted to add streamed ingest files to batch ingest job");
         }
-        // Streaming ingest jobs will only have one data source
-        IngestJobPipeline streamingIngestPipeline = ingestJobPipelines.values().iterator().next();
-        streamingIngestPipeline.addStreamedDataSource();
     }
 
     /**
@@ -182,45 +219,25 @@ public final class IngestJob {
      * scheduling the ingest tasks that make up the job.
      *
      * @return A collection of ingest module start up errors, empty on success.
+     *
+     * @throws InterruptedException The exception is thrown if the current
+     *                              thread is interrupted during the start up
+     *                              process.
      */
-    List<IngestModuleError> start() throws InterruptedException {
-        /*
-         * Set up the ingest job pipelines, one for each data source to be
-         * ingested by this job.
-         */
-        if (files.isEmpty()) {
-            for (Content dataSource : dataSources) {
-                IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSource, settings);
-                ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
-            }
-        } else {
-            IngestJobPipeline ingestJobPipeline = new IngestJobPipeline(this, dataSources.get(0), files, settings);
-            ingestJobPipelines.put(ingestJobPipeline.getId(), ingestJobPipeline);
+    synchronized List<IngestModuleError> start() throws InterruptedException {
+        if (ingestModuleExecutor != null) {
+            logger.log(Level.SEVERE, "Attempt to start ingest job that has already been started");
+            return Collections.emptyList();
         }
-        incompleteJobsCount.set(ingestJobPipelines.size());
 
-        /*
-         * Try to start up each ingest job pipeline. Stop at the first failure.
-         */
+        ingestModuleExecutor = new IngestJobExecutor(this);
         List<IngestModuleError> errors = new ArrayList<>();
-        for (IngestJobPipeline ingestJobPipeline : ingestJobPipelines.values()) {
-            errors.addAll(ingestJobPipeline.startUp());
-            if (errors.isEmpty() == false) {
-                break;
-            }
-        }
-
-        /*
-         * Handle start up success or failure.
-         */
+        errors.addAll(ingestModuleExecutor.startUp());
         if (errors.isEmpty()) {
-            for (IngestJobPipeline ingestJobPipeline : ingestJobPipelines.values()) {
-                IngestManager.getInstance().fireDataSourceAnalysisStarted(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());
-            }
+            IngestManager.getInstance().fireDataSourceAnalysisStarted(id, ingestModuleExecutor.getDataSource());
         } else {
             cancel(CancellationReason.INGEST_MODULES_STARTUP_FAILED);
         }
-
         return errors;
     }
 
@@ -236,42 +253,46 @@ public final class IngestJob {
     /**
      * Gets a snapshot of the progress of this ingest job.
      *
-     * @return The snapshot.
+     * @return The snapshot, will be null if the job is not started yet.
      */
     public ProgressSnapshot getSnapshot() {
-        return new ProgressSnapshot(true);
+        return getSnapshot(true);
     }
 
     /**
      * Gets a snapshot of the progress of this ingest job.
      *
-     * @param getIngestTasksSnapshot
+     * @param includeIngestTasksSnapshot Whether or not to include ingest task
+     *                                   stats in the snapshot.
      *
-     * @return The snapshot.
+     * @return The snapshot, will be null if the job is not started yet.
      */
-    public ProgressSnapshot getSnapshot(boolean getIngestTasksSnapshot) {
-        return new ProgressSnapshot(getIngestTasksSnapshot);
+    public ProgressSnapshot getSnapshot(boolean includeIngestTasksSnapshot) {
+        ProgressSnapshot snapshot = null;
+        if (ingestModuleExecutor != null) {
+            return new ProgressSnapshot(includeIngestTasksSnapshot);
+        }
+        return snapshot;
     }
 
     /**
-     * Gets snapshots of the progress of each of this ingest job's child data
-     * source ingest jobs.
+     * Gets a snapshot of some basic diagnostic statistics for this ingest job.
      *
-     * @return A list of data source ingest job progress snapshots.
+     * @return The snapshot, will be null if the job is not started yet.
      */
-    List<Snapshot> getDataSourceIngestJobSnapshots() {
-        List<Snapshot> snapshots = new ArrayList<>();
-        this.ingestJobPipelines.values().stream().forEach((dataSourceJob) -> {
-            snapshots.add(dataSourceJob.getSnapshot(true));
-        });
-        return snapshots;
+    IngestJobProgressSnapshot getDiagnosticStatsSnapshot() {
+        IngestJobProgressSnapshot snapshot = null;
+        if (ingestModuleExecutor != null) {
+            snapshot = ingestModuleExecutor.getIngestJobProgressSnapshot(true);
+        }
+        return snapshot;
     }
 
     /**
      * Requests cancellation of this ingest job, which means discarding
-     * unfinished tasks and stopping the ingest pipelines. Returns immediately,
-     * but there may be a delay before all of the ingest modules in the
-     * pipelines respond by stopping processing.
+     * unfinished tasks and stopping the ingest module pipelines. Returns
+     * immediately, but there may be a delay before all of the ingest modules in
+     * the pipelines respond by stopping processing.
      *
      * @deprecated Use cancel(CancellationReason reason) instead
      */
@@ -282,16 +303,16 @@ public final class IngestJob {
 
     /**
      * Requests cancellation of this ingest job, which means discarding
-     * unfinished tasks and stopping the ingest pipelines. Returns immediately,
-     * but there may be a delay before all of the ingest modules in the
-     * pipelines respond by stopping processing.
+     * unfinished tasks and stopping the ingest module pipelines. Returns
+     * immediately, but there may be a delay before all of the ingest modules in
+     * the pipelines respond by stopping processing.
      *
      * @param reason The reason for cancellation.
      */
     public void cancel(CancellationReason reason) {
         cancellationReason = reason;
         /*
-         * Cancel the ingest pipelines for each data source. This is done in a
+         * Cancels the running of the ingest module pipelines. This is done in a
          * separate thread to avoid a potential deadlock. The deadlock is
          * possible because this method can be called in a thread that acquires
          * the ingest manager's ingest jobs list lock and then tries to acquire
@@ -300,9 +321,9 @@ public final class IngestJob {
          * ingest manager's ingest jobs list lock.
          */
         new Thread(() -> {
-            this.ingestJobPipelines.values().stream().forEach((job) -> {
-                job.cancel(reason);
-            });
+            if (ingestModuleExecutor != null) {
+                ingestModuleExecutor.cancel(reason);
+            }
         }).start();
     }
 
@@ -312,7 +333,7 @@ public final class IngestJob {
      * @return The cancellation reason, may be not cancelled.
      */
     public CancellationReason getCancellationReason() {
-        return this.cancellationReason;
+        return cancellationReason;
     }
 
     /**
@@ -322,25 +343,21 @@ public final class IngestJob {
      * @return True or false.
      */
     public boolean isCancelled() {
-        return (CancellationReason.NOT_CANCELLED != this.cancellationReason);
+        return (CancellationReason.NOT_CANCELLED != cancellationReason);
     }
 
     /**
-     * Provides a callback for completed ingest job pipeline, allowing this
-     * ingest job to notify the ingest manager when it is complete.
-     *
-     * @param ingestJobPipeline A completed ingestJobPipeline.
+     * Provides a callback for the ingest module executor, allowing this ingest
+     * job to notify the ingest manager when it is complete.
      */
-    void notifyIngestPipelineShutDown(IngestJobPipeline ingestJobPipeline) {
+    void notifyIngestPipelinesShutDown() {
         IngestManager ingestManager = IngestManager.getInstance();
-        if (!ingestJobPipeline.isCancelled()) {
-            ingestManager.fireDataSourceAnalysisCompleted(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());
+        if (!ingestModuleExecutor.isCancelled()) {
+            ingestManager.fireDataSourceAnalysisCompleted(id, dataSource);
         } else {
-            IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, ingestJobPipeline.getId(), ingestJobPipeline.getDataSource());
+            IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, dataSource);
         }
-        if (incompleteJobsCount.decrementAndGet() == 0) {
-            ingestManager.finishIngestJob(this);
-        }
+        ingestManager.finishIngestJob(this);
     }
 
     /**
@@ -348,22 +365,29 @@ public final class IngestJob {
      */
     public final class ProgressSnapshot {
 
-        private final List<DataSourceProcessingSnapshot> dataSourceProcessingSnapshots;
-        private DataSourceIngestModuleHandle dataSourceModule;
-        private boolean fileIngestRunning;
-        private Date fileIngestStartTime;
-        private final boolean jobCancelled;
-        private final IngestJob.CancellationReason jobCancellationReason;
+        private final DataSourceProcessingSnapshot dataSourceProcessingSnapshot;
+        private final boolean jobCancellationRequested;
+        private final CancellationReason jobCancellationReason;
 
         /**
-         * A snapshot of the progress of an ingest job on the processing of a
-         * data source.
+         * A snapshot of some basic diagnostic statistics for an ingest job.
+         * This thin wrapper around a Snapshot object is an artifact of a time
+         * when an ingest job could involve the analysis of multiple data
+         * sources, each of which had its own basic diagnostic statistics
+         * snapshot.
          */
         public final class DataSourceProcessingSnapshot {
 
-            private final Snapshot snapshot;
+            private final IngestJobProgressSnapshot snapshot;
 
-            private DataSourceProcessingSnapshot(Snapshot snapshot) {
+            /**
+             * Constructs a snapshot of some basic diagnostic statistics for an
+             * ingest job. This thin wrapper around a Snapshot object is an
+             * artifact of a time when an ingest job could involve the analysis
+             * of multiple data sources, each of which had its own basic
+             * diagnostic statistics snapshot.
+             */
+            private DataSourceProcessingSnapshot(IngestJobProgressSnapshot snapshot) {
                 this.snapshot = snapshot;
             }
 
@@ -375,6 +399,35 @@ public final class IngestJob {
              */
             public String getDataSource() {
                 return snapshot.getDataSource();
+            }
+
+            /**
+             * Queries whether or not file level ingest was running at the time
+             * the snapshot was taken.
+             *
+             * @return True or false.
+             */
+            public boolean fileIngestIsRunning() {
+                return snapshot.getFileIngestIsRunning();
+            }
+
+            /**
+             * Gets the time that file level ingest started.
+             *
+             * @return The start time, may be null.
+             */
+            public Date fileIngestStartTime() {
+                return new Date(snapshot.getFileIngestStartTime().getTime());
+            }
+
+            /**
+             * Gets the currently running data source level ingest module at the
+             * time the snapshot was taken.
+             *
+             * @return The module.
+             */
+            DataSourceIngestPipeline.DataSourcePipelineModule getDataSourceLevelIngestModule() {
+                return snapshot.getDataSourceLevelIngestModule();
             }
 
             /**
@@ -410,42 +463,33 @@ public final class IngestJob {
         }
 
         /**
-         * Constructs a snapshot of ingest job progress.
+         * Constructs a snapshot of the progress of an ingest job.
+         *
+         * @param includeIngestTasksSnapshot Whether or not to include ingest
+         *                                   task stats in basic diagnostic
+         *                                   stats part of the snapshot.
          */
-        private ProgressSnapshot(boolean getIngestTasksSnapshot) {
-            dataSourceModule = null;
-            fileIngestRunning = false;
-            fileIngestStartTime = null;
-            dataSourceProcessingSnapshots = new ArrayList<>();
-            for (IngestJobPipeline pipeline : ingestJobPipelines.values()) {
-                Snapshot snapshot = pipeline.getSnapshot(getIngestTasksSnapshot);
-                dataSourceProcessingSnapshots.add(new DataSourceProcessingSnapshot(snapshot));
-                if (null == dataSourceModule) {
-                    DataSourceIngestPipeline.DataSourcePipelineModule module = snapshot.getDataSourceLevelIngestModule();
-                    if (null != module) {
-                        dataSourceModule = new DataSourceIngestModuleHandle(ingestJobPipelines.get(snapshot.getJobId()), module);
-                    }
-                }
-                if (snapshot.getFileIngestIsRunning()) {
-                    fileIngestRunning = true;
-                }
-                Date childFileIngestStartTime = snapshot.getFileIngestStartTime();
-                if (null != childFileIngestStartTime && (null == fileIngestStartTime || childFileIngestStartTime.before(fileIngestStartTime))) {
-                    fileIngestStartTime = childFileIngestStartTime;
-                }
-            }
-            this.jobCancelled = isCancelled();
-            this.jobCancellationReason = cancellationReason;
+        private ProgressSnapshot(boolean includeIngestTasksSnapshot) {
+            IngestJobProgressSnapshot snapshot = ingestModuleExecutor.getIngestJobProgressSnapshot(includeIngestTasksSnapshot);
+            dataSourceProcessingSnapshot = new DataSourceProcessingSnapshot(snapshot);
+            jobCancellationRequested = IngestJob.this.isCancelled();
+            jobCancellationReason = IngestJob.this.getCancellationReason();
         }
 
         /**
          * Gets a handle to the currently running data source level ingest
-         * module at the time the snapshot was taken.
+         * module at the time the snapshot was taken. This handle can be used to
+         * cancel the module, if it is still running.
          *
          * @return The handle, may be null.
          */
         public DataSourceIngestModuleHandle runningDataSourceIngestModule() {
-            return this.dataSourceModule;
+            DataSourceIngestModuleHandle moduleHandle = null;
+            DataSourceIngestPipeline.DataSourcePipelineModule module = dataSourceProcessingSnapshot.getDataSourceLevelIngestModule();
+            if (module != null) {
+                moduleHandle = new DataSourceIngestModuleHandle(ingestModuleExecutor, module);
+            }
+            return moduleHandle;
         }
 
         /**
@@ -455,7 +499,7 @@ public final class IngestJob {
          * @return True or false.
          */
         public boolean fileIngestIsRunning() {
-            return this.fileIngestRunning;
+            return dataSourceProcessingSnapshot.fileIngestIsRunning();
         }
 
         /**
@@ -464,35 +508,37 @@ public final class IngestJob {
          * @return The start time, may be null.
          */
         public Date fileIngestStartTime() {
-            return new Date(this.fileIngestStartTime.getTime());
+            return new Date(dataSourceProcessingSnapshot.fileIngestStartTime().getTime());
         }
 
         /**
-         * Queries whether or not an ingest job level cancellation request had
-         * been issued at the time the snapshot was taken.
+         * Queries whether or not an ingest job cancellation request had been
+         * issued at the time the snapshot was taken.
          *
          * @return True or false.
          */
         public boolean isCancelled() {
-            return this.jobCancelled;
+            return jobCancellationRequested;
         }
 
         /**
-         * Gets the reason this job was cancelled.
+         * Gets the reason the ingest job was cancelled.
          *
-         * @return The cancellation reason, may be not cancelled.
+         * @return The cancellation reason, which may indicate that the job had
+         *         not been cancelled at the time the snapshot was taken.
          */
         public CancellationReason getCancellationReason() {
-            return this.jobCancellationReason;
+            return jobCancellationReason;
         }
 
         /**
-         * Gets snapshots of the progress processing individual data sources.
+         * Gets a snapshot of some basic diagnostic statistics for an ingest
+         * job.
          *
-         * @return The list of snapshots.
+         * @return The snapshot.
          */
-        public List<DataSourceProcessingSnapshot> getDataSourceSnapshots() {
-            return Collections.unmodifiableList(this.dataSourceProcessingSnapshots);
+        public DataSourceProcessingSnapshot getDataSourceProcessingSnapshot() {
+            return dataSourceProcessingSnapshot;
         }
 
     }
@@ -504,7 +550,7 @@ public final class IngestJob {
      */
     public static class DataSourceIngestModuleHandle {
 
-        private final IngestJobPipeline ingestJobPipeline;
+        private final IngestJobExecutor ingestJobExecutor;
         private final DataSourceIngestPipeline.DataSourcePipelineModule module;
         private final boolean cancelled;
 
@@ -513,14 +559,14 @@ public final class IngestJob {
          * used to get basic information about the module and to request
          * cancellation of the module.
          *
-         * @param ingestJobPipeline The ingestJobPipeline that owns the data
+         * @param ingestJobExecutor The ingest job executor that owns the data
          *                          source level ingest module.
          * @param module            The data source level ingest module.
          */
-        private DataSourceIngestModuleHandle(IngestJobPipeline ingestJobPipeline, DataSourceIngestPipeline.DataSourcePipelineModule module) {
-            this.ingestJobPipeline = ingestJobPipeline;
+        private DataSourceIngestModuleHandle(IngestJobExecutor ingestJobExecutor, DataSourceIngestPipeline.DataSourcePipelineModule module) {
+            this.ingestJobExecutor = ingestJobExecutor;
             this.module = module;
-            this.cancelled = ingestJobPipeline.currentDataSourceIngestModuleIsCancelled();
+            this.cancelled = ingestJobExecutor.currentDataSourceIngestModuleIsCancelled();
         }
 
         /**
@@ -530,7 +576,7 @@ public final class IngestJob {
          * @return The display name.
          */
         public String displayName() {
-            return this.module.getDisplayName();
+            return module.getDisplayName();
         }
 
         /**
@@ -540,7 +586,7 @@ public final class IngestJob {
          * @return The module processing start time.
          */
         public Date startTime() {
-            return this.module.getProcessingStartTime();
+            return module.getProcessingStartTime();
         }
 
         /**
@@ -550,7 +596,7 @@ public final class IngestJob {
          * @return True or false.
          */
         public boolean isCancelled() {
-            return this.cancelled;
+            return cancelled;
         }
 
         /**
@@ -559,19 +605,13 @@ public final class IngestJob {
          * ingest module responds by stopping processing.
          */
         public void cancel() {
-            /**
-             * TODO: Cancellation needs to be more precise. The long-term
-             * solution is to add a cancel() method to IngestModule and do away
-             * with the cancellation queries of IngestJobContext. However, until
-             * an API change is legal, a cancel() method can be added to the
-             * DataSourceIngestModuleAdapter and FileIngestModuleAdapter classes
-             * and an instanceof check can be used to call it, with this code as
-             * the default implementation and the fallback. All of the ingest
-             * modules participating in this workaround will need to consult the
-             * cancelled flag in the adapters.
+            /*
+             * Note that this cancellation mechanism has a race condition. This
+             * could perhaps be solved by adding a cancel() API to the
+             * IngestModule interface.
              */
-            if (this.ingestJobPipeline.getCurrentDataSourceIngestModule() == this.module) {
-                this.ingestJobPipeline.cancelCurrentDataSourceIngestModule();
+            if (ingestJobExecutor.getCurrentDataSourceIngestModule() == module) {
+                ingestJobExecutor.cancelCurrentDataSourceIngestModule();
             }
         }
 

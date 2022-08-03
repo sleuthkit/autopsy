@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,7 +73,6 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
     private static final String XMLFILE = "ileap-artifact-attribute-reference.xml"; //NON-NLS
 
-    
     private File iLeappExecutable;
 
     private IngestJobContext context;
@@ -95,13 +94,13 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         if (false == PlatformUtil.is64BitOS()) {
             throw new IngestModuleException(NbBundle.getMessage(this.getClass(), "IleappAnalyzerIngestModule.not.64.bit.os"));
         }
-        
+
         if (false == PlatformUtil.isWindowsOS()) {
             throw new IngestModuleException(Bundle.ILeappAnalyzerIngestModule_requires_windows());
         }
 
         try {
-            iLeappFileProcessor = new LeappFileProcessor(XMLFILE, ILeappAnalyzerModuleFactory.getModuleName());
+            iLeappFileProcessor = new LeappFileProcessor(XMLFILE, ILeappAnalyzerModuleFactory.getModuleName(), context);
         } catch (IOException | IngestModuleException | NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.ILeappAnalyzerIngestModule_error_ileapp_file_processor_init(), ex);
         }
@@ -118,8 +117,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     @NbBundle.Messages({
         "ILeappAnalyzerIngestModule.error.running.iLeapp=Error running iLeapp, see log file.",
         "ILeappAnalyzerIngestModule.error.creating.output.dir=Error creating iLeapp module output directory.",
-        "ILeappAnalyzerIngestModule.starting.iLeapp=Starting iLeapp",
         "ILeappAnalyzerIngestModule.running.iLeapp=Running iLeapp",
+        "ILeappAnalyzerIngestModule_processing_iLeapp_results=Processing iLeapp results",
         "ILeappAnalyzerIngestModule.has.run=iLeapp",
         "ILeappAnalyzerIngestModule.iLeapp.cancelled=iLeapp run was canceled",
         "ILeappAnalyzerIngestModule.completed=iLeapp Processing Completed",
@@ -127,50 +126,61 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
 
+        statusHelper.switchToIndeterminate();
+        statusHelper.progress(Bundle.ILeappAnalyzerIngestModule_running_iLeapp());
+
         Case currentCase = Case.getCurrentCase();
         Path tempOutputPath = Paths.get(currentCase.getTempDirectory(), ILEAPP, ILEAPP_FS + dataSource.getId());
         try {
             Files.createDirectories(tempOutputPath);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Error creating iLeapp output directory %s", tempOutputPath.toString()), ex);
+            writeErrorMsgToIngestInbox();
             return ProcessResult.ERROR;
         }
 
-        List<String> iLeappPathsToProcess = new ArrayList<>();
+        List<String> iLeappPathsToProcess;
         ProcessBuilder iLeappCommand = buildiLeappListCommand(tempOutputPath);
         try {
             int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
             if (result != 0) {
                 logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program getting file paths to search for result is %d", result));
+                writeErrorMsgToIngestInbox();
                 return ProcessResult.ERROR;
             }
             iLeappPathsToProcess = loadIleappPathFile(tempOutputPath);
+            if (iLeappPathsToProcess.isEmpty()) {
+                logger.log(Level.SEVERE, String.format("Error getting file paths to search, list is empty"));
+                writeErrorMsgToIngestInbox();
+                return ProcessResult.ERROR;
+            }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Error when trying to execute iLeapp program getting file paths to search"), ex);
+            writeErrorMsgToIngestInbox();
             return ProcessResult.ERROR;
         }
 
-        statusHelper.progress(Bundle.ILeappAnalyzerIngestModule_starting_iLeapp(), 0);
-
-        List<AbstractFile> iLeappFilesToProcess = new ArrayList<>();
-
-        if (!(context.getDataSource() instanceof LocalFilesDataSource)) {
-            extractFilesFromImage(dataSource, iLeappPathsToProcess, tempOutputPath);
-            statusHelper.switchToDeterminate(iLeappFilesToProcess.size());
-            processILeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
-        } else {
-            iLeappFilesToProcess = LeappFileProcessor.findLeappFilesToProcess(dataSource);
-            statusHelper.switchToDeterminate(iLeappFilesToProcess.size());
-
-            Integer filesProcessedCount = 0;
-            for (AbstractFile iLeappFile : iLeappFilesToProcess) {
-                processILeappFile(dataSource, currentCase, statusHelper, filesProcessedCount, iLeappFile);
-                filesProcessedCount++;
+        if ((context.getDataSource() instanceof LocalFilesDataSource)) {
+            /*
+             * The data source may be local files from an iOS file system, or it
+             * may be a tarred/ZIP of an iOS file system. If it is the latter,
+             * extract the files we need to process.
+             */
+            List<AbstractFile> iLeappFilesToProcess = LeappFileProcessor.findLeappFilesToProcess(dataSource);
+            if (!iLeappFilesToProcess.isEmpty()) {
+                statusHelper.switchToDeterminate(iLeappFilesToProcess.size());
+                Integer filesProcessedCount = 0;
+                for (AbstractFile iLeappFile : iLeappFilesToProcess) {
+                    processILeappFile(dataSource, currentCase, statusHelper, filesProcessedCount, iLeappFile);
+                    filesProcessedCount++;
+                }
             }
-            // Process the logical image as a fs in iLeapp to make sure this is not a logical fs that was added
-            extractFilesFromImage(dataSource, iLeappPathsToProcess, tempOutputPath);
-            processILeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
         }
+
+        statusHelper.switchToIndeterminate();
+        statusHelper.progress(Bundle.ILeappAnalyzerIngestModule_processing_iLeapp_results());
+        extractFilesFromDataSource(dataSource, iLeappPathsToProcess, tempOutputPath);
+        processILeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
 
         IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
                 Bundle.ILeappAnalyzerIngestModule_has_run(),
@@ -180,15 +190,19 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     }
 
     /**
-     * Process each tar/zip file that is found in a logical image that contains xLeapp data
-     * @param dataSource Datasource where the file has been found
-     * @param currentCase current case
-     * @param statusHelper Progress bar for messages to show user
+     * Process each tar/zip file that is found in a logical image that contains
+     * xLeapp data
+     *
+     * @param dataSource          Datasource where the file has been found
+     * @param currentCase         current case
+     * @param statusHelper        Progress bar for messages to show user
      * @param filesProcessedCount count that is incremented for progress bar
-     * @param iLeappFile abstract file that will be processed
+     * @param iLeappFile          abstract file that will be processed
      */
     private void processILeappFile(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, int filesProcessedCount,
             AbstractFile iLeappFile) {
+        statusHelper.progress(NbBundle.getMessage(this.getClass(), "ILeappAnalyzerIngestModule.processing.file", iLeappFile.getName()), filesProcessedCount);
+
         String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
         Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, currentTime);
         try {
@@ -198,7 +212,6 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        statusHelper.progress(NbBundle.getMessage(this.getClass(), "ILeappAnalyzerIngestModule.processing.file", iLeappFile.getName()), filesProcessedCount);
         ProcessBuilder iLeappCommand = buildiLeappCommand(moduleOutputPath, iLeappFile.getLocalAbsPath(), iLeappFile.getNameExtension());
         try {
             int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
@@ -219,21 +232,19 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        ProcessResult fileProcessorResult = iLeappFileProcessor.processFiles(dataSource, moduleOutputPath, iLeappFile);
-
-        if (fileProcessorResult == ProcessResult.ERROR) {
-            return;
-        }
+        iLeappFileProcessor.processFiles(dataSource, moduleOutputPath, iLeappFile, statusHelper);
     }
 
     /**
      * Process extracted files from a disk image using xLeapp
-     * @param dataSource Datasource where the file has been found
-     * @param currentCase current case
-     * @param statusHelper Progress bar for messages to show user
-     * @param directoryToProcess 
+     *
+     * @param dataSource         Datasource where the file has been found
+     * @param currentCase        current case
+     * @param statusHelper       Progress bar for messages to show user
+     * @param directoryToProcess
      */
     private void processILeappFs(Content dataSource, Case currentCase, DataSourceIngestModuleProgress statusHelper, String directoryToProcess) {
+        statusHelper.progress(NbBundle.getMessage(this.getClass(), "ILeappAnalyzerIngestModule.processing.filesystem"));
         String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
         Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), ILEAPP, currentTime);
         try {
@@ -243,7 +254,6 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        statusHelper.progress(NbBundle.getMessage(this.getClass(), "ILeappAnalyzerIngestModule.processing.filesystem"));
         ProcessBuilder iLeappCommand = buildiLeappCommand(moduleOutputPath, directoryToProcess, "fs");
         try {
             int result = ExecUtil.execute(iLeappCommand, new DataSourceIngestModuleProcessTerminator(context, true));
@@ -264,19 +274,16 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             return;
         }
 
-        ProcessResult fileProcessorResult = iLeappFileProcessor.processFileSystem(dataSource, moduleOutputPath);
-
-        if (fileProcessorResult == ProcessResult.ERROR) {
-            return;
-        }
-
+        iLeappFileProcessor.processFileSystem(dataSource, moduleOutputPath, statusHelper);
     }
 
     /**
      * Build the command to run xLeapp
-     * @param moduleOutputPath output path for xLeapp
-     * @param sourceFilePath path where the xLeapp file is
+     *
+     * @param moduleOutputPath     output path for xLeapp
+     * @param sourceFilePath       path where the xLeapp file is
      * @param iLeappFileSystemType type of file to process tar/zip/fs
+     *
      * @return process to run
      */
     private ProcessBuilder buildiLeappCommand(Path moduleOutputPath, String sourceFilePath, String iLeappFileSystemType) {
@@ -294,7 +301,9 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
     /**
      * Command to run xLeapp using the path option
+     *
      * @param moduleOutputPath path where the file paths output will reside
+     *
      * @return process to run
      */
     private ProcessBuilder buildiLeappListCommand(Path moduleOutputPath) {
@@ -311,8 +320,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     static private ProcessBuilder buildProcessWithRunAsInvoker(String... commandLine) {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
-         * Add an environment variable to force iLeapp to run with
-         * the same permissions Autopsy uses.
+         * Add an environment variable to force iLeapp to run with the same
+         * permissions Autopsy uses.
          */
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
         return processBuilder;
@@ -333,9 +342,9 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
      * added to reports
      */
     private void addILeappReportToReports(Path iLeappOutputDir, Case currentCase) {
-        List<String> allIndexFiles = new ArrayList<>();
+        List<String> allIndexFiles;
 
-        try (Stream<Path> walk = Files.walk(iLeappOutputDir)) { 
+        try (Stream<Path> walk = Files.walk(iLeappOutputDir)) {
 
             allIndexFiles = walk.map(x -> x.toString())
                     .filter(f -> f.toLowerCase().endsWith("index.html")).collect(Collectors.toList());
@@ -383,11 +392,12 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
     /**
      * Extract files from a disk image to process with xLeapp
-     * @param dataSource Datasource of the image
-     * @param iLeappPathsToProcess List of paths to extract content from 
-     * @param moduleOutputPath path to write content to
+     *
+     * @param dataSource           Datasource of the image
+     * @param iLeappPathsToProcess List of paths to extract content from
+     * @param moduleOutputPath     path to write content to
      */
-    private void extractFilesFromImage(Content dataSource, List<String> iLeappPathsToProcess, Path moduleOutputPath) {
+    private void extractFilesFromDataSource(Content dataSource, List<String> iLeappPathsToProcess, Path moduleOutputPath) {
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
         for (String fullFilePath : iLeappPathsToProcess) {
@@ -402,7 +412,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             String fileName = FilenameUtils.getName(ffp);
             String filePath = FilenameUtils.getPath(ffp);
 
-            List<AbstractFile> iLeappFiles = new ArrayList<>();
+            List<AbstractFile> iLeappFiles;
             try {
                 if (filePath.isEmpty()) {
                     iLeappFiles = fileManager.findFiles(dataSource, fileName); //NON-NLS                
@@ -425,42 +435,44 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
     /**
      * Create path and file from datasource in temp
-     * @param dataSource datasource of the image
-     * @param iLeappFile abstract file to write out
+     *
+     * @param dataSource     datasource of the image
+     * @param iLeappFile     abstract file to write out
      * @param fileParentPath parent file path
-     * @param parentPath parent file
+     * @param parentPath     parent file
      */
     private void extractFileToOutput(Content dataSource, AbstractFile iLeappFile, File fileParentPath, Path parentPath) {
         if (fileParentPath.exists()) {
-                    if (!iLeappFile.isDir()) {
-                        writeiLeappFile(dataSource, iLeappFile, fileParentPath.toString());
-                    } else {
-                        try {
-                            Files.createDirectories(Paths.get(parentPath.toString(), iLeappFile.getName()));
-                        } catch (IOException ex) {
-                            logger.log(Level.INFO, String.format("Error creating iLeapp output directory %s", parentPath.toString()), ex);
-                        }
-                    }
-                } else {
-                    try {
-                        Files.createDirectories(parentPath);
-                    } catch (IOException ex) {
-                        logger.log(Level.INFO, String.format("Error creating iLeapp output directory %s", parentPath.toString()), ex);
-                    }
-                    if (!iLeappFile.isDir()) {
-                        writeiLeappFile(dataSource, iLeappFile, fileParentPath.toString());
-                    } else {
-                        try {
-                            Files.createDirectories(Paths.get(parentPath.toString(), iLeappFile.getName()));
-                        } catch (IOException ex) {
-                            logger.log(Level.INFO, String.format("Error creating iLeapp output directory %s", parentPath.toString()), ex);
-                        }
-                    }
+            if (!iLeappFile.isDir()) {
+                writeiLeappFile(dataSource, iLeappFile, fileParentPath.toString());
+            } else {
+                try {
+                    Files.createDirectories(Paths.get(parentPath.toString(), iLeappFile.getName()));
+                } catch (IOException ex) {
+                    logger.log(Level.INFO, String.format("Error creating iLeapp output directory %s", parentPath.toString()), ex);
                 }
+            }
+        } else {
+            try {
+                Files.createDirectories(parentPath);
+            } catch (IOException ex) {
+                logger.log(Level.INFO, String.format("Error creating iLeapp output directory %s", parentPath.toString()), ex);
+            }
+            if (!iLeappFile.isDir()) {
+                writeiLeappFile(dataSource, iLeappFile, fileParentPath.toString());
+            } else {
+                try {
+                    Files.createDirectories(Paths.get(parentPath.toString(), iLeappFile.getName()));
+                } catch (IOException ex) {
+                    logger.log(Level.INFO, String.format("Error creating iLeapp output directory %s", parentPath.toString()), ex);
+                }
+            }
+        }
     }
-    
+
     /**
      * Write out file to output
+     *
      * @param dataSource datasource of disk image
      * @param iLeappFile acstract file to write out
      * @param parentPath path to write file to
@@ -481,4 +493,16 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
             }
         }
     }
+
+    /**
+     * Writes a generic error message to the ingest inbox, directing the user to
+     * consult the application log fpor more details.
+     */
+    private void writeErrorMsgToIngestInbox() {
+        IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.ERROR,
+                MODULE_NAME,
+                Bundle.ILeappAnalyzerIngestModule_error_running_iLeapp());
+        IngestServices.getInstance().postMessage(message);
+    }
+
 }

@@ -1229,6 +1229,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @param node      The node.
      * @param osAccount The os account.
+     * @param hosts     List of hosts.
      *
      * @return The parent list node of the os account if found or empty if not.
      */
@@ -1274,7 +1275,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 return;
             }
         }
-        
+
         final Set<Host> finalHosts = hosts;
 
         Optional<Node> osAccountListNodeOpt = Stream.of(em.getRootContext().getChildren().getNodes(true))
@@ -1330,7 +1331,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * DirectoryTreeTopComponent.viewArtifact, ViewContextAction
      *
      * @param art The artifact.
+     *
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
      */
+    @SuppressWarnings("deprecation")
     public void viewArtifact(final BlackboardArtifact art) {
         int typeID = art.getArtifactTypeID();
         String typeName = art.getArtifactTypeName();
@@ -1357,6 +1362,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ITEM, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
             treeNode = getEmailNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
@@ -1494,12 +1501,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact.Type artifactType, BlackboardArtifact art) {
         Node interestingItemsRootNode = typesChildren.findChild(artifactType.getDisplayName());
         Children setNodeChildren = (interestingItemsRootNode == null) ? null : interestingItemsRootNode.getChildren();
-        
+
         // set node children for type could not be found, so return null.
         if (setNodeChildren == null) {
             return null;
         }
-        
+
         String setName = null;
         try {
             setName = art.getAttributes().stream()

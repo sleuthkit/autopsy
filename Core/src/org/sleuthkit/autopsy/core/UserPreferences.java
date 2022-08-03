@@ -19,15 +19,21 @@
 package org.sleuthkit.autopsy.core;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import java.util.prefs.PreferenceChangeListener;
-import java.util.prefs.Preferences;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.NbPreferences;
+import org.apache.commons.lang3.tuple.Triple;
+import org.openide.util.Lookup;
 import org.python.icu.util.TimeZone;
+import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -42,7 +48,58 @@ import org.sleuthkit.datamodel.TskData.DbType;
  */
 public final class UserPreferences {
 
-    private static final Preferences preferences = NbPreferences.forModule(UserPreferences.class);
+    /**
+     * Returns the path to the preferences for the identifier in the user config
+     * directory.
+     *
+     * @param identifier The identifier.
+     *
+     * @return The path to the preference file.
+     */
+    private static String getConfigPreferencePath(String identifier) {
+        return Paths.get(PlatformUtil.getUserConfigDirectory(), identifier + ".properties").toString();
+    }
+
+    /**
+     * Returns the path to the preferences for the identifier in the shared
+     * preference directory.
+     *
+     * @param identifier The identifier.
+     *
+     * @return The path to the preference file.
+     */
+    private static String getSharedPreferencePath(String identifier) {
+        return Paths.get(PlatformUtil.getModuleConfigDirectory(), identifier + ".properties").toString();
+    }
+        
+    private static final String VIEW_PREFERENCE_PATH = getSharedPreferencePath("ViewPreferences");
+    private static final String MACHINE_SPECIFIC_PREFERENCE_PATH = getConfigPreferencePath("MachineSpecificPreferences");
+    private static final String MODE_PREFERENCE_PATH = getConfigPreferencePath("ModePreferences");
+    private static final String EXTERNAL_SERVICE_PREFERENCE_PATH = getSharedPreferencePath("ExternalServicePreferences");
+
+    private static final ConfigProperties viewPreferences = new ConfigProperties(VIEW_PREFERENCE_PATH);
+    private static final ConfigProperties machineSpecificPreferences = new ConfigProperties(MACHINE_SPECIFIC_PREFERENCE_PATH);
+    private static final ConfigProperties modePreferences = new ConfigProperties(MODE_PREFERENCE_PATH);
+    private static final ConfigProperties externalServicePreferences = new ConfigProperties(EXTERNAL_SERVICE_PREFERENCE_PATH);
+
+    static {
+        // perform initial load to ensure disk preferences are loaded
+        try {
+            // make shared directory paths if they don't exist.
+            new File(PlatformUtil.getModuleConfigDirectory()).mkdirs();
+            viewPreferences.load();
+            machineSpecificPreferences.load();
+            modePreferences.load();
+            externalServicePreferences.load();
+        } catch (IOException ex) {
+            // can't log because logger requires UserPreferences.  
+            // This shouldn't really be thrown unless their is a file access 
+            // issue within the user config directory.
+            ex.printStackTrace();
+        }
+    }
+
+    // view preferences
     public static final String KEEP_PREFERRED_VIEWER = "KeepPreferredViewer"; // NON-NLS    
     public static final String HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE = "HideKnownFilesInDataSourcesTree"; //NON-NLS 
     public static final String HIDE_KNOWN_FILES_IN_VIEWS_TREE = "HideKnownFilesInViewsTree"; //NON-NLS 
@@ -50,8 +107,38 @@ public final class UserPreferences {
     public static final String HIDE_SLACK_FILES_IN_VIEWS_TREE = "HideSlackFilesInViewsTree"; //NON-NLS 
     public static final String DISPLAY_TIMES_IN_LOCAL_TIME = "DisplayTimesInLocalTime"; //NON-NLS
     public static final String TIME_ZONE_FOR_DISPLAYS = "TimeZoneForDisplays"; //NON-NLS
+    public static final String GROUP_ITEMS_IN_TREE_BY_DATASOURCE = "GroupItemsInTreeByDataSource"; //NON-NLS
+    public static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
+    public static final String HIDE_SCO_COLUMNS = "HideCentralRepoCommentsAndOccurrences"; //The key for this setting pre-dates the settings current functionality //NON-NLS
+    public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
+    private static final boolean DISPLAY_TRANSLATED_NAMES_DEFAULT = true;
+    public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
+    public static final String RESULTS_TABLE_PAGE_SIZE = "ResultsTablePageSize";
+
+    // machine-specific settings
     public static final String NUMBER_OF_FILE_INGEST_THREADS = "NumberOfFileIngestThreads"; //NON-NLS
+    public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS
+    public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS
+    private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
+    private static final String MAX_NUM_OF_LOG_FILE = "MaximumNumberOfLogFiles";
+    private static final int LOG_FILE_NUM_INT = 10;
+    public static final String SOLR_MAX_JVM_SIZE = "SolrMaxJVMSize";
+    private static final int DEFAULT_SOLR_HEAP_SIZE_MB_64BIT_PLATFORM = 2048;
+    private static final int DEFAULT_SOLR_HEAP_SIZE_MB_32BIT_PLATFORM = 512;
+    private static final String HEALTH_MONITOR_REPORT_PATH = "HealthMonitorReportPath";
+    private static final String TEMP_FOLDER = "Temp";
+    private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
+    private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
+
+    // mode and enabled
+    public static final String SETTINGS_PROPERTIES = "AutoIngest";
+    private static final String MODE = "AutopsyMode"; // NON-NLS
+    private static final String APP_NAME = "AppName";
+
+    // external services preferences
     public static final String IS_MULTI_USER_MODE_ENABLED = "IsMultiUserModeEnabled"; //NON-NLS
+    private static final String GEO_TILE_OPTION = "GeolocationTileOption";
+    public static final String OCR_TRANSLATION_ENABLED = "OcrTranslationEnabled";
     public static final String EXTERNAL_DATABASE_HOSTNAME_OR_IP = "ExternalDatabaseHostnameOrIp"; //NON-NLS
     public static final String EXTERNAL_DATABASE_PORTNUMBER = "ExternalDatabasePortNumber"; //NON-NLS
     public static final String EXTERNAL_DATABASE_NAME = "ExternalDatabaseName"; //NON-NLS
@@ -69,40 +156,117 @@ public final class UserPreferences {
     private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
     private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
     public static final String TEXT_TRANSLATOR_NAME = "TextTranslatorName";
-    public static final String OCR_TRANSLATION_ENABLED = "OcrTranslationEnabled";
-    public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS
-    public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS
-    private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
     private static final String DEFAULT_PORT_STRING = "61616";
     private static final int DEFAULT_PORT_INT = 61616;
-    private static final String APP_NAME = "AppName";
-    public static final String SETTINGS_PROPERTIES = "AutoIngest";
-    private static final String MODE = "AutopsyMode"; // NON-NLS
-    private static final String MAX_NUM_OF_LOG_FILE = "MaximumNumberOfLogFiles";
-    private static final int LOG_FILE_NUM_INT = 10;
-    public static final String GROUP_ITEMS_IN_TREE_BY_DATASOURCE = "GroupItemsInTreeByDataSource"; //NON-NLS
-    public static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
-    public static final String HIDE_SCO_COLUMNS = "HideCentralRepoCommentsAndOccurrences"; //The key for this setting pre-dates the settings current functionality //NON-NLS
-    public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
-    private static final boolean DISPLAY_TRANSLATED_NAMES_DEFAULT = true;
-    public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
-    public static final String SOLR_MAX_JVM_SIZE = "SolrMaxJVMSize";
-    private static final int DEFAULT_SOLR_HEAP_SIZE_MB_64BIT_PLATFORM = 2048;
-    private static final int DEFAULT_SOLR_HEAP_SIZE_MB_32BIT_PLATFORM = 512;
-    public static final String RESULTS_TABLE_PAGE_SIZE = "ResultsTablePageSize";
-    private static final String GEO_TILE_OPTION = "GeolocationTileOption";
-    private static final String GEO_OSM_TILE_ZIP_PATH = "GeolocationOsmZipPath";
     private static final String GEO_OSM_SERVER_ADDRESS = "GeolocationOsmServerAddress";
-    private static final String GEO_MBTILES_FILE_PATH = "GeolcoationMBTilesFilePath";
-    private static final String HEALTH_MONITOR_REPORT_PATH = "HealthMonitorReportPath";
-    private static final String TEMP_FOLDER = "Temp";
+
+    // view preference keys used for moving from legacy files to new files
+    private static final List<String> VIEW_PREFERENCE_KEYS = Arrays.asList(
+            KEEP_PREFERRED_VIEWER,
+            HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE,
+            HIDE_KNOWN_FILES_IN_VIEWS_TREE,
+            HIDE_SLACK_FILES_IN_DATA_SRCS_TREE,
+            HIDE_SLACK_FILES_IN_VIEWS_TREE,
+            DISPLAY_TIMES_IN_LOCAL_TIME,
+            TIME_ZONE_FOR_DISPLAYS,
+            GROUP_ITEMS_IN_TREE_BY_DATASOURCE,
+            SHOW_ONLY_CURRENT_USER_TAGS,
+            HIDE_SCO_COLUMNS,
+            DISPLAY_TRANSLATED_NAMES,
+            EXTERNAL_HEX_EDITOR_PATH,
+            RESULTS_TABLE_PAGE_SIZE
+    );
+
+    // machine preference keys used for moving from legacy files to new files
+    private static final List<String> MACHINE_PREFERENCE_KEYS = Arrays.asList(
+            NUMBER_OF_FILE_INGEST_THREADS,
+            PROCESS_TIME_OUT_ENABLED,
+            PROCESS_TIME_OUT_HOURS,
+            MAX_NUM_OF_LOG_FILE,
+            SOLR_MAX_JVM_SIZE,
+            HEALTH_MONITOR_REPORT_PATH,
+            TEMP_FOLDER,
+            GEO_OSM_TILE_ZIP_PATH,
+            GEO_MBTILES_FILE_PATH
+    );
+
+    // mode preference keys used for moving from legacy files to new files
+    private static final List<String> MODE_PREFERENCE_KEYS = Arrays.asList(
+            SETTINGS_PROPERTIES,
+            MODE,
+            APP_NAME
+    );
+
+    // external service preference keys used for moving from legacy files to new files
+    private static final List<String> EXTERNAL_SERVICE_KEYS = Arrays.asList(
+            IS_MULTI_USER_MODE_ENABLED,
+            GEO_TILE_OPTION,
+            OCR_TRANSLATION_ENABLED,
+            EXTERNAL_DATABASE_HOSTNAME_OR_IP,
+            EXTERNAL_DATABASE_PORTNUMBER,
+            EXTERNAL_DATABASE_NAME,
+            EXTERNAL_DATABASE_USER,
+            EXTERNAL_DATABASE_PASSWORD,
+            EXTERNAL_DATABASE_TYPE,
+            SOLR8_SERVER_HOST,
+            SOLR8_SERVER_PORT,
+            SOLR4_SERVER_HOST,
+            SOLR4_SERVER_PORT,
+            ZK_SERVER_HOST,
+            ZK_SERVER_PORT,
+            MESSAGE_SERVICE_PASSWORD,
+            MESSAGE_SERVICE_USER,
+            MESSAGE_SERVICE_HOST,
+            MESSAGE_SERVICE_PORT,
+            TEXT_TRANSLATOR_NAME,
+            GEO_OSM_SERVER_ADDRESS
+    );
+
+    private static final String LEGACY_CONFIG_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), "Preferences", "org", "sleuthkit", "autopsy", "core.properties").toString();
+
+    static void updateConfig() {
+        List<Triple<File, ConfigProperties, List<String>>> fileAndKeys = Arrays.asList(
+                Triple.of(new File(MODE_PREFERENCE_PATH), modePreferences, MODE_PREFERENCE_KEYS),
+                Triple.of(new File(MACHINE_SPECIFIC_PREFERENCE_PATH), machineSpecificPreferences, MACHINE_PREFERENCE_KEYS),
+                Triple.of(new File(VIEW_PREFERENCE_PATH), viewPreferences, VIEW_PREFERENCE_KEYS),
+                Triple.of(new File(EXTERNAL_SERVICE_PREFERENCE_PATH), externalServicePreferences, EXTERNAL_SERVICE_KEYS)
+        );
+
+        boolean newSettingsExist = fileAndKeys.stream().anyMatch(triple -> triple.getLeft().exists());
+
+        File oldSettingsFile = new File(LEGACY_CONFIG_PATH);
+        // copy old settings to new location.
+        if (oldSettingsFile.exists() && !newSettingsExist) {
+            try {
+                Properties allProperties = new Properties();
+                try (FileInputStream oldPropsStream = new FileInputStream(oldSettingsFile)) {
+                    allProperties.load(oldPropsStream);
+                }
+
+                for (Triple<File, ConfigProperties, List<String>> fileKeys : fileAndKeys) {
+                    ConfigProperties newProperties = fileKeys.getMiddle();
+                    for (String key : fileKeys.getRight()) {
+                        String val = allProperties.getProperty(key);
+                        if (val != null) {
+                            newProperties.put(key, val);
+                        }
+                    }
+
+                }
+            } catch (IOException ex) {
+                // can't log because logger requires UserPreferences.  
+                // This shouldn't really be thrown unless their is a file access 
+                // issue within the user config directory.
+                ex.printStackTrace();
+            }
+        }
+    }
 
     // Prevent instantiation.
     private UserPreferences() {
     }
 
     public enum SelectedMode {
-
         STANDALONE,
         AUTOINGEST
     };
@@ -136,7 +300,10 @@ public final class UserPreferences {
      * @throws BackingStoreException
      */
     public static void reloadFromStorage() throws BackingStoreException {
-        preferences.sync();
+        viewPreferences.sync();
+        machineSpecificPreferences.sync();
+        modePreferences.sync();
+        externalServicePreferences.sync();
     }
 
     /**
@@ -147,89 +314,98 @@ public final class UserPreferences {
      * @throws BackingStoreException
      */
     public static void saveToStorage() throws BackingStoreException {
-        preferences.flush();
+        viewPreferences.flush();
+        machineSpecificPreferences.flush();
+        modePreferences.flush();
+        externalServicePreferences.flush();
     }
 
     public static void addChangeListener(PreferenceChangeListener listener) {
-        preferences.addPreferenceChangeListener(listener);
+        viewPreferences.addPreferenceChangeListener(listener);
+        machineSpecificPreferences.addPreferenceChangeListener(listener);
+        modePreferences.addPreferenceChangeListener(listener);
+        externalServicePreferences.addPreferenceChangeListener(listener);
     }
 
     public static void removeChangeListener(PreferenceChangeListener listener) {
-        preferences.removePreferenceChangeListener(listener);
+        viewPreferences.removePreferenceChangeListener(listener);
+        machineSpecificPreferences.removePreferenceChangeListener(listener);
+        modePreferences.removePreferenceChangeListener(listener);
+        externalServicePreferences.removePreferenceChangeListener(listener);
     }
 
     public static boolean keepPreferredContentViewer() {
-        return preferences.getBoolean(KEEP_PREFERRED_VIEWER, false);
+        return viewPreferences.getBoolean(KEEP_PREFERRED_VIEWER, false);
     }
 
     public static void setKeepPreferredContentViewer(boolean value) {
-        preferences.putBoolean(KEEP_PREFERRED_VIEWER, value);
+        viewPreferences.putBoolean(KEEP_PREFERRED_VIEWER, value);
     }
 
     public static boolean hideKnownFilesInDataSourcesTree() {
-        return preferences.getBoolean(HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE, false);
+        return viewPreferences.getBoolean(HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE, false);
     }
 
     public static void setHideKnownFilesInDataSourcesTree(boolean value) {
-        preferences.putBoolean(HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE, value);
+        viewPreferences.putBoolean(HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE, value);
     }
 
     public static boolean hideKnownFilesInViewsTree() {
-        return preferences.getBoolean(HIDE_KNOWN_FILES_IN_VIEWS_TREE, true);
+        return viewPreferences.getBoolean(HIDE_KNOWN_FILES_IN_VIEWS_TREE, true);
     }
 
     public static void setHideKnownFilesInViewsTree(boolean value) {
-        preferences.putBoolean(HIDE_KNOWN_FILES_IN_VIEWS_TREE, value);
+        viewPreferences.putBoolean(HIDE_KNOWN_FILES_IN_VIEWS_TREE, value);
     }
 
     public static boolean hideSlackFilesInDataSourcesTree() {
-        return preferences.getBoolean(HIDE_SLACK_FILES_IN_DATA_SRCS_TREE, true);
+        return viewPreferences.getBoolean(HIDE_SLACK_FILES_IN_DATA_SRCS_TREE, true);
     }
 
     public static void setHideSlackFilesInDataSourcesTree(boolean value) {
-        preferences.putBoolean(HIDE_SLACK_FILES_IN_DATA_SRCS_TREE, value);
+        viewPreferences.putBoolean(HIDE_SLACK_FILES_IN_DATA_SRCS_TREE, value);
     }
 
     public static boolean hideSlackFilesInViewsTree() {
-        return preferences.getBoolean(HIDE_SLACK_FILES_IN_VIEWS_TREE, true);
+        return viewPreferences.getBoolean(HIDE_SLACK_FILES_IN_VIEWS_TREE, true);
     }
 
     public static void setHideSlackFilesInViewsTree(boolean value) {
-        preferences.putBoolean(HIDE_SLACK_FILES_IN_VIEWS_TREE, value);
+        viewPreferences.putBoolean(HIDE_SLACK_FILES_IN_VIEWS_TREE, value);
     }
 
     public static boolean displayTimesInLocalTime() {
-        return preferences.getBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, true);
+        return viewPreferences.getBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, true);
     }
 
     public static void setDisplayTimesInLocalTime(boolean value) {
-        preferences.putBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, value);
+        viewPreferences.putBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, value);
     }
 
     public static String getTimeZoneForDisplays() {
-        return preferences.get(TIME_ZONE_FOR_DISPLAYS, TimeZone.GMT_ZONE.getID());
+        return viewPreferences.get(TIME_ZONE_FOR_DISPLAYS, TimeZone.GMT_ZONE.getID());
     }
 
     public static void setTimeZoneForDisplays(String timeZone) {
-        preferences.put(TIME_ZONE_FOR_DISPLAYS, timeZone);
+        viewPreferences.put(TIME_ZONE_FOR_DISPLAYS, timeZone);
     }
 
     public static int numberOfFileIngestThreads() {
-        return preferences.getInt(NUMBER_OF_FILE_INGEST_THREADS, 2);
+        return machineSpecificPreferences.getInt(NUMBER_OF_FILE_INGEST_THREADS, 2);
     }
 
     public static void setNumberOfFileIngestThreads(int value) {
-        preferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
+        machineSpecificPreferences.putInt(NUMBER_OF_FILE_INGEST_THREADS, value);
     }
 
     @Deprecated
     public static boolean groupItemsInTreeByDatasource() {
-        return preferences.getBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, false);
+        return viewPreferences.getBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, false);
     }
 
     @Deprecated
     public static void setGroupItemsInTreeByDatasource(boolean value) {
-        preferences.putBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, value);
+        viewPreferences.putBoolean(GROUP_ITEMS_IN_TREE_BY_DATASOURCE, value);
     }
 
     /**
@@ -239,7 +415,7 @@ public final class UserPreferences {
      * @return true for just the current user, false for all users
      */
     public static boolean showOnlyCurrentUserTags() {
-        return preferences.getBoolean(SHOW_ONLY_CURRENT_USER_TAGS, false);
+        return viewPreferences.getBoolean(SHOW_ONLY_CURRENT_USER_TAGS, false);
     }
 
     /**
@@ -249,7 +425,7 @@ public final class UserPreferences {
      * @param value - true for just the current user, false for all users
      */
     public static void setShowOnlyCurrentUserTags(boolean value) {
-        preferences.putBoolean(SHOW_ONLY_CURRENT_USER_TAGS, value);
+        viewPreferences.putBoolean(SHOW_ONLY_CURRENT_USER_TAGS, value);
     }
 
     /**
@@ -260,7 +436,7 @@ public final class UserPreferences {
      * @return True if hiding SCO columns; otherwise false.
      */
     public static boolean getHideSCOColumns() {
-        return preferences.getBoolean(HIDE_SCO_COLUMNS, false);
+        return viewPreferences.getBoolean(HIDE_SCO_COLUMNS, false);
     }
 
     /**
@@ -271,15 +447,15 @@ public final class UserPreferences {
      * @param value The value of which to assign to the user preference.
      */
     public static void setHideSCOColumns(boolean value) {
-        preferences.putBoolean(HIDE_SCO_COLUMNS, value);
+        viewPreferences.putBoolean(HIDE_SCO_COLUMNS, value);
     }
 
     public static void setDisplayTranslatedFileNames(boolean value) {
-        preferences.putBoolean(DISPLAY_TRANSLATED_NAMES, value);
+        viewPreferences.putBoolean(DISPLAY_TRANSLATED_NAMES, value);
     }
 
     public static boolean displayTranslatedFileNames() {
-        return preferences.getBoolean(DISPLAY_TRANSLATED_NAMES, DISPLAY_TRANSLATED_NAMES_DEFAULT);
+        return viewPreferences.getBoolean(DISPLAY_TRANSLATED_NAMES, DISPLAY_TRANSLATED_NAMES_DEFAULT);
     }
 
     /**
@@ -292,16 +468,16 @@ public final class UserPreferences {
     public static CaseDbConnectionInfo getDatabaseConnectionInfo() throws UserPreferencesException {
         DbType dbType;
         try {
-            dbType = DbType.valueOf(preferences.get(EXTERNAL_DATABASE_TYPE, "POSTGRESQL")); //NON-NLS
+            dbType = DbType.valueOf(externalServicePreferences.get(EXTERNAL_DATABASE_TYPE, "POSTGRESQL")); //NON-NLS
         } catch (Exception ex) {
             dbType = DbType.SQLITE;
         }
         try {
             return new CaseDbConnectionInfo(
-                    preferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
-                    preferences.get(EXTERNAL_DATABASE_PORTNUMBER, "5432"),
-                    preferences.get(EXTERNAL_DATABASE_USER, ""),
-                    TextConverter.convertHexTextToText(preferences.get(EXTERNAL_DATABASE_PASSWORD, "")),
+                    externalServicePreferences.get(EXTERNAL_DATABASE_HOSTNAME_OR_IP, ""),
+                    externalServicePreferences.get(EXTERNAL_DATABASE_PORTNUMBER, "5432"),
+                    externalServicePreferences.get(EXTERNAL_DATABASE_USER, ""),
+                    TextConverter.convertHexTextToText(externalServicePreferences.get(EXTERNAL_DATABASE_PASSWORD, "")),
                     dbType);
         } catch (TextConverterException ex) {
             throw new UserPreferencesException("Failure converting password hex text to text.", ex); // NON-NLS
@@ -317,87 +493,107 @@ public final class UserPreferences {
      * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
     public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) throws UserPreferencesException {
-        preferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, connectionInfo.getHost());
-        preferences.put(EXTERNAL_DATABASE_PORTNUMBER, connectionInfo.getPort());
-        preferences.put(EXTERNAL_DATABASE_USER, connectionInfo.getUserName());
+        externalServicePreferences.put(EXTERNAL_DATABASE_HOSTNAME_OR_IP, connectionInfo.getHost());
+        externalServicePreferences.put(EXTERNAL_DATABASE_PORTNUMBER, connectionInfo.getPort());
+        externalServicePreferences.put(EXTERNAL_DATABASE_USER, connectionInfo.getUserName());
         try {
-            preferences.put(EXTERNAL_DATABASE_PASSWORD, TextConverter.convertTextToHexText(connectionInfo.getPassword()));
+            externalServicePreferences.put(EXTERNAL_DATABASE_PASSWORD, TextConverter.convertTextToHexText(connectionInfo.getPassword()));
         } catch (TextConverterException ex) {
             throw new UserPreferencesException("Failure converting text to password hext text", ex); // NON-NLS
         }
-        preferences.put(EXTERNAL_DATABASE_TYPE, connectionInfo.getDbType().toString());
+        externalServicePreferences.put(EXTERNAL_DATABASE_TYPE, connectionInfo.getDbType().toString());
     }
 
     public static void setIsMultiUserModeEnabled(boolean enabled) {
-        preferences.putBoolean(IS_MULTI_USER_MODE_ENABLED, enabled);
+        externalServicePreferences.putBoolean(IS_MULTI_USER_MODE_ENABLED, enabled);
     }
 
     public static boolean getIsMultiUserModeEnabled() {
-        return preferences.getBoolean(IS_MULTI_USER_MODE_ENABLED, false);
+        return isMultiUserSupported() && externalServicePreferences.getBoolean(IS_MULTI_USER_MODE_ENABLED, false);
+    }
+
+    private static Boolean multiUserSupported = null;
+
+    /**
+     * Checks to see if SolrSearchService is a registered AutopsyService. If the
+     * module is not found, the keyword search module and solr services have
+     * likely been excluded from the build. In that event, services relying on
+     * Solr (a.k.a. multiuser cases) will be disabled.
+     *
+     * @return True if multi user cases are supported.
+     */
+    public static boolean isMultiUserSupported() {
+        if (multiUserSupported == null) {
+            // looks for any SolrSearchService present in AutopsyService.
+            multiUserSupported = Lookup.getDefault().lookupAll(AutopsyService.class).stream()
+                    .anyMatch(obj -> obj.getClass().getName().equalsIgnoreCase("org.sleuthkit.autopsy.keywordsearch.SolrSearchService"));
+        }
+
+        return multiUserSupported;
     }
 
     public static String getIndexingServerHost() {
-        return preferences.get(SOLR8_SERVER_HOST, "");
+        return externalServicePreferences.get(SOLR8_SERVER_HOST, "");
     }
 
     public static void setIndexingServerHost(String hostName) {
-        preferences.put(SOLR8_SERVER_HOST, hostName);
+        externalServicePreferences.put(SOLR8_SERVER_HOST, hostName);
     }
 
     public static String getIndexingServerPort() {
-        return preferences.get(SOLR8_SERVER_PORT, "8983");
+        return externalServicePreferences.get(SOLR8_SERVER_PORT, "8983");
     }
 
     public static void setIndexingServerPort(int port) {
-        preferences.putInt(SOLR8_SERVER_PORT, port);
+        externalServicePreferences.putInt(SOLR8_SERVER_PORT, port);
     }
 
     public static String getSolr4ServerHost() {
-        return preferences.get(SOLR4_SERVER_HOST, "");
+        return externalServicePreferences.get(SOLR4_SERVER_HOST, "");
     }
 
     public static void setSolr4ServerHost(String hostName) {
-        preferences.put(SOLR4_SERVER_HOST, hostName);
+        externalServicePreferences.put(SOLR4_SERVER_HOST, hostName);
     }
 
     public static String getSolr4ServerPort() {
-        return preferences.get(SOLR4_SERVER_PORT, "");
+        return externalServicePreferences.get(SOLR4_SERVER_PORT, "");
     }
 
     public static void setSolr4ServerPort(String port) {
-        preferences.put(SOLR4_SERVER_PORT, port);
+        externalServicePreferences.put(SOLR4_SERVER_PORT, port);
     }
 
     public static String getZkServerHost() {
-        return preferences.get(ZK_SERVER_HOST, "");
+        return externalServicePreferences.get(ZK_SERVER_HOST, "");
     }
 
     public static void setZkServerHost(String hostName) {
-        preferences.put(ZK_SERVER_HOST, hostName);
+        externalServicePreferences.put(ZK_SERVER_HOST, hostName);
     }
 
     public static String getZkServerPort() {
-        return preferences.get(ZK_SERVER_PORT, "9983");
+        return externalServicePreferences.get(ZK_SERVER_PORT, "9983");
     }
 
     public static void setZkServerPort(String port) {
-        preferences.put(ZK_SERVER_PORT, port);
+        externalServicePreferences.put(ZK_SERVER_PORT, port);
     }
 
     public static void setTextTranslatorName(String textTranslatorName) {
-        preferences.put(TEXT_TRANSLATOR_NAME, textTranslatorName);
+        externalServicePreferences.put(TEXT_TRANSLATOR_NAME, textTranslatorName);
     }
 
     public static String getTextTranslatorName() {
-        return preferences.get(TEXT_TRANSLATOR_NAME, null);
+        return externalServicePreferences.get(TEXT_TRANSLATOR_NAME, null);
     }
 
     public static void setUseOcrInTranslation(boolean enableOcr) {
-        preferences.putBoolean(OCR_TRANSLATION_ENABLED, enableOcr);
+        externalServicePreferences.putBoolean(OCR_TRANSLATION_ENABLED, enableOcr);
     }
 
     public static boolean getUseOcrInTranslation() {
-        return preferences.getBoolean(OCR_TRANSLATION_ENABLED, true);
+        return externalServicePreferences.getBoolean(OCR_TRANSLATION_ENABLED, true);
     }
 
     /**
@@ -408,11 +604,11 @@ public final class UserPreferences {
      * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
     public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) throws UserPreferencesException {
-        preferences.put(MESSAGE_SERVICE_HOST, info.getHost());
-        preferences.put(MESSAGE_SERVICE_PORT, Integer.toString(info.getPort()));
-        preferences.put(MESSAGE_SERVICE_USER, info.getUserName());
+        externalServicePreferences.put(MESSAGE_SERVICE_HOST, info.getHost());
+        externalServicePreferences.put(MESSAGE_SERVICE_PORT, Integer.toString(info.getPort()));
+        externalServicePreferences.put(MESSAGE_SERVICE_USER, info.getUserName());
         try {
-            preferences.put(MESSAGE_SERVICE_PASSWORD, TextConverter.convertTextToHexText(info.getPassword()));
+            externalServicePreferences.put(MESSAGE_SERVICE_PASSWORD, TextConverter.convertTextToHexText(info.getPassword()));
         } catch (TextConverterException ex) {
             throw new UserPreferencesException("Failed to convert password text to hex text.", ex);
         }
@@ -428,7 +624,7 @@ public final class UserPreferences {
     public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() throws UserPreferencesException {
         int port;
         try {
-            port = Integer.parseInt(preferences.get(MESSAGE_SERVICE_PORT, DEFAULT_PORT_STRING));
+            port = Integer.parseInt(externalServicePreferences.get(MESSAGE_SERVICE_PORT, DEFAULT_PORT_STRING));
         } catch (NumberFormatException ex) {
             // if there is an error parsing the port number, use the default port number
             port = DEFAULT_PORT_INT;
@@ -436,10 +632,10 @@ public final class UserPreferences {
 
         try {
             return new MessageServiceConnectionInfo(
-                    preferences.get(MESSAGE_SERVICE_HOST, ""),
+                    externalServicePreferences.get(MESSAGE_SERVICE_HOST, ""),
                     port,
-                    preferences.get(MESSAGE_SERVICE_USER, ""),
-                    TextConverter.convertHexTextToText(preferences.get(MESSAGE_SERVICE_PASSWORD, "")));
+                    externalServicePreferences.get(MESSAGE_SERVICE_USER, ""),
+                    TextConverter.convertHexTextToText(externalServicePreferences.get(MESSAGE_SERVICE_PASSWORD, "")));
         } catch (TextConverterException ex) {
             throw new UserPreferencesException("Failed to convert password hex text to text.", ex);
         }
@@ -451,7 +647,7 @@ public final class UserPreferences {
      * @return int Process time out value (hours).
      */
     public static int getProcessTimeOutHrs() {
-        int timeOut = preferences.getInt(PROCESS_TIME_OUT_HOURS, DEFAULT_PROCESS_TIMEOUT_HR);
+        int timeOut = machineSpecificPreferences.getInt(PROCESS_TIME_OUT_HOURS, DEFAULT_PROCESS_TIMEOUT_HR);
         if (timeOut < 0) {
             timeOut = 0;
         }
@@ -467,7 +663,7 @@ public final class UserPreferences {
         if (value < 0) {
             value = 0;
         }
-        preferences.putInt(PROCESS_TIME_OUT_HOURS, value);
+        machineSpecificPreferences.putInt(PROCESS_TIME_OUT_HOURS, value);
     }
 
     /**
@@ -478,7 +674,7 @@ public final class UserPreferences {
      *         otherwise.
      */
     public static boolean getIsTimeOutEnabled() {
-        boolean enabled = preferences.getBoolean(PROCESS_TIME_OUT_ENABLED, false);
+        boolean enabled = machineSpecificPreferences.getBoolean(PROCESS_TIME_OUT_ENABLED, false);
         return enabled;
     }
 
@@ -490,7 +686,7 @@ public final class UserPreferences {
      *                functionality is enabled.
      */
     public static void setIsTimeOutEnabled(boolean enabled) {
-        preferences.putBoolean(PROCESS_TIME_OUT_ENABLED, enabled);
+        machineSpecificPreferences.putBoolean(PROCESS_TIME_OUT_ENABLED, enabled);
     }
 
     /**
@@ -499,7 +695,7 @@ public final class UserPreferences {
      * @return Name of this program
      */
     public static String getAppName() {
-        return preferences.get(APP_NAME, Version.getName());
+        return modePreferences.get(APP_NAME, Version.getName());
     }
 
     /**
@@ -508,7 +704,7 @@ public final class UserPreferences {
      * @param name Display name
      */
     public static void setAppName(String name) {
-        preferences.put(APP_NAME, name);
+        modePreferences.put(APP_NAME, name);
     }
 
     /**
@@ -517,7 +713,7 @@ public final class UserPreferences {
      * @return Number of log files
      */
     public static int getLogFileCount() {
-        return preferences.getInt(MAX_NUM_OF_LOG_FILE, LOG_FILE_NUM_INT);
+        return machineSpecificPreferences.getInt(MAX_NUM_OF_LOG_FILE, LOG_FILE_NUM_INT);
     }
 
     /**
@@ -535,7 +731,7 @@ public final class UserPreferences {
      * @param count number of log files
      */
     public static void setLogFileCount(int count) {
-        preferences.putInt(MAX_NUM_OF_LOG_FILE, count);
+        machineSpecificPreferences.putInt(MAX_NUM_OF_LOG_FILE, count);
     }
 
     /**
@@ -547,9 +743,9 @@ public final class UserPreferences {
      */
     public static int getMaxSolrVMSize() {
         if (PlatformUtil.is64BitJVM()) {
-            return preferences.getInt(SOLR_MAX_JVM_SIZE, DEFAULT_SOLR_HEAP_SIZE_MB_64BIT_PLATFORM);
+            return machineSpecificPreferences.getInt(SOLR_MAX_JVM_SIZE, DEFAULT_SOLR_HEAP_SIZE_MB_64BIT_PLATFORM);
         } else {
-            return preferences.getInt(SOLR_MAX_JVM_SIZE, DEFAULT_SOLR_HEAP_SIZE_MB_32BIT_PLATFORM);
+            return machineSpecificPreferences.getInt(SOLR_MAX_JVM_SIZE, DEFAULT_SOLR_HEAP_SIZE_MB_32BIT_PLATFORM);
         }
     }
 
@@ -559,7 +755,7 @@ public final class UserPreferences {
      * @param maxSize
      */
     public static void setMaxSolrVMSize(int maxSize) {
-        preferences.putInt(SOLR_MAX_JVM_SIZE, maxSize);
+        machineSpecificPreferences.putInt(SOLR_MAX_JVM_SIZE, maxSize);
     }
 
     /**
@@ -568,7 +764,7 @@ public final class UserPreferences {
      * @return Saved value or default (10,000).
      */
     public static int getResultsTablePageSize() {
-        return preferences.getInt(RESULTS_TABLE_PAGE_SIZE, 10_000);
+        return viewPreferences.getInt(RESULTS_TABLE_PAGE_SIZE, 10_000);
     }
 
     /**
@@ -577,7 +773,7 @@ public final class UserPreferences {
      * @param pageSize
      */
     public static void setResultsTablePageSize(int pageSize) {
-        preferences.putInt(RESULTS_TABLE_PAGE_SIZE, pageSize);
+        viewPreferences.putInt(RESULTS_TABLE_PAGE_SIZE, pageSize);
     }
 
     /**
@@ -586,7 +782,7 @@ public final class UserPreferences {
      * @param executablePath User-inputted path to HxD executable
      */
     public static void setExternalHexEditorPath(String executablePath) {
-        preferences.put(EXTERNAL_HEX_EDITOR_PATH, executablePath);
+        viewPreferences.put(EXTERNAL_HEX_EDITOR_PATH, executablePath);
     }
 
     /**
@@ -596,7 +792,7 @@ public final class UserPreferences {
      * @return Path to HdX
      */
     public static String getExternalHexEditorPath() {
-        return preferences.get(EXTERNAL_HEX_EDITOR_PATH, Paths.get("C:", "Program Files", "HxD", "HxD.exe").toString());
+        return viewPreferences.get(EXTERNAL_HEX_EDITOR_PATH, Paths.get("C:", "Program Files", "HxD", "HxD.exe").toString());
     }
 
     /**
@@ -605,7 +801,7 @@ public final class UserPreferences {
      * @param option
      */
     public static void setGeolocationTileOption(int option) {
-        preferences.putInt(GEO_TILE_OPTION, option);
+        externalServicePreferences.putInt(GEO_TILE_OPTION, option);
     }
 
     /**
@@ -615,7 +811,7 @@ public final class UserPreferences {
      * @return
      */
     public static int getGeolocationtTileOption() {
-        return preferences.getInt(GEO_TILE_OPTION, 0);
+        return externalServicePreferences.getInt(GEO_TILE_OPTION, 0);
     }
 
     /**
@@ -624,7 +820,7 @@ public final class UserPreferences {
      * @param absolutePath
      */
     public static void setGeolocationOsmZipPath(String absolutePath) {
-        preferences.put(GEO_OSM_TILE_ZIP_PATH, absolutePath);
+        machineSpecificPreferences.put(GEO_OSM_TILE_ZIP_PATH, absolutePath);
     }
 
     /**
@@ -634,7 +830,7 @@ public final class UserPreferences {
      * @return Path to zip file
      */
     public static String getGeolocationOsmZipPath() {
-        return preferences.get(GEO_OSM_TILE_ZIP_PATH, "");
+        return machineSpecificPreferences.get(GEO_OSM_TILE_ZIP_PATH, "");
     }
 
     /**
@@ -644,7 +840,7 @@ public final class UserPreferences {
      * @param address
      */
     public static void setGeolocationOsmServerAddress(String address) {
-        preferences.put(GEO_OSM_SERVER_ADDRESS, address);
+        externalServicePreferences.put(GEO_OSM_SERVER_ADDRESS, address);
     }
 
     /**
@@ -653,7 +849,7 @@ public final class UserPreferences {
      * @return Address of OSM server
      */
     public static String getGeolocationOsmServerAddress() {
-        return preferences.get(GEO_OSM_SERVER_ADDRESS, "");
+        return externalServicePreferences.get(GEO_OSM_SERVER_ADDRESS, "");
     }
 
     /**
@@ -662,7 +858,7 @@ public final class UserPreferences {
      * @param absolutePath
      */
     public static void setGeolocationMBTilesFilePath(String absolutePath) {
-        preferences.put(GEO_MBTILES_FILE_PATH, absolutePath);
+        machineSpecificPreferences.put(GEO_MBTILES_FILE_PATH, absolutePath);
     }
 
     /**
@@ -671,7 +867,7 @@ public final class UserPreferences {
      * @return Absolute path to MBTiles file or empty string if none was found.
      */
     public static String getGeolocationMBTilesFilePath() {
-        return preferences.get(GEO_MBTILES_FILE_PATH, "");
+        return machineSpecificPreferences.get(GEO_MBTILES_FILE_PATH, "");
     }
 
     /**
@@ -721,7 +917,7 @@ public final class UserPreferences {
      * @param reportPath Last used health monitor report path.
      */
     public static void setHealthMonitorReportPath(String reportPath) {
-        preferences.put(HEALTH_MONITOR_REPORT_PATH, reportPath);
+        machineSpecificPreferences.put(HEALTH_MONITOR_REPORT_PATH, reportPath);
     }
 
     /**
@@ -731,6 +927,6 @@ public final class UserPreferences {
      *         has been recorded.
      */
     public static String getHealthMonitorReportPath() {
-        return preferences.get(HEALTH_MONITOR_REPORT_PATH, "");
+        return machineSpecificPreferences.get(HEALTH_MONITOR_REPORT_PATH, "");
     }
 }

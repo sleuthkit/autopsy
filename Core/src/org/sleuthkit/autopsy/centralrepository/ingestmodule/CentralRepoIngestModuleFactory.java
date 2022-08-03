@@ -64,7 +64,7 @@ public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
         return Version.getVersion();
     }
 
-   @Override
+    @Override
     public boolean isFileIngestModuleFactory() {
         return true;
     }
@@ -83,7 +83,7 @@ public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
         }
         throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
     }
-   
+
     @Override
     public boolean hasGlobalSettingsPanel() {
         return true;
@@ -121,14 +121,14 @@ public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
         throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
     }
 
-//    @Override
-//    public boolean isDataArtifactIngestModuleFactory() {
-//        return true;
-//    }
-//
-//    @Override
-//    public DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
-//        return new CentralRepoDataArtifactIngestModule();
-//    }
+    @Override
+    public boolean isDataArtifactIngestModuleFactory() {
+        return true;
+    }
+
+    @Override
+    public DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
+        return new CentralRepoDataArtifactIngestModule((IngestSettings) settings);
+    }
 
 }

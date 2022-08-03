@@ -18,20 +18,26 @@
  */
 package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.io.FileUtils;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
+import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Sets up a default, single-user SQLite central repository
@@ -40,6 +46,10 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  */
 public class Installer extends ModuleInstall {
 
+    private static final String LEGACY_DEFAULT_FOLDER = "central_repository";
+    private static final String LEGACY_DEFAULT_DB_PARENT_PATH = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), LEGACY_DEFAULT_FOLDER).toAbsolutePath().toString();
+    private static final String LEGACY_MODULE_SETTINGS_KEY = "CentralRepository";
+    
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static final long serialVersionUID = 1L;
     private static Installer instance;
@@ -78,7 +88,67 @@ public class Installer extends ModuleInstall {
      */
     @Override
     public void restored() {
+        // must happen first to move any legacy settings that exist.
+        upgradeSettingsPath();
         setupDefaultCentralRepository();
+    }
+    
+    
+    
+    /**
+    * Path to module settings path.
+    *
+    * @param moduleName The full name of the module provided to ModuleSettings.
+    *
+    * @return The path on disk for that object. NOTE: This must be in sync with
+    *         ModuleSettings.
+    */
+    private String getSettingsFilePath(String moduleName) {
+        return Paths.get(PlatformUtil.getUserConfigDirectory(), moduleName + ".properties").toString();
+    }
+            
+    /**
+     * Copies settings to new path location.
+     */
+    private void upgradeSettingsPath() {
+        File newSettingsFile = new File(getSettingsFilePath(CentralRepoSettings.getInstance().getModuleSettingsKey()));
+        File legacySettingsFile = new File(getSettingsFilePath(LEGACY_MODULE_SETTINGS_KEY));
+        // new config has not been created, but legacy has, copy it.
+        if (!newSettingsFile.exists() && legacySettingsFile.exists()) {
+            Map<String, String> prevSettings = ModuleSettings.getConfigSettings(LEGACY_MODULE_SETTINGS_KEY);
+            String prevPath = prevSettings.get(CentralRepoSettings.getInstance().getDatabasePathKey());
+            File prevDirCheck = new File(prevPath);
+            // if a relative directory, make sure it is relative to user config.
+            if (!prevDirCheck.isAbsolute()) {
+                prevPath = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), prevPath).toAbsolutePath().toString();
+            }
+            
+            // if old path is default path for sqlite db, copy it over to new location and update setting.
+            if (prevPath != null 
+                    && Paths.get(LEGACY_DEFAULT_DB_PARENT_PATH).toAbsolutePath().toString().equals(Paths.get(prevPath).toAbsolutePath().toString())) {
+                String prevDbName = prevSettings.get(CentralRepoSettings.getInstance().getDatabaseNameKey());
+                File prevDir = new File(prevPath);
+                // copy all files starting with prevDbName in prevPath to new path location.
+                if (prevDir.exists() && prevDir.isDirectory()) {
+                    new File(CentralRepoSettings.getInstance().getDefaultDbPath()).mkdirs();
+                    try {
+                        for (File childFile : prevDir.listFiles((dir, name) -> name.startsWith(prevDbName))) {
+                            FileUtils.copyFile(childFile, new File(CentralRepoSettings.getInstance().getDefaultDbPath(), childFile.getName()));
+                        }    
+                    } catch (IOException ex) {
+                        logger.log(Level.SEVERE, "There was an error upgrading settings.", ex);
+                    }
+                }
+                
+                // get the new relative path to store
+                String newRelPath = PlatformUtil.getUserDirectory().toPath().relativize(Paths.get(CentralRepoSettings.getInstance().getDefaultDbPath())).toString();
+                // update path settings accordingly
+                prevSettings.put(CentralRepoSettings.getInstance().getDatabasePathKey(), newRelPath);
+            }
+            
+            // copy settings
+            ModuleSettings.setConfigSettings(CentralRepoSettings.getInstance().getModuleSettingsKey(), prevSettings);
+        }
     }
 
     /**
@@ -88,7 +158,7 @@ public class Installer extends ModuleInstall {
      * (in other words, developers are exempt from seeing the notification).
      */
     private void setupDefaultCentralRepository() {
-        Map<String, String> centralRepoSettings = ModuleSettings.getConfigSettings("CentralRepository");
+        Map<String, String> centralRepoSettings = ModuleSettings.getConfigSettings(CentralRepoSettings.getInstance().getModuleSettingsKey());
         String initializedStr = centralRepoSettings.get("initialized");
 
         // check to see if the repo has been initialized asking to setup cr
@@ -100,7 +170,7 @@ public class Installer extends ModuleInstall {
             // if it has been previously set up and is in use, mark as previously initialized and save the settings
             if (prevRepo) {
                 initialized = true;
-                ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
+                ModuleSettings.setConfigSetting(CentralRepoSettings.getInstance().getModuleSettingsKey(), "initialized", "true");
             }
         }
         
@@ -126,7 +196,7 @@ public class Installer extends ModuleInstall {
             doMessageBoxIfRunningInGUI(ex);
         }
 
-        ModuleSettings.setConfigSetting("CentralRepository", "initialized", "true");
+        ModuleSettings.setConfigSetting(CentralRepoSettings.getInstance().getModuleSettingsKey(), "initialized", "true");
     }
 
     /**

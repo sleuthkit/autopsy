@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -35,7 +36,7 @@ import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
 import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
-import org.sleuthkit.autopsy.directorytree.FileSearchAction;
+import org.sleuthkit.autopsy.directorytree.FileSearchTreeAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -103,15 +104,14 @@ public class ImageNode extends AbstractContentNode<Image> {
     public Action[] getActions(boolean context) {
 
         List<Action> actionsList = new ArrayList<>();
-        for (Action a : super.getActions(true)) {
-            actionsList.add(a);
-        }
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
-        actionsList.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text(), content.getId()));
+        actionsList.add(new FileSearchTreeAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text(), content.getId()));
         actionsList.add(new ViewSummaryInformationAction(content.getId()));
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
         actionsList.add(new DeleteDataSourceAction(content.getId()));
+        actionsList.add(null);
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
         return actionsList.toArray(new Action[0]);
     }
 
