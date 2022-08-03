@@ -260,7 +260,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 // run ingest
                                 String ingestProfile = inputs.get(CommandLineCommand.InputType.INGEST_PROFILE_NAME.name());
                                 analyze(dataSource, ingestProfile);
-                            } catch (InterruptedException | CaseActionException ex) {
+                            } catch (InterruptedException | CaseActionException | AnalysisStartupException ex) {
                                 String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
                                 LOGGER.log(Level.SEVERE, "Error running ingest on data source " + dataSourcePath, ex);
                                 System.out.println("Error running ingest on data source " + dataSourcePath);
@@ -520,7 +520,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                     // unable to find the user specified profile
                     LOGGER.log(Level.SEVERE, "Unable to find ingest profile: {0}. Ingest cancelled!", ingestProfileName);
                     System.out.println("Unable to find ingest profile: " + ingestProfileName + ". Ingest cancelled!");
-                    return;
+                    throw new AnalysisStartupException("Unable to find ingest profile: " + ingestProfileName + ". Ingest cancelled!");
                 }
 
                 // get FileSet filter associated with this profile
@@ -529,7 +529,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                     // unable to find the user specified profile
                     LOGGER.log(Level.SEVERE, "Unable to find file filter {0} for ingest profile: {1}. Ingest cancelled!", new Object[]{selectedProfile.getFileIngestFilter(), ingestProfileName});
                     System.out.println("Unable to find file filter " + selectedProfile.getFileIngestFilter() + " for ingest profile: " + ingestProfileName + ". Ingest cancelled!");
-                    return;
+                    throw new AnalysisStartupException("Unable to find file filter " + selectedProfile.getFileIngestFilter() + " for ingest profile: " + ingestProfileName + ". Ingest cancelled!");
                 }
             }
 
