@@ -709,7 +709,7 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < faviconFiles.size()) {
-            if (browser.equals(GOOGLE_PROFILE_NAME)) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(faviconFiles.get(j).getParentPath());
                 browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
             }
@@ -827,7 +827,7 @@ class Chromium extends Extract {
         while (j < loginDataFiles.size()) {
             if (browser.contains(GOOGLE_PROFILE_NAME)) {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(loginDataFiles.get(j).getParentPath());
-                browserName = GOOGLE_PROFILE_NAME + FilenameUtils.getBaseName(parentPath);
+                browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
             }
             AbstractFile loginDataFile = loginDataFiles.get(j++);
             if ((loginDataFile.getSize() == 0) || (loginDataFile.getName().toLowerCase().contains("-slack"))) {
@@ -939,7 +939,7 @@ class Chromium extends Extract {
         while (j < webDataFiles.size()) {
             if (browser.contains(GOOGLE_PROFILE_NAME)) {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(webDataFiles.get(j).getParentPath());
-                browserName = GOOGLE_PROFILE_NAME + FilenameUtils.getBaseName(parentPath);
+                browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
             }
             databaseEncrypted = false;
             AbstractFile webDataFile = webDataFiles.get(j++);
