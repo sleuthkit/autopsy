@@ -86,13 +86,19 @@ class Chromium extends Extract {
     private static final String WEBFORM_ADDRESS_QUERY_V8X = "SELECT first_name, middle_name, last_name, full_name, street_address, city, state, zipcode, country_code, number, email, date_modified, use_date, use_count"
             + " FROM autofill_profiles, autofill_profile_names, autofill_profile_emails, autofill_profile_phones"
             + " WHERE autofill_profiles.guid = autofill_profile_names.guid AND autofill_profiles.guid = autofill_profile_emails.guid AND autofill_profiles.guid = autofill_profile_phones.guid";
+    private static final String FAVICON_QUERY = "SELECT page_url, last_updated, last_requested FROM icon_mapping, favicon_bitmaps "
+            + " WHERE icon_mapping.icon_id = favicon_bitmaps.icon_id";
     private static final String HISTORY_FILE_NAME = "History";
     private static final String BOOKMARK_FILE_NAME = "Bookmarks";
     private static final String COOKIE_FILE_NAME = "Cookies";
     private static final String LOGIN_DATA_FILE_NAME = "Login Data";
     private static final String WEB_DATA_FILE_NAME = "Web Data";
+    private static final String FAVICON_DATA_FILE_NAME = "Favicons";
     private static final String UC_BROWSER_NAME = "UC Browser";
     private static final String ENCRYPTED_FIELD_MESSAGE = "The data was encrypted.";
+    private static final String GOOGLE_PROFILE_NAME = "Profile";
+    private static final String GOOGLE_PROFILE = "Google Chrome ";
+    private static final String FAVICON_ARTIFACT_NAME = "TSK_FAVICON"; //NON-NLS
 
     private Boolean databaseEncrypted = false;
     private Boolean fieldEncrypted = false;
@@ -109,6 +115,8 @@ class Chromium extends Extract {
             .put("UC Browser", "UCBrowser/User Data%/Default")
             .put("Brave", "BraveSoftware/Brave-Browser/User Data/Default")
             .put("Google Chrome", "Chrome/User Data/Default")
+            .put("Google Chrome Profile", "Chrome/User Data/Profile %")
+            .put("Google Chrome System Profile", "Chrome/User Data/System Profile")
             .build();
 
     @Messages({"# {0} - browserName",
@@ -119,6 +127,7 @@ class Chromium extends Extract {
         "Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}",
         "# {0} - browserName",
         "Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}",
+        "Progress_Message_Chrome_Favicons=Chrome Downloads Favicons {0}",
         "Progress_Message_Chrome_FormHistory=Chrome Form History",
         "# {0} - browserName",
         "Progress_Message_Chrome_AutoFill=Chrome Auto Fill Browser {0}",
@@ -174,6 +183,12 @@ class Chromium extends Extract {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
+
+            progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Favicons", browserName));
+            this.getFavicons(browser.getKey(), browser.getValue(), ingestJobId);
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
         }
 
         progressBar.progress(Bundle.Progress_Message_Chrome_Cache());
@@ -190,9 +205,10 @@ class Chromium extends Extract {
      */
     private void getHistory(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
+        String browserName = browser;
         List<AbstractFile> historyFiles;
         String historyFileName = HISTORY_FILE_NAME;
-        if (browser.equals(UC_BROWSER_NAME)) {
+        if (browserName.equals(UC_BROWSER_NAME)) {
             historyFileName = HISTORY_FILE_NAME + "%";
         }
         try {
@@ -223,7 +239,11 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < allocatedHistoryFiles.size()) {
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + allocatedHistoryFiles.get(j).getName() + j + ".db"; //NON-NLS
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
+                String parentPath = FilenameUtils.normalizeNoEndSeparator(allocatedHistoryFiles.get(j).getParentPath());
+                browserName = GOOGLE_PROFILE + " " + FilenameUtils.getBaseName(parentPath);
+            }
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + allocatedHistoryFiles.get(j).getName() + j + ".db"; //NON-NLS
             final AbstractFile historyFile = allocatedHistoryFiles.get(j++);
             if ((historyFile.getSize() == 0) || (historyFile.getName().toLowerCase().contains("-slack"))
                     || (historyFile.getName().toLowerCase().contains("cache")) || (historyFile.getName().toLowerCase().contains("media"))
@@ -263,7 +283,7 @@ class Chromium extends Extract {
                         (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - Long.valueOf("11644473600"),
                         result.get("from_visit") == null ? "" : result.get("from_visit").toString(),
                         result.get("title") == null ? "" : result.get("title").toString(),
-                        browser,
+                        browserName,
                         extractedDomain,
                         "");
                                     
@@ -290,8 +310,9 @@ class Chromium extends Extract {
     private void getBookmark(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles;
+        String browserName = browser;
         String bookmarkFileName = BOOKMARK_FILE_NAME;
-        if (browser.equals(UC_BROWSER_NAME)) {
+        if (browserName.equals(UC_BROWSER_NAME)) {
             bookmarkFileName = BOOKMARK_FILE_NAME + "%";
         }
         try {
@@ -312,6 +333,11 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < bookmarkFiles.size()) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
+                String parentPath = FilenameUtils.normalizeNoEndSeparator(bookmarkFiles.get(j).getParentPath());
+                browserName = GOOGLE_PROFILE + " " + FilenameUtils.getBaseName(parentPath);
+            }
+
             AbstractFile bookmarkFile = bookmarkFiles.get(j++);
             if ((bookmarkFile.getSize() == 0) || (bookmarkFile.getName().toLowerCase().contains("-slack"))
                     || (bookmarkFile.getName().toLowerCase().contains("extras")) || (bookmarkFile.getName().toLowerCase().contains("log"))
@@ -319,7 +345,7 @@ class Chromium extends Extract {
                     || (bookmarkFile.getName().toLowerCase().contains("bak")) || (bookmarkFile.getParentPath().toLowerCase().contains("backup"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -404,7 +430,7 @@ class Chromium extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
                         RecentActivityExtracterModuleFactory.getModuleName(), (date / 1000000) - Long.valueOf("11644473600")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browser));
+                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
 
@@ -435,8 +461,9 @@ class Chromium extends Extract {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
+        String browserName = browser;
         String cookieFileName = COOKIE_FILE_NAME;
-        if (browser.equals(UC_BROWSER_NAME)) {
+        if (browserName.equals(UC_BROWSER_NAME)) {
             // Wildcard on front and back of Cookies are there for Cookie files that start with something else
             // ie: UC browser has "Extension Cookies.9" as well as Cookies.9
             cookieFileName = "%" + COOKIE_FILE_NAME + "%";
@@ -459,11 +486,16 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < cookiesFiles.size()) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
+                String parentPath = FilenameUtils.normalizeNoEndSeparator(cookiesFiles.get(j).getParentPath());
+                browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
+            }
+            
             AbstractFile cookiesFile = cookiesFiles.get(j++);
             if ((cookiesFile.getSize() == 0) || (cookiesFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + cookiesFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + cookiesFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -503,7 +535,7 @@ class Chromium extends Extract {
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browser));
+                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
                 String domain = result.get("host_key").toString(); //NON-NLS
                 domain = domain.replaceFirst("^\\.+(?!$)", "");
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
@@ -534,8 +566,9 @@ class Chromium extends Extract {
     private void getDownload(String browser, String browserLocation, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadFiles;
+        String browserName = browser;
         String historyFileName = HISTORY_FILE_NAME;
-        if (browser.equals(UC_BROWSER_NAME)) {
+        if (browserName.equals(UC_BROWSER_NAME)) {
             historyFileName = HISTORY_FILE_NAME + "%";
         }
         try {
@@ -556,13 +589,18 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < downloadFiles.size()) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
+                String parentPath = FilenameUtils.normalizeNoEndSeparator(downloadFiles.get(j).getParentPath());
+                browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
+            }
+
             AbstractFile downloadFile = downloadFiles.get(j++);
             if ((downloadFile.getSize() == 0) || (downloadFile.getName().toLowerCase().contains("-slack"))
                     || (downloadFile.getName().toLowerCase().contains("cache")) || (downloadFile.getName().toLowerCase().contains("index"))) {
                 continue;
             }
 
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(downloadFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -618,7 +656,7 @@ class Chromium extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browser));
+                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
 
                 // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
                 try {
@@ -643,6 +681,116 @@ class Chromium extends Extract {
     }
 
     /**
+     * Queries the Favicons table and adds artifacts
+     *
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId     The ingest job id.
+     */
+    private void getFavicons(String browser, String browserLocation, long ingestJobId) {
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> faviconFiles;
+        String browserName = browser;
+        try {
+            faviconFiles = fileManager.findFiles(dataSource, FAVICON_DATA_FILE_NAME, browserLocation); //NON-NLS
+        } catch (TskCoreException ex) {
+            String msg = NbBundle.getMessage(this.getClass(), "Chrome.getFavicon.errMsg.errGettingFiles");
+            logger.log(Level.SEVERE, msg, ex);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
+            return;
+        }
+
+        if (faviconFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome favicon files."); //NON-NLS
+            return;
+        }
+
+        dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        int j = 0;
+        while (j < faviconFiles.size()) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
+                String parentPath = FilenameUtils.normalizeNoEndSeparator(faviconFiles.get(j).getParentPath());
+                browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
+            }
+            AbstractFile faviconFile = faviconFiles.get(j++);
+            if ((faviconFile.getSize() == 0) || (faviconFile.getName().toLowerCase().contains("-slack"))
+                    || (faviconFile.getName().toLowerCase().contains("cache")) || (faviconFile.getName().toLowerCase().contains("index"))) {
+                continue;
+            }
+
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + faviconFile.getName() + j + ".db"; //NON-NLS
+            try {
+                ContentUtils.writeToFile(faviconFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome favicons artifacts file '%s' (id=%d).",
+                        faviconFile.getName(), faviconFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getFavicon.errMsg.errAnalyzeFiles1",
+                        this.getDisplayName(), faviconFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome favicon artifacts file '%s' (id=%d).",
+                        temps, faviconFile.getName(), faviconFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getfavicon.errMsg.errAnalyzeFiles1",
+                        this.getDisplayName(), faviconFile.getName()));
+                continue;
+            }
+            File dbFile = new File(temps);
+            if (context.dataSourceIngestIsCancelled()) {
+                dbFile.delete();
+                break;
+            }
+
+            BlackboardArtifact.Type faviconArtifactType;
+
+            try {
+                faviconArtifactType = createFaviconArtifactType();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error creating artifact type for Chrome favicon."), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getfavicon.errMsg.errCreateArtifact"));
+                continue;
+                
+            }
+            
+            List<HashMap<String, Object>> tempList;
+
+            tempList = this.querySQLiteDb(temps, FAVICON_QUERY);
+
+            logger.log(Level.INFO, "{0}- Now getting favicons from {1} with {2} artifacts identified.", new Object[]{getDisplayName(), temps, tempList.size()}); //NON-NLS
+            for (HashMap<String, Object> result : tempList) {
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        ((result.get("page_url").toString() != null) ? result.get("page_url").toString() : ""))); //NON-NLS
+                Long updatedTime = (Long.valueOf(result.get("last_updated").toString()) / 1000000) - Long.valueOf("11644473600"); //NON-NLS
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED,
+                        RecentActivityExtracterModuleFactory.getModuleName(), updatedTime));
+                Long requestedTime = (Long.valueOf(result.get("last_requested").toString()) / 1000000) - Long.valueOf("11644473600"); //NON-NLS
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                        RecentActivityExtracterModuleFactory.getModuleName(), requestedTime));
+                String domain = NetworkUtils.extractDomain((result.get("page_url").toString() != null) ? result.get("page_url").toString() : ""); //NON-NLS
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+
+                try {
+                    bbartifacts.add(createArtifactWithAttributes(faviconArtifactType, faviconFile, bbattributes));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to create cookie artifact for file (%d)", faviconFile.getId()), ex);
+                }
+
+            }
+
+            dbFile.delete();
+        }
+
+        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bbartifacts);
+        }
+    }
+
+    /**
      * Gets user logins from Login Data sqlite database
      *
      * @param browser
@@ -653,8 +801,9 @@ class Chromium extends Extract {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> loginDataFiles;
+        String browserName = browser;
         String loginDataFileName = LOGIN_DATA_FILE_NAME;
-        if (browser.equals(UC_BROWSER_NAME)) {
+        if (browserName.equals(UC_BROWSER_NAME)) {
             loginDataFileName = LOGIN_DATA_FILE_NAME + "%";
         }
 
@@ -676,11 +825,15 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < loginDataFiles.size()) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
+                String parentPath = FilenameUtils.normalizeNoEndSeparator(loginDataFiles.get(j).getParentPath());
+                browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
+            }
             AbstractFile loginDataFile = loginDataFiles.get(j++);
             if ((loginDataFile.getSize() == 0) || (loginDataFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + loginDataFile.getName() + j + ".db"; //NON-NLS
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + loginDataFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(loginDataFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -731,7 +884,7 @@ class Chromium extends Extract {
                         result.containsKey("signon_realm") ? NetworkUtils.extractDomain(result.get("signon_realm").toString()) : "")); //NON-NLS
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browser));
+                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
 
                 try {
                     bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_SERVICE_ACCOUNT, loginDataFile, bbattributes));
@@ -760,8 +913,9 @@ class Chromium extends Extract {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> webDataFiles;
+        String browserName = browser;
         String webDataFileName = WEB_DATA_FILE_NAME;
-        if (browser.equals(UC_BROWSER_NAME)) {
+        if (browserName.equals(UC_BROWSER_NAME)) {
             webDataFileName = WEB_DATA_FILE_NAME + "%";
         }
 
@@ -783,12 +937,16 @@ class Chromium extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < webDataFiles.size()) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
+                String parentPath = FilenameUtils.normalizeNoEndSeparator(webDataFiles.get(j).getParentPath());
+                browserName = GOOGLE_PROFILE + FilenameUtils.getBaseName(parentPath);
+            }
             databaseEncrypted = false;
             AbstractFile webDataFile = webDataFiles.get(j++);
             if ((webDataFile.getSize() == 0) || (webDataFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, browser, ingestJobId) + File.separator + webDataFile.getName() + j + ".db"; //NON-NLS
+            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + webDataFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(webDataFile, new File(tempFilePath), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -814,12 +972,12 @@ class Chromium extends Extract {
             boolean isSchemaV8X = Util.checkColumn("date_created", "autofill", tempFilePath);
 
             // get form autofill artifacts
-            bbartifacts.addAll(getFormAutofillArtifacts(webDataFile, tempFilePath, isSchemaV8X, browser));
+            bbartifacts.addAll(getFormAutofillArtifacts(webDataFile, tempFilePath, isSchemaV8X, browserName));
             try {
                 // get form address atifacts
                 getFormAddressArtifacts(webDataFile, tempFilePath, isSchemaV8X);
                 if (databaseEncrypted) {
-                    String comment = String.format("%s Autofill Database Encryption Detected", browser);
+                    String comment = String.format("%s Autofill Database Encryption Detected", browserName);
                     Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                             new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
                                     RecentActivityExtracterModuleFactory.getModuleName(), comment));
@@ -1031,4 +1189,24 @@ class Chromium extends Extract {
 
         return false;
     }
+    
+        @Messages({
+        "ExtractFavicon_Display_Name=Favicon"
+    })
+    /**
+     * Create TSK_FAVICON artifact type.
+     *
+     * @return the BlackboardArtifact.type of the artifact created
+     * @throws TskCoreException
+     */
+    private BlackboardArtifact.Type createFaviconArtifactType() throws TskCoreException {
+        BlackboardArtifact.Type faviconArtifactType;
+        try {
+            faviconArtifactType = tskCase.getBlackboard().getOrAddArtifactType(FAVICON_ARTIFACT_NAME, Bundle.ExtractFavicon_Display_Name()); //NON-NLS
+        } catch (Blackboard.BlackboardException ex) {
+            throw new TskCoreException(String.format("An exception was thrown while defining artifact type %s", FAVICON_ARTIFACT_NAME), ex);
+        }
+        return faviconArtifactType;
+    }
+
 }
