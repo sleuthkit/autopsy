@@ -261,8 +261,9 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 String ingestProfile = inputs.get(CommandLineCommand.InputType.INGEST_PROFILE_NAME.name());
                                 analyze(dataSource, ingestProfile);
                             } catch (InterruptedException | CaseActionException | AnalysisStartupException ex) {
-                                LOGGER.log(Level.SEVERE, "Error running ingest on data source " + dataSource.getPath(), ex);
-                                System.out.println("Error running ingest on data source " + dataSource.getPath());
+                                String dataSourcePath = command.getInputs().get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
+                                LOGGER.log(Level.SEVERE, "Error running ingest on data source " + dataSourcePath, ex);
+                                System.out.println("Error running ingest on data source " + dataSourcePath);
                                 // Do not process any other commands
                                 errorCode = CL_RUN_FAILURE;
                                 return;
