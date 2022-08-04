@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Verifies programs are installed and copies native code into the Autopsy folder structure
+# Verifies programs are installed and copies native code into the Application folder structure
 #
 
 # NOTE: update_sleuthkit_version.pl updates this value and relies
@@ -9,11 +9,16 @@ TSK_VERSION=4.11.1
 
 
 usage() { 
-    echo "Usage: unix_setup.sh [-j java_home]" 1>&2;
+    echo "Usage: unix_setup.sh [-j java_home] [-n application_name]" 1>&2;
 }
 
-while getopts "j:" o; do
+APPLICATION_NAME = "autopsy";
+
+while getopts "j:n:" o; do
     case "${o}" in
+        n)
+            APPLICATION_NAME = ${OPTARG}
+            ;;
         j)
             JAVA_PATH=${OPTARG}
             ;;
@@ -27,7 +32,7 @@ done
 
 # In the beginning...
 echo "---------------------------------------------"
-echo "Checking prerequisites and preparing Autopsy:"
+echo "Checking prerequisites and preparing ${APPLICATION_NAME}:"
 echo "---------------------------------------------"
 
 # Verify PhotoRec was installed
@@ -47,8 +52,8 @@ fi
 echo -n "Checking for Java..."
 if [ -n "$JAVA_PATH" ]; then 
     if [ -x "$JAVA_PATH/bin/java" ]; then
-        sed -Ei '/^#?\s*jdkhome=/d' etc/autopsy.conf
-        echo "jdkhome=$JAVA_PATH" >> etc/autopsy.conf
+        sed -Ei '/^#?\s*jdkhome=/d' etc/$(APPLICATION_NAME).conf
+        echo "jdkhome=$JAVA_PATH" >> etc/$(APPLICATION_NAME).conf
     else
         echo "ERROR: Java was not found in $JAVA_PATH."
         exit 1
@@ -81,7 +86,7 @@ else
 fi
 
 ext_jar_filepath=$PWD/autopsy/modules/ext/sleuthkit-$TSK_VERSION.jar;
-echo -n "Copying sleuthkit-$TSK_VERSION.jar into the Autopsy directory..."
+echo -n "Copying sleuthkit-$TSK_VERSION.jar into the $APPLICATION_NAME directory..."
 rm -f "$ext_jar_filepath";
 if [ "$?" -gt 0 ]; then  #checking if remove operation failed
     echo "ERROR: Deleting $ext_jar_filepath failed."
@@ -105,8 +110,8 @@ chmod u+x autopsy/markmckinnon/parse*
 chmod -R u+x autopsy/solr/bin
 
 # make sure it is executable
-find /home/autopsy/src/commander/commander-1.0.0/bin/* -not -name "*.exe" | xargs chmod u+x
+chmod u+x bin/$APPLICATION_NAME
 
 echo
-echo "Autopsy is now configured. You can execute $(find /home/autopsy/src/commander/commander-1.0.0/bin/* -not -name "*.exe") to start it"
+echo "Application is now configured. You can execute bin/$APPLICATION_NAME to start it"
 echo

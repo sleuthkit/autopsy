@@ -2,7 +2,7 @@
 echo "Installing dependencies..."
 # dependencies taken from: https://github.com/sleuthkit/autopsy/pull/5111/files
 # brew install postgresql gettext cppunit && \
-brew install ant automake libtool afflib libewf libpq testdisk imagemagick gstreamer gst-plugins-base gst-plugins-good
+brew install ant automake libtool afflib libewf libpq testdisk gstreamer gst-plugins-base gst-plugins-good
 if [[ $? -ne 0 ]] 
 then 
     echo "Unable to install necessary dependencies" >> /dev/stderr
