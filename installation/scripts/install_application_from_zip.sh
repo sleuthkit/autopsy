@@ -6,12 +6,12 @@ usage() {
     echo "If specifying a .asc verification file (with -v flag), the program will attempt to create a temp folder in the working directory and verify the signature with gpg." 1>&2
 }
 
-APPLICATION_NAME = "autopsy";
+APPLICATION_NAME="autopsy";
 
 while getopts "n:z:i:j:v:" o; do
     case "${o}" in
     n)
-        APPLICATION_NAME = ${OPTARG}
+        APPLICATION_NAME=${OPTARG}
         ;;
     z)
         APPLICATION_ZIP_PATH=${OPTARG}
@@ -55,7 +55,7 @@ fi
 
 ZIP_FILE_NAME=$(basename -- "$APPLICATION_ZIP_PATH")
 ZIP_NAME="${ZIP_FILE_NAME%.*}"
-APPLICATION_EXTRACTED_PATH=$INSTALL_DIR/$ZIP_NAME
+APPLICATION_EXTRACTED_PATH=$INSTALL_DIR/$ZIP_NAME/
 
 if [[ -d $APPLICATION_EXTRACTED_PATH || -f $APPLICATION_EXTRACTED_PATH ]]; then
     echo "A file or directory already exists at $APPLICATION_EXTRACTED_PATH" >>/dev/stderr
