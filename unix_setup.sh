@@ -12,12 +12,12 @@ usage() {
     echo "Usage: unix_setup.sh [-j java_home] [-n application_name]" 1>&2;
 }
 
-APPLICATION_NAME = "autopsy";
+APPLICATION_NAME="autopsy";
 
 while getopts "j:n:" o; do
     case "${o}" in
         n)
-            APPLICATION_NAME = ${OPTARG}
+            APPLICATION_NAME=${OPTARG}
             ;;
         j)
             JAVA_PATH=${OPTARG}
@@ -52,8 +52,9 @@ fi
 echo -n "Checking for Java..."
 if [ -n "$JAVA_PATH" ]; then 
     if [ -x "$JAVA_PATH/bin/java" ]; then
-        sed -Ei '/^#?\s*jdkhome=/d' etc/$(APPLICATION_NAME).conf
-        echo "jdkhome=$JAVA_PATH" >> etc/$(APPLICATION_NAME).conf
+        # only works on linux; not os x
+        sed -Ei '/^#?\s*jdkhome=.*$' "etc/$APPLICATION_NAME.conf"
+        echo "jdkhome=$JAVA_PATH" >> etc/$APPLICATION_NAME.conf
     else
         echo "ERROR: Java was not found in $JAVA_PATH."
         exit 1
