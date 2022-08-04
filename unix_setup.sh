@@ -105,8 +105,8 @@ chmod u+x autopsy/markmckinnon/parse*
 chmod -R u+x autopsy/solr/bin
 
 # make sure it is executable
-chmod u+x bin/autopsy
+find /home/autopsy/src/commander/commander-1.0.0/bin/* -not -name "*.exe" | xargs chmod u+x
 
 echo
-echo "Autopsy is now configured. You can execute bin/autopsy to start it"
+echo "Autopsy is now configured. You can execute $(find /home/autopsy/src/commander/commander-1.0.0/bin/* -not -name "*.exe") to start it"
 echo
