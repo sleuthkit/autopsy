@@ -31,7 +31,6 @@ import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -47,8 +46,7 @@ import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
-import org.sleuthkit.datamodel.SleuthkitItemVisitor;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
+import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -120,11 +118,11 @@ class Ingester {
      * Creates a field map from a SleuthkitVisitableItem, that is later sent to
      * Solr.
      *
-     * @param item SleuthkitVisitableItem to get fields from
+     * @param item Content to get fields from
      *
      * @return the map from field name to value (as a string)
      */
-    private Map<String, String> getContentFields(SleuthkitVisitableItem item) {
+    private Map<String, String> getContentFields(Content item) {
         return item.accept(SOLR_FIELDS_VISITOR);
     }
     
@@ -146,7 +144,7 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+    < T extends Content> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
         boolean doLanguageDetection = true;
         return indexText(sourceReader, sourceID, sourceName, source, context, doLanguageDetection);
     }
@@ -170,7 +168,7 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> boolean indexStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+    < T extends Content> boolean indexStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
         // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
         boolean doLanguageDetection = false;
         return indexText(sourceReader, sourceID, sourceName, source, context, doLanguageDetection);
@@ -195,7 +193,7 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    private < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
+    private < T extends Content> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
         
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
@@ -342,10 +340,10 @@ class Ingester {
     /**
      * Visitor used to create fields to send to SOLR index.
      */
-    static private class SolrFieldsVisitor extends SleuthkitItemVisitor.Default<Map<String, String>> {
+    static private class SolrFieldsVisitor extends ContentVisitor.Default<Map<String, String>> {
 
         @Override
-        protected Map<String, String> defaultVisit(SleuthkitVisitableItem svi) {
+        protected Map<String, String> defaultVisit(Content svi) {
             return new HashMap<>();
         }
 

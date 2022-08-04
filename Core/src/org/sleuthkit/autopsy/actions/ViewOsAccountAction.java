@@ -52,11 +52,12 @@ public class ViewOsAccountAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        final DirectoryTreeTopComponent topComp = DirectoryTreeTopComponent.findInstance();
         new SwingWorker<Void, Void>() {
 
             @Override
             protected Void doInBackground() throws Exception {
-                DirectoryTreeTopComponent.findInstance().viewOsAccount(osAccount);
+                topComp.viewOsAccount(osAccount);
                 return null;
             }
 

@@ -593,13 +593,11 @@ final class RegexQuery implements KeywordSearchQuery {
          * attributes
          */
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
+        String configuration = originalKeyword.getOriginalTerm();
 
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
 
-        if (StringUtils.isNotBlank(listName)) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
-        }
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
@@ -609,15 +607,22 @@ final class RegexQuery implements KeywordSearchQuery {
         );
 
         if (originalKeyword.searchTermIsLiteral()) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
+            configuration += " (" + TskData.KeywordSearchQueryType.SUBSTRING.name() + ")";
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.SUBSTRING.ordinal()));
         } else {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
+            configuration += " (" + TskData.KeywordSearchQueryType.REGEX.name() + ")";
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.REGEX.ordinal()));
+        }
+        
+        if (StringUtils.isNotBlank(listName)) {
+            configuration += " - " + listName;
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
         }
 
         try {
             return content.newAnalysisResult(
                     BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_LIKELY_NOTABLE, 
-                    null, listName, null, attributes)
+                    null, configuration, null, attributes)
                     .getAnalysisResult();
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
@@ -714,7 +719,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
 
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.REGEX.getType()));
 
         /*
          * Create an account instance.

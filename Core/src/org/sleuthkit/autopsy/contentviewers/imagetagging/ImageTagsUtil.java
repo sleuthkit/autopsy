@@ -29,13 +29,12 @@ import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javax.imageio.ImageIO;
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.highgui.Highgui;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -124,7 +123,7 @@ public final class ImageTagsUtil {
 
             byte[] imageBytes = outStream.toByteArray();
             MatOfByte rawSourceBytes = new MatOfByte(imageBytes);
-            Mat sourceImage = Highgui.imdecode(rawSourceBytes, Highgui.IMREAD_COLOR);
+            Mat sourceImage = Imgcodecs.imdecode(rawSourceBytes, Imgcodecs.IMREAD_COLOR);
             rawSourceBytes.release();
 
             return sourceImage;
@@ -150,12 +149,12 @@ public final class ImageTagsUtil {
 
             int rectangleBorderWidth = (int) Math.rint(region.getStrokeThickness());
 
-            Core.rectangle(sourceImage, topLeft, bottomRight,
+            Imgproc.rectangle(sourceImage, topLeft, bottomRight,
                     rectangleBorderColor, rectangleBorderWidth);
         }
 
         MatOfByte taggedMatrix = new MatOfByte();
-        Highgui.imencode(OPENCV_PNG, sourceImage, taggedMatrix);
+        Imgcodecs.imencode(OPENCV_PNG, sourceImage, taggedMatrix);
 
         return taggedMatrix;
     }
@@ -200,13 +199,13 @@ public final class ImageTagsUtil {
      */
     private static MatOfByte getResizedMatrix(MatOfByte taggedMatrix, IconSize size) {
         Size resizeDimensions = new Size(size.getSize(), size.getSize());
-        Mat taggedImage = Highgui.imdecode(taggedMatrix, Highgui.IMREAD_COLOR);
+        Mat taggedImage = Imgcodecs.imdecode(taggedMatrix, Imgcodecs.IMREAD_COLOR);
 
         Mat thumbnailImage = new Mat();
         Imgproc.resize(taggedImage, thumbnailImage, resizeDimensions);
 
         MatOfByte thumbnailMatrix = new MatOfByte();
-        Highgui.imencode(OPENCV_PNG, thumbnailImage, thumbnailMatrix);
+        Imgcodecs.imencode(OPENCV_PNG, thumbnailImage, thumbnailMatrix);
 
         thumbnailImage.release();
         taggedImage.release();

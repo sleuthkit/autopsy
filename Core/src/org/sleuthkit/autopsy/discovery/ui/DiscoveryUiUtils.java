@@ -43,7 +43,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.imgscalr.Scalr;
 import org.netbeans.api.progress.ProgressHandle;
 import org.opencv.core.Mat;
-import org.opencv.highgui.VideoCapture;
+import org.opencv.videoio.VideoCapture;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;

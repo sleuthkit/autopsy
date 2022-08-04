@@ -36,13 +36,4 @@ abstract class ContentNode extends DisplayableItemNode {
     public ContentNode(Children children, Lookup lookup) {
         super(children, lookup);
     }
-
-    /**
-     * Visitor pattern support.
-     *
-     * @param visitor visitor
-     *
-     * @return visitor's visit return value
-     */
-    public abstract <T> T accept(ContentNodeVisitor<T> visitor);
 }

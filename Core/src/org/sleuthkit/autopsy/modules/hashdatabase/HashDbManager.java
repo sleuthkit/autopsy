@@ -1050,7 +1050,7 @@ public class HashDbManager implements PropertyChangeListener {
          *
          * @throws TskCoreException
          */
-        abstract boolean isValid() throws TskCoreException;
+        public abstract boolean isValid() throws TskCoreException;
 
         public abstract String getIndexPath() throws TskCoreException;
 
@@ -1301,7 +1301,7 @@ public class HashDbManager implements PropertyChangeListener {
          * @throws TskCoreException
          */
         @Override
-        boolean isValid() throws TskCoreException {
+        public boolean isValid() throws TskCoreException {
             return hasIndex();
         }
 
@@ -1646,7 +1646,7 @@ public class HashDbManager implements PropertyChangeListener {
          * @return true if is valid, false otherwise
          */
         @Override
-        boolean isValid() {
+        public boolean isValid() {
             if (!CentralRepository.isEnabled()) {
                 return false;
             }
