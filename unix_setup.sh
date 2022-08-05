@@ -35,6 +35,10 @@ echo "---------------------------------------------"
 echo "Checking prerequisites and preparing ${APPLICATION_NAME}:"
 echo "---------------------------------------------"
 
+# make sure cwd is same as script's
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+pushd $SCRIPTPATH
+
 # Verify PhotoRec was installed
 echo -n "Checking for PhotoRec..."
 photorec_filepath=/usr/bin/photorec
@@ -53,7 +57,8 @@ echo -n "Checking for Java..."
 if [ -n "$JAVA_PATH" ]; then 
     if [ -x "$JAVA_PATH/bin/java" ]; then
         # only works on linux; not os x
-        sed -Ei '/^#?\s*jdkhome=.*$' "etc/$APPLICATION_NAME.conf"
+        awk '!/^\s*#?\s*jdkhome=.*$/' etc/$APPLICATION_NAME.conf > etc/$APPLICATION_NAME.conf.tmp && \
+        mv etc/$APPLICATION_NAME.conf.tmp etc/$APPLICATION_NAME.conf && \
         echo "jdkhome=$JAVA_PATH" >> etc/$APPLICATION_NAME.conf
     else
         echo "ERROR: Java was not found in $JAVA_PATH."
@@ -112,6 +117,8 @@ chmod -R u+x autopsy/solr/bin
 
 # make sure it is executable
 chmod u+x bin/$APPLICATION_NAME
+
+popd
 
 echo
 echo "Application is now configured. You can execute bin/$APPLICATION_NAME to start it"
