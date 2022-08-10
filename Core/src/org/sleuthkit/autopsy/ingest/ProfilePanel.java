@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
@@ -85,7 +86,15 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     IngestJobSettings getSettings() {
         return ingestSettingsPanel.getSettings();
     }
-
+    
+    String getIngestProfileName() {
+        if (profile != null) {
+            return profile.getName();
+        } else {
+            return NEW_PROFILE_NAME;
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
