@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.swing.DefaultListModel;
@@ -28,7 +27,6 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
