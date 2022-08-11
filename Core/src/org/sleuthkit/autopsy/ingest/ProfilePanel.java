@@ -85,7 +85,15 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     IngestJobSettings getSettings() {
         return ingestSettingsPanel.getSettings();
     }
-
+    
+    String getIngestProfileName() {
+        if (profile != null) {
+            return profile.getName();
+        } else {
+            return NEW_PROFILE_NAME;
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
