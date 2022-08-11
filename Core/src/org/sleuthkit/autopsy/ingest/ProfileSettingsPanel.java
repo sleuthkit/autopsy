@@ -391,7 +391,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
      */
     private void doProfileDialog(IngestProfile selectedProfile) {
         // Create a files set defintion panel.
-         final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
+        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         //start wait cursor for ingest job settings construction
         if (selectedProfile != null) {
@@ -430,6 +430,15 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             }
             panel.saveSettings();
             load();
+        } else if (option == JOptionPane.CANCEL_OPTION) {
+            if (selectedProfile == null) {
+                // for new profiles, if user canlessed a profile create/edit then delete the temp empty profile that was created. 
+                // Otherwise it will remain in "config/ModuleSettings/IngestSettings" and then will get loaded
+                // next time we open ProfilePanel(), causing an NPE (JIRA-8404). This only needs to be done when creating
+                // a new ingest profile. If user cancelled editing of an existing profile, then we should not delete
+                // that profile.
+                IngestProfile.deleteProfile(panel.getIngestProfileName());
+            }
         }
     }
 
@@ -479,7 +488,12 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                     for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
                         fileIngestFilters.put(fSet.getName(), fSet);
                     }
-                    filterDescArea.setText(fileIngestFilters.get(selectedProfile.getFileIngestFilter()).getDescription());
+                    String selectedFilter = selectedProfile.getFileIngestFilter();
+                    if (selectedFilter == null) {
+                        filterDescArea.setText(NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.messages.filterLoadFailed"));
+                    } else {
+                        filterDescArea.setText(fileIngestFilters.get(selectedFilter).getDescription());
+                    }
                 } catch (FilesSetsManager.FilesSetsManagerException ex) {
                     filterDescArea.setText(NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.messages.filterLoadFailed"));
                 }

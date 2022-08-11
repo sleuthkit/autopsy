@@ -202,15 +202,24 @@ public final class IngestProfiles {
          * @param selectedProfile
          */
         synchronized static void deleteProfile(IngestProfile selectedProfile) {
+            deleteProfile(selectedProfile.getName());
+        }
+        
+        /**
+         * Deletes all of the files which are currently storing a profile.
+         *
+         * @param profile name
+         */
+        synchronized static void deleteProfile(String profileName) {
             try {
-                File rootSettingsFile = getRootSettingsFile(selectedProfile.getName());
-                File settingsDirectory = getSettingsDirectory(selectedProfile.getName());
+                File rootSettingsFile = getRootSettingsFile(profileName);
+                File settingsDirectory = getSettingsDirectory(profileName);
                 Files.deleteIfExists(rootSettingsFile.toPath());
                 FileUtils.deleteDirectory(settingsDirectory);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error deleting directory for profile " + selectedProfile.getName(), ex);
+                logger.log(Level.WARNING, "Error deleting directory for profile " + profileName, ex);
             }
-        }
+        }        
 
         /**
          * Renames the files and directories associated with a profile

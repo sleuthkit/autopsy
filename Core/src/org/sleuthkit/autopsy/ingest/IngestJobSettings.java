@@ -199,7 +199,7 @@ public final class IngestJobSettings {
     public Path getSavedModuleSettingsFolder() {
         return getSavedModuleSettingsFolder(executionContext);
     }
-
+    
     /**
      * Saves these ingest job settings.
      */
