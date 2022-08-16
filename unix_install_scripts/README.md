@@ -5,7 +5,7 @@
 
 ## On OS X
 
-*A script to install these dependencies that can be found [here](scripts/install_prereqs_osx.sh).*
+*A script to install these dependencies that can be found [here](install_prereqs_osx.sh).*
 - Using [Homebrew](https://brew.sh/), install dependencies that have formulas:
   ```
   brew install ant automake libtool afflib libewf libpq testdisk imagemagick gstreamer gst-plugins-base gst-plugins-good imagemagick
@@ -25,7 +25,7 @@
   
 ## On Linux (Ubuntu / Debian-based)
 
-*A script to install these dependencies that can be found [here](scripts/install_prereqs_ubuntu.sh).*
+*A script to install these dependencies that can be found [here](install_prereqs_ubuntu.sh).*
 - You will need to include some repositories in order to install this software.  One way to do that is to uncomment lines in your `sources.list`:
   ```
   sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
@@ -55,7 +55,7 @@
 # Install Sleuthkit
 
 ## Install Sleuthkit from Source
-*A script to install these dependencies on Unix-like systems (i.e. OS X, Linux) that can be found [here](scripts/install_tsk_from_src.sh).*
+*A script to install these dependencies on Unix-like systems (i.e. OS X, Linux) that can be found [here](install_tsk_from_src.sh).*
 - Please ensure you have all the prerequisites installed on your system (see the directions [here](#installing-prerequisites)).
 - If you don't have a copy of the repository on your local machine, clone it (this requires git):
   ```
@@ -89,7 +89,7 @@
 - The zip file should be created within the `dist` folder of the Autopsy repository and will have the version in the name (i.e. `autopsy-4.18.0.zip`).
 
 ## Install Autopsy from Zip File
-*These instructions are for Unix-like systems like OS X and Linux.  If you are on Windows, there is an installer that can be downloaded from the [Autopsy downloads section](https://www.autopsy.com/download/) or in the [Releases section on GitHub](https://github.com/sleuthkit/autopsy/releases/). Please make sure you have the [prerequisites installed](#installing-prerequisites) and have [installed Sleuthkit](#install-sleuthkit). A script to perform these steps can be found [here](scripts/install_autopsy_from_zip.sh).*
+*These instructions are for Unix-like systems like OS X and Linux.  If you are on Windows, there is an installer that can be downloaded from the [Autopsy downloads section](https://www.autopsy.com/download/) or in the [Releases section on GitHub](https://github.com/sleuthkit/autopsy/releases/). Please make sure you have the [prerequisites installed](#installing-prerequisites) and have [installed Sleuthkit](#install-sleuthkit). A script to perform these steps can be found [here](install_autopsy_from_zip.sh).*
 
 - Download the zip file from the [Autopsy downloads section](https://www.autopsy.com/download/) or in the [Releases section on GitHub](https://github.com/sleuthkit/autopsy/releases/).  You can also create a zip file from source using [these directions](#create-autopsy-zip-file-from-source).
 - If you downloaded the zip file, you can verify the zip file with the [Sleuthkit key](https://sleuthkit.org/carrier.asc) and the related `.asc` file found in the [Releases section on GitHub](https://github.com/sleuthkit/autopsy/releases/).  For instance, you would use `autopsy-4.18.0.zip.asc` with `autopsy-4.18.0.zip`.  Here is an example where `$ASC_FILE` is the path to the `.asc` file and `$AUTOPSY_ZIP_PATH` is the path to the autopsy zip file:
@@ -123,3 +123,10 @@
 # Known Issues
 - On initial run, Autopsy shows a window that can appear behind the splash screen.  This looks like Autopsy has stalled during startup.  The easiest way to get around this issue for the first run is to run autopsy with the `--nosplash` flag, which will hide the splash screen on startup.  There will be a lag where no window appears for a bit, so please be patient.
 - If a script fails to run due to operation not permitted or something along those lines, you may need to run `chmod u+x <path to script>` from the command line to allow the script to run.
+- If you encounter an error like: `getcwd: cannot access parent directories: Operation not permitted` on Mac, you can do the following:
+  1. Select System Preferences -> Security & Privacy -> Full Disk Access
+  2. Click the lock to make changes
+  3. Click '+'
+  4. Press 'cmd' + 'shift' + '.' to show hidden files
+  5. Select `/bin/sh`
+  *Source: [Symscape](https://www.symscape.com/node/1727)*
