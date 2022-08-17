@@ -74,7 +74,7 @@ echo "Setting up application at $APPLICATION_EXTRACTED_PATH..."
 pushd $APPLICATION_EXTRACTED_PATH &&
     chown -R $(whoami) . &&
     chmod u+x ./unix_setup.sh &&
-    ./unix_setup.sh -j $JAVA_PATH &&
+    ./unix_setup.sh -j $JAVA_PATH -n $APPLICATION_NAME &&
     popd
 if [[ $? -ne 0 ]]; then
     echo "Unable to setup permissions for application binaries" >>/dev/stderr
