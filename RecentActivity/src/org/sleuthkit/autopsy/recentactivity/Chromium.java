@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
@@ -88,6 +89,8 @@ class Chromium extends Extract {
             + " WHERE autofill_profiles.guid = autofill_profile_names.guid AND autofill_profiles.guid = autofill_profile_emails.guid AND autofill_profiles.guid = autofill_profile_phones.guid";
     private static final String FAVICON_QUERY = "SELECT page_url, last_updated, last_requested FROM icon_mapping, favicon_bitmaps "
             + " WHERE icon_mapping.icon_id = favicon_bitmaps.icon_id";
+    private static final String LOCALSTATE_FILE_NAME = "Local State";
+    private static final String EXTENSIONS_FILE_NAME = "Secure Preferences";
     private static final String HISTORY_FILE_NAME = "History";
     private static final String BOOKMARK_FILE_NAME = "Bookmarks";
     private static final String COOKIE_FILE_NAME = "Cookies";
@@ -95,10 +98,13 @@ class Chromium extends Extract {
     private static final String WEB_DATA_FILE_NAME = "Web Data";
     private static final String FAVICON_DATA_FILE_NAME = "Favicons";
     private static final String UC_BROWSER_NAME = "UC Browser";
+    private static final String OPERA_BROWSER_NAME = "Opera";
     private static final String ENCRYPTED_FIELD_MESSAGE = "The data was encrypted.";
     private static final String GOOGLE_PROFILE_NAME = "Profile";
     private static final String GOOGLE_PROFILE = "Google Chrome ";
     private static final String FAVICON_ARTIFACT_NAME = "TSK_FAVICON"; //NON-NLS
+    private static final String LOCAL_STATE_ARTIFACT_NAME = "TSK_LOCAL_STATE"; //NON-NLS
+    private static final String EXTENSIONS_ARTIFACT_NAME = "TSK_CHROME_EXTENSIONS"; //NON-NLS
 
     private Boolean databaseEncrypted = false;
     private Boolean fieldEncrypted = false;
@@ -107,16 +113,17 @@ class Chromium extends Extract {
     private Content dataSource;
     private final IngestJobContext context;
 
+    private Map<String, String> userProfiles;
+    private Map<String, String> browserLocations;
+    
     private static final Map<String, String> BROWSERS_MAP = ImmutableMap.<String, String>builder()
-            .put("Microsoft Edge", "Microsoft/Edge/User Data/Default")
-            .put("Yandex", "YandexBrowser/User Data/Default")
+            .put("Microsoft Edge", "Microsoft/Edge/User Data")
+            .put("Yandex", "YandexBrowser/User Data")
             .put("Opera", "Opera Software/Opera Stable")
-            .put("SalamWeb", "SalamWeb/User Data/Default")
-            .put("UC Browser", "UCBrowser/User Data%/Default")
-            .put("Brave", "BraveSoftware/Brave-Browser/User Data/Default")
-            .put("Google Chrome", "Chrome/User Data/Default")
-            .put("Google Chrome Profile", "Chrome/User Data/Profile %")
-            .put("Google Chrome System Profile", "Chrome/User Data/System Profile")
+            .put("SalamWeb", "SalamWeb/User Data")
+            .put("UC Browser", "UCBrowser/User Data%")
+            .put("Brave", "BraveSoftware/Brave-Browser/User Data")
+            .put("Google Chrome", "Chrome/User Data")
             .build();
 
     @Messages({"# {0} - browserName",
@@ -127,6 +134,8 @@ class Chromium extends Extract {
         "Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}",
         "# {0} - browserName",
         "Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}",
+        "Progress_Message_Chrome_Profiles=Chrome Profiles {0}",
+        "Progress_Message_Chrome_Extensions=Chrome Extensions {0}",
         "Progress_Message_Chrome_Favicons=Chrome Downloads Favicons {0}",
         "Progress_Message_Chrome_FormHistory=Chrome Form History",
         "# {0} - browserName",
@@ -146,46 +155,62 @@ class Chromium extends Extract {
         dataFound = false;
         long ingestJobId = context.getJobId();
 
+        userProfiles = new HashMap<>();
+        browserLocations = new HashMap<>();
         for (Map.Entry<String, String> browser : BROWSERS_MAP.entrySet()) {
-            String browserName = browser.getKey();
+            progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Profiles", browser.getKey()));
+            getProfiles(browser.getKey(), browser.getValue(), ingestJobId);
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+        }
+        for (Map.Entry<String, String> profile : userProfiles.entrySet()) {
+            String browserLocation = profile.getKey(); 
+            String browserName = browserLocations.get(browserLocation);
+            String userName = profile.getValue();
+            progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Extensions", browserName));
+            this.getExtensions(browserName, browserLocation, userName, ingestJobId);
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_History", browserName));
-            this.getHistory(browser.getKey(), browser.getValue(), ingestJobId);
+            this.getHistory(browserName, browserLocation, userName, ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Bookmarks", browserName));
-            this.getBookmark(browser.getKey(), browser.getValue(), ingestJobId);
+            this.getBookmark(browserName, browserLocation, userName, ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Cookies", browserName));
-            this.getCookie(browser.getKey(), browser.getValue(), ingestJobId);
+            this.getCookie(browserName, browserLocation, userName, ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Logins", browserName));
-            this.getLogins(browser.getKey(), browser.getValue(), ingestJobId);
+            this.getLogins(browserName, browserLocation, userName, ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_AutoFill", browserName));
-            this.getAutofill(browser.getKey(), browser.getValue(), ingestJobId);
+            this.getAutofill(browserName, browserLocation, userName, ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Downloads", browserName));
-            this.getDownload(browser.getKey(), browser.getValue(), ingestJobId);
+            this.getDownload(browserName, browserLocation, userName, ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
             progressBar.progress(NbBundle.getMessage(this.getClass(), "Progress_Message_Chrome_Favicons", browserName));
-            this.getFavicons(browser.getKey(), browser.getValue(), ingestJobId);
+            this.getFavicons(browserName, browserLocation, userName, ingestJobId);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
@@ -197,13 +222,432 @@ class Chromium extends Extract {
     }
 
     /**
+     * Query for profiles and add artifacts
+     *
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId     The ingest job id.
+     */
+    private void getProfiles(String browser, String browserLocation, long ingestJobId) {
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        String browserName = browser;
+        List<AbstractFile> localStateFiles;
+        String localStateName = LOCALSTATE_FILE_NAME;
+        if (browserName.equals(UC_BROWSER_NAME)) {
+            localStateName = LOCALSTATE_FILE_NAME + "%";
+        }
+        try {
+            localStateFiles = fileManager.findFiles(dataSource, localStateName, browserLocation); //NON-NLS                                
+        } catch (TskCoreException ex) {
+            String msg = NbBundle.getMessage(this.getClass(), "Chrome.getLocalState.errMsg.errGettingFiles");
+            logger.log(Level.SEVERE, msg, ex);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
+            return;
+        }
+
+        // get only the allocated ones, for now
+        List<AbstractFile> allocatedLocalStateFiles = new ArrayList<>();
+        for (AbstractFile localStateFile : localStateFiles) {
+            if (localStateFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
+                allocatedLocalStateFiles.add(localStateFile);
+            }
+        }
+
+        // log a message if we don't have any allocated Local State files
+        if (allocatedLocalStateFiles.isEmpty()) {
+            String msg = NbBundle.getMessage(this.getClass(), "Chrome.getLocalState.errMsg.couldntFindAnyFiles");
+            logger.log(Level.INFO, msg);
+            return;
+        }
+
+        dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        int j = 0;
+        while (j < allocatedLocalStateFiles.size()) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
+                String parentPath = FilenameUtils.normalizeNoEndSeparator(allocatedLocalStateFiles.get(j).getParentPath());
+                browserName = GOOGLE_PROFILE + " " + FilenameUtils.getBaseName(parentPath);
+            }
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + allocatedLocalStateFiles.get(j).getName() + j; //NON-NLS
+            final AbstractFile localStateFile = allocatedLocalStateFiles.get(j++);
+            if ((localStateFile.getSize() == 0) || (localStateFile.getName().toLowerCase().contains("-slack"))
+                    || (localStateFile.getName().toLowerCase().contains("cache")) || (localStateFile.getName().toLowerCase().contains("media"))
+                    || (localStateFile.getName().toLowerCase().contains("index"))) {
+                continue;
+            }
+            try {
+                ContentUtils.writeToFile(localStateFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome web Local State artifacts file '%s' (id=%d).",
+                        localStateFile.getName(), localStateFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLocalState.errMsg.errAnalyzingFile",
+                        this.getDisplayName(), localStateFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp file '%s' for Chrome Local State artifacts file '%s' (id=%d).",
+                        temps, localStateFile.getName(), localStateFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLocalState.errMsg.errAnalyzingFile",
+                        this.getDisplayName(), localStateFile.getName()));
+                continue;
+            }
+
+            if (context.dataSourceIngestIsCancelled()) {
+                break;
+            }
+ 
+            FileReader tempReader;
+            try {
+                tempReader = new FileReader(temps);
+            } catch (FileNotFoundException ex) {
+                logger.log(Level.WARNING, "Error while trying to read into the LocalState file.", ex); //NON-NLS
+                continue;
+            }
+
+            JsonElement jsonElement;
+            JsonObject jElement, jProfile, jInfoCache;
+
+            try {
+                jsonElement = JsonParser.parseReader(tempReader);
+                jElement = jsonElement.getAsJsonObject();
+                if (jElement.has("profile")) {
+                    jProfile = jElement.get("profile").getAsJsonObject(); //NON-NLS
+                    jInfoCache = jProfile.get("info_cache").getAsJsonObject();
+                } else {
+                    continue;
+                }
+            } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
+                logger.log(Level.WARNING, "Error parsing Json from LocalState.", ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getlocalState.errMsg.errAnalyzingFile",
+                        this.getDisplayName(), localStateFile.getName()));
+                continue;
+            }
+
+            BlackboardArtifact.Type localStateArtifactType;
+
+            try {
+                localStateArtifactType = createArtifactType(LOCAL_STATE_ARTIFACT_NAME, NbBundle.getMessage(this.getClass(), "Chrome.getLocalState.displayName"));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error creating artifact type for LocalState."), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getfavicon.errMsg.errCreateArtifact"));
+                continue;
+                
+            }
+            Set<String> profileNames = jInfoCache.keySet();
+            for (String profileName : profileNames) {
+                JsonElement result = jInfoCache.get(profileName);
+                JsonObject profile = result.getAsJsonObject();
+                if (profile == null) {
+                    continue;
+                }
+                JsonElement gaiaIdEl = profile.get("gaia_id"); //NON-NLS
+                String gaiaId;
+                if (gaiaIdEl != null) {
+                    gaiaId = gaiaIdEl.getAsString();
+                } else {
+                    gaiaId = "";
+                }
+                String hostedDomain;
+                JsonElement hostedDomainEl = profile.get("hosted_domain"); //NON-NLS
+                if (hostedDomainEl != null) {
+                    hostedDomain = hostedDomainEl.getAsString();
+                } else {
+                     hostedDomain= "";
+                }
+                String shortcutName;
+                JsonElement shortcutNameEl = profile.get("shortcut_name"); //NON-NLS
+                if (shortcutNameEl != null) {
+                    shortcutName = shortcutNameEl.getAsString();
+                } else {
+                    shortcutName = "";
+                }
+                String name;
+                JsonElement nameEl = profile.get("name"); //NON-NLS
+                if (nameEl != null) {
+                    name = nameEl.getAsString();
+                } else {
+                     name= "";
+                }
+                String userName; 
+                JsonElement userNameEl = profile.get("user_name"); //NON-NLS
+                if (userNameEl != null) {
+                    userName = userNameEl.getAsString();
+                } else {
+                    userName = "";
+                }              
+
+                if (userName.contains("")) {
+                    userProfiles.put(browserLocation + "/" + profileName, name);
+                    browserLocations.put(browserLocation + "/" + profileName, browser);                    
+                } else {
+                    userProfiles.put(browserLocation + "/" + profileName, userName);
+                    browserLocations.put(browserLocation + "/" + profileName, browser);                    
+                }
+
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
+                        RecentActivityExtracterModuleFactory.getModuleName(), profileName));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
+                        RecentActivityExtracterModuleFactory.getModuleName(), gaiaId));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                        RecentActivityExtracterModuleFactory.getModuleName(), hostedDomain));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SHORTCUT,
+                        RecentActivityExtracterModuleFactory.getModuleName(), shortcutName));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), name));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+
+                try {
+                    bbartifacts.add(createArtifactWithAttributes(localStateArtifactType, localStateFile, bbattributes));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to create bookmark artifact for file (%d)", localStateFile.getId()), ex);
+                }
+
+            }
+
+            if (!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(bbartifacts);
+            }
+            bbartifacts.clear();
+ 
+        }
+        // Check if Default, Guest Profile and System Profile are in the usersProfiles, if they are not then add them
+        if (!userProfiles.containsKey("Default")) {
+            userProfiles.put(browserLocation + "/" + "Default", "Default");
+            browserLocations.put(browserLocation + "/" + "Default", browser);
+        }
+        if (!userProfiles.containsKey("Guest Profile")) {
+            userProfiles.put(browserLocation + "/" + "Guest Profile", "Guest");
+            browserLocations.put(browserLocation + "/" + "Guest Profile", browser);
+        }
+        if (!userProfiles.containsKey("System Profile")) {
+            userProfiles.put(browserLocation + "/" + "System Profile", "System");
+            browserLocations.put(browserLocation + "/" + "System Profile", browser);
+        }
+    }
+
+    /**
+     * Query for Extensions and add artifacts
+     *
+     * @param browser
+     * @param browserLocation
+     * @param ingestJobId     The ingest job id.
+     */
+    private void getExtensions(String browser, String browserLocation, String userName, long ingestJobId) {
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        String browserName = browser;
+        List<AbstractFile> extensionFiles;
+        String extensionsName = EXTENSIONS_FILE_NAME;
+        if (browserName.equals(UC_BROWSER_NAME)) {
+            extensionsName = EXTENSIONS_FILE_NAME + "%";
+        }
+        try {
+            // Local State file is found in the directory about the browserLocation, that is why it is being removed
+            extensionFiles = fileManager.findFiles(dataSource, extensionsName, browserLocation); //NON-NLS
+        } catch (TskCoreException ex) {
+            String msg = NbBundle.getMessage(this.getClass(), "Chrome.getExtensions.errMsg.errGettingFiles");
+            logger.log(Level.SEVERE, msg, ex);
+            this.addErrorMessage(this.getDisplayName() + ": " + msg);
+            return;
+        }
+
+        // get only the allocated ones, for now
+        List<AbstractFile> allocatedExtensionsFiles = new ArrayList<>();
+        for (AbstractFile extensionFile : extensionFiles) {
+            if (extensionFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)) {
+                allocatedExtensionsFiles.add(extensionFile);
+            }
+        }
+
+        // log a message if we don't have any allocated Local State files
+        if (allocatedExtensionsFiles.isEmpty()) {
+            String msg = NbBundle.getMessage(this.getClass(), "Chrome.getExtensions.errMsg.couldntFindAnyFiles");
+            logger.log(Level.INFO, msg);
+            return;
+        }
+
+        dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        int j = 0;
+        while (j < allocatedExtensionsFiles.size()) {
+            if (browser.contains(GOOGLE_PROFILE_NAME)) {
+                String parentPath = FilenameUtils.normalizeNoEndSeparator(allocatedExtensionsFiles.get(j).getParentPath());
+                browserName = GOOGLE_PROFILE + " " + FilenameUtils.getBaseName(parentPath);
+            }
+            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + allocatedExtensionsFiles.get(j).getName() + j; //NON-NLS
+            final AbstractFile extensionFile = allocatedExtensionsFiles.get(j++);
+            if ((extensionFile.getSize() == 0) || (extensionFile.getName().toLowerCase().contains("-slack"))
+                    || (extensionFile.getName().toLowerCase().contains("cache")) || (extensionFile.getName().toLowerCase().contains("media"))
+                    || (extensionFile.getName().toLowerCase().contains("index"))) {
+                continue;
+            }
+            try {
+                ContentUtils.writeToFile(extensionFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome web extension artifacts file '%s' (id=%d).",
+                        extensionFile.getName(), extensionFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getExtensions.errMsg.errAnalyzingFile",
+                        this.getDisplayName(), extensionFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp file '%s' for Chrome Extensions artifacts file '%s' (id=%d).",
+                        temps, extensionFile.getName(), extensionFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getExtensions.errMsg.errAnalyzingFile",
+                        this.getDisplayName(), extensionFile.getName()));
+                continue;
+            }
+
+            if (context.dataSourceIngestIsCancelled()) {
+                break;
+            }
+ 
+            FileReader tempReader;
+            try {
+                tempReader = new FileReader(temps);
+            } catch (FileNotFoundException ex) {
+                logger.log(Level.WARNING, "Error while trying to read into the Secure Preferences file.", ex); //NON-NLS
+                continue;
+            }
+
+            BlackboardArtifact.Type localStateArtifactType;
+
+            try {
+                localStateArtifactType = createArtifactType(EXTENSIONS_ARTIFACT_NAME, NbBundle.getMessage(this.getClass(), "Chrome.getExtensions.displayName"));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error creating artifact type for Secure Preferences."), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getExtensions.errMsg.errCreateArtifact"));
+                continue;
+            }
+            
+            String profileName = FilenameUtils.getBaseName(StringUtils.chop(extensionFile.getParentPath()));
+            
+            JsonElement jsonElement;
+            JsonObject jElement, jExtensions, jSettings;
+
+            try {
+                jsonElement = JsonParser.parseReader(tempReader);
+                jElement = jsonElement.getAsJsonObject();
+                if (jElement.has("extensions")) {
+                    logger.log(Level.WARNING, String.format("Processing Secure Preferences from %s", extensionFile.getParentPath()));
+                    jExtensions = jElement.get("extensions").getAsJsonObject(); //NON-NLS
+                    if (!browserName.equals(OPERA_BROWSER_NAME)) {
+                        jSettings = jExtensions.get("settings").getAsJsonObject();
+                    } else {
+                        jSettings = jExtensions.get("opsettings").getAsJsonObject();
+                    }
+                } else {
+                    continue;
+                }
+            } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
+                logger.log(Level.WARNING, "Error parsing Json from Secure Preferences.", ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getExtensoins.errMsg.errAnalyzingFile",
+                        this.getDisplayName(), extensionFile.getName()));
+                continue;
+            }
+
+            Set<String> extensions = jSettings.keySet();
+            for (String extension : extensions) {
+                JsonElement result = jSettings.get(extension);
+                JsonObject ext = result.getAsJsonObject();
+                if (ext == null) {
+                    continue;
+                }
+                JsonElement flagEl = ext.get("state"); //NON-NLS
+                String flag;
+                if (flagEl != null) {
+                    if (flagEl.getAsInt() == 1) {
+                        flag = "Enabled";
+                    } else {
+                        flag = "Disabled";
+                    }
+                } else {
+                    flag = "";
+                }
+                String apiGrantedPermissions = "";
+                if (ext.has("active_permissions")) {
+                    JsonObject permissions = ext.get("active_permissions").getAsJsonObject();
+                    JsonArray apiPermissions = permissions.get("api").getAsJsonArray();
+                    for (JsonElement apiPermission : apiPermissions) {
+                        String apigrantEl = apiPermission.getAsString();                   
+                        if (apigrantEl != null) {
+                            apiGrantedPermissions = apiGrantedPermissions + ", " + apigrantEl;
+                        } else {
+                            apiGrantedPermissions =  apiGrantedPermissions + "";
+                        }
+                    }                    
+                }
+                String version;
+                String description;
+                String extName;
+                if (ext.has("manifest")) {
+                    JsonObject manifest = ext.get("manifest").getAsJsonObject();
+                    JsonElement descriptionEl = manifest.get("description");
+                    if (descriptionEl != null) {
+                        description = descriptionEl.getAsString();
+                    } else {
+                        description = "";
+                    }
+                    JsonElement versionEl = manifest.get("version");
+                    if (versionEl != null) {
+                        version = versionEl.getAsString();
+                    } else {
+                        version = "";
+                    }
+                    JsonElement extNameEl = manifest.get("name");
+                    if (extNameEl != null) {
+                        extName = extNameEl.getAsString();
+                    } else {
+                        extName = "";
+                    }
+                } else {
+                    version = "";
+                    description = "";
+                    extName = "";
+                }                
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ID,
+                        RecentActivityExtracterModuleFactory.getModuleName(), extension));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), extName));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+                        RecentActivityExtracterModuleFactory.getModuleName(), description));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VERSION,
+                        RecentActivityExtracterModuleFactory.getModuleName(), version));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FLAG,
+                        RecentActivityExtracterModuleFactory.getModuleName(), flag));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PERMISSIONS,
+                        RecentActivityExtracterModuleFactory.getModuleName(), apiGrantedPermissions.replaceFirst(", ", "")));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+
+                try {
+                    bbartifacts.add(createArtifactWithAttributes(localStateArtifactType, extensionFile, bbattributes));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to create Extension artifact for file (%d)", extensionFile.getId()), ex);
+                }
+
+            }
+
+            if (!context.dataSourceIngestIsCancelled()) {
+                postArtifacts(bbartifacts);
+            }
+            bbartifacts.clear();
+ 
+        }
+    }
+
+    /**
      * Query for history databases and add artifacts
      *
      * @param browser
      * @param browserLocation
      * @param ingestJobId     The ingest job id.
      */
-    private void getHistory(String browser, String browserLocation, long ingestJobId) {
+    private void getHistory(String browser, String browserLocation, String userName, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         String browserName = browser;
         List<AbstractFile> historyFiles;
@@ -285,7 +729,7 @@ class Chromium extends Extract {
                         result.get("title") == null ? "" : result.get("title").toString(),
                         browserName,
                         extractedDomain,
-                        "");
+                        userName);
                                     
                     bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_HISTORY, historyFile, bbattributes));
                 } catch (TskCoreException ex) {
@@ -307,7 +751,7 @@ class Chromium extends Extract {
      * @param browserLocation
      * @param ingestJobId     The ingest job id.
      */
-    private void getBookmark(String browser, String browserLocation, long ingestJobId) {
+    private void getBookmark(String browser, String browserLocation, String userName, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> bookmarkFiles;
         String browserName = browser;
@@ -378,15 +822,13 @@ class Chromium extends Extract {
             }
 
             JsonElement jsonElement;
-            JsonObject jElement, jRoot, jBookmark;
-            JsonArray jBookmarkArray;
+            JsonObject jElement, jRoot;
 
             try {
                 jsonElement = JsonParser.parseReader(tempReader);
                 jElement = jsonElement.getAsJsonObject();
                 jRoot = jElement.get("roots").getAsJsonObject(); //NON-NLS
-                jBookmark = jRoot.get("bookmark_bar").getAsJsonObject(); //NON-NLS
-                jBookmarkArray = jBookmark.getAsJsonArray("children"); //NON-NLS
+                Set<String> bookmarkKeys = jRoot.keySet();
             } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
                 logger.log(Level.WARNING, "Error parsing Json from Chrome Bookmark.", ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getBookmark.errMsg.errAnalyzingFile3",
@@ -394,54 +836,64 @@ class Chromium extends Extract {
                 continue;
             }
 
-            for (JsonElement result : jBookmarkArray) {
-                JsonObject address = result.getAsJsonObject();
-                if (address == null) {
-                    continue;
-                }
-                JsonElement urlEl = address.get("url"); //NON-NLS
-                String url;
-                if (urlEl != null) {
-                    url = urlEl.getAsString();
-                } else {
-                    url = "";
-                }
-                String name;
-                JsonElement nameEl = address.get("name"); //NON-NLS
-                if (nameEl != null) {
-                    name = nameEl.getAsString();
-                } else {
-                    name = "";
-                }
-                Long date;
-                JsonElement dateEl = address.get("date_added"); //NON-NLS
-                if (dateEl != null) {
-                    date = dateEl.getAsLong();
-                } else {
-                    date = Long.valueOf(0);
-                }
-                String domain = NetworkUtils.extractDomain(url);
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                //TODO Revisit usage of deprecated constructor as per TSK-583
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(), url));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
-                        RecentActivityExtracterModuleFactory.getModuleName(), name));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                        RecentActivityExtracterModuleFactory.getModuleName(), (date / 1000000) - Long.valueOf("11644473600")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
+            Set<String> bookmarkKeys = jRoot.keySet();
+            for (String bookmarkKey : bookmarkKeys) {
+                JsonObject jBookmark = jRoot.get(bookmarkKey).getAsJsonObject(); //NON-NLS
+                JsonArray jBookmarkArray = jBookmark.getAsJsonArray("children"); //NON-NLS
+                for (JsonElement result : jBookmarkArray) {
+                    JsonObject address = result.getAsJsonObject();
+                    if (address == null) {
+                        continue;
+                    }
+                    JsonElement urlEl = address.get("url"); //NON-NLS
+                    String url;
+                    if (urlEl != null) {
+                        url = urlEl.getAsString();
+                    } else {
+                        url = "";
+                    }
+                    String name;
+                    JsonElement nameEl = address.get("name"); //NON-NLS
+                    if (nameEl != null) {
+                        name = nameEl.getAsString();
+                    } else {
+                        name = "";
+                    }
+                    Long date;
+                    JsonElement dateEl = address.get("date_added"); //NON-NLS
+                    if (dateEl != null) {
+                        date = dateEl.getAsLong();
+                    } else {
+                        date = Long.valueOf(0);
+                    }
+                    String domain = NetworkUtils.extractDomain(url);
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                    //TODO Revisit usage of deprecated constructor as per TSK-583
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                            RecentActivityExtracterModuleFactory.getModuleName(), url));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
+                            RecentActivityExtracterModuleFactory.getModuleName(), name));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                            RecentActivityExtracterModuleFactory.getModuleName(), (date / 1000000) - Long.valueOf("11644473600")));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                            RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                            RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                            RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                            RecentActivityExtracterModuleFactory.getModuleName(), bookmarkKey));
 
-                try {
-                    bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes));
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to create bookmark artifact for file (%d)", bookmarkFile.getId()), ex);
-                }
 
+                    try {
+                        bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes));
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Failed to create bookmark artifact for file (%d)", bookmarkFile.getId()), ex);
+                    }
+
+                }
             }
-
+            
             if (!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(bbartifacts);
             }
@@ -457,7 +909,7 @@ class Chromium extends Extract {
      * @param browserLocation
      * @param ingestJobId     The ingest job id.
      */
-    private void getCookie(String browser, String browserLocation, long ingestJobId) {
+    private void getCookie(String browser, String browserLocation, String userName, long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
@@ -540,6 +992,8 @@ class Chromium extends Extract {
                 domain = domain.replaceFirst("^\\.+(?!$)", "");
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
 
                 try {
                     bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_COOKIE, cookiesFile, bbattributes));
@@ -563,7 +1017,7 @@ class Chromium extends Extract {
      * @param browserLocation
      * @param ingestJobId     The ingest job id.
      */
-    private void getDownload(String browser, String browserLocation, long ingestJobId) {
+    private void getDownload(String browser, String browserLocation, String userName, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> downloadFiles;
         String browserName = browser;
@@ -655,6 +1109,8 @@ class Chromium extends Extract {
                 String domain = NetworkUtils.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         RecentActivityExtracterModuleFactory.getModuleName(), browserName));
 
@@ -687,7 +1143,7 @@ class Chromium extends Extract {
      * @param browserLocation
      * @param ingestJobId     The ingest job id.
      */
-    private void getFavicons(String browser, String browserLocation, long ingestJobId) {
+    private void getFavicons(String browser, String browserLocation, String userName, long ingestJobId) {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> faviconFiles;
         String browserName = browser;
@@ -744,7 +1200,7 @@ class Chromium extends Extract {
             BlackboardArtifact.Type faviconArtifactType;
 
             try {
-                faviconArtifactType = createFaviconArtifactType();
+                faviconArtifactType = createArtifactType(FAVICON_ARTIFACT_NAME, NbBundle.getMessage(this.getClass(), "Chrome.getFavicon.displayName"));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Error creating artifact type for Chrome favicon."), ex); //NON-NLS
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getfavicon.errMsg.errCreateArtifact"));
@@ -771,6 +1227,8 @@ class Chromium extends Extract {
                 String domain = NetworkUtils.extractDomain((result.get("page_url").toString() != null) ? result.get("page_url").toString() : ""); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         RecentActivityExtracterModuleFactory.getModuleName(), browserName));
 
@@ -797,7 +1255,7 @@ class Chromium extends Extract {
      * @param browserLocation
      * @param ingestJobId     The ingest job id.
      */
-    private void getLogins(String browser, String browserLocation, long ingestJobId) {
+    private void getLogins(String browser, String browserLocation, String userName, long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> loginDataFiles;
@@ -886,6 +1344,9 @@ class Chromium extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         RecentActivityExtracterModuleFactory.getModuleName(), browserName));
 
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
+
                 try {
                     bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_SERVICE_ACCOUNT, loginDataFile, bbattributes));
                 } catch (TskCoreException ex) {
@@ -909,7 +1370,7 @@ class Chromium extends Extract {
      * @param browserLocation
      * @param ingestJobId     The ingest job id.
      */
-    private void getAutofill(String browser, String browserLocation, long ingestJobId) {
+    private void getAutofill(String browser, String browserLocation, String userName, long ingestJobId) {
 
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> webDataFiles;
@@ -972,7 +1433,7 @@ class Chromium extends Extract {
             boolean isSchemaV8X = Util.checkColumn("date_created", "autofill", tempFilePath);
 
             // get form autofill artifacts
-            bbartifacts.addAll(getFormAutofillArtifacts(webDataFile, tempFilePath, isSchemaV8X, browserName));
+            bbartifacts.addAll(getFormAutofillArtifacts(webDataFile, tempFilePath, isSchemaV8X, userName, browserName));
             try {
                 // get form address atifacts
                 getFormAddressArtifacts(webDataFile, tempFilePath, isSchemaV8X);
@@ -1010,7 +1471,7 @@ class Chromium extends Extract {
      *
      * @return collection of TSK_WEB_FORM_AUTOFILL artifacts
      */
-    private Collection<BlackboardArtifact> getFormAutofillArtifacts(AbstractFile webDataFile, String dbFilePath, boolean isSchemaV8X, String browser) {
+    private Collection<BlackboardArtifact> getFormAutofillArtifacts(AbstractFile webDataFile, String dbFilePath, boolean isSchemaV8X, String userName, String browser) {
 
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
 
@@ -1048,6 +1509,8 @@ class Chromium extends Extract {
                         Long.valueOf(result.get("date_last_used").toString()))); //NON-NLS
             }
 
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                    RecentActivityExtracterModuleFactory.getModuleName(), userName));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                     RecentActivityExtracterModuleFactory.getModuleName(), browser));
             if (fieldEncrypted) {
@@ -1194,17 +1657,17 @@ class Chromium extends Extract {
         "ExtractFavicon_Display_Name=Favicon"
     })
     /**
-     * Create TSK_FAVICON artifact type.
+     * Create custom artifact type.
      *
      * @return the BlackboardArtifact.type of the artifact created
      * @throws TskCoreException
      */
-    private BlackboardArtifact.Type createFaviconArtifactType() throws TskCoreException {
+    private BlackboardArtifact.Type createArtifactType(String artifactName, String displayName) throws TskCoreException {
         BlackboardArtifact.Type faviconArtifactType;
         try {
-            faviconArtifactType = tskCase.getBlackboard().getOrAddArtifactType(FAVICON_ARTIFACT_NAME, Bundle.ExtractFavicon_Display_Name()); //NON-NLS
+            faviconArtifactType = tskCase.getBlackboard().getOrAddArtifactType(artifactName, displayName); //NON-NLS
         } catch (Blackboard.BlackboardException ex) {
-            throw new TskCoreException(String.format("An exception was thrown while defining artifact type %s", FAVICON_ARTIFACT_NAME), ex);
+            throw new TskCoreException(String.format("An exception was thrown while defining artifact type %s", artifactName), ex);
         }
         return faviconArtifactType;
     }
