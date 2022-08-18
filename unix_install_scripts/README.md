@@ -8,7 +8,7 @@
 *A script to install these dependencies that can be found [here](install_prereqs_osx.sh).*
 - Using [Homebrew](https://brew.sh/), install dependencies that have formulas:
   ```
-  brew install ant automake libtool afflib libewf libpq testdisk imagemagick gstreamer gst-plugins-base gst-plugins-good imagemagick
+  brew install ant automake libtool afflib libewf postgresql testdisk
   ```
 - You will also need to install Java 8 and JavaFX to run autopsy.  We recommend Liberica OpenJDK which can be installed by tapping this third-party dependency:
   ```
@@ -22,6 +22,7 @@
   ```
   /usr/libexec/java_home -v 1.8
   ```
+- If you want gstreamer to open media, you can download and install gstreamer here: `https://gstreamer.freedesktop.org/data/pkg/osx/1.20.3/gstreamer-1.0-1.20.3-universal.pkg`
   
 ## On Linux (Ubuntu / Debian-based)
 
@@ -113,8 +114,8 @@
   ```
 - At this point, you should be able to run Autopsy with the command `./autopsy` from within the `bin` directory of the extracted folder.
 
-## Setup Homebrew JNA paths
-A few features in Autopsy will only work (i.e. gstreamer) will only work if the JNA paths are specified.  If you installed the necessary dependencies through Homebrew, you will want to either run this [script](add_homebrew_jna.sh) or manually add all the gstreamer lib and dependency lib paths to the env variable `jre_flags`.
+## Setup OSX JNA paths
+A few features in Autopsy will only work (i.e. gstreamer) if the JNA paths are specified.  If you installed the necessary dependencies through Homebrew, you will want to either run this [script](add_osx_jna.sh) or manually add all the gstreamer lib and dependency lib paths to the env variable `jre_flags` with jre flag: `-Djna.library.path`.
 
 # Caveats
 - Not all current features in Autopsy are functional in a Linux and Mac environment including but not limited to:
