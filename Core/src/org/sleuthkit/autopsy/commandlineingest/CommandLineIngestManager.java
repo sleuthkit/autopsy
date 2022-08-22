@@ -77,7 +77,7 @@ public class CommandLineIngestManager extends CommandLineManager {
 
     static int CL_SUCCESS = 0;
     static int CL_RUN_FAILURE = -1;
-    static int CL_PROCESS_FAILURE = 1;
+    static int CL_PROCESS_FAILURE = -2;
 
     public CommandLineIngestManager() {
     }
