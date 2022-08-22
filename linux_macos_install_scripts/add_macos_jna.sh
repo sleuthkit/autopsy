@@ -2,7 +2,7 @@
 # Updates jna paths for mac
 
 usage() {
-    echo "Usage: add_osx_jna.sh [-i base_install_location (i.e. /home/usr/autopsy)] [-a application_name (default: autopsy)]" 1>&2
+    echo "Usage: add_macos_jna.sh [-i base_install_location (i.e. /home/usr/autopsy)] [-a application_name (default: autopsy)]" 1>&2
 }
 
 APPLICATION_NAME="autopsy"
