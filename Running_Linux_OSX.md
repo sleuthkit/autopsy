@@ -76,7 +76,7 @@ The Sleuth Kit must be installed before trying to install Autopsy.  If you are o
 - Please ensure you have all the prerequisites installed on your system (see the directions [here](#installing-prerequisites)).
 - If you don't have a copy of the repository on your local machine, clone it (this requires git):
   ```
-  git clone https://github.com/sleuthkit/sleuthkit.git
+  git clone --depth 1 https://github.com/sleuthkit/sleuthkit.git
   ```
 - If you want to build source from a particular branch or tag (i.e. `develop` or `release-4.11.0`), check out that branch:
   ```
@@ -97,7 +97,7 @@ The Sleuth Kit must be installed before trying to install Autopsy.  If you are o
 *In most instances, you should download the Autopsy Zip file from the [Autopsy downloads section](https://www.autopsy.com/download/) or in the [Releases section on GitHub](https://github.com/sleuthkit/autopsy/releases/), but if you have a special use case you can do the following.  Please make sure you have the [prerequisites installed](#installing-prerequisites) and have [installed The Sleuth Kit](#install-sleuthkit).* 
 - If you haven't already, clone the repo:
   ```
-  git clone https://github.com/sleuthkit/autopsy.git
+  git clone --depth 1 https://github.com/sleuthkit/autopsy.git
   ```
 - With the autopsy repo as your working directory, you can run:
   ```
