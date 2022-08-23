@@ -75,9 +75,9 @@ public class CommandLineIngestManager extends CommandLineManager {
     private Case caseForJob = null;
     private AutoIngestDataSource dataSource = null;
 
-    static int CL_SUCCESS = 0;
-    static int CL_RUN_FAILURE = -1;
-    static int CL_PROCESS_FAILURE = 1;
+    static final int CL_SUCCESS = 0;
+    static final int CL_RUN_FAILURE = -1;
+    static final int CL_PROCESS_FAILURE = -2;
 
     public CommandLineIngestManager() {
     }
