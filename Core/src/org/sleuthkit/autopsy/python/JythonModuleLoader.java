@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.Comparator;
 
 /**
  * Finds and loads Autopsy modules written using the Jython variant of the
@@ -124,6 +125,8 @@ public final class JythonModuleLoader {
                 }
             }
         }
+        
+        Collections.sort(objects, Comparator.comparing((T obj) -> obj.getClass().getSimpleName(), (s1, s2) -> s1.compareToIgnoreCase(s2)));
         return objects;
     }
 
