@@ -210,7 +210,7 @@ public final class JythonModuleLoader {
 
         @Override
         public boolean accept(String line) {
-            return (line.contains("DataSourceProcessor")); //NON-NLS
+            return (line.contains("DataSourceProcessorAdapter") || line.contains("DataSourceProcessor")); //NON-NLS
         }
     }
 }
