@@ -80,7 +80,7 @@
             <fileset dir="${basedir}/docs/doxygen-dev/build-docs" includes="**/*"/>
         </delete>
 
-        <!-- build core test libs -->
+        <!-- clean core test libs -->
         <subant buildpath="${basedir}/CoreTestLibs/build.xml" target="clean" inheritrefs="false" inheritall="false">
             <property name="nbplatform.active.dir" value="${nbplatform.active.dir}" />
             <property name="nbplatform.default.harness.dir" value="${nbplatform.default.harness.dir}" />
@@ -155,14 +155,6 @@
         <!-- Copy the Autopsy documentation to the docs folder -->
         <copy flatten="true" todir="${zip-tmp}/${app.name}/docs">
             <fileset dir="${basedir}/docs/doxygen-user/user-docs"/>
-        </copy>
-        
-        <!-- Copy the ZooKeeper migration tool, it's JAR files, and documentation -->
-        <copy flatten="false" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration">
-            <fileset dir="${basedir}/Tools/ZookeeperNodeMigration/dist"/>
-        </copy>
-        <copy flatten="false" todir="${zip-tmp}/${app.name}/autopsy/ZookeeperNodeMigration" overwrite="true">
-            <fileset dir="${basedir}/Tools/ZookeeperNodeMigration/docs"/>
         </copy>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
