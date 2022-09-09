@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2014 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,9 +58,7 @@ import org.xml.sax.SAXException;
  * search engines by querying the blackboard for web history and bookmark
  * artifacts, and extracting search text from them.
  *
- *
  * To add search engines, edit SEUQAMappings.xml under RecentActivity
- *
  */
 @NbBundle.Messages({
     "cannotBuildXmlParser=Unable to build XML parser: ",
@@ -77,10 +75,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     private static SearchEngineURLQueryAnalyzer.SearchEngine[] engines;
 
     private Content dataSource;
-    private IngestJobContext context;
+    private final IngestJobContext context;
 
-    SearchEngineURLQueryAnalyzer() {
-        super(NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text"));
+    SearchEngineURLQueryAnalyzer(IngestJobContext context) {
+        super(NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text"), context);
+        this.context = context;
     }
 
     /**
@@ -134,7 +133,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         String getDomainSubstring() {
             return domainSubstring;
         }
-        
+
         Pattern getDomainRegexPattern() {
             return domainRegexPattern;
         }
@@ -213,7 +212,8 @@ class SearchEngineURLQueryAnalyzer extends Extract {
      *
      * @param domain domain as part of the URL
      *
-     * @return supported search engine(s) the domain belongs to (list may be empty)
+     * @return supported search engine(s) the domain belongs to (list may be
+     *         empty)
      *
      */
     private static Collection<SearchEngineURLQueryAnalyzer.SearchEngine> getSearchEngineFromUrl(String domain) {
@@ -332,23 +332,23 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                 if (urlAttr == null) {
                     continue;
                 }
-                
+
                 final String urlString = urlAttr.getValueString();
                 Collection<SearchEngineURLQueryAnalyzer.SearchEngine> possibleSearchEngines = getSearchEngineFromUrl(urlString);
                 for (SearchEngineURLQueryAnalyzer.SearchEngine se : possibleSearchEngines) {
                     String query = extractSearchEngineQuery(se, urlString);
                     // If we have a non-empty query string, add it to the list
-                    if ( !query.equals("")) {
+                    if (!query.equals("")) {
                         searchQueries.add(query);
                         se.increment();
                     }
                 }
-                
+
                 // If we didn't extract any search queries, go on to the next artifact
                 if (searchQueries.isEmpty()) {
                     continue;
                 }
-                
+
                 // Extract the rest of the fields needed for the web search artifact
                 BlackboardAttribute browserAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME));
                 if (browserAttr != null) {
@@ -364,7 +364,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                 }
 
                 // Make an artifact for each distinct query
-                for (String query : searchQueries) { 
+                for (String query : searchQueries) {
                     // If date doesn't exist, change to 0 (instead of 1969)
                     if (last_accessed == -1) {
                         last_accessed = 0;
@@ -382,7 +382,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                             NbBundle.getMessage(this.getClass(),
                                     "SearchEngineURLQueryAnalyzer.parentModuleName"), last_accessed));
-                    postArtifact(createArtifactWithAttributes(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes));
+                    postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_SEARCH_QUERY, file, bbattributes));
                     ++totalQueries;
                 }
             }
@@ -408,17 +408,16 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
-        this.context = context;
-        
+
         progressBar.progress(Bundle.Progress_Message_Find_Search_Query());
         this.findSearchQueries();
         logger.log(Level.INFO, "Search Engine stats: \n{0}", getTotals()); //NON-NLS
     }
 
     @Override
-    void configExtractor() throws IngestModuleException {
+    void startUp() throws IngestModuleException {
         try {
             PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE, true);
         } catch (IOException e) {
@@ -429,8 +428,4 @@ class SearchEngineURLQueryAnalyzer extends Extract {
         loadConfigFile();
     }
 
-    @Override
-    public void complete() {
-        logger.info("Search Engine URL Query Analyzer has completed."); //NON-NLS
-    }
 }

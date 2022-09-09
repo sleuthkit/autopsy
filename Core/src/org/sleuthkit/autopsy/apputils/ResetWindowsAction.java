@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.apputils.ResetWindowsAction")
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Window", position = 105)})
+    @ActionReference(path = "Menu/Window", position = 205)})
 @ActionRegistration(displayName = "#CTL_ResetWindowsAction", lazy = false)
 @NbBundle.Messages({"CTL_ResetWindowsAction=Reset Windows"})
 public final class ResetWindowsAction extends CallableSystemAction {

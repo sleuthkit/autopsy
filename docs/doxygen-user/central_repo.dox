@@ -14,7 +14,7 @@ The following are some use cases for the central repository:
 - <b>Finding Other Instances of a Property</b>
  - If you navigate to a file or Autopsy artifact (such as a Web History item), there is a content viewer in the bottom right that will show you other instances of this property across the data stored in the central repository. 
 - <b>Alerting When Previously Notable Properties Occur</b>
- - You can use the central repository to record which properties were associated with files and artifacts that were evidence (or notable).  Once these properties have been tagged as notable they will be added to the Interesting Items section of the tree when seen again in any future cases.
+ - You can use the central repository to record which properties were associated with files and artifacts that were evidence (or notable).  Once these properties have been tagged as notable they will be added to the Analysis Results section of the tree when seen again in any future cases.
 - <b>Storing Hash Sets</b>
  - You can create and import hash sets into the central repository instead of using local copies in the \ref hash_db_page "Hash Lookup module". These hash sets are functionally equivalent to local hash sets but can be shared among multiple analysts (when using a PostgreSQL central repository).
 
@@ -111,7 +111,11 @@ Descriptions of the property types:
 - <b>ICCID Number</b>
  - ICCID properties are currently only created by custom Autopsy modules.
 - <b>Credit Card</b>
- - Credid Card properties are created by the \ref keyword_search_page.
+ - Credit Card properties are created by the \ref keyword_search_page.
+- <b>OS Account</b>
+ - OS account properties are created by the disk image data source processor and the \ref recent_activity_page.
+- <b>Installed Programs</b>
+ - Installed program properties are created primarily by the \ref recent_activity_page.
 - <b> App-specific Accounts (Facebook, Twitter, etc)</b>
  - These properties primarily come from the \ref android_analyzer_page.
 
@@ -147,8 +151,9 @@ other cases/data sources where the Central Repository was run.
 There are three settings for the Central Repository ingest module:
 <ul>
 <li><b>Save items to the Central Repository</b> - This should only be unselected in the rare case that you don't want to add any properties from the current data source to the central repository, but still want to flag past occurrences.
-<li><b>Flag items previously tagged as notable</b> - Enabling this causes Interesting Item/File artifacts to be created when properties matching those previously flagged are found. See the next section \ref cr_tagging for details.
-<li><b>Flag previously seen devices</b> - When this is enabled, an Interesting Item artifact will be created if any device-related property (USB, MAC Address, IMSI, IMEI, ICCID) is found that is already in the central repository, regardless of whether they have been flagged.
+<li><b>Flag items previously tagged as notable</b> - Enabling this causes Previously Notable analysis results to be created when properties matching those previously flagged are found. See the next section \ref cr_tagging for details.
+<li><b>Flag devices and users previously seen in other cases</b> - When this is enabled, an Previously Seen analysis result will be created if any device-related property (USB, MAC Address, IMSI, IMEI, ICCID) or an OS account is found that is already in the central repository, regardless of whether they have been flagged.
+<li><b>Flag apps and domains not seen in other cases</b> - When this is enabled, Previously Unseen analysis results will be created for any installed program names or domains that are not in the central repository.
 </li>
 
 \subsection cr_tagging Tagging Files and Artifacts
@@ -157,16 +162,16 @@ Tagging a file or artifact with a "notable" tag will change its associated prope
 By default, there will be a tag named "Notable Item" that can be used for this purpose. See the \ref tagging_page "Tagging page" for more information on creating additional tags with notable status. 
 Any future data source ingest (where this module is enabled) 
 will use those notable properties in a similar manner as a Known Bad hash set, causing matching files and artifacts from that 
-ingest to be added to the Interesting Items list in that currently open case.
+ingest to generate Previously Notable analysis results in that future case.
 
 \image html central_repo_tag_file.png
 
 If a tag is accidentally added to a file or artifact, it can be removed though the context menu. This will remove its property's
 notable status in the central repository.
 
-If you would like to prevent the Interesting Items from being created in a particular case, you can disable the flagging 
-through the run time ingest properties. Note that this only disables the Interesting Item results - all properties
-are still added to the central repository.
+If you would like to prevent the analysis results from being created in a particular case, you can disable the flagging 
+through the run time ingest properties. Note that this only disables the analysis results - all properties
+are still added to the central repository unless the top checkbox in the ingest properties is unselected.
 
 \image html central_repo_ingest_settings.png
 
@@ -174,7 +179,7 @@ are still added to the central repository.
 
 Results from enabling a central repository and running the Central Repository Ingest Module can be seen in two places:
 - The Content Viewer for each file or artifact will display all matching properties from other cases/data sources
-- The Interesting Files node of the result tree will contain any files or results that matched properties previously marked as notable
+- The Analysis Results section of the result tree will contain any files or results that matched properties previously marked as notable, that have been seen before, or that are unique.
 
 \subsection cr_content_viewer Content Viewer
 
@@ -221,23 +226,21 @@ the Case -> Case Properties menu.
 
 This shows how common the selected file is. The value is the percentage of case/data source tuples that have the selected property.
 
-\subsection cr_interesting_items Interesting Items
+\subsection cr_interesting_items Analysis Results
 
-In the Results tree of an open case is an entry called Interesting Items. When this module is enabled, all of the enabled 
-Correlatable Properties will cause matching files and artifacts to be added to this Interesting Items tree during ingest.
+When this module is enabled, all of the enabled Correlatable Properties will cause matching files and artifacts to be added to the Analysis Results section of the tree during ingest. There are three types of analysis results that can be created:
 
-\image html central_repo_interesting_items.png
+<ul>
+<li> <b>Previously Notable</b> results include files and results that have been previoulsy marked as notable in the central repository.
+<li> <b>Previously Seen</b> results show users and devices that were found in the central repository.
+<li> <b>Previously Unseen</b> results show domains and app names that were not found in the central repository.
+</ul>
 
-As an example, suppose the Files Correlatable Property is enabled and the ingest is currently processing a file "badfile.exe", and the MD5 hash 
-for that file already exists in the database as a notable file property. In this case an entry in the Interesting Items tree will be added for 
-the current instance of "badfile.exe" in the data source currently being ingested.
+\image html central_repo_results.png
 
-The same type of thing will happen for each enabled Correlatable Property.
+Each type contains columns in the result viewer showing the correlation type and value that were compared with the central repository, and an "Other Cases" column listing every case the value was found in at the time of ingest (if applicable). 
 
-In the case of the phone number correlatable type, the Interesting Items tree will start a sub-tree for each phone number. The sub-tree will 
-then contain each instance of that notable phone number.
-
-
+\image html central_repo_result_viewer.png
 
 
 */

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,12 +21,8 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
-import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.Tag;
 
@@ -140,65 +136,5 @@ public class PoolNode extends AbstractContentNode<Pool> {
     @Override
     protected List<Tag> getAllTagsFromDatabase() {
         return new ArrayList<>();
-    }
-
-    /**
-     * Returns correlation attribute instance for the underlying content of the
-     * node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @return correlation attribute instance for the underlying content of the
-     *         node.
-     */
-    @Override
-    protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
-        return null;
-    }
-
-    /**
-     * Returns Score property for the node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @param tags list of tags.
-     *
-     * @return Score property for the underlying content of the node.
-     */
-    @Override
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-        return Pair.of(DataResultViewerTable.Score.NO_SCORE, NO_DESCR);
-    }
-
-    /**
-     * Returns comment property for the node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @param tags      list of tags
-     * @param attribute correlation attribute instance
-     *
-     * @return Comment property for the underlying content of the node.
-     */
-    @Override
-    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
-        return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-    }
-
-    /**
-     * Returns occurrences/count property for the node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @param attributeType      the type of the attribute to count
-     * @param attributeValue     the value of the attribute to coun
-     * @param defaultDescription a description to use when none is determined by
-     *                           the getCountPropertyAndDescription method
-     *
-     * @return count property for the underlying content of the node.
-     */
-    @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, String defaultDescription) {
-        return Pair.of(-1L, NO_DESCR);
     }
 }

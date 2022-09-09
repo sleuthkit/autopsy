@@ -1,0 +1,185 @@
+/*! \page logical_imager_page Imageur logique
+
+[TOC]
+
+
+\section logical_imager_overview Aperçu
+
+L'imageur logique ("Logical Imager") vous permet de collecter des fichiers en direct à partir d'un ordinateur Windows allumé. L'imageur est configuré avec des règles qui spécifient les fichiers à collecter. Les règles peuvent être basées sur des attributs de fichier tels que les noms de dossier, les extensions et les tailles. Vous pouvez utiliser cette fonction lorsque vous n'avez pas le temps ou l'autorisation d'effectuer une acquisition complète du lecteur.
+
+L'imageur logique peut enregistrer les fichiers correspondants de deux manières. La méthode par défaut consiste à enregistrer des fichiers individuels, ce qui est la méthode la plus rapide et utilise le moins d'espace disque. L'autre option consiste à produire une ou plusieurs images "sparse VHD" contenant toutes les données du système de fichiers qui ont été lues. Ces images VHD peuvent être importées dans Autopsy ou montées avec Windows. Dans les deux cas, l'imageur logique énumère également les comptes d'utilisateurs présents sur le système et peut générer des alertes si des programmes de chiffrement existent.
+
+Le flux de travail général est:
+<ul>
+<li>Configurez l'imageur logique à l'aide d'Autopsy. Cela copiera sur votre lecteur amovible un fichier de configuration spécifiant les fichiers à collecter ainsi que l'exécutable de l'imageur logique.
+<li>Insérez le lecteur dans le système cible et exécutez l'imageur logique. Cela génèrera un dossier contenant soit les fichiers correspondants, soit un ou plusieurs "sparse VHD", ainsi qu'un fichier contenant des informations sur les comptes d'utilisateurs et sur les fichiers qui ont généré des alertes.
+<li>Chargez le résultat de l'exécution de l'imageur logique dans Autopsy pour parcourir tous les fichiers correspondants et voir les informations des comptes utilisateurs.
+</ul>
+
+Actuellement, l'imageur logique ne peut être configuré que sur Windows et analysera uniquement les systèmes Windows. Vous devrez également exécuter l'imageur logique en tant qu'administrateur sur le système cible.
+
+\section logical_imager_config Configuration
+
+Pour commencer, ouvrez Autopsy et accédez à Tools->Create Logical Imager.
+
+\image html LogicalImager/tools_menu.png
+
+<ul>
+<li><b>Configuration d'un lecteur externe</b>
+
+L'utilisation normale consiste à sélectionner un lecteur dans la liste sous "Configure selected external drive". Une fois la configuration terminée, cela placera l'exécutable de l'imageur logique et un fichier de configuration dans le répertoire racine de ce lecteur. Notez que l'imageur logique ne peut être configuré et exécuté que sur un lecteur non formaté FAT (sauf exFAT) en raison de la taille maximale de fichier limitée à 4 Go sur les systèmes FAT.
+
+\image html LogicalImager/configure_drive.png
+
+<li><b>Configuration dans un dossier</b>
+
+Si vous n'êtes pas encore prêt à configurer votre lecteur, ou si vous souhaitez créer un fichier de configuration différent, vous pouvez utiliser la deuxième option en allant chercher un dossier ou un fichier de configuration existant. Si vous créez un nouveau fichier, accédez au dossier dans lequel vous souhaitez le créer.
+Notez que le fichier de configuration porte le nom par défaut "logical-imager-config.json". Vous pouvez modifier cela, mais si vous le faites, vous devrez le renommer après l'avoir copié sur votre lecteur ou utiliser l'invite de commande pour exécuter l'imageur. Voir la rubrique sur l'\ref logical_imager_custom_run.
+
+\image html LogicalImager/select_folder.png
+</ul>
+
+Dans les deux cas, vous pouvez maintenant configurer votre imageur. Si le fichier de configuration existe déjà, cette fenêtre apparaîtra avec les paramètres actuels du fichier.
+
+\image html LogicalImager/main_config_panel.png
+
+Sur le côté gauche, vous pouvez voir chaque règle dans le fichier de configuration. Chacune de ces règles sera appliquée sur le système analysé en direct. Une règle a un nom, une description facultative, une ou plusieurs conditions et des paramètres pour ce qui doit se passer lorsqu'un fichier correspondant à la règle est trouvé. Lorsque vous sélectionnez une règle, vous verrez tous les paramètres de cette règle sur le côté droit du panneau. Vous pouvez modifier ou supprimer des règles une fois que vous les avez sélectionnées. Il existe également des paramètres globaux en bas à droite qui s'appliquent au fichier de configuration dans son ensemble:
+<ul>
+<li><b>Alert if encryption programs are found</b> - Cela ajoutera une règle prédéfinie pour rechercher les programmes de chiffrement et pour vous alerter et exporter tous ceux qui sont trouvés. Vous ne pourrez pas modifier cette règle.
+
+
+<li><b>Prompt before exiting imager</b> - Si ce paramètre est sélectionné, vous devrez appuyer sur une touche à la fin de l'exécution de l'imageur logique. Cela maintient ouverte la fenêtre d'invite de commande afin que vous puissiez viualiser la sortie. 
+<li><b>Create VHD</b> - Si cette option est sélectionnée, un "sparse VHD" sera créé lors de l'exécution de l'imageur logique. Voir plus de détails ci-dessous.
+<ul>
+<li><b>Continue imaging after searches are performed</b> - Uniquement pertinent lors de la création d'un VHD. Par défaut, l'imageur logique copiera uniquement les secteurs qu'il utilise ou qui font partie des fichiers correspondants aux critères de recherches et qui seront exportés. Si cette option est sélectionnée, l'imageur logique parcourt à nouveau l'image une fois la correspondance de règles de recherches terminée et copie tous les secteurs restants. Cela prendra plus de temps à exécuter et donnera des images VHD beaucoup plus grandes.
+</ul>
+</ul>
+
+Plus d'informations sur la création d'un VHD par rapport à l'enregistrement direct des fichiers correspondants:
+<ul>
+<li> Mode non-VHD
+<ul>
+<li> Dans ce mode, tous les fichiers correspondant à une règle dont l'option "Extract File" est activée seront copiés dans le dossier de sortie de l'imageur logique. Les chemins et les noms sont raccourcis dans le dossier de sortie mais apparaîtront sous leur forme originale une fois les résultats chargés dans Autopsy.
+<li> Avantages: Plus rapide que la création d'un disque dur virtuel et utilisera généralement beaucoup moins d'espace disque
+<li> Inconvénients: toutes les métadonnées des fichiers ne sont pas conservées. Aucune donnée supplémentaire sur le système de fichiers n'est enregistrée
+</ul>
+<li> Mode VHD
+<ul>
+<li> Dans ce mode, toutes les données lues par l'imageur logique sont copiées dans un VHD. Cela inclura tous les fichiers correspondants dans leur intégralité, ainsi que les métadonnées de tous les fichiers du système.
+<li> Avantages : Des métadonnées plus complètes pour les fichiers correspondants. Contient des informations sur le système au-delà des fichiers correspondants. Avoir la possibilité de copier l'intégralité du système de fichiers.
+<li> Inconvénients : Plus lent et utilise plus d'espace disque. Peut également être déroutant dans Autopsy car de nombreuses entrées de fichiers n'auront pas de données (leurs métadonnées ont été copiées sur le VHD mais pas leur contenu)
+</ul>
+</ul>
+
+Pour créer une nouvelle règle, cliquez sur le bouton "New Rule". 
+
+\image html LogicalImager/new_attr_rule.png
+
+Vous avez le choix entre deux types de règles:
+<ul>
+<li>Les règles "Attribute" vous permettent d'entrer plusieurs conditions qui doivent être vraies pour qu'un fichier corresponde
+<li>Les règles "Full path" vous permettent de saisir un ou plusieurs chemins complets (chemin et nom de fichier) qui doivent correspondre exactement
+</ul>
+
+Pour chaque type de règle, commencez par saisir un nom de règle et une description facultative. Vous devrez également choisir au moins une action à effectuer lorsqu'une correspondance est trouvée.
+<ul>
+<li>Alert in Imager console - cela affichera les données du fichier dans la console et l'ajoutera au fichier de sortie "alerts.txt".
+<li>Extract file - cela garantira que le contenu du fichier correspondant sera copié dans le dossier de sortie ou le "sparse VHD"
+</ul>
+
+Les règles d'attribut peuvent avoir une ou plusieurs conditions. Toutes les conditions doivent être vraies pour qu'une règle corresponde.
+<ul>
+<li>Extensions - Le fichier doit correspondre à l'une des extensions données (séparées par des virgules). Les extensions sont insensibles à la casse.
+<li>File names - Le fichier doit correspondre à l'un des noms de fichiers donnés (séparés par un retour à la ligne). Les noms de fichiers doivent inclure des extensions et ne sont pas sensibles à la casse.
+<li>Folder names - Le fichier doit correspondre à l'un des chemins donnés (séparés par un retour à la ligne). Le chemin donné peut être une sous-chaîne du chemin du fichier. Vous pouvez utiliser "[USER_FOLDER]" pour faire correspondre n'importe quel dossier utilisateur sur le système. Par exemple, "[USER_FOLDER]/Downloads" correspondra au dossier de téléchargements dans n'importe quel dossier utilisateur, tel que "Users/nom d'utilisateur/Downloads".
+<li>Minimum size / Maximum size - La taille du fichier doit être dans la plage donnée. Vous pouvez soit spécifier les deux champs pour spécifier une plage, soit en utiliser un seul pour faire correspondre tous les fichiers plus grands ou plus petits que la taille donnée.
+<li>Modified Within - Le fichier doit avoir été modifié dans le nombre de jours spécifié
+</ul>
+
+Les règles de chemin complet ont une seule condition.
+<ul>
+<li>Full paths: Le fichier doit correspondre exactement à l'un des chemins complets donnés (séparés par un retour à la ligne)
+</ul>
+
+\image html LogicalImager/full_path_rule.png
+
+Une fois que vous avez configuré toutes vos règles, accédez au panneau suivant et cliquez sur "Save" pour enregistrer votre fichier de configuration et l'exécutable de l'imageur logique à l'emplacement que vous avez sélectionné.
+
+\image html LogicalImager/save.png
+
+\section logical_imager_running Exécution de l'imageur logique
+
+\subsection logical_imager_default_run Exécution avec la configuration par défaut
+
+L'utilisation des valeurs par défaut dans le processus de configuration créera un lecteur avec le fichier de configuration (nommé "logical-imager-config.json") et l'exécutable de l'imageur logique dans le dossier racine de votre lecteur.
+
+\image html LogicalImager/exe_folder.png
+
+L'utilisation par défaut consiste à exécuter l'imageur logique sur chaque lecteur, à l'exception de celui qui le contient. Notez que l'exécutable de l'imageur logique doit se trouver dans le répertoire racine pour que le lecteur soit ignoré. Pour exécuter l'imageur, faites un clic droit sur "tsk_logical_imager.exe" et sélectionnez "Exécuter en tant qu'administrateur". Cela ouvrira une fenêtre de console où vous verrez des informations sur le traitement et, si vous avez défini des règles pour créer des alertes, vous verrez également les correspondances dans la console. Selon l'option que vous avez sélectionnée lors de la configuration, la fenêtre peut se fermer automatiquement lorsque le traitement est terminé.
+ 
+L'imageur logique commencera à écrire dans un répertoire à côté de l'exécutable.
+
+\image html LogicalImager/output_folder.png
+
+\subsection logical_imager_custom_run Exécution à partir d'une invite de commande
+
+Pour exécuter l'imageur logique avec des paramètres personnalisés, vous devez d'abord ouvrir une invite de commande en mode administrateur (cliquez avec le bouton droit, puis sélectionnez "Exécuter en tant qu'administrateur"). Passez ensuite au lecteur sur lequel se trouve l'imageur logique. Vous pouvez l'exécuter en utilisant la configuration par défaut en tapant simplement "tsk_logical_imager.exe".
+
+\image html LogicalImager/command_prompt.png
+
+Si votre fichier de configuration ne s'appelle pas "logical-imager-config.json" (par exemple, si vous avez plusieurs fichiers de configuration pour différentes situations), vous devrez spécifier le nom du fichier à l'aide de l'argument "-c".
+
+\image html LogicalImager/config_flag.png
+
+Si vous souhaitez spécifier le lecteur sur lequel exécuter l'imageur logique, vous pouvez utiliser l'argument "-i". Cela peut être utile pour tester votre fichier de configuration - vous pouvez créer une petite clé USB avec des fichiers qui doivent correspondre à vos règles pour vous assurer que tout fonctionne correctement avant de l'utiliser sur un système réel. L'exemple suivant montre comment exécuter l'imageur uniquement sur le lecteur "G" du système:
+
+\image html LogicalImager/image_flag.png
+
+\section logical_imager_results Affichage des résultats
+
+\subsection logical_imager_folder Structure du dossier de sortie
+
+Si l'imageur logique a été exécuté dans le mode par défaut (sans créer de VHD), le dossier de sortie ressemblera à ceci:
+
+\image html LogicalImager/nonVHDfolder.png
+
+Contenu du dossier:
+<ul>
+<li> Le dossier <b>root</b> contient tous les fichiers extraits. Ceux-ci peuvent être visualisés directement dans l'explorateur Windows mais comme les noms ont été modifiés et les répertoires aplatis, il est préférable de les visualiser dans Autopsy.
+\image html LogicalImager/nonVHDexport.png
+<li> <b>config.json</b> est une copie du fichier de configuration utilisé pour générer la sortie
+<li> <b>console.txt</b> est une copie de tout ce qui était écrit dans la console Windows
+<li> <b>SearchResults.txt</b> est utilisé lors de l'\ref logical_imager_dsp "ajout des résultats dans Autopsy" pour faire correspondre les fichiers exportés avec leurs chemins et noms de fichiers d'origine, ainsi que la règle à laquelle ils correspondent. Ce fichier sera ajouté au cas d'Autopsy en tant que \ref reporting_page "rapport".
+<li> <b>users.txt</b> contient des informations sur les comptes utilisateurs trouvés dans le système. Ce fichier sera également ajouté au cas d'Autopsy en tant que \ref reporting_page "rapport".
+</ul>
+
+Si l'imageur logique a été configuré pour créer des VHD, vous verrez ces VHD dans le dossier de sortie (avec les autres fichiers de sortie décrits ci-dessus, à l'exception du dossier racine):
+
+\image html LogicalImager/VHDfolder.png
+
+\subsection logical_imager_dsp Ajout des résultats à Autopsy
+
+Les résultats de l'imageur logique peuvent être ajoutés à un cas d'Autopsy en tant que \ref ds_page "source de données". Cela ajoute soit uniquement les fichiers correspondants, soit le ou les "sparse VHD" en tant qu'image disque, et cela ajoute également les autres fichiers créés par l'imageur logique. Sélectionnez l'option "Autopsy Imager" et passez à la page suivante.
+
+\image html LogicalImager/dsp_select.png
+
+Dans la section supérieure, vous pouvez voir tous les dossiers de résultats de l'imageur logique dans le dossier racine de chaque lecteur. Sélectionnez celui que vous souhaitez ajouter, puis cliquez sur le bouton "Next".
+
+\image html LogicalImager/import.png
+
+Si les résultats de votre imageur logique se trouvent à un emplacement différent, sélectionnez "Manually Choose Folder" et utilisez le bouton "Browse" pour localiser vos résultats.
+
+Dans les deux cas, vous aurez à configurer les \ref ingest_page "modules d'acquisition" à exécuter. Vous pouvez exécuter n'importe lesquels, mais si vous avez créé un VHD, votre image disque peut ne pas être complète et vous pouvez voir un plus grand nombre d'erreurs qu'à l'accoutumée. Par exemple, un "sparse VHD" contiendra l'intégralité de la table d'allocation de fichiers, mais les données réelles qui accompagnent la plupart des fichiers seront manquantes.
+
+Que vous ayez utilisé un VHD ou non, les fichiers correspondants apparaîtront dans leur chemin d'origine avec leur nom d'origine dans l'\ref tree_viewer_page. Si vous n'avez pas créé de VHD, vous ne verrez que les fichiers correspondants dans l'arborescence. Si vous avez créé un VHD, vous verrez également des entrées pour les fichiers qui ne correspondent pas, bien que le contenu de ces fichiers puisse ne pas figurer dans l'image.
+
+\image html LogicalImager/fileTree.png
+
+Des artefacts "Interesting File" seront créés pour tous les fichiers qui correspondent aux règles. 
+
+\image html LogicalImager/interestingFiles.png
+
+Les alertes et fichiers d'utilisateur créés par l'imageur logique se trouvent dans la section Reports de l'arborescence.
+
+
+*/

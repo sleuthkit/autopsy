@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.TskData;
  * systems the images may have been used by.
  *
  */
-@Messages({"DataSourceUsageAnalyzer.parentModuleName=Recent Activity"})
+@Messages({"DataSourceUsageAnalyzer.displayName=Data Source Usage Analyzer"})
 class DataSourceUsageAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
@@ -56,37 +56,38 @@ class DataSourceUsageAnalyzer extends Extract {
             {".android_secure", "android", "audio",
                 "photos", "dcim", "music", "pictures", "videos"}; //NON-NLS
     private Content dataSource;
+    private final IngestJobContext context;
+
+    DataSourceUsageAnalyzer(IngestJobContext context) {
+        super(Bundle.DataSourceUsageAnalyzer_displayName(), context);
+        this.context = context;
+    }
 
     @Messages({
         "# {0} - OS name",
         "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})",
         "Progress_Message_Analyze_Usage=Data Sources Usage Analysis",})
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         try {
             progressBar.progress(Bundle.Progress_Message_Analyze_Usage());
-            createDataSourceUsageArtifacts(context);
+            createDataSourceUsageArtifacts();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to check if datasource contained a volume with operating system specific files", ex);
         }
 
     }
 
-    private void createDataSourceUsageArtifacts(IngestJobContext context) throws TskCoreException {
-
+    private void createDataSourceUsageArtifacts() throws TskCoreException {
         createOSInfoDataSourceUsageArtifacts();
-        
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
-        
         createAndroidMediaCardArtifacts();
-        
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
-        
         createDJIDroneDATArtitifacts();
     }
 
@@ -146,9 +147,9 @@ class DataSourceUsageAnalyzer extends Extract {
         }
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                Bundle.DataSourceUsageAnalyzer_parentModuleName(),
+                getRAModuleName(),
                 dataSourceUsageDescription)); //NON-NLS
-        postArtifact(createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes));
+        postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes));
     }
 
     /**
@@ -157,17 +158,13 @@ class DataSourceUsageAnalyzer extends Extract {
      * does not exist with the given description.
      *
      * @param osType - the OS_TYPE to check for
-     *
-     * @return true if any specified files exist false if none exist
      */
     private void checkIfOsSpecificVolume(ExtractOs.OS_TYPE osType) throws TskCoreException {
-        FileManager fileManager = currentCase.getServices().getFileManager();
         for (String filePath : osType.getFilePaths()) {
-            for (AbstractFile file : fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
-                if ((file.getParentPath() + file.getName()).equals(filePath)) {
-                    createDataSourceUsageArtifact(osType.getDsUsageLabel());
-                    return;
-                }
+            for (AbstractFile file : currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource,
+                    FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
+                createDataSourceUsageArtifact(osType.getDsUsageLabel());
+                return;
             }
         }
     }
@@ -203,7 +200,7 @@ class DataSourceUsageAnalyzer extends Extract {
                     return;
                 }
 
-                if(hasAndroidMediaCardRootNames()) {
+                if (hasAndroidMediaCardRootNames()) {
                     return;
                 }
 
@@ -218,12 +215,12 @@ class DataSourceUsageAnalyzer extends Extract {
 
     /**
      * Checks the data source for any android media card root files
-     * 
+     *
      * @return True if root files were found
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
-    private boolean hasAndroidMediaCardRootNames() throws TskCoreException{
+    private boolean hasAndroidMediaCardRootNames() throws TskCoreException {
         FileManager fileManager = currentCase.getServices().getFileManager();
         for (String fileName : ANDROID_MEDIACARD_ROOT_FILENAMES) {
             for (AbstractFile file : fileManager.findFiles(dataSource, fileName, "/")) { // NON-NLS

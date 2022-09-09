@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,9 @@
 package org.sleuthkit.autopsy.experimental.objectdetection;
 
 import java.io.File;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
@@ -43,12 +44,11 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OBJECT_DETECTED;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -163,19 +163,21 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
                 if (!detectionRectangles.empty()) {
                     //if any detections occurred create an artifact for this classifier and file combination
                     try {
-                        BlackboardArtifact artifact = file.newArtifact(TSK_OBJECT_DETECTED);
-                        artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                                MODULE_NAME,
-                                classifierKey));
-                        artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
-                                MODULE_NAME,
-                                Bundle.ObjectDetectionFileIngestModule_classifierDetection_text((int) detectionRectangles.size().height)));
-
+                        List<BlackboardAttribute> attributes = Arrays.asList(
+                                new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION, MODULE_NAME, classifierKey),
+                                new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME, 
+                                        Bundle.ObjectDetectionFileIngestModule_classifierDetection_text((int) detectionRectangles.size().height))
+                        );
+                        
+                        BlackboardArtifact artifact = file.newAnalysisResult(
+                                BlackboardArtifact.Type.TSK_OBJECT_DETECTED, Score.SCORE_UNKNOWN, null, null, null, attributes)
+                                .getAnalysisResult();
+                        
                         try {
                             /*
                              * Index the artifact for keyword search.
                              */
-                            blackboard.postArtifact(artifact, MODULE_NAME);
+                            blackboard.postArtifact(artifact, MODULE_NAME, jobId);
                         } catch (Blackboard.BlackboardException ex) {
                             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                         }

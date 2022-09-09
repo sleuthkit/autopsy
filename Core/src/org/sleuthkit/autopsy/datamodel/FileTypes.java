@@ -34,6 +34,8 @@ import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.AnalysisResultAdded;
@@ -76,16 +78,10 @@ public final class FileTypes implements AutopsyVisitableItem {
      */
     private boolean showCounts = true;
 
-    private final SleuthkitCase skCase;
-
     private final long datasourceObjId;
-    
-    FileTypes(SleuthkitCase skCase) {
-        this(skCase, 0);
-    }
 
-    FileTypes(SleuthkitCase skCase, long dsObjId) {
-        this.skCase = skCase;
+
+    FileTypes(long dsObjId) {
         this.datasourceObjId = dsObjId;
         updateShowCounts();
     }
@@ -93,10 +89,6 @@ public final class FileTypes implements AutopsyVisitableItem {
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
-    }
-
-    SleuthkitCase getSleuthkitCase() {
-        return skCase;
     }
 
     long filteringDataSourceObjId() {
@@ -112,10 +104,10 @@ public final class FileTypes implements AutopsyVisitableItem {
          */
         if (showCounts) {
             try {
-                if (skCase.countFilesWhere("1=1") > NODE_COUNT_FILE_TABLE_THRESHOLD) { //NON-NLS
+                if (Case.getCurrentCaseThrows().getSleuthkitCase().countFilesWhere("1=1") > NODE_COUNT_FILE_TABLE_THRESHOLD) { //NON-NLS
                     showCounts = false;
                 }
-            } catch (TskCoreException tskCoreException) {
+            } catch (NoCurrentCaseException | TskCoreException tskCoreException) {
                 showCounts = false;
                 logger.log(Level.SEVERE, "Error counting files.", tskCoreException); //NON-NLS
             }
@@ -386,19 +378,33 @@ public final class FileTypes implements AutopsyVisitableItem {
             return content.getChildrenIds();
         }
 
+        @Deprecated
+        @SuppressWarnings("deprecation")
         @Override
         public BlackboardArtifact newArtifact(int artifactTypeID) throws TskCoreException {
             return content.newArtifact(artifactTypeID);
         }
 
+        @Deprecated
+        @SuppressWarnings("deprecation")
         @Override
         public BlackboardArtifact newArtifact(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
             return content.newArtifact(type);
         }
         
         @Override
-        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList, OsAccount osAccount) throws TskCoreException {
-            return content.newDataArtifact(artifactType, attributesList, osAccount);
+        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList, Long osAccountId) throws TskCoreException {
+            return content.newDataArtifact(artifactType, attributesList, osAccountId);
+        }
+        
+        @Override
+        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList, Long osAccountId, long dataSourceId) throws TskCoreException {
+            return content.newDataArtifact(artifactType, attributesList, osAccountId, dataSourceId);
+        }
+        
+        @Override
+        public DataArtifact newDataArtifact(BlackboardArtifact.Type artifactType, Collection<BlackboardAttribute> attributesList) throws TskCoreException {
+            return content.newDataArtifact(artifactType, attributesList);
         }
 
         @Override
@@ -467,6 +473,11 @@ public final class FileTypes implements AutopsyVisitableItem {
         }
 
         @Override
+        public AnalysisResultAdded newAnalysisResult(BlackboardArtifact.Type type, Score score, String string, String string1, String string2, Collection<BlackboardAttribute> clctn, long dataSourceId) throws TskCoreException {
+            return content.newAnalysisResult(type, score, string, string1, string2, clctn, dataSourceId);
+        }
+
+        @Override
         public Score getAggregateScore() throws TskCoreException {
             return content.getAggregateScore();
         }
@@ -479,6 +490,11 @@ public final class FileTypes implements AutopsyVisitableItem {
         @Override
         public List<AnalysisResult> getAllAnalysisResults() throws TskCoreException {
             return content.getAllAnalysisResults();
+        }
+
+        @Override
+        public List<DataArtifact> getAllDataArtifacts() throws TskCoreException {
+            return content.getAllDataArtifacts();
         }
     }
 }

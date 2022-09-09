@@ -335,6 +335,8 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
         showingMessagesLabel = new javax.swing.JLabel();
         threadNameLabel = new javax.swing.JLabel();
 
+        setMinimumSize(new java.awt.Dimension(450, 292));
+        setName(""); // NOI18N
         setLayout(new java.awt.CardLayout());
 
         rootMessagesPane.setOpaque(false);
@@ -377,6 +379,7 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
 
         add(rootMessagesPane, "threads");
 
+        messagePanel.setMinimumSize(new java.awt.Dimension(450, 292));
         messagePanel.setLayout(new java.awt.GridBagLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -398,8 +401,8 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 9, 15);
         messagePanel.add(backButton, gridBagConstraints);
         backButton.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.backButton.AccessibleContext.accessibleDescription")); // NOI18N
@@ -416,7 +419,9 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(9, 5, 5, 15);
         messagePanel.add(threadNameLabel, gridBagConstraints);
 

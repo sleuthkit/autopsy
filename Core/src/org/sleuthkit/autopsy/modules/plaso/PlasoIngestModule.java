@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -151,7 +151,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             currentCase = Case.getCurrentCase();
             fileManager = currentCase.getServices().getFileManager();
 
-            String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
+            // Use Z here for timezone since the other formats can include a colon on some systems
+            String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss Z", Locale.US).format(System.currentTimeMillis());//NON-NLS
             Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO, currentTime);
             try {
                 Files.createDirectories(moduleOutputPath);
@@ -326,7 +327,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 // If the description is empty use the event type display name
                 // as the description.
                 if (description == null || description.isEmpty()) {
-                    if (eventType != TimelineEventType.OTHER) {
+                    if (eventType != TimelineEventType.STANDARD_ARTIFACT_CATCH_ALL) {
                         description = eventType.getDisplayName();
                     } else {
                         continue;
@@ -345,15 +346,14 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                                 eventType.getTypeID()));
 
                 try {
-                    BlackboardArtifact bbart = resolvedFile.newArtifact(TSK_TL_EVENT);
-                    bbart.addAttributes(bbattributes);
+                    BlackboardArtifact bbart = resolvedFile.newDataArtifact(new BlackboardArtifact.Type(TSK_TL_EVENT), bbattributes);
                     try {
                         /*
                          * Post the artifact which will index the artifact for
                          * keyword search, and fire an event to notify UI of
                          * this new artifact
                          */
-                        blackboard.postArtifact(bbart, MODULE_NAME);
+                        blackboard.postArtifact(bbart, MODULE_NAME, context.getJobId());
                     } catch (BlackboardException ex) {
                         logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
                     }
@@ -441,7 +441,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                         return TimelineEventType.REGISTRY;
                 }
             default:
-                return TimelineEventType.OTHER;
+                return TimelineEventType.STANDARD_ARTIFACT_CATCH_ALL;
         }
     }
 

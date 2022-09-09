@@ -1,0 +1,45 @@
+﻿/*! \page install_multiuser_systems_page Choisissez votre configuration matérielle / VM
+
+\section multiuser_system Aperçu
+
+La première étape de la configuration d'un cluster multi-utilisateur consiste à choisir le nombre d'ordinateurs ou de machines virtuelles que vous utiliserez pour exécuter les différents services.
+
+Du point de vue des services, vous devrez exécuter:
+- Serveur de base de données PostgeSQL
+- Serveur d'indexation de texte Apache Solr
+- Serveur de messagerie ActiveMQ
+- Stockage en réseau
+
+Vous pouvez exécuter chacun d'entre eux sur leur propre machine virtuelle dédiée, mais ce n'est pas nécessaire.
+
+Apache Solr utilise beaucoup de mémoire, nous vous recommandons donc de la conserver seule, sauf si vous utilisez le partage de fichiers Windows pour le stockage partagé. Vous pouvez obtenir de meilleures performances avec Solr s'il écrit sur le stockage local plutôt que sur le réseau. Vous pouvez donc envisager d'utiliser le même ordinateur pour Solr et le stockage partagé.
+
+Notez également que, étant donné que tous les ordinateurs doivent accéder au stockage partagé par le même chemin, vous ne pouvez pas mélanger les systèmes d'exploitation.
+
+
+Nous recommandons:
+
+- Serveur 1: PostgreSQL et ActiveMQ
+  - Ces deux services sont relativement faibles consommateurs de ressources.
+- Serveur 2: Apache Solr et Stockage partagé (si vous utilisez le partage de fichiers Windows).
+
+
+\subsection multiuser_system_hw Matériel suggéré
+
+- PostgreSQL/ActiveMQ (Serveur 1):
+ - RAM: 16 Go minimum
+ - Stockage local: SSD à 500 Go
+
+- Solr (Serveur 2):
+ - RAM: 32 Go minimum
+ - Stockage local: Un index unique aura à peu près la taille de la source de données analysée. Par exemple, 128 Go de données E01 génère généralement un index de 128 Go.
+
+\subsection multiuser_system_back Sauvegardes
+
+Vous aurez beaucoup de données importantes sur le système. Assurez-vous que les éléments suivants soient régulièrement sauvegardés:
+- Stockage partagé (qui contient les données des cas et les index de texte)
+- Bases de données sur le serveur PostgreSQL  (voir \ref install_post_backup)
+- Données Zookeeper sur le serveur Solr (voir \ref install_solr_backup)
+
+
+*/

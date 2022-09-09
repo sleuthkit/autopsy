@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -37,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * DataContentViewer for OsAccounts.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 7)
+@ServiceProvider(service = DataContentViewer.class, position = 5)
 public class OsAccountViewer extends javax.swing.JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = 1L;
@@ -141,7 +142,7 @@ public class OsAccountViewer extends javax.swing.JPanel implements DataContentVi
 
     @Override
     public int isPreferred(Node node) {
-        return 5;
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
     }
 
     /**

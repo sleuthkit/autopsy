@@ -1,0 +1,89 @@
+/*! \page data_source_summary_page Résumé de la source de données
+
+[TOC]
+
+\section ds_summary_overview Aperçu
+
+La visionneuse "Data Source Summary" vous permet d'afficher une vue d'ensemble des types de fichiers, des résultats et d'autres informations pour une source de données particulière. 
+
+\section ds_summary_opening Ouverture du résumé de la source de données
+
+Il existe deux façons d'afficher le résumé de la source de données. Le premier est d'aller sur Case->Data Source Summary. Cela ouvrira le résumé dans une nouvelle fenêtre.
+
+\image html ds_summary_window.png
+
+La deuxième façon d'afficher le résumé consiste à sélectionner la source de données dans l'\ref tree_viewer_page puis sélectionner l'onglet "Summary" dans la \ref result_viewer_page. 
+
+\image html ds_summary_result_viewer.png
+
+\section ds_summary_main Sections
+
+Chaque onglet du résumé de la source de données affiche différents types d'informations sur la source de données sélectionnée. Si l'acquisition est en cours, le résumé sera mis à jour périodiquement au fur et à mesure que de nouvelles données seront disponibles.
+
+Si le ou les module(s) d'acquisition requis pour un type de données n'ont pas été exécutés, vous verrez une note expliquant pourquoi il n'y a pas de données. Par exemple, les résultats "Recent Programs" sont créés par le module \ref recent_activity_page, vous verrez donc un message sur l'exécution de ce module si vous ne l'avez pas fait.
+
+\image html DataSourceSummary/ds_summary_noRA.png
+
+\subsection ds_summary_types Types
+
+L'onglet "Types" affiche le nombre de types de fichiers différents trouvés dans la source de données.
+
+\image html ds_summary_types.png
+
+\subsection ds_summary_user_activity User Activity
+
+L'onglet "User Activity" affiche les résultats les plus récents trouvés dans la source de données. Vous pouvez faire un clic droit sur une ligne pour accéder directement au résultat correspondant.
+
+\image html ds_summary_user_activity.png
+
+\subsection ds_summary_analysis Analysis
+
+L'onglet "Analysis" montre les ensembles avec le plus grand nombre de résultats concernant les modules \ref hash_db_page, \ref keyword_search_page, et \ref interesting_files_identifier_page.
+
+\image html ds_summary_analysis.png
+
+\subsection ds_summary_recent_files Recent Files
+
+L'onglet "Recent Files" affiche des informations sur les fichiers les plus récents ouverts et téléchargés. Vous pouvez faire un clic droit sur une ligne pour accéder directement au fichier ou au résultat correspondant.
+
+\image html ds_summary_recent_files.png
+
+\subsection ds_summary_past_cases Past Cases
+
+L'onglet "Past Cases" montre quels cas avaient des résultats ou des fichiers notables en commun avec la source de données actuelle. Ceci est basé sur les résultats de la zone "Interesting Items" de la section "Results" de l'\ref tree_viewer_page. Le module d'acquisition \ref central_repo_page "Central Repository" doit avoir été exécuté avec les options "Flag items previously tagged as notable" et "Flag devices previously seen in other cases" activées.
+
+\image html ds_summary_past_cases.png
+
+Notez que, comme ces entrées sont basées sur les résultats des éléments intéressants créés lors de l'acquisition et n'interrogent pas le référentiel central, elles ne refléteront aucune correspondance dans les cas traités après ce dernier. Par exemple, supposons que nous créons le cas A et procédons à l'acquisition d'une source de données avec le périphérique Z. Si nous créons un nouveau cas B par la suite et procédons à l'acquisition d'une source de données qui a également le périphérique Z, nous verrons le cas A répertorié dans cet onglet pour le cas B, mais si nous rouvrions le cas A, nous ne verrions pas le cas B répertorié à moins que l'acquisition ne soit exécutée à nouveau.
+
+\subsection ds_summary_geo Geolocation
+
+L'onglet "Geolocation" utilise les coordonnées des résultats de géolocalisation pour trouver la ville la plus proche pour chacune et affiche les villes les plus récentes et les villes les plus courantes. Si l'emplacement est à plus de 150 km d'une ville, il sera affiché comme "Unknown" (inconnu). Le bouton "View in Map" sous le tableau des villes récentes ouvrira la fenêtre \ref geolocation_page "Geolocation" affichant tous les points de cheminement de cette source de données avec des horodatages au cours des 30 derniers jours. Le bouton "View in Map" sous les villes les plus courantes affichera tous les points de cheminement pour cette source de données. 
+
+\image html ds_summary_geo.png
+
+\subsection ds_summary_timeline Timeline
+
+L'onglet "Timeline" montre une version simplifiée de la visionneuse \ref timeline_page "Timeline" pour la source de données sélectionnée. Il affichera les événements des 30 derniers jours d'activité dans la source de données et donnera les première et dernière dates d'activité. "File events" représente les dates de création, de modification, d'accès et de changement des fichiers. "Result events" représente les résultats de l'exécution de l'acquisition, tels que l'heure d'envoi d'un message ou l'accès à une URL. Le bouton "View in Timeline" ouvrira la visionneuse \ref timeline_page "Timeline".
+
+\image html ds_summary_timeline.png
+
+\subsection ds_summary_ingest_history Ingest History
+
+L'onglet "Ingest History" indique quels modules d'acquisition ont été exécutés sur la source de données et la version de chaque module.
+
+\image html ds_summary_ingest.png
+
+\subsection ds_summary_container Container
+
+L'onglet "Container" affiche des informations sur la source de données elle-même, telles que la taille et les chemins de l'image.
+
+\image html ds_summary_container.png
+
+\subsection ds_summary_export Export
+
+L'onglet "Export" vous permet d'exporter le contenu des autres onglets de résumé de la source de données vers un fichier au format Excel.
+
+\image html ds_summary_export.png
+
+*/

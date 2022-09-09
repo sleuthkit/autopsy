@@ -26,10 +26,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * A pipeline of data source level ingest modules for performing data source
+ * A pipeline of data source level ingest modules for executing data source
  * level ingest tasks for an ingest job.
  */
-final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngestTask> {
+final class DataSourceIngestPipeline extends IngestPipeline<DataSourceIngestTask> {
 
     private static final Logger logger = Logger.getLogger(DataSourceIngestPipeline.class.getName());
     private static final IngestManager ingestManager = IngestManager.getInstance();
@@ -38,17 +38,19 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
      * Constructs a pipeline of data source level ingest modules for performing
      * data source level ingest tasks for an ingest job.
      *
-     * @param ingestJobPipeline The ingest job pipeline that owns this pipeline.
-     * @param moduleTemplates   The ingest module templates that define this
-     *                          pipeline.
+     * @param ingestJobExecutor The ingest job executor for this pipeline.
+     * @param moduleTemplates   The ingest module templates to be used to
+     *                          construct the ingest modules for this pipeline.
+     *                          May be an empty list if this type of pipeline is
+     *                          not needed for the ingest job.
      */
-    DataSourceIngestPipeline(IngestJobPipeline ingestJobPipeline, List<IngestModuleTemplate> moduleTemplates) {
-        super(ingestJobPipeline, moduleTemplates);
+    DataSourceIngestPipeline(IngestJobExecutor ingestJobExecutor, List<IngestModuleTemplate> moduleTemplates) {
+        super(ingestJobExecutor, moduleTemplates);
     }
 
     @Override
-    Optional<IngestTaskPipeline.PipelineModule<DataSourceIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
-        Optional<IngestTaskPipeline.PipelineModule<DataSourceIngestTask>> module = Optional.empty();
+    Optional<IngestPipeline.PipelineModule<DataSourceIngestTask>> acceptModuleTemplate(IngestModuleTemplate template) {
+        Optional<IngestPipeline.PipelineModule<DataSourceIngestTask>> module = Optional.empty();
         if (template.isDataSourceIngestModuleTemplate()) {
             DataSourceIngestModule ingestModule = template.createDataSourceIngestModule();
             module = Optional.of(new DataSourcePipelineModule(ingestModule, template.getModuleName()));
@@ -57,11 +59,11 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
     }
 
     @Override
-    void prepareTask(DataSourceIngestTask task) {
+    void prepareForTask(DataSourceIngestTask task) {
     }
 
     @Override
-    void completeTask(DataSourceIngestTask task) {
+    void cleanUpAfterTask(DataSourceIngestTask task) {
         ingestManager.setIngestTaskProgressCompleted(task);
     }
 
@@ -69,7 +71,7 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
      * A wrapper that adds ingest infrastructure operations to a data source
      * level ingest module.
      */
-    static final class DataSourcePipelineModule extends IngestTaskPipeline.PipelineModule<DataSourceIngestTask> {
+    static final class DataSourcePipelineModule extends IngestPipeline.PipelineModule<DataSourceIngestTask> {
 
         private final DataSourceIngestModule module;
 
@@ -83,22 +85,18 @@ final class DataSourceIngestPipeline extends IngestTaskPipeline<DataSourceIngest
         }
 
         @Override
-        void performTask(IngestJobPipeline ingestJobPipeline, DataSourceIngestTask task) throws IngestModuleException {
+        void process(IngestJobExecutor ingestJobExecutor, DataSourceIngestTask task) throws IngestModuleException {
             Content dataSource = task.getDataSource();
             String progressBarDisplayName = NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.displayName", getDisplayName(), dataSource.getName());
-            ingestJobPipeline.updateDataSourceIngestProgressBarDisplayName(progressBarDisplayName);
-            ingestJobPipeline.switchDataSourceIngestProgressBarToIndeterminate();
+            ingestJobExecutor.changeDataSourceIngestProgressBarTitle(progressBarDisplayName);
+            ingestJobExecutor.switchDataSourceIngestProgressBarToIndeterminate();
             ingestManager.setIngestTaskProgress(task, getDisplayName());
             logger.log(Level.INFO, "{0} analysis of {1} starting", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS
-            ProcessResult result = module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobPipeline));
+            module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobExecutor));
             logger.log(Level.INFO, "{0} analysis of {1} finished", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS            
-            if (!ingestJobPipeline.isCancelled() && ingestJobPipeline.currentDataSourceIngestModuleIsCancelled()) {
-                ingestJobPipeline.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
+            if (!ingestJobExecutor.isCancelled() && ingestJobExecutor.currentDataSourceIngestModuleIsCancelled()) {
+                ingestJobExecutor.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
             }
-            // See JIRA-7449            
-//            if (result == ProcessResult.ERROR) {
-//                throw new IngestModuleException(String.format("%s experienced an error analyzing %s (data source objId = %d)", getDisplayName(), dataSource.getName(), dataSource.getId())); //NON-NLS
-//            }            
         }
 
     }

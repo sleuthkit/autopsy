@@ -776,13 +776,13 @@ sub parseFolderEntry {
 	
 	$str = substr($data,$ofs,length($data) - 30);
 	my $longname = (split(/\x00\x00/,$str,2))[0];
-	$longname =~ s/\x00//g;
-	
+	$longname = $longname.chr 0x00;
+
 	if ($longname ne "") {
-		$item{name} = $longname;
+		$item{name} = Utf16ToUtf8($longname);
 	}
 	else {
-		$item{name} = $shortname;
+		$item{name} = Utf16ToUtf8($shortname);
 	}
 	return %item;
 }
@@ -871,7 +871,7 @@ sub parseFolderEntry2 {
 	
 	$item{name} = (split(/\x00\x00/,$str,2))[0];
 	$item{name} =~ s/\x13\x20/\x2D\x00/;
-	$item{name} =~ s/\x00//g;
+	$item{name} = Utf16ToUtf8($item{name});
 	
 	return %item;
 }
@@ -929,6 +929,16 @@ sub printData {
 		$display[$cnt] = sprintf "0x%08x: %-47s  ".$str,($cnt * 16),$h;
 	}
 	return @display;
+}
+
+#---------------------------------------------------------------------
+# Utf16ToUtf8()
+#---------------------------------------------------------------------
+sub Utf16ToUtf8 {
+  my $str = $_[0];
+  Encode::from_to($str,'UTF-16LE','utf8');
+  my $str2 = Encode::decode_utf8($str);
+  return $str;
 }
 
 1;

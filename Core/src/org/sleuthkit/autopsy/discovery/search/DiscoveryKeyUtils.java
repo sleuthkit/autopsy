@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.discovery.search.SearchData.PageViews;
 import org.sleuthkit.autopsy.discovery.ui.MonthAbbreviation;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -59,6 +59,7 @@ public class DiscoveryKeyUtils {
         private final List<AbstractFilter> filters;
         private final SleuthkitCase sleuthkitCase;
         private final CentralRepository centralRepository;
+        private final SearchContext context;
 
         /**
          * Construct a new SearchKey with all information that defines a search.
@@ -70,16 +71,20 @@ public class DiscoveryKeyUtils {
          * @param sortingMethod      The method to sort the results by.
          * @param sleuthkitCase      The SleuthkitCase being searched.
          * @param centralRepository  The Central Repository being searched.
+         * @param context            The SearchContext which reflects the search
+         *                           being performed to get results for this
+         *                           key.
          */
         SearchKey(String userName, List<AbstractFilter> filters,
                 DiscoveryAttributes.AttributeType groupAttributeType,
                 Group.GroupSortingAlgorithm groupSortingType,
                 ResultsSorter.SortingMethod sortingMethod,
-                SleuthkitCase sleuthkitCase, CentralRepository centralRepository) {
+                SleuthkitCase sleuthkitCase, CentralRepository centralRepository, SearchContext context) {
             this.groupAttributeType = groupAttributeType;
             this.groupSortingType = groupSortingType;
             this.sortingMethod = sortingMethod;
             this.filters = filters;
+            this.context = context;
 
             StringBuilder searchStringBuilder = new StringBuilder();
             searchStringBuilder.append(userName);
@@ -93,8 +98,8 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * Construct a SearchKey without a SleuthkitCase or CentralRepositry
-         * instance.
+         * Construct a SearchKey without a SearchContext, SleuthkitCase or
+         * CentralRepositry instance.
          *
          * @param userName           The name of the user performing the search.
          * @param filters            The Filters being used for the search.
@@ -107,7 +112,8 @@ public class DiscoveryKeyUtils {
                 Group.GroupSortingAlgorithm groupSortingType,
                 ResultsSorter.SortingMethod sortingMethod) {
             this(userName, filters, groupAttributeType, groupSortingType,
-                    sortingMethod, null, null);
+                    sortingMethod, null, null, null);
+            //this constructor should only be used putting things directly into a map or getting if present since casedb, cr, and search context will be null
         }
 
         @Override
@@ -139,6 +145,23 @@ public class DiscoveryKeyUtils {
             int hash = 5;
             hash = 79 * hash + Objects.hashCode(getKeyString());
             return hash;
+        }
+
+        /**
+         * Get the SearchContext for the search this key is being used in.
+         *
+         * @return The SearchContext the search key is being used in.
+         *
+         * @throws DiscoveryException Thrown when the key being used has a null
+         *                            context indicating it was not created with
+         *                            knowledge of the case or central
+         *                            repository databases.
+         */
+        SearchContext getContext() throws DiscoveryException {
+            if (context == null) {
+                throw new DiscoveryException("The key in use was created without a context and does not support retrieving information from the databases.");
+            }
+            return context;
         }
 
         /**
@@ -1217,7 +1240,7 @@ public class DiscoveryKeyUtils {
         Instant startActivityAsInsant = Instant.ofEpochSecond(epochSeconds);
         // Determines the timezone using the settings panel or value parsed from the
         // parent data source
-        TimeZone currentTimeZone = ContentUtils.getTimeZone(domainResult.getDataSource());
+        TimeZone currentTimeZone = TimeZoneUtils.getTimeZone();
         // Convert to a datetime using epoch and timezone.
         ZonedDateTime startActivityAsDateTime = ZonedDateTime.ofInstant(startActivityAsInsant, currentTimeZone.toZoneId());
         // Get the closest Sunday, which is the cut off for the current week.

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.List;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 
@@ -45,28 +43,23 @@ public final class SizeRepresentationUtil {
         "SizeRepresentationUtil_units_petabytes=PB"
     })
     enum SizeUnit {
-        BYTES(Bundle.SizeRepresentationUtil_units_bytes(), "#", 0),
-        KB(Bundle.SizeRepresentationUtil_units_kilobytes(), "#,##0.00,", 1),
-        MB(Bundle.SizeRepresentationUtil_units_megabytes(), "#,##0.00,,", 2),
-        GB(Bundle.SizeRepresentationUtil_units_gigabytes(), "#,##0.00,,,", 3),
-        TB(Bundle.SizeRepresentationUtil_units_terabytes(), "#,##0.00,,,,", 4),
-        PB(Bundle.SizeRepresentationUtil_units_petabytes(), "#,##0.00,,,,,", 5);
+        BYTES(Bundle.SizeRepresentationUtil_units_bytes(), 0),
+        KB(Bundle.SizeRepresentationUtil_units_kilobytes(), 1),
+        MB(Bundle.SizeRepresentationUtil_units_megabytes(), 2),
+        GB(Bundle.SizeRepresentationUtil_units_gigabytes(), 3),
+        TB(Bundle.SizeRepresentationUtil_units_terabytes(), 4),
+        PB(Bundle.SizeRepresentationUtil_units_petabytes(), 5);
 
         private final String suffix;
-        private final String excelFormatString;
         private final long divisor;
 
         /**
          * Main constructor.
          * @param suffix The string suffix to use for size unit.
-         * @param excelFormatString The excel format string to use for this size unit.
          * @param power The power of 1000 of bytes for this size unit.
          */
-        SizeUnit(String suffix, String excelFormatString, int power) {
+        SizeUnit(String suffix, int power) {
             this.suffix = suffix;
-            
-            // based on https://www.mrexcel.com/board/threads/how-do-i-format-cells-to-show-gb-mb-kb.140135/
-            this.excelFormatString = String.format("%s \"%s\"", excelFormatString, suffix);
             this.divisor = (long) Math.pow(SIZE_CONVERSION_CONSTANT, power);
         }
 
@@ -75,13 +68,6 @@ public final class SizeRepresentationUtil {
          */
         public String getSuffix() {
             return suffix;
-        }
-
-        /**
-         * @return The excel format string to use for this size unit.
-         */
-        public String getExcelFormatString() {
-            return excelFormatString;
         }
 
         /**
@@ -114,8 +100,7 @@ public final class SizeRepresentationUtil {
             return SizeUnit.values()[0];
         }
         
-        for (int unitsIndex = 0; unitsIndex < SizeUnit.values().length; unitsIndex++) {
-            SizeUnit unit = SizeUnit.values()[unitsIndex];
+        for (SizeUnit unit : SizeUnit.values()) {
             long result = size / unit.getDivisor();
             if (result < SIZE_CONVERSION_CONSTANT) {
                 return unit;
@@ -126,14 +111,14 @@ public final class SizeRepresentationUtil {
     }
 
     /**
-     * Get a long size in bytes as a string formated to be read by users.
+     * Get a long size in bytes as a string formatted to be read by users.
      *
      * @param size Long value representing a size in byte.s
      * @param format The means of formatting the number.
      * @param showFullSize Optionally show the number of bytes in the
      * datasource.
      *
-     * @return Return a string formated with a user friendly version of the size
+     * @return Return a string formatted with a user friendly version of the size
      * as a string, returns empty String when provided empty size.
      */
     static String getSizeString(Long size, DecimalFormat format, boolean showFullSize) {
@@ -168,12 +153,7 @@ public final class SizeRepresentationUtil {
         if (bytes == null) {
             return new DefaultCellModel<>("");
         } else {
-            SizeUnit unit = SizeRepresentationUtil.getSizeUnit(bytes);
-            if (unit == null) {
-                unit = SizeUnit.BYTES;
-            }
-
-            return new DefaultCellModel<Long>(bytes, SizeRepresentationUtil::getSizeString, unit.getExcelFormatString());
+            return new DefaultCellModel<>(bytes, SizeRepresentationUtil::getSizeString);
         }
     }
 

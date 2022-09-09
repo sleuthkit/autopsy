@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeUtil;
@@ -46,7 +47,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
@@ -59,14 +59,15 @@ import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslationUtil;
+import org.sleuthkit.datamodel.Score;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * An abstract node that encapsulates AbstractFile data
@@ -94,6 +95,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
                 IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
             }
+        }
+        
+        // Add listener if this is the carved files base directory.
+        if (VirtualDirectory.NAME_CARVED.equals(abstractFile.getName())) {
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
         }
 
         try {
@@ -158,7 +164,13 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     // data sources branch of the tree. The parent nodes in other
                     // branches of the tree (e.g. File Types and Deleted Files) do
                     // not need to be refreshed.
-                    BaseChildFactory.post(getParentNode().getName(), new RefreshKeysEvent());
+                    if (VirtualDirectory.NAME_CARVED.equals(getContent().getName())) {
+                        // If the current node is the carved files directory, we need to refresh it
+                        BaseChildFactory.post(getName(), new RefreshKeysEvent());
+                    } else {
+                        // Otherwise we need to refresh the parent node
+                        BaseChildFactory.post(getParentNode().getName(), new RefreshKeysEvent());
+                    }
                 } catch (NullPointerException ex) {
                     // Skip
                 } catch (NoSuchEventBusException ex) {
@@ -179,33 +191,44 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } else if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())) {
             ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
             if (event.getAddedTag().getContent().equals(content)) {
-                List<Tag> tags = this.getAllTagsFromDatabase();
-                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
+
+                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription();
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
-                CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
+                List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
+                CorrelationAttributeInstance corrInstance = CorrelationAttributeUtil.getCorrAttrForFile(content);
+                if (corrInstance != null) {
+                    listWithJustFileAttr.add(corrInstance);
+                }
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
-                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute))
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(getAllTagsFromDatabase(), listWithJustFileAttr))
                 );
             }
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
             ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
             if (event.getDeletedTagInfo().getContentID() == content.getId()) {
                 List<Tag> tags = getAllTagsFromDatabase();
-                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription(tags);
+                Pair<Score, String> scorePropAndDescr = getScorePropertyAndDescription();
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
-                CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
+                List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
+                CorrelationAttributeInstance corrInstance = CorrelationAttributeUtil.getCorrAttrForFile(content);
+                if (corrInstance != null) {
+                    listWithJustFileAttr.add(corrInstance);
+                }
                 updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
-                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute))
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(getAllTagsFromDatabase(), listWithJustFileAttr))
                 );
             }
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
             CommentChangedEvent event = (CommentChangedEvent) evt;
             if (event.getContentID() == content.getId()) {
-                List<Tag> tags = getAllTagsFromDatabase();
-                CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
-                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute)));
+                List<CorrelationAttributeInstance> listWithJustFileAttr = new ArrayList<>();
+                CorrelationAttributeInstance corrInstance = CorrelationAttributeUtil.getCorrAttrForFile(content);
+                if (corrInstance != null) {
+                    listWithJustFileAttr.add(corrInstance);
+                }
+                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(getAllTagsFromDatabase(), listWithJustFileAttr)));
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
             this.setDisplayName(evt.getNewValue().toString());
@@ -350,10 +373,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     new WeakReference<>(this), weakPcl));
         }
 
-        properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
-        properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCtime(), content)));
-        properties.add(new NodeProperty<>(ACCESS_TIME.toString(), ACCESS_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getAtime(), content)));
-        properties.add(new NodeProperty<>(CREATED_TIME.toString(), CREATED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCrtime(), content)));
+        properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getMtime())));
+        properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getCtime())));
+        properties.add(new NodeProperty<>(ACCESS_TIME.toString(), ACCESS_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getAtime())));
+        properties.add(new NodeProperty<>(CREATED_TIME.toString(), CREATED_TIME.toString(), NO_DESCR, TimeZoneUtils.getFormattedTime(content.getCrtime())));
         properties.add(new NodeProperty<>(SIZE.toString(), SIZE.toString(), NO_DESCR, content.getSize()));
         properties.add(new NodeProperty<>(FLAGS_DIR.toString(), FLAGS_DIR.toString(), NO_DESCR, content.getDirFlagAsString()));
         properties.add(new NodeProperty<>(FLAGS_META.toString(), FLAGS_META.toString(), NO_DESCR, content.getMetaFlagsAsString()));
@@ -412,20 +435,19 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "# {0} - occurrenceCount",
         "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurrences of the MD5 correlation value"})
     @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue,
-            String defaultDescription) {
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attributeInstance, String defaultDescription) {
         Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
         String description = defaultDescription;
         try {
             //don't perform the query if there is no correlation value
-            if (attributeType != null && StringUtils.isNotBlank(attributeValue)) {
-                count = CentralRepository.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attributeType, attributeValue);
+            if (attributeInstance != null && StringUtils.isNotBlank(attributeInstance.getCorrelationValue())) {
+                count = CentralRepository.getInstance().getCountCasesWithOtherInstances(attributeInstance);
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_description(count);
-            } else if (attributeType != null) {
+            } else if (attributeInstance != null) {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
         } catch (CentralRepoException ex) {
-            logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
+            logger.log(Level.SEVERE, "Error getting count of datasources with correlation attribute", ex);
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
@@ -433,49 +455,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
 
     @NbBundle.Messages({
-        "AbstractAbstractFileNode.createSheet.score.displayName=S",
-        "AbstractAbstractFileNode.createSheet.notableFile.description=File recognized as notable.",
-        "AbstractAbstractFileNode.createSheet.interestingResult.description=File has interesting result associated with it.",
-        "AbstractAbstractFileNode.createSheet.taggedFile.description=File has been tagged.",
-        "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag.",
-        "AbstractAbstractFileNode.createSheet.noScore.description=No score"})
-    @Override
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-        DataResultViewerTable.Score score = DataResultViewerTable.Score.NO_SCORE;
-        String description = Bundle.AbstractAbstractFileNode_createSheet_noScore_description();
-        if (content.getKnown() == TskData.FileKnown.BAD) {
-            score = DataResultViewerTable.Score.NOTABLE_SCORE;
-            description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
-        }
-        try {
-            if (score == DataResultViewerTable.Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).isEmpty()) {
-                score = DataResultViewerTable.Score.INTERESTING_SCORE;
-                description = Bundle.AbstractAbstractFileNode_createSheet_interestingResult_description();
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Error getting artifacts for file: " + content.getName(), ex);
-        }
-        if (!tags.isEmpty() && (score == DataResultViewerTable.Score.NO_SCORE || score == DataResultViewerTable.Score.INTERESTING_SCORE)) {
-            score = DataResultViewerTable.Score.INTERESTING_SCORE;
-            description = Bundle.AbstractAbstractFileNode_createSheet_taggedFile_description();
-            for (Tag tag : tags) {
-                if (tag.getName().getKnownStatus() == TskData.FileKnown.BAD) {
-                    score = DataResultViewerTable.Score.NOTABLE_SCORE;
-                    description = Bundle.AbstractAbstractFileNode_createSheet_notableTaggedFile_description();
-                    break;
-                }
-            }
-        }
-        return Pair.of(score, description);
-    }
-
-    @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
     @Override
-    protected HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
-
+    protected HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
         DataResultViewerTable.HasCommentStatus status = !tags.isEmpty() ? DataResultViewerTable.HasCommentStatus.TAG_NO_COMMENT : DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-
         for (Tag tag : tags) {
             if (!StringUtils.isBlank(tag.getComment())) {
                 //if the tag is null or empty or contains just white space it will indicate there is not a comment
@@ -483,12 +466,20 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 break;
             }
         }
-        if (attribute != null && !StringUtils.isBlank(attribute.getComment())) {
-            if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
-                status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
-            } else {
-                status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
+        /*
+         * Is there a comment in the CR for anything that matches the value and
+         * type of the specified attributes.
+         */
+        try {
+            if (CentralRepoDbUtil.commentExistsOnAttributes(attributes)) {
+                if (status == DataResultViewerTable.HasCommentStatus.TAG_COMMENT) {
+                    status = DataResultViewerTable.HasCommentStatus.CR_AND_TAG_COMMENTS;
+                } else {
+                    status = DataResultViewerTable.HasCommentStatus.CR_COMMENT;
+                }
             }
+        } catch (CentralRepoException ex) {
+            logger.log(Level.SEVERE, "Attempted to Query CR for presence of comments in a file node and was unable to perform query, comment column will only reflect caseDB", ex);
         }
         return status;
     }
@@ -528,15 +519,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         return new ArrayList<>(getContentTagsFromDatabase());
     }
 
-    @Override
-    protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
-        CorrelationAttributeInstance attribute = null;
-        if (CentralRepository.isEnabled() && !UserPreferences.getHideSCOColumns()) {
-            attribute = CorrelationAttributeUtil.getCorrAttrForFile(content);
-        }
-        return attribute;
-    }
-
     static String getContentPath(AbstractFile file) {
         try {
             return file.getUniquePath();
@@ -571,10 +553,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
         map.put(NAME.toString(), getContentDisplayName(content));
         map.put(LOCATION.toString(), getContentPath(content));
-        map.put(MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
-        map.put(CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
-        map.put(ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
-        map.put(CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
+        map.put(MOD_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getMtime()));
+        map.put(CHANGED_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getCtime()));
+        map.put(ACCESS_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getAtime()));
+        map.put(CREATED_TIME.toString(), TimeZoneUtils.getFormattedTime(content.getCrtime()));
         map.put(SIZE.toString(), content.getSize());
         map.put(FLAGS_DIR.toString(), content.getDirFlagAsString());
         map.put(FLAGS_META.toString(), content.getMetaFlagsAsString());

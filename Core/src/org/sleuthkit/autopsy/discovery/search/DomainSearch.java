@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,15 +24,13 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryKeyUtils.GroupKey;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -80,24 +78,31 @@ public class DomainSearch {
      * @param caseDb              The case database.
      * @param centralRepoDb       The central repository database. Can be null
      *                            if not needed.
+     * @param context             The SearchContext the search is being performed from.
      *
      * @return A LinkedHashMap grouped and sorted according to the parameters.
      *
      * @throws DiscoveryException
+     * @throws SearchCancellationException - Thrown when the user has cancelled
+     *                                     the search.
      */
     public Map<GroupKey, Integer> getGroupSizes(String userName,
             List<AbstractFilter> filters,
             DiscoveryAttributes.AttributeType groupAttributeType,
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
         final Map<GroupKey, List<Result>> searchResults = searchCache.get(
                 userName, filters, groupAttributeType, groupSortingType,
-                domainSortingMethod, caseDb, centralRepoDb);
+                domainSortingMethod, caseDb, centralRepoDb, context);
+
         // Transform the cached results into a map of group key to group size.
         final LinkedHashMap<GroupKey, Integer> groupSizes = new LinkedHashMap<>();
         for (GroupKey groupKey : searchResults.keySet()) {
+            if (context.searchIsCancelled()) {
+                throw new SearchCancellationException("The search was cancelled before group sizes were finished being calculated");
+            }
             groupSizes.put(groupKey, searchResults.get(groupKey).size());
         }
 
@@ -121,6 +126,7 @@ public class DomainSearch {
      * @param caseDb              The case database.
      * @param centralRepoDb       The central repository database. Can be null
      *                            if not needed.
+     * @param context             The search context.
      *
      * @return A LinkedHashMap grouped and sorted according to the parameters.
      *
@@ -132,11 +138,11 @@ public class DomainSearch {
             Group.GroupSortingAlgorithm groupSortingType,
             ResultsSorter.SortingMethod domainSortingMethod,
             GroupKey groupKey, int startingEntry, int numberOfEntries,
-            SleuthkitCase caseDb, CentralRepository centralRepoDb) throws DiscoveryException {
+            SleuthkitCase caseDb, CentralRepository centralRepoDb, SearchContext context) throws DiscoveryException, SearchCancellationException {
 
         final Map<GroupKey, List<Result>> searchResults = searchCache.get(
                 userName, filters, groupAttributeType, groupSortingType,
-                domainSortingMethod, caseDb, centralRepoDb);
+                domainSortingMethod, caseDb, centralRepoDb, context);
         final List<Result> domainsInGroup = searchResults.get(groupKey);
         final List<Result> page = new ArrayList<>();
         for (int i = startingEntry; (i < startingEntry + numberOfEntries)
@@ -246,8 +252,7 @@ public class DomainSearch {
     private String getDate(BlackboardArtifact artifact) throws TskCoreException {
         for (BlackboardAttribute attribute : artifact.getAttributes()) {
             if (attribute.getAttributeType().getTypeName().startsWith("TSK_DATETIME")) {
-                TimeZone timeZone = ContentUtils.getTimeZone(artifact);
-                String dateString = TimeUtilities.epochToTime(attribute.getValueLong(), timeZone);
+                String dateString = TimeZoneUtils.getFormattedTime(attribute.getValueLong());
                 if (dateString.length() >= 10) {
                     return dateString.substring(0, 10);
                 }

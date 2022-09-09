@@ -21,7 +21,7 @@ Accounts.FileWithCCNNode.statusProperty.displayName=Status
 # {0} - raw file name
 # {1} - solr chunk id
 Accounts.FileWithCCNNode.unallocatedSpaceFile.displayName={0}_chunk_{1}
-Accounts.RootNode.displayName=Accounts
+Accounts.RootNode.displayName=Communication Accounts
 AccountsRootNode.name=Accounts
 ApproveAccountsAction.name=Approve Accounts
 RejectAccountsAction.name=Reject Accounts

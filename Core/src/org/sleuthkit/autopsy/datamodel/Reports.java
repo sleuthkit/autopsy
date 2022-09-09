@@ -204,10 +204,11 @@ public final class Reports implements AutopsyVisitableItem {
         @Override
         public Action[] getActions(boolean popup) {
             List<Action> actions = new ArrayList<>();
-            actions.addAll(Arrays.asList(super.getActions(true)));
             actions.add(new OpenReportAction());
             actions.add(DeleteReportAction.getInstance());
-            return actions.toArray(new Action[actions.size()]);
+            actions.add(null);
+            actions.addAll(Arrays.asList(super.getActions(true)));
+            return actions.toArray(new Action[actions.size()]); 
         }
 
         @Override

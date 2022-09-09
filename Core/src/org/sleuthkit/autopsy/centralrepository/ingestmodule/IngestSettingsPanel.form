@@ -26,10 +26,11 @@
                           <Component id="flagTaggedNotableItemsCheckbox" max="32767" attributes="0"/>
                           <Component id="flagPreviouslySeenDevicesCheckbox" alignment="0" max="32767" attributes="0"/>
                           <Component id="createCorrelationPropertiesCheckbox" alignment="0" max="32767" attributes="0"/>
+                          <Component id="flagUniqueAppsCheckbox" alignment="0" max="32767" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
-              <EmptySpace pref="47" max="32767" attributes="0"/>
+              <EmptySpace pref="16" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -44,7 +45,9 @@
               <Component id="flagTaggedNotableItemsCheckbox" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="flagPreviouslySeenDevicesCheckbox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="47" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="flagUniqueAppsCheckbox" min="-2" max="-2" attributes="0"/>
+              <EmptySpace pref="24" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -80,6 +83,13 @@
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/ingestmodule/Bundle.properties" key="IngestSettingsPanel.createCorrelationPropertiesCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JCheckBox" name="flagUniqueAppsCheckbox">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/ingestmodule/Bundle.properties" key="IngestSettingsPanel.flagUniqueAppsCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,83 +28,110 @@ import org.sleuthkit.datamodel.Content;
  */
 public final class IngestJobContext {
 
-    private final IngestJobPipeline ingestJobPipeline;
+    private final IngestJobExecutor ingestJobExecutor;
 
-    IngestJobContext(IngestJobPipeline ingestJobPipeline) {
-        this.ingestJobPipeline = ingestJobPipeline;
+    /**
+     * Constructs an ingest job context object that provides an ingest module
+     * with services specific to the ingest job of which the module is a part.
+     *
+     * @param ingestJobExecutor The ingest executor for the job.
+     */
+    IngestJobContext(IngestJobExecutor ingestJobExecutor) {
+        this.ingestJobExecutor = ingestJobExecutor;
     }
 
     /**
-     * Gets the ingest job execution context identifier.
+     * Gets the execution context identifier of the ingest job.
      *
      * @return The context string.
      */
     public String getExecutionContext() {
-        return this.ingestJobPipeline.getExecutionContext();
+        return ingestJobExecutor.getExecutionContext();
     }
-        
+
     /**
-     * Gets the data source associated with this context.
+     * Gets the data source for the ingest job.
      *
      * @return The data source.
      */
     public Content getDataSource() {
-        return this.ingestJobPipeline.getDataSource();
+        return ingestJobExecutor.getDataSource();
     }
 
     /**
-     * Gets the identifier of the ingest job associated with this context.
+     * Gets the unique identifier for the ingest job.
      *
-     * @return The ingest job identifier.
+     * @return The ID.
      */
     public long getJobId() {
-        return this.ingestJobPipeline.getId();
+        return ingestJobExecutor.getIngestJobId();
     }
 
     /**
-     * Queries whether or not cancellation of the data source ingest part of the
-     * ingest job associated with this context has been requested.
+     * Indicates whether or not cancellation of the ingest job has been
+     * requested.
      *
      * @return True or false.
      *
-     * @deprecated Use dataSourceIngestIsCancelled() or fileIngestIsCancelled()
+     * @deprecated Modules should call a type-specific cancellation check method
      * instead.
      */
     @Deprecated
     public boolean isJobCancelled() {
-        return this.dataSourceIngestIsCancelled();
+        return ingestJobExecutor.isCancelled();
     }
 
     /**
-     * Allows a data source ingest module to determine whether or not
-     * cancellation of the data source ingest part of the ingest job associated
-     * with this context has been requested.
+     * Indicates whether or not cancellation of the currently running data
+     * source level ingest module has been requested. Data source level ingest
+     * modules should check this periodically and break off processing if the
+     * method returns true.
      *
      * @return True or false.
      */
     public boolean dataSourceIngestIsCancelled() {
-        return this.ingestJobPipeline.currentDataSourceIngestModuleIsCancelled() || this.ingestJobPipeline.isCancelled();
+        return ingestJobExecutor.currentDataSourceIngestModuleIsCancelled() || ingestJobExecutor.isCancelled();
     }
 
     /**
-     * Allows a file ingest module to determine whether or not cancellation of
-     * the file ingest part of the ingest job associated with this context has
-     * been requested.
+     * Indicates whether or not cancellation of the currently running file level
+     * ingest module has been requested. File level ingest modules should check
+     * this periodically and break off processing if the method returns true.
      *
      * @return True or false.
      */
     public boolean fileIngestIsCancelled() {
-        return this.ingestJobPipeline.isCancelled();
+        /*
+         * It is not currently possible to cancel individual file ingest
+         * modules.
+         */
+        return ingestJobExecutor.isCancelled();
+    }
+
+    /**
+     * Checks whether or not cancellation of the currently running data artifact
+     * ingest module for the ingest job has been requested. Data artifact ingest
+     * modules should check this periodically and break off processing if the
+     * method returns true.
+     *
+     * @return True or false.
+     */
+    public boolean dataArtifactIngestIsCancelled() {
+        /*
+         * It is not currently possible to cancel individual data artifact
+         * ingest modules.
+         */
+        return ingestJobExecutor.isCancelled();
     }
 
     /**
      * Queries whether or not unallocated space should be processed for the
-     * ingest job associated with this context.
+     * ingest job.
      *
      * @return True or false.
      */
     public boolean processingUnallocatedSpace() {
-        return this.ingestJobPipeline.shouldProcessUnallocatedSpace();
+        return ingestJobExecutor.shouldProcessUnallocatedSpace();
     }
 
     /**
@@ -113,21 +140,21 @@ public final class IngestJobContext {
      *
      * @param files The files to be added.
      *
-     * @deprecated use addFilesToJob() instead
+     * @deprecated use addFilesToJob() instead.
      */
     @Deprecated
     public void scheduleFiles(List<AbstractFile> files) {
-        this.addFilesToJob(files);
+        addFilesToJob(files);
     }
 
     /**
-     * Adds one or more files, i.e., extracted or carved files, to the ingest
-     * job associated with this context.
+     * Adds one or more files, e.g., extracted or carved files, to the ingest
+     * job for processing by its file ingest modules.
      *
-     * @param files The files to be added.
+     * @param files The files.
      */
     public void addFilesToJob(List<AbstractFile> files) {
-        this.ingestJobPipeline.addFiles(files);
+        ingestJobExecutor.addFiles(files);
     }
 
 }

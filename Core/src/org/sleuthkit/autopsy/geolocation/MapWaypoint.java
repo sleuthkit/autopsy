@@ -219,11 +219,13 @@ public final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewe
     JMenuItem[] getMenuItems() throws TskCoreException {
         List<JMenuItem> menuItems = new ArrayList<>();
         BlackboardArtifact artifact = dataModelWaypoint.getArtifact();
-        Content content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
+        Content content = dataModelWaypoint.getContent();
 
         menuItems.addAll(getTimelineMenuItems(dataModelWaypoint.getArtifact()));
         menuItems.addAll(getDataModelActionFactoryMenuItems(artifact, content));
-        menuItems.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(Arrays.asList((AbstractFile) content)));
+        if (content instanceof AbstractFile) {
+            menuItems.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(Arrays.asList((AbstractFile) content)));    
+        }
         menuItems.add(DeleteFileBlackboardArtifactTagAction.getInstance().getMenuForArtifacts(Arrays.asList(artifact)));
 
         return menuItems.toArray(new JMenuItem[0]);

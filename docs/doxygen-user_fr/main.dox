@@ -1,0 +1,118 @@
+﻿/*! \mainpage Guide de l'utilisateur d'Autopsy
+
+
+Aperçu
+-----
+
+Ceci est le guide de l'utilisateur de la <a href="http://www.sleuthkit.org/autopsy/">plate-forme open source Autopsy</a>. Autopsy vous permet d'analyser un disque dur ou un appareil mobile et d'en récupérer des éléments de preuves. Ce guide devrait vous aider à utiliser Autopsy. Le <a href="http://www.sleuthkit.org/autopsy/docs/api-docs/latest/"> guide du développeur</a> vous aidera à développer vos propres modules d'Autopsy.
+
+Remarque: pour les utilisateurs exécutant Autopsy sur des appareils Mac, les fonctionnalités disponibles via la boîte de dialogue "Tools"->"Options" et décritent dans cette documentation sont accessibles via la barre de menu système sous "Préférences" ou via le raccourci Cmd +, (touche "Cmd" + touche "plus").
+
+Version originale de ce guide:
+- <a href="https://sleuthkit.org/autopsy/docs/user-docs/latest">Dernière version à jour</a>
+
+Rubriques d'aide
+-------
+Les rubriques suivantes sont disponibles:
+
+- \subpage installation_page
+- Mises à niveau notables
+ - \subpage upgrade_solr8_page 
+- Configuration
+ - \subpage config_page
+ - \subpage performance_page 
+ - Cluster multi-utilisateurs 
+  - \subpage install_multiuser_page
+  - \subpage multiuser_sec_page
+  - \subpage multiuser_page 
+
+- \subpage quick_start_guide "Guide de démarrage rapide"
+
+- Cas et ajout de sources de données
+ - \subpage workflow_page 
+ - \subpage cases_page
+ - \subpage ds_page
+ - \subpage logs_and_output_page
+
+
+- Modules d'acquisition
+ - \subpage ingest_page
+ - \subpage recent_activity_page
+ - \subpage hash_db_page 
+ - \subpage file_type_identification_page
+ - \subpage embedded_file_extractor_page
+ - \subpage EXIF_parser_page
+ - \subpage keyword_search_page
+ - \subpage email_parser_page
+ - \subpage extension_mismatch_detector_page
+ - \subpage data_source_integrity_page
+ - \subpage android_analyzer_page
+ - \subpage interesting_files_identifier_page
+ - \subpage photorec_carver_page
+ - \subpage cr_ingest_module "Central Repository (Référentiel central)"
+ - \subpage encryption_page
+ - \subpage vm_extractor_page
+ - \subpage plaso_page
+ - \subpage drone_page
+ - \subpage gpx_page
+ - \subpage ileapp_page
+ - \subpage aleapp_page
+ - \subpage yara_page
+
+- Examen des résultats
+ - \subpage uilayout_page
+ - \subpage tree_viewer_page
+ - \subpage result_viewer_page
+ - \subpage content_viewer_page
+ - \subpage data_source_summary_page
+ - \subpage machine_translation_page
+
+- Recherches
+ - \subpage ui_quick_search
+ - \subpage file_search_page
+ - \subpage ad_hoc_keyword_search_page
+ - \subpage stix_page
+ - \subpage common_properties_page
+ - \subpage search_all_cases_page
+
+- Visionneuses spécialisées
+ - \subpage image_gallery_page
+ - \subpage timeline_page
+ - \subpage communications_page
+ - \subpage geolocation_page
+ - \subpage discovery_page
+ - \subpage personas_page
+
+- Rapports
+ - \subpage tagging_page
+ - \subpage reporting_page
+
+- \subpage module_install_page
+- \subpage central_repo_page
+
+- Autres flux de travail
+ - Triage
+  - \subpage triage_page
+  - \subpage live_triage_page
+ - \subpage logical_imager_page
+ - \subpage command_line_ingest_page
+ 
+
+- Module expérimental
+  - \subpage experimental_page
+  - \ref auto_ingest_page
+  - \ref object_detection_page
+  - \ref volatility_dsp_page
+
+- Contributions de la communauté
+  - \subpage translations_page
+  - \subpage update_interesting_files_page
+ 
+- \subpage troubleshooting_page
+
+Si le sujet dont vous avez besoin n'est pas répertorié, vous pouvez:
+- Vous référer au <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Wiki Autopsy</a> 
+- Poser une question sur le <a href="http://forum.sleuthkit.org">Forum</a>
+- Poser une question sur la <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-users">Mailing liste</a>.
+
+*/

@@ -1,3 +1,40 @@
+---------------- VERSION 4.19.3  --------------
+Bug Fixes:
+- Updates for log4j vulnerabilities. 
+-- Solr 8.11.0 Upgrade
+-- Manual update of log4j to 2.16.0
+-- NOTE: This installer was created with some manual work because Solr 8.11.1 was not on maven at the time of building. 
+
+---------------- VERSION 4.19.2  --------------
+GUI Updates:
+- Special handling of Interesting Files and Interesting Results analysis results was removed from the tree and they are now shown as individual nodes. 
+- Updated display of analysis results in the tabular results viewer.
+- Improved algorithm for populating the S(core) column in the tabular results view.
+- Updated the right-click menu options for data artifacts and analysis results.
+- The O(ther Cases) column in the tabular results view and the Other Occurrences content viewer now count cases in the same way.  
+
+Misc:
+- Installed applications are now added to the central repository.
+- The Central Repository ingest module no longer uses the generic Interesting Item analysis result and instead creates more specific Previously Seen, Previously Unseen, and Previously Notable analysis results.
+- Automatic destinations (jump lists) parsing added to the Recent Activity module.
+- French translation of user documentation contributed by github user Seb2lyon.
+
+Bug Fixes:
+- Analysis Results and Annotation content viewers now work when parent is a data artifact.
+- Fixed bug that prevented media attachments from being displayed in the Communications Viewer. 
+- Fixed RegRipper bug to support parsing of ShellBags with non-Latin characters.
+- Assorted GUI responsiveness fixes.
+- Fixed NTFS handling of compressed files that were not fully initialized (via TSK). 
+- Other assorted bug fixes.
+
+
+---------------- VERSION 4.19.1  --------------
+Bug Fixes:
+- Fixed connection leak associated with creating OS Accounts
+- Decreased priority of OS Account Content Viewer
+- Misc bound check fixes in TSK
+
+
 ---------------- VERSION 4.19.0  --------------
 Data Source Management:
 - To make managing big cases easier, all data sources are now associated with a host that can be specified in the “Add Data Source” wizard. 
@@ -5,12 +42,18 @@ Data Source Management:
 - The main tree viewer can be configured to group by person and host. 
 
 OS Accounts:
-- Operating System (OS) accounts and realms are their own data types and not generic artifacts. 
+- Operating System (OS) accounts and realms are their own data types and no longer generic artifacts. 
 - OS Accounts are created for Windows accounts found in the registry. Domain-scoped realms are not fully detected yet. 
 - NTFS files are associated with OS Accounts by SID. 
 - The Recent Activity module associates artifacts with OS Accounts based on SID or path of database.  Other modules still need to be updated. 
 - OS accounts appear in a dedicated sub-tree of the main tree view and their properties can be viewed in the results view.
-- A new content viewer in the lower right area of the main window was built to display OS account data for the item selected in the result view.
+- A new content viewer in the lower right area of the main window was built to display OS account data for the item selected in the results view.
+
+Analysis Result and Data Artifacts
+- All modules make either Analysis Results or Data Artifacts instead of “Blackboard Artifacts.”
+- New “Analysis Result” content viewer shows the results for a given file and its score.
+- The tabular results viewer shows an icon for the aggregate score of a file. 
+- The tree organizes results into "Analysis Results" and "Data Artifacts" instead of simply “Results.” 
 
 Discovery UI:
 - Domain categorization and account types are displayed in Domain Discovery results.
@@ -22,16 +65,39 @@ Ingest Modules:
 - Parsing of iLEAPP and aLEAPP output was expanded to create communication relationships which can be displayed in the Communications UI. 
 - EML email parsing handles EML messages that are attachments (and have their own attachments). 
 - Domain categorization within Recent Activity can be customized by user-defined rules that can be imported and exported.
+- Account IDs and Installed Applications are added to the Central Repository.
+- Keyword search can be configured to only do OCR and skip non-OCR files.
 
 Miscellaneous:
 - A “Reset Windows” feature was created to help redock windows. 
 - A case-insensitive wordlist of all words in the keyword search index can be exported as a text document.
 - Information from the Data Source Summary panels can be exported as an Excel spreadsheet.
 - More artifacts are added to the timeline and artifacts with multiple time-based attributes are mapped to multiple timeline events.
-- The Auto Ingest Dashboard is resizable.
 - Added option to only perform optical character recognition on certain file types.
 - Heap dumps can be saved to a custom location.
+- More detailed error messages about encrypted disks when they are added.
+- Added file size filter to Ingest Filters.
+
+Performance:
+- Keyword search does not make an explicit commit for each report if ingest is running. 
+- Language ID is performed on a small subset of a file instead of the entire file.
+- Recent Activity is more efficient because of TSK changes to file searching (using extension).
+- Embedded file extractor module has been made faster by doing file typing in memory and adding extracted files in batches. 
+- Moved Content Viewers setNode() and isSupported()/isPreferred() code to background threads. 
+- Moved Data Source Summary Panel population code to background threads. 
+- Moved Node/Tree queries to background threads.
+
+Bug Fixes:
+- Fixed embedded file extractor file name escaping bug.
+- Detect VHD files by signature and not extension.
+- Fixed iLEAPP path error.
+- Content viewers UIs are more consistent.
 - Assorted bug fixes are included.
+
+Auto Ingest:
+- The Auto Ingest Dashboard is resizable.
+- Get thread dumps from AID
+- Added beta pause feature that pauses auto ingest for a set amount of time at a scheduled date and time.
 
 ---------------- VERSION 4.18.0  --------------
 Keyword Search:

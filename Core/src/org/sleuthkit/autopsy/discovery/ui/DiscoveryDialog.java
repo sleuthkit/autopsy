@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.SwingUtilities;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
@@ -574,7 +573,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        // Get the selected filters
+        setVisible(false); //set visible used here instead of dispose incase dispose code changes
         final DiscoveryTopComponent tc = DiscoveryTopComponent.getTopComponent();
         if (tc == null) {
             setValid("No Top Component Found");
@@ -584,6 +583,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             tc.open();
         }
         tc.resetTopComponent();
+        // Get the selected filters
         List<AbstractFilter> filters;
         if (videosButton.isSelected()) {
             filters = videoFilterPanel.getFilters();
@@ -617,7 +617,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         }
         searchWorker = new SearchWorker(centralRepoDb, type, filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
-        dispose();
         tc.toFront();
         tc.requestActive();
     }//GEN-LAST:event_searchButtonActionPerformed
@@ -651,6 +650,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     void cancelSearch() {
         if (searchWorker != null) {
             searchWorker.cancel(true);
+            searchWorker = null;
         }
     }
 
@@ -720,8 +720,12 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      */
     private class ModuleChangeListener implements PropertyChangeListener {
 
+        /**
+         * @SuppressWarnings("deprecation") - we need to support already
+         * existing interesting file and artifact hits.
+         */
+        @SuppressWarnings("deprecation")
         @Override
-        @SuppressWarnings("fallthrough")
         public void propertyChange(PropertyChangeEvent evt) {
             if (!shouldUpdate) {
                 String eventType = evt.getPropertyName();
@@ -746,11 +750,11 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                                 shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID(), eventData, objectsDetected);
                             } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                                 shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), eventData, hashSets);
-                            } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
+                            } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID()
+                                    || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
                                     || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
                                 shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), eventData, interestingItems);
                             }
-
                         }
                     } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2019 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,35 +20,29 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.Action;
-import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.DeleteDataSourceAction;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datasourcesummary.ui.ViewSummaryInformationAction;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
-import org.sleuthkit.autopsy.directorytree.FileSearchAction;
+import org.sleuthkit.autopsy.directorytree.FileSearchTreeAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
@@ -110,15 +104,14 @@ public class ImageNode extends AbstractContentNode<Image> {
     public Action[] getActions(boolean context) {
 
         List<Action> actionsList = new ArrayList<>();
-        for (Action a : super.getActions(true)) {
-            actionsList.add(a);
-        }
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
-        actionsList.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
+        actionsList.add(new FileSearchTreeAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text(), content.getId()));
         actionsList.add(new ViewSummaryInformationAction(content.getId()));
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
         actionsList.add(new DeleteDataSourceAction(content.getId()));
+        actionsList.add(null);
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
         return actionsList.toArray(new Action[0]);
     }
 
@@ -171,17 +164,10 @@ public class ImageNode extends AbstractContentNode<Image> {
                 Bundle.ImageNode_createSheet_timezone_desc(),
                 this.content.getTimeZone()));
 
-        try (CaseDbQuery query = Case.getCurrentCaseThrows().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
-            ResultSet deviceIdSet = query.getResultSet();
-            if (deviceIdSet.next()) {
-                sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
-                        Bundle.ImageNode_createSheet_deviceId_displayName(),
-                        Bundle.ImageNode_createSheet_deviceId_desc(),
-                        deviceIdSet.getString("device_id")));
-            }
-        } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Failed to get device id for the following image: " + this.content.getId(), ex);
-        }
+        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_deviceId_name(),
+                Bundle.ImageNode_createSheet_deviceId_displayName(),
+                Bundle.ImageNode_createSheet_deviceId_desc(),
+                content.getDeviceId()));
 
         return sheet;
     }
@@ -266,65 +252,5 @@ public class ImageNode extends AbstractContentNode<Image> {
     @Override
     protected List<Tag> getAllTagsFromDatabase() {
         return new ArrayList<>();
-    }
-
-    /**
-     * Returns correlation attribute instance for the underlying content of the
-     * node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @return correlation attribute instance for the underlying content of the
-     *         node.
-     */
-    @Override
-    protected CorrelationAttributeInstance getCorrelationAttributeInstance() {
-        return null;
-    }
-
-    /**
-     * Returns Score property for the node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @param tags list of tags.
-     *
-     * @return Score property for the underlying content of the node.
-     */
-    @Override
-    protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags) {
-        return Pair.of(DataResultViewerTable.Score.NO_SCORE, NO_DESCR);
-    }
-
-    /**
-     * Returns comment property for the node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @param tags      list of tags
-     * @param attribute correlation attribute instance
-     *
-     * @return Comment property for the underlying content of the node.
-     */
-    @Override
-    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute) {
-        return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
-    }
-
-    /**
-     * Returns occurrences/count property for the node.
-     *
-     * Null implementation of an abstract method.
-     *
-     * @param attributeType      the type of the attribute to count
-     * @param attributeValue     the value of the attribute to coun
-     * @param defaultDescription a description to use when none is determined by
-     *                           the getCountPropertyAndDescription method
-     *
-     * @return count property for the underlying content of the node.
-     */
-    @Override
-    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance.Type attributeType, String attributeValue, String defaultDescription) {
-        return Pair.of(-1L, NO_DESCR);
     }
 }

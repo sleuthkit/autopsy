@@ -102,8 +102,14 @@ public class CentralRepoCommonAttributeInstanceNode extends DisplayableItemNode 
 
         final String caseName = centralRepoFile.getCorrelationCase().getDisplayName();
 
-        final String name = file.getName();
-        final String parent = file.getParent();
+        String name = file.getName();
+        if (name == null) {
+            name = "";
+        }
+        String parent = file.getParent();
+        if (parent == null) {
+            parent = "";
+        }
         final String value = centralRepoFile.getCorrelationValue();
 
         final String dataSourceName = centralRepoFile.getCorrelationDataSource().getName();

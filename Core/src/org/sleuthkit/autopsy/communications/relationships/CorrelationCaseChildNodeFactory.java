@@ -29,6 +29,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
@@ -73,6 +74,8 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
         }
 
         Map<String, CorrelationCase> uniqueCaseMap = new HashMap<>();
+        
+        String currentCaseName = Case.getCurrentCase().getName();
 
         accounts.forEach((account) -> {
             try {
@@ -81,7 +84,9 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
                     List<CorrelationAttributeInstance> correlationInstances = dbInstance.getArtifactInstancesByTypeValue(optCorrelationType.get(), account.getTypeSpecificID());
                     correlationInstances.forEach((correlationInstance) -> {
                         CorrelationCase correlationCase = correlationInstance.getCorrelationCase();
-                        uniqueCaseMap.put(correlationCase.getCaseUUID(), correlationCase);
+                        if(!correlationCase.getCaseUUID().equals(currentCaseName)) {
+                            uniqueCaseMap.put(correlationCase.getCaseUUID(), correlationCase);
+                        }
                     });
                 }
             } catch (CentralRepoException | CorrelationAttributeNormalizationException ex) {

@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-2020 Basis Technology Corp.
+Copyright 2016-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,7 +75,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                 return
             for contactDb in contactsDbs:
                 try:
-                    self.__findContactsInDB(contactDb, dataSource)
+                    self.__findContactsInDB(contactDb, dataSource, context)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing Contacts", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -86,7 +86,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
     """
         Queries the given contact database and adds Contacts to the case.
     """
-    def __findContactsInDB(self, contactDb, dataSource):
+    def __findContactsInDB(self, contactDb, dataSource, context):
         if not contactDb:
             return
 
@@ -97,7 +97,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             contactDbHelper = CommunicationArtifactsHelper(current_case.getSleuthkitCase(),
                                                     self._PARSER_NAME,
                                                     contactDb.getDBFile(),
-                                                    Account.Type.PHONE )
+                                                    Account.Type.PHONE, context.getJobId())
             
             # get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
             # sorted by name, so phonenumber/email would be consecutive for a person if they exist.

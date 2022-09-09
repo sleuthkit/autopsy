@@ -84,11 +84,6 @@ public class RootContentChildren extends Children.Keys<Object> {
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
 
         @Override
-        public ExtractedContent.RootNode visit(ExtractedContent ec) {
-            return ec.new RootNode(ec.getSleuthkitCase());
-        }
-
-        @Override
         public AbstractNode visit(FileTypesByExtension sf) {
             return sf.new FileTypesByExtNode(sf.getSleuthkitCase(), null);
         }
@@ -135,7 +130,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(DataSources i) {
-            return new DataSourcesNode(i.filteringDataSourceObjId());
+            return new DataSourceFilesNode(i.filteringDataSourceObjId());
         }
 
         @Override
@@ -146,11 +141,6 @@ public class RootContentChildren extends Children.Keys<Object> {
         @Override
         public AbstractNode visit(Views v) {
             return new ViewsNode(v.getSleuthkitCase(), v.filteringDataSourceObjId());
-        }
-
-        @Override
-        public AbstractNode visit(Results results) {
-            return new ResultsNode(results.getSleuthkitCase(), results.filteringDataSourceObjId());
         }
 
         @Override
@@ -167,7 +157,7 @@ public class RootContentChildren extends Children.Keys<Object> {
         public AbstractNode visit(Accounts accountsItem) {
             return accountsItem.new AccountsRootNode();
         }
-        
+
         @Override
         public AbstractNode visit(OsAccounts osAccountsItem) {
             return osAccountsItem.new OsAccountListNode();
@@ -187,7 +177,7 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(PersonGrouping personGrouping) {
-            return new PersonGroupingNode(personGrouping.getPerson());
+            return new PersonNode(personGrouping.getPerson());
         }
 
         @Override
@@ -202,7 +192,19 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(DataSourcesByType dataSourceHosts) {
-            return new DataSourcesByTypeNode();
+            return new DataSourcesNode();
+        }
+
+        @Override
+        public AbstractNode visit(AnalysisResults analysisResults) {
+            return new AnalysisResults.RootNode(
+                    analysisResults.getFilteringDataSourceObjId());
+        }
+
+        @Override
+        public AbstractNode visit(DataArtifacts dataArtifacts) {
+            return new DataArtifacts.RootNode(
+                    dataArtifacts.getFilteringDataSourceObjId());
         }
     }
 }

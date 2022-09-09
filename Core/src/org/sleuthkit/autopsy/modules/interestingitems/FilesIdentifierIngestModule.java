@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2018 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,10 +39,10 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 @NbBundle.Messages({"FilesIdentifierIngestModule.getFilesError=Error getting interesting files sets from file."})
 final class FilesIdentifierIngestModule implements FileIngestModule {
-
+    
     private static final Object sharedResourcesLock = new Object();
     private static final Logger logger = Logger.getLogger(FilesIdentifierIngestModule.class.getName());
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -141,13 +141,16 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                     );
 
                     // Create artifact if it doesn't already exist.
-                    if (!blackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
-                        BlackboardArtifact artifact = file.newArtifact(TSK_INTERESTING_FILE_HIT);
-                        artifact.addAttributes(attributes);
+                    if (!blackboard.artifactExists(file, BlackboardArtifact.Type.TSK_INTERESTING_ITEM, attributes)) {
+                        BlackboardArtifact artifact = file.newAnalysisResult(
+                                BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE, 
+                                null, filesSet.getName(), null, 
+                                attributes)
+                                .getAnalysisResult();
                         try {
 
                             // Post thet artifact to the blackboard.
-                            blackboard.postArtifact(artifact, MODULE_NAME);
+                            blackboard.postArtifact(artifact, MODULE_NAME, context.getJobId());
                         } catch (Blackboard.BlackboardException ex) {
                             logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                             MessageNotifyUtil.Notify.error(Bundle.FilesIdentifierIngestModule_indexError_message(), artifact.getDisplayName());

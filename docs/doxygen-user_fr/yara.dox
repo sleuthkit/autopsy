@@ -1,0 +1,50 @@
+﻿/*! \page yara_page YARA Analyzer (Analyseur YARA)
+
+[TOC]
+
+
+\section yara_overview Aperçu
+
+Le module "YARA Analyzer" utilise un ensemble de règles pour rechercher dans les fichiers des modèles textuels ou binaires. YARA a été conçu pour l'analyse des logiciels malveillants, mais peut être utilisé pour rechercher tout type de fichiers. Pour plus d'informations sur YARA, voir <a href="https://virustotal.github.io/yara/">https://virustotal.github.io/yara/</a>.
+
+\section yara_config Configuration
+
+Pour créer et modifier vos ensembles de règles, allez dans "Tools", "Options" puis sélectionnez l'onglet "Yara Rule Sets". 
+
+\image html yara_options.png
+
+Les ensembles de règles YARA sont stockés dans les répertoires du dossier Autopsy de l'utilisateur. Pour créer un nouvel ensemble de règles, cliquez sur le bouton "New Set" en bas à gauche et saisissez le nom de votre nouvel ensemble.
+
+\image html yara_new_rule_set.png
+
+Une fois votre nouvel ensemble de règles sélectionné, cliquez sur le bouton "Open Folder" pour accéder au dossier de règles nouvellement créé. Vous pouvez désormais copier les fichiers YARA existants dans ce dossier pour les inclure dans l'ensemble de règles. Vous trouverez des informations sur la rédaction des règles YARA <a href="https://yara.readthedocs.io/en/stable/writingrules.html">ici</a> et de nombreuses règles YARA existantes peuvent être trouvées grâce à une recherche sur le Web. À titre d'exemple très simple, nous ajouterons cette règle à un ensemble de règles pour rechercher les fichiers contenant les mots "hello" et "world":
+
+\verbatim
+rule HelloWorldRule
+{
+    strings:
+        $part1 = "hello" nocase 
+        $part2 = "world" nocase 
+
+    condition:
+        $part1 and $part2
+}
+\endverbatim
+
+Une fois que vous avez ajouté vos règles au dossier, cliquez sur le bouton "Refresh File List" pour les afficher dans le panneau d'options.
+
+\section yara_running Exécution du module
+
+Pour activer le module d'acquisition YARA Analyzer, cochez la case dans l'\ref ingest_configure "écran de configuration des modules d'acquisition (Configure Ingest Modules)". 
+
+\image html yara_ingest_settings.png
+
+Assurez-vous que tous les ensembles de règles que vous souhaitez exécuter sont cochés. Vous pouvez également choisir de les appliquer sur tous les fichiers ou uniquement sur des fichiers exécutables.
+
+\section yara_results Affichage des résultats
+
+Les résultats sont affichés dans l'arborescence sous "Extracted Content". 
+
+\image html yara_results.png
+
+*/

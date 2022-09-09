@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-17 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -126,7 +126,7 @@ final class ResultViewerPersistence {
     static private void getAllChildPropertiesHelper(Node node, int maxRows, Set<Node.Property<?>> propertiesAcc) {
         Children children = node.getChildren();
         int childCount = 0;
-        for (Node child : children.getNodes()) {
+        for (Node child : children.getNodes(true)) {
             childCount++;
             if (childCount > maxRows) {
                 return;

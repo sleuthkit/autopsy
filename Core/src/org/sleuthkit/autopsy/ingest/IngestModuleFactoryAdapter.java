@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,10 @@ package org.sleuthkit.autopsy.ingest;
 /**
  * An adapter that provides no-op implementations of various IngestModuleFactory
  * methods.
+ *
+ * NOTE: As of Java 8, interfaces can have default methods. IngestModuleFactory
+ * now provides default no-op versions of all of its optional methods. This
+ * class is no longer needed and can be DEPRECATED when convenient.
  */
 public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory {
 

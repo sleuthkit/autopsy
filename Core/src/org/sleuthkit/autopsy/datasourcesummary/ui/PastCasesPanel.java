@@ -19,21 +19,16 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.PastCasesSummary.PastCasesResult;
-import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getFetchResult;
-import static org.sleuthkit.autopsy.datasourcesummary.ui.BaseDataSourceSummaryPanel.getTableExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetcher;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.ExcelExport;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
 import org.sleuthkit.datamodel.DataSource;
@@ -45,9 +40,7 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "PastCasesPanel_caseColumn_title=Case",
     "PastCasesPanel_countColumn_title=Count",
-    "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run.",
-    "PastCasesPanel_notableFileTable_tabName=Cases with Common Notable",
-    "PastCasesPanel_sameIdsTable_tabName=Past Cases with the Same Devices",})
+    "PastCasesPanel_onNoCrIngest_message=No results will be shown because the Central Repository module was not run.",})
 public class PastCasesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
@@ -71,12 +64,13 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
             = Arrays.asList(CASE_COL, COUNT_COL);
 
     private final JTablePanel<Pair<String, Long>> notableFileTable = JTablePanel.getJTablePanel(DEFAULT_TEMPLATE);
-
-    private final JTablePanel<Pair<String, Long>> sameIdTable = JTablePanel.getJTablePanel(DEFAULT_TEMPLATE);
+    private final JTablePanel<Pair<String, Long>> seenDeviceTable = JTablePanel.getJTablePanel(DEFAULT_TEMPLATE);
+    private final JTablePanel<Pair<String, Long>> seenResultTable = JTablePanel.getJTablePanel(DEFAULT_TEMPLATE);
 
     private final List<JTablePanel<?>> tables = Arrays.asList(
             notableFileTable,
-            sameIdTable
+            seenResultTable,
+            seenDeviceTable
     );
 
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
@@ -84,19 +78,19 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
     private final DataFetcher<DataSource, PastCasesResult> pastCasesFetcher;
-    
+
     public PastCasesPanel() {
-        this(new PastCasesSummary());
+        this(new PastCasesSummaryGetter());
     }
 
     /**
      * Creates new form PastCasesPanel
      */
-    public PastCasesPanel(PastCasesSummary pastCaseData) {
+    public PastCasesPanel(PastCasesSummaryGetter pastCaseData) {
         super(pastCaseData);
 
         this.pastCasesFetcher = (dataSource) -> pastCaseData.getPastCasesData(dataSource);
-        
+
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 new DataFetchWorker.DataFetchComponents<>(
@@ -114,8 +108,9 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
      * @param result The result.
      */
     private void handleResult(DataFetchResult<PastCasesResult> result) {
-        notableFileTable.showDataFetchResult(DataFetchResult.getSubResult(result, (res) -> res.getTaggedNotable()));
-        sameIdTable.showDataFetchResult(DataFetchResult.getSubResult(result, (res) -> res.getSameIdsResults()));
+        notableFileTable.showDataFetchResult(DataFetchResult.getSubResult(result, res -> res.getPreviouslyNotable()));
+        seenResultTable.showDataFetchResult(DataFetchResult.getSubResult(result, res -> res.getPreviouslySeenResults()));
+        seenDeviceTable.showDataFetchResult(DataFetchResult.getSubResult(result, res -> res.getPreviouslySeenDevices()));
     }
 
     @Override
@@ -126,19 +121,6 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
     @Override
     protected void onNewDataSource(DataSource dataSource) {
         onNewDataSource(dataFetchComponents, tables, dataSource);
-    }
-
-    @Override
-    List<ExcelExport.ExcelSheetExport> getExports(DataSource dataSource) {
-        PastCasesResult result = getFetchResult(pastCasesFetcher, "Past cases sheets", dataSource);
-        if (result == null) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.asList(
-                getTableExport(DEFAULT_TEMPLATE, Bundle.PastCasesPanel_notableFileTable_tabName(), result.getTaggedNotable()),
-                getTableExport(DEFAULT_TEMPLATE, Bundle.PastCasesPanel_sameIdsTable_tabName(), result.getSameIdsResults())
-        );
     }
 
     @Override
@@ -163,10 +145,15 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         javax.swing.Box.Filler filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
         javax.swing.JPanel notableFilePanel = notableFileTable;
         javax.swing.Box.Filler filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
-        javax.swing.JLabel sameIdLabel = new javax.swing.JLabel();
+        javax.swing.JLabel seenResultLabel = new javax.swing.JLabel();
         javax.swing.Box.Filler filler3 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
-        javax.swing.JPanel sameIdPanel = sameIdTable;
-        javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
+        javax.swing.JPanel seenResultPanel = seenResultTable;
+        javax.swing.Box.Filler filler4 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
+        javax.swing.JLabel seenDeviceLabel = new javax.swing.JLabel();
+        javax.swing.Box.Filler filler5 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2), new java.awt.Dimension(0, 2));
+        javax.swing.JPanel seenDevicePanel = seenDeviceTable;
+        javax.swing.Box.Filler filler6 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20), new java.awt.Dimension(0, 20));
+        javax.swing.JLabel warningLabel = new javax.swing.JLabel();
 
         mainContentPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainContentPanel.setLayout(new javax.swing.BoxLayout(mainContentPanel, javax.swing.BoxLayout.PAGE_AXIS));
@@ -193,20 +180,38 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         filler2.setAlignmentX(0.0F);
         mainContentPanel.add(filler2);
 
-        org.openide.awt.Mnemonics.setLocalizedText(sameIdLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.sameIdLabel.text")); // NOI18N
-        mainContentPanel.add(sameIdLabel);
+        org.openide.awt.Mnemonics.setLocalizedText(seenResultLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.seenResultLabel.text")); // NOI18N
+        mainContentPanel.add(seenResultLabel);
 
         filler3.setAlignmentX(0.0F);
         mainContentPanel.add(filler3);
 
-        sameIdPanel.setAlignmentX(0.0F);
-        sameIdPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
-        sameIdPanel.setMinimumSize(new java.awt.Dimension(100, 106));
-        sameIdPanel.setPreferredSize(new java.awt.Dimension(100, 106));
-        mainContentPanel.add(sameIdPanel);
+        seenResultPanel.setAlignmentX(0.0F);
+        seenResultPanel.setMaximumSize(new java.awt.Dimension(32767, 106));
+        seenResultPanel.setMinimumSize(new java.awt.Dimension(100, 106));
+        seenResultPanel.setPreferredSize(new java.awt.Dimension(100, 106));
+        mainContentPanel.add(seenResultPanel);
+
+        filler4.setAlignmentX(0.0F);
+        mainContentPanel.add(filler4);
+
+        org.openide.awt.Mnemonics.setLocalizedText(seenDeviceLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.seenDeviceLabel.text")); // NOI18N
+        mainContentPanel.add(seenDeviceLabel);
 
         filler5.setAlignmentX(0.0F);
         mainContentPanel.add(filler5);
+
+        seenDevicePanel.setAlignmentX(0.0F);
+        seenDevicePanel.setMaximumSize(new java.awt.Dimension(32767, 106));
+        seenDevicePanel.setMinimumSize(new java.awt.Dimension(100, 106));
+        seenDevicePanel.setPreferredSize(new java.awt.Dimension(100, 106));
+        mainContentPanel.add(seenDevicePanel);
+
+        filler6.setAlignmentX(0.0F);
+        mainContentPanel.add(filler6);
+
+        org.openide.awt.Mnemonics.setLocalizedText(warningLabel, org.openide.util.NbBundle.getMessage(PastCasesPanel.class, "PastCasesPanel.warningLabel.text")); // NOI18N
+        mainContentPanel.add(warningLabel);
 
         mainScrollPane.setViewportView(mainContentPanel);
 
@@ -218,7 +223,7 @@ public class PastCasesPanel extends BaseDataSourceSummaryPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+            .addComponent(mainScrollPane)
         );
     }// </editor-fold>//GEN-END:initComponents
 

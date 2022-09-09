@@ -1,0 +1,96 @@
+﻿/*! \page photorec_carver_page PhotoRec Carver (Carving PhotoRec)
+
+[TOC]
+
+
+\section photorec_overview Aperçu
+
+Le module "PhotoRec Carver" effectue des recherches par carving de fichiers à partir de l'espace non alloué dans la source de données et envoie les fichiers trouvés dans la chaîne de traitement des modules d'acquisition.
+
+Cela peut aider un analyste à découvrir plus d'informations sur les fichiers qui se trouvaient auparavant sur l'appareil et qui ont été supprimés par la suite. Ce sont simplement des fichiers supplémentaires qui ont été trouvés dans des parties "vides" du stockage de l'appareil.
+
+
+\section photorec_usage Utilisation du module
+
+Cochez la case dans l'écran des paramètres des modules d'acquisition ("Configure Ingest Modules") pour activer PhotoRec Carver. Assurez-vous que "All Files, Directories and Unallocated Space" est sélectionné.
+
+\subsection photorec_settings Paramètres d'intégration
+
+Les paramètres d'exécution de ce module vous permettent de choisir "Keep corrupted files"(conserver les fichiers corrompus) et "Focus on certain file types" (inclure ou d'exclure certains types de fichiers).
+
+\image html photo_rec_settings.PNG
+
+Pour l'option "Focus on certain file types", vous entrerez une liste de types de fichiers séparés par des virgules. Selon l'option que vous choisissez, PhotoRec n'effectuera des recherches par carving que sur les fichiers de ces types ("Include only the specified types") ou sur tous les fichiers à l'exception de ces types ("Exclude the specified types"). Vous verrez une erreur si un type non valide est entré. Notez que les types de fichiers sont sensibles à la casse.
+
+\image html photo_rec_extensions.png
+
+La liste des \ref photorec_extensions "types de fichiers valides" pour la version actuelle d'Autopsy se trouve au bas de cette page.
+
+\subsection photorec_results Voir les résultats
+
+Les résultats de la recherche par carving apparaissent dans l'arborescence de la source de données appropriée avec l'en-tête "$CarvedFiles".
+
+\image html photorec_output.PNG
+
+Les types sélectionnés apparaissent également dans la section "Views", "File Types" de l'arborescence, selon le type de fichier.
+
+\section photorec_custom Signatures de fichier personnalisées
+Pour ajouter des signatures de fichier personnalisées, créez un fichier (s'il n'existe pas) photorec.sig dans le répertoire de base de l'utilisateur (par exemple - /home/john/photorec.sig, ou C:\\Users\john\photorec.sig). Le fichier photorec.sig doit contenir une expression par ligne.
+Par exemple, pour détecter le fichier foo.bar qui a pour signature d'en-tête - 0x4141414141414141, ajouter une expression
+
+	bar 0 0x4141414141414141
+dans le fichier photorec.sig où *bar* est l'extension du fichier, *0* est l'offset de la signature, et *0x4141414141414141* est la signature. Ajoutez une autre expression sur une nouvelle ligne pour détecter un autre type personnalisé de fichier en fonction de sa signature. Notez que les signatures personnalisées ne peuvent pas être utilisées avec l'option "Focus on certain file types". 
+
+\image html photo_rec_custom.png
+
+\section photorec_extensions Types de fichiers valides
+
+Voici la liste des types de fichiers valides pour la version de PhotoRec actuellement utilisée par Autopsy:
+
+\verbatim
+1cd          caf          dwg          gp2          max          pdb          rw2          vfb
+3dm          cam          dxf          gp5          mb           pdf          rx2          vib
+7z           catdrawing   e01          gpg          mcd          pds          sav          vmdk
+a            cdt          eCryptfs     gpx          mdb          pf           save         vmg
+ab           che          edb          gsm          mdf          pfx          ses          wallet
+abr          chm          elf          gz           mfa          plist        sgcta        wdp
+acb          class        emf          hdf          mfg          plr          shn          wee
+accdb        comicdoc     ess          hdr          mft          plt          sib          wim
+ace          cow          evt          hds          mid          png          sit          win
+ado          cp_          evtx         hfsp         mig          pnm          skd          wks
+afdesign     cpi          exe          hm           mk5          prc          skp          wld
+ahn          crw          exs          hr9          mkv          prd          snag         wmf
+aif          csh          ext          http         mlv          prt          snz          wnk
+all          ctg          fat          ibd          mobi         ps           sp3          woff
+als          cwk          fbf          icc          mov          psb          sparseimage  wpb
+amd          d2s          fbk          icns         mov/mdat     psd          spe          wpd
+amr          dad          fcp          ico          mp3          psf          spf          wtv
+apa          dar          fcs          idx          mpg          psp          sqlite       wv
+ape          dat          fdb          ifo          mpl          pst          sqm          x3f
+apple        DB           fds          imb          mrw          ptb          steuer2014   x3i
+ari          db           fh10         indd         msa          ptf          stl          x4a
+arj          dbf          fh5          info         mus          pyc          studio       xar
+asf          dbn          fit          iso          mxf          pzf          swf          xcf
+asl          dcm          fits         it           MYI          pzh          tar          xfi
+asm          ddf          flac         itu          myo          qbb          tax          xfs
+atd          dex          flp          jks          nd2          qdf          tg           xm
+au           diskimage    flv          jpg          nds          qkt          tib          xml
+axp          djv          fm           jsonlz4      nes          qxd          tif          xpt
+axx          dmp          fob          kdb          njx          r3d          TiVo         xsv
+bac          doc          fos          kdbx         nk2          ra           torrent      xv
+bdm          dpx          fp5          key          nsf          raf          tph          xz
+bim          drw          fp7          ldf          oci          rar          tpl          z2d
+bin          ds2          freeway      lit          ogg          raw          ts           zcode
+binvox       DS_Store     frm          lnk          one          rdc          ttf          zip
+bkf          dsc          fs           logic        orf          reg          tx?          zpr
+blend        dss          fwd          lso          paf          res          txt
+bmp          dst          gam          luks         pap          rfp          tz
+bpg          dta          gct          lxo          par2         riff         v2i
+bvr          dump         gho          lzh          pcap         rlv          vault
+bz2          dv           gi           lzo          pcb          rm           vdi
+c4d          dvi          gif          m2ts         pct          rns          vdj
+cab          dvr          gm*          mat          pcx          rpm          veg
+
+\endverbatim
+
+*/

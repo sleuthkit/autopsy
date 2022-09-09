@@ -1,0 +1,105 @@
+/*! \page auto_ingest_admin_page Administration de l'acquisition automatisée
+
+[TOC]
+
+
+\section auto_ingest_admin_overview Aperçu
+
+Les "Examiner Nodes" dans un environnement d'\ref auto_ingest_page peuvent recevoir un type d'accès administrateur. Cela permet à un administrateur de:
+
+<ul><li>Accéder aux options réservées aux administrateurs dans le panneau "Auto Ingest Jobs", notamment:
+<ul>
+<li>Hiérarchiser les tâches et les cas
+<li>Annuler des tâches
+<li>Supprimer et retraiter des tâches
+</ul>
+<li>Accédez au panneau "Auto Ingest Nodes", qui permet à l'utilisateur de:
+<ul><li>Afficher les "Automated Ingest Node" actuellement actifs
+<li>Mettre en pause/reprendre/arrêter les "Automated Ingest Node" actifs
+<li>Afficher/activer le moniteur de santé
+<li>Afficher les métriques d'acquisition automatisée
+</ul></ul>
+
+\section auto_ingest_admin_setup Installation
+
+Le panneau d'administration est activé en créant le fichier "admin" dans le répertoire de configuration de l'utilisateur. Notez que le nom doit être exactement celui-ci, sans extension. Cela fonctionne également en créant un dossier nommé "admin" au lieu d'un fichier, ce qui peut être plus facile sur les machines où l'extension de fichier est cachée. Aucun redémarrage n'est nécessaire; rouvrez simplement le tableau de bord "Auto Ingest Dashboard" après avoir créé le fichier.
+
+Pour une application installée d'Autopsy, le fichier ira sous \c "C:\Users\<user name>\AppData\Roaming\Autopsy\config". 
+
+\image html AutoIngest/admin_file.png
+
+\section auto_ingest_admin_jobs_panel Panneau "Auto Ingest Jobs"
+
+Une fois le fichier "admin" en place, l'utilisateur peut cliquer avec le bouton droit de la souris sur les travaux dans chacun des tableaux du panneau des tâches pour effectuer différentes actions. Dans le tableau "Pending Jobs", le menu contextuel permet de hiérarchiser les cas et les travaux individuels.
+
+\image html AutoIngest/admin_jobs_panel.png
+
+Vous pouvez également activer de manière sélective \ref keyword_search_ocr_config "la reconnaissance optique de caractères (OCR)" au cas par cas. Cela remplacera les paramètres normaux de la recherche "Keyword Search" pour chaque tâche dans le cas. Les travaux en cours ne seront pas affectés. Pour activer l'OCR pour un cas, faites un clic droit sur un des travaux de ce cas dans le tableau "Pending Jobs" et sélectionnez "Enable OCR For This Case".
+
+\image html admin_jobs_ocr1.png
+
+Une fois activé, une coche verte apparaîtra dans la colonne OCR à côté de chaque tâche en attente pour ce cas.
+
+\image html admin_jobs_ocr2.png
+
+Dans le tableau "Pending Jobs", la progression de l'acquisition peut être visualisée et le travail en cours peut être annulé. Notez que l'annulation peut prendre un certain temps. Vous pouvez également générer une capture du thread d'activité si vous pensez que l'acquisition peut être bloquée.
+
+\image html AutoIngest/admin_jobs_cancel.png
+
+Dans le tableau "Completed Jobs", l'utilisateur peut retraiter une tâche (généralement utile lorsqu'une tâche comporte des erreurs), supprimer un cas (si aucune autre machine ne l'utilise) et afficher le journal des cas.
+
+\image html AutoIngest/admin_jobs_completed.png
+
+
+
+\section auto_ingest_admin_nodes_panel Panneau "Auto Ingest Nodes"
+
+Ce panneau affiche l'état de chaque "Automated Ingest Node" en ligne. De plus, un administrateur peut mettre en pause ou reprendre un nœud, 
+capturer le thread d'activité, ou encore arrêter complètement un nœud (c'est-à-dire quitter l'application Autopsy).
+
+\image html AutoIngest/admin_nodes_panel.png
+
+\section auto_ingest_admin_cases_panel Panneau "Cases"
+
+Le panneau "Cases" affiche des informations sur chaque cas d'acquisition automatisée - le nom, la date de création et de dernier accès, le répertoire de cas et les indicateurs pour chaque parties du cas ayant été supprimées.
+
+\image html AutoIngest/cases_panel.png
+
+Si vous cliquez avec le bouton droit sur un cas, vous pouvez l'ouvrir, voir le journal, supprimer le cas ou afficher les propriétés du cas. 
+
+\image html AutoIngest/cases_context_menu.png
+
+Notez que vous pouvez sélectionner plusieurs cas à la fois à supprimer. Si vous choisissez de supprimer un cas (ou des cas), vous verrez la boîte de dialogue de confirmation suivante:
+
+\image html AutoIngest/case_delete_confirm.png
+
+\section auto_ingest_admin_health_monitor Health Monitor
+
+La fenêtre "Health Monitor" affiche les statistiques de chronométrage et l'état général du système. Ce moniteur d'intégrité est accessible à partir du panneau "Auto Ingest Nodes". Pour activer la surveillance de la santé du système, cliquez sur le bouton "Health Monitor" pour obtenir l'écran suivant, puis appuyez sur le bouton "Enable monitor".
+
+\image html AutoIngest/health_monitor_disabled.png
+
+Cela activera les métriques du moniteur de santé sur chaque nœud (à la fois les "Automated Ingest Node" et les "Examiner Node") qui utilise ce serveur PostgreSQL. Une fois activé, le moniteur affichera les métriques collectées.
+
+\image html AutoIngest/health_monitor.png
+
+Par défaut, les graphiques afficheront toutes les métriques collectées le dernier jour.
+
+La zone "Timing Metrics" indique la durée d'exécution des différentes tâches. Il y a plusieurs options dans la section "Timing Metrics":
+<ul><li><b>Max days to display</b>: Choisissez d'afficher le dernier jour, la dernière semaine, les deux dernières semaines ou le dernier mois
+<li><b>Filter by host</b>: Afficher uniquement les métriques provenant de l'hôte sélectionné
+<li><b>Show trend line</b>: Afficher ou masquer la ligne de tendance rouge
+<li><b>Do not plot outliers</b>: Redessine le graphique permettant à des métriques très élevées de sortir de l'écran. Peut être utile avec des données où quelques entrées ont pris un temps exceptionnellement long.
+</ul>
+
+La section "User Metrics" affiche les requêtes ouvertes et les nœuds connectés. Pour la section "Cases open", le décompte correspond au nombre de dossiers distincts ouverts. Si dix nœuds ont le même cas ouvert, le nombre sera de un. La section "Users logged in" affiche le nombre total de nœuds actifs, avec les "Automated Ingest Node" en bas en vert et les "Examiner Node" en haut en bleu. La section "User Metrics" n'a qu'une seule option:
+<ul><li><b>Max days to display</b>: Choisissez d'afficher le dernier jour, la dernière semaine, les deux dernières semaines ou le dernier mois
+</ul>
+
+\section auto_ingest_admin_metrics Auto Ingest Metrics
+
+La fenêtre "Auto Ingest Metrics" est accessible dans le panneau "Auto Ingest Nodes" et affiche des données sur les travaux terminés au cours d'une période sélectionnée.
+
+\image html AutoIngest/metrics.png
+
+*/

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2020 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,12 +37,12 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoOrganization
 import org.sleuthkit.autopsy.centralrepository.optionspanel.ManageOrganizationsDialog;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb.KnownFilesType;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerException;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
+import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 
 /**
  * Instances of this class allow a user to select an existing hash database and
@@ -52,12 +52,13 @@ import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
-    private final JFileChooser fileChooser;
+    private JFileChooser fileChooser;
     private String selectedFilePath = "";
     private HashDb selectedHashDb = null;
     private final static String LAST_FILE_PATH_KEY = "HashDbImport_Path";
     private CentralRepoOrganization selectedOrg = null;
     private List<CentralRepoOrganization> orgs = null;
+    private final JFileChooserFactory chooserHelper;
 
     /**
      * Displays a dialog that allows a user to select an existing hash database
@@ -68,10 +69,9 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.importHashDbMsg"),
                 true);
-        this.fileChooser = new JFileChooser();
+        chooserHelper = new JFileChooserFactory();
         initComponents();
         enableComponents();
-        initFileChooser();
         display();
     }
 
@@ -82,16 +82,6 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
      */
     HashDb getHashDatabase() {
         return selectedHashDb;
-    }
-
-    private void initFileChooser() {
-        fileChooser.setDragEnabled(false);
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
-        fileChooser.setFileFilter(filter);
-        fileChooser.setMultiSelectionEnabled(false);
     }
 
     private void display() {
@@ -421,14 +411,25 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
-        String lastBaseDirectory = Paths.get(PlatformUtil.getUserConfigDirectory(), HashDbCreateDatabaseDialog.HASH_DATABASE_DIR_NAME).toString();
+        if(fileChooser == null) {
+            fileChooser = chooserHelper.getChooser();
+            fileChooser.setDragEnabled(false);
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            String[] EXTENSION = new String[]{"txt", "kdb", "idx", "hash", "Hash", "hsh"}; //NON-NLS
+            FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                    NbBundle.getMessage(this.getClass(), "HashDbImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION);
+            fileChooser.setFileFilter(filter);
+            fileChooser.setMultiSelectionEnabled(false);
+        }
+        
+        String lastBaseDirectory = HashLookupSettings.getDefaultDbPath();
         if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
             lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
         }
         File hashDbFolder = new File(lastBaseDirectory);
         // create the folder if it doesn't exist
         if (!hashDbFolder.exists()) {
-            hashDbFolder.mkdir();
+            hashDbFolder.mkdirs();
         }
         fileChooser.setCurrentDirectory(hashDbFolder);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -530,9 +531,11 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
         if (saveInUserConfigFolderCheckbox.isSelected()) {
             // copy the hash database to user configuration directory and use that path instead (JIRA-4177)
-            String locationInUserConfigDir = Paths.get(PlatformUtil.getUserConfigDirectory(), HashDbCreateDatabaseDialog.HASH_DATABASE_DIR_NAME, hashSetNameTextField.getText(), file.getName()).toString();
+            String locationInUserConfigDir = Paths.get(HashLookupSettings.getDefaultDbPath(), hashSetNameTextField.getText(), file.getName()).toString();
             try {
-                FileUtils.copyFile(file, new File(locationInUserConfigDir));
+                File newFileLoc = new File(locationInUserConfigDir);
+                newFileLoc.getParentFile().mkdirs();
+                FileUtils.copyFile(file, newFileLoc);
                 // update the hash database location
                 selectedFilePath = locationInUserConfigDir;
             } catch (IOException ex) {

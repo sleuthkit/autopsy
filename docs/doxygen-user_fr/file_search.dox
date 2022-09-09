@@ -1,0 +1,44 @@
+/*! \page file_search_page Recherche de fichier
+
+[TOC]
+
+
+\section about_file_search À propos de la recherche de fichiers
+L'outil de recherche de fichiers est accessible à partir du menu Tools ou en faisant un clic droit sur un nœud de source de données dans l'arborescence de répertoires. En utilisant la recherche de fichiers, vous pouvez spécifier, filtrer et afficher les répertoires et les fichiers que vous souhaitez voir à partir des images dans le cas actuellement ouvert. Les résultats de la recherche de fichiers seront renseignés dans une toute nouvelle table de résultats sur le côté droit.
+
+Remarque: Actuellement, la recherche de fichiers ne prend pas en charge les expressions régulières. La fonction de recherche par mot-clé d'Autopsy prend en charge les expressions régulières et peut être utilisée pour rechercher des fichiers et/ou des répertoires par nom.
+
+\section how_to_open_file_search Comment ouvrir la recherche de fichiers
+    
+Pour ouvrir la recherche de fichiers, vous pouvez effectuer l'une des opérations suivantes:
+Cliquez avec le bouton droit sur une source de données et choisissez "Open File Search by Attributes".
+\image html open-file-search-component-1.PNG
+ou sélectionnez le menu "Tools", "File Search by Attributes".
+\image html open-file-search-component-2.PNG
+
+\section how_to_use_file_search Comment utiliser la recherche de fichiers
+
+Il existe plusieurs catégories que vous pouvez utiliser pour filtrer et afficher les répertoires et les fichiers dans les images du cas ouvert actuellement.
+Ces catégories sont:
+\li Name:
+Recherchez tous les fichiers et répertoires dont le nom contient le modèle donné. La recherche porte uniquement sur le nom du fichier/répertoire et ne prends pas en compte le chemin parent.
+Remarque: il ne prend pas en charge la correspondance d'expressions régulières et de mots clés.
+\li Size:
+Recherchez tous les fichiers et répertoires dont la taille correspond au modèle donné. Le motif peut être "equal to" (égal à), "greater than" (supérieur à) et "less than" (inférieur à). L'unité pour la taille peut être "Octet(s)", "Ko", "Mo", "Go" et "To".
+\li MIME Type:
+Recherchez tous les fichiers avec le type MIME sélectionné. Plusieurs types peuvent être utilisés en maintenant SHIFT ou CTRL pendant la sélection.
+\li MD5:
+Recherchez tous les fichiers avec le hachage MD5 donné.
+\li Date:
+Recherchez tous les fichiers et répertoires dont la propriété "date" est comprise dans la plage de dates indiquée. Les propriétés de date sont "Modified Date" (Date de modification), "Accessed Date" (Date d'accès), "Changed Date" (Date de changement), and "Created Date" (Date de création). Vous devez également spécifier le fuseau horaire de la date donnée.
+\li Known Status:
+Recherchez tous les fichiers dont l'état est reconnu comme "Unknown" (Inconnu), "Known" (Connu) ou "Notable" (Connu défavorablement). Pour plus d'informations sur ces états, consultez la page \ref hash_db_page.
+Pour utiliser l'un de ces filtres, cochez la case à côté de la catégorie et cliquez sur le bouton "Search" pour démarrer le processus de recherche. Le résultat apparaîtra dans la visionneuse de résultats.
+\li Data Source:
+Rechercher uniquement dans la source de données spécifiée au lieu de l'ensemble du cas. Notez que plusieurs sources de données peuvent être sélectionnées en maintenant MAJ ou CTRL pendant la sélection. 
+
+Voici un exemple fictif où nous essayons d'obtenir tous les répertoires et fichiers dont le nom contient "hello", ayant une taille supérieure à 1000 octets, étant au format JPEG, ayant été créé entre le 06/01/2018 et
+le 06/08/2017 (dans le fuseau horaire GMT-5), étant un fichier inconnu (Unknown), ayant un hachage de 1127F348BD4303A4C3D1D587C807B49F et apparaîssant dans la source de données "image3.vhd":
+\image html example-of-file-search.PNG
+
+*/

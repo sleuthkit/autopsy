@@ -165,7 +165,7 @@ public class KeywordList {
     /**
      * Gets the keywords included in the list
      *
-     * @return A colleciton of Keyword objects.
+     * @return A collection of Keyword objects.
      */
     public List<Keyword> getKeywords() {
         return keywords;

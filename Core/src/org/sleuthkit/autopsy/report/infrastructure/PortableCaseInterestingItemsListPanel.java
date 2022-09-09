@@ -57,11 +57,11 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
     private final SetNamesListModel setNamesListModel = new SetNamesListModel();
     private final SetNamesListCellRenderer setNamesRenderer = new SetNamesListCellRenderer();
     private Map<String, Long> setCounts;
-    
+
     private final ReportWizardPortableCaseOptionsPanel wizPanel;
     private final PortableCaseReportModuleSettings settings;
     private final boolean useCaseSpecificData;
-    
+
     /**
      * Creates new form PortableCaseListPanel
      */
@@ -71,14 +71,14 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         this.settings = options;
         initComponents();
         customizeComponents();
-        
+
         // update tag selection
         jAllSetsCheckBox.setSelected(settings.areAllSetsSelected());
         setNamesListBox.setEnabled(!jAllSetsCheckBox.isSelected());
         selectButton.setEnabled(!jAllSetsCheckBox.isSelected());
         deselectButton.setEnabled(!jAllSetsCheckBox.isSelected());
         selectAllSets(jAllSetsCheckBox.isSelected());
-        
+
         this.jAllSetsCheckBox.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
@@ -93,14 +93,18 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
     @NbBundle.Messages({
         "PortableCaseInterestingItemsListPanel.error.errorTitle=Error getting intesting item set names for case",
         "PortableCaseInterestingItemsListPanel.error.noOpenCase=There is no case open",
-        "PortableCaseInterestingItemsListPanel.error.errorLoadingTags=Error loading interesting item set names",  
-    })    
+        "PortableCaseInterestingItemsListPanel.error.errorLoadingTags=Error loading interesting item set names",})
+    /**
+     * @SuppressWarnings("deprecation") - we need to support already existing
+     * interesting file and artifact hits.
+     */
+    @SuppressWarnings("deprecation")
     private void customizeComponents() {
-        
+
         // Get the set names in use for the current case.
         setNames = new ArrayList<>();
         setCounts = new HashMap<>();
-        
+
         // only try to load tag names if we are displaying case specific data, otherwise
         // we will be displaying case specific data in command line wizard if there is 
         // a case open in the background
@@ -108,6 +112,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             try {
                 // Get all SET_NAMEs from interesting item artifacts
                 String innerSelect = "SELECT (value_text) AS set_name FROM blackboard_attributes WHERE (artifact_type_id = '"
+                        + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID() + "' OR artifact_type_id = '"
                         + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() + "' OR artifact_type_id = '"
                         + BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() + "') AND attribute_type_id = '"
                         + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "'"; // NON-NLS
@@ -157,15 +162,16 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             }
         });
     }
-    
+
     /**
-     * Save the current selections and enabled/disable the finish button as needed.
+     * Save the current selections and enabled/disable the finish button as
+     * needed.
      */
     private void updateSetNameList() {
         settings.updateSetNames(getSelectedSetNames());
         settings.setAllSetsSelected(jAllSetsCheckBox.isSelected());
         wizPanel.setFinish(settings.isValid());
-    }    
+    }
 
     /**
      * This class is a list model for the set names JList component.
@@ -194,9 +200,11 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
     }
 
     /**
-     * This class renders the items in the set names JList component as JCheckbox components.
+     * This class renders the items in the set names JList component as
+     * JCheckbox components.
      */
     private class SetNamesListCellRenderer extends JCheckBox implements ListCellRenderer<String> {
+
         private static final long serialVersionUID = 1L;
 
         @Override
@@ -214,10 +222,11 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             }
             return new JLabel();
         }
-    }      
-    
+    }
+
     /**
-     * Gets the subset of the interesting item set names in use selected by the user.
+     * Gets the subset of the interesting item set names in use selected by the
+     * user.
      *
      * @return A list, possibly empty, of String data transfer objects (DTOs).
      */
@@ -299,10 +308,10 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(6, 6, 6)
                 .addComponent(descLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jAllSetsCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 159, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(selectButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -342,7 +351,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             setNameSelections.put(setName, state);
         }
         updateSetNameList();
-        setNamesListBox.repaint();        
+        setNamesListBox.repaint();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

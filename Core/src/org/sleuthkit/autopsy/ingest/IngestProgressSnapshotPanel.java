@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,7 +136,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = snapshot.getThreadId();
                     break;
                 case 1:
-                    cellValue = snapshot.getActivity();
+                    cellValue = snapshot.getModuleDisplayName();
                     break;
                 case 2:
                     cellValue = snapshot.getDataSourceName();
@@ -165,27 +165,25 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
     private class IngestJobTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.jobID"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dataSource"),
+        private static final long serialVersionUID = 1L;
+
+        private final String[] columnNames = {
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.jobID"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dataSource"),
             NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.start"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.numProcessed"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.filesPerSec"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.inProgress"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.filesQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dirQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.rootQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.streamingQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dsQueued")};
-        private List<Snapshot> jobSnapshots;
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.tier"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.numProcessed"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.filesPerSec"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.inProgress"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.filesQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dirQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.rootQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.streamingQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dsQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.artifactsQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.resultsQueued")};
+
+        private List<IngestJobProgressSnapshot> jobSnapshots;
 
         private IngestJobTableModel() {
             refresh();
@@ -213,7 +211,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Snapshot snapShot = jobSnapshots.get(rowIndex);
+            IngestJobProgressSnapshot snapShot = jobSnapshots.get(rowIndex);
             Object cellValue;
             switch (columnIndex) {
                 case 0:
@@ -227,28 +225,37 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = dateFormat.format(new Date(snapShot.getJobStartTime()));
                     break;
                 case 3:
-                    cellValue = snapShot.getFilesProcessed();
+                    cellValue = snapShot.getCurrentIngestModuleTier();
                     break;
                 case 4:
-                    cellValue = snapShot.getSpeed();
+                    cellValue = snapShot.getFilesProcessed();
                     break;
                 case 5:
-                    cellValue = snapShot.getRunningListSize();
+                    cellValue = snapShot.getFilesProcessedPerSec();
                     break;
                 case 6:
-                    cellValue = snapShot.getFileQueueSize();
+                    cellValue = snapShot.getRunningListSize();
                     break;
                 case 7:
-                    cellValue = snapShot.getDirQueueSize();
+                    cellValue = snapShot.getFileQueueSize();
                     break;
                 case 8:
-                    cellValue = snapShot.getRootQueueSize();
+                    cellValue = snapShot.getDirQueueSize();
                     break;
                 case 9:
-                    cellValue = snapShot.getStreamingQueueSize();
+                    cellValue = snapShot.getRootQueueSize();
                     break;
                 case 10:
+                    cellValue = snapShot.getStreamingQueueSize();
+                    break;
+                case 11:
                     cellValue = snapShot.getDsQueueSize();
+                    break;
+                case 12:
+                    cellValue = snapShot.getDataArtifactTasksQueueSize();
+                    break;
+                case 13:
+                    cellValue = snapShot.getAnalysisResultTasksQueueSize();
                     break;
                 default:
                     cellValue = null;
@@ -259,6 +266,8 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
     }
 
     private class ModuleTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
 
         private class ModuleStats implements Comparable<ModuleStats> {
 
@@ -371,9 +380,10 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         closeButton = new javax.swing.JButton();
         moduleScrollPane = new javax.swing.JScrollPane();
         moduleTable = new javax.swing.JTable();
+        jPanel1 = new javax.swing.JPanel();
 
         setMinimumSize(new java.awt.Dimension(500, 500));
-        setPreferredSize(new java.awt.Dimension(600, 500));
+        setPreferredSize(new java.awt.Dimension(1500, 700));
         setLayout(new java.awt.GridBagLayout());
 
         threadActivitySnapshotsTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -464,6 +474,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         gridBagConstraints.weighty = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(6, 10, 0, 10);
         add(moduleScrollPane, gridBagConstraints);
+        add(jPanel1, new java.awt.GridBagConstraints());
     }// </editor-fold>//GEN-END:initComponents
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
@@ -477,6 +488,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_refreshButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jobScrollPane;
     private javax.swing.JTable jobTable;
     private javax.swing.JScrollPane moduleScrollPane;

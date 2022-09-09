@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.actions;
 
+import java.awt.Cursor;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -33,6 +35,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
@@ -163,7 +166,50 @@ public class GetTagNameDialog extends JDialog {
             return tagDisplayNames.get(rowIndex);
         }
     }
+    
+    /**
+     * A SwingWorker for creating a new TagName.
+     */
+    private class AddTagNameWorker extends SwingWorker<TagName, Void> {
 
+        private final String name;
+        private final String description;
+        private final TskData.FileKnown status;
+        private final TagName.HTML_COLOR color;
+        
+        AddTagNameWorker(String name, String description, TskData.FileKnown status, TagName.HTML_COLOR color) {
+            this.name = name;
+            this.description = description;
+            this.status = status;
+            this.color = color;
+        }
+        
+        @Override
+        protected TagName doInBackground() throws Exception {
+            return Case.getCurrentCaseThrows().getServices().getTagsManager().addTagName(name, description, color, status);
+        }
+        
+        @Override 
+        protected void done() {            
+            try {
+                tagName = get();
+                dispose();
+            } catch (ExecutionException | InterruptedException ex) {
+                Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + name + " tag name", ex); //NON-NLS
+                    JOptionPane.showMessageDialog(GetTagNameDialog.this,
+                            NbBundle.getMessage(GetTagNameDialog.this.getClass(),
+                                    "GetTagNameDialog.unableToAddTagNameToCase.msg",
+                                    name),
+                            NbBundle.getMessage(this.getClass(), "GetTagNameDialog.taggingErr"),
+                            JOptionPane.ERROR_MESSAGE);
+                tagName = null;
+            } 
+            
+            okButton.setEnabled(true);
+            cancelButton.setEnabled(true);
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        } 
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -351,32 +397,12 @@ public class GetTagNameDialog extends JDialog {
             tagName = tagNamesMap.get(tagDisplayName);
 
             if (tagName == null) {
-                try {
-                    tagName = Case.getCurrentCaseThrows().getServices().getTagsManager().addTagName(tagDisplayName, userTagDescription, TagName.HTML_COLOR.NONE, status);
-                    dispose();
-                } catch (TskCoreException | NoCurrentCaseException ex) {
-                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
-                    JOptionPane.showMessageDialog(this,
-                            NbBundle.getMessage(this.getClass(),
-                                    "GetTagNameDialog.unableToAddTagNameToCase.msg",
-                                    tagDisplayName),
-                            NbBundle.getMessage(this.getClass(), "GetTagNameDialog.taggingErr"),
-                            JOptionPane.ERROR_MESSAGE);
-                    tagName = null;
-                } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    try {
-                        tagName = Case.getCurrentCaseThrows().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
-                    } catch (TskCoreException | NoCurrentCaseException ex1) {
-                        Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " exists in database but an error occurred in retrieving it.", ex1); //NON-NLS
-                        JOptionPane.showMessageDialog(this,
-                                NbBundle.getMessage(this.getClass(),
-                                        "GetTagNameDialog.tagNameExistsTskCore.msg",
-                                        tagDisplayName),
-                                NbBundle.getMessage(this.getClass(), "GetTagNameDialog.dupTagErr"),
-                                JOptionPane.ERROR_MESSAGE);
-                        tagName = null;
-                    }
-                }
+                AddTagNameWorker worker = new AddTagNameWorker(tagDisplayName, userTagDescription, status, TagName.HTML_COLOR.NONE );
+                okButton.setEnabled(false);
+                cancelButton.setEnabled(false);
+                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                
+                worker.execute();
             } else {
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(), "GetTagNameDialog.tagNameAlreadyExists.message"),

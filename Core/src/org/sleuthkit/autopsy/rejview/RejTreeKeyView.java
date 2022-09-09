@@ -28,6 +28,8 @@ import java.awt.Dimension;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.logging.Level;
 import javax.swing.BorderFactory;
@@ -54,7 +56,8 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         "RejTreeKeyView.valuesBorder.title=Values",
         "RejTreeKeyView.template.name=Name:",
         "RejTreeKeyView.template.numberOfSubkeys=Number of subkeys:",
-        "RejTreeKeyView.template.numberOfValues=Number of values:"})
+        "RejTreeKeyView.template.numberOfValues=Number of values:",
+        "RejTreeKeyView.template.dateTime=Modification Time:"})
     public RejTreeKeyView(RejTreeKeyNode node) {
         super(new BorderLayout());
 
@@ -62,6 +65,7 @@ public final class RejTreeKeyView extends RejTreeNodeView {
          * param 1 Name
          * param 2 Number of subkeys
          * param 3 Number of values
+         * param 4 Date/time
          */
         String metadataTemplate = "<html><i>"
                 + Bundle.RejTreeKeyView_template_name()
@@ -69,10 +73,13 @@ public final class RejTreeKeyView extends RejTreeNodeView {
                 + Bundle.RejTreeKeyView_template_numberOfSubkeys()
                 + "</i>  %2$d<br/><i>"
                 + Bundle.RejTreeKeyView_template_numberOfValues()
-                + "</i>  %3$d<br/></html>";
+                + "</i>  %3$d<br/><i>"
+                + Bundle.RejTreeKeyView_template_dateTime()
+                + "</i>  %4$s</br></html>";
         String keyName;
         int numSubkeys;
         int numValues;
+        String dateTime;
 
         try {
             keyName = node.getKey().getName();
@@ -95,7 +102,12 @@ public final class RejTreeKeyView extends RejTreeNodeView {
             numValues = -1;
         }
 
-        JLabel metadataLabel = new JLabel(String.format(metadataTemplate, keyName, numSubkeys, numValues), JLabel.LEFT);
+        Date date = new java.util.Date(node.getKey().getTimestamp().getTimeInMillis()); 
+        SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); 
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT+0")); 
+        dateTime = sdf.format(date);
+
+        JLabel metadataLabel = new JLabel(String.format(metadataTemplate, keyName, numSubkeys, numValues, dateTime), JLabel.LEFT);
         metadataLabel.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeKeyView_metadataBorder_title()));
         metadataLabel.setVerticalAlignment(SwingConstants.TOP);
 

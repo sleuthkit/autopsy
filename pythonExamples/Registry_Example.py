@@ -45,12 +45,13 @@ from java.lang import Class
 from java.lang import System
 from java.sql  import DriverManager, SQLException
 from java.util.logging import Level
-from java.util import ArrayList
+from java.util import Arrays
 from org.sleuthkit.datamodel import SleuthkitCase
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import ReadContentInputStream
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
+from org.sleuthkit.datamodel import Blackboard
 from org.sleuthkit.datamodel import TskData
 from org.sleuthkit.autopsy.ingest import IngestModule
 from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
@@ -130,12 +131,13 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
         tempDir = os.path.join(Case.getCurrentCase().getTempDirectory(), "RegistryExample")
         self.log(Level.INFO, "create Directory " + tempDir)
         try:
-		    os.mkdir(tempDir)
+            os.mkdir(tempDir)
         except:
-		    self.log(Level.INFO, "ExampleRegistry Directory already exists " + tempDir)
+            self.log(Level.INFO, "ExampleRegistry Directory already exists " + tempDir)
 
         # Set the database to be read to the once created by the prefetch parser program
-        skCase = Case.getCurrentCase().getSleuthkitCase();
+        skCase = Case.getCurrentCase().getSleuthkitCase()
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
         fileManager = Case.getCurrentCase().getServices().getFileManager()
 
         # Look for files to process
@@ -170,13 +172,13 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
  
        
         # Setup Artifact and Attributes
-        try:
-            artID = skCase.addArtifactType( "TSK_REGISTRY_RUN_KEYS", "Registry Run Keys")
-        except:		
-            self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
-            
-        artId = skCase.getArtifactTypeID("TSK_REGISTRY_RUN_KEYS")
-
+        artType = skCase.getArtifactType("TSK_REGISTRY_RUN_KEYS")
+        if not artType:
+            try:
+                artType = skCase.addBlackboardArtifactType( "TSK_REGISTRY_RUN_KEYS", "Registry Run Keys")
+            except:		
+                self.log(Level.WARNING, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
+          
         try:
            attributeIdRunKeyName = skCase.addArtifactAttributeType("TSK_REG_RUN_KEY_NAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Run Key Name")
         except:		
@@ -198,25 +200,23 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
         
         # RefistryKeysFound is a list that contains a list with the following records abstractFile, Registry Key Location, Key Name, Key value
         for registryKey in self.registryKeysFound:
-            attributes = ArrayList()
-            art = registryKey[0].newArtifact(artId)
+            self.log(Level.INFO, "Creating artifact for registry key with path: " + registryKey[1] + " and key: " + registryKey[2])
+            art = registryKey[0].newDataArtifact(artType, Arrays.asList(
+                BlackboardAttribute(attributeIdRegKeyLoc, moduleName, registryKey[1]),
+                BlackboardAttribute(attributeIdRunKeyName, moduleName, registryKey[2]),
+                BlackboardAttribute(attributeIdRunKeyValue, moduleName, registryKey[3])
+            ))
             
-            attributes.add(BlackboardAttribute(attributeIdRegKeyLoc, moduleName, registryKey[1]))           
-            attributes.add(BlackboardAttribute(attributeIdRunKeyName, moduleName, registryKey[2]))
-            attributes.add(BlackboardAttribute(attributeIdRunKeyValue, moduleName, registryKey[3]))
-            art.addAttributes(attributes)
-
-            # index the artifact for keyword search
             try:
-                blackboard.indexArtifact(art)
-            except:
-                self._logger.log(Level.WARNING, "Error indexing artifact " + art.getDisplayName())
+                blackboard.postArtifact(art, moduleName, context.getJobId())
+            except Blackboard.BlackboardException as ex:
+                self.log(Level.SEVERE, "Unable to index blackboard artifact " + str(art.getArtifactTypeName()), ex)
         
 		#Clean up registryExample directory and files
         try:
-             shutil.rmtree(tempDir)		
+            shutil.rmtree(tempDir)		
         except:
-		     self.log(Level.INFO, "removal of directory tree failed " + tempDir)
+            self.log(Level.INFO, "removal of directory tree failed " + tempDir)
  
         # After all databases, post a message to the ingest messages in box.
         message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
@@ -236,7 +236,7 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
         softwareRegFile = RegistryHiveFile(File(softwareHive))
         for runKey in self.registrySoftwareRunKeys:
             currentKey = self.findRegistryKey(softwareRegFile, runKey)
-            if len(currentKey.getValueList()) > 0:
+            if currentKey and len(currentKey.getValueList()) > 0:
                 skValues = currentKey.getValueList()
                 for skValue in skValues:
                     regKey = []
@@ -255,7 +255,7 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
         ntuserRegFile = RegistryHiveFile(File(ntuserHive))
         for runKey in self.registryNTUserRunKeys:
             currentKey = self.findRegistryKey(ntuserRegFile, runKey)
-            if len(currentKey.getValueList()) > 0:
+            if currentKey and len(currentKey.getValueList()) > 0:
                 skValues = currentKey.getValueList()
                 for skValue in skValues:
                     regKey = []
@@ -276,9 +276,10 @@ class RegistryExampleIngestModule(DataSourceIngestModule):
             for key in regKeyList:
                 currentKey = currentKey.getSubkey(key) 
             return currentKey
-        except:
-        # Key not found
-            return null        
+        except Exception as ex:
+            # Key not found
+            self.log(Level.SEVERE, "registry key parsing issue:", ex)
+            return None        
         
 
 

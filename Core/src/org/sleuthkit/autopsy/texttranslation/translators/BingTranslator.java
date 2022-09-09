@@ -165,9 +165,8 @@ public class BingTranslator implements TextTranslator {
          * the Spanish word for cat: [ { "detectedLanguage": { "language": "es",
          * "score": 1.0 }, "translations": [ { "text": "cat", "to": "en" } ] } ]
          */
-        JsonParser parser = new JsonParser();
         try {
-            JsonArray responses = parser.parse(json_text).getAsJsonArray();
+            JsonArray responses = JsonParser.parseString(json_text).getAsJsonArray();
             //As far as I know, there's always exactly one item in the array.
             JsonObject response0 = responses.get(0).getAsJsonObject();
             JsonArray translations = response0.getAsJsonArray("translations");

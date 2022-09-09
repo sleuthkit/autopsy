@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-2018 Basis Technology Corp.
+Copyright 2016-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,7 +76,7 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     jFile = File(self.current_case.getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.__findGeoLocationsInDB(jFile.toString(), abstractFile)
+                    self.__findGeoLocationsInDB(jFile.toString(), abstractFile, context)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing Google map locations", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -84,13 +84,13 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
             # Error finding Google map locations.
             pass
 
-    def __findGeoLocationsInDB(self, databasePath, abstractFile):
+    def __findGeoLocationsInDB(self, databasePath, abstractFile, context):
         if not databasePath:
             return
 
         try:
             artifactHelper = GeoArtifactsHelper(self.current_case.getSleuthkitCase(),
-                                    general.MODULE_NAME, self.PROGRAM_NAME, abstractFile)
+                                    general.MODULE_NAME, self.PROGRAM_NAME, abstractFile, context.getJobId())
             Class.forName("org.sqlite.JDBC") # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()

@@ -57,6 +57,8 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.casemodule.services import Blackboard
+from org.sleuthkit.datamodel import Score
+from java.util import Arrays
 
 # Factory that defines the name and details of the module and allows Autopsy
 # to create instances of the modules that will do the anlaysis.
@@ -90,11 +92,15 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
     def log(self, level, msg):
         self._logger.logp(level, self.__class__.__name__, inspect.stack()[1][3], msg)
 
+    def __init__(self):
+        self.context = None
+
     # Where any setup and configuration is done
     # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
     # See: http://sleuthkit.org/autopsy/docs/api-docs/latest/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
+        self.context = context
         self.filesFound = 0
 
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
@@ -107,7 +113,7 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
     def process(self, file):
 
         # Use blackboard class to index blackboard artifacts for keyword search
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
 
         # Skip non-files
         if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or 
@@ -118,23 +124,19 @@ class FindBigRoundFilesIngestModule(FileIngestModule):
         # Look for files bigger than 10MB that are a multiple of 4096            
         if ((file.getSize() > 10485760) and ((file.getSize() % 4096) == 0)):
 
-            # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
+            # Make an artifact on the blackboard.  TSK_INTERESTING_ITEM is a generic type of
             # artifact.  Refer to the developer docs for other examples.
-            art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), 
-                  FindBigRoundFilesIngestModuleFactory.moduleName, "Big and Round Files")
-            art.addAttribute(att)
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE,
+                                         None, "Big and Round Files", None,
+                                         Arrays.asList(
+                                             BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
+                                                                 FindBigRoundFilesIngestModuleFactory.moduleName,
+                                                                 "Big and Round Files"))).getAnalysisResult()
 
             try:
-                # index the artifact for keyword search
-                blackboard.indexArtifact(art)
+                blackboard.postArtifact(art, FindBigRoundFilesIngestModuleFactory.moduleName, context.getJobId())
             except Blackboard.BlackboardException as e:
                 self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
-
-            # Fire an event to notify the UI and others that there is a new artifact  
-            IngestServices.getInstance().fireModuleDataEvent(
-                ModuleDataEvent(FindBigRoundFilesIngestModuleFactory.moduleName, 
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None))
 
         return IngestModule.ProcessResult.OK
  

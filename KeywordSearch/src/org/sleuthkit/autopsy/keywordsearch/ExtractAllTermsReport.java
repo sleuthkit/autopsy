@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.logging.Level;
+import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -29,6 +30,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.GeneralReportSettings;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
+import org.sleuthkit.autopsy.keywordsearch.infastructure.NoReportConfigurationPanel;
 
 /**
  * Instances of this class plug in to the reporting infrastructure to provide a
@@ -124,6 +126,10 @@ public class ExtractAllTermsReport implements GeneralReportModule {
     @Override
     public String getDescription() {
         return Bundle.ExtractAllTermsReport_description_text();
+    }
+    @Override
+    public JPanel getConfigurationPanel() {
+        return new NoReportConfigurationPanel();
     }
 
     @Override

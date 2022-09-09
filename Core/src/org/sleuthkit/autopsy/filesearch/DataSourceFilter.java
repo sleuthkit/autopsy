@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,10 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.util.EnumSet;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Filter by mime type used in filter areas of file search by attribute.
@@ -28,22 +31,40 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
 
     /**
      * Construct DataSourceFilter with the DataSourcePanel
+     *
      * @param component A DataSourcePanel
      */
-    public DataSourceFilter(DataSourcePanel component) {
+    DataSourceFilter(DataSourcePanel component) {
         super(component);
     }
 
     /**
-     * Default constructor to construct a new DataSourceFilter with a new DataSourcePanel
+     * Default constructor to construct a new DataSourceFilter with a new
+     * DataSourcePanel
      */
-    public DataSourceFilter() {
+    DataSourceFilter() {
         this(new DataSourcePanel());
     }
 
     @Override
     public boolean isEnabled() {
         return this.getComponent().isSelected();
+    }
+
+    /**
+     * Set the data source filter to select the specified data source initially.
+     *
+     * @param dataSourceId - The data source to select.
+     */
+    void setSelectedDataSource(long dataSourceId) {
+        this.getComponent().setDataSourceSelected(dataSourceId);
+    }
+
+    /**
+     * Reset the data source filter to be up to date with the current case.
+     */
+    void resetDataSourceFilter() {
+        this.getComponent().resetDataSourcePanel();
     }
 
     @Override
@@ -64,11 +85,11 @@ class DataSourceFilter extends AbstractFileSearchFilter<DataSourcePanel> {
     }
 
     @Override
-    @Messages ({
+    @Messages({
         "DataSourceFilter.errorMessage.emptyDataSource=At least one data source must be selected."
     })
     public boolean isValid() {
-        if(this.getComponent().getDataSourcesSelected().isEmpty()){
+        if (this.getComponent().getDataSourcesSelected().isEmpty()) {
             setLastError(Bundle.DataSourceFilter_errorMessage_emptyDataSource());
             return false;
         }

@@ -73,7 +73,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 throw new InterruptedException();
             }
             attr.addAttributeToResults(domainResults,
-                    key.getSleuthkitCase(), key.getCentralRepository());
+                    key.getSleuthkitCase(), key.getCentralRepository(), key.getContext());
         }
         // Apply secondary in memory filters
         for (AbstractFilter filter : key.getFilters()) {
@@ -81,7 +81,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 throw new InterruptedException();
             }
             if (filter.useAlternateFilter()) {
-                domainResults = filter.applyAlternateFilter(domainResults, key.getSleuthkitCase(), key.getCentralRepository());
+                domainResults = filter.applyAlternateFilter(domainResults, key.getSleuthkitCase(), key.getCentralRepository(), key.getContext());
             }
         }
         // Sort the ResultDomains by the requested criteria.

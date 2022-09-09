@@ -1,12 +1,11 @@
-AddDrawableFilesTask.populatingDb.status=populating analyzed image/video database
-BulkDrawableFilesTask.committingDb.status=committing image/video database
-BulkDrawableFilesTask.errPopulating.errMsg=There was an error populating Image Gallery database.
-BulkDrawableFilesTask.populatingDb.status=populating analyzed image/video database
-BulkDrawableFilesTask.stopCopy.status=Stopping copy to drawable db task.
 CTL_ImageGalleryAction=Image/Video Gallery
 CTL_ImageGalleryTopComponent=Image/Video Gallery
 DrawableDbTask.InnerTask.message.name=status
 DrawableDbTask.InnerTask.progress.name=progress
+DrawableFileUpdateTask_committingDb.status=committing image/video database
+DrawableFileUpdateTask_errPopulating_errMsg=There was an error populating Image Gallery database.
+DrawableFileUpdateTask_populatingDb_status=populating analyzed image/video database
+DrawableFileUpdateTask_stopCopy_status=Stopping copy to drawable db task.
 ImageGallery.dialogTitle=Image Gallery
 ImageGallery.showTooManyFiles.contentText=There are too many files in the selected datasource(s) to ensure reasonable performance.
 ImageGallery.showTooManyFiles.headerText=

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2020 Basis Technology Corp.
+ * Copyright 2013-2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -107,7 +107,7 @@ public class ReportGenerator {
         this.reportGenerationPanel = null;
         this.configName = configName;
     }
-    
+
     /**
      * Constructs a report generator that generates one or more reports by
      * running user-selected report modules and uses a report generation panel
@@ -121,12 +121,15 @@ public class ReportGenerator {
         this.progressIndicator = panel.getProgressPanel();
         this.configName = configName;
     }
-    
+
     /**
-     * Generates the reports specified by the reporting configuration passed 
-     * in via the constructor. Does lookup of all existing report modules.
+     * Generates the reports specified by the reporting configuration passed in
+     * via the constructor. Does lookup of all existing report modules.
+     *
+     * @throws ReportGenerationException if an error occurred while generating
+     *                                   the report.
      */
-    public void generateReports() {
+    public void generateReports() throws ReportGenerationException {
         // load all report modules 
         Map<String, ReportModule> modules = new HashMap<>();
         for (TableReportModule module : ReportModuleLoader.getTableReportModules()) {
@@ -143,38 +146,51 @@ public class ReportGenerator {
 
         // special case for PortableCaseReportModule
         modules.put(FactoryClassNameNormalizer.normalize(PortableCaseReportModule.class.getCanonicalName()), new PortableCaseReportModule());
-        
+
         generateReports(modules);
     }
 
+    @NbBundle.Messages({
+        "ReportGenerator.error.noReportModules=No report modules found",
+        "# {0} - report configuration name", "ReportGenerator.error.unableToLoadConfig=Unable to load reporting configuration {0}.",
+        "# {0} - report module name", "ReportGenerator.error.moduleNotFound=Report module {0} not found",
+        "# {0} - report module name", "ReportGenerator.error.noTableReportSettings=No table report settings for report module {0}",
+        "# {0} - report module name", "ReportGenerator.error.noFileReportSettings=No file report settings for report module {0}",
+        "# {0} - report module name", "ReportGenerator.error.invalidSettings=Invalid settings for report module {0}",
+        "# {0} - report module name", "ReportGenerator.error.unsupportedType=Report module {0} has unsupported report module type",
+        "# {0} - report module name", "ReportGenerator.error.exception=Exception while running report module {0}"})
     /**
      * Generates the reports specified by the reporting configuration passed in
-     * via the constructor. 
-     * 
-     * @param modules Map of report module objects to use. This is useful when we want to 
-     *                re-use the module instances or limit which reports are generated.
+     * via the constructor.
+     *
+     * @param modules Map of report module objects to use. This is useful when
+     *                we want to re-use the module instances or limit which
+     *                reports are generated.
+     *
+     * @throws ReportGenerationException if an error occurred while generating
+     *                                   the report.
      */
-    public void generateReports(Map<String, ReportModule> modules) {
-        
+    public void generateReports(Map<String, ReportModule> modules) throws ReportGenerationException {
+
         if (modules == null || modules.isEmpty()) {
-            logger.log(Level.SEVERE, "No report modules found");
-            progressIndicator.updateStatusLabel("No report modules found. Exiting");
-            return;            
+            logger.log(Level.SEVERE, Bundle.ReportGenerator_error_noReportModules());
+            progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_noReportModules());
+            throw new ReportGenerationException(Bundle.ReportGenerator_error_noReportModules());
         }
-        
+
         ReportingConfig config = null;
         try {
             config = ReportingConfigLoader.loadConfig(configName);
         } catch (ReportConfigException ex) {
-            logger.log(Level.SEVERE, "Unable to load reporting configuration " + configName + ". Exiting", ex);
-            progressIndicator.updateStatusLabel("Unable to load reporting configuration " + configName + ". Exiting");
-            return;
+            logger.log(Level.SEVERE, Bundle.ReportGenerator_error_unableToLoadConfig(configName), ex);
+            progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_unableToLoadConfig(configName));
+            throw new ReportGenerationException(Bundle.ReportGenerator_error_unableToLoadConfig(configName));
         }
 
         if (config == null) {
-            logger.log(Level.SEVERE, "Unable to load reporting configuration {0}. Exiting", configName);
-            progressIndicator.updateStatusLabel("Unable to load reporting configuration " + configName + ". Exiting");
-            return;
+            logger.log(Level.SEVERE, Bundle.ReportGenerator_error_unableToLoadConfig(configName));
+            progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_unableToLoadConfig(configName));
+            throw new ReportGenerationException(Bundle.ReportGenerator_error_unableToLoadConfig(configName));
         }
 
         try {
@@ -189,8 +205,8 @@ public class ReportGenerator {
                 String moduleName = entry.getKey();
                 ReportModule module = modules.get(moduleName);
                 if (module == null) {
-                    logger.log(Level.SEVERE, "Report module {0} not found", moduleName);
-                    progressIndicator.updateStatusLabel("Report module " + moduleName + " not found");
+                    logger.log(Level.SEVERE, Bundle.ReportGenerator_error_moduleNotFound(moduleName));
+                    progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_moduleNotFound(moduleName));
                     continue;
                 }
 
@@ -216,8 +232,8 @@ public class ReportGenerator {
                         // get table report settings
                         TableReportSettings tableSettings = config.getTableReportSettings();
                         if (tableSettings == null) {
-                            logger.log(Level.SEVERE, "No table report settings for report module {0}", moduleName);
-                            progressIndicator.updateStatusLabel("No table report settings for report module " + moduleName);
+                            logger.log(Level.SEVERE, Bundle.ReportGenerator_error_noTableReportSettings(moduleName)); 
+                            progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_noTableReportSettings(moduleName));
                             continue;
                         }
 
@@ -228,8 +244,8 @@ public class ReportGenerator {
                         // get file report settings
                         FileReportSettings fileSettings = config.getFileReportSettings();
                         if (fileSettings == null) {
-                            logger.log(Level.SEVERE, "No file report settings for report module {0}", moduleName);
-                            progressIndicator.updateStatusLabel("No file report settings for report module " + moduleName);
+                            logger.log(Level.SEVERE, Bundle.ReportGenerator_error_noFileReportSettings(moduleName));
+                            progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_noFileReportSettings(moduleName));
                             continue;
                         }
 
@@ -240,20 +256,20 @@ public class ReportGenerator {
                         if (settings instanceof NoReportModuleSettings) {
                             settings = new PortableCaseReportModuleSettings();
                         } else if (!(settings instanceof PortableCaseReportModuleSettings)) {
-                            logger.log(Level.SEVERE, "Invalid settings for report module {0}", moduleName);
-                            progressIndicator.updateStatusLabel("Invalid settings for report module " + moduleName);
+                            logger.log(Level.SEVERE, Bundle.ReportGenerator_error_invalidSettings(moduleName)); 
+                            progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_invalidSettings(moduleName));
                             continue;
                         }
 
                         generatePortableCaseReport((PortableCaseReportModule) module, (PortableCaseReportModuleSettings) settings);
 
                     } else {
-                        logger.log(Level.SEVERE, "Report module {0} has unsupported report module type", moduleName);
-                        progressIndicator.updateStatusLabel("Report module " + moduleName + " has unsupported report module type");
+                        logger.log(Level.SEVERE, Bundle.ReportGenerator_error_unsupportedType(moduleName)); 
+                        progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_unsupportedType(moduleName));
                     }
                 } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Exception while running report module {0}: {1}", new Object[]{moduleName, e.getMessage()});
-                    progressIndicator.updateStatusLabel("Exception while running report module " + moduleName);
+                    logger.log(Level.SEVERE, Bundle.ReportGenerator_error_exception(moduleName)); 
+                    progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_exception(moduleName));
                 }
             }
         } finally {
@@ -321,15 +337,15 @@ public class ReportGenerator {
             TableReportGenerator generator = new TableReportGenerator(tableReportSettings, progressIndicator, tableReport);
             generator.execute();
             tableReport.endReport();
-            
+
             // finish progress, wrap up
             errorList = generator.getErrorList();
-            
+
             // if error list is empty, the operation has completed successfully.  If not there is an error
-            ReportProgressPanel.ReportStatus finalStatus = (errorList == null || errorList.isEmpty()) ?
-                ReportProgressPanel.ReportStatus.COMPLETE :
-                ReportProgressPanel.ReportStatus.ERROR;
-            
+            ReportProgressPanel.ReportStatus finalStatus = (errorList == null || errorList.isEmpty())
+                    ? ReportProgressPanel.ReportStatus.COMPLETE
+                    : ReportProgressPanel.ReportStatus.ERROR;
+
             progressIndicator.complete(finalStatus);
         }
     }
@@ -368,10 +384,10 @@ public class ReportGenerator {
             int i = 0;
             // Add files to report.
             for (AbstractFile file : files) {
-                if(shouldFilterFromReport(file, fileReportSettings)) {
+                if (shouldFilterFromReport(file, fileReportSettings)) {
                     continue;
                 }
-                
+
                 // Check to see if any reports have been cancelled.
                 if (progressIndicator.getStatus() == ReportStatus.CANCELED) {
                     return;
@@ -393,9 +409,9 @@ public class ReportGenerator {
             progressIndicator.complete(ReportStatus.COMPLETE);
         }
     }
-    
+
     private boolean shouldFilterFromReport(AbstractFile file, FileReportSettings fileReportSettings) {
-        if(fileReportSettings.getSelectedDataSources() == null) {
+        if (fileReportSettings.getSelectedDataSources() == null) {
             return false;
         }
         // Filter if the data source id is not in the list to process

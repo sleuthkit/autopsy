@@ -1,0 +1,10 @@
+/*! \page workflow_page Flux de travail d'Autopsy
+
+L'analyse des données dans Autopsy utilise le flux de travail suivant:
+-# <b>Créer un cas</b>: un cas est un conteneur pour une ou plusieurs sources de données. Il faut en créer un avant l'analyse des données. Voir \ref cases_page pour plus de détails. 
+-# <b>Ajouter une source de données</b>: une ou plusieurs sources de données sont ajoutées au cas. Les sources de données incluent les images disque et les fichiers locaux. Voir \ref ds_page pour plus de détails. 
+-# <b>Analyser avec des Ingest Modules (modules d'acquisition)</b>: une fois la source de données ajoutée, les modules d'acquisition fonctionnent en arrière-plan pour analyser les données. Les résultats s’affichent dans l'interface en temps réel et fournissent des alertes si nécessaire. Exemples de modules d'acquisition: \ref hash_db_page "calcul et recherche de hachage", \ref keyword_search_page "recherche de mots-clés" ou \ref recent_activity_page "extraction d'artefacts Web". Des modules tiers peuvent être développés et ajoutés aux pipelines. Voir \ref ingest_page. 
+-# <b>Analyser manuellement</b>: l'utilisateur navigue dans l'interface, le contenu du fichier et les résultats du module d'acquisition pour identifier les preuves. Les éléments intéressants peuvent être marqués pour un rapport et une analyse ultérieurs.
+-# <b>Générer un rapport</b>: l'utilisateur lance un rapport final basé sur les marquages ou les résultats sélectionnés.
+
+*/

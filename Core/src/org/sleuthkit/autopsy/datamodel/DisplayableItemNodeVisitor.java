@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2018 Basis Technology Corp.
+ * Copyright 2011 - 2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Data Sources Area
      */
-    T visit(DataSourcesNode in);
+    T visit(DataSourceFilesNode in);
 
     T visit(LayoutFileNode lfn);
 
@@ -88,16 +88,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(RecentFilesFilterNode rffn);
 
-    /*
-     * Extracted Results Area
-     */
-    T visit(ResultsNode rn);
-
     T visit(BlackboardArtifactNode ban);
 
-    T visit(ExtractedContent.TypeNode atn);
+    T visit(Artifacts.TypeNode atn);
 
-    T visit(ExtractedContent.RootNode ecn);
+    T visit(Artifacts.BaseArtifactNode ecn);
 
     T visit(KeywordHits.RootNode khrn);
 
@@ -186,27 +181,27 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(EmptyNode.MessageNode emptyNode);
 
-    T visit(InterestingHits.InterestingItemTypeNode aThis);
-
     /*
      * Attachments
      */
     T visit(AttachmentNode node);
-    
+
     T visit(OsAccounts.OsAccountNode node);
-    
+
     T visit(OsAccounts.OsAccountListNode node);
 
-    T visit(PersonGroupingNode node);
+    T visit(PersonNode node);
 
     T visit(HostNode node);
 
-    T visit(DataSourcesByTypeNode node);
-    
+    T visit(DataSourcesNode node);
+
     /*
      * Unsupported node
      */
     T visit(UnsupportedContentNode ucn);
+
+    T visit(LocalFilesDataSourceNode lfdsn);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -301,12 +296,12 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(ExtractedContent.TypeNode atn) {
+        public T visit(Artifacts.TypeNode atn) {
             return defaultVisit(atn);
         }
 
         @Override
-        public T visit(ExtractedContent.RootNode ecn) {
+        public T visit(Artifacts.BaseArtifactNode ecn) {
             return defaultVisit(ecn);
         }
 
@@ -333,11 +328,6 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
             return defaultVisit(ftByMimeTypeEmptyNode);
-        }
-
-        @Override
-        public T visit(InterestingHits.InterestingItemTypeNode interestingItemTypeNode) {
-            return defaultVisit(interestingItemTypeNode);
         }
 
         @Override
@@ -406,17 +396,12 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(ResultsNode rn) {
-            return defaultVisit(rn);
-        }
-
-        @Override
         public T visit(FileTypesNode ft) {
             return defaultVisit(ft);
         }
 
         @Override
-        public T visit(DataSourcesNode in) {
+        public T visit(DataSourceFilesNode in) {
             return defaultVisit(in);
         }
 
@@ -554,12 +539,12 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(AttachmentNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(OsAccounts.OsAccountNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(OsAccounts.OsAccountListNode node) {
             return defaultVisit(node);
@@ -571,17 +556,22 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(DataSourcesByTypeNode node) {
+        public T visit(DataSourcesNode node) {
             return defaultVisit(node);
         }
 
         @Override
-        public T visit(PersonGroupingNode node) {
+        public T visit(PersonNode node) {
             return defaultVisit(node);
         }
-        
+
         @Override
         public T visit(UnsupportedContentNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(LocalFilesDataSourceNode node) {
             return defaultVisit(node);
         }
     }

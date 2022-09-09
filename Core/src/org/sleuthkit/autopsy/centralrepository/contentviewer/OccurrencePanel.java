@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
+import org.sleuthkit.autopsy.centralrepository.application.NodeData;
 import java.awt.Color;
 import java.awt.Font;
 import java.util.ArrayList;
@@ -28,7 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -50,7 +50,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
 
     private int gridY = 0;
-    private final List<OtherOccurrenceNodeData> nodeDataList;
+    private final List<NodeData> nodeDataList;
     private final Map<String, String> caseNamesAndDates = new HashMap<>();
     private final Set<String> dataSourceNames = new HashSet<>();
     private final Set<String> filePaths = new HashSet<>();
@@ -97,7 +97,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
      * @param nodeDataList the list of OtherOccurrenceNodeData representing
      *                     common properties for the file
      */
-    OccurrencePanel(List<OtherOccurrenceNodeData> nodeDataList) {
+    OccurrencePanel(List<NodeData> nodeDataList) {
         this.nodeDataList = nodeDataList;
         customizeComponents();
     }
@@ -148,9 +148,9 @@ final class OccurrencePanel extends javax.swing.JPanel {
         addItemToBag(gridY, 0, TOP_INSET, 0, commonPropertiesLabel);
         gridY++;
         //for each other occurrence
-        for (OtherOccurrenceNodeData occurrence : nodeDataList) {
-            if (occurrence instanceof OtherOccurrenceNodeInstanceData) {
-                String type = ((OtherOccurrenceNodeInstanceData) occurrence).getType();
+        for (NodeData occurrence : nodeDataList) {
+            if (occurrence instanceof NodeData) {
+                String type = occurrence.getType();
                 if (!type.isEmpty()) {
                     javax.swing.JLabel typeLabel = new javax.swing.JLabel();
                     org.openide.awt.Mnemonics.setLocalizedText(typeLabel, Bundle.OccurrencePanel_commonPropertyTypeLabel_text());
@@ -160,7 +160,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
                     addItemToBag(gridY, 1, VERTICAL_GAP, 0, typeFieldValue);
                     gridY++;
                 }
-                String value = ((OtherOccurrenceNodeInstanceData) occurrence).getValue();
+                String value = occurrence.getValue();
                 if (!value.isEmpty()) {
                     javax.swing.JLabel valueLabel = new javax.swing.JLabel();
                     org.openide.awt.Mnemonics.setLocalizedText(valueLabel, Bundle.OccurrencePanel_commonPropertyValueLabel_text());
@@ -170,7 +170,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
                     addItemToBag(gridY, 1, 0, 0, valueFieldValue);
                     gridY++;
                 }
-                TskData.FileKnown knownStatus = ((OtherOccurrenceNodeInstanceData) occurrence).getKnown();
+                TskData.FileKnown knownStatus = occurrence.getKnown();
                 javax.swing.JLabel knownStatusLabel = new javax.swing.JLabel();
                 org.openide.awt.Mnemonics.setLocalizedText(knownStatusLabel, Bundle.OccurrencePanel_commonPropertyKnownStatusLabel_text());
                 addItemToBag(gridY, 0, 0, 0, knownStatusLabel);
@@ -181,7 +181,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
                 }
                 addItemToBag(gridY, 1, 0, 0, knownStatusValue);
                 gridY++;
-                String comment = ((OtherOccurrenceNodeInstanceData) occurrence).getComment();
+                String comment = occurrence.getComment();
                 if (!comment.isEmpty()) {
                     javax.swing.JLabel commentLabel = new javax.swing.JLabel();
                     org.openide.awt.Mnemonics.setLocalizedText(commentLabel, Bundle.OccurrencePanel_commonPropertyCommentLabel_text());
@@ -201,22 +201,17 @@ final class OccurrencePanel extends javax.swing.JPanel {
                 }
                 String caseDate = "";
                 try {
-                    OtherOccurrenceNodeInstanceData nodeData = ((OtherOccurrenceNodeInstanceData) occurrence);
-                    if (nodeData.isCentralRepoNode()) {
-                        if (CentralRepository.isEnabled()) {
-                            CorrelationCase partialCase = nodeData.getCorrelationAttributeInstance().getCorrelationCase();
-                            caseDate = CentralRepository.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
-                        }
-                    } else {
-                        caseDate = Case.getCurrentCase().getCreatedDate();
+                    if (CentralRepository.isEnabled()) {
+                        CorrelationCase partialCase = occurrence.getCorrelationAttributeInstance().getCorrelationCase();
+                        caseDate = CentralRepository.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
                     }
                 } catch (CentralRepoException ex) {
                     LOGGER.log(Level.WARNING, "Error getting case created date for other occurrence content viewer", ex);
                 }
                 //Collect the data that is necessary for the other sections 
-                caseNamesAndDates.put(((OtherOccurrenceNodeInstanceData) occurrence).getCaseName(), caseDate);
-                dataSourceNames.add(((OtherOccurrenceNodeInstanceData) occurrence).getDataSourceName());
-                filePaths.add(((OtherOccurrenceNodeInstanceData) occurrence).getFilePath());
+                caseNamesAndDates.put(occurrence.getCaseName(), caseDate);
+                dataSourceNames.add(occurrence.getDataSourceName());
+                filePaths.add(occurrence.getFilePath());
             }
         }
         //end for each

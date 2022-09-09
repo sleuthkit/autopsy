@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,12 +23,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -49,9 +52,9 @@ public class StringsContentPanel extends javax.swing.JPanel {
     private final byte[] data = new byte[(int) PAGE_LENGTH];
     private static int currentPage = 1;
     private Content dataSource;
-    //string extract utility
-    private final StringExtract stringExtract = new StringExtract();
     private static final Logger logger = Logger.getLogger(StringsContentPanel.class.getName());
+
+    private SwingWorker<String, Void> worker;
 
     /**
      * Creates new form StringsTextViewer
@@ -81,10 +84,10 @@ public class StringsContentPanel extends javax.swing.JPanel {
         });
 
         // use wrap layout for better component wrapping
-        WrapLayout layout = new WrapLayout(0,5);
+        WrapLayout layout = new WrapLayout(0, 5);
         layout.setOppositeAligned(Arrays.asList(panelScriptSelect));
         controlPanel.setLayout(layout);
-        
+
     }
 
     final void resetDisplay() {
@@ -92,12 +95,11 @@ public class StringsContentPanel extends javax.swing.JPanel {
         currentPage = 1;
         currentOffset = 0;
         this.dataSource = null;
-        currentPageLabel.setText("");
+        currentPageLabel.setText("1");
         totalPageLabel.setText("");
         prevPageButton.setEnabled(false);
         nextPageButton.setEnabled(false);
         outputViewPane.setText(""); // reset the output view
-        setComponentsVisibility(false); // hides the components that not needed
     }
 
     /**
@@ -164,9 +166,6 @@ public class StringsContentPanel extends javax.swing.JPanel {
         panelPageOfCount.add(jSepMed1);
 
         currentPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.currentPageLabel.text_1")); // NOI18N
-        currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 25));
-        currentPageLabel.setMinimumSize(new java.awt.Dimension(7, 25));
-        currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 25));
         panelPageOfCount.add(currentPageLabel);
 
         jSepMed2.setPreferredSize(new java.awt.Dimension(5, 0));
@@ -182,9 +181,9 @@ public class StringsContentPanel extends javax.swing.JPanel {
         panelPageOfCount.add(jSepMed3);
 
         totalPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.totalPageLabel.text_1")); // NOI18N
-        totalPageLabel.setMaximumSize(new java.awt.Dimension(21, 25));
-        totalPageLabel.setMinimumSize(new java.awt.Dimension(21, 25));
-        totalPageLabel.setPreferredSize(new java.awt.Dimension(21, 25));
+        totalPageLabel.setMaximumSize(new java.awt.Dimension(25, 25));
+        totalPageLabel.setMinimumSize(new java.awt.Dimension(25, 25));
+        totalPageLabel.setPreferredSize(new java.awt.Dimension(25, 25));
         panelPageOfCount.add(totalPageLabel);
 
         jSepMed4.setPreferredSize(new java.awt.Dimension(5, 0));
@@ -363,6 +362,10 @@ public class StringsContentPanel extends javax.swing.JPanel {
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
+    @Messages({
+        "StringContentPanel_Loading_String=Loading text..."
+    })
+
     /**
      * Sets the DataView (The tabbed panel)
      *
@@ -370,102 +373,173 @@ public class StringsContentPanel extends javax.swing.JPanel {
      * @param offset     the starting offset
      */
     void setDataView(Content dataSource, long offset) {
+
+        if (worker != null) {
+            worker.cancel(true);
+            worker = null;
+        }
+
         if (dataSource == null) {
             return;
         }
-        // change the cursor to "waiting cursor" for this operation
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        this.dataSource = dataSource;
-        int bytesRead = 0;
-        // set the data on the bottom and show it
 
-        if (dataSource.getSize() > 0) {
-            try {
-                bytesRead = dataSource.read(data, offset, PAGE_LENGTH); // read the data
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error while trying to show the String content.", ex); //NON-NLS
-            }
-        }
-        String text;
-        if (bytesRead > 0) {
-            //text = DataConversion.getString(data, bytesRead, 4);
-            final SCRIPT selScript = (SCRIPT) languageCombo.getSelectedItem();
-            stringExtract.setEnabledScript(selScript);
-            StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
-            text = res.getText();
-            if (StringUtils.isBlank(text)) {
-                text = NbBundle.getMessage(this.getClass(),
-                        "StringsTextViewer.setDataView.errorNoText", currentOffset,
-                        currentOffset + PAGE_LENGTH);
-            }
-        } else {
-            text = NbBundle.getMessage(this.getClass(), "StringsTextViewer.setDataView.errorText", currentOffset,
-                    currentOffset + PAGE_LENGTH);
-        }
-
-        // disable or enable the next button
-        if (offset + PAGE_LENGTH < dataSource.getSize()) {
-            nextPageButton.setEnabled(true);
-        } else {
-            nextPageButton.setEnabled(false);
-        }
-
-        if (offset == 0) {
-            prevPageButton.setEnabled(false);
-            currentPage = 1; // reset the page number
-        } else {
-            prevPageButton.setEnabled(true);
-        }
-
-        int totalPage = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
-        totalPageLabel.setText(Integer.toString(totalPage));
-        currentPageLabel.setText(Integer.toString(currentPage));
-        outputViewPane.setText(text); // set the output view
-        setComponentsVisibility(true); // shows the components that not needed
-        outputViewPane.moveCaretPosition(0);
-
-        this.setCursor(null);
+        worker = new ContentWorker(dataSource, offset);
+        outputViewPane.setText(Bundle.StringContentPanel_Loading_String());
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        worker.execute();
     }
 
     void setDataView(StringContent dataSource) {
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            this.dataSource = null;
+        if (worker != null) {
+            worker.cancel(true);
+            worker = null;
+        }
 
+        if (dataSource == null) {
+            return;
+        }
+
+        worker = new StringContentWorker(dataSource);
+        outputViewPane.setText(Bundle.StringContentPanel_Loading_String());
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        worker.execute();
+    }
+
+
+    /**
+     * Swingworker for getting the text from a content object.
+     */
+    private final class ContentWorker extends SwingWorker<String, Void> {
+
+        private final Content content;
+        private final long offset;
+
+        /**
+         * ContentWorker constructor
+         *
+         * @param content Content to get text from.
+         * @param offset  The starting offset.
+         */
+        ContentWorker(Content content, long offset) {
+            this.content = content;
+            this.offset = offset;
+        }
+
+        @Override
+        protected String doInBackground() throws Exception {
+            int bytesRead = 0;
             // set the data on the bottom and show it
-            String text = dataSource.getString();
-            nextPageButton.setEnabled(false);
-            prevPageButton.setEnabled(false);
-            currentPage = 1;
 
-            int totalPage = 1;
-            totalPageLabel.setText(Integer.toString(totalPage));
-            currentPageLabel.setText(Integer.toString(currentPage));
-            outputViewPane.setText(text); // set the output view
-            setComponentsVisibility(true); // shows the components that not needed
-            outputViewPane.moveCaretPosition(0);
-        } finally {
-            this.setCursor(null);
+            if (content.getSize() > 0) {
+                try {
+                    bytesRead = content.read(data, offset, PAGE_LENGTH); // read the data
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error while trying to show the String content.", ex); //NON-NLS
+                }
+            }
+            String text;
+            if (bytesRead > 0) {
+                //text = DataConversion.getString(data, bytesRead, 4);
+                final SCRIPT selScript = (SCRIPT) languageCombo.getSelectedItem();
+                StringExtract stringExtract = new StringExtract();
+                stringExtract.setEnabledScript(selScript);
+                StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
+                text = res.getText();
+                if (StringUtils.isBlank(text)) {
+                    text = NbBundle.getMessage(this.getClass(),
+                            "StringsTextViewer.setDataView.errorNoText", currentOffset,
+                            currentOffset + PAGE_LENGTH);
+                }
+            } else {
+                text = NbBundle.getMessage(this.getClass(), "StringsTextViewer.setDataView.errorText", currentOffset,
+                        currentOffset + PAGE_LENGTH);
+            }
+
+            return text;
+        }
+
+        @Override
+        public void done() {
+            if (isCancelled()) {
+                return;
+            }
+
+            try {
+                if (isCancelled()) {
+                    return;
+                }
+                String text = get();
+                dataSource = content;
+
+                // disable or enable the next button
+                if (offset + PAGE_LENGTH < dataSource.getSize()) {
+                    nextPageButton.setEnabled(true);
+                } else {
+                    nextPageButton.setEnabled(false);
+                }
+
+                if (offset == 0) {
+                    prevPageButton.setEnabled(false);
+                    currentPage = 1; // reset the page number
+                } else {
+                    prevPageButton.setEnabled(true);
+                }
+
+                int totalPage = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
+                totalPageLabel.setText(Integer.toString(totalPage));
+                outputViewPane.setText(text); // set the output view
+                outputViewPane.moveCaretPosition(0);
+
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to get text from content (id=%d)", content.getId()), ex);
+            }
         }
     }
 
     /**
-     * To set the visibility of specific components in this class.
-     *
-     * @param isVisible whether to show or hide the specific components
+     * SwingWorker for getting the text from a StringContent object.
      */
-    private void setComponentsVisibility(boolean isVisible) {
-        currentPageLabel.setVisible(isVisible);
-        totalPageLabel.setVisible(isVisible);
-        ofLabel.setVisible(isVisible);
-        prevPageButton.setVisible(isVisible);
-        nextPageButton.setVisible(isVisible);
-        pageLabel.setVisible(isVisible);
-        pageLabel2.setVisible(isVisible);
-        goToPageTextField.setVisible(isVisible);
-        goToPageLabel.setVisible(isVisible);
-        languageCombo.setVisible(isVisible);
-        languageLabel.setVisible(isVisible);
-    }
+    private final class StringContentWorker extends SwingWorker<String, Void> {
 
+        private final StringContent content;
+
+        /**
+         * Constructor to pulling the text out of a string content object.
+         *
+         * @param content
+         */
+        StringContentWorker(StringContent content) {
+            this.content = content;
+        }
+
+        @Override
+        protected String doInBackground() throws Exception {
+            return content.getString();
+        }
+
+        @Override
+        public void done() {
+            if (isCancelled()) {
+                return;
+            }
+
+            try {
+                String text = get();
+
+                dataSource = null;
+                nextPageButton.setEnabled(false);
+                prevPageButton.setEnabled(false);
+                currentPage = 1;
+
+                outputViewPane.setText(text); // set the output view
+                outputViewPane.moveCaretPosition(0);
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to get text from StringContent"), ex);
+            }
+        }
+    }
 }

@@ -33,6 +33,7 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import javax.imageio.ImageIO;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.apache.commons.io.FileUtils;
@@ -44,6 +45,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.core.UserPreferences.SETTINGS_PROPERTIES;
+import org.sleuthkit.autopsy.corelibs.OpenCvLoader;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -66,6 +68,13 @@ public class Installer extends ModuleInstall {
 
     static {
         loadDynLibraries();
+        
+        // This call was moved from MediaViewImagePanel so that it is 
+        // not called during top level component construction.
+        ImageIO.scanForPlugins();
+        
+        // This will cause OpenCvLoader to load its library instead of 
+        OpenCvLoader.openCvIsLoaded();
     }
 
     private static void loadDynLibraries() {
@@ -195,6 +204,7 @@ public class Installer extends ModuleInstall {
         System.setProperty("prism.allowhidpi", "false");
 
         // Update existing configuration in case of unsupported settings
+        UserPreferences.updateConfig();
         updateConfig();
 
         packageInstallers = new ArrayList<>();
@@ -205,6 +215,8 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.centralrepository.eventlisteners.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.healthmonitor.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.casemodule.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.modules.hashdatabase.infrastructure.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.report.infrastructure.Installer.getDefault());
 
         /**
          * This is a temporary workaround for the following bug in Tika that

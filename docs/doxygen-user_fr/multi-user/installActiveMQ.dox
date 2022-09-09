@@ -1,0 +1,145 @@
+﻿/*! \page install_activemq_page Installer et configurer ActiveMQ
+
+\section install_activemq_overview Aperçu
+
+ActiveMQ est un service de messagerie qui permet aux clients Autopsy de communiquer entre eux. Cela permet à chaque client d'obtenir des mises à jour en temps réel. Ce service a des exigences de stockage minimales.
+
+
+\section install_activemq_prereq Conditions préalables
+
+Vous aurez besoin de:
+- Java Runtime Environment 8 (JRE) version 64 bits téléchargeable à partir de https://github.com/ojdkbuild/ojdkbuild (<a href="https://github.com/ojdkbuild/ojdkbuild/releases/download/java-1.8.0-openjdk-1.8.0.242-1.b08/java-1.8.0-openjdk-1.8.0.242-1.b08.ojdkbuild.windows.x86_64.msi"> Lien vers l'installateur</a>)
+- Télécharger ActiveMQ depuis: http://activemq.apache.org/download.html . Autopsy a été testé avec ActiveMQ version 5.14.0.
+
+
+\section install_activemq_install Installation
+
+\subsection install_activemq_install_java Installation du JRE
+Installez Java JRE si nécessaire. Vous pouvez tester l'installation en exécutant _where java_ à partir du terminal de commande. Si vous voyez une sortie similaire aux résultats ci-dessous, vous avez un JRE.
+<br><br>
+\image html wherejava.PNG
+<br><br>   
+Si vous avez besoin du JRE, installez-le avec les paramètres par défaut.
+
+
+\subsection install_activemq_install_mq Installation de ActiveMQ
+
+<ol>
+<li>Extrayez le contenu de l'archive ActiveMQ vers un emplacement de votre choix, en gardant à l'esprit que les fichiers doivent se trouver dans un emplacement où le processus en cours d'exécution dispose d'autorisations d'écriture. Un choix de dossier typique serait <i>C:\\Program Files\\apache-activemq-5.13.3</i>. Le système peut demander une autorisation d'administrateur pour déplacer le dossier. Autorisez-la si nécessaire. 
+
+<li>Ouvrez le fichier <i>conf\\activemq.xml</i> dans le dossier extrait avec un éditeur de texte et apportez les modifications suivantes:
+<ul>
+<li> Ajoutez <i>"schedulePeriodForDestinationPurge="10000""</i> à la balise _broker_ puis ajouter <i>"gcInactiveDestinations="true" inactiveTimoutBeforeGC="30000""</i> à la balise _policyEntry_. Ceci est surligné en jaune ci-dessous:
+
+\image html activeMQ_node_cleanup.png
+
+<li>Ajoutez <i>"&amp;wireFormat.maxInactivityDuration=0"</i> à l'URI dans la balise _transportConnector_ nommée _openwire_. Ceci est surligné en jaune ci-dessous:
+<br><br>
+\image html maxinactivityduration.PNG
+<br><br>
+</ul>
+
+<li>Installez ActiveMQ en tant que service en accédant au dossier <i>bin\\win64</i>, puis en faisant un clic droit sur _InstallService.bat_, sélectionnez _Exécuter en tant qu'administrateur_, puis cliquez sur _Oui_.
+
+<li>Démarrez le service ActiveMQ en cliquant sur le bouton _Démarrer_, puis tapez _services.msc_, et validez avec _Entrer_. Trouvez _ActiveMQ_ dans la liste et cliquez sur le lien _Démarrer le service_.
+
+<li>ActiveMQ doit maintenant être installé et configuré à l'aide des informations d'identification par défaut. 
+</ol>
+
+\subsection install_activemq_test Essai
+
+Pour tester votre installation, vous pouvez accéder aux pages d'administration par votre navigateur Web via une URL comme celle-ci: http://localhost:8161/admin. 
+
+Le nom d'administrateur par défaut est _admin_ avec le mot de passe _admin_ et le nom d'utilisateur standard par défaut est _user_ avec le mot de passe _password_.  Vous pouvez modifier ces mots de passe en suivant les instructions ci-dessous.
+
+Si vous pouvez voir une page qui ressemble à ce qui suit, cela confirme que le service ActiveMQ s'exécute localement, mais cela ne signifie pas nécessairement que le service est visible par les autres ordinateurs du réseau.
+<br><br>
+\image html activemq.PNG
+<br><br>
+
+Vous pouvez confirmer que votre installation ActiveMQ est visible par les autres ordinateurs du réseau en essayant de vous connecter à une URL comme celle-ci (en remplaçant le nom d'hôte par celui de l'ordinateur ActiveMQ) dans un navigateur Web: http://activemq-computer:61616
+
+Si vous ne parvenez pas à vous connecter à cette adresse:
+- Vérifiez que le service ActiveMQ est en cours d'exécution
+- Vérifiez que le port (61616) n'est pas bloqué par un pare-feu.
+
+
+
+\section install_activemq_install_pw Configuration de l'authentification
+
+Vous pouvez éventuellement ajouter une authentification à votre serveur ActiveMQ. Les communications ActiveMQ ne sont pas chiffrées et contiennent des messages de base entre les systèmes sur le moment où de nouvelles données ont été trouvées.
+
+Les instructions suivantes vous permettent de configurer les informations d'identification:
+
+1. Copiez et collez le texte suivant dans le fichier <i>"conf\groups.properties"</i>, en écrasant le texte surligné en jaune dans la capture d'écran ci-dessous:
+<BLOCKQUOTE>
+admins=system,sslclient,client,broker1,broker2<br />
+tempDestinationAdmins=system,user,sslclient,client,broker1,broker2<br />
+users=system,user,sslclient,client,broker1,broker2<br />
+guests=guest<br />
+</BLOCKQUOTE>            
+<br><br>
+\image html groups.properties.before.PNG
+<br><br>
+Une fois terminé, le fichier devrait ressembler à ceci:   
+<br><br>
+\image html groups.properties.after.PNG
+<br><br>     
+
+2. Copiez et collez le texte suivant dans le fichier <i>"conf\users.properties"</i>, en écrasant le texte surligné en jaune dans la capture d'écran ci-dessous:
+<BLOCKQUOTE>            
+system=manager<br />
+user=password<br />
+guest=password<br />
+sslclient=CN=localhost, OU=activemq.org, O=activemq.org, L=LA, ST=CA, C=US<br />
+</BLOCKQUOTE>            
+<br><br>
+\image html users.properties.before.PNG
+<br><br>    
+Une fois terminé, le fichier devrait ressembler à ceci:   
+<br><br>
+\image html users.properties.after.PNG
+<br><br>        
+
+3. Copiez et collez le texte suivant dans le fichier <i>"conf\activemq.xml"</i>, en insérant le texte au niveau de la ligne indiquée en jaune dans la capture d'écran ci-dessous.
+
+            <plugins>
+            <jaasAuthenticationPlugin configuration="activemq-domain" />
+                <simpleAuthenticationPlugin>
+                    <users>
+                        <authenticationUser username="system" password="manager" groups="users,admins"/>
+                        <authenticationUser username="user" password="password" groups="users"/>
+                        <authenticationUser username="guest" password="password" groups="guests"/>
+                    </users>
+                </simpleAuthenticationPlugin>
+            </plugins>
+            
+<br><br>
+\image html insertTextHere.PNG
+<br><br>
+Après l'insertion, le fichier doit ressembler à la capture d'écran ci-dessous, avec la partie insérée surlignée en jaune. C'est ici que vous pouvez modifier le nom d'utilisateur et le mot de passe pour votre configuration ActiveMQ.
+<br><br>
+\image html insertedText.PNG
+<br><br>
+   
+   
+Pour ajouter un nouvel utilisateur ou modifier le mot de passe:
+
+1. Arrêtez le service ActiveMQ en cliquant sur le bouton _Démarrer_, puis tapez _services.msc_, et validez avec _Entrer_. Trouvez _ActiveMQ_ dans la liste et cliquez sur le lien _Arrêter le service_.
+<br><br>
+\image html StopActiveMQService.PNG
+<br><br>
+2. Modifiez le fichier <i>"conf\activemq.xml"</i> en ajoutant la ligne souhaitée. Les variables _username_ et _password_ sont sensibles à la casse. Il sera très probablement souhaitable de garder vos nouveaux utilisateurs dans le groupe _users_.
+<br><br>
+\image html newUserAndPassword.PNG
+<br><br>
+3. Démarrez le service ActiveMQ en cliquant sur le bouton _Démarrer_, puis tapez _services.msc_, et validez avec _Entrer_. Trouvez _ActiveMQ_ dans la liste et cliquez sur le lien _Démarrer le service_.
+<br><br>
+\image html StartActiveMQService.PNG
+<br><br>
+
+\section install_mq_backup Sauvegarde
+
+Il n'y a rien à sauvegarder pour ActiveMQ. Il ne stocke aucune donnée relative aux cas dans ses fichiers.
+
+*/

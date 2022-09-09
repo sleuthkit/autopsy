@@ -104,8 +104,9 @@ class SQLiteTableRowNode extends AbstractNode {
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
             
-            actions.addAll(Arrays.asList(super.getActions(context)));
             actions.addAll(nodeActions);
+            actions.add(null);
+            actions.addAll(Arrays.asList(super.getActions(context)));
            
             return actions.toArray(new Action[actions.size()]);
         }

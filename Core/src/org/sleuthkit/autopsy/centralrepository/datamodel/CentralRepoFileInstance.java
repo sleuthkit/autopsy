@@ -114,7 +114,7 @@ public class CentralRepoFileInstance {
     /**
      * @param MD5Hash the MD5Hash to set
      */
-    public void setMD5Hash(String MD5Hash) throws CorrelationAttributeNormalizationException {
+    public void setMD5Hash(String MD5Hash) throws CorrelationAttributeNormalizationException, CentralRepoException {
         this.MD5Hash = CorrelationAttributeNormalizer.normalize(CorrelationAttributeInstance.FILES_TYPE_ID, MD5Hash);
     }
 

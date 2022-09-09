@@ -23,6 +23,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
@@ -31,6 +32,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo.SOFTWARE_CR_DB_SCHEMA_VERSION;
+import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 
 /**
  *
@@ -38,7 +40,7 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.RdbmsCentralRepo
 public class CentralRepoDbUtil {
 
     private final static Logger LOGGER = Logger.getLogger(CentralRepoDbUtil.class.getName());
-    private static final String CENTRAL_REPO_NAME = "CentralRepository";
+    private static final String CENTRAL_REPO_NAME = CentralRepoSettings.getInstance().getModuleSettingsKey();
     private static final String CENTRAL_REPO_USE_KEY = "db.useCentralRepo";
     private static final String DEFAULT_ORG_NAME = "Not Specified";
 
@@ -129,7 +131,7 @@ public class CentralRepoDbUtil {
     /**
      * Inserts the specified correlation type into the database.
      *
-     * @param conn Open connection to use.
+     * @param conn            Open connection to use.
      * @param correlationType New correlation type to add.
      *
      */
@@ -187,7 +189,6 @@ public class CentralRepoDbUtil {
         }
         return true;
     }
-
 
     /**
      * Get the default organization name
@@ -265,7 +266,7 @@ public class CentralRepoDbUtil {
         closePersonasTopComponent();
         ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));
     }
-    
+
     /**
      * Closes Personas top component if it exists.
      */
@@ -273,7 +274,7 @@ public class CentralRepoDbUtil {
         SwingUtilities.invokeLater(() -> {
             TopComponent personasWindow = WindowManager.getDefault().findTopComponent("PersonasTopComponent");
             if (personasWindow != null && personasWindow.isOpened()) {
-                personasWindow.close();   
+                personasWindow.close();
             }
         });
     }
@@ -349,9 +350,79 @@ public class CentralRepoDbUtil {
      * @return True If the specified correlation type has an account.
      */
     static boolean correlationAttribHasAnAccount(CorrelationAttributeInstance.Type type) {
-       return (type.getId() >= CorrelationAttributeInstance.ADDITIONAL_TYPES_BASE_ID) 
-               || type.getId() == CorrelationAttributeInstance.PHONE_TYPE_ID
-               || type.getId() == CorrelationAttributeInstance.EMAIL_TYPE_ID;
+        return (type.getId() >= CorrelationAttributeInstance.ADDITIONAL_TYPES_BASE_ID)
+                || type.getId() == CorrelationAttributeInstance.PHONE_TYPE_ID
+                || type.getId() == CorrelationAttributeInstance.EMAIL_TYPE_ID;
     }
-    
+
+    /**
+     * Check if any of the specified attribute values in the CR have a non-empty
+     * and non-null comment.
+     *
+     * @param attributes The list of attributes which should have their type
+     *                   value matches checked for the presence of a comment.
+     *
+     * @return True if any of the type value matches in the CR have a comment in
+     *         their respective comment column. False if there are no comments
+     *         or if the CR is disabled.
+     *
+     * @throws CentralRepoException Thrown when there is an issue either getting
+     *                              the CentralRepository instance or executing
+     *                              a query.
+     */
+    public static boolean commentExistsOnAttributes(List<CorrelationAttributeInstance> attributes) throws CentralRepoException {
+        boolean commentExists = false;
+        if (CentralRepository.isEnabled() && !attributes.isEmpty()) {
+            CentralRepository crInstance = CentralRepository.getInstance();
+            //Query to check for the presence of a comment on any matching value in the specified table.
+            String sqlSelect = "SELECT EXISTS "
+                    + "(SELECT 1 "
+                    + "FROM ";
+            String sqlWhere = " WHERE value=? "
+                    + "AND comment<>''"
+                    + "LIMIT 1)";
+            List<Object> params;
+            CommentExistsCallback commentCallback = new CommentExistsCallback();
+            for (CorrelationAttributeInstance instance : attributes) {
+                params = new ArrayList<>();
+                params.add(instance.getCorrelationValue());
+                String sql = sqlSelect + CentralRepoDbUtil.correlationTypeToInstanceTableName(instance.getCorrelationType()) + sqlWhere;
+                crInstance.executeQuery(sql, params, commentCallback);
+                if (commentCallback.doesCommentExist()) {
+                    //we are checking a binary condition so as soon as any query returns true we can stop
+                    commentExists = true;
+                    break;
+                }
+            }
+        }
+        return commentExists;
+    }
+
+    /**
+     * Private implementation of the CentralRepositoryDbQueryCallback to parse
+     * the results of the query which checks if a type value pair has a comment.
+     */
+    private static class CommentExistsCallback implements CentralRepositoryDbQueryCallback {
+
+        private boolean commentExists = false;
+
+        @Override
+        public void process(ResultSet rs) throws CentralRepoException, SQLException {
+            //there should only be 1 result here with 1 column
+            if (rs.next()) {
+                commentExists = rs.getBoolean(1);
+            }
+        }
+
+        /**
+         * Identifies if a comment existed.
+         *
+         * @return True if a comment existed, false otherwise.
+         */
+        boolean doesCommentExist() {
+            return commentExists;
+        }
+
+    }
+
 }

@@ -25,6 +25,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,7 +47,7 @@ public class CentralRepoPostgresSettingsUtil {
     private static final String DBNAME_KEY = "db.postgresql.dbName";
     private static final String HOST_KEY = "db.postgresql.host";
 
-    private static final String MODULE_KEY = "CentralRepository";
+    private static final String MODULE_KEY = CentralRepoSettings.getInstance().getModuleSettingsKey();
 
     private static CentralRepoPostgresSettingsUtil instance = null;
     

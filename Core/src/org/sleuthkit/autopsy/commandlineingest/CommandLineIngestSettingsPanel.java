@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -280,9 +280,10 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         add(nodePanel, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
     @Messages({
-        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name:",
+        "CommandListIngestSettingsPanel_Report_Name_Msg=Please supply a report profile name (letters, digits, and underscore characters only):",
         "CommandLineIngestSettingPanel_empty_report_name_mgs=Report profile name was empty, no profile created.",
-        "CommandLineIngestSettingPanel_existing_report_name_mgs=Report profile name was already exists, no profile created."
+        "CommandLineIngestSettingPanel_existing_report_name_mgs=Report profile name was already exists, no profile created.",
+        "CommandLineIngestSettingPanel_invalid_report_name_mgs=Report profile name contained illegal characters, no profile created."
     })
     private void bnEditReportSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnEditReportSettingsActionPerformed
         String reportName = getReportName();
@@ -298,6 +299,15 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
             } else if (doesReportProfileNameExist(reportName)) {
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.CommandLineIngestSettingPanel_existing_report_name_mgs());
                 return;
+            } else {
+                // sanitize report name
+                String originalReportName = reportName;
+                reportName = reportName.replaceAll("[^A-Za-z0-9_]", "");
+                if (reportName.isEmpty() || (!(originalReportName.equals(reportName)))) {
+                    // report name contained only invalid characters, display error
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.CommandLineIngestSettingPanel_invalid_report_name_mgs());
+                    return;
+                }               
             }
         }
 

@@ -250,17 +250,9 @@
             <file name="org-netbeans-core-windows-actions-ResetWindowsAction.shadow_hidden"/>
             <file name="testAction.shadow_hidden"/>
             <file name="org-netbeans-core-io-ui-IOWindowAction.shadow_hidden"/>
-            <file name="org-sleuthkit-autopsy-menuactions-DataResultMenu-separatoBefore.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="75"/>
-            </file>
             <file name="org-sleuthkit-autopsy-menuactions-DataResultMenu.instance">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-menuactions-DataResultMenu.instance"/>
                 <attr name="position" intvalue="100"/>
-            </file>
-            <file name="org-sleuthkit-autopsy-menuactions-DataResultMenu-separatoAfter.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="125"/>
             </file>
             <file name="org-sleuthkit-autopsy-menuactions-DataContentMenu.instance">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-menuactions-DataContentMenu.instance"/>
@@ -341,11 +333,6 @@
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.kml.KMLReport.getDefault"/>
             <attr name="position" intvalue="904"/>
-        </file>
-        <file name="org-sleuthkit-autopsy-report-modules-stix-STIXReportModule.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.modules.stix.STIXReportModule.getDefault"/>
-            <attr name="position" intvalue="910"/>
         </file>
         <file name="org-sleuthkit-autopsy-report-modules-caseuco-CaseUcoReportModule.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
