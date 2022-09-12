@@ -362,7 +362,7 @@
     
     <target name="versioning-script" depends="check-release, versioning-script-if-release, versioning-script-if-not-release"/>
          
-    <target name="build-installer" depends="set-release-build, getProps, doxygen, build-zip" description="Builds Autopsy installer.">    
+    <target name="build-installer" depends="build-zip" description="Builds Autopsy installer.">    
         <!-- Unzip file -->
         <delete dir="${nbdist.dir}/${app.name}-tmp-installer" quiet="true"/>
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-tmp-installer"/>
