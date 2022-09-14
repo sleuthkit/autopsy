@@ -5,7 +5,7 @@
 
 ## On macOS
 
-*A script to install these dependencies that can be found [here](./linux_macos_install_scripts/install_prereqs_macos.sh).*
+*A script to install these dependencies that can be found [here](./linux_macos_install_scripts/install_prereqs_macos.sh).  Make sure the script is executable before running.*
 - Using [Homebrew](https://brew.sh/), install dependencies that have formulas:
   ```
   brew install ant automake libtool afflib libewf postgresql testdisk
@@ -33,7 +33,7 @@
   
 ## On Linux (Ubuntu / Debian-based)
 
-*A script to install these dependencies that can be found [here](./linux_macos_install_scripts/install_prereqs_ubuntu.sh).*
+*A script to install these dependencies that can be found [here](./linux_macos_install_scripts/install_prereqs_ubuntu.sh).  Make sure the script is executable before running.*
 - You will need to include some repositories in order to install this software.  One way to do that is to uncomment lines in your `sources.list`:
   ```
   sudo sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
@@ -72,7 +72,7 @@
 The Sleuth Kit must be installed before trying to install Autopsy.  If you are on a Debian-like system (i.e. Ubuntu) you can download the most recent deb file from the [github release section](https://github.com/sleuthkit/sleuthkit/releases), and install by running something like `sudo apt install ./sleuthkit-java_4.11.1-1_amd64.deb`.  Otherwise, you can follow the directions below to install The Sleuth Kit from source code.
 
 ## Install The Sleuth Kit from Source
-*A script to install these dependencies on Unix-like systems (i.e. macOS, Linux) that can be found [here](./linux_macos_install_scripts/install_tsk_from_src.sh).*
+*A script to install these dependencies on Unix-like systems (i.e. macOS, Linux) that can be found [here](./linux_macos_install_scripts/install_tsk_from_src.sh).  Make sure the script is executable before running.*
 - Please ensure you have all the prerequisites installed on your system (see the directions [here](#installing-prerequisites)).
 - If you don't have a copy of the repository on your local machine, clone it (this requires git):
   ```
@@ -106,7 +106,7 @@ The Sleuth Kit must be installed before trying to install Autopsy.  If you are o
 - The zip file should be created within the `dist` folder of the Autopsy repository and will have the version in the name (i.e. `autopsy-4.18.0.zip`).
 
 ## Install Autopsy from Zip File
-*These instructions are for Unix-like systems like macOS and Linux.  If you are on Windows, there is an installer that can be downloaded from the [Autopsy downloads section](https://www.autopsy.com/download/) or in the [Releases section on GitHub](https://github.com/sleuthkit/autopsy/releases/). Please make sure you have the [prerequisites installed](#installing-prerequisites) and have [installed The Sleuth Kit](#install-sleuthkit). A script to perform these steps can be found [here](./linux_macos_install_scripts/install_application_from_zip.sh).*
+*These instructions are for Unix-like systems like macOS and Linux.  If you are on Windows, there is an installer that can be downloaded from the [Autopsy downloads section](https://www.autopsy.com/download/) or in the [Releases section on GitHub](https://github.com/sleuthkit/autopsy/releases/). Please make sure you have the [prerequisites installed](#installing-prerequisites) and have [installed The Sleuth Kit](#install-sleuthkit). A script to perform these steps can be found [here](./linux_macos_install_scripts/install_application.sh).  Make sure the script is executable before running.*
 
 - Download the zip file from the [Autopsy downloads section](https://www.autopsy.com/download/) or in the [Releases section on GitHub](https://github.com/sleuthkit/autopsy/releases/).  You can also create a zip file from source using [these directions](#create-autopsy-zip-file-from-source).
 - If you downloaded the zip file, you can verify the zip file with the [The Sleuth Kit key](https://sleuthkit.org/carrier.asc) and the related `.asc` file found in the [Releases section on GitHub](https://github.com/sleuthkit/autopsy/releases/).  For instance, you would use `autopsy-4.18.0.zip.asc` with `autopsy-4.18.0.zip`.  Here is an example where `$ASC_FILE` is the path to the `.asc` file and `$AUTOPSY_ZIP_PATH` is the path to the autopsy zip file:
