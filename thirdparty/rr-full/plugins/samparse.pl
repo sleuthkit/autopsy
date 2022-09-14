@@ -24,6 +24,7 @@
 package samparse;
 use strict;
 use Encode::Unicode;
+use JSON::PP;
 
 my %config = (hive          => "SAM",
               hivemask      => 2,
@@ -131,6 +132,23 @@ sub pluginmain {
 					my $f = $f_value->get_data();
 					my %f_val = parseF($f);
 					
+					eval {
+					    my $reset_data_value = $u->get_value("ResetData");
+						my $reset_data = $reset_data_value->get_data();
+    					my $reset_data_hash = decode_json($reset_data);
+						my $reset_data_question_1 = $reset_data_hash->{'questions'}[0];
+						my $reset_data_question_2 = $reset_data_hash->{'questions'}[1];
+						my $reset_data_question_3 = $reset_data_hash->{'questions'}[2];
+						my $question_1 = $reset_data_question_1->{'question'};
+                        ::rptMsg("Security Questions:");
+						::rptMsg("    Question 1  : ".$question_1);
+						::rptMsg("    Answer 1    : ".$reset_data_question_1->{'answer'});
+						::rptMsg("    Question 2  : ".$reset_data_question_2->{'question'});
+						::rptMsg("    Answer 2    : ".$reset_data_question_2->{'answer'});
+						::rptMsg("    Question 3  : ".$reset_data_question_3->{'question'});
+						::rptMsg("    Answer 3    : ".$reset_data_question_3->{'answer'});
+					};
+										
 					my $lastlogin;
 					my $pwdreset;
 					my $pwdfail;
