@@ -44,7 +44,7 @@ if [[ -z "$APPLICATION_ZIP_PATH" ]] && [[ ! -d "$INSTALL_DIR" ]]; then
 fi
 
 # check against the asc file if the zip exists
-if [[ -n "$ASC_FILE" ]] && [[ -n "$APPLCATION_ZIP_PATH" ]]; then
+if [[ -n "$ASC_FILE" ]] && [[ -n "$APPLICATION_ZIP_PATH" ]]; then
     VERIFY_DIR=$(pwd)/temp
     KEY_DIR=$VERIFY_DIR/private
     mkdir -p $VERIFY_DIR &&
@@ -65,7 +65,7 @@ ZIP_NAME="${ZIP_FILE_NAME%.*}"
 APPLICATION_EXTRACTED_PATH=$INSTALL_DIR/$ZIP_NAME/
 
 # if specifying a zip path, ensure directory doesn't exist and then create and extract
-if [[ -n "$APPLCATION_ZIP_PATH" ]]; then
+if [[ -n "$APPLICATION_ZIP_PATH" ]]; then
     if [[ -d $APPLICATION_EXTRACTED_PATH || -f $APPLICATION_EXTRACTED_PATH ]]; then
         echo "A file or directory already exists at $APPLICATION_EXTRACTED_PATH" >>/dev/stderr
         exit 1
@@ -81,7 +81,10 @@ if [[ -n "$APPLCATION_ZIP_PATH" ]]; then
 fi 
 
 echo "Setting up application at $APPLICATION_EXTRACTED_PATH..."
-pushd $APPLICATION_EXTRACTED_PATH &&
+# find unix_setup.sh in least nested path (https://stackoverflow.com/a/40039568/2375948)
+UNIX_SETUP_PATH=`find $APPLICATION_EXTRACTED_PATH -name 'unix_setup.sh' -printf "%d %p\n"| sort -n | perl -pe 's/^\d+\s//;' | head -n1 | xargs -I{} dirname {}`
+
+pushd $UNIX_SETUP_PATH &&
     chown -R $(whoami) . &&
     chmod u+x ./unix_setup.sh &&
     ./unix_setup.sh -j $JAVA_PATH -n $APPLICATION_NAME &&
@@ -90,5 +93,5 @@ if [[ $? -ne 0 ]]; then
     echo "Unable to setup permissions for application binaries" >>/dev/stderr
     exit 1
 else
-    echo "Application setup done."
+    echo "Application setup done.  You can run $APPLICATION_NAME from $UNIX_SETUP_PATH/bin/$APPLICATION_NAME."
 fi
