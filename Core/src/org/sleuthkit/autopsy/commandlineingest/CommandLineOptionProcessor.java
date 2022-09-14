@@ -271,6 +271,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
                 newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_ID.name(), dataSourceId);
                 newCommand.addInputValue(CommandLineCommand.InputType.INGEST_PROFILE_NAME.name(), ingestProfile);
+                newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_PATH.name(), dataSourcePath);
                 commands.add(newCommand);
                 runFromCommandLine(true);
             }

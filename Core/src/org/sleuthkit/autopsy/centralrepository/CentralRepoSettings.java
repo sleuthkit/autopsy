@@ -44,6 +44,8 @@ public class CentralRepoSettings {
 
     private static final String DEFAULT_DB_PARENT_PATH = Paths.get(CENTRAL_REPO_BASE_PATH, "LocalDatabase").toString();
     private static final String DEFAULT_DB_NAME = "central_repository.db";
+
+    // NOTE: if this changes, an equivalent fix will be needed in CentralRepoDatamodelTest for the String PROPERTIES_FILE
     private static final String MODULE_SETTINGS_KEY = Paths.get(
             Paths.get(PlatformUtil.getUserConfigDirectory()).relativize(Paths.get(PlatformUtil.getModuleConfigDirectory())).toString(),
             CENTRAL_REPOSITORY_FOLDER,

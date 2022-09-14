@@ -43,7 +43,6 @@ import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 
 /**
@@ -57,7 +56,10 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
  */
 public class CentralRepoDatamodelTest extends TestCase {
 
-    private static final String PROPERTIES_FILE = CentralRepoSettings.getInstance().getModuleSettingsKey();
+    // Classloader for qa functional tests is having trouble with loading NbBundle.  
+    // Path is hard-coded to avoid that issue instead of using 
+    // CentralRepoSettings.getInstance().getModuleSettingsKey()
+    private static final String PROPERTIES_FILE = "ModuleConfig/CentralRepository/CentralRepository";
     private static final String CR_DB_NAME = "testcentralrepo.db";
 
     private static final Path testDirectory = Paths.get(System.getProperty("java.io.tmpdir"), "CentralRepoDatamodelTest");
