@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2022 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -108,7 +108,12 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
                 Map<String, ReportModule> modules = (Map<String, ReportModule>) wiz.getProperty("modules");
                 ReportGenerator generator = new ReportGenerator(configName, panel); //NON-NLS
                 ReportWorker worker = new ReportWorker(() -> {
-                    generator.generateReports(modules);
+                    try {
+                        generator.generateReports(modules);
+                    } catch (ReportGenerationException ex) {
+                        // do nothing. the error message will be logged and 
+                        // displayed by the progress panel.
+                    }
                 });
                 worker.execute();
                 generator.displayProgressPanel();

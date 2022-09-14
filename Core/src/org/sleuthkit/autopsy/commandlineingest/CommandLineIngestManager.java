@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
+import org.sleuthkit.autopsy.ingest.profile.IngestProfilePaths;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 import org.sleuthkit.autopsy.report.infrastructure.ReportGenerator;
@@ -75,9 +76,9 @@ public class CommandLineIngestManager extends CommandLineManager {
     private Case caseForJob = null;
     private AutoIngestDataSource dataSource = null;
 
-    static int CL_SUCCESS = 0;
-    static int CL_RUN_FAILURE = -1;
-    static int CL_PROCESS_FAILURE = 1;
+    static final int CL_SUCCESS = 0;
+    static final int CL_RUN_FAILURE = -1;
+    static final int CL_PROCESS_FAILURE = -2;
 
     public CommandLineIngestManager() {
     }
@@ -543,7 +544,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                         ingestJobSettings = new IngestJobSettings(UserPreferences.getCommandLineModeIngestModuleContextString());
                     } else {
                         // load the custom ingest 
-                        ingestJobSettings = new IngestJobSettings(selectedProfile.toString());
+                        ingestJobSettings = new IngestJobSettings(IngestProfilePaths.getInstance().getIngestProfilePrefix() + selectedProfile.toString());
                         ingestJobSettings.setFileFilter(selectedFileSet);
                     }
 
