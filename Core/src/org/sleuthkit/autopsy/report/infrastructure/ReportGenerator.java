@@ -194,7 +194,7 @@ public class ReportGenerator {
             progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_unableToLoadConfig(configName));
             throw new ReportGenerationException(Bundle.ReportGenerator_error_unableToLoadConfig(configName));
         }
-        
+
         try {
             // generate reports for enabled modules
             for (Map.Entry<String, ReportModuleConfig> entry : config.getModuleConfigs().entrySet()) {
@@ -243,7 +243,7 @@ public class ReportGenerator {
                             tableSettings.setSelectedDataSources(Case.getCurrentCaseThrows().getSleuthkitCase()
                                     .getDataSources().stream().map(ds -> ds.getId()).collect(Collectors.toList()));
                         }
-                        
+
                         generateTableReport((TableReportModule) module, tableSettings); //NON-NLS
 
                     } else if (module instanceof FileReportModule) {
@@ -272,7 +272,7 @@ public class ReportGenerator {
                             progressIndicator.updateStatusLabel(Bundle.ReportGenerator_error_invalidSettings(moduleName));
                             continue;
                         }
-                    
+
                         generatePortableCaseReport((PortableCaseReportModule) module, (PortableCaseReportModuleSettings) settings);
 
                     } else {
