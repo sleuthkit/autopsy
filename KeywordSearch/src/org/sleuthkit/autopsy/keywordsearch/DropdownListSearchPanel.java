@@ -143,10 +143,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         searchAddListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (ingestRunning) {
-                    IngestSearchRunner.getInstance().addKeywordListsToAllJobs(listsTableModel.getSelectedLists());
-                    logger.log(Level.INFO, "Submitted enqueued lists to ingest"); //NON-NLS
-                } else {
+                if (!ingestRunning) {
                     searchAction(e);
                 }
             }
