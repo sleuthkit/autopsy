@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2021 Basis Technology Corp.
+ * Copyright 2011-2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -169,24 +169,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         EXTRACT_UTF8, ///< extract UTF8 text, true/false
     };
 
-    enum UpdateFrequency {
-
-        FAST(20),
-        AVG(10),
-        SLOW(5),
-        SLOWEST(1),
-        NONE(Integer.MAX_VALUE),
-        DEFAULT(5);
-        private final int time;
-
-        UpdateFrequency(int time) {
-            this.time = time;
-        }
-
-        int getTime() {
-            return time;
-        }
-    };
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
@@ -195,7 +177,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 //only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
 
-    private boolean startedSearching = false;
     private Lookup stringsExtractionContext;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
