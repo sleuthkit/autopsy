@@ -4,10 +4,6 @@ cannotParseXml=Unable to parse XML file:
 ChromeCacheExtract_adding_artifacts_msg=Chrome Cache: Adding %d artifacts for analysis.
 ChromeCacheExtract_adding_extracted_files_msg=Chrome Cache: Adding %d extracted files for analysis.
 ChromeCacheExtract_loading_files_msg=Chrome Cache: Loading files from %s.
-# {0} - module name
-# {1} - row number
-# {2} - table length
-# {3} - cache path
 ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}
 DataSourceUsage_AndroidMedia=Android Media Card
 DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card
@@ -167,21 +163,15 @@ Firefox.getDlV24.errMsg.errAnalyzeFile={0}: Error while trying to analyze file:{
 Firefox.getDlV24.errMsg.errParsingArtifacts={0}: Error parsing {1} Firefox web download artifacts.
 Progress_Message_Analyze_Registry=Analyzing Registry Files
 Progress_Message_Analyze_Usage=Data Sources Usage Analysis
-# {0} - browserName
 Progress_Message_Chrome_AutoFill=Chrome Auto Fill Browser {0}
-# {0} - browserName
 Progress_Message_Chrome_Bookmarks=Chrome Bookmarks Browser {0}
 Progress_Message_Chrome_Cache=Chrome Cache
-# {0} - browserName
 Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}
-# {0} - browserName
 Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}
 Progress_Message_Chrome_Extensions=Chrome Extensions {0}
 Progress_Message_Chrome_Favicons=Chrome Downloads Favicons {0}
 Progress_Message_Chrome_FormHistory=Chrome Form History
-# {0} - browserName
 Progress_Message_Chrome_History=Chrome History Browser {0}
-# {0} - browserName
 Progress_Message_Chrome_Logins=Chrome Logins Browser {0}
 Progress_Message_Chrome_Profiles=Chrome Profiles {0}
 Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks
@@ -238,6 +228,12 @@ Recently_Used_Artifacts_Winrar=Recently opened according to WinRAR MRU
 Registry_System_Bam=Recently Executed according to Background Activity Moderator (BAM)
 RegRipperFullNotFound=Full version RegRipper executable not found.
 RegRipperNotFound=Autopsy RegRipper executable not found.
+Sam_Security_Answer_1_Attribute_Display_Name=Security Answer 1
+Sam_Security_Answer_2_Attribute_Display_Name=Security Answer 2
+Sam_Security_Answer_3_Attribute_Display_Name=Security Answer 3
+Sam_Security_Question_1_Attribute_Display_Name=Security Question 1
+Sam_Security_Question_2_Attribute_Display_Name=Security Question 2
+Sam_Security_Question_3_Attribute_Display_Name=Security Question 3
 SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}.
 SearchEngineURLQueryAnalyzer.moduleName.text=Search Engine Query Analyzer
 SearchEngineURLQueryAnalyzer.engineName.none=NONE
