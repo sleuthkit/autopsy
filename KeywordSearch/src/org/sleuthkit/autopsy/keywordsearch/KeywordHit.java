@@ -54,7 +54,7 @@ class KeywordHit implements Comparable<KeywordHit> {
      *                       For some searches (ie substring, regex) this will be
      *                       different than the search term.
      *
-     */
+     */       
     KeywordHit(String solrDocumentId, String snippet, String hit) {
         this.snippet = StringUtils.stripToEmpty(snippet);
         this.hit = hit;
@@ -78,6 +78,14 @@ class KeywordHit implements Comparable<KeywordHit> {
             this.chunkId = Integer.parseInt(split[1]);
         }
     }
+    
+    KeywordHit(int chunkId, String snippet, String hit) {
+        this.snippet = StringUtils.stripToEmpty(snippet);
+        this.hit = hit;
+        this.chunkId = chunkId;
+        this.solrObjectId = 0;
+    }
+    
 
     String getHit() {
         return hit;

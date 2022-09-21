@@ -15,16 +15,13 @@ ExtractAllTermsReport.error.noOpenCase=No currently open case.
 ExtractAllTermsReport.export.error=Error During Unique Word Extraction
 ExtractAllTermsReport.exportComplete=Unique Word Extraction Complete
 ExtractAllTermsReport.getName.text=Extract Unique Words
-# {0} - Number of extracted terms
 ExtractAllTermsReport.numberExtractedTerms=Extracted {0} terms...
 ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and unique word extraction might yield incomplete results.<br />Do you want to proceed with unique word extraction anyway?</html>
-# {0} - Keyword search commit frequency
 ExtractAllTermsReport.search.noFilesInIdxMsg=No files are in index yet. Try again later. Index is updated every {0} minutes.
 ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try again later
 ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress
 ExtractAllTermsReport.startExport=Starting Unique Word Extraction
 ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>
-# {0} - Content name
 ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}
 GlobalEditListPanel.editKeyword.title=Edit Keyword
 GlobalEditListPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
@@ -228,7 +225,6 @@ KeywordSearchSettings.propertiesNSRL.text={0}_NSRL
 KeywordSearchSettings.propertiesScripts.text={0}_Scripts
 NoOpenCoreException.err.noOpenSorlCore.msg=No currently open Solr core.
 SearchRunner.query.exception.msg=Error performing query:
-# {0} - colelction name
 Server.deleteCore.exception.msg=Failed to delete Solr colelction {0}
 Server.exceptionMessage.unableToBackupCollection=Unable to backup Solr collection
 Server.exceptionMessage.unableToCreateCollection=Unable to create Solr collection
@@ -371,7 +367,6 @@ SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not conta
 SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from case directory: {0}
 # {0} - collection name
 SolrSearchService.exceptionMessage.unableToDeleteCollection=Unable to delete collection {0}
-SolrSearchService.indexingError=Unable to index blackboard artifact.
 SolrSearchService.ServiceName=Solr Keyword Search Service
 SolrSearchService.DeleteDataSource.msg=Error Deleting Solr data for data source id {0}
 DropdownSingleTermSearchPanel.dataSourceCheckBox.text=Restrict search to the selected data sources:
@@ -405,6 +400,7 @@ ExtractedContentPanel.pagesLabel.text=Page:
 KeywordSearchJobSettingsPanel.ocrCheckBox.text=Enable Optical Character Recognition (OCR)
 KeywordSearchJobSettingsPanel.limitedOcrCheckbox.text=<html>Only process PDFs, MS Office docs and images which are over 100KB in size or extracted from another file (Beta)</html>
 KeywordSearchJobSettingsPanel.ocrOnlyCheckbox.text=Only index text extracted using OCR
+KeywordSearchJobSettingsPanel.solrCheckbox.text=Add text to Solr Index
 TextZoomPanel.zoomInButton.text=
 TextZoomPanel.zoomOutButton.text=
 TextZoomPanel.zoomResetButton.text=Reset
