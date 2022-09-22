@@ -52,25 +52,28 @@ final class InlineSearcher {
             for(Keyword originalKeyword: keywords) {
                 List<KeywordHit> keywordHits = new ArrayList<>();
                 if(originalKeyword.searchTermIsLiteral()) {
-                    if(originalKeyword.searchTermIsWholeWord()) {
+                    if(!originalKeyword.searchTermIsWholeWord()) {
                         if(StringUtil.containsIgnoreCase(chunk.geLowerCasedChunk(), originalKeyword.getSearchTerm())) {
                             keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
                         }
                     } else {
                         String regex = ".*\\b" + Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()) + "\\b.*";
+                        Pattern pattern = Pattern.compile(regex);
+                        Matcher matcher = pattern.matcher(chunk.geLowerCasedChunk());
                         
-                        if(chunk.geLowerCasedChunk().matches(regex)) {
+                        if(matcher.find()) {
                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
                         } 
                     }
                 } else {
-                    String regex = Pattern.quote(originalKeyword.getSearchTerm());
+                    String regex = originalKeyword.getSearchTerm();
                     
                     try{
                         // validate the regex
-                        Pattern.compile(regex, java.util.regex.Pattern.UNICODE_CHARACTER_CLASS);
-
-                        if(chunk.geLowerCasedChunk().matches(regex)) {
+                        Pattern pattern = Pattern.compile(regex, java.util.regex.Pattern.UNICODE_CHARACTER_CLASS);
+                        Matcher matcher = pattern.matcher(chunk.geLowerCasedChunk());
+                        
+                        if(matcher.find()) {
                             keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
                         }
                     } catch(IllegalArgumentException ex) {

@@ -267,7 +267,7 @@ class Ingester {
                     Keyword orginialKeyword = entry.getKey();
                     List<KeywordHit> hitList = entry.getValue();
                     for(KeywordHit hit: hitList) {
-                        //hitArtifacts.add(KeywordArtifactUtilities.createKeywordHitArtifact((Content)source, orginialKeyword, orginialKeyword, hit, hit.getSnippet(), orginialKeyword.getListName(), sourceID));
+                        hitArtifacts.add(KeywordArtifactUtilities.createKeywordHitArtifact((Content)source, orginialKeyword, orginialKeyword, hit, hit.getSnippet(), orginialKeyword.getListName(), sourceID));
                     }
                 }
                 
