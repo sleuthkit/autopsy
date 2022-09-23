@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.core;
 
 import com.sun.jna.platform.win32.Kernel32;
 import java.awt.Cursor;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -369,7 +370,11 @@ public class Installer extends ModuleInstall {
         ensurePythonModulesFolderExists();
         ensureClassifierFolderExists();
         ensureOcrLanguagePacksFolderExists();
-        initJavaFx();
+
+        if (!GraphicsEnvironment.isHeadless()) {
+            initJavaFx();
+        }
+
         initializeSevenZip();
         for (ModuleInstall mi : packageInstallers) {
             try {
@@ -473,7 +478,10 @@ public class Installer extends ModuleInstall {
     @Override
     public boolean closing() {
         if (IngestRunningCheck.checkAndConfirmProceed(Bundle.Installer_closing_confirmationDialog_title(), Bundle.Installer_closing_confirmationDialog_message())) {
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            if (!GraphicsEnvironment.isHeadless() && RuntimeProperties.runningWithGUI()) {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            }
+
             FutureTask<Void> future = new FutureTask<>(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
@@ -491,7 +499,9 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.SEVERE, "Error closing the current case", ex);
                 MessageNotifyUtil.Message.error(Bundle.Installer_closing_messageBox_caseCloseExceptionMessage(ex.getMessage()));
             } finally {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                if (!GraphicsEnvironment.isHeadless() && RuntimeProperties.runningWithGUI()) {
+                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                }
             }
             return true;
         } else {
