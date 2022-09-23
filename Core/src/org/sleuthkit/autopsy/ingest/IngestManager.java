@@ -588,7 +588,7 @@ public class IngestManager implements IngestProgressSnapshotProvider {
                 }
             }
         }
-        
+
         List<IngestModuleError> errors = null;
         Case openCase;
         try {
