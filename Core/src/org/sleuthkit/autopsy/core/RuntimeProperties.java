@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2013-2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,7 @@ public class RuntimeProperties {
     
     /**
      * Sets or unsets a flag indicating whether or not the application is running in a target system.
-     * The flag can only be set once per application innvocation
+     * The flag can only be set once per application invocation
      * 
      * @param runningInTarget
      * 
@@ -76,12 +76,23 @@ public class RuntimeProperties {
 
     /**
      * Gets a flag indicating whether or not the application is running with a
-     * GUI.
+     * GUI. In addition to the Autopsy flag setting, it also checks whether the  
+     * AUTOPSY_HEADLESS environment variable is set. The environment variable is set 
+     * by some of the projects built on top of Autopsy platform. This is necessary 
+     * because sometimes this method is called from Installer classes, i.e. before 
+     * we have been able to determine whether we are running headless or not. 
+     * See JIRA-8422.
      *
      * @return True or false.
      */
     public synchronized static boolean runningWithGUI() {
-        return runningWithGUI;
+        if (System.getenv("AUTOPSY_HEADLESS") != null) {
+            // Some projects built on top of Autopsy platform set this environment 
+            // variable to make sure there are no UI popups
+            return false;
+        } else {
+            return runningWithGUI;
+        }
     }
 
     /**
