@@ -32,6 +32,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 public class KeywordArtifactUtilities {
+    
+    private KeywordArtifactUtilities() {}
+    
     /**
      * Adds a keyword hit artifact for a given keyword hit.
      *

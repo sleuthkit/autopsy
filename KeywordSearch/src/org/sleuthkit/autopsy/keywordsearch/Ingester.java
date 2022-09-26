@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.BufferedReader;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -31,17 +30,13 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Chunker.Chunk;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -52,7 +47,6 @@ import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -152,9 +146,9 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> boolean indexTextOrSearch(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
+    < T extends SleuthkitVisitableItem> boolean indexTextAndSearch(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
         boolean doLanguageDetection = true;
-        return indexTextOrSearch(sourceReader, sourceID, sourceName, source, context, doLanguageDetection,  indexIntoSolr, keywordListNames);
+        return indexTextAndSearch(sourceReader, sourceID, sourceName, source, context, doLanguageDetection,  indexIntoSolr, keywordListNames);
     }
     
     /**
@@ -179,7 +173,7 @@ class Ingester {
     < T extends SleuthkitVisitableItem> boolean indexStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr) throws Ingester.IngesterException {
         // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
         boolean doLanguageDetection = false;
-        return indexTextOrSearch(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, null);
+        return indexTextAndSearch(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, null);
     }
     
     /**
@@ -201,7 +195,7 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    private < T extends SleuthkitVisitableItem> boolean indexTextOrSearch(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection, boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
+    private < T extends SleuthkitVisitableItem> boolean indexTextAndSearch(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection, boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
         
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
@@ -260,29 +254,7 @@ class Ingester {
                 return false;
             }
             
-            Map<Keyword, List<KeywordHit>> map = searcher.getHitMap();
-            List<BlackboardArtifact> hitArtifacts = new ArrayList<>();
-            if(!map.isEmpty()) {
-                for (Map.Entry<Keyword, List<KeywordHit>> entry : map.entrySet()) {
-                    Keyword orginialKeyword = entry.getKey();
-                    List<KeywordHit> hitList = entry.getValue();
-                    for(KeywordHit hit: hitList) {
-                        hitArtifacts.add(KeywordArtifactUtilities.createKeywordHitArtifact((Content)source, orginialKeyword, orginialKeyword, hit, hit.getSnippet(), orginialKeyword.getListName(), sourceID));
-                    }
-                }
-                
-                if (!hitArtifacts.isEmpty()) {
-                    try {
-                        SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                        Blackboard blackboard = tskCase.getBlackboard();
-
-                        blackboard.postArtifacts(hitArtifacts, "KeywordSearch", context.getJobId());
-                    } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, "Failed to post KWH artifact to blackboard.", ex); //NON-NLS
-                    }
-                }
-            }
-            
+            searcher.makeArtifactsForChunk((Content)source, context, sourceID);
             
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
@@ -290,7 +262,7 @@ class Ingester {
         } finally {
             if (context != null && context.fileIngestIsCancelled()) {
                 return false;
-            } else {
+            } else if(indexIntoSolr){
                 Map<String, Object> fields = new HashMap<>(contentFields);
                 //after all chunks, index just the meta data, including the  numChunks, of the parent file
                 fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));

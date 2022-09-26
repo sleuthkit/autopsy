@@ -11,12 +11,21 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.validator.routines.DomainValidator;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Chunker.Chunk;
 import static org.sleuthkit.autopsy.keywordsearch.RegexQuery.CREDIT_CARD_NUM_PATTERN;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 
@@ -24,6 +33,7 @@ final class InlineSearcher {
     private final List<KeywordList> keywordList;
     private static final int MIN_EMAIL_ADDR_LENGTH = 8;
     private static final String SNIPPET_DELIMITER = String.valueOf(Character.toChars(171));
+    private static final Logger logger = Logger.getLogger(InlineSearcher.class.getName());
     
     private Map<Keyword, List<KeywordHit>> hitMap = new HashMap<>();
     
@@ -51,10 +61,17 @@ final class InlineSearcher {
             List<Keyword> keywords = list.getKeywords();
             for(Keyword originalKeyword: keywords) {
                 List<KeywordHit> keywordHits = new ArrayList<>();
+                Keyword keywordCopy = new Keyword(originalKeyword.getSearchTerm(), 
+                                                    originalKeyword.searchTermIsLiteral(),
+                                                    originalKeyword.searchTermIsWholeWord(),
+                                                    list.getName(),
+                                                    originalKeyword.getOriginalTerm());
+                
                 if(originalKeyword.searchTermIsLiteral()) {
                     if(!originalKeyword.searchTermIsWholeWord()) {
                         if(StringUtil.containsIgnoreCase(chunk.geLowerCasedChunk(), originalKeyword.getSearchTerm())) {
-                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
+                            
+                            keywordHits.addAll(createKeywordHits(chunk, keywordCopy));
                         }
                     } else {
                         String regex = ".*\\b" + Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()) + "\\b.*";
@@ -62,7 +79,7 @@ final class InlineSearcher {
                         Matcher matcher = pattern.matcher(chunk.geLowerCasedChunk());
                         
                         if(matcher.find()) {
-                           keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
+                           keywordHits.addAll(createKeywordHits(chunk, keywordCopy));
                         } 
                     }
                 } else {
@@ -70,11 +87,11 @@ final class InlineSearcher {
                     
                     try{
                         // validate the regex
-                        Pattern pattern = Pattern.compile(regex, java.util.regex.Pattern.UNICODE_CHARACTER_CLASS);
+                        Pattern pattern = Pattern.compile(regex);
                         Matcher matcher = pattern.matcher(chunk.geLowerCasedChunk());
                         
                         if(matcher.find()) {
-                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
+                            keywordHits.addAll(createKeywordHits(chunk, keywordCopy));
                         }
                     } catch(IllegalArgumentException ex) {
                         //TODO What should we do here? Log and continue?
@@ -82,10 +99,10 @@ final class InlineSearcher {
                 }
                 
                 if(!keywordHits.isEmpty()) {
-                    List<KeywordHit> mapHitList = hitMap.get(originalKeyword);
+                    List<KeywordHit> mapHitList = hitMap.get(keywordCopy);
                     if(mapHitList == null) {
                         mapHitList = new ArrayList<>();
-                        hitMap.put(originalKeyword, mapHitList);
+                        hitMap.put(keywordCopy, mapHitList);
                     }
                     
                     mapHitList.addAll(keywordHits);
@@ -129,7 +146,6 @@ final class InlineSearcher {
         final java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(searchPattern, java.util.regex.Pattern.CASE_INSENSITIVE);
 
         try {
-//            for (Object content_obj : content_str) {
                 String content = chunk.geLowerCasedChunk();
                 Matcher hitMatcher = pattern.matcher(content);
                 int offset = 0;
@@ -224,7 +240,7 @@ final class InlineSearcher {
                                  */
                                 if (hit.length() >= MIN_EMAIL_ADDR_LENGTH
                                         && DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
-                                    hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
+                                    hits.add(new KeywordHit(0, makeSnippet(content, hitMatcher, hit), hit));
                                 }
 
                                 break;
@@ -241,14 +257,14 @@ final class InlineSearcher {
                                     if (ccnMatcher.find()) {
                                         final String group = ccnMatcher.group("ccn");
                                         if (CreditCardValidator.isValidCCN(group)) {
-                                            hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
+                                            hits.add(new KeywordHit(0, makeSnippet(content, hitMatcher, hit), hit));
                                         }
                                     }
                                 }
 
                                 break;
                             default:
-                                hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
+                                hits.add(new KeywordHit(0, makeSnippet(content, hitMatcher, hit), hit));
                                 break;
                         }
                     }
@@ -263,9 +279,36 @@ final class InlineSearcher {
              * that it is logged by the calling method and move on to the next
              * Solr document.
              */
-            throw new TskCoreException("Failed to create keyword hits for Solr document id " + docId + " due to " + error.getMessage());
+            throw new TskCoreException("Failed to create keyword hits for chunk due to " + error.getMessage());
         }
         return hits;
+    }
+    
+    void makeArtifactsForChunk(Content content, IngestJobContext context, long sourceID) {
+        Map<Keyword, List<KeywordHit>> map = getHitMap();
+        List<BlackboardArtifact> hitArtifacts = new ArrayList<>();
+        if (!map.isEmpty()) {
+            for (Map.Entry<Keyword, List<KeywordHit>> entry : map.entrySet()) {
+                Keyword orginialKeyword = entry.getKey();
+                List<KeywordHit> hitList = entry.getValue();
+                for (KeywordHit hit : hitList) {
+                    hitArtifacts.add(KeywordArtifactUtilities.createKeywordHitArtifact(content, orginialKeyword, orginialKeyword, hit, hit.getSnippet(), orginialKeyword.getListName(), sourceID));
+                }
+            }
+
+            if (!hitArtifacts.isEmpty()) {
+                try {
+                    SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                    Blackboard blackboard = tskCase.getBlackboard();
+
+                    blackboard.postArtifacts(hitArtifacts, "KeywordSearch", context.getJobId());
+                } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, "Failed to post KWH artifact to blackboard.", ex); //NON-NLS
+                }
+            }
+        }
+        
+        map.clear();
     }
     
     /**

@@ -622,7 +622,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     finalReader = fileText;
                 }
                 //divide into chunks and index
-                return Ingester.getDefault().indexTextOrSearch(finalReader, aFile.getId(), aFile.getName(), aFile, context, settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists());
+                return Ingester.getDefault().indexTextAndSearch(finalReader, aFile.getId(), aFile.getName(), aFile, context, settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists());
             } catch (TextExtractor.InitReaderException ex) {
                 // Text extractor could not be initialized.  No text will be extracted.
                 return false;
@@ -870,7 +870,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 Reader textReader = textFileExtractor.getReader();
                 if (textReader == null) {
                     logger.log(Level.INFO, "Unable to extract with TextFileExtractor, Reader was null for file: {0}", aFile.getName());
-                } else if (Ingester.getDefault().indexTextOrSearch(textReader, aFile.getId(), aFile.getName(), aFile, context, settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists())) {
+                } else if (Ingester.getDefault().indexTextAndSearch(textReader, aFile.getId(), aFile.getName(), aFile, context, settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists())) {
                     textReader.close();
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                     return true;
