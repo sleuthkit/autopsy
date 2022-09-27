@@ -176,6 +176,12 @@ class Ingester {
         return indexTextAndSearch(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, null);
     }
     
+    < T extends SleuthkitVisitableItem> boolean indexAndSearchStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
+        // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
+        boolean doLanguageDetection = false;
+        return indexTextAndSearch(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, keywordListNames);
+    }
+    
     /**
      * Read and chunk the source text for indexing in Solr.
      *
@@ -252,10 +258,9 @@ class Ingester {
             if (chunker.hasException()) {
                 logger.log(Level.WARNING, "Error chunking content from " + sourceID + ": " + sourceName, chunker.getException());
                 return false;
-            }
+            } 
             
-            searcher.makeArtifactsForChunk((Content)source, context, sourceID);
-            
+            searcher.makeArtifacts((Content)source, context, sourceID);
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;

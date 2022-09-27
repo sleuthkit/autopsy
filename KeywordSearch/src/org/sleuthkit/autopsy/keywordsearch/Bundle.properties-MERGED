@@ -17,6 +17,7 @@ ExtractAllTermsReport.exportComplete=Unique Word Extraction Complete
 ExtractAllTermsReport.getName.text=Extract Unique Words
 ExtractAllTermsReport.numberExtractedTerms=Extracted {0} terms...
 ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and unique word extraction might yield incomplete results.<br />Do you want to proceed with unique word extraction anyway?</html>
+# {0} - Keyword search commit frequency
 ExtractAllTermsReport.search.noFilesInIdxMsg=No files are in index yet. Try again later. Index is updated every {0} minutes.
 ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try again later
 ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress
@@ -352,15 +353,20 @@ SolrSearch.checkingForLatestIndex.msg=Looking for text index with latest Solr an
 SolrSearch.complete.msg=Text index successfully opened
 SolrSearch.creatingNewIndex.msg=Creating new text index
 SolrSearch.findingIndexes.msg=Looking for existing text index directories
+# {0} - futureVersion
+# {1} - currentVersion
 SolrSearch.futureIndexVersion.msg=The text index for the case is for Solr {0}. This version of Autopsy is compatible with Solr {1}.
 SolrSearch.indentifyingIndex.msg=Identifying text index to use
 SolrSearch.lookingForMetadata.msg=Looking for text index metadata file
 SolrSearch.openCore.msg=Opening text index. For large cases this may take several minutes.
 SolrSearch.readingIndexes.msg=Reading text index metadata file
 SolrSearch.unableToFindIndex.msg=Unable to find index that can be used for this case
+# {0} - index folder path
 SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}
 SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case
+# {0} - case directory
 SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from case directory: {0}
+# {0} - collection name
 SolrSearchService.exceptionMessage.unableToDeleteCollection=Unable to delete collection {0}
 SolrSearchService.ServiceName=Solr Keyword Search Service
 SolrSearchService.DeleteDataSource.msg=Error Deleting Solr data for data source id {0}

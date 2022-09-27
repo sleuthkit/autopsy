@@ -20,11 +20,14 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
 import java.io.File;
+import java.util.regex.Matcher;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import org.openide.windows.WindowManager;
 
 class KeywordSearchUtil {
+    
+    private static final String SNIPPET_DELIMITER = String.valueOf(Character.toChars(171));
 
     public enum DIALOG_MESSAGE_TYPE {
 
@@ -141,6 +144,30 @@ class KeywordSearchUtil {
             }
         }
         return query;
+    }
+    
+    /**
+     * Make a snippet from the given content that has the given hit plus some
+     * surrounding context.
+     *
+     * @param content    The content to extract the snippet from.
+     *
+     * @param hitMatcher The Matcher that has the start/end info for where the
+     *                   hit is in the content.
+     * @param hit        The actual hit in the content.
+     *
+     * @return A snippet extracted from content that contains hit plus some
+     *         surrounding context.
+     */
+    static String makeSnippet(String content, Matcher hitMatcher, String hit) {
+        // Get the snippet from the document.
+        int maxIndex = content.length() - 1;
+        final int end = hitMatcher.end();
+        final int start = hitMatcher.start();
+
+        return content.substring(Integer.max(0, start - 20), Integer.max(0, start))
+                + SNIPPET_DELIMITER + hit + SNIPPET_DELIMITER
+                + content.substring(Integer.min(maxIndex, end), Integer.min(maxIndex, end + 20));
     }
 
     /**

@@ -394,7 +394,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (context.fileIngestIsCancelled()) {
                 return ProcessResult.OK;
             }
-            indexer.indexOrSearchFile(extractorOpt, abstractFile, mimeType, false);
+            indexer.indexAndSearchFile(extractorOpt, abstractFile, mimeType, false);
             return ProcessResult.OK;
         }
 
@@ -402,7 +402,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         if (context.fileIngestIsCancelled()) {
             return ProcessResult.OK;
         }
-        indexer.indexOrSearchFile(extractorOpt, abstractFile, mimeType, true);
+        indexer.indexAndSearchFile(extractorOpt, abstractFile, mimeType, true);
 
         
         // Start searching if it hasn't started already
@@ -724,7 +724,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 }
                 TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(aFile, stringsExtractionContext);
                 Reader extractedTextReader = stringsExtractor.getReader();
-                if (Ingester.getDefault().indexStrings(extractedTextReader, aFile.getId(), aFile.getName(), aFile, KeywordSearchIngestModule.this.context, settings.isIndexToSolrEnabled())) {
+                if (Ingester.getDefault().indexAndSearchStrings(extractedTextReader, aFile.getId(), aFile.getName(), aFile, KeywordSearchIngestModule.this.context, settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists())) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {
@@ -749,7 +749,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @param indexContent False if only metadata should be text_ingested.
          *                     True if content and metadata should be index.
          */
-        private void indexOrSearchFile(Optional<TextExtractor> extractor, AbstractFile aFile, String mimeType, boolean indexContent) {
+        private void indexAndSearchFile(Optional<TextExtractor> extractor, AbstractFile aFile, String mimeType, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
 
             TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
