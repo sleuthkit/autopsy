@@ -44,8 +44,8 @@ Misc:
 - The Communication window Message Viewer Threads panel layout was cleaned up so 
   that the buttons are visible despite the subject length.
 - Limit ingest inbox messages to first 20 keyword hits
-- GStreamer update to version XXX
-- libheif v1.12.0 replaces imagemajick
+- GStreamer update to version 1.20.0
+- libheif v1.12.0 replaces ImageMagick
 - Removal of 32bit verison of Autopsy
 
 ---------------- VERSION 4.19.3  --------------
