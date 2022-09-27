@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2022 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
@@ -31,10 +44,9 @@ final class InlineSearcher {
 
     private final List<KeywordList> keywordList;
     private static final int MIN_EMAIL_ADDR_LENGTH = 8;
-    private static final String SNIPPET_DELIMITER = String.valueOf(Character.toChars(171));
     private static final Logger logger = Logger.getLogger(InlineSearcher.class.getName());
 
-    private Map<Keyword, Map<Keyword, List<KeywordHit>>> hitByKeyword = new HashMap<>();
+    private final Map<Keyword, Map<Keyword, List<KeywordHit>>> hitByKeyword = new HashMap<>();
 
     InlineSearcher(List<String> keywordListNames) {
         this.keywordList = new ArrayList<>();
@@ -104,18 +116,25 @@ final class InlineSearcher {
                         }
                         mapHitList.add(hit);
                     }
-
                 }
             }
         }
     }
 
+    /**
+     * This method very similar to RegexQuery createKeywordHits, with the knowledge
+     * of solr removed.
+     * 
+     * @param chunk
+     * @param originalKeyword
+     * @return
+     * @throws TskCoreException 
+     */
     private List<KeywordHit> createKeywordHits(Chunk chunk, Keyword originalKeyword) throws TskCoreException {
 
         final HashMap<String, String> keywordsFoundInThisDocument = new HashMap<>();
 
         List<KeywordHit> hits = new ArrayList<>();
-        final String docId = "";
         String keywordString = originalKeyword.getSearchTerm();
 
         boolean queryStringContainsWildcardSuffix = originalKeyword.getSearchTerm().endsWith(".*");
