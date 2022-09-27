@@ -120,6 +120,12 @@ import org.sleuthkit.datamodel.TskDataException;
     "Shellbag_Artifact_Display_Name=Shell Bags",
     "Shellbag_Key_Attribute_Display_Name=Key",
     "Shellbag_Last_Write_Attribute_Display_Name=Last Write",
+    "Sam_Security_Question_1_Attribute_Display_Name=Security Question 1",
+    "Sam_Security_Answer_1_Attribute_Display_Name=Security Answer 1",
+    "Sam_Security_Question_2_Attribute_Display_Name=Security Question 2",
+    "Sam_Security_Answer_2_Attribute_Display_Name=Security Answer 2",
+    "Sam_Security_Question_3_Attribute_Display_Name=Security Question 3",
+    "Sam_Security_Answer_3_Attribute_Display_Name=Security Answer 3",
     "Recently_Used_Artifacts_Office_Trustrecords=Stored in TrustRecords because Office security exception was granted",
     "Recently_Used_Artifacts_ArcHistory=Recently opened by 7Zip",
     "Recently_Used_Artifacts_Applets=Recently opened according to Applets registry key",
@@ -157,7 +163,13 @@ class ExtractRegistry extends Extract {
     private static final String SERVER_TRUST_ACCOUNT = "Server trust account";
     private static final String ACCOUNT_AUTO_LOCKED = "Account auto locked";
     private static final String PASSWORD_HINT = "Password Hint";
-
+    private static final String SECURITY_QUESTION_1 = "Question 1";
+    private static final String SECURITY_ANSWER_1 = "Answer 1";
+    private static final String SECURITY_QUESTION_2 = "Question 2";
+    private static final String SECURITY_ANSWER_2 = "Answer 2";
+    private static final String SECURITY_QUESTION_3 = "Question 3";
+    private static final String SECURITY_ANSWER_3 = "Answer 3";
+    
     private static final String[] PASSWORD_SETTINGS_FLAGS = {PWD_DOES_NOT_EXPIRE_KEY, PWD_NOT_REQUIRED_KEY};
     private static final String[] ACCOUNT_SETTINGS_FLAGS = {ACCOUNT_AUTO_LOCKED, HOME_DIRECTORY_REQUIRED_KEY, ACCOUNT_DISABLED_KEY};
     private static final String[] ACCOUNT_TYPE_FLAGS = {NORMAL_ACCOUNT_KEY, SERVER_TRUST_ACCOUNT, WORKSTATION_TRUST_ACCOUNT, INTERDOMAIN_TRUST_ACCOUNT_KEY, MNS_LOGON_ACCOUNT_KEY, TEMPORARY_DUPLICATE_ACCOUNT};
@@ -185,6 +197,13 @@ class ExtractRegistry extends Extract {
     private static final String SHELLBAG_ARTIFACT_NAME = "RA_SHELL_BAG"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_LAST_WRITE = "RA_SHELL_BAG_LAST_WRITE"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_KEY = "RA_SHELL_BAG_KEY"; //NON-NLS
+    private static final String SAM_SECURITY_QUESTION_1 = "RA_SAM_QUESTION_1"; //NON-NLS;
+    private static final String SAM_SECURITY_ANSWER_1 = "RA_SAM_ANSWER_1"; //NON-NLS;
+    private static final String SAM_SECURITY_QUESTION_2 = "RA_SAM_QUESTION_2"; //NON-NLS;
+    private static final String SAM_SECURITY_ANSWER_2 = "RA_SAM_ANSWER_2"; //NON-NLS;
+    private static final String SAM_SECURITY_QUESTION_3 = "RA_SAM_QUESTION_3"; //NON-NLS;
+    private static final String SAM_SECURITY_ANSWER_3 = "RA_SAM_ANSWER_3"; //NON-NLS;
+    
 
     private static final SimpleDateFormat REG_RIPPER_TIME_FORMAT = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
 
@@ -2169,7 +2188,85 @@ class ExtractRegistry extends Extract {
                         time, osAccount, host, regFile));
             }
         }
-
+        
+        value = userInfo.get(SECURITY_QUESTION_1);
+        if (value != null && !value.isEmpty()) {
+            BlackboardAttribute.Type securityQuestionAttributeType = null;
+            try {
+                    securityQuestionAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SAM_SECURITY_QUESTION_1,
+                            BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                            Bundle.Sam_Security_Question_1_Attribute_Display_Name());
+            } catch (BlackboardException ex) {
+                    throw new TskCoreException(String.format("Failed to get key attribute %s", SAM_SECURITY_QUESTION_1), ex);
+            }
+            attributes.add(createOsAccountAttribute(securityQuestionAttributeType, value, osAccount, host, regFile));
+        }
+        
+        value = userInfo.get(SECURITY_ANSWER_1);
+        if (value != null && !value.isEmpty()) {
+            BlackboardAttribute.Type securityAnswerAttributeType = null;
+            try {
+                    securityAnswerAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SAM_SECURITY_ANSWER_1,
+                            BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                            Bundle.Sam_Security_Answer_1_Attribute_Display_Name());
+            } catch (BlackboardException ex) {
+                    throw new TskCoreException(String.format("Failed to get key attribute %s", SAM_SECURITY_ANSWER_1), ex);
+            }
+            attributes.add(createOsAccountAttribute(securityAnswerAttributeType, value, osAccount, host, regFile));
+        }
+        
+        value = userInfo.get(SECURITY_QUESTION_2);
+        if (value != null && !value.isEmpty()) {
+            BlackboardAttribute.Type securityQuestionAttributeType = null;
+            try {
+                    securityQuestionAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SAM_SECURITY_QUESTION_2,
+                            BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                            Bundle.Sam_Security_Question_2_Attribute_Display_Name());
+            } catch (BlackboardException ex) {
+                    throw new TskCoreException(String.format("Failed to get key attribute %s", SAM_SECURITY_QUESTION_2), ex);
+            }
+            attributes.add(createOsAccountAttribute(securityQuestionAttributeType, value, osAccount, host, regFile));
+        }
+        
+        value = userInfo.get(SECURITY_ANSWER_2);
+        if (value != null && !value.isEmpty()) {
+            BlackboardAttribute.Type securityAnswerAttributeType = null;
+            try {
+                    securityAnswerAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SAM_SECURITY_ANSWER_2,
+                            BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                            Bundle.Sam_Security_Answer_2_Attribute_Display_Name());
+            } catch (BlackboardException ex) {
+                    throw new TskCoreException(String.format("Failed to get key attribute %s", SAM_SECURITY_ANSWER_2), ex);
+            }
+            attributes.add(createOsAccountAttribute(securityAnswerAttributeType, value, osAccount, host, regFile));
+        }
+        
+        value = userInfo.get(SECURITY_QUESTION_3);
+        if (value != null && !value.isEmpty()) {
+            BlackboardAttribute.Type securityQuestionAttributeType = null;
+            try {
+                    securityQuestionAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SAM_SECURITY_QUESTION_3,
+                            BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                            Bundle.Sam_Security_Question_2_Attribute_Display_Name());
+            } catch (BlackboardException ex) {
+                    throw new TskCoreException(String.format("Failed to get key attribute %s", SAM_SECURITY_QUESTION_3), ex);
+            }
+            attributes.add(createOsAccountAttribute(securityQuestionAttributeType, value, osAccount, host, regFile));
+        }
+        
+        value = userInfo.get(SECURITY_ANSWER_3);
+        if (value != null && !value.isEmpty()) {
+            BlackboardAttribute.Type securityAnswerAttributeType = null;
+            try {
+                    securityAnswerAttributeType = tskCase.getBlackboard().getOrAddAttributeType(SAM_SECURITY_ANSWER_3,
+                            BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                            Bundle.Sam_Security_Answer_3_Attribute_Display_Name());
+            } catch (BlackboardException ex) {
+                    throw new TskCoreException(String.format("Failed to get key attribute %s", SAM_SECURITY_ANSWER_3), ex);
+            }
+            attributes.add(createOsAccountAttribute(securityAnswerAttributeType, value, osAccount, host, regFile));
+        }
+        
         value = userInfo.get(PASSWORD_HINT);
         if (value != null && !value.isEmpty()) {
             attributes.add(createOsAccountAttribute(ATTRIBUTE_TYPE.TSK_PASSWORD_HINT,
@@ -2247,6 +2344,21 @@ class ExtractRegistry extends Extract {
         }
 
         return "";
+    }
+
+    /**
+     * Helper for constructing a new OsAccountAttribute
+     *
+     * @param type      Attribute type
+     * @param value     The value to store
+     * @param osAccount The OsAccount this attribute belongs to
+     * @param host      The Host related to the OsAccount
+     * @param file      The source where the attribute was found.
+     *
+     * @return Newly created OsACcountAttribute
+     */
+    private OsAccountAttribute createOsAccountAttribute(BlackboardAttribute.Type type, String value, OsAccount osAccount, Host host, AbstractFile file) {
+        return osAccount.new OsAccountAttribute(type, value, osAccount, host, file);
     }
 
     /**
