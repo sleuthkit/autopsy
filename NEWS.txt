@@ -1,3 +1,53 @@
+---------------- VERSION 4.19.4  --------------
+Recent Activity Updates:
+- Added Favicons, Profiles and Extensions to Chromium Browsers
+- Added Security Questions/Answers from SAM registry Hive
+
+Datasource Processing
+- Added Jython Support
+- Added example Python plugin
+
+Linux / Mac Improvements
+- Script to install prerequisites using Homebrew and debian package. 
+- Script that allows you to install TSK from source
+- Script that sets JAVA home per install
+- Updating Linux and Mac Installation Documentation
+
+Command Line Interface
+- Simplified command line input parameters
+- Command Line Interface changes - The -listAllIngestProfiles switch was added, 
+  the initialization code was modified to make the java.exe switch –nogui work 
+  (splash screen will appear, but framework window will not), and return codes 
+  will be pushed up so that the return value of java.exe reflects the return 
+  value of our application.
+
+Bug Fixes:
+- Solr 8.11.2 Upgrade which includes update to Log4j to verison 2.17.1
+- Change Timezone format for Plaso output.
+- Regex fix for Mbox parsing.
+- Portable Case report string index out of range -1 fixed
+- Extracting files, numbering of files and overwriting of files.
+- Image tagging
+- Joda-Time updated from 2.4 to 2.10 -  fixes certain timezone errors
+
+Misc:
+- Update to USB id's.
+- Update Tesseract to 4.10.
+- Config changes - moves config settings that could/should be moved to a separate 
+  computer to a common config folder.  Those settings can be zipped and taken 
+  to a different computer and extracted.
+- File filter exclude rules:  For interesting files and file filters, you can now 
+  create rules that will exclude certain files in addition to including them.
+- Adds host to artifact content viewer.
+- When an OS Account is selected the Other Occurences tab will no longer show the 
+  open case in the case list.
+- The Communication window Message Viewer Threads panel layout was cleaned up so 
+  that the buttons are visible despite the subject length.
+- Limit ingest inbox messages to first 20 keyword hits
+- GStreamer update to version 1.20.0
+- libheif v1.12.0 replaces ImageMagick
+- Removal of 32bit verison of Autopsy
+
 ---------------- VERSION 4.19.3  --------------
 Bug Fixes:
 - Updates for log4j vulnerabilities. 
