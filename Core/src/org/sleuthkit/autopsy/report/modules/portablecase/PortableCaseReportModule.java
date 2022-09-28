@@ -1378,7 +1378,7 @@ public class PortableCaseReportModule implements ReportModule {
             }
 
             try {
-                OsAccountRealm newRealm = newRealmManager.newWindowsRealm(oldRealm.getRealmAddr().orElse(null), realmName, newHost, oldRealm.getScope());
+                OsAccountRealm newRealm = newRealmManager.newWindowsRealm(oldOsAccount.getAddr().orElse(null), realmName, newHost, oldRealm.getScope());
                 oldRealmIdToNewRealm.put(oldOsAccount.getRealmId(), newRealm);
             } catch (NotUserSIDException ex) {
                 throw new TskCoreException("Failed to copy OsAccountRealm with ID=" + oldOsAccount.getRealmId(), ex);
