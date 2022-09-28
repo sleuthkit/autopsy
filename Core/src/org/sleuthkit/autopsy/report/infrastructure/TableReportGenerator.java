@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -56,6 +57,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -1222,10 +1224,14 @@ class TableReportGenerator {
      *
      * @return a list of the filtered tags.
      */
-    private List<ArtifactData> getFilteredArtifacts(BlackboardArtifact.Type type, HashSet<String> tagNamesFilter) {
+    private List<ArtifactData> getFilteredArtifacts(BlackboardArtifact.Type type, HashSet<String> tagNamesFilter) {               
         List<ArtifactData> artifacts = new ArrayList<>();
         try {
-            for (BlackboardArtifact artifact : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(Collections.singletonList(type), settings.getSelectedDataSources())) {
+            List<Long> dsIds = settings.getSelectedDataSources() != null
+                ? settings.getSelectedDataSources() 
+                : Case.getCurrentCaseThrows().getSleuthkitCase().getDataSources().stream().map(DataSource::getId).collect(Collectors.toList());
+                            
+            for (BlackboardArtifact artifact : Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard().getArtifacts(Collections.singletonList(type), dsIds)) {
                 if (shouldFilterFromReport(artifact)) {
                     continue;
                 }
