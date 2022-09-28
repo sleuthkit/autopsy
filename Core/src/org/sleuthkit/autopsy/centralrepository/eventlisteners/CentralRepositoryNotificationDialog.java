@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,11 +30,22 @@ import org.sleuthkit.autopsy.coreutils.Version;
 public class CentralRepositoryNotificationDialog {
 
     /**
-     * This dialog should display iff the mode is RELEASE and the
-     * application is running with a GUI.
+     * This dialog should display if the mode is RELEASE and the application is
+     * running with a GUI. In addition to the Autopsy flag setting, it also
+     * checks whether the AUTOPSY_HEADLESS environment variable is set. The
+     * environment variable is set by some of the projects built on top of
+     * Autopsy platform. This is necessary because sometimes this method is
+     * called from Installer classes, i.e. before we have been able to determine
+     * whether we are running headless or not. See JIRA-8422.
      */
     static boolean shouldDisplay() {
-        return Version.getBuildType() == Version.Type.RELEASE 
+        if (System.getenv("AUTOPSY_HEADLESS") != null) {
+            // Some projects built on top of Autopsy platform set this environment 
+            // variable to make sure there are no UI popups
+            return false;
+        }
+
+        return Version.getBuildType() == Version.Type.RELEASE
                 && RuntimeProperties.runningWithGUI();
     }
 
