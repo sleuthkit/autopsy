@@ -50,7 +50,14 @@ The file filters panel can be opened from the ingest module selection panel or t
 
 \image html ingest-file-filters.PNG
 
-Each filter contains one or more rules for selecting files based on a combination of file name, path, file size, and how recently the file was modified. Only one rule needs to match for the file to pass. Additionally, you can enter multiple comma-separated file extensions. All files will still be displayed in the tree view, but the ingest modules will only run on a subset. If we use the previous example and run the hash module, only files ending in .png will have their hash computed.
+Each filter contains one or more rules for selecting files based on a combination of file name, path, file size, and how recently the file was modified. A file will match a rule set based on these conventions:
+<ul>
+    <li>If there are no rules in a rule set, no file will match the set.</li>
+    <li>If there are only rules that exclude files, as long as the file doesn’t match one of the exclusive rules, it is included in the set.</li>
+    <li>If both inclusive rules and exclusive rules are present, a file must match one of the inclusive rules and not match any of the exclusive rules to be included in the set.</li>
+    <li>If there are only inclusive rules, a file must match one of the rules to be included in the set.</li>
+</ul>    
+Additionally, you can enter multiple comma-separated file extensions. All files will still be displayed in the tree view, but the ingest modules will only run on a subset. If we use the previous example and run the hash module, only files ending in .png will have their hash computed.
 
 \section ingest_profiles Using Ingest Profiles
 
