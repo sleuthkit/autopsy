@@ -60,15 +60,14 @@ public class LocalDisk {
     public long getSize() {
         return size;
     }
-
+   
     /**
-     * NOTE: Currently works only under Linux
-     * @returns empty string if unknown 
+     * Returns details about the mount point 
+     * of the drive as well as if it is an Autopsy 
+     * config or iso.
+     * 
+     * NOTE: Currently only works for linux.
      */
-    public String getMountPoint() {
-        return mountPoint;
-    }
-    
     public String getDetail() {
         if(isConfigDrive()) {
             return mountPoint + ", " + "Autopsy Config";
@@ -120,7 +119,7 @@ public class LocalDisk {
      * Does this drive contain an AutopsyConfig folder?
      * requires the mount point to be known
      */
-    public boolean isConfigDrive() {        
+    private boolean isConfigDrive() {        
         Path path = Paths.get(this.mountPoint, "AutopsyConfig");
         File configFile = new File(path.toString());
         return configFile.exists();
@@ -130,7 +129,7 @@ public class LocalDisk {
      * Need to better define what this method does..
      * I (BC) am not sure it should be public API. 
      */
-    public boolean isAutopsyISO() {
+    private boolean isAutopsyISO() {
         Path path = Paths.get(this.mountPoint);
         return path.toString().equals("/cdrom");
     }

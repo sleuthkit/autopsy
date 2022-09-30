@@ -168,6 +168,7 @@ LocalDiskPanel.imageWriterError.isDirectory=Error - VHD path is a directory
 LocalDiskPanel.localDiskMessage.unspecified=Unspecified
 LocalDiskPanel.moduleErrorMessage.body=A module caused an error listening to LocalDiskPanel updates. See log to determine which module. Some data could be incomplete.
 LocalDiskPanel.moduleErrorMessage.title=Module Error
+LocalDiskSelectionDialog.columnName.Details=Details
 LocalDiskSelectionDialog.columnName.diskName=Disk Name
 LocalDiskSelectionDialog.columnName.diskSize=Disk Size
 LocalDiskSelectionDialog.errorMessage.disksNotDetected=Disks were not detected. On some systems it requires admin privileges (or "Run as administrator").

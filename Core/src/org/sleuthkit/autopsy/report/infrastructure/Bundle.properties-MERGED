@@ -9,6 +9,21 @@ PortableCaseTagsListPanel.error.noOpenCase=There is no case open
 ReportGenerator.artTableColHdr.comment=Comment
 ReportGenerator.errList.failedGetBBArtifactTags=Failed to get result tags.
 ReportGenerator.errList.noOpenCase=No open case available.
+# {0} - report module name
+ReportGenerator.error.exception=Exception while running report module {0}
+# {0} - report module name
+ReportGenerator.error.invalidSettings=Invalid settings for report module {0}
+# {0} - report module name
+ReportGenerator.error.moduleNotFound=Report module {0} not found
+# {0} - report module name
+ReportGenerator.error.noFileReportSettings=No file report settings for report module {0}
+ReportGenerator.error.noReportModules=No report modules found
+# {0} - report module name
+ReportGenerator.error.noTableReportSettings=No table report settings for report module {0}
+# {0} - report configuration name
+ReportGenerator.error.unableToLoadConfig=Unable to load reporting configuration {0}.
+# {0} - report module name
+ReportGenerator.error.unsupportedType=Report module {0} has unsupported report module type
 ReportGenerator.tagTable.header.userName=User Name
 ReportProgressIndicator.cancelledMessage=Report generation cancelled
 ReportProgressIndicator.completedMessage=Report generation completed

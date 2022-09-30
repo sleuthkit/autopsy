@@ -334,22 +334,14 @@ public class PlatformUtil {
     public static boolean isWindowsOS() {
         return PlatformUtil.getOSName().toLowerCase().contains("windows"); //NON-NLS
     }
+
     /**
      * Check if running on Linux OS
      *
      * @return true if running on Linux OS
      */
     public static boolean isLinuxOS() {
-        return PlatformUtil.getOSName().toLowerCase().contains("nux");
-    }
-    
-    /**
-     * Check if running on MAC OS
-     * 
-     * @return true if running on MAC OS
-     */
-    public static boolean isMacOS() {
-        return PlatformUtil.getOSName().toLowerCase().contains("mac");
+        return PlatformUtil.getOSName().toLowerCase().contains("linux");
     }
 
     /**
@@ -428,7 +420,7 @@ public class PlatformUtil {
             File[] files = dev.listFiles();
             for (File f : files) {
                 String name = f.getName();
-                if ((name.contains("hd") || name.contains("sd") || name.contains("disk")) && f.canRead() && name.length() == drivelength) { //NON-NLS
+                if ((name.contains("hd") || name.contains("sd") || name.contains("disk")) && f.canRead() && name.length() <= drivelength) { //NON-NLS
                     String path = "/dev/" + name; //NON-NLS
                     if (canReadDrive(path)) {
                         try {
@@ -472,7 +464,7 @@ public class PlatformUtil {
             File[] files = dev.listFiles();
             for (File f : files) {
                 String name = f.getName();
-                if ((name.contains("hd") || name.contains("sd") || name.contains("disk")) && f.canRead() && name.length() == partitionLength) { //NON-NLS
+                if ((name.contains("hd") || name.contains("sd") || name.contains("disk")) && f.canRead() && name.length() <= partitionLength) { //NON-NLS
                     String path = "/dev/" + name; //NON-NLS
                     if (canReadDrive(path)) {
                         drives.add(new LocalDisk(path, path, f.getTotalSpace()));
