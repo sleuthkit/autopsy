@@ -53,8 +53,11 @@ public final class FilesSet implements Serializable {
 
     private final Map<String, Rule> rules;
     
-    private final Map<String, Rule> inclusiveRules;
-    private final Map<String, Rule> exclusiveRules;
+    // NOTE: these fields are derived from 'rules' which may happen at runtime 
+    // due to deserialization of older FilesSet objects before inclusive and 
+    // exclusive rules existed.
+    private Map<String, Rule> inclusiveRules;
+    private Map<String, Rule> exclusiveRules;
 
     /**
      * Constructs an interesting files set.
@@ -108,16 +111,24 @@ public final class FilesSet implements Serializable {
         this.ignoreUnallocatedSpace = ignoreUnallocatedSpace;
         this.rules = rules == null ? Collections.emptyMap() : new HashMap<>(rules);
         
+        divideInclusiveExclusive();
+    }
+
+    /**
+     * Divides rules into inclusive and exclusive rules setting object fields.
+     */
+    private void divideInclusiveExclusive() {
         Map<String, Rule> inclusiveRules = new HashMap<>();
         Map<String, Rule> exclusiveRules = new HashMap<>();
-        for (Entry<String, Rule> ruleEntry : rules.entrySet()) {
-            if (ruleEntry.getValue().isExclusive()) {
-                exclusiveRules.put(ruleEntry.getKey(), ruleEntry.getValue());
-            } else {
-                inclusiveRules.put(ruleEntry.getKey(), ruleEntry.getValue());
+        if (this.rules != null) {
+            for (Entry<String, Rule> ruleEntry : this.rules.entrySet()) {
+                if (ruleEntry.getValue().isExclusive()) {
+                    exclusiveRules.put(ruleEntry.getKey(), ruleEntry.getValue());
+                } else {
+                    inclusiveRules.put(ruleEntry.getKey(), ruleEntry.getValue());
+                }
             }
         }
-        
         this.inclusiveRules = inclusiveRules;
         this.exclusiveRules = exclusiveRules;
     }
@@ -210,6 +221,10 @@ public final class FilesSet implements Serializable {
                 || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
                 || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
             return null;
+        }
+        
+        if (inclusiveRules == null || exclusiveRules == null) {
+            divideInclusiveExclusive();
         }
 
 
