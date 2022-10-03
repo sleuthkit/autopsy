@@ -71,8 +71,6 @@ public class LocalDisk {
     public String getDetail() {
         if(isConfigDrive()) {
             return mountPoint + ", " + "Autopsy Config";
-        } else if (isAutopsyISO()) {
-            return mountPoint + ", " + "Autopsy ISO";
         }
         return mountPoint;
     }
@@ -123,14 +121,5 @@ public class LocalDisk {
         Path path = Paths.get(this.mountPoint, "AutopsyConfig");
         File configFile = new File(path.toString());
         return configFile.exists();
-    }
-    
-    /**
-     * Need to better define what this method does..
-     * I (BC) am not sure it should be public API. 
-     */
-    private boolean isAutopsyISO() {
-        Path path = Paths.get(this.mountPoint);
-        return path.toString().equals("/cdrom");
     }
 }
