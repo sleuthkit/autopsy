@@ -82,7 +82,7 @@ fi
 
 echo "Setting up application at $APPLICATION_EXTRACTED_PATH..."
 # find unix_setup.sh in least nested path (https://stackoverflow.com/a/40039568/2375948)
-UNIX_SETUP_PATH=`find $APPLICATION_EXTRACTED_PATH -name 'unix_setup.sh' -printf "%d %p\n"| sort -n | perl -pe 's/^\d+\s//;' | head -n1 | xargs -I{} dirname {}`
+UNIX_SETUP_PATH=`find $APPLICATION_EXTRACTED_PATH -maxdepth 2 -name 'unix_setup.sh' | head -n1 | xargs -I{} dirname {}`
 
 pushd $UNIX_SETUP_PATH &&
     chown -R $(whoami) . &&
