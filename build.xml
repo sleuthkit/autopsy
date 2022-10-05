@@ -271,9 +271,23 @@
         <mkdir dir="${zip-tmp}"/>
         <unzip src="${nbdist.dir}/${app.name}.zip" dest="${zip-tmp}"/>
         
-        <!-- step (3) Copy the Autopsy documentation to the docs folder -->
+        <!-- step (3) add things to the packaged archive -->
+        
+        <!-- Copy the Autopsy documentation to the docs folder -->
         <copy flatten="true" todir="${zip-tmp}/${app.name}/docs">
             <fileset dir="${basedir}/docs/doxygen-user/user-docs"/>
+        </copy>
+        
+        <!-- Copy Linux/Mac related stuff -->
+        <copy file="${nbplatform.active.dir}/platform/modules/ext/junit-4.10.jar"
+                      tofile="${zip-tmp}/${app.name}/platform/modules/ext/junit-4.10.jar"/>
+        <copy file="${basedir}/README.txt" tofile="${zip-tmp}/${app.name}/README.txt"/>
+        <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
+        <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
+        <copy file="${basedir}/Running_Linux_OSX.md" tofile="${zip-tmp}/${app.name}/Running_Linux_OSX.md"/>
+        <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
+        <copy flatten="false" todir="${zip-tmp}/${app.name}/linux_macos_install_scripts">
+            <fileset dir="${basedir}/linux_macos_install_scripts"/>
         </copy>
         
         <!-- step (4) zip again, but with the version numbers in the name & root folder -->
@@ -284,7 +298,7 @@
 
         <!-- step (5) delete temp folder folder -->
         <delete dir="${zip-tmp}"/>
-        <delete file="${nbdist.dir}/${app.name}" quiet="true"/>
+        <delete file="${nbdist.dir}/${app.name}.zip" quiet="true"/>
     </target>
 
     <target name="build-core-test-libs">
