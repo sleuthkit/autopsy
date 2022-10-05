@@ -42,11 +42,17 @@ The buttons under the list of rules allow you to create new rules and edit or de
 
 \image html InterestingFiles/new_rule.png 
 
-The top line allows you to choose whether you want to match only files, only directories, or both. If you select directories or both, some of the condition types will be unavailable since they only apply to files.
-
 Each rule must have at least one condition. To create conditions, check the box to the left of the condition you want to enable. The following is a description of each condition, with some full examples after.
 
 <ul>
+<li><b>Rule Type</b> - Determines if files matching this rule will be included or excluded.  A rule set will match these conventions:
+    <ul>
+        <li>If there are no rules in a rule set, no file will match the set.</li>
+        <li>If there are only rules that exclude files, as long as the file doesn’t match one of the exclusive rules, it is included in the set.</li>
+        <li>If both inclusive rules and exclusive rules are present, a file must match one of the inclusive rules and not match any of the exclusive rules to be included in the set.</li>
+        <li>If there are only inclusive rules, a file must match one of the rules to be included in the set.</li>
+    </ul>
+<li><b>Type</b> - Choose whether you want to match only files, only directories, or both. If you select directories or both, some of the condition types will be unavailable since they only apply to files.
 <li><b>Name</b> - Enter either the full file name or one or more extensions, and select whether this is an exact match or a substring/regex match. If substring/regex match is enabled, it will automatically add wildcards to the beginning and end of the text. If you're only matching directories, this will match the directory name. If you're using a comma-separated list of extensions, make sure the regex checkbox is disabled - the entire contents will be interpreted as one regex when the checkbox is selected. The following table shows some examples of what the different combinations can be used for.
 
 <table>
@@ -59,7 +65,7 @@ Each rule must have at least one condition. To create conditions, check the box 
 <tr><td>Extension Only</td><td>true</td><td>\verbatim jp \endverbatim</td><td>Will match .jpg, .jpeg files, and any others with "jp" in the extension</td><td>myImage.jpg</td></tr>
 </table>
 
-<li><b>Path Substring</b> - Enter a folder name that must be part of file's path for it to be a match. If you only want to specify that a word appears somewhere in the path, use the regex option.
+<li><b>Folder Name</b> - Enter a folder name that must be part of file's path for it to be a match. If you only want to specify that a word appears somewhere in the path, use the regex option.
 <table>
 <tr><th>Regex</th><th>Text</th><th>Description</th><th>Sample match</th></tr>
 <tr><td>false</td><td>\verbatim Documents \endverbatim</td><td>Match any file that has a folder named "Documents" in its path</td><td>/folder1/Documents/fileA.doc</td></tr>
@@ -91,7 +97,7 @@ This rule is looking for archives in the user download directory. It requires "U
  
 \image html InterestingFiles/download_archive.png
 
-This is a rule that matches files with size at least 50MB that have been modified in the last week.
+This is a rule that matches files with size more than 50MB that have been modified in the last week.
 
 \image html InterestingFiles/new_large_files.png
 

@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.StringsExtractOptions;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequency;
 
 //This file contains constants and settings for KeywordSearch
 class KeywordSearchSettings {
@@ -46,33 +45,8 @@ class KeywordSearchSettings {
     static final boolean LIMITED_OCR_ENABLED_DEFAULT = false;
     private static boolean skipKnown = true;
     private static final Logger logger = Logger.getLogger(KeywordSearchSettings.class.getName());
-    private static UpdateFrequency UpdateFreq = UpdateFrequency.DEFAULT;
     private static List<StringExtract.StringExtractUnicodeTable.SCRIPT> stringExtractScripts = new ArrayList<>();
     private static Map<String, String> stringExtractOptions = new HashMap<>();
-
-    /**
-     * Gets the update Frequency from KeywordSearch_Options.properties
-     *
-     * @return KeywordSearchIngestModule's update frequency
-     */
-    static UpdateFrequency getUpdateFrequency() {
-        if (ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency") != null) { //NON-NLS
-            return UpdateFrequency.valueOf(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency")); //NON-NLS
-        }
-        //if it failed, return the default/last known value
-        logger.log(Level.WARNING, "Could not read property for UpdateFrequency, returning backup value."); //NON-NLS
-        return UpdateFrequency.DEFAULT;
-    }
-
-    /**
-     * Sets the update frequency and writes to KeywordSearch_Options.properties
-     *
-     * @param freq Sets KeywordSearchIngestModule to this value.
-     */
-    static void setUpdateFrequency(UpdateFrequency freq) {
-        ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency", freq.name()); //NON-NLS
-        UpdateFreq = freq;
-    }
 
     /**
      * Sets whether or not to skip adding known good files to the search during
@@ -242,11 +216,6 @@ class KeywordSearchSettings {
         if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")) { //NON-NLS
             logger.log(Level.INFO, "No configuration for NSRL found, generating default..."); //NON-NLS
             KeywordSearchSettings.setSkipKnown(true);
-        }
-        //setting default Update Frequency
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")) { //NON-NLS
-            logger.log(Level.INFO, "No configuration for Update Frequency found, generating default..."); //NON-NLS
-            KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.DEFAULT);
         }
         //setting default Extract UTF8
         if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, StringsExtractOptions.EXTRACT_UTF8.toString())) {
