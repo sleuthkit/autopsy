@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Verifies programs are installed and copies native code into the Autopsy folder structure
+# Verifies programs are installed and copies native code into the Application folder structure
 #
 
 # NOTE: update_sleuthkit_version.pl updates this value and relies
@@ -8,10 +8,36 @@
 TSK_VERSION=4.11.1
 
 
+usage() { 
+    echo "Usage: unix_setup.sh [-j java_home] [-n application_name]" 1>&2;
+}
+
+APPLICATION_NAME="autopsy";
+
+while getopts "j:n:" o; do
+    case "${o}" in
+        n)
+            APPLICATION_NAME=${OPTARG}
+            ;;
+        j)
+            JAVA_PATH=${OPTARG}
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+
 # In the beginning...
 echo "---------------------------------------------"
-echo "Checking prerequisites and preparing Autopsy:"
+echo "Checking prerequisites and preparing ${APPLICATION_NAME}:"
 echo "---------------------------------------------"
+
+# make sure cwd is same as script's
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+pushd $SCRIPTPATH
 
 # Verify PhotoRec was installed
 echo -n "Checking for PhotoRec..."
@@ -28,12 +54,22 @@ fi
 
 # Verify Java was installed and configured
 echo -n "Checking for Java..."
-if [ -n "$JAVA_HOME" ];  then
-    if [ -x "$JAVA_HOME/bin/java" ]; then
-	echo "found in $JAVA_HOME"
+if [ -n "$JAVA_PATH" ]; then 
+    if [ -x "$JAVA_PATH/bin/java" ]; then
+        # only works on linux; not os x
+        awk '!/^\s*#?\s*jdkhome=.*$/' etc/$APPLICATION_NAME.conf > etc/$APPLICATION_NAME.conf.tmp && \
+        mv etc/$APPLICATION_NAME.conf.tmp etc/$APPLICATION_NAME.conf && \
+        echo "jdkhome=$JAVA_PATH" >> etc/$APPLICATION_NAME.conf
     else
-	echo "ERROR: Java was not found in $JAVA_HOME."
-	exit 1
+        echo "ERROR: Java was not found in $JAVA_PATH."
+        exit 1
+    fi
+elif [ -n "$JAVA_HOME" ];  then
+    if [ -x "$JAVA_HOME/bin/java" ]; then
+	    echo "found in $JAVA_HOME"
+    else
+        echo "ERROR: Java was not found in $JAVA_HOME."
+        exit 1
     fi
 else
     echo "ERROR: JAVA_HOME environment variable must be defined."
@@ -56,7 +92,7 @@ else
 fi
 
 ext_jar_filepath=$PWD/autopsy/modules/ext/sleuthkit-$TSK_VERSION.jar;
-echo -n "Copying sleuthkit-$TSK_VERSION.jar into the Autopsy directory..."
+echo -n "Copying sleuthkit-$TSK_VERSION.jar into the $APPLICATION_NAME directory..."
 rm -f "$ext_jar_filepath";
 if [ "$?" -gt 0 ]; then  #checking if remove operation failed
     echo "ERROR: Deleting $ext_jar_filepath failed."
@@ -80,8 +116,10 @@ chmod u+x autopsy/markmckinnon/parse*
 chmod -R u+x autopsy/solr/bin
 
 # make sure it is executable
-chmod u+x bin/autopsy
+chmod u+x bin/$APPLICATION_NAME
+
+popd
 
 echo
-echo "Autopsy is now configured. You can execute bin/autopsy to start it"
+echo "Application is now configured. You can execute bin/$APPLICATION_NAME to start it"
 echo

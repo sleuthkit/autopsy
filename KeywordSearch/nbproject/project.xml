@@ -399,8 +399,8 @@
                 <binary-origin>release/modules/ext/snappy-java-1.1.7.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-8.11.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-8.11.1.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-8.11.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-8.11.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/stax2-api-4.2.1.jar</runtime-relative-path>
