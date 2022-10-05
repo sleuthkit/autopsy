@@ -27,6 +27,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Representation of a PhysicalDisk or partition.
@@ -68,11 +69,21 @@ public class LocalDisk {
      * 
      * NOTE: Currently only works for linux.
      */
+    @Messages({
+        "LocalDisk_getDetail_autopsyConfig=Autopsy Config",
+        "LocalDisk_getDetail_cdRom=CD-ROM",
+    })
     public String getDetail() {
+        String toRet = mountPoint == null ? "" : mountPoint;
         if(isConfigDrive()) {
-            return mountPoint + ", " + "Autopsy Config";
+            toRet += ", " + Bundle.LocalDisk_getDetail_autopsyConfig();
+        } 
+            
+        if (isCDDrive()) {
+            toRet += ", " + Bundle.LocalDisk_getDetail_cdRom();
         }
-        return mountPoint;
+        
+        return toRet;
     }
 
     public String getReadableSize() {
@@ -112,14 +123,22 @@ public class LocalDisk {
             logger.log(Level.WARNING, "Unable to find the mount point for the device", ex);
         }
     }
-    
+
     /**
-     * Does this drive contain an AutopsyConfig folder?
-     * requires the mount point to be known
+     * If AutopsyConfig folder is present, linux autopsy will display drive
+     * details including 'Autopsy Config'.
      */
-    private boolean isConfigDrive() {        
+    private boolean isConfigDrive() {
         Path path = Paths.get(this.mountPoint, "AutopsyConfig");
         File configFile = new File(path.toString());
         return configFile.exists();
+    }
+
+    /**
+     * For linux autopsy, determines if drive is CD-ROM if the device starts
+     * with /dev/sr.
+     */
+    private boolean isCDDrive() {
+        return this.path.toString().trim().toLowerCase().startsWith("/dev/sr");
     }
 }

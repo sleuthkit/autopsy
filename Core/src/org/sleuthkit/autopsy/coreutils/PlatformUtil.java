@@ -420,7 +420,7 @@ public class PlatformUtil {
             File[] files = dev.listFiles();
             for (File f : files) {
                 String name = f.getName();
-                if ((name.contains("hd") || name.contains("sd") || name.contains("disk")) && f.canRead() && name.length() <= drivelength) { //NON-NLS
+                if ((name.contains("hd") || name.contains("sd") || name.contains("sr") || name.contains("disk")) && f.canRead() && name.length() <= drivelength) { //NON-NLS
                     String path = "/dev/" + name; //NON-NLS
                     if (canReadDrive(path)) {
                         try {
