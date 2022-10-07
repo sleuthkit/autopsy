@@ -81,3 +81,4 @@ MimeTypePanel.noteLabel.text=*Note: Multiple MIME types can be selected
 HashSearchPanel.sha256CheckBox.text=SHA-256:
 HashSearchPanel.sha256TextField.text=
 FileSearchPanel.closeButton.text=Close
+DeletedFilesSearchPanel.deletedCheckbox.text=Deleted
