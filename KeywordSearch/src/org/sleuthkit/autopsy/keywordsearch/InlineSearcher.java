@@ -77,13 +77,11 @@ final class InlineSearcher {
                             keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
                         }
                     } else {
-                        String regex = ".*\\b" + Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()) + "\\b.*";
-                        Pattern pattern = Pattern.compile(regex);
-                        Matcher matcher = pattern.matcher(chunk.geLowerCasedChunk());
-
-                        if (matcher.find()) {
+                        String REGEX_FIND_WORD="(?i).*?\\b%s\\b.*?";
+                        String regex=String.format(REGEX_FIND_WORD, Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()));
+                        if(chunk.geLowerCasedChunk().matches(regex)) {
                             keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
-                        }
+                        }     
                     }
                 } else {
                     String regex = originalKeyword.getSearchTerm();
