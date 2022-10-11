@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2022 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -169,6 +169,24 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         EXTRACT_UTF8, ///< extract UTF8 text, true/false
     };
 
+    enum UpdateFrequency {
+
+        FAST(20),
+        AVG(10),
+        SLOW(5),
+        SLOWEST(1),
+        NONE(Integer.MAX_VALUE),
+        DEFAULT(5);
+        private final int time;
+
+        UpdateFrequency(int time) {
+            this.time = time;
+        }
+
+        int getTime() {
+            return time;
+        }
+    };
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
@@ -177,6 +195,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 //only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
 
+    private boolean startedSearching = false;
     private Lookup stringsExtractionContext;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
@@ -380,6 +399,16 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
         indexer.indexFile(extractorOpt, abstractFile, mimeType, true);
 
+        // Start searching if it hasn't started already
+        if (!startedSearching) {
+            if (context.fileIngestIsCancelled()) {
+                return ProcessResult.OK;
+            }
+            List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
+            IngestSearchRunner.getInstance().startJob(context, keywordListNames);
+            startedSearching = true;
+        }
+
         return ProcessResult.OK;
     }
 
@@ -396,10 +425,14 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
 
         if (context.fileIngestIsCancelled()) {
-            logger.log(Level.INFO, "Keyword search ingest module instance {0} stopping due to ingest cancellation", instanceNum); //NON-NLS
+            logger.log(Level.INFO, "Keyword search ingest module instance {0} stopping search job due to ingest cancellation", instanceNum); //NON-NLS
+            IngestSearchRunner.getInstance().stopJob(jobId);
             cleanup();
             return;
         }
+
+        // Remove from the search list and trigger final commit and final search
+        IngestSearchRunner.getInstance().endJob(jobId);
 
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
