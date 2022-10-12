@@ -87,7 +87,7 @@ public class DeletedFilesSearchPanel extends javax.swing.JPanel {
         @Override
         public String getPredicate() throws FilterValidationException {
             if(getComponent().isDeletedFileSelected()) {
-                return "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS;
+                return "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType();
             }
             
             return "";

@@ -101,7 +101,7 @@ class FileSearchPanel extends javax.swing.JPanel {
         JPanel panel5 = new JPanel();
         panel5.setLayout(new GridLayout(1, 2, 20, 0));
         JPanel panel6 = new JPanel();
-        panel5.setLayout(new GridLayout(1, 2, 0, 0));
+        panel6.setLayout(new GridLayout(1, 2, 0, 0));
 
         // Create and add filter areas
         NameSearchFilter nameFilter = new NameSearchFilter();
