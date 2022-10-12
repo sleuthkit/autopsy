@@ -40,7 +40,12 @@ public class KwsDataArtifactIngestModule implements DataArtifactIngestModule {
     private static final int TSK_ASSOCIATED_OBJECT_TYPE_ID = BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT.getTypeID();
     private IngestJobContext context;
     private KeywordSearchService searchService;
+    private final KeywordSearchJobSettings settings;
 
+    KwsDataArtifactIngestModule(KeywordSearchJobSettings settings) {
+        this.settings = settings;
+    }
+    
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;

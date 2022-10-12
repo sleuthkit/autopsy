@@ -41,7 +41,12 @@ public class KwsAnalysisResultIngestModule implements AnalysisResultIngestModule
     private static final int TSK_KEYWORD_HIT_TYPE_ID = BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID();
     private IngestJobContext context;
     private KeywordSearchService searchService;
+    private final KeywordSearchJobSettings settings;
 
+    KwsAnalysisResultIngestModule(KeywordSearchJobSettings settings) {
+        this.settings = settings;
+    }
+    
     @Override
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         this.context = context;
