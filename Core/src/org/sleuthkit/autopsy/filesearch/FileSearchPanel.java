@@ -100,8 +100,6 @@ class FileSearchPanel extends javax.swing.JPanel {
         panel4.setLayout(new GridLayout(1, 2, 20, 0));
         JPanel panel5 = new JPanel();
         panel5.setLayout(new GridLayout(1, 2, 20, 0));
-        JPanel panel6 = new JPanel();
-        panel6.setLayout(new GridLayout(1, 2, 0, 0));
 
         // Create and add filter areas
         NameSearchFilter nameFilter = new NameSearchFilter();
@@ -113,22 +111,19 @@ class FileSearchPanel extends javax.swing.JPanel {
         panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"), nameFilter));
 
         panel3.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), sizeFilter));
-        panel6.add(new FilterArea(NbBundle.getMessage(this.getClass(), "DeletedFilesSearchPanel.deletedCheckbox.text"), deleltedFilter));   
         panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), dateFilter));
         panel3.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), knowStatusFilter));
 
         panel5.add(new FilterArea(NbBundle.getMessage(this.getClass(), "HashSearchPanel.md5CheckBox.text"), hashFilter));
-        panel5.add(new JLabel(""));
         panel4.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), mimeTypeFilter));
         panel4.add(new FilterArea(NbBundle.getMessage(this.getClass(), "DataSourcePanel.dataSourceCheckBox.text"), dataSourceFilter));
+        panel5.add(new FilterArea(NbBundle.getMessage(this.getClass(), "DeletedFilesSearchPanel.deletedCheckbox.text"), deleltedFilter));   
         
         filterPanel.add(panel1);
         filterPanel.add(panel2);
         filterPanel.add(panel3);
-        filterPanel.add(panel6);
         filterPanel.add(panel4);
         filterPanel.add(panel5);
-        
 
         filters.add(nameFilter);
         filters.add(sizeFilter);
@@ -302,15 +297,7 @@ class FileSearchPanel extends javax.swing.JPanel {
      *
      * @throws
      * org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException
-     *                                                                           if
-     *                                                                           an
-     *                                                                           enabled
-     *                                                                           filter
-     *                                                                           is
-     *                                                                           in
-     *                                                                           an
-     *                                                                           invalid
-     *                                                                           state
+     * if an enabled filter is in an invalid state
      */
     private String getQuery() throws FilterValidationException {
 

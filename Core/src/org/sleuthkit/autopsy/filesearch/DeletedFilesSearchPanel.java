@@ -52,15 +52,18 @@ public class DeletedFilesSearchPanel extends javax.swing.JPanel {
 
         deletedCheckbox = new javax.swing.JCheckBox();
 
-        setMinimumSize(new java.awt.Dimension(75, 35));
+        setMinimumSize(new java.awt.Dimension(337, 49));
+        setPreferredSize(new java.awt.Dimension(337, 49));
         setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(deletedCheckbox, org.openide.util.NbBundle.getMessage(DeletedFilesSearchPanel.class, "DeletedFilesSearchPanel.deletedCheckbox.text")); // NOI18N
+        deletedCheckbox.setMinimumSize(new java.awt.Dimension(0, 0));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
         add(deletedCheckbox, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
