@@ -65,18 +65,33 @@ public class DeletedContent implements AutopsyVisitableItem {
     public enum DeletedContentFilter implements AutopsyVisitableItem {
 
         FS_DELETED_FILTER(0, "FS_DELETED_FILTER", //NON-NLS
-                Bundle.DeletedContent_fsDelFilter_text()),
+                Bundle.DeletedContent_fsDelFilter_text(),
+                "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
+                + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
+                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType()),
         ALL_DELETED_FILTER(1, "ALL_DELETED_FILTER", //NON-NLS
-                Bundle.DeletedContent_allDelFilter_text());
+                Bundle.DeletedContent_allDelFilter_text(),
+                "( "
+                + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
+                + " OR " //NON-NLS
+                + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
+                + ")"
+                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
+                + " )"
+                + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType() //NON-NLS
+                + " OR (dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
+                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.getFileType() + " )");
 
         private int id;
         private String name;
         private String displayName;
+        private String filterQuery;
 
-        private DeletedContentFilter(int id, String name, String displayName) {
+        private DeletedContentFilter(int id, String name, String displayName, String filterQuery) {
             this.id = id;
             this.name = name;
             this.displayName = displayName;
+            this.filterQuery = filterQuery;
 
         }
 
@@ -90,6 +105,10 @@ public class DeletedContent implements AutopsyVisitableItem {
 
         public String getDisplayName() {
             return this.displayName;
+        }
+        
+        public String getFilterQuery() {
+            return filterQuery;
         }
 
         @Override
@@ -409,30 +428,13 @@ public class DeletedContent implements AutopsyVisitableItem {
                 String query = "";
                 switch (filter) {
                     case FS_DELETED_FILTER:
-                        query = "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
-                                + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
-                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType(); //NON-NLS
+                        query = DeletedContent.DeletedContentFilter.FS_DELETED_FILTER.getFilterQuery(); //NON-NLS
 
                         break;
                     case ALL_DELETED_FILTER:
                         query = " ( "
-                                + "( "
-                                + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
-                                + " OR " //NON-NLS
-                                + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
-                                + ")"
-                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
-                                + " )"
-                                + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType() //NON-NLS
-                                + " OR (dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
-                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.getFileType() + " )"
+                                + DeletedContent.DeletedContentFilter.ALL_DELETED_FILTER.getFilterQuery()
                                 + " )";
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType();
                         break;
 
                     default:

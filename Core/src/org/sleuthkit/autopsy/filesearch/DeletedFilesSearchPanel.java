@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionListener;
+import org.sleuthkit.autopsy.datamodel.DeletedContent;
 import org.sleuthkit.datamodel.TskData;
 
 public class DeletedFilesSearchPanel extends javax.swing.JPanel {
@@ -89,8 +90,8 @@ public class DeletedFilesSearchPanel extends javax.swing.JPanel {
 
         @Override
         public String getPredicate() throws FilterValidationException {
-            if(getComponent().isDeletedFileSelected()) {
-                return "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType();
+            if (getComponent().isDeletedFileSelected()) {
+                return DeletedContent.DeletedContentFilter.ALL_DELETED_FILTER.getFilterQuery();
             }
             
             return "";
