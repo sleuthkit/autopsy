@@ -2240,6 +2240,7 @@ function start_solr() {
     exec "$JAVA" "${SOLR_START_OPTS[@]}" $SOLR_ADDL_ARGS -jar start.jar "${SOLR_JETTY_CONFIG[@]}" $SOLR_JETTY_ADDL_CONFIG
   else
     # run Solr in the background
+    echo "Starting server with \"$JAVA\" \"${SOLR_START_OPTS[@]}\" $SOLR_ADDL_ARGS -jar start.jar \"${SOLR_JETTY_CONFIG[@]}\" $SOLR_JETTY_ADDL_CONFIG in pwd: $(pwd)"
     nohup "$JAVA" "${SOLR_START_OPTS[@]}" $SOLR_ADDL_ARGS -Dsolr.log.muteconsole \
 	"-XX:OnOutOfMemoryError=$SOLR_TIP/bin/oom_solr.sh $SOLR_PORT $SOLR_LOGS_DIR" \
         -jar start.jar "${SOLR_JETTY_CONFIG[@]}" $SOLR_JETTY_ADDL_CONFIG \

@@ -93,7 +93,7 @@
 #SOLR_OPTS="$SOLR_OPTS -Dsolr.autoSoftCommit.maxTime=3000"
 #SOLR_OPTS="$SOLR_OPTS -Dsolr.autoCommit.maxTime=60000"
 #SOLR_OPTS="$SOLR_OPTS -Dsolr.clustering.enabled=true"
-SOLR_OPTS=$SOLR_OPTS -Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf -Dcollection.configName=AutopsyConfig -Dsolr.default.confdir=../solr/configsets/AutopsyConfig/conf 
+SOLR_OPTS="$SOLR_OPTS -Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf -Dcollection.configName=AutopsyConfig -Dsolr.default.confdir=../solr/configsets/AutopsyConfig/conf "
 
 
 # Location where the bin/solr script will save PID files for running instances

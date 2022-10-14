@@ -1,0 +1,198 @@
+name: autopsy # you probably want to 'snapcraft register <name>'
+base: core20 # the base snap is the execution environment for this snap
+version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
+summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
+description: Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools.
+grade: stable # must be 'stable' to release into candidate/stable channels
+# TODO look into turning back to strict for store inclusion
+confinement: classic # use 'strict' once you have the right plugs and slots
+architectures: [amd64, arm64]
+
+# Java package repo to use with snapcraft
+package-repositories:
+  - type: apt
+    formats: [deb]
+    components: [main]
+    suites: [stable]
+    key-id: 99A5C88E3C5B1FA8B05A19D332E9750179FCEA62
+    url: https://apt.bell-sw.com/
+
+layout:
+  /usr/lib/jvm/bellsoft-java8-full-amd64:
+    bind: $SNAP/usr/lib/jvm/bellsoft-java8-full-amd64
+  /usr/bin/photorec:
+    symlink: $SNAP/usr/bin/photorec
+  /usr/local/bin:
+    bind: $SNAP/usr/local/bin
+  # /usr/local/lib:
+  #   bind: $SNAP/usr/local/lib
+  # $HOME/.autopsy:
+  #   bind: $HOME/$SNAP/.autopsy
+
+plugs:
+  home-autopsy:
+    interface: home
+    read: all
+  # personal-files-autopsy:
+  #   interface: personal-files
+  #   read: [$HOME/.autopsy]
+  system-files-autopsy:
+    interface: system-files
+    read: [/dev]
+
+apps:
+  autopsy:
+    environment: 
+      jdkhome: /usr/lib/jvm/bellsoft-java8-full-amd64
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
+      PATH: $SNAP/usr/local/bin:$PATH
+    command: autopsy/bin/autopsy
+    common-id: org.sleuthkit.autopsy
+    plugs:
+      # TODO verify these: 
+      # taken from https://snapcraft.io/docs/supported-interfaces
+      - audio-playback
+      - avahi-observe
+      - block-devices
+      - cifs-mount
+      # - custom-device
+      - daemon-notify
+      # - dbus
+      - desktop
+      - desktop-launch
+      - desktop-legacy
+      - dm-crypt
+      - firewall-control
+      - fuse-support
+      - hardware-observe
+      - home
+      - kernel-crypto-api
+      #- locale-control
+      - log-observe
+      #- mount-control
+      - mount-observe
+      - network
+      # - network-bind
+      # - network-manager
+      - network-observe
+      - network-setup-observe
+      - network-status
+      # - online-accounts-service
+      - opengl
+      - optical-drive
+      # - personal-files-autopsy
+      # - posix-mq
+      - pulseaudio
+      - raw-input
+      - raw-usb
+      # - raw-volume
+      - removable-media
+      - sd-control
+      - system-files-autopsy
+      - system-observe
+      - system-trace
+      - udisks2
+      - unity7
+      - unity8
+      - wayland
+      - x11 
+
+parts:
+  sleuthkit:
+    plugin: autotools
+    source: https://github.com/sleuthkit/sleuthkit.git
+    source-branch: develop
+    # source-tag: sleuthkit-4.11.1
+    build-environment: [JAVA_HOME: /usr/lib/jvm/bellsoft-java8-full-amd64]
+    build-packages:
+      - build-essential
+      - autoconf
+      - libtool
+      - automake
+      - zip
+      - ant
+      - ant-contrib
+      - ant-optional
+      - bellsoft-java8-full
+      - libpq-dev
+      - testdisk
+      - libafflib-dev
+      - libewf-dev
+      - libvhdi-dev
+      - libvmdk-dev
+    stage-packages:
+      - libpq-dev
+      - testdisk
+      - libafflib-dev
+      - libewf-dev
+      - libvhdi-dev
+      - libvmdk-dev
+  autopsy:
+    after: [sleuthkit]
+    build-packages:
+      - zip
+      - unzip
+      - ant
+      - bellsoft-java8-full
+      - doxygen
+    stage-packages:
+      - libde265-dev
+      - libheif-dev
+      - libpq-dev
+      - testdisk
+      - libgstreamer1.0-0
+      - gstreamer1.0-plugins-base
+      - gstreamer1.0-plugins-good 
+      - gstreamer1.0-plugins-bad
+      - gstreamer1.0-plugins-ugly
+      - gstreamer1.0-libav
+      - gstreamer1.0-tools
+      - gstreamer1.0-x
+      - gstreamer1.0-alsa
+      - gstreamer1.0-gl
+      - gstreamer1.0-gtk3
+      - gstreamer1.0-qt5
+      - gstreamer1.0-pulseaudio
+      - bellsoft-java8-full
+      - perl
+    plugin: nil
+    source: https://github.com/gdicristofaro/autopsy.git
+    source-branch: 8425_linuxMacBuild
+    # source: https://github.com/sleuthkit/autopsy.git
+    # source-branch: develop
+    # source-tag: autopsy-4.19.3
+    build-environment: 
+      - JAVA_HOME: /usr/lib/jvm/bellsoft-java8-full-amd64
+      - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
+    override-build: |
+      # ----- BUILD ZIP -----
+      AUTOPSY_SRC_PATH=$(pwd)
+      NETBEANS_PLAT_VER=$(grep "netbeans-plat-version=" "$AUTOPSY_SRC_PATH/nbproject/platform.properties" | cut -d'=' -f2)
+      AUTOPSY_PLATFORM_PATH="$AUTOPSY_SRC_PATH/netbeans-plat/$NETBEANS_PLAT_VER"
+      AUTOPSY_HARNESS_PATH="$AUTOPSY_PLATFORM_PATH/harness"
+      export TSK_HOME="$HOME/parts/sleuthkit/build"
+      ant -Dnbplatform.active.dir="$AUTOPSY_PLATFORM_PATH" -Dnbplatform.default.harness.dir="$AUTOPSY_HARNESS_PATH" build build-zip
+
+      # ----- SETUP EXTRACT DIRECTORY -----
+      AUTOPSY_LOCATION="$SNAPCRAFT_PART_INSTALL/autopsy"
+      mkdir -p $AUTOPSY_LOCATION
+      AUTOPSY_ZIP=$(find ./dist -maxdepth 1 -name "autopsy-*.*.*.zip")
+      AUTOPSY_ZIP_TMP_LOC=./dist/autopsy_tmp_zip_loc
+      mkdir -p $AUTOPSY_ZIP_TMP_LOC
+      unzip $AUTOPSY_ZIP -d $AUTOPSY_ZIP_TMP_LOC
+      AUTOPSY_EXTRACTED_TMP_LOC=$(find $AUTOPSY_ZIP_TMP_LOC -maxdepth 1 -name "autopsy-*.*.*")
+      cp -r $AUTOPSY_EXTRACTED_TMP_LOC/* $AUTOPSY_LOCATION
+
+      # ----- RUN UNIX SETUP SCRIPT -----
+      UNIX_SETUP_SCRIPT="$AUTOPSY_LOCATION/unix_setup.sh"
+      chmod +x $UNIX_SETUP_SCRIPT
+      $UNIX_SETUP_SCRIPT
+      chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
+      # TODO is this necessary?
+      find "$AUTOPSY_LOCATION/autopsy/markmckinnon" -name "Export*" -o -name "parse*" | xargs -I{} chmod a+x {}
+      # TODO is this necessary?
+      chmod -R a+x "$AUTOPSY_LOCATION/autopsy/solr/bin"
+
+      # include this line to print all set variables
+      # TODO remove after debugging
+      sed -i '129 i set -o posix ; echo $(set) >&2' "$AUTOPSY_LOCATION/platform/lib/nbexec"
