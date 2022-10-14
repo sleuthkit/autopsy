@@ -1,4 +1,4 @@
----------------- VERSION 4.19.4  --------------
+---------------- VERSION 4.20.0  --------------
 Recent Activity Updates:
 - Added Favicons, Profiles and Extensions to Chromium Browsers
 - Added Security Questions/Answers from SAM registry Hive
@@ -6,6 +6,9 @@ Recent Activity Updates:
 Datasource Processing
 - Added Jython Support
 - Added example Python plugin
+
+Ingest Module
+- New DataArtifact ingest module for analyzing data artifacts
 
 Linux / Mac Improvements
 - Script to install prerequisites using Homebrew and debian package. 
