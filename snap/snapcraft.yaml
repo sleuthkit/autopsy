@@ -46,6 +46,8 @@ apps:
       jdkhome: /usr/lib/jvm/bellsoft-java8-full-amd64
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
       PATH: $SNAP/usr/local/bin:$PATH
+      SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
+      SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
     command: autopsy/bin/autopsy
     common-id: org.sleuthkit.autopsy
     plugs:
