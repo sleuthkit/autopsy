@@ -30,9 +30,6 @@ layout:
   #   bind: $HOME/$SNAP/.autopsy
 
 plugs:
-  home-autopsy:
-    interface: home
-    read: all
   # personal-files-autopsy:
   #   interface: personal-files
   #   read: [$HOME/.autopsy]
