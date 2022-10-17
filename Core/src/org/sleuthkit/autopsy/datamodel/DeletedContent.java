@@ -66,21 +66,10 @@ public class DeletedContent implements AutopsyVisitableItem {
 
         FS_DELETED_FILTER(0, "FS_DELETED_FILTER", //NON-NLS
                 Bundle.DeletedContent_fsDelFilter_text(),
-                "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
-                + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
-                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType()),
+                CommonQuery.FS_DELETED_CONTENT_QUERY),
         ALL_DELETED_FILTER(1, "ALL_DELETED_FILTER", //NON-NLS
                 Bundle.DeletedContent_allDelFilter_text(),
-                "( "
-                + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
-                + " OR " //NON-NLS
-                + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
-                + ")"
-                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
-                + " )"
-                + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType() //NON-NLS
-                + " OR (dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
-                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.getFileType() + " )");
+                CommonQuery.ALL_DELETED_CONTENT_QUERY);
 
         private int id;
         private String name;
