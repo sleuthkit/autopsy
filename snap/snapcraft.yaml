@@ -7,8 +7,9 @@ grade: stable # must be 'stable' to release into candidate/stable channels
 # TODO look into turning back to strict for store inclusion
 confinement: classic # use 'strict' once you have the right plugs and slots
 architectures: [amd64, arm64]
-# improves startup performance
-compression: lzo
+# TODO improves startup performance
+# compression: lzo
+icon: snap/gui/autopsy.png
 
 # Java package repo to use with snapcraft
 package-repositories:
@@ -20,8 +21,6 @@ package-repositories:
     url: https://apt.bell-sw.com/
 
 layout:
-  /usr/lib/jvm/bellsoft-java8-full-amd64:
-    bind: $SNAP/usr/lib/jvm/bellsoft-java8-full-amd64
   /usr/bin/photorec:
     symlink: $SNAP/usr/bin/photorec
   /usr/local/bin:
@@ -35,7 +34,7 @@ plugs:
 apps:
   autopsy:
     environment: 
-      jdkhome: /usr/lib/jvm/bellsoft-java8-full-amd64
+      jdkhome: $SNAP/usr/lib/jvm/bellsoft-java8-full-amd64
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
       PATH: $SNAP/usr/local/bin:$PATH
       SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
@@ -174,14 +173,18 @@ parts:
       $UNIX_SETUP_SCRIPT
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
 
-      # ----- INSTALL DESKTOP SHORTCUT -----
-      AUTOPSY_DESKTOP_PATH="$SNAPCRAFT_PART_INSTALL/usr/share/applications/"
-      mkdir -p $AUTOPSY_DESKTOP_PATH
-      sed -i 's|Icon=autopsy|Icon=${SNAP}/usr/share/pixmaps/autopsy.png|g' ${AUTOPSY_DESKTOP_PATH}/autopsy.desktop
-      sed -i 's|Exec=${SNAP}/autopsy/bin/autopsy|Exec=autopsy|g' ${AUTOPSY_DESKTOP_PATH}/autopsy.desktop
-      AUTOPSY_ICON_BASE_PATH="usr/share/pixmaps/"
-      mkdir -p "$SNAPCRAFT_PART_INSTALL/$AUTOPSY_ICON_BASE_PATH"
-      cp ./snap/autopsy.png "$SNAPCRAFT_PART_INSTALL/$AUTOPSY_ICON_BASE_PATH"
+      # # ----- INSTALL DESKTOP SHORTCUT -----
+      # AUTOPSY_DESKTOP_PATH="$SNAPCRAFT_PART_INSTALL/usr/share/applications/"
+      # AUTOPSY_ICON_BASE_PATH="usr/share/pixmaps/"
+      
+      # mkdir -p "$SNAPCRAFT_PART_INSTALL/$AUTOPSY_ICON_BASE_PATH"
+      # cp ./snap/autopsy.png "$SNAPCRAFT_PART_INSTALL/$AUTOPSY_ICON_BASE_PATH"
+
+      # mkdir -p $AUTOPSY_DESKTOP_PATH
+      # sudo sh -c "cat << EOF > ${AUTOPSY_DESKTOP_PATH}/autopsy.desktop
+      # Icon=\$SNAP/${AUTOPSY_ICON_BASE_PATH}/autopsy.png
+      # Exec=\$SNAP/autopsy/bin/autopsy
+      # EOF"
 
       # include this line to print all set variables
       # TODO remove after debugging
