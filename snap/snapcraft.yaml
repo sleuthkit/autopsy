@@ -7,6 +7,8 @@ grade: stable # must be 'stable' to release into candidate/stable channels
 # TODO look into turning back to strict for store inclusion
 confinement: classic # use 'strict' once you have the right plugs and slots
 architectures: [amd64, arm64]
+# improves startup performance
+compression: lzo
 
 # Java package repo to use with snapcraft
 package-repositories:
@@ -24,15 +26,8 @@ layout:
     symlink: $SNAP/usr/bin/photorec
   /usr/local/bin:
     bind: $SNAP/usr/local/bin
-  # /usr/local/lib:
-  #   bind: $SNAP/usr/local/lib
-  # $HOME/.autopsy:
-  #   bind: $HOME/$SNAP/.autopsy
 
 plugs:
-  # personal-files-autopsy:
-  #   interface: personal-files
-  #   read: [$HOME/.autopsy]
   system-files-autopsy:
     interface: system-files
     read: [/dev]
@@ -54,9 +49,7 @@ apps:
       - avahi-observe
       - block-devices
       - cifs-mount
-      # - custom-device
       - daemon-notify
-      # - dbus
       - desktop
       - desktop-launch
       - desktop-legacy
@@ -66,25 +59,18 @@ apps:
       - hardware-observe
       - home
       - kernel-crypto-api
-      #- locale-control
       - log-observe
-      #- mount-control
       - mount-observe
       - network
-      # - network-bind
-      # - network-manager
+      - network-manager
       - network-observe
       - network-setup-observe
       - network-status
-      # - online-accounts-service
       - opengl
       - optical-drive
-      # - personal-files-autopsy
-      # - posix-mq
       - pulseaudio
       - raw-input
       - raw-usb
-      # - raw-volume
       - removable-media
       - sd-control
       - system-files-autopsy
@@ -187,11 +173,16 @@ parts:
       chmod +x $UNIX_SETUP_SCRIPT
       $UNIX_SETUP_SCRIPT
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
-      # TODO is this necessary?
-      find "$AUTOPSY_LOCATION/autopsy/markmckinnon" -name "Export*" -o -name "parse*" | xargs -I{} chmod a+x {}
-      # TODO is this necessary?
-      chmod -R a+x "$AUTOPSY_LOCATION/autopsy/solr/bin"
+
+      # ----- INSTALL DESKTOP SHORTCUT -----
+      AUTOPSY_DESKTOP_PATH="$SNAPCRAFT_PART_INSTALL/usr/share/applications/"
+      mkdir -p $AUTOPSY_DESKTOP_PATH
+      sed -i 's|Icon=autopsy|Icon=${SNAP}/usr/share/pixmaps/autopsy.png|g' ${AUTOPSY_DESKTOP_PATH}/autopsy.desktop
+      sed -i 's|Exec=${SNAP}/autopsy/bin/autopsy|Exec=autopsy|g' ${AUTOPSY_DESKTOP_PATH}/autopsy.desktop
+      AUTOPSY_ICON_BASE_PATH="usr/share/pixmaps/"
+      mkdir -p "$SNAPCRAFT_PART_INSTALL/$AUTOPSY_ICON_BASE_PATH"
+      cp ./snap/autopsy.png "$SNAPCRAFT_PART_INSTALL/$AUTOPSY_ICON_BASE_PATH"
 
       # include this line to print all set variables
       # TODO remove after debugging
-      sed -i '129 i set -o posix ; echo $(set) >&2' "$AUTOPSY_LOCATION/platform/lib/nbexec"
+      sed -i '129 i set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"' "$AUTOPSY_LOCATION/platform/lib/nbexec"
