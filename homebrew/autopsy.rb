@@ -5,7 +5,7 @@ class Autopsy < Formula
   desc "Autopsy® is a digital forensics platform and graphical interface to The Sleuth Kit® and other digital forensics tools. It can be used by law enforcement, military, and corporate examiners to investigate what happened on a computer. You can even use it to recover photos from your camera's memory card. "
   homepage "http://www.sleuthkit.org/autopsy/"
   url "https://github.com/sleuthkit/autopsy/archive/refs/tags/autopsy-4.19.3.tar.gz"
-  # sha256 "67299005603af0cadc98c420ce5088187010b71eabcbb6db7a4e5bce325734c5"
+  # sha256 "SHA_HERE"
   license "Apache-2.0"
 
   depends_on "postgresql@14"
