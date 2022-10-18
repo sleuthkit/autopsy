@@ -7,7 +7,6 @@ grade: stable # must be 'stable' to release into candidate/stable channels
 # TODO look into turning back to strict for store inclusion
 confinement: classic # use 'strict' once you have the right plugs and slots
 architectures: [amd64, arm64]
-# TODO improves startup performance
 compression: lzo
 icon: snap/gui/autopsy.png
 
@@ -19,14 +18,6 @@ package-repositories:
     suites: [stable]
     key-id: 99A5C88E3C5B1FA8B05A19D332E9750179FCEA62
     url: https://apt.bell-sw.com/
-
-layout:
-  /usr/bin/photorec:
-    symlink: $SNAP/usr/bin/photorec
-  /usr/local/bin:
-    bind: $SNAP/usr/local/bin
-  # /usr/lib/jvm/bellsoft-java8-full-amd64:
-  #   symlink: $SNAP/usr/lib/jvm/bellsoft-java8-full-amd64    
 
 plugs:
   system-files-autopsy:
@@ -44,7 +35,6 @@ apps:
     command: autopsy/bin/autopsy
     common-id: org.sleuthkit.autopsy
     plugs:
-      # TODO verify these: 
       # taken from https://snapcraft.io/docs/supported-interfaces
       - audio-playback
       - avahi-observe
@@ -108,8 +98,6 @@ parts:
       - libvmdk-dev
     stage-packages:
       - build-essential
-      - autoconf
-      - libtool
       - libpq-dev
       - testdisk
       - libafflib-dev
@@ -125,9 +113,6 @@ parts:
       - bellsoft-java8-full
       - doxygen
     stage-packages:
-      - build-essential
-      - autoconf
-      - libtool
       - libde265-dev
       - libheif-dev
       - libpq-dev
@@ -179,7 +164,11 @@ parts:
       UNIX_SETUP_SCRIPT="$AUTOPSY_LOCATION/unix_setup.sh"
       chmod +x $UNIX_SETUP_SCRIPT
       $UNIX_SETUP_SCRIPT
+
+      # snaps run applications with different permissions.  This ensures applications can run.
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
+      find "$AUTOPSY_LOCATION/autopsy/markmckinnon" -name "Export*" -o -name "parse*" | xargs -I{} chmod a+x {}
+      chmod -R a+x "$AUTOPSY_LOCATION/autopsy/solr/bin"
 
       # # ----- INSTALL DESKTOP SHORTCUT -----
       # AUTOPSY_DESKTOP_PATH="$SNAPCRAFT_PART_INSTALL/usr/share/applications/"
