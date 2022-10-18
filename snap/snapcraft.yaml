@@ -8,7 +8,7 @@ grade: stable # must be 'stable' to release into candidate/stable channels
 confinement: classic # use 'strict' once you have the right plugs and slots
 architectures: [amd64, arm64]
 # TODO improves startup performance
-# compression: lzo
+compression: lzo
 icon: snap/gui/autopsy.png
 
 # Java package repo to use with snapcraft
@@ -25,6 +25,8 @@ layout:
     symlink: $SNAP/usr/bin/photorec
   /usr/local/bin:
     bind: $SNAP/usr/local/bin
+  # /usr/lib/jvm/bellsoft-java8-full-amd64:
+  #   symlink: $SNAP/usr/lib/jvm/bellsoft-java8-full-amd64    
 
 plugs:
   system-files-autopsy:
@@ -105,6 +107,9 @@ parts:
       - libvhdi-dev
       - libvmdk-dev
     stage-packages:
+      - build-essential
+      - autoconf
+      - libtool
       - libpq-dev
       - testdisk
       - libafflib-dev
@@ -120,6 +125,9 @@ parts:
       - bellsoft-java8-full
       - doxygen
     stage-packages:
+      - build-essential
+      - autoconf
+      - libtool
       - libde265-dev
       - libheif-dev
       - libpq-dev
