@@ -41,13 +41,8 @@ pushd $SCRIPTPATH
 
 # Verify PhotoRec was installed
 echo -n "Checking for PhotoRec..."
-photorec_filepath=/usr/bin/photorec
-photorec_osx_filepath=/usr/local/bin/photorec
-if [ -f "$photorec_filepath" ]; then
-    echo "found in $(dirname $photorec_filepath)"
-elif [ -f "$photorec_osx_filepath" ]; then
-    echo "found in $(dirname $photorec_osx_filepath)"
-else
+if ! command -v photorec &> /dev/null 
+then
     echo "ERROR: PhotoRec not found, please install the testdisk package."
     exit 1
 fi
