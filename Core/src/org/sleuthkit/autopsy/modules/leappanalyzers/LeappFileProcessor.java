@@ -145,7 +145,11 @@ public final class LeappFileProcessor {
     }
 
     private static final Logger logger = Logger.getLogger(LeappFileProcessor.class.getName());
+    private final String CUSTOM_ARTIFACTS_ATTRIBUTES_FILE = "custom-artifact-attribute-list.csv";
+    private final String ARTIFACT_ATTRIBUTE_REFERENCE_USER = "artifact-attribute-reference-user.xml";
+
     private final String xmlFile; //NON-NLS
+    private final String leapModule;
     private final String moduleName;
     private final IngestJobContext context;
 
@@ -198,7 +202,7 @@ public final class LeappFileProcessor {
 
     private final Blackboard blkBoard;
 
-    public LeappFileProcessor(String xmlFile, String moduleName, IngestJobContext context) throws IOException, IngestModuleException, NoCurrentCaseException {
+    public LeappFileProcessor(String xmlFile, String moduleName, String leapModule, IngestJobContext context) throws IOException, IngestModuleException, NoCurrentCaseException {
         this.tsvFiles = new HashMap<>();
         this.tsvFileArtifacts = new HashMap<>();
         this.tsvFileArtifactComments = new HashMap<>();
@@ -206,9 +210,11 @@ public final class LeappFileProcessor {
         this.xmlFile = xmlFile;
         this.moduleName = moduleName;
         this.context = context;
+        this.leapModule = leapModule;
 
         blkBoard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
 
+        loadCustomArtifactsAttributes(blkBoard, leapModule);
         createCustomArtifacts(blkBoard);
         configExtractor();
         loadConfigFile();
@@ -1301,6 +1307,111 @@ public final class LeappFileProcessor {
         }
 
         return leappFilesToProcess;
+    }
+
+    /**
+     * Create custom artifacts that are defined in the xLeapp xml file(s).
+     *
+     */
+    private void loadCustomArtifactsAttributes(Blackboard blkBoard, String leapModule) {
+
+        for (Map.Entry<String, String> customArtifact : CUSTOM_ARTIFACT_MAP.entrySet()) {
+            String artifactName = customArtifact.getKey();
+            String artifactDescription = customArtifact.getValue();
+            createCustomAttributesArtifacts(blkBoard, "artifact", artifactName, artifactDescription, null);
+        }
+
+        File customFilePath = new File(PlatformUtil.getUserConfigDirectory() + File.separator + leapModule + '-' + CUSTOM_ARTIFACTS_ATTRIBUTES_FILE);
+        if (customFilePath.exists()) {
+            try (MappingIterator<List<String>> iterator = new CsvMapper()
+                .enable(CsvParser.Feature.WRAP_AS_ARRAY)
+                .readerFor(List.class)
+                .with(CsvSchema.emptySchema().withColumnSeparator(','))
+                .readValues(customFilePath)) {
+
+                if (iterator.hasNext()) {
+                    // Header line we can skip
+                    List<String> headerItems = iterator.next();
+                    int lineNum = 2;
+                    while (iterator.hasNext()) {
+                        List<String> columnItems = iterator.next();
+                        if (columnItems.size() > 3) {
+                            createCustomAttributesArtifacts(blkBoard, columnItems.get(0), columnItems.get(1), columnItems.get(2), columnItems.get(3));
+                        } else {
+                            createCustomAttributesArtifacts(blkBoard, columnItems.get(0), columnItems.get(1), columnItems.get(2), null);                        
+                        }
+                    }
+                }
+            } catch (IOException ex) {
+                    logger.log(Level.WARNING, String.format("Failed to read/open file %s.", customFilePath), ex);            
+            }
+        }
+    }
+    
+    /**
+     * Create custom attributes that are defined in the xLeapp xml file(s).
+     *
+     */
+    private void createCustomAttributesArtifacts(Blackboard blkBoard, String atType, String atName, String atDescription, String attrType) {
+
+        if (atType.toLowerCase().equals("artifact")) {
+            try {
+                BlackboardArtifact.Type customArtifactType = blkBoard.getOrAddArtifactType(atName.toUpperCase(), atDescription);
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.WARNING, String.format("Failed to create custom artifact type %s.", atName), ex);
+            }
+            return;   
+        }            
+            
+        switch (attrType.toLowerCase()) {
+            case "json":
+            case "string":
+                try {
+                    BlackboardAttribute.Type customAttrbiuteType = blkBoard.getOrAddAttributeType(atName.toUpperCase(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, atDescription);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.WARNING, String.format("Failed to create custom attribute type %s.", atName), ex);
+                }
+                return;
+            case "integer":
+                try {
+                    BlackboardAttribute.Type customAttrbiuteType = blkBoard.getOrAddAttributeType(atName.toUpperCase(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, atDescription);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.WARNING, String.format("Failed to create custom attribute type %s.", atName), ex);
+                }
+                return;
+            case "long":
+                try {
+                    BlackboardAttribute.Type customAttrbiuteType = blkBoard.getOrAddAttributeType(atName.toUpperCase(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, atDescription);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.WARNING, String.format("Failed to create custom attribute type %s.", atName), ex);
+                }
+                return;
+            case "double":
+                try {
+                    BlackboardAttribute.Type customAttrbiuteType = blkBoard.getOrAddAttributeType(atName.toUpperCase(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, atDescription);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.WARNING, String.format("Failed to create custom attribute type %s.", atName), ex);
+                }
+                return;
+            case "byte":
+                try {
+                    BlackboardAttribute.Type customAttrbiuteType = blkBoard.getOrAddAttributeType(atName.toUpperCase(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.BYTE, atDescription);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.WARNING, String.format("Failed to create custom attribute type %s.", atName), ex);
+                }
+                return;
+            case "datetime":
+                try {
+                    BlackboardAttribute.Type customAttrbiuteType = blkBoard.getOrAddAttributeType(atName.toUpperCase(), BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME, atDescription);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.WARNING, String.format("Failed to create custom attribute type %s.", atName), ex);
+                }
+                return;
+            default:
+                logger.log(Level.WARNING, String.format("Attribute Type %s for file %s not defined.", attrType, atName)); //NON-NLS                   
+                return;
+
+        }
     }
 
     /**

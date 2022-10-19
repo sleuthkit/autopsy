@@ -100,7 +100,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         }
 
         try {
-            iLeappFileProcessor = new LeappFileProcessor(XMLFILE, ILeappAnalyzerModuleFactory.getModuleName(), context);
+            iLeappFileProcessor = new LeappFileProcessor(XMLFILE, ILeappAnalyzerModuleFactory.getModuleName(), ILEAPP, context);
         } catch (IOException | IngestModuleException | NoCurrentCaseException ex) {
             throw new IngestModuleException(Bundle.ILeappAnalyzerIngestModule_error_ileapp_file_processor_init(), ex);
         }
