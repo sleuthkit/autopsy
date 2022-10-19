@@ -80,12 +80,10 @@ class Autopsy < Formula
     resource("sleuthkit").stage(sleuthkit_bin_path)
     cd sleuthkit_bin_path do
         ENV.append_to_cflags "-DNDEBUG"
-        system "./bootstrap"
         system "./configure", "--disable-dependency-tracking", "--prefix=#{prefix}"
         system "make"
         system "make", "install"
     end
-    ENV["TSK_HOME"]= sleuthkit_bin_path
     
     # ----- RUN UNIX SETUP SCRIPT -----
     autopsy_tmp_path = `find $(pwd) -maxdepth 1 -type d -name "autopsy-*.*.*"`.strip()
