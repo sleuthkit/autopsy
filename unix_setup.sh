@@ -83,7 +83,7 @@ elif [ -n $TSK_JAVA_LIB_PATH ] && [ -f "$TSK_JAVA_LIB_PATH/sleuthkit-$TSK_VERSIO
     sleuthkit_jar_filepath=$TSK_JAVA_LIB_PATH/sleuthkit-$TSK_VERSION.jar
     echo "found in $(dirname $sleuthkit_jar_filepath)"
 else
-    echo "ERROR: sleuthkit-$TSK_VERSION.jar not found in /usr/share/java/, /usr/local/share/java/, or the environment variable: 'TSK_JAVA_LIB_PATH'."
+    echo "ERROR: sleuthkit-$TSK_VERSION.jar not found in /usr/share/java/, /usr/local/share/java/, or the environment variable: 'TSK_JAVA_LIB_PATH': \"$TSK_JAVA_LIB_PATH\"."
     echo "Please install the Sleuth Kit Java bindings file."
     echo "See https://github.com/sleuthkit/sleuthkit/releases."
     exit 1
