@@ -18,12 +18,16 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.Reader;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataArtifactIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -39,7 +43,6 @@ public class KwsDataArtifactIngestModule implements DataArtifactIngestModule {
     private static final Logger LOGGER = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     private static final int TSK_ASSOCIATED_OBJECT_TYPE_ID = BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT.getTypeID();
     private IngestJobContext context;
-    private KeywordSearchService searchService;
     private final KeywordSearchJobSettings settings;
 
     KwsDataArtifactIngestModule(KeywordSearchJobSettings settings) {
@@ -49,19 +52,27 @@ public class KwsDataArtifactIngestModule implements DataArtifactIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
-        searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
     }
 
     @Override
     public ProcessResult process(DataArtifact artifact) {
         try {
             if (artifact.getType().getTypeID() != TSK_ASSOCIATED_OBJECT_TYPE_ID) {
-                searchService.index(artifact);
+                Ingester ingester = Ingester.getDefault();
+                Reader blackboardExtractedTextReader = KeywordSearchUtil.getReader(artifact);
+                String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
+                ingester.indexMetaDataOnly(artifact, sourceName);
+                ingester.indexTextAndSearch(blackboardExtractedTextReader, 
+                        artifact.getArtifactID(), 
+                        sourceName, artifact, 
+                        context, 
+                        settings.isIndexToSolrEnabled(), 
+                        settings.getNamesOfEnabledKeyWordLists());
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException | Ingester.IngesterException ex) {
             LOGGER.log(Level.SEVERE, String.format("Error indexing data artifact '%s' (job ID=%d)", artifact, context.getJobId()), ex); //NON-NLS
             return ProcessResult.ERROR;
-        }
+        } 
         return ProcessResult.OK;
     }
 

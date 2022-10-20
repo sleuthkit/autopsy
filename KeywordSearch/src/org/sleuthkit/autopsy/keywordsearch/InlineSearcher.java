@@ -77,11 +77,17 @@ final class InlineSearcher {
                             keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
                         }
                     } else {
-                        String REGEX_FIND_WORD="(?i).*?\\b%s\\b.*?";
+                        String REGEX_FIND_WORD="\\b\\W*%s\\W*\\b"; //"[\\w[\\.']]*%s[\\w[\\.']]*"; //"(?i).*?\\b%s\\b.*?";
                         String regex=String.format(REGEX_FIND_WORD, Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()));
-                        if(chunk.geLowerCasedChunk().matches(regex)) {
+//                        if(chunk.geLowerCasedChunk().matches(regex)) {
+//                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
+//                        }     
+
+                       Pattern pattern = Pattern.compile(regex, java.util.regex.Pattern.CASE_INSENSITIVE);
+                       Matcher matcher = pattern.matcher(chunk.geLowerCasedChunk());
+                       if (matcher.find()) {
                             keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
-                        }     
+                        }
                     }
                 } else {
                     String regex = originalKeyword.getSearchTerm();
@@ -152,7 +158,12 @@ final class InlineSearcher {
              * and possessives (e.g. hacker's). This obviously works for English
              * but is probably not sufficient for other languages.
              */
-            searchPattern = "[\\w[\\.']]*" + java.util.regex.Pattern.quote(keywordString.toLowerCase()) + "[\\w[\\.']]*";
+            if(!originalKeyword.searchTermIsWholeWord()) {
+                searchPattern = "[\\w[\\.']]*" + java.util.regex.Pattern.quote(keywordString.toLowerCase()) + "[\\w[\\.']]*";
+            } else {
+                String REGEX_FIND_WORD="\\b\\W*%s\\W*\\b"; 
+                searchPattern=String.format(REGEX_FIND_WORD, Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()));
+            }
         } else {
             searchPattern = keywordString;
         }

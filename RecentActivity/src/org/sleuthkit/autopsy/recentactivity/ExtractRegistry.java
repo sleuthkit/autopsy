@@ -422,13 +422,13 @@ class ExtractRegistry extends Extract {
                             "RegRipper " + regFile.getUniquePath(), regFile); //NON-NLS
 
                     // Index the report content so that it will be available for keyword search.
-                    KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
-                    if (null == searchService) {
-                        logger.log(Level.WARNING, "Keyword search service not found. Report will not be indexed");
-                    } else {
-                        searchService.index(report);
-                        report.close();
-                    }
+//                    KeywordSearchService searchService = Lookup.getDefault().lookup(KeywordSearchService.class);
+//                    if (null == searchService) {
+//                        logger.log(Level.WARNING, "Keyword search service not found. Report will not be indexed");
+//                    } else {
+//                        searchService.index(report);
+//                        report.close();
+//                    }
                 } catch (TskCoreException e) {
                     this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage()); //NON-NLS
                 }

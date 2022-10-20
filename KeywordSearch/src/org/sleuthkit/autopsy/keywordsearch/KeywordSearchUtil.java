@@ -20,10 +20,18 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
 import java.io.File;
+import java.io.Reader;
 import java.util.regex.Matcher;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
+import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 class KeywordSearchUtil {
     
@@ -180,5 +188,41 @@ class KeywordSearchUtil {
     static boolean isXMLList(String absPath) {
         //TODO: make this more robust, if necessary
         return new File(absPath).getName().endsWith(".xml"); //NON-NLS
+    }
+    
+    static Reader getReader(Content content) throws TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException{
+        return getReader(content, null);
+    }
+    
+    static Reader getReader(Content content, Lookup stringsExtractionContext) throws TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException{
+        Reader reader = null;
+        if (content instanceof BlackboardArtifact) {
+            BlackboardArtifact artifact = (BlackboardArtifact) content;
+            if (artifact.getArtifactID() > 0) {
+                /*
+                 * Artifact indexing is only supported for artifacts that use
+                 * negative artifact ids to avoid overlapping with the object
+                 * ids of other types of Content.
+                 */
+                return null;
+            }
+            TextExtractor blackboardExtractor = TextExtractorFactory.getExtractor(content, null);
+            reader = blackboardExtractor.getReader();
+
+        } else if (content instanceof AbstractFile) {
+            TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor( content, stringsExtractionContext);
+            reader = stringsExtractor.getReader();
+        } else {
+            try {
+                TextExtractor contentExtractor = TextExtractorFactory.getExtractor(content, null);
+                reader = contentExtractor.getReader();
+            } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+                // Try the StringsTextExtractor if Tika extractions fails.
+                TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(content, null);
+                reader = stringsExtractor.getReader();
+            }
+        }
+
+        return reader;
     }
 }

@@ -93,8 +93,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 return;
             }
             try {
-                TextExtractor blackboardExtractor = TextExtractorFactory.getExtractor(content, null);
-                Reader blackboardExtractedTextReader = blackboardExtractor.getReader();
+                Reader blackboardExtractedTextReader = KeywordSearchUtil.getReader(content);
                 String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
                 ingester.indexMetaDataOnly(artifact, sourceName);
                 ingester.indexTextAndSearch(blackboardExtractedTextReader, artifact.getArtifactID(), sourceName, content, null, true, null);
@@ -103,18 +102,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
         } else {
             try {
-                TextExtractor contentExtractor = TextExtractorFactory.getExtractor(content, null);
-                Reader contentExtractedTextReader = contentExtractor.getReader();
-                ingester.indexTextAndSearch(contentExtractedTextReader, content.getId(), content.getName(), content, null, true, null);
+                
+                Reader reader = KeywordSearchUtil.getReader(content);
+                ingester.indexTextAndSearch(reader, content.getId(), content.getName(), content, null, true, null);
             } catch (TextExtractorFactory.NoTextExtractorFound | Ingester.IngesterException | TextExtractor.InitReaderException ex) {
-                try {
-                    // Try the StringsTextExtractor if Tika extractions fails.
-                    TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(content, null);
-                    Reader stringsExtractedTextReader = stringsExtractor.getReader();
-                    ingester.indexStrings(stringsExtractedTextReader, content.getId(), content.getName(), content, null, true);
-                } catch (Ingester.IngesterException | TextExtractor.InitReaderException ex1) {
-                    throw new TskCoreException("Error indexing content", ex1);
-                }
+                throw new TskCoreException("Error indexing content", ex);
             }
             // only do a Solr commit if ingest is not running. If ingest is running, the changes will 
             // be committed via a periodic commit or via final commit after the ingest job has finished.
