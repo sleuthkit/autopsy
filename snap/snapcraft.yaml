@@ -28,7 +28,8 @@ apps:
   autopsy:
     environment: 
       jdkhome: $SNAP/usr/lib/jvm/bellsoft-java8-full-amd64
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
+      jreflags: "$jreflags -Djna.library.path=\"$SNAP/usr/java/packages/lib:$SNAP/usr/lib/x86_64-linux-gnu/jni:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/lib/jni:$SNAP/lib:$SNAP/usr/lib\""
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/lib:$SNAP/usr/lib:$LD_LIBRARY_PATH
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
       SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
       SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs

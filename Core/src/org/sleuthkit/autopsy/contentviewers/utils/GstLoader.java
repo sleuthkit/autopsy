@@ -30,7 +30,24 @@ public final class GstLoader {
 
     private static final Logger logger = Logger.getLogger(GstLoader.class.getName());
     private static GstStatus status;
+    
+    // TODO remove
+    private final static String[] nameFormats = System.getProperty("gstreamer.GstNative.nameFormats", "%s-1.0").split("\\|");
+    private final static String libName = "gstreamer";
+    
+    private synchronized static void loadDebug() {
+        logger.log(Level.INFO, "PROPERTIES: " + System.getProperties());
+        for (String nameFormat: nameFormats) {
+            logger.log(Level.INFO, "Loading with name format: " + nameFormat);
+            try {
+                System.loadLibrary(String.format(nameFormat, libName));
+            } catch (UnsatisfiedLinkError ex) {
+                logger.log(Level.WARNING, "An error occurred while loading: " + String.format(nameFormat, libName), ex);
+            }
+        }    
+    }
 
+    
     /**
      * Attempts to load the gstreamer bindings. Only one attempt will be
      * performed per Autopsy process. Clients should not attempt to interact
@@ -45,6 +62,8 @@ public final class GstLoader {
             return status;
         }
 
+        loadDebug();
+        
         try {
             // Setting the following property causes the GST
             // Java bindings to call dispose() on the GST 

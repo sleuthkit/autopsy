@@ -1,6 +1,6 @@
 # Documentation: https://docs.brew.sh/Formula-Cookbook
 #                https://rubydoc.brew.sh/Formula
-# Can be run locally with `brew install --build-from-source --verbose --debug <path_to_this_file>`
+# Can be run locally with `brew install --debug --build-from-source --verbose --debug <path_to_this_file>`
 class Autopsy < Formula
   desc "Autopsy® is a digital forensics platform and graphical interface to The Sleuth Kit® and other digital forensics tools. It can be used by law enforcement, military, and corporate examiners to investigate what happened on a computer. You can even use it to recover photos from your camera's memory card. "
   homepage "http://www.sleuthkit.org/autopsy/"
@@ -13,7 +13,12 @@ class Autopsy < Formula
 
   depends_on "testdisk"
   # TODO is this right?
-  depends_on "gstreamer"
+  depends_on "gst-devtools"
+  depends_on "gst-libav"
+  depends_on "gst-plugins-bad"
+  depends_on "gst-plugins-base"
+  depends_on "gst-plugins-good"
+  depends_on "gst-plugins-ugly"
   depends_on "libheif"
 
   depends_on "libtool" => :build
@@ -97,8 +102,12 @@ class Autopsy < Formula
 
     ENV["TSK_JAVA_LIB_PATH"] = File.join(prefix, "share", "java")
     system unix_setup_script, "-j", "#{java_home_path}"
+    open(File.join(autopsy_install_path, "etc", "autopsy.conf"), 'a') { |f|
+      f.puts("export jreflags=\"-Djna.library.path=/usr/local/lib/ $jreflags\"") 
+    }
 
-    system "ln", "-s", File.join(autopsy_install_path, "bin", "autopsy"), File.join(bin, "autopsy") 
+    bin_autopsy = File.join(bin, "autopsy")
+    system "ln", "-s", File.join(autopsy_install_path, "bin", "autopsy"), bin_autopsy
   end
 
   test do
