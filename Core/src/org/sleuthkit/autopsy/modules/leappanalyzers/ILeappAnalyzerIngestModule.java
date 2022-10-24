@@ -71,7 +71,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     private static final String ILEAPP_EXECUTABLE = "ileapp.exe";//NON-NLS
     private static final String ILEAPP_PATHS_FILE = "iLeapp_paths.txt"; //NON-NLS
 
-    private static final String XMLFILE = "ileap-artifact-attribute-reference.xml"; //NON-NLS
+    private static final String XMLFILE = "ileapp-artifact-attribute-reference.xml"; //NON-NLS
 
     private File iLeappExecutable;
 

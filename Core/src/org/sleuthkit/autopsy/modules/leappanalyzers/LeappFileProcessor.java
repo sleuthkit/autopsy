@@ -1074,6 +1074,18 @@ public final class LeappFileProcessor {
     /**
      * Read the XML config file and load the mappings into maps
      */
+    private void loadConfigFile() throws IngestModuleException {
+        String path = PlatformUtil.getUserConfigDirectory() + File.separator + xmlFile;
+        loadIndividualConfigFile(path);
+        String userPath = PlatformUtil.getUserConfigDirectory() + File.separator + leapModule + "-" + ARTIFACT_ATTRIBUTE_REFERENCE_USER;
+        if (new File(userPath).canExecute()) {
+            loadIndividualConfigFile(path);
+        }
+    }
+
+    /**
+     * Read the XML config file and load the mappings into maps
+     */
     @NbBundle.Messages({
         "LeappFileProcessor.cannot.load.artifact.xml=Cannot load xml artifact file.",
         "LeappFileProcessor.cannotBuildXmlParser=Cannot buld an XML parser.",
@@ -1081,10 +1093,9 @@ public final class LeappFileProcessor {
         "LeappFileProcessor.postartifacts_error=Error posting Blackboard Artifact",
         "LeappFileProcessor.error.creating.new.artifacts=Error creating new artifacts."
     })
-    private void loadConfigFile() throws IngestModuleException {
+    private void loadIndividualConfigFile(String path) throws IngestModuleException {
         Document xmlinput;
         try {
-            String path = PlatformUtil.getUserConfigDirectory() + File.separator + xmlFile;
             File f = new File(path);
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();

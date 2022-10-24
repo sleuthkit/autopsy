@@ -54,7 +54,7 @@
             </ArtifactName>
         </FileName>
 
-        <FileName filename="Browser Bookmarks.tsv" description="Browser Bookmarks">
+        <FileName filename="Browser - Bookmarks.tsv" description="Browser Bookmarks">
             <ArtifactName artifactname="TSK_WEB_BOOKMARK" comment="Browser Bookmarks">
                 <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Added Date" required="yes" />
                 <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
@@ -64,7 +64,7 @@
             </ArtifactName>
         </FileName>
 
-        <FileName filename="Browser cookies.tsv" description="Browser Cookies">
+        <FileName filename="Browser - Cookies.tsv" description="Browser Cookies">
             <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Browser Cookies">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Date" required="yes" />
                 <AttributeName attributename="TSK_URL" columnName="Host" required="yes" />
@@ -76,7 +76,7 @@
             </ArtifactName>
         </FileName>
 
-        <FileName filename="Browser History.tsv" description="Browser History">
+        <FileName filename="Browser - Web History.tsv" description="Browser History">
             <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Browser History">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
                 <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
@@ -86,7 +86,7 @@
             </ArtifactName>
         </FileName>
 
-        <FileName filename="Browser keyword search terms.tsv" description="Browser keyword Search Terms">
+        <FileName filename="Browser - Keyword Search Terms.tsv" description="Browser keyword Search Terms">
             <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Browser Keyword Search Terms">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
                 <AttributeName attributename="TSK_TEXT" columnName="Term" required="yes"/>
@@ -94,7 +94,7 @@
             </ArtifactName>
         </FileName>
 
-        <FileName filename="Browser login data.tsv" description="Browser Login Data">
+        <FileName filename="Browser - Login Data.tsv" description="Browser Login Data">
             <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Browser Login">
                 <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Time" required="yes" />
                 <AttributeName attributename="TSK_USER_ID" columnName="Username" required="yes" />
@@ -104,7 +104,7 @@
             </ArtifactName>
         </FileName>
 
-        <FileName filename="Browser offline pages.tsv" description="Browser Offline Pages">
+        <FileName filename="Browser - Offline Pages.tsv" description="Browser Offline Pages">
             <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Browser Offline Pages">
                 <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Creation Time" required="yes" />
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Time" required="yes" />
@@ -116,7 +116,7 @@
             </ArtifactName>
         </FileName>
 
-        <FileName filename="Browser search terms.tsv" description="Browser Search Terms">
+        <FileName filename="Browser - Search Terms.tsv" description="Browser Search Terms">
             <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Browser Search Terms">
                 <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
                 <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes"/>
@@ -126,7 +126,7 @@
             </ArtifactName>
         </FileName>
 
-    <FileName filename="Browser top sites.tsv" description="Browser Top Sites">
+    <FileName filename="Browser - Top Sites.tsv" description="Browser Top Sites">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Browser Top Sites">
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
             <AttributeName attributename="null" columnName="Rank" required="no" />
@@ -151,7 +151,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Chrome Bookmarks.tsv" description="Chrome Bookmarks">
+    <FileName filename="Chrome - Bookmarks.tsv" description="Chrome Bookmarks">
         <ArtifactName artifactname="TSK_WEB_BOOKMARK" comment="Chrome Bookmarks">
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Added Date" required="yes" />
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
@@ -161,7 +161,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Chrome cookies.tsv" description="Chrome Cookies">
+    <FileName filename="Chrome - cookies.tsv" description="Chrome Cookies">
         <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Chrome Cookies">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Date" required="yes" />
             <AttributeName attributename="TSK_URL" columnName="Host" required="yes" />
@@ -173,7 +173,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Chrome History.tsv" description="Chrome History">
+    <FileName filename="Chrome - History.tsv" description="Chrome History">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Chrome History">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
@@ -183,7 +183,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Chrome login data.tsv" description="Chrome Login Data">
+    <FileName filename="Chrome - login data.tsv" description="Chrome Login Data">
         <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Chrome Login">
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Time" required="yes" />
             <AttributeName attributename="TSK_USER_ID" columnName="Username" required="yes" />
@@ -193,7 +193,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Chrome offline pages.tsv" description="Chrome Offline Pages">
+    <FileName filename="Chrome - offline pages.tsv" description="Chrome Offline Pages">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Chrome Offline Pages">
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Creation Time" required="yes" />
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Time" required="yes" />
@@ -205,7 +205,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Chrome search terms.tsv" description="Chrome Search Terms">
+    <FileName filename="Chrome - search terms.tsv" description="Chrome Search Terms">
         <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Chrome Search Terms">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
             <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes"/>
@@ -215,7 +215,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Chrome top sites.tsv" description="Chrome Top Sites">
+    <FileName filename="Chrome - top sites.tsv" description="Chrome Top Sites">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Chrome Top Sites">
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
             <AttributeName attributename="null" columnName="Rank" required="no" />
@@ -224,7 +224,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Edge Bookmarks.tsv" description="Edge Bookmarks">
+    <FileName filename="Edge - Bookmarks.tsv" description="Edge Bookmarks">
         <ArtifactName artifactname="TSK_WEB_BOOKMARK" comment="Edge Bookmarks">
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Added Date" required="yes" />
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
@@ -234,7 +234,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Edge cookies.tsv" description="Edge Cookies">
+    <FileName filename="Edge - cookies.tsv" description="Edge Cookies">
         <ArtifactName artifactname="TSK_WEB_COOKIE" comment="Edge Cookies">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Date" required="yes" />
             <AttributeName attributename="TSK_URL" columnName="Host" required="yes" />
@@ -246,7 +246,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Edge History.tsv" description="Edge History">
+    <FileName filename="Edge - History.tsv" description="Edge History">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Edge History">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
@@ -256,7 +256,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Edge login data.tsv" description="Edge Login Data">
+    <FileName filename="Edge - login data.tsv" description="Edge Login Data">
         <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Edge Login">
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Created Time" required="yes" />
             <AttributeName attributename="TSK_USER_ID" columnName="Username" required="yes" />
@@ -266,7 +266,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Edge offline pages.tsv" description="Edge Offline Pages">
+    <FileName filename="Edge - offline pages.tsv" description="Edge Offline Pages">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Edge Offline Pages">
             <AttributeName attributename="TSK_DATETIME_CREATED" columnName="Creation Time" required="yes" />
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Access Time" required="yes" />
@@ -278,7 +278,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Edge search terms.tsv" description="Edge Search Terms">
+    <FileName filename="Edge - search terms.tsv" description="Edge Search Terms">
         <ArtifactName artifactname="TSK_WEB_SEARCH_QUERY" comment="Chrome Search Terms">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
             <AttributeName attributename="TSK_TEXT" columnName="Search Term" required="yes"/>
@@ -288,7 +288,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Edge top sites.tsv" description="Edge Top Sites">
+    <FileName filename="Edge - top sites.tsv" description="Edge Top Sites">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Edge Top Sites">
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes" />
             <AttributeName attributename="null" columnName="Rank" required="no" />

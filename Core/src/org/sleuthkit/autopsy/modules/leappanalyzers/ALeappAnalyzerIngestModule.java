@@ -71,7 +71,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     private static final String ALEAPP_EXECUTABLE = "aleapp.exe";//NON-NLS
     private static final String ALEAPP_PATHS_FILE = "aLeapp_paths.txt"; //NON-NLS
 
-    private static final String XMLFILE = "aleap-artifact-attribute-reference.xml"; //NON-NLS
+    private static final String XMLFILE = "aleapp-artifact-attribute-reference.xml"; //NON-NLS
 
     private File aLeappExecutable;
 
