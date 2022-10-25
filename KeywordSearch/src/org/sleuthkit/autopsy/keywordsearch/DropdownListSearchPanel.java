@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2022 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -142,7 +143,10 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         searchAddListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!ingestRunning) {
+                if (ingestRunning) {
+                    IngestSearchRunner.getInstance().addKeywordListsToAllJobs(listsTableModel.getSelectedLists());
+                    logger.log(Level.INFO, "Submitted enqueued lists to ingest"); //NON-NLS
+                } else {
                     searchAction(e);
                 }
             }
