@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.twelvemonkeys.lang.StringUtil;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,11 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.validator.routines.DomainValidator;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -71,24 +77,24 @@ final class InlineSearcher {
 
                 List<KeywordHit> keywordHits = new ArrayList<>();
                 if (originalKeyword.searchTermIsLiteral()) {
-                    if (!originalKeyword.searchTermIsWholeWord()) {
+//                    if (!originalKeyword.searchTermIsWholeWord()) {
                         if (StringUtil.containsIgnoreCase(chunk.geLowerCasedChunk(), originalKeyword.getSearchTerm())) {
 
                             keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
                         }
-                    } else {
-                        String REGEX_FIND_WORD="\\b\\W*%s\\W*\\b"; //"[\\w[\\.']]*%s[\\w[\\.']]*"; //"(?i).*?\\b%s\\b.*?";
-                        String regex=String.format(REGEX_FIND_WORD, Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()));
+//                    } else {
+//                        String REGEX_FIND_WORD="\\b\\W*%s\\W*\\b"; //"[\\w[\\.']]*%s[\\w[\\.']]*"; //"(?i).*?\\b%s\\b.*?";
+//                        String regex=String.format(REGEX_FIND_WORD, Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()));
 //                        if(chunk.geLowerCasedChunk().matches(regex)) {
 //                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
 //                        }     
 
-                       Pattern pattern = Pattern.compile(regex, java.util.regex.Pattern.CASE_INSENSITIVE);
-                       Matcher matcher = pattern.matcher(chunk.geLowerCasedChunk());
-                       if (matcher.find()) {
-                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
-                        }
-                    }
+//                       Pattern pattern = Pattern.compile(regex, java.util.regex.Pattern.CASE_INSENSITIVE);
+//                       Matcher matcher = pattern.matcher(chunk.geLowerCasedChunk());
+//                       if (matcher.find()) {
+//                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
+//                        }
+//                    }
                 } else {
                     String regex = originalKeyword.getSearchTerm();
 
@@ -163,6 +169,7 @@ final class InlineSearcher {
             } else {
                 String REGEX_FIND_WORD="\\b\\W*%s\\W*\\b"; 
                 searchPattern=String.format(REGEX_FIND_WORD, Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()));
+                testingTokenizer(chunk, originalKeyword);
             }
         } else {
             searchPattern = keywordString;
@@ -352,5 +359,29 @@ final class InlineSearcher {
             // content object the map will be cleared. 
             map.clear();
         }
+    }
+    
+    private void testingTokenizer(Chunk chunk, Keyword originalKeyword) {
+        try {
+            List<String> tokens = analyze(chunk.geLowerCasedChunk(), new StandardAnalyzer());
+            for(String token: tokens) {
+                if(token.equals(originalKeyword.getSearchTerm())) {
+                    
+                }
+            }
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
+    
+    public List<String> analyze(String text, Analyzer analyzer) throws IOException{
+        List<String> result = new ArrayList<>();
+        TokenStream tokenStream = analyzer.tokenStream("sampleName", text);
+        CharTermAttribute attr = tokenStream.addAttribute(CharTermAttribute.class);
+        tokenStream.reset();
+        while(tokenStream.incrementToken()) {
+           result.add(attr.toString());
+        }       
+        return result;
     }
 }
