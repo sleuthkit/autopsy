@@ -16,7 +16,7 @@ When installing on Debian-based Linux or macOS systems, there are three general 
 
 # Installing Autopsy
 
-- Download the Autopsy zip file from [repository releases](https://github.com/sleuthkit/autopsy/releases).  The file will be marked as "autopsy-&ltrelease&gt.zip" (i.e. "autopsy-4.19.2.zip").
+- Download the Autopsy zip file from [repository releases](https://github.com/sleuthkit/autopsy/releases).  The file will be marked as "autopsy-&lt;release&gt;.zip" (i.e. "autopsy-4.19.2.zip").
 - Run [`install_application.sh`](./linux_macos_install_scripts/install_application.sh) with the following parameters: `install_application.sh [-z zip_path] [-i install_directory] [-j java_home]`.  An example would be `install_application.sh -z ~/Downloads/autopsy-4.19.2.zip -i ~/autopsy -j /usr/lib/jvm/bellsoft-java8-full-amd64`.  The path to the Java 8 home is the last output from the [prequisites installation scripts](#installing-prerequisites), but typically, the path will be `/usr/lib/jvm/bellsoft-java8-full-amd64` on Debian-based Linux or the output of running `/usr/libexec/java_home -v 1.8` on macOS.
 
 # Setup macOS JNA paths
