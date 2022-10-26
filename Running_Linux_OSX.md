@@ -1,27 +1,26 @@
 # Overview
 
-When installing on Debian-based or macOS systems, there are three general steps: [installing prerequisites](#installing-prerequisites), [installing The Sleuth Kit](#installing-the-sleuth-kit), and [installing Autopsy](#installing-autopsy) itself.  On macOS, you will want to [setup the JNA paths](#setup-macos-jna-paths).
+When installing on Debian-based Linux or macOS systems, there are three general steps: [installing prerequisites](#installing-prerequisites), [installing The Sleuth Kit](#installing-the-sleuth-kit), and [installing Autopsy](#installing-autopsy) itself.  On macOS, you will want to [setup the JNA paths](#setup-macos-jna-paths).
 
 # Installing Prerequisites
 
-- Debian-based Linux users can install prerequisites by running [`linux_macos_install_scripts/install_prereqs_ubuntu.sh`](./linux_macos_install_scripts/install_prereqs_ubuntu.sh).
-- macOS users can install prerequisites by running [`linux_macos_install_scripts/install_prereqs_macos.sh`](./linux_macos_install_scripts/install_prereqs_macos.sh).  This script requires the package manager: [Homebrew](https://brew.sh/) to be installed.  The [Homebrew](https://brew.sh/) site has directions on how to install.
+- **Linux**: run [`linux_macos_install_scripts/install_prereqs_ubuntu.sh`](./linux_macos_install_scripts/install_prereqs_ubuntu.sh).
+- **macOS**: run [`linux_macos_install_scripts/install_prereqs_macos.sh`](./linux_macos_install_scripts/install_prereqs_macos.sh).  This script requires the package manager: [Homebrew](https://brew.sh/), which has installation steps on their site.
 
 *NOTE: The last output of the script is the path to the Java 8 installation.  You will want to note that path when installing Autopsy.*
 
 # Installing The Sleuth Kit
 
-- Debian-based Linux users can install The Sleuth Kit by installing the [package](https://packages.ubuntu.com/search?suite=default&keywords=sleuthkit) from the repositories with the following command: `sudo apt update && sudo apt install sleuthkit`.
-- macOS users can install The Sleuth Kit from source by running [`linux_macos_install_scripts/install_tsk_from_src.sh`](./linux_macos_install_scripts/install_tsk_from_src.sh).  The script will download, build, and install The Sleuth Kit.  It can be run as follows: `install_tsk_from_src -p ~/src/sleuthkit -b sleuthkit-4.11.1`.  Make sure that your path to download source ends with "sleuthkit" as the last directory, and the release is the corresponding tag in the [repository](https://github.com/sleuthkit/sleuthkit).
+- **Linux**: Install The Sleuth Kit [package](https://packages.ubuntu.com/search?suite=default&keywords=sleuthkit) from the repositories with the following command: `sudo apt update && sudo apt install sleuthkit`.
+- **macOS**: Install The Sleuth Kit from source by running [`linux_macos_install_scripts/install_tsk_from_src.sh`](./linux_macos_install_scripts/install_tsk_from_src.sh), which will download, build, and install The Sleuth Kit.  It can be run as follows: `install_tsk_from_src -p ~/src/sleuthkit -b sleuthkit-4.11.1`.  Make sure that your path to download source ends with "sleuthkit" as the last directory, and the release is the corresponding tag in the [repository](https://github.com/sleuthkit/sleuthkit).
 
 # Installing Autopsy
 
-- The Autopsy zip file can be downloaded from the [repository releases](https://github.com/sleuthkit/autopsy/releases).  Find the relevant release, and download the file marked as "autopsy-<release>.zip" (i.e. "autopsy-4.19.2.zip").
-- Installing autopsy from zip file can be done by running [`install_application.sh`](./linux_macos_install_scripts/install_application.sh) with the following parameters: `install_application.sh [-z zip_path] [-i install_directory] [-j java_home]`.  An example would be `install_application.sh -z ~/Downloads/autopsy-4.19.2.zip -i ~/autopsy -j /usr/lib/jvm/bellsoft-java8-full-amd64`.  The path to the Java 8 home is the last output from the [prequisites installation scripts](#installing-prerequisites), but typically, the path will be `/usr/lib/jvm/bellsoft-java8-full-amd64` on Debian-based Linux or the output of running `/usr/libexec/java_home -v 1.8` on macOS.
+- Download the Autopsy zip file from [repository releases](https://github.com/sleuthkit/autopsy/releases).  The file will be marked as "autopsy-<release>.zip" (i.e. "autopsy-4.19.2.zip").
+- Run [`install_application.sh`](./linux_macos_install_scripts/install_application.sh) with the following parameters: `install_application.sh [-z zip_path] [-i install_directory] [-j java_home]`.  An example would be `install_application.sh -z ~/Downloads/autopsy-4.19.2.zip -i ~/autopsy -j /usr/lib/jvm/bellsoft-java8-full-amd64`.  The path to the Java 8 home is the last output from the [prequisites installation scripts](#installing-prerequisites), but typically, the path will be `/usr/lib/jvm/bellsoft-java8-full-amd64` on Debian-based Linux or the output of running `/usr/libexec/java_home -v 1.8` on macOS.
 
 # Setup macOS JNA paths
-A few features in Autopsy will only work (i.e. gstreamer) if the JNA paths are specified.  If you installed the necessary dependencies through Homebrew, you will want to  run this [linux_macos_install_scripts/add_macos_jna.sh](./linux_macos_install_scripts/add_macos_jna.sh) to properly setup the path.
-
+If you are on macOS run [linux_macos_install_scripts/add_macos_jna.sh](./linux_macos_install_scripts/add_macos_jna.sh) to properly setup the jna path to get things like gstreamer working.
 
 # Troubleshooting
 - If you see something like "Cannot create case: javafx/scene/paint/Color" it is an indication that Java FX
