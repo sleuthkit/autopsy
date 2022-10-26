@@ -4,8 +4,8 @@ When installing on Debian-based Linux or macOS systems, there are three general 
 
 # Installing Prerequisites
 
-- **Linux**: run [`linux_macos_install_scripts/install_prereqs_ubuntu.sh`](./linux_macos_install_scripts/install_prereqs_ubuntu.sh).
-- **macOS**: run [`linux_macos_install_scripts/install_prereqs_macos.sh`](./linux_macos_install_scripts/install_prereqs_macos.sh).  This script requires the package manager: [Homebrew](https://brew.sh/), which has installation steps on their site.
+- **Linux**: Run [`linux_macos_install_scripts/install_prereqs_ubuntu.sh`](./linux_macos_install_scripts/install_prereqs_ubuntu.sh).
+- **macOS**: Run [`linux_macos_install_scripts/install_prereqs_macos.sh`](./linux_macos_install_scripts/install_prereqs_macos.sh).  This script requires the package manager: [Homebrew](https://brew.sh/), which has installation steps on their site.
 
 *NOTE: The last output of the script is the path to the Java 8 installation.  You will want to note that path when installing Autopsy.*
 
