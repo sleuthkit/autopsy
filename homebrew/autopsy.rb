@@ -12,13 +12,7 @@ class Autopsy < Formula
   depends_on "libewf"
 
   depends_on "testdisk"
-  # TODO is this right?
-  depends_on "gst-devtools"
-  depends_on "gst-libav"
-  depends_on "gst-plugins-bad"
-  depends_on "gst-plugins-base"
-  depends_on "gst-plugins-good"
-  depends_on "gst-plugins-ugly"
+
   depends_on "libheif"
 
   depends_on "libtool" => :build
@@ -47,6 +41,9 @@ class Autopsy < Formula
   end
   on_macos do
     uses_from_macos "sqlite"
+    resource "gstreamer_pkg" do 
+      url "https://gstreamer.freedesktop.org/data/pkg/osx/1.20.4/gstreamer-1.0-1.20.4-universal.pkg"
+    end
 
     on_arm do 
       resource "liberica_jvm" do
@@ -102,9 +99,24 @@ class Autopsy < Formula
 
     ENV["TSK_JAVA_LIB_PATH"] = File.join(prefix, "share", "java")
     system unix_setup_script, "-j", "#{java_home_path}"
-    open(File.join(autopsy_install_path, "etc", "autopsy.conf"), 'a') { |f|
-      f.puts("export jreflags=\"-Djna.library.path=/usr/local/lib/ $jreflags\"") 
-    }
+
+    # handle installing gstreamer for use with autopsy
+    # homebrew gstreamer packages don't appear to integrate properly with gstreamer-java
+    if OS.mac?
+      # pkg has nested folders (with .pkg suffix) whose contents need to be extracted to the same location
+      gstreamer_initial_download_folder = "./gstreamer_initial_download"
+      gstreamer_initial_extraction = "./gstreamer_initial_extraction"
+      gstreamer_extraction_path = File.join(install_dir, "gstreamer_libs")
+      resource("gstreamer_pkg").stage(gstreamer_initial_download_folder)
+      gstreamer_pkg_path = `find #{gstreamer_initial_download_folder} -maxdepth 1 -name *.pkg | head -n1`.strip()
+      system "pkgutil", "--expand-full", gstreamer_pkg_path, gstreamer_initial_extraction
+      system "mkdir", "-p", gstreamer_extraction_path
+      system "find #{gstreamer_initial_extraction} -maxdepth 2 -type d -path *.pkg/Payload | xargs -I{} cp -R {}/. #{gstreamer_extraction_path}"
+
+      open(File.join(autopsy_install_path, "etc", "autopsy.conf"), 'a') { |f|
+        f.puts("export jreflags=\"\\\"-Djna.library.path=#{gstreamer_extraction_path}/lib\\\" $jreflags\"") 
+      }
+    end
 
     bin_autopsy = File.join(bin, "autopsy")
     system "ln", "-s", File.join(autopsy_install_path, "bin", "autopsy"), bin_autopsy
