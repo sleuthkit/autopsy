@@ -9,7 +9,7 @@ The output was:
 Microsoft (R) Build Engine version 17.1.0+ae57d105c for .NET Framework
 Copyright (C) Microsoft Corporation. All rights reserved.
 
-Build started 3/8/2022 9:06:21 AM.
+Build started 10/27/2022 2:47:03 PM.
 Project "C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertJNI\dist\CMakeFiles\3.23.0-rc2\CompilerIdC\CompilerIdC.vcxproj" on node 1 (default targets).
 PrepareForBuild:
   Creating directory "Debug\".
@@ -43,7 +43,7 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:01.01
+Time Elapsed 00:00:03.70
 
 
 Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CompilerIdC.exe"
@@ -62,7 +62,7 @@ The output was:
 Microsoft (R) Build Engine version 17.1.0+ae57d105c for .NET Framework
 Copyright (C) Microsoft Corporation. All rights reserved.
 
-Build started 3/8/2022 9:06:23 AM.
+Build started 10/27/2022 2:47:07 PM.
 Project "C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertJNI\dist\CMakeFiles\3.23.0-rc2\CompilerIdCXX\CompilerIdCXX.vcxproj" on node 1 (default targets).
 PrepareForBuild:
   Creating directory "Debug\".
@@ -96,7 +96,7 @@ Build succeeded.
     0 Warning(s)
     0 Error(s)
 
-Time Elapsed 00:00:00.84
+Time Elapsed 00:00:00.99
 
 
 Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CompilerIdCXX.exe"
@@ -108,28 +108,28 @@ The CXX compiler identification is MSVC, found in "C:/Users/gregd/Documents/Sour
 Detecting C compiler ABI info compiled with the following output:
 Change Dir: C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_34712.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:m && Microsoft (R) Build Engine version 17.1.0+ae57d105c for .NET Framework
+Run Build Command(s):C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_c7496.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:m && Microsoft (R) Build Engine version 17.1.0+ae57d105c for .NET Framework
 Copyright (C) Microsoft Corporation. All rights reserved.
 
   Microsoft (R) C/C++ Optimizing Compiler Version 19.31.31104 for x64
   Copyright (C) Microsoft Corporation.  All rights reserved.
   CMakeCCompilerABI.c
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_34712.dir\Debug\\" /Fd"cmTC_34712.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Program Files\CMake\share\cmake-3.23\Modules\CMakeCCompilerABI.c"
-  cmTC_34712.vcxproj -> C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertJNI\dist\CMakeFiles\CMakeTmp\Debug\cmTC_34712.exe
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /Gm- /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"cmTC_c7496.dir\Debug\\" /Fd"cmTC_c7496.dir\Debug\vc143.pdb" /external:W1 /Gd /TC /errorReport:queue "C:\Program Files\CMake\share\cmake-3.23\Modules\CMakeCCompilerABI.c"
+  cmTC_c7496.vcxproj -> C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertJNI\dist\CMakeFiles\CMakeTmp\Debug\cmTC_c7496.exe
 
 
 
 Detecting CXX compiler ABI info compiled with the following output:
 Change Dir: C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_edca7.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:m && Microsoft (R) Build Engine version 17.1.0+ae57d105c for .NET Framework
+Run Build Command(s):C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/amd64/MSBuild.exe cmTC_44417.vcxproj /p:Configuration=Debug /p:Platform=x64 /p:VisualStudioVersion=17.0 /v:m && Microsoft (R) Build Engine version 17.1.0+ae57d105c for .NET Framework
 Copyright (C) Microsoft Corporation. All rights reserved.
 
   Microsoft (R) C/C++ Optimizing Compiler Version 19.31.31104 for x64
   CMakeCXXCompilerABI.cpp
   Copyright (C) Microsoft Corporation.  All rights reserved.
-  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_edca7.dir\Debug\\" /Fd"cmTC_edca7.dir\Debug\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\Program Files\CMake\share\cmake-3.23\Modules\CMakeCXXCompilerABI.cpp"
-  cmTC_edca7.vcxproj -> C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertJNI\dist\CMakeFiles\CMakeTmp\Debug\cmTC_edca7.exe
+  cl /c /Zi /W1 /WX- /diagnostics:column /Od /Ob0 /D _MBCS /D WIN32 /D _WINDOWS /D "CMAKE_INTDIR=\"Debug\"" /Gm- /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"cmTC_44417.dir\Debug\\" /Fd"cmTC_44417.dir\Debug\vc143.pdb" /external:W1 /Gd /TP /errorReport:queue "C:\Program Files\CMake\share\cmake-3.23\Modules\CMakeCXXCompilerABI.cpp"
+  cmTC_44417.vcxproj -> C:\Users\gregd\Documents\Source\autopsy\thirdparty\libheif\HeifConvertJNI\dist\CMakeFiles\CMakeTmp\Debug\cmTC_44417.exe
 
 
 

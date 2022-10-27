@@ -1,6 +1,6 @@
 # Documentation: https://docs.brew.sh/Formula-Cookbook
 #                https://rubydoc.brew.sh/Formula
-# Can be run locally with `brew install --debug --build-from-source --verbose --debug <path_to_this_file>`
+# Can be run locally with `brew install --debug --build-from-source --verbose <path_to_this_file>`
 class Autopsy < Formula
   desc "Autopsy® is a digital forensics platform and graphical interface to The Sleuth Kit® and other digital forensics tools. It can be used by law enforcement, military, and corporate examiners to investigate what happened on a computer. You can even use it to recover photos from your camera's memory card. "
   homepage "http://www.sleuthkit.org/autopsy/"
@@ -14,6 +14,13 @@ class Autopsy < Formula
   depends_on "testdisk"
 
   depends_on "libheif"
+
+  depends_on "gst-libav"
+  depends_on "gst-plugins-bad"
+  depends_on "gst-plugins-base"
+  depends_on "gst-plugins-good"
+  depends_on "gst-plugins-ugly"
+  depends_on "gstreamer"
 
   depends_on "libtool" => :build
   depends_on "autoconf" => :build
@@ -41,9 +48,6 @@ class Autopsy < Formula
   end
   on_macos do
     uses_from_macos "sqlite"
-    resource "gstreamer_pkg" do 
-      url "https://gstreamer.freedesktop.org/data/pkg/osx/1.20.4/gstreamer-1.0-1.20.4-universal.pkg"
-    end
 
     on_arm do 
       resource "liberica_jvm" do
@@ -100,23 +104,14 @@ class Autopsy < Formula
     ENV["TSK_JAVA_LIB_PATH"] = File.join(prefix, "share", "java")
     system unix_setup_script, "-j", "#{java_home_path}"
 
-    # handle installing gstreamer for use with autopsy
-    # homebrew gstreamer packages don't appear to integrate properly with gstreamer-java
-    if OS.mac?
-      # pkg has nested folders (with .pkg suffix) whose contents need to be extracted to the same location
-      gstreamer_initial_download_folder = "./gstreamer_initial_download"
-      gstreamer_initial_extraction = "./gstreamer_initial_extraction"
-      gstreamer_extraction_path = File.join(install_dir, "gstreamer_libs")
-      resource("gstreamer_pkg").stage(gstreamer_initial_download_folder)
-      gstreamer_pkg_path = `find #{gstreamer_initial_download_folder} -maxdepth 1 -name *.pkg | head -n1`.strip()
-      system "pkgutil", "--expand-full", gstreamer_pkg_path, gstreamer_initial_extraction
-      system "mkdir", "-p", gstreamer_extraction_path
-      system "find #{gstreamer_initial_extraction} -maxdepth 2 -type d -path *.pkg/Payload | xargs -I{} cp -R {}/. #{gstreamer_extraction_path}"
-
-      open(File.join(autopsy_install_path, "etc", "autopsy.conf"), 'a') { |f|
-        f.puts("export jreflags=\"\\\"-Djna.library.path=#{gstreamer_extraction_path}/lib\\\" $jreflags\"") 
-      }
-    end
+     open(File.join(autopsy_install_path, "etc", "autopsy.conf"), 'a') { |f|
+      # gstreamer needs the 'gst-plugin-scanner' to locate gstreamer plugins like the ones that allow gstreamer to play videos in autopsy
+      # so, the jreflags allow the initial gstreamer lib to be loaded and the  'GST_PLUGIN_SYSTEM_PATH' along with 'GST_PLUGIN_SCANNER'
+      # allows gstreamer to find plugin dependencies
+      f.puts("export jreflags=\"-Djna.library.path=/usr/local/lib $jreflags\"") 
+      f.puts("export GST_PLUGIN_SYSTEM_PATH=\"/usr/local/lib/gstreamer-1.0\"")
+      f.puts("export GST_PLUGIN_SCANNER=\"#{Formula["gstreamer"].prefix}/libexec/gstreamer-1.0/gst-plugin-scanner\"")
+     }
 
     bin_autopsy = File.join(bin, "autopsy")
     system "ln", "-s", File.join(autopsy_install_path, "bin", "autopsy"), bin_autopsy

@@ -10,7 +10,7 @@
 		<ProjectGuid>{F3FC6D86-508D-3FB1-96D2-995F08B142EC}</ProjectGuid>
 		<Keyword>Win32Proj</Keyword>
 		<Platform>x64</Platform>
-		<WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
+		<WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
 	</PropertyGroup>
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
 	<PropertyGroup>

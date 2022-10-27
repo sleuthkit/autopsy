@@ -1,0 +1,10 @@
+^C:\USERS\GREGD\DOCUMENTS\SOURCE\AUTOPSY\THIRDPARTY\LIBHEIF\HEIFCONVERTJNI\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI -BC:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist --check-stamp-file C:/Users/gregd/Documents/Source/autopsy/thirdparty/libheif/HeifConvertJNI/dist/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

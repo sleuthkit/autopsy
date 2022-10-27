@@ -11,7 +11,7 @@ or something other than the suffix :x64-windows for different architectures.
 
 In order to build, 
 1) from command line, set directory to HeifConvertJNI\dist
-2) You can rebuild the vcxproj in this directory by running:  cmake -G "Visual Studio 17 2022" -A x64 -S .. "-DCMAKE_TOOLCHAIN_FILE=PATH_TO_VCPKG_INSTALL/scripts/buildsystems/vcpkg.cmake"
+2) You can rebuild the vcxproj in this directory by running:  cmake -G "Visual Studio 17 2022" -A x64 -S .. "-DCMAKE_TOOLCHAIN_FILE=PATH_TO_VCPKG_INSTALL/scripts/buildsystems/vcpkg.cmake" (on macOS and linux, the "-G" and "-A" parameters can be ignored)
 3) The binaries can be created by running: cmake --build . --config Release
 
 * The "-A x64" flag can be substituted with relevant architecture.
