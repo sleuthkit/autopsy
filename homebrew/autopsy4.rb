@@ -108,12 +108,6 @@ class Autopsy4 < Formula
     ENV["TSK_JAVA_LIB_PATH"] = File.join(prefix, "share", "java")
     system unix_setup_script, "-j", "#{java_home_path}"
 
-    # set executable by all (for packaging and running)
-    system "chmod", "a+x", "#{autopsy_install_path}/autopsy/markmckinnon/Export*"
-    system "chmod", "a+x", "#{autopsy_install_path}/autopsy/markmckinnon/parse*"
-    system "chmod", "-R", "a+x", "#{autopsy_install_path}/autopsy/solr/bin"
-    system "chmod", "a+x", "#{autopsy_install_path}/bin/autopsy"
-
     open(File.join(autopsy_install_path, "etc", "autopsy.conf"), 'a') { |f|
       # gstreamer needs the 'gst-plugin-scanner' to locate gstreamer plugins like the ones that allow gstreamer to play videos in autopsy
       # so, the jreflags allow the initial gstreamer lib to be loaded and the  'GST_PLUGIN_SYSTEM_PATH' along with 'GST_PLUGIN_SCANNER'

@@ -174,8 +174,6 @@ parts:
 
       # snaps run applications with different permissions.  This ensures applications can run.
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
-      find "$AUTOPSY_LOCATION/autopsy/markmckinnon" -name "Export*" -o -name "parse*" | xargs -I{} chmod a+x {}
-      chmod -R a+x "$AUTOPSY_LOCATION/autopsy/solr/bin"
 
       # include this line to print all set variables
       # sed -i '129 i set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"' "$AUTOPSY_LOCATION/platform/lib/nbexec"
