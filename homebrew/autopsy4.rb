@@ -1,7 +1,10 @@
 # Documentation: https://docs.brew.sh/Formula-Cookbook
 #                https://rubydoc.brew.sh/Formula
+
+# Named Autopsy4 to avoid conflict with the autopsy formula in repos
+# A package installer can be generated using brew-pkg: https://github.com/timsutton/brew-pkg
 # Can be run locally with `brew install --debug --build-from-source --verbose <path_to_this_file>`
-class Autopsy < Formula
+class Autopsy4 < Formula
   desc "Autopsy® is a digital forensics platform and graphical interface to The Sleuth Kit® and other digital forensics tools. It can be used by law enforcement, military, and corporate examiners to investigate what happened on a computer. You can even use it to recover photos from your camera's memory card. "
   homepage "http://www.sleuthkit.org/autopsy/"
   url "https://github.com/sleuthkit/autopsy/releases/download/autopsy-4.19.2/autopsy-4.19.2.zip"
@@ -65,6 +68,7 @@ class Autopsy < Formula
 
   conflicts_with "ffind", because: "both install a `ffind` executable"
   conflicts_with "sleuthkit", because: "both install sleuthkit items"
+  conflicts_with "autopsy", because: "both install sleuthkit items and have autopsy executables"
 
   def install
     ENV.deparallelize
@@ -99,19 +103,25 @@ class Autopsy < Formula
     system "rm", unix_setup_script
     system "curl", "-o", unix_setup_script, "https://raw.githubusercontent.com/gdicristofaro/autopsy/8425_linuxMacBuild/unix_setup.sh"
 
-    system "chmod", "u+x", unix_setup_script
+    system "chmod", "a+x", unix_setup_script
 
     ENV["TSK_JAVA_LIB_PATH"] = File.join(prefix, "share", "java")
     system unix_setup_script, "-j", "#{java_home_path}"
 
-     open(File.join(autopsy_install_path, "etc", "autopsy.conf"), 'a') { |f|
+    # set executable by all (for packaging and running)
+    system "chmod", "a+x", "#{autopsy_install_path}/autopsy/markmckinnon/Export*"
+    system "chmod", "a+x", "#{autopsy_install_path}/autopsy/markmckinnon/parse*"
+    system "chmod", "-R", "a+x", "#{autopsy_install_path}/autopsy/solr/bin"
+    system "chmod", "a+x", "#{autopsy_install_path}/bin/autopsy"
+
+    open(File.join(autopsy_install_path, "etc", "autopsy.conf"), 'a') { |f|
       # gstreamer needs the 'gst-plugin-scanner' to locate gstreamer plugins like the ones that allow gstreamer to play videos in autopsy
       # so, the jreflags allow the initial gstreamer lib to be loaded and the  'GST_PLUGIN_SYSTEM_PATH' along with 'GST_PLUGIN_SCANNER'
       # allows gstreamer to find plugin dependencies
       f.puts("export jreflags=\"-Djna.library.path=/usr/local/lib $jreflags\"") 
       f.puts("export GST_PLUGIN_SYSTEM_PATH=\"/usr/local/lib/gstreamer-1.0\"")
       f.puts("export GST_PLUGIN_SCANNER=\"#{Formula["gstreamer"].prefix}/libexec/gstreamer-1.0/gst-plugin-scanner\"")
-     }
+    }
 
     bin_autopsy = File.join(bin, "autopsy")
     system "ln", "-s", File.join(autopsy_install_path, "bin", "autopsy"), bin_autopsy

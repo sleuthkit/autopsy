@@ -107,14 +107,14 @@ else
 fi
 
 # make sure thirdparty files are executable
-chmod u+x autopsy/markmckinnon/Export*
-chmod u+x autopsy/markmckinnon/parse*
+chmod a+x autopsy/markmckinnon/Export*
+chmod a+x autopsy/markmckinnon/parse*
 
 # allow solr dependencies to execute
-chmod -R u+x autopsy/solr/bin
+chmod -R a+x autopsy/solr/bin
 
 # make sure it is executable
-chmod u+x bin/$APPLICATION_NAME
+chmod a+x bin/$APPLICATION_NAME
 
 popd
 
