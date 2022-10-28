@@ -86,11 +86,11 @@ class KeywordHit implements Comparable<KeywordHit> {
         }
     }
     
-    KeywordHit(int chunkId, String snippet, String hit) {
+    KeywordHit(int chunkId, long sourceID, String snippet, String hit) {
         this.snippet = StringUtils.stripToEmpty(snippet);
         this.hit = hit;
         this.chunkId = chunkId;
-        this.solrObjectId = 0;
+        this.solrObjectId = sourceID;
     }
     
 

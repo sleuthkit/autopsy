@@ -32,6 +32,11 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.Query;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -65,7 +70,25 @@ final class InlineSearcher {
         }
     }
 
-    void searchChunk(Chunk chunk) throws TskCoreException {
+    /**
+     * Search the chunk for the currently selected keywords.
+     * 
+     * @param chunk
+     * @param sourceID
+     * @throws TskCoreException 
+     */
+    void searchChunk(Chunk chunk, long sourceID) throws TskCoreException {
+        searchString(chunk.getLowerCasedChunk(), sourceID);
+    }
+
+    /**
+     * Search a string for the currently selected keywords.
+     * 
+     * @param text
+     * @param sourceID
+     * @throws TskCoreException 
+     */
+    void searchString(String text, long sourceID) throws TskCoreException {
         for (KeywordList list : keywordList) {
             List<Keyword> keywords = list.getKeywords();
             for (Keyword originalKeyword : keywords) {
@@ -77,34 +100,20 @@ final class InlineSearcher {
 
                 List<KeywordHit> keywordHits = new ArrayList<>();
                 if (originalKeyword.searchTermIsLiteral()) {
-//                    if (!originalKeyword.searchTermIsWholeWord()) {
-                        if (StringUtil.containsIgnoreCase(chunk.geLowerCasedChunk(), originalKeyword.getSearchTerm())) {
+                    if (StringUtil.containsIgnoreCase(text, originalKeyword.getSearchTerm())) {
 
-                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
-                        }
-//                    } else {
-//                        String REGEX_FIND_WORD="\\b\\W*%s\\W*\\b"; //"[\\w[\\.']]*%s[\\w[\\.']]*"; //"(?i).*?\\b%s\\b.*?";
-//                        String regex=String.format(REGEX_FIND_WORD, Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()));
-//                        if(chunk.geLowerCasedChunk().matches(regex)) {
-//                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
-//                        }     
-
-//                       Pattern pattern = Pattern.compile(regex, java.util.regex.Pattern.CASE_INSENSITIVE);
-//                       Matcher matcher = pattern.matcher(chunk.geLowerCasedChunk());
-//                       if (matcher.find()) {
-//                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
-//                        }
-//                    }
+                        keywordHits.addAll(createKeywordHits(text, originalKeyword, sourceID));
+                    }
                 } else {
                     String regex = originalKeyword.getSearchTerm();
 
                     try {
                         // validate the regex
                         Pattern pattern = Pattern.compile(regex);
-                        Matcher matcher = pattern.matcher(chunk.geLowerCasedChunk());
+                        Matcher matcher = pattern.matcher(text);
 
                         if (matcher.find()) {
-                            keywordHits.addAll(createKeywordHits(chunk, originalKeyword));
+                            keywordHits.addAll(createKeywordHits(text, originalKeyword, sourceID));
                         }
                     } catch (IllegalArgumentException ex) {
                         //TODO What should we do here? Log and continue?
@@ -132,15 +141,25 @@ final class InlineSearcher {
     }
 
     /**
-     * This method very similar to RegexQuery createKeywordHits, with the knowledge
-     * of solr removed.
-     * 
-     * @param chunk
+     * This method very similar to RegexQuery createKeywordHits, with the
+     * knowledge of solr removed.
+     *
+     * @param text
      * @param originalKeyword
-     * @return
-     * @throws TskCoreException 
+     *
+     * @return A list of KeywordHit objects.
+     *
+     * @throws TskCoreException
      */
-    private List<KeywordHit> createKeywordHits(Chunk chunk, Keyword originalKeyword) throws TskCoreException {
+    private List<KeywordHit> createKeywordHits(String text, Keyword originalKeyword, long sourceID) throws TskCoreException {
+
+        if (originalKeyword.searchTermIsLiteral() && originalKeyword.searchTermIsWholeWord()) {
+            try {
+                return getExactMatchHits(text, originalKeyword, sourceID);
+            } catch (IOException ex) {
+                throw new TskCoreException("Failed to create exactMatch hits", ex);
+            }
+        }
 
         final HashMap<String, String> keywordsFoundInThisDocument = new HashMap<>();
 
@@ -164,13 +183,8 @@ final class InlineSearcher {
              * and possessives (e.g. hacker's). This obviously works for English
              * but is probably not sufficient for other languages.
              */
-            if(!originalKeyword.searchTermIsWholeWord()) {
-                searchPattern = "[\\w[\\.']]*" + java.util.regex.Pattern.quote(keywordString.toLowerCase()) + "[\\w[\\.']]*";
-            } else {
-                String REGEX_FIND_WORD="\\b\\W*%s\\W*\\b"; 
-                searchPattern=String.format(REGEX_FIND_WORD, Pattern.quote(originalKeyword.getSearchTerm().toLowerCase()));
-                testingTokenizer(chunk, originalKeyword);
-            }
+            searchPattern = "[\\w[\\.']]*" + java.util.regex.Pattern.quote(keywordString.toLowerCase()) + "[\\w[\\.']]*";
+
         } else {
             searchPattern = keywordString;
         }
@@ -178,7 +192,7 @@ final class InlineSearcher {
         final java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(searchPattern, java.util.regex.Pattern.CASE_INSENSITIVE);
 
         try {
-            String content = chunk.geLowerCasedChunk();
+            String content = text;
             Matcher hitMatcher = pattern.matcher(content);
             int offset = 0;
 
@@ -261,7 +275,7 @@ final class InlineSearcher {
                 keywordsFoundInThisDocument.put(hit, hit);
 
                 if (artifactAttributeType == null) {
-                    hits.add(new KeywordHit(0, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                    hits.add(new KeywordHit(0, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
                 } else {
                     switch (artifactAttributeType) {
                         case TSK_EMAIL:
@@ -272,7 +286,7 @@ final class InlineSearcher {
                              */
                             if (hit.length() >= MIN_EMAIL_ADDR_LENGTH
                                     && DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
-                                hits.add(new KeywordHit(0, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                                hits.add(new KeywordHit(0, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
                             }
 
                             break;
@@ -289,14 +303,14 @@ final class InlineSearcher {
                                 if (ccnMatcher.find()) {
                                     final String group = ccnMatcher.group("ccn");
                                     if (CreditCardValidator.isValidCCN(group)) {
-                                        hits.add(new KeywordHit(0, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                                        hits.add(new KeywordHit(0, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
                                     }
                                 }
                             }
 
                             break;
                         default:
-                            hits.add(new KeywordHit(0, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                            hits.add(new KeywordHit(0, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
                             break;
                     }
                 }
@@ -360,28 +374,74 @@ final class InlineSearcher {
             map.clear();
         }
     }
-    
-    private void testingTokenizer(Chunk chunk, Keyword originalKeyword) {
-        try {
-            List<String> tokens = analyze(chunk.geLowerCasedChunk(), new StandardAnalyzer());
-            for(String token: tokens) {
-                if(token.equals(originalKeyword.getSearchTerm())) {
-                    
+
+    /**
+     * Searches the chunk for exact matches and creates the approprate keyword
+     * hits.
+     *
+     * @param text
+     * @param originalKeyword
+     * @param sourceID
+     *
+     * @return
+     *
+     * @throws IOException
+     */
+    public List<KeywordHit> getExactMatchHits(String text, Keyword originalKeyword, long sourceID) throws IOException {
+        final HashMap<String, String> keywordsFoundInThisDocument = new HashMap<>();
+
+        List<KeywordHit> hits = new ArrayList<>();
+        Analyzer analyzer = new StandardAnalyzer();
+
+        //Get the tokens of the keyword
+        List<String> keywordTokens = new ArrayList<>();
+        try (TokenStream keywordstream = analyzer.tokenStream("field", originalKeyword.getSearchTerm())) {
+            CharTermAttribute attr = keywordstream.addAttribute(CharTermAttribute.class);
+            keywordstream.reset();
+            while (keywordstream.incrementToken()) {
+                keywordTokens.add(attr.toString());
+            }
+        }
+
+        try (TokenStream stream = analyzer.tokenStream("field", text)) {
+            CharTermAttribute attr = stream.addAttribute(CharTermAttribute.class);
+            OffsetAttribute offset = stream.addAttribute(OffsetAttribute.class);
+            stream.reset();
+            while (stream.incrementToken()) {
+                if (!attr.toString().equals(keywordTokens.get(0))) {
+                    continue;
+                }
+
+                int startOffset = offset.startOffset();
+                int endOffset = offset.endOffset();
+                boolean match = true;
+
+                for (int index = 1; index < keywordTokens.size(); index++) {
+                    if (stream.incrementToken()) {
+                        if (!attr.toString().equals(keywordTokens.get(index))) {
+                            match = false;
+                            break;
+                        } else {
+                            endOffset = offset.endOffset();
+                        }
+                    }
+                }
+
+                if (match) {
+                    String hit = text.subSequence(startOffset, endOffset).toString();
+
+                    // We will only create one KeywordHit instance per document for
+                    // a given hit.
+                    if (keywordsFoundInThisDocument.containsKey(hit)) {
+                        continue;
+                    }
+                    keywordsFoundInThisDocument.put(hit, hit);
+
+                    hits.add(new KeywordHit(0, sourceID, KeywordSearchUtil.makeSnippet(text, startOffset, endOffset, hit), hit));
                 }
             }
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
         }
-    }
-    
-    public List<String> analyze(String text, Analyzer analyzer) throws IOException{
-        List<String> result = new ArrayList<>();
-        TokenStream tokenStream = analyzer.tokenStream("sampleName", text);
-        CharTermAttribute attr = tokenStream.addAttribute(CharTermAttribute.class);
-        tokenStream.reset();
-        while(tokenStream.incrementToken()) {
-           result.add(attr.toString());
-        }       
-        return result;
+
+        return hits;
     }
 }

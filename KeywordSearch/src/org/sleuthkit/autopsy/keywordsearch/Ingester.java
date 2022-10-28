@@ -212,6 +212,7 @@ class Ingester {
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
+            searcher.searchChunk(sourceName, sourceID);
 
             while (chunker.hasNext()) {
                 if (context != null && context.fileIngestIsCancelled()) {
@@ -237,7 +238,7 @@ class Ingester {
                     language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
                     try {
                         //add the chunk text to Solr index
-                        indexChunk(chunk.toString(), chunk.geLowerCasedChunk(), sourceName, fields);
+                        indexChunk(chunk.toString(), chunk.getLowerCasedChunk(), sourceName, fields);
                         // add mini chunk when there's a language specific field
                         if (chunker.hasNext() && language.isPresent()) {
                             languageSpecificContentIndexingHelper.indexMiniChunk(chunk, sourceName, new HashMap<>(contentFields), chunkId, language.get());
@@ -252,7 +253,7 @@ class Ingester {
                 }
                 
                 if(keywordListNames != null) {
-                    searcher.searchChunk(chunk);
+                    searcher.searchChunk(chunk, sourceID);
                 }
             }
             if (chunker.hasException()) {

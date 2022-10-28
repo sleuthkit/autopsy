@@ -169,13 +169,19 @@ class KeywordSearchUtil {
      */
     static String makeSnippet(String content, Matcher hitMatcher, String hit) {
         // Get the snippet from the document.
-        int maxIndex = content.length() - 1;
         final int end = hitMatcher.end();
         final int start = hitMatcher.start();
 
-        return content.substring(Integer.max(0, start - 20), Integer.max(0, start))
+        return makeSnippet(content, start, end, hit);
+    }
+    
+    static String makeSnippet(String content, int startOffset, int endOffset, String hit) {
+        // Get the snippet from the document.
+        int maxIndex = content.length() - 1;
+
+        return content.substring(Integer.max(0, startOffset - 20), Integer.max(0, startOffset))
                 + SNIPPET_DELIMITER + hit + SNIPPET_DELIMITER
-                + content.substring(Integer.min(maxIndex, end), Integer.min(maxIndex, end + 20));
+                + content.substring(Integer.min(maxIndex, endOffset), Integer.min(maxIndex, endOffset + 20));
     }
 
     /**
