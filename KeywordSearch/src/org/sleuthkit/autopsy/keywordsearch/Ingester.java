@@ -36,8 +36,6 @@ import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Chunker.Chunk;
-import org.sleuthkit.autopsy.textextractors.TextExtractor;
-import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -212,7 +210,7 @@ class Ingester {
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
-            searcher.searchChunk(sourceName, sourceID);
+            searcher.searchString(sourceName, sourceID);
 
             while (chunker.hasNext()) {
                 if (context != null && context.fileIngestIsCancelled()) {

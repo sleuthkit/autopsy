@@ -19,7 +19,7 @@
         
         <dependency conf="solr-libs->default" name="solr-cell" rev="8.11.2" org="org.apache.solr"/>
         <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-core -->
-        <!-- <dependency org="org.apache.lucene" name="lucene-core" rev="8.11.2"/> -->       
+        <dependency conf="autopsy->default" org="org.apache.lucene" name="lucene-core" rev="8.11.2"/>     
         <!-- Autopsy -->
         <dependency conf="autopsy->default" org="org.apache.solr" name="solr-solrj" rev="8.11.2"/>
         <dependency conf="autopsy->default" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>       
