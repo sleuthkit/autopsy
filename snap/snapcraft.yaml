@@ -1,5 +1,6 @@
 name: autopsy
-base: core20
+# core22 brings along linting for share object library paths as well as improvements to get java gstreamer working
+base: core22
 version: '4.19.3'
 summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
 description: Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools.
@@ -28,9 +29,12 @@ apps:
   autopsy:
     environment: 
       jdkhome: $SNAP/usr/lib/jvm/bellsoft-java8-full-amd64
+      # provide means for java gstreamer to find gstreamer libs
       jreflags: "$jreflags \"-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu\""
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
+      # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
+      # gstreamer scans for plugins (i.e. app integration plugins).  this tells gstreamer where to look for the scanner and libraries
       GST_PLUGIN_SYSTEM_PATH: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer-1.0
       GST_PLUGIN_SCANNER: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
       SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
