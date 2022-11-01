@@ -38,7 +38,7 @@ fi
  awk '!/^ *#? *export +?(jreflags|GST_PLUGIN_SYSTEM_PATH|GST_PLUGIN_SCANNER)=.*$/' $INSTALL_LOC/etc/$APPLICATION_NAME.conf > $INSTALL_LOC/etc/$APPLICATION_NAME.conf.tmp && \
 mv $INSTALL_LOC/etc/$APPLICATION_NAME.conf.tmp $INSTALL_LOC/etc/$APPLICATION_NAME.conf && \
 echo "
-export jreflags=-Djna.library.path=\"/usr/local/lib\"
+export jreflags=\"-Djna.library.path=\\\"/usr/local/lib\\\" \$jreflags\"
 export GST_PLUGIN_SYSTEM_PATH=\"/usr/local/lib/gstreamer-1.0\"
 export GST_PLUGIN_SCANNER=\"${GSTREAMER_LOC}/libexec/gstreamer-1.0/gst-plugin-scanner\"" >> $INSTALL_LOC/etc/$APPLICATION_NAME.conf
 
