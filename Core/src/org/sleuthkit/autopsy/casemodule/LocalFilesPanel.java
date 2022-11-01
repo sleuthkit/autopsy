@@ -78,6 +78,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         errorLabel = new javax.swing.JLabel();
         changeNameButton = new javax.swing.JButton();
         displayNameLabel = new javax.swing.JLabel();
+        deleteButon = new javax.swing.JButton();
 
         localFileChooser.setApproveButtonText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonText")); // NOI18N
         localFileChooser.setApproveButtonToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonToolTipText")); // NOI18N
@@ -127,6 +128,13 @@ final class LocalFilesPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(displayNameLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.displayNameLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(deleteButon, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.deleteButon.text")); // NOI18N
+        deleteButon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteButonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -139,8 +147,8 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(selectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(2, 2, 2))
+                            .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(deleteButon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
@@ -148,7 +156,8 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(changeNameButton))
                             .addComponent(errorLabel))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         jPanel1Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {clearButton, selectButton});
@@ -160,7 +169,9 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(selectButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(36, 36, 36)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(deleteButon)
+                        .addGap(7, 7, 7)
                         .addComponent(clearButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(selectedPathsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -225,6 +236,43 @@ final class LocalFilesPanel extends javax.swing.JPanel {
             this.displayNameLabel.setText("Display Name: " + this.displayName);
         }
     }//GEN-LAST:event_changeNameButtonActionPerformed
+
+    private void deleteButonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButonActionPerformed
+        String selectedText = this.selectedPaths.getSelectedText();
+        
+        if (selectedText.contains("\n")) {
+            String[] selectedFiles = selectedText.split("\n");
+            for (String fileName : selectedFiles) {
+                File deletedFile = new File(fileName);
+                currentFiles.remove(deletedFile);        
+            }
+        } else {
+            File deletedFile = new File(selectedText);
+            currentFiles.remove(deletedFile);
+        }
+        
+        StringBuilder allPaths = new StringBuilder();
+
+        for (File f : currentFiles) { 
+            //loop over set of all files to ensure list is accurate
+            //update label
+            allPaths.append(f.getAbsolutePath()).append("\n");
+        }
+        
+        this.selectedPaths.setText(allPaths.toString());
+        this.selectedPaths.setToolTipText(allPaths.toString());
+        
+        enableNext = !currentFiles.isEmpty();
+
+        try {
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "LocalFilesPanel listener threw exception", e); //NON-NLS
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr"),
+                    NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr.msg"),
+                    MessageNotifyUtil.MessageType.ERROR);
+        }
+    }//GEN-LAST:event_deleteButonActionPerformed
 
     /**
      * Clear the fields and undo any selection of files.
@@ -314,6 +362,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton changeNameButton;
     private javax.swing.JButton clearButton;
+    private javax.swing.JButton deleteButon;
     private javax.swing.JLabel displayNameLabel;
     private javax.swing.JLabel errorLabel;
     private javax.swing.JPanel jPanel1;
