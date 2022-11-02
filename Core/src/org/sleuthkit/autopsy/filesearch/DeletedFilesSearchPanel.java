@@ -21,15 +21,11 @@ package org.sleuthkit.autopsy.filesearch;
 import java.awt.event.ActionListener;
 import org.sleuthkit.datamodel.TskData;
 
-public class DeletedFilesSearchPanel extends javax.swing.JPanel {
+class DeletedFilesSearchPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     
-    public final static String FS_DELETED_CONTENT_QUERY = "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
-                + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
-                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType();
-    
-    public final static String ALL_DELETED_CONTENT_QUERY = "( "
+    private final static String ALL_DELETED_CONTENT_QUERY = "( "
                 + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
                 + " OR " //NON-NLS
                 + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
