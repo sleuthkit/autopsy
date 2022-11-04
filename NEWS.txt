@@ -3,29 +3,28 @@ Recent Activity Updates:
 - Added Favicons, Profiles and Extensions to Chromium Browsers
 - Added Security Questions/Answers from SAM registry Hive
 
-Datasource Processing
-- Added Jython Support
-- Added example Python plugin
+Data Source Processing
+- Added Jython Support for Data Source Processor modules.
+- Added example Python DSP plugin
 
-Ingest Module
-- New DataArtifact ingest module for analyzing data artifacts
+Ingest Pipelines
+- Added new DataArtifact ingest pipeline that artifacts will go down.
+- Moved Keyword search functionality for artifacts to the new pipeline.
 
 Linux / Mac Improvements
-- Script to install prerequisites using Homebrew and debian package. 
+- Script to install prerequisites using Homebrew and Debian package. 
 - Script that allows you to install TSK from source
 - Script that sets JAVA home per install
 - Updating Linux and Mac Installation Documentation
 
 Command Line Interface
 - Simplified command line input parameters
-- Command Line Interface changes - The -listAllIngestProfiles switch was added, 
-  the initialization code was modified to make the java.exe switch –nogui work 
-  (splash screen will appear, but framework window will not), and return codes 
-  will be pushed up so that the return value of java.exe reflects the return 
-  value of our application.
+- The -listAllIngestProfiles switch was added
+- The -nogui switch now works.
+- Return codes now reflect if the application failed
 
 Bug Fixes:
-- Solr 8.11.2 Upgrade which includes update to Log4j to verison 2.17.1
+- Solr 8.11.2 Upgrade which includes update to Log4j to version 2.17.1
 - Change Timezone format for Plaso output.
 - Regex fix for Mbox parsing.
 - Portable Case report string index out of range -1 fixed
@@ -36,20 +35,17 @@ Bug Fixes:
 Misc:
 - Update to USB id's.
 - Update Tesseract to 4.10.
-- Config changes - moves config settings that could/should be moved to a separate 
-  computer to a common config folder.  Those settings can be zipped and taken 
-  to a different computer and extracted.
-- File filter exclude rules:  For interesting files and file filters, you can now 
-  create rules that will exclude certain files in addition to including them.
+- Moved configuration settings to separate ones that are machine-dependent. 
+- Interesting files and file filters can now exclude certain features, such as folders.
 - Adds host to artifact content viewer.
-- When an OS Account is selected the Other Occurences tab will no longer show the 
-  open case in the case list.
-- The Communication window Message Viewer Threads panel layout was cleaned up so 
-  that the buttons are visible despite the subject length.
+- When an OS Account is selected the Other Occurrences tab will no longer show the open case in the case list.
+
+- The Communication window Message Viewer Threads panel layout was cleaned up so that the buttons are visible despite the subject length.
 - Limit ingest inbox messages to first 20 keyword hits
 - GStreamer update to version 1.20.0
 - libheif v1.12.0 replaces ImageMagick
-- Removal of 32bit verison of Autopsy
+- Removal of 32bit version of Autopsy
+
 
 ---------------- VERSION 4.19.3  --------------
 Bug Fixes:
