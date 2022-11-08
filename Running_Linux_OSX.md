@@ -8,7 +8,7 @@ When installing on Debian-based Linux or macOS systems, there are three general 
 *NOTE: The last output of the script is the path to the Java 8 installation.  You will want to note that path when installing Autopsy.*
 
 # Installing The Sleuth Kit
-- **Linux**: Download the .deb file for the release you want to install from the [release section](https://github.com/sleuthkit/sleuthkit/releases).  Install The Sleuth Kit [package](https://packages.ubuntu.com/search?suite=default&keywords=sleuthkit) from the repositories with the following command: `sudo apt update && sudo apt install /path/to/sleuthkit-version.deb`.
+- **Linux**: Download the .deb file for the release you want to install from the [release section](https://github.com/sleuthkit/sleuthkit/releases).  Install The Sleuth Kit package from the repositories with the following command: `sudo apt update && sudo apt install /path/to/sleuthkit-version.deb`.
 - **macOS**: Ensure that for this session, your `JAVA_HOME` variable is set to the java 8 installation by running `export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)/bin/java`.  Then, install The Sleuth Kit from source by running [`linux_macos_install_scripts/install_tsk_from_src.sh`](./linux_macos_install_scripts/install_tsk_from_src.sh), which will download, build, and install The Sleuth Kit.  It can be run as follows: `install_tsk_from_src.sh -p ~/src/sleuthkit -b sleuthkit-4.11.1`.  Make sure that your path to download source ends with "sleuthkit" as the last directory, and the release is the corresponding tag in the [repository](https://github.com/sleuthkit/sleuthkit).
 
 # Installing Autopsy
