@@ -11,10 +11,16 @@
     <property name="netbeans-plat-version" value="11.3" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
     <!-- Supported java versions.-->
+
+    <echo message="Java version is ${java.version} and ant java version is ${ant.java.version}"/>
     <condition property="supported-java-versions">
         <or>
             <matches string="${java.version}" pattern="11\.0\.*"/>
             <equals arg1="${ant.java.version}" arg2="11"/>
+            <matches string="${java.version}" pattern="14\.0\.*"/>
+            <equals arg1="${ant.java.version}" arg2="14"/>
+            <matches string="${java.version}" pattern="17\.0\.*"/>
+            <equals arg1="${ant.java.version}" arg2="17"/>
         </or>
     </condition>
     
