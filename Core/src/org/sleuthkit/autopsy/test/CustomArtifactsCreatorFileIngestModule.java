@@ -75,7 +75,7 @@ final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapt
         }
         try {
             CustomArtifactType.createAndPostInstance(file, context.getJobId());
-        } catch (TskCoreException | Blackboard.BlackboardException ex) {
+        } catch (TskCoreException | Blackboard.BlackboardException | DecoderException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process file (obj_id = %d)", file.getId()), ex);
             return ProcessResult.ERROR;
         }

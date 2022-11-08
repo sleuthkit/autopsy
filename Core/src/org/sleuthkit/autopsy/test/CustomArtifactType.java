@@ -96,8 +96,7 @@ final class CustomArtifactType {
      * @throws Blackboard.BlackboardException If there is an error posting the
      *                                        artifact to the blackboard.
      */
-    static BlackboardArtifact createInstance(Content source) throws TskCoreException, DecoderException {
-        BlackboardArtifact artifact = source.newArtifact(artifactType.getTypeID());
+    static BlackboardArtifact createAndPostInstance(Content source, long ingestJobId) throws TskCoreException, Blackboard.BlackboardException, DecoderException {
         List<BlackboardAttribute> attributes = new ArrayList<>();
         attributes.add(new BlackboardAttribute(intAttrType, MODULE_NAME, 0));
         attributes.add(new BlackboardAttribute(doubleAttrType, MODULE_NAME, 0.0));

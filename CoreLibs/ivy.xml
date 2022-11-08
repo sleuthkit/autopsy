@@ -60,7 +60,6 @@
         <dependency conf="autopsy_core->default" org="joda-time" name="joda-time" rev="2.10.14" />
 
         <!-- timeline  -->
-        <dependency conf="autopsy_core->*" org="joda-time" name="joda-time" rev="2.4" />
         <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-fxml" rev="11-r1" />
         <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-controls" rev="11-r1" />
         <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-common" rev="11-r1" />

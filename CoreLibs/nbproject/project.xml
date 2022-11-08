@@ -246,7 +246,6 @@
                 <package>javax.annotation</package>
                 <package>javax.annotation.concurrent</package>
                 <package>javax.annotation.meta</package>
-<<<<<<< HEAD
                 <package>javax.jms</package>
                 <package>javax.mail</package>
                 <package>javax.mail.event</package>
@@ -260,8 +259,6 @@
                 <package>javax.xml.transform.dom</package>
                 <package>javax.xml.transform.sax</package>
                 <package>javax.xml.transform.stream</package>
-=======
->>>>>>> c8f546a0d7078b675a4eb673ba25e4acd1523985
                 <package>jfxtras.animation</package>
                 <package>jfxtras.css</package>
                 <package>jfxtras.css.converters</package>
@@ -329,7 +326,6 @@
                 <package>org.apache.commons.lang3.tuple</package>
                 <package>org.apache.commons.logging</package>
                 <package>org.apache.commons.logging.impl</package>
-<<<<<<< HEAD
                 <package>org.apache.log</package>
                 <package>org.apache.log.filter</package>
                 <package>org.apache.log.format</package>
@@ -340,11 +336,9 @@
                 <package>org.apache.log.output.jms</package>
                 <package>org.apache.log.output.net</package>
                 <package>org.apache.log.util</package>
-=======
                 <package>org.apache.commons.text</package>
                 <package>org.apache.commons.validator.routines</package>
                 <package>org.apache.commons.validator.routines.checkdigit</package>
->>>>>>> c8f546a0d7078b675a4eb673ba25e4acd1523985
                 <package>org.apache.log4j</package>
                 <package>org.apache.log4j.chainsaw</package>
                 <package>org.apache.log4j.config</package>
@@ -513,6 +507,10 @@
                 <binary-origin>release/modules/ext/AppleJavaExtensions-1.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/assertj-core-3.13.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/assertj-core-3.13.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/auto-value-annotations-1.9.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/auto-value-annotations-1.9.jar</binary-origin>
             </class-path-extension>
@@ -537,17 +535,12 @@
                 <binary-origin>release/modules/ext/common-image-3.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-<<<<<<< HEAD
-                <runtime-relative-path>ext/jsr305-1.3.9.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jsr305-1.3.9.jar</binary-origin>
-=======
                 <runtime-relative-path>ext/common-io-3.8.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/common-io-3.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/common-lang-3.8.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/common-lang-3.8.2.jar</binary-origin>
->>>>>>> c8f546a0d7078b675a4eb673ba25e4acd1523985
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-beanutils-1.9.4.jar</runtime-relative-path>
@@ -558,17 +551,8 @@
                 <binary-origin>release/modules/ext/commons-codec-1.15.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-<<<<<<< HEAD
-                <runtime-relative-path>ext/jfxtras-fxml-10.0-r1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-fxml-10.0-r1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.4.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-lang3-3.4.jar</binary-origin>
-=======
                 <runtime-relative-path>ext/commons-collections-3.2.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-collections-3.2.2.jar</binary-origin>
->>>>>>> c8f546a0d7078b675a4eb673ba25e4acd1523985
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-collections4-4.4.jar</runtime-relative-path>
@@ -615,8 +599,8 @@
                 <binary-origin>release/modules/ext/conscrypt-openjdk-uber-2.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-8.40.11.jar</binary-origin>
+                <runtime-relative-path>ext/controlsfx-9.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-9.0.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dd-plist-1.23.jar</runtime-relative-path>
@@ -635,18 +619,6 @@
                 <binary-origin>release/modules/ext/gax-2.12.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-<<<<<<< HEAD
-                <runtime-relative-path>ext/commons-csv-1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-csv-1.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-9.0.0.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\controlsfx-9.0.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/imageio-sgi-3.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/imageio-sgi-3.2.jar</binary-origin>
-=======
                 <runtime-relative-path>ext/gax-grpc-2.12.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gax-grpc-2.12.2.jar</binary-origin>
             </class-path-extension>
@@ -761,11 +733,14 @@
             <class-path-extension>
                 <runtime-relative-path>ext/gst1-java-core-1.4.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gst1-java-core-1.4.0.jar</binary-origin>
->>>>>>> c8f546a0d7078b675a4eb673ba25e4acd1523985
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/guava-31.1-jre.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/guava-31.1-jre.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/hamcrest-core-1.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/hamcrest-core-1.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/httpclient-4.5.13.jar</runtime-relative-path>
@@ -864,25 +839,24 @@
                 <binary-origin>release/modules/ext/jericho-html-3.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-common-8.0-r4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-common-8.0-r4.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-common-11-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-common-11-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-controls-8.0-r4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-controls-8.0-r4.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-controls-11-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-controls-11-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-<<<<<<< HEAD
-                <runtime-relative-path>ext/joda-time-2.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/joda-time-2.4.jar</binary-origin>
-=======
-                <runtime-relative-path>ext/jfxtras-fxml-8.0-r4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r4.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-fxml-11-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-fxml-11-r1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jfxtras-test-support-11-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-test-support-11-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jna-5.12.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jna-5.12.1.jar</binary-origin>
->>>>>>> c8f546a0d7078b675a4eb673ba25e4acd1523985
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jna-platform-5.12.0.jar</runtime-relative-path>
@@ -897,21 +871,16 @@
                 <binary-origin>release/modules/ext/jsr305-3.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/junit-4.13.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/junit-4.13.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/LGoodDatePicker-11.2.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/LGoodDatePicker-11.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-<<<<<<< HEAD
-                <runtime-relative-path>ext/jfxtras-common-10.0-r1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-common-10.0-r1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
-=======
                 <runtime-relative-path>ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</binary-origin>
->>>>>>> c8f546a0d7078b675a4eb673ba25e4acd1523985
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/log4j-api-2.17.2.jar</runtime-relative-path>
@@ -922,8 +891,8 @@
                 <binary-origin>release/modules/ext/log4j-core-2.17.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/ooxml-schemas-1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/ooxml-schemas-1.4.jar</binary-origin>
+                <runtime-relative-path>ext/mockito-all-1.9.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mockito-all-1.9.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/opencensus-api-0.31.0.jar</runtime-relative-path>
@@ -962,17 +931,12 @@
                 <binary-origin>release/modules/ext/proto-google-iam-v1-1.2.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-<<<<<<< HEAD
-                <runtime-relative-path>ext/jfxtras-controls-10.0-r1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-controls-10.0-r1.jar</binary-origin>
-=======
                 <runtime-relative-path>ext/protobuf-java-3.19.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/protobuf-java-3.19.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/protobuf-java-util-3.19.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/protobuf-java-util-3.19.4.jar</binary-origin>
->>>>>>> c8f546a0d7078b675a4eb673ba25e4acd1523985
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/re2j-1.5.jar</runtime-relative-path>
@@ -993,6 +957,14 @@
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-reload4j-1.7.36.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-reload4j-1.7.36.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/testfx-core-4.0.16-alpha.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/testfx-core-4.0.16-alpha.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/testfx-junit-4.0.15-alpha.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/testfx-junit-4.0.15-alpha.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/threetenbp-1.5.2.jar</runtime-relative-path>
