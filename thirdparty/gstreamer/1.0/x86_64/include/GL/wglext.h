@@ -39,7 +39,7 @@ extern "C" {
 #include <windows.h>
 #endif
 
-#define WGL_WGLEXT_VERSION 20180905
+#define WGL_WGLEXT_VERSION 20181017
 
 /* Generated C header for:
  * API: wgl
@@ -343,6 +343,11 @@ VOID WINAPI wglBlitContextFramebufferAMD (HGLRC dstCtx, GLint srcX0, GLint srcY0
 #define WGL_ATI_pixel_format_float 1
 #define WGL_TYPE_RGBA_FLOAT_ATI           0x21A0
 #endif /* WGL_ATI_pixel_format_float */
+
+#ifndef WGL_ATI_render_texture_rectangle
+#define WGL_ATI_render_texture_rectangle 1
+#define WGL_TEXTURE_RECTANGLE_ATI         0x21A5
+#endif /* WGL_ATI_render_texture_rectangle */
 
 #ifndef WGL_EXT_colorspace
 #define WGL_EXT_colorspace 1

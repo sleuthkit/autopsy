@@ -5,10 +5,24 @@ AccountsText.nextPage.exception.msg=No next page.
 AccountsText.previousItem.exception.msg=No previous item.
 AccountsText.previousPage.exception.msg=No previous page.
 CannotRunFileTypeDetection=Unable to run file type detection.
+Collection.unableToIndexData.error=Unable to add data to text index. All future text indexing for the current case will be skipped.
 DropdownListSearchPanel.selected=Ad Hoc Search data source filter is selected
 DropdownSingleTermSearchPanel.selected=Ad Hoc Search data source filter is selected
 DropdownSingleTermSearchPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
 DropdownSingleTermSearchPanel.warning.title=Warning
+ExtractAllTermsReport.description.text=Extracts all unique words out of the current case. NOTE: The extracted words are lower-cased.
+ExtractAllTermsReport.error.noOpenCase=No currently open case.
+ExtractAllTermsReport.export.error=Error During Unique Word Extraction
+ExtractAllTermsReport.exportComplete=Unique Word Extraction Complete
+ExtractAllTermsReport.getName.text=Extract Unique Words
+# {0} - Number of extracted terms
+ExtractAllTermsReport.numberExtractedTerms=Extracted {0} terms...
+ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and unique word extraction might yield incomplete results.<br />Do you want to proceed with unique word extraction anyway?</html>
+# {0} - Keyword search commit frequency
+ExtractAllTermsReport.search.noFilesInIdxMsg=No files are in index yet. Try again later. Index is updated every {0} minutes.
+ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try again later
+ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress
+ExtractAllTermsReport.startExport=Starting Unique Word Extraction
 ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>
 # {0} - Content name
 ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}
@@ -18,6 +32,8 @@ GlobalEditListPanel.warning.title=Warning
 IndexedText.errorMessage.errorGettingText=<span style='font-style:italic'>Error retrieving indexed text.</span>
 IndexedText.warningMessage.knownFile=<span style='font-style:italic'>This file is a known file (based on MD5 hash) and does not have indexed text.</span>
 IndexedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No indexed text for this file.</span>
+KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsLimitedOCR=Only process images which are over 100KB in size or extracted from a document. (Beta) (Requires Windows 64-bit)
+KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsOCR=Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)
 KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings
 KeywordSearchIngestModule.init.badInitMsg=Keyword search server was not properly initialized, cannot run keyword search ingest.
 # {0} - Reason for not connecting to Solr
@@ -36,7 +52,7 @@ KeywordSearchResultFactory.createNodeForKey.noResultsFound.text=No results found
 KeywordSearchResultFactory.query.exception.msg=Could not perform the query 
 OpenIDE-Module-Display-Category=Ingest Module
 
-OpenIDE-Module-Long-Description=Keyword Search ingest module.\n\nThe module indexes files found in the disk image at ingest time.\nIt then periodically runs the search on the indexed files using one or more keyword lists (containing pure words and/or regular expressions) and posts results.\n\n\The module also contains additional tools integrated in the main GUI, such as keyword list configuration, keyword search bar in the top-right corner, extracted text viewer and search results viewer showing highlighted keywords found.
+OpenIDE-Module-Long-Description=Keyword Search ingest module.\n\nThe module indexes files found in the disk image at ingest time.\nIt then periodically runs the search on the indexed files using one or more keyword lists (containing pure words and/or regular expressions) and posts results.\n\nThe module also contains additional tools integrated in the main GUI, such as keyword list configuration, keyword search bar in the top-right corner, extracted text viewer and search results viewer showing highlighted keywords found.
 OpenIDE-Module-Name=KeywordSearch
 OptionsCategory_Name_KeywordSearchOptions=Keyword Search
 OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search
@@ -217,6 +233,7 @@ Server.deleteCore.exception.msg=Failed to delete Solr colelction {0}
 Server.exceptionMessage.unableToBackupCollection=Unable to backup Solr collection
 Server.exceptionMessage.unableToCreateCollection=Unable to create Solr collection
 Server.exceptionMessage.unableToRestoreCollection=Unable to restore Solr collection
+Server.getAllTerms.error=Extraction of all unique Solr terms failed:
 Server.start.exception.cantStartSolr.msg=Could not start Solr server process
 Server.start.exception.cantStartSolr.msg2=Could not start Solr server process
 Server.isRunning.exception.errCheckSolrRunning.msg=Error checking if Solr server is running
@@ -231,7 +248,7 @@ Server.query.exception.msg=Error running query: {0}
 Server.query2.exception.msg=Error running query: {0}
 Server.queryTerms.exception.msg=Error running terms query: {0}
 Server.connect.exception.msg=Failed to connect to Solr server: {0}
-Server.openCore.exception.msg=Keyword search service not yet running
+Server.openCore.exception.msg=Local keyword search service not yet running
 Server.openCore.exception.cantOpen.msg=Could not create or open index
 Server.openCore.exception.noIndexDir.msg=Index directory could not be created or is missing
 Server.request.exception.exception.msg=Could not issue Solr request
@@ -254,7 +271,6 @@ KeywordSearchJobSettingsPanel.languagesLabel.text=Scripts enabled for string ext
 KeywordSearchGlobalLanguageSettingsPanel.enableUTF8Checkbox.text=Enable UTF8 text extraction
 KeywordSearchGlobalLanguageSettingsPanel.ingestSettingsLabel.text=Ingest settings for string extraction from unknown file types (changes effective on next ingest):
 KeywordSearchGlobalLanguageSettingsPanel.enableUTF16Checkbox.text=Enable UTF16LE and UTF16BE string extraction
-KeywordSearchGlobalLanguageSettingsPanel.enableOcrCheckbox.text=Enable Optical Character Recognition (OCR)
 KeywordSearchGlobalLanguageSettingsPanel.languagesLabel.text=Enabled scripts (languages):
 KeywordSearchGlobalSearchSettingsPanel.timeRadioButton1.toolTipText=20 mins. (fastest ingest time)
 KeywordSearchGlobalSearchSettingsPanel.timeRadioButton1.text=20 minutes (slowest feedback, fastest ingest)
@@ -340,10 +356,14 @@ SolrSearch.checkingForLatestIndex.msg=Looking for text index with latest Solr an
 SolrSearch.complete.msg=Text index successfully opened
 SolrSearch.creatingNewIndex.msg=Creating new text index
 SolrSearch.findingIndexes.msg=Looking for existing text index directories
+# {0} - futureVersion
+# {1} - currentVersion
+SolrSearch.futureIndexVersion.msg=The text index for the case is for Solr {0}. This version of Autopsy is compatible with Solr {1}.
 SolrSearch.indentifyingIndex.msg=Identifying text index to use
 SolrSearch.lookingForMetadata.msg=Looking for text index metadata file
 SolrSearch.openCore.msg=Opening text index. For large cases this may take several minutes.
 SolrSearch.readingIndexes.msg=Reading text index metadata file
+SolrSearch.unableToFindIndex.msg=Unable to find index that can be used for this case
 # {0} - index folder path
 SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}
 SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case
@@ -382,6 +402,9 @@ ExtractedContentPanel.pageTotalLabel.text=-
 ExtractedContentPanel.pageOfLabel.text=of
 ExtractedContentPanel.pageCurLabel.text=-
 ExtractedContentPanel.pagesLabel.text=Page:
+KeywordSearchJobSettingsPanel.ocrCheckBox.text=Enable Optical Character Recognition (OCR)
+KeywordSearchJobSettingsPanel.limitedOcrCheckbox.text=<html>Only process PDFs, MS Office docs and images which are over 100KB in size or extracted from another file (Beta)</html>
+KeywordSearchJobSettingsPanel.ocrOnlyCheckbox.text=Only index text extracted using OCR
 TextZoomPanel.zoomInButton.text=
 TextZoomPanel.zoomOutButton.text=
 TextZoomPanel.zoomResetButton.text=Reset

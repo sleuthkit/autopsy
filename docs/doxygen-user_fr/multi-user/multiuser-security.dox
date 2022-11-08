@@ -1,0 +1,16 @@
+﻿/*! \page multiuser_sec_page Sécurité des cas multi-utilisateurs
+
+\section mulit_sec_overview Aperçu
+Cette page décrit les protections de sécurité qui existent dans un déploiement de cas multi-utilisateurs afin que vous puissiez protéger les données sensibles. Un déploiement multi-utilisateur doit se trouver dans un réseau privé pour garantir que seuls les utilisateurs autorisés peuvent accéder aux données. Les sites distants doivent se connecter aux services centraux via un VPN.
+
+- Stockage central: il est de votre responsabilité d'utiliser les autorisations basées sur les dossiers pour restreindre l'accès aux dossiers des cas. Un utilisateur doit être capable de lire et d'écrire dans les dossiers des cas pour ouvrir un cas via Autopsy. Il contient l'index Solr, la sortie des modules, les journaux et les rapports.
+- Base de données centrale: PostgreSQL prend en charge l'authentification via un login et un mot de passe. Chaque client Autopsy doit être configuré avec un nom d'utilisateur et un mot de passe PostgreSQL. C'est à vous de décider s'il existe un nom d'utilisateur et un mot de passe unique pour l'ensemble du laboratoire ou si vous allez en configurer un différent pour chaque client.
+- Centrale Solr: Solr n'a pas besoin d'un nom d'utilisateur ou d'un mot de passe pour se connecter et interroger sa base de données. Il existe un moyen facultatif de configurer Solr pour les exiger, mais nous n'avons pas encore essayé cela.
+- Service de messagerie: ActiveMQ peut être configuré pour exiger un nom d'utilisateur et un mot de passe. Tout comme la base de données centrale, c'est à vous de décider s'il y a un seul nom d'utilisateur et mot de passe ou un pour chaque client.
+
+Étant donné que le serveur Solr ne restreint pas l'accès au contenu indexé,
+vous devez déployer ces services dans un réseau qui ne permet l'accès qu'aux utilisateurs
+autorisés. Les versions futures permettront une protection supplémentaire
+des données sensibles.
+
+*/

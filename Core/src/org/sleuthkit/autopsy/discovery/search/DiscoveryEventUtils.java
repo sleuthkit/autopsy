@@ -135,6 +135,9 @@ public final class DiscoveryEventUtils {
 
         /**
          * Construct a new PopulateDomainTabsEvent.
+         *
+         * @param domain The domain this event is for, or empty if no domain is
+         *               selected.
          */
         public PopulateDomainTabsEvent(String domain) {
             this.domain = domain;
@@ -236,25 +239,29 @@ public final class DiscoveryEventUtils {
 
         private final List<BlackboardArtifact> listOfArtifacts = new ArrayList<>();
         private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
+        private final boolean grabFocus;
 
         /**
          * Construct a new ArtifactSearchResultEvent with a list of specified
-         * artifacts and an artifact type.
+         * results and an artifact type.
          *
-         * @param artifactType    The type of artifacts in the list.
-         * @param listOfArtifacts The list of artifacts retrieved.
+         * @param artifactType    The type of results in the list.
+         * @param listOfArtifacts The list of results retrieved.
+         * @param shouldGrabFocus True if the list of artifacts should have
+         *                        focus, false otherwise.
          */
-        public ArtifactSearchResultEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, List<BlackboardArtifact> listOfArtifacts) {
+        public ArtifactSearchResultEvent(BlackboardArtifact.ARTIFACT_TYPE artifactType, List<BlackboardArtifact> listOfArtifacts, boolean shouldGrabFocus) {
             if (listOfArtifacts != null) {
                 this.listOfArtifacts.addAll(listOfArtifacts);
             }
             this.artifactType = artifactType;
+            this.grabFocus = shouldGrabFocus;
         }
 
         /**
-         * Get the list of artifacts included in the event.
+         * Get the list of results included in the event.
          *
-         * @return The list of artifacts retrieved.
+         * @return The list of results retrieved.
          */
         public List<BlackboardArtifact> getListOfArtifacts() {
             return Collections.unmodifiableList(listOfArtifacts);
@@ -267,6 +274,72 @@ public final class DiscoveryEventUtils {
          */
         public BlackboardArtifact.ARTIFACT_TYPE getArtifactType() {
             return artifactType;
+        }
+
+        /**
+         * Get whether or not the artifacts list should grab focus.
+         *
+         * @return True if the list of artifacts should have focus, false
+         *         otherwise.
+         */
+        public boolean shouldGrabFocus() {
+            return grabFocus;
+        }
+
+    }
+
+    /**
+     * Event to signal the completion of a search for mini timeline results
+     * being performed.
+     */
+    public static final class MiniTimelineResultEvent {
+
+        private final List<MiniTimelineResult> results = new ArrayList<>();
+        private final String domain;
+        private final boolean grabFocus;
+
+        /**
+         * Construct a new MiniTimelineResultEvent.
+         *
+         * @param results         The list of MiniTimelineResults contained in
+         *                        this event.
+         * @param domain          The domain the results are for.
+         * @param shouldGrabFocus True if the list of dates should have focus,
+         *                        false otherwise.
+         */
+        public MiniTimelineResultEvent(List<MiniTimelineResult> results, String domain, boolean shouldGrabFocus) {
+            if (results != null) {
+                this.results.addAll(results);
+            }
+            this.grabFocus = shouldGrabFocus;
+            this.domain = domain;
+        }
+
+        /**
+         * Get the list of results included in the event.
+         *
+         * @return The list of results found.
+         */
+        public List<MiniTimelineResult> getResultList() {
+            return Collections.unmodifiableList(results);
+        }
+
+        /**
+         * Get the domain this list of results is for.
+         *
+         * @return The domain the list of results is for.
+         */
+        public String getDomain() {
+            return domain;
+        }
+
+        /**
+         * Get whether or not the dates list should grab focus.
+         *
+         * @return True if the list of dates should have focus, false otherwise.
+         */
+        public boolean shouldGrabFocus() {
+            return grabFocus;
         }
     }
 

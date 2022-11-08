@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JPanel;
 import static javax.swing.SwingUtilities.isDescendingFrom;
+import javax.swing.table.TableColumn;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
@@ -82,6 +83,8 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
 
         outlineViewPanel.hideOutlineView(Bundle.CallLogViewer_noCallLogs());
 
+        // If changing the order of these columns effects the location of the
+        // phone number column be sure to adjust the renderer code below.
         outlineViewPanel.getOutlineView().setPropertyColumns(
                 TSK_DIRECTION.getLabel(), TSK_DIRECTION.getDisplayName(),
                 TSK_PHONE_NUMBER.getLabel(), Bundle.CallLogViewer_recipient_label(),
@@ -116,6 +119,9 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
                 updateOutlineViewPanel();
             }
         });
+
+        TableColumn column = outline.getColumnModel().getColumn(2);
+        column.setCellRenderer(new NodeTableCellRenderer());
 
     }
 
@@ -158,7 +164,9 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
+        callLogDataViewer.setNode(null);
         nodeFactory.refresh(info);
+
     }
 
     @Override
@@ -217,7 +225,7 @@ final class CallLogViewer extends javax.swing.JPanel implements RelationshipsVie
     private void updateOutlineViewPanel() {
         int nodeCount = outlineViewPanel.getExplorerManager().getRootContext().getChildren().getNodesCount();
         if (nodeCount == 0) {
-            outlineViewPanel.hideOutlineView(Bundle.ContactsViewer_noContacts_message());
+            outlineViewPanel.hideOutlineView(Bundle.CallLogViewer_noCallLogs());
         } else {
             outlineViewPanel.showOutlineView();
         }

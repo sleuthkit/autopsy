@@ -18,11 +18,11 @@ Refer to \ref ad_hoc_keyword_search_page for more details on specifying regular 
 \section keyword_search_configuration_dialog Keyword Search Configuration Dialog
 
 The keyword search configuration dialog has three tabs, each with its own purpose:
-\li The \ref keywordListsTab is used to add, remove, and modify keyword search lists.
-\li The \ref stringExtractionTab is used to enable language scripts and extraction type.
-\li The \ref generalSettingsTab is used to configure the ingest timings and display information.
+\li The \ref keyword_keywordListsTab is used to add, remove, and modify keyword search lists.
+\li The \ref keyword_stringExtractionTab is used to enable language scripts and extraction type.
+\li The \ref keyword_generalSettingsTab is used to configure the ingest timings and display information.
 
-## Lists tab {#keywordListsTab}
+\subsection keyword_keywordListsTab Lists tab
 
 The Lists tab is used to create/import and add content to keyword lists. To create a list, select the 'New List' button and choose a name for the new Keyword List. Once the list has been created, keywords can be added to it (see \ref ad_hoc_kw_types_section for more information on keyword types). Lists can be added to the keyword search ingest process; searches will happen at regular intervals as content is added to the index.
 
@@ -40,16 +40,48 @@ Under the Keyword list is the option to send ingest inbox messages for each hit.
 
 \image html keyword-search-inbox.PNG
 
-## String Extraction tab {#stringExtractionTab}
+\subsection keyword_stringExtractionTab String Extraction tab 
 The string extraction setting defines how strings are extracted from files from which text cannot be extracted normally because their file formats are not supported. This is the case with arbitrary binary files (such as the page file) and chunks of unallocated space that represent deleted files.
 When we extract strings from binary files we need to interpret sequences of bytes as text differently, depending on the possible text encoding and script/language used. In many cases we don't know in advance what the specific encoding/language the text is encoded in. However, it helps if the investigator is looking for a specific language, because by selecting less languages the indexing performance will be improved and the number of false positives will be reduced.
+
+\image html keyword-search-configuration-dialog-string-extraction.PNG
 
 The default setting is to search for English strings only, encoded as either UTF8 or UTF16. This setting has the best performance (shortest ingest time).
 The user can also use the String Viewer first and try different script/language settings, and see which settings give satisfactory results for the type of text relevant to the investigation. Then the same setting that works for the investigation can be applied to the keyword search ingest.
 
-\image html keyword-search-configuration-dialog-string-extraction.PNG
 
-There is also a setting to enable Optical Character Recognition (OCR). If enabled, text may be extracted from supported image types. Enabling this feature will make the keyword search module take longer to run, and the results are not perfect. The following shows a sample image containing text:
+\subsection keyword_generalSettingsTab General Settings tab
+
+\image html keyword-search-configuration-dialog-general.PNG
+
+\subsubsection keyword_nsrl NIST NSRL Support
+The hash lookup ingest service can be configured to use the NIST NSRL hash set of known files. The keyword search advanced configuration dialog "General" tab contains an option to skip keyword indexing and search on files that have previously marked as "known" and uninteresting files. Selecting this option can greatly reduce size of the index and improve ingest performance. In most cases, user does not need to keyword search for "known" files.
+
+\subsubsection keyword_update_freq Result update frequency during ingest
+To control how frequently searches are executed during ingest, the user can adjust the timing setting available in the keyword search advanced configuration dialog "General" tab. Setting the number of minutes lower will result in more frequent index updates and searches being executed and the user will be able to see results more in real-time. However, more frequent updates can affect the overall performance, especially on lower-end systems, and can potentially lengthen the overall time needed for the ingest to complete.
+
+One can also choose to have no periodic searches. This will speed up the ingest. Users choosing this option can run their keyword searches once the entire keyword search index is complete.
+
+\section keyword_usage Using the Module
+
+Search queries can be executed manually by the user at any time, as long as there are some files already indexed and ready to be searched. Searching before indexing is complete will naturally only search indexes that are already compiled.
+
+See \ref ingest_page "Ingest" for more information on ingest in general.
+
+Once there are files in the index, \ref ad_hoc_keyword_search_page will be available for use to manually search at any time.
+
+\subsection keyword_ingest_settings Ingest Settings
+
+The Ingest Settings for the Keyword Search module allow the user to enable or disable the specific built-in search expressions, Phone Numbers, IP Addresses, Email Addresses, and URLs. Using the Advanced button (covered below), one can add custom keyword groups.
+
+\image html keyword-search-ingest-settings.PNG
+
+\subsubsection keyword_ocr Optical Character Recognition
+\anchor keyword_search_ocr_config
+
+There is also a setting to enable Optical Character Recognition (OCR). If enabled, text may be extracted from supported image types. Enabling this feature will make the keyword search module take longer to run, and the results are not perfect.
+
+The following shows a sample image containing text:
 
 \image html keyword-search-ocr-image.png
 
@@ -57,7 +89,12 @@ The "Indexed Text" tab shows the results when running the keyword search module 
 
 \image html keyword-search-ocr-indexed-text.png
 
-\anchor keyword_search_ocr_config
+The two options to related to OCR are the following:
+<ul>
+<li>Only index text extracted from an image. This will prevent keyword search from indexing text found in text files, docs, etc.
+<li>Only run on large images and documents and extracted files. With this selected, OCR will only be performed on images over 100KB and PDFs/Office docs. It will also run on images of any size that were extracted from another file.
+</ul>
+
 By default, OCR is only configured for English text. Its configuration depends on the presence of language files (called "traineddata" files) 
 that exist in a location that Autopsy can understand. To add support for more languages, you will need to download additional "traineddata" 
 and move them to the right location. The following steps breakdown this process for you:
@@ -72,41 +109,8 @@ and move them to the right location. The following steps breakdown this process 
 
 The language files will now be supported when OCR is enabled in the Keyword Search Settings.
 
-## General Settings tab {#generalSettingsTab}
 
-\image html keyword-search-configuration-dialog-general.PNG
-
-### NIST NSRL Support
-The hash lookup ingest service can be configured to use the NIST NSRL hash set of known files. The keyword search advanced configuration dialog "General" tab contains an option to skip keyword indexing and search on files that have previously marked as "known" and uninteresting files. Selecting this option can greatly reduce size of the index and improve ingest performance. In most cases, user does not need to keyword search for "known" files.
-
-### Result update frequency during ingest
-To control how frequently searches are executed during ingest, the user can adjust the timing setting available in the keyword search advanced configuration dialog "General" tab. Setting the number of minutes lower will result in more frequent index updates and searches being executed and the user will be able to see results more in real-time. However, more frequent updates can affect the overall performance, especially on lower-end systems, and can potentially lengthen the overall time needed for the ingest to complete.
-
-One can also choose to have no periodic searches. This will speed up the ingest. Users choosing this option can run their keyword searches once the entire keyword search index is complete.
-
-
-<!----------------------------------------->
-
-<br>
-Using the Module
-======
-Search queries can be executed manually by the user at any time, as long as there are some files already indexed and ready to be searched. Searching before indexing is complete will naturally only search indexes that are already compiled.
-
-See \ref ingest_page "Ingest" for more information on ingest in general.
-
-Once there are files in the index, \ref ad_hoc_keyword_search_page will be available for use to manually search at any time.
-
-<!----------------------------------->
-
-Ingest Settings
-------
-The Ingest Settings for the Keyword Search module allow the user to enable or disable the specific built-in search expressions, Phone Numbers, IP Addresses, Email Addresses, and URLs. Using the Advanced button (covered below), one can add custom keyword groups.
-
-\image html keyword-search-ingest-settings.PNG
-
-
-Seeing Results
-------
+\section keyword_results Seeing Results
 
 The Keyword Search module will save the search results regardless whether the search is performed by the ingest process, or manually by the user. The saved results are available in the Directory Tree in the left hand side panel.
 

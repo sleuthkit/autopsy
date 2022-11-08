@@ -62,6 +62,9 @@ class GeoFilterPanel extends javax.swing.JPanel {
     private final CheckBoxListPanel<DataSource> dsCheckboxPanel;
     private final CheckBoxListPanel<ARTIFACT_TYPE> atCheckboxPanel;
 
+    private final Object initialFilterLock = new Object();
+    private GeoFilter initialFilter = null;
+
     // Make sure to update if other GPS artifacts are added
     @SuppressWarnings("deprecation")
     private static final ARTIFACT_TYPE[] GPS_ARTIFACT_TYPES = {
@@ -89,12 +92,12 @@ class GeoFilterPanel extends javax.swing.JPanel {
 
         initComponents();
 
-        dsCheckboxPanel = (CheckBoxListPanel<DataSource>)dsCBPanel;
+        dsCheckboxPanel = (CheckBoxListPanel<DataSource>) dsCBPanel;
         dsCheckboxPanel.setPanelTitle(Bundle.GeoFilterPanel_DataSource_List_Title());
         dsCheckboxPanel.setPanelTitleIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/image.png")));
         dsCheckboxPanel.setSetAllSelected(true);
 
-        atCheckboxPanel = (CheckBoxListPanel<ARTIFACT_TYPE>)atCBPanel;
+        atCheckboxPanel = (CheckBoxListPanel<ARTIFACT_TYPE>) atCBPanel;
         atCheckboxPanel.setPanelTitle(Bundle.GeoFilterPanel_ArtifactType_List_Title());
         atCheckboxPanel.setPanelTitleIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/extracted_content.png")));
         atCheckboxPanel.setSetAllSelected(true);
@@ -167,6 +170,49 @@ class GeoFilterPanel extends javax.swing.JPanel {
                 numberModel.getNumber().intValue(),
                 dataSources,
                 artifactTypes);
+    }
+
+    /**
+     * Sets up filter state in filter panel based on filter provided. NOTE:
+     * GeolocationTopComponent will overwrite these settings on open(). Also,
+     * this will not immediately trigger waypoints to be reloaded.
+     *
+     * @param filter The new filter state.
+     */
+    void setupFilter(GeoFilter filter) {
+        if (filter == null) {
+            return;
+        }
+
+        dsCheckboxPanel.setSelectedElements(filter.getDataSources() == null ? Collections.emptyList() : filter.getDataSources());
+        atCheckboxPanel.setSelectedElements(filter.getArtifactTypes() == null ? Collections.emptyList() : filter.getArtifactTypes());
+
+        if (filter.showAllWaypoints()) {
+            allButton.setSelected(true);
+        } else {
+            mostRecentButton.setSelected(true);
+        }
+
+        showWaypointsWOTSCheckBox.setSelected(filter.showWaypointsWithoutTimeStamp());
+        numberModel.setValue(filter.getMostRecentNumDays());
+    }
+
+    /**
+     * Sets the filter state that will be created when the DataSourceUpdater
+     * runs as a part of updating the data source list which is called during
+     * opening the GeolocationTopComponent.
+     *
+     * @param filter The initial filter.
+     * @throws GeoLocationUIException
+     */
+    void setInitialFilterState(GeoFilter filter) throws GeoLocationUIException {
+        synchronized (initialFilterLock) {
+            if (filter == null) {
+                throw new GeoLocationUIException("Unable to set filter state as no filter was provided.");
+            }
+
+            initialFilter = filter;
+        }
     }
 
     /**
@@ -358,98 +404,6 @@ class GeoFilterPanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Class to store the values of the Geolocation user set filter parameters
-     */
-    final class GeoFilter {
-
-        private final boolean showAll;
-        private final boolean showWithoutTimeStamp;
-        private final int mostRecentNumDays;
-        private final List<DataSource> dataSources;
-        private final List<ARTIFACT_TYPE> artifactTypes;
-
-        /**
-         * Construct a Geolocation filter. showAll and mostRecentNumDays are
-         * exclusive filters, ie they cannot be used together.
-         *
-         * withoutTimeStamp is only applicable if mostRecentNumDays is true.
-         *
-         * When using the filters "most recent days" means to include waypoints
-         * for the numbers of days after the most recent waypoint, not the
-         * current date.
-         *
-         * @param showAll True if all waypoints should be shown
-         * @param withoutTimeStamp True to show waypoints without timeStamps,
-         * this filter is only applicable if mostRecentNumDays is true
-         * @param mostRecentNumDays Show Waypoint for the most recent given
-         * number of days. This parameter is ignored if showAll is true.
-         * @param dataSources A list of dataSources to filter waypoint for.
-         * @param artifactTypes A list of artifactTypes to filter waypoint for.
-         */
-        GeoFilter(boolean showAll, boolean withoutTimeStamp,
-                int mostRecentNumDays, List<DataSource> dataSources,
-                List<ARTIFACT_TYPE> artifactTypes) {
-            this.showAll = showAll;
-            this.showWithoutTimeStamp = withoutTimeStamp;
-            this.mostRecentNumDays = mostRecentNumDays;
-            this.dataSources = dataSources;
-            this.artifactTypes = artifactTypes;
-        }
-
-        /**
-         * Returns whether or not to show all waypoints.
-         *
-         * @return True if all waypoints should be shown.
-         */
-        boolean showAllWaypoints() {
-            return showAll;
-        }
-
-        /**
-         * Returns whether or not to include waypoints with time stamps.
-         *
-         * This filter is only applicable if "showAll" is true.
-         *
-         * @return True if waypoints with time stamps should be shown.
-         */
-        boolean showWaypointsWithoutTimeStamp() {
-            return showWithoutTimeStamp;
-        }
-
-        /**
-         * Returns the number of most recent days to show waypoints for. This
-         * value should be ignored if showAll is true.
-         *
-         * @return The number of most recent days to show waypoints for
-         */
-        int getMostRecentNumDays() {
-            return mostRecentNumDays;
-        }
-
-        /**
-         * Returns a list of data sources to filter the waypoints by, or null if
-         * all datasources should be include.
-         *
-         * @return A list of dataSources or null if all dataSources should be
-         * included.
-         */
-        List<DataSource> getDataSources() {
-            return Collections.unmodifiableList(dataSources);
-        }
-
-        /**
-         * Returns a list of artifact types to filter the waypoints by, or null
-         * if all types should be include.
-         *
-         * @return A list of artifactTypes or null if all artifactTypes should
-         * be included.
-         */
-        List<ARTIFACT_TYPE> getArtifactTypes() {
-            return Collections.unmodifiableList(artifactTypes);
-        }
-    }
-
-    /**
      * Container for data sources and artifact types to be given as filter
      * options
      */
@@ -608,6 +562,16 @@ class GeoFilterPanel extends javax.swing.JPanel {
                     Icon icon = getImageIcon(entry.getKey().getTypeID());
                     atCheckboxPanel.addElement(dispName, icon, entry.getKey());
                 }
+            }
+
+            GeoFilter filter = null;
+            synchronized (GeoFilterPanel.this.initialFilterLock) {
+                filter = GeoFilterPanel.this.initialFilter;
+                GeoFilterPanel.this.initialFilter = null;
+            }
+
+            if (filter != null) {
+                setupFilter(filter);
             }
 
             GeoFilterPanel.this.firePropertyChange(INITPROPERTY, false, true);

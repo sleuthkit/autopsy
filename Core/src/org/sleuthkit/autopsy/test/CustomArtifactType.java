@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,12 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -68,8 +70,8 @@ final class CustomArtifactType {
      *
      * @throws BlackboardException If there is an error adding any of the types.
      */
-    static void addToCaseDatabase() throws Blackboard.BlackboardException, NoCurrentCaseException {
-        Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getArtifactsBlackboard();
+    static void addToCaseDatabase() throws Blackboard.BlackboardException {
+        Blackboard blackboard = Case.getCurrentCase().getServices().getArtifactsBlackboard();
         artifactType = blackboard.getOrAddArtifactType(ARTIFACT_TYPE_NAME, ARTIFACT_DISPLAY_NAME);
         intAttrType = blackboard.getOrAddAttributeType(INT_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.INTEGER, INT_ATTR_DISPLAY_NAME);
         doubleAttrType = blackboard.getOrAddAttributeType(DOUBLE_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DOUBLE, DOUBLE_ATTR_DISPLAY_NAME);
@@ -81,13 +83,18 @@ final class CustomArtifactType {
     }
 
     /**
-     * Creates and instance of the custom artifact type.
+     * Creates an instance of the custom artifact type and posts it to the
+     * blackboard.
      *
      * @param source The artifact source content.
+     * @param ingestJobId The ingest job ID.
      *
      * @return A BlackboardArtifact object.
      *
-     * @throws TskCoreException If there is an error creating the artifact.
+     * @throws TskCoreException               If there is an error creating the
+     *                                        artifact.
+     * @throws Blackboard.BlackboardException If there is an error posting the
+     *                                        artifact to the blackboard.
      */
     static BlackboardArtifact createInstance(Content source) throws TskCoreException, DecoderException {
         BlackboardArtifact artifact = source.newArtifact(artifactType.getTypeID());
@@ -99,7 +106,6 @@ final class CustomArtifactType {
         attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, Hex.decodeHex("ABCD")));
         attributes.add(new BlackboardAttribute(stringAttrType, MODULE_NAME, "Zero"));
         attributes.add(new BlackboardAttribute(jsonAttrType, MODULE_NAME, "{\"fruit\": \"Apple\",\"size\": \"Large\",\"color\": \"Red\"}"));
-        artifact.addAttributes(attributes);
 
         /*
          * Add a second source module to the attributes. Try to do it twice. The
@@ -109,6 +115,25 @@ final class CustomArtifactType {
             attr.addSource(ADDITIONAL_MODULE_NAME);
             attr.addSource(ADDITIONAL_MODULE_NAME);
         }
+
+        BlackboardArtifact artifact;        
+        switch (artifactType.getCategory()) {
+            case DATA_ARTIFACT:
+                artifact = source.newDataArtifact(artifactType, attributes);
+                break;
+                
+            case ANALYSIS_RESULT:
+                artifact = source.newAnalysisResult(artifactType, Score.SCORE_UNKNOWN, null, null, null, attributes)
+                        .getAnalysisResult();
+                break;
+                
+            default:
+                throw new TskCoreException(String.format("Artifact type: %s has no known category: %s", 
+                        artifactType.getDisplayName(), artifactType.getCategory().getDisplayName()));
+        }
+                
+        Blackboard blackboard = Case.getCurrentCase().getServices().getArtifactsBlackboard();
+        blackboard.postArtifact(artifact, MODULE_NAME, ingestJobId);
 
         return artifact;
     }

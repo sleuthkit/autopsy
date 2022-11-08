@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "Test Suite Schema",
+  "type": "object",
+  "properties": {
+    "rootTestOutputPath": {
+      "title": "Root Test Output Path",
+      "description": "The path to where yaml file results will be outputted.",
+      "type": "string",
+      "required": true
+    },
+    "rootTestSuitesPath": {
+      "title": "Root Test Suites Path",
+      "description": "The path to be scanned for json test suite files.",
+      "type": "string",
+      "required": true
+    },
+    "rootCaseOutputPath": {
+      "title": "Root Case Output Path",
+      "description": "The path to where autopsy cases for these test suites will be stored.",
+      "type": "string",
+      "required": true
+    },
+
+    "workingDirectory": {
+      "title": "Working Directory",
+      "description": "If any of the above paths are relative paths, they will be relative to this path.",
+      "type": "string",
+      "required": true
+    },
+    "diffOutputPath": {
+      "title": "Diff File Output Path",
+      "description": "The path to where the diff file will be written (optional; if not specified, no diff'ing will happen).",
+      "type": "string",
+      "required": false
+    },
+    "rootGoldPath": {
+      "title": "Root Gold Path",
+      "description": "The path to where the gold yaml files are stored (optional; if not specified, no diff'ing will happen).",
+      "type": "string",
+      "required": false
+    },
+
+    "dbConnection": {
+      "title": "Database Connection",
+      "description": "Configuration for the database connection.  This is required for multi user case testing.",
+      "$ref": "connectionconfig.schema.json",
+      "required": false
+    },
+    "mqConnection": {
+      "title": "Active MQ Connection",
+      "description": "Configuration for the Active MQ connection.  This should be specified for multi user case testing.",
+      "$ref": "connectionconfig.schema.json",
+      "required": false
+    },
+    "solrConnection": {
+      "title": "Solr Connection",
+      "description": "Configuration for the Solr connection.  This should be specified for multi user case testing.",
+      "$ref": "connectionconfig.schema.json",
+      "required": false
+    },
+    "zkConnection": {
+      "title": "ZooKeeper Connection",
+      "description": "Configuration for the Zookeeper connection.  This should be specified for multi user case testing.",
+      "$ref": "connectionconfig.schema.json",
+      "required": false
+    },
+    "crConnection": {
+      "title": "Central Repository Connection",
+      "description": "Configuration for the Central Repository connection.  This should be specified when using central repo in a multi user case for testing.",
+      "$ref": "connectionconfig.schema.json",
+      "required": false
+    }
+  }
+}

@@ -38,7 +38,7 @@ public interface TextViewer {
      * previous nodes.
      *
      * @param selectedNode the node which is used to determine what is displayed
-     *                     in this viewer
+     * in this viewer
      */
     public void setNode(Node selectedNode);
 
@@ -102,30 +102,37 @@ public interface TextViewer {
      * selected node is an artifact, the level may be determined by both the
      * artifact and its associated file.
      *
-     * Level 7 - Based on the artifact, if any, in the selected node and
-     * specific to an artifact type or types. The current text viewer that can
-     * return level 7 is the Indexed Text tab when the selected node is a
-     * Keyword Search hit.
+     * Level 6 - Used for data artifact viewers. These have higher priority over
+     * file content viewers because a Node will likely have the ‘source’ file
+     * for a data artifact and we want to give the artifact priority. Currently
+     * used by the Data Artifacts viewer.
      *
-     * Level 6 - Based on the artifact, if any, in the selected node but not
-     * restricted to particular types.
+     * Level 5 - Used for type-specific file content viewers that are optimized
+     * for that type, such as displaying an image or a PDF file with images and
+     * proper layout. Currently used by the Application viewer.
      *
-     * Level 5 - Based on the file in the selected node and very specific to the
-     * file type.
+     * Level 4 - Used for type-specific file content viewers that are not
+     * optimized. For example, displaying only the plain text from a PDF would
+     * be at this level, but displaying the same PDF with images and layout
+     * would be level 5. Currently used by the Text viewer that returns text
+     * from Solr.
      *
-     * Level 4 - Based on the file in the selected node but fairly general.
-     * Currently this is the level returned by the Indexed Text tab if Keyword
-     * Search has been run (unless the node is a Keyword Search hit or a Credit
-     * Card account). This is the default tab for most files.
+     * Level 3 - Used for viewing Data Artifacts that refer to files and the
+     * user may want to view the files more than the artifact itself. This is
+     * currently used by the Data Artifact viewer when a Web Download artifact
+     * is selected.
      *
-     * Level 3 - Based on the artifact, if any, in the selected node where the
-     * artifact is thought to be of less interest than the associated file.
+     * Level 2 - Used for viewing Analysis Results. This is a lower priority
+     * than Data Artifacts and file content because Analysis Results are used to
+     * identify content of interest and therefore the content itself should be
+     * shown. Currently used by the Analysis Results viewer.      *
+     * Level 1 - Used for metadata viewers that give more information and
+     * context about the primary file or artifact. Currently used by Metadata,
+     * Annotations, Context, Other Occurrences, and OS Account.
      *
-     * Level 1 - Very general and should always be available. The Strings tabs
-     * is this this level
-     *
-     * Level 0 - For cases where the text viewer should never be displayed by
-     * default.
+     * Level 0 - Used for general purpose file content viewers that are not file
+     * specific and will always be enabled. Currently used by Text/Strings and
+     * Hex.
      *
      * @param node Node to check for preference
      *

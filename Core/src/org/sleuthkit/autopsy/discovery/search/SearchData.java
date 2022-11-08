@@ -36,8 +36,99 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 public final class SearchData {
 
     private final static long BYTES_PER_MB = 1000000;
-    private static final Set<BlackboardArtifact.ARTIFACT_TYPE> DOMAIN_ARTIFACT_TYPES = EnumSet.of(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY);
+    private static final Set<BlackboardArtifact.ARTIFACT_TYPE> DOMAIN_ARTIFACT_TYPES = 
+            EnumSet.of(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, 
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY);
 
+    
+    /**
+     * Enum representing the notability of the result in the Central Repository.
+     */
+    @NbBundle.Messages({
+        "SearchData.prevNotable.displayName=Previously Notable",
+        "SearchData.notPrevNotable.displayName=Previously Not Notable"
+    })
+    public enum PreviouslyNotable {
+        PREVIOUSLY_NOTABLE(0, Bundle.SearchData_prevNotable_displayName()),
+        NOT_PREVIOUSLY_NOTABLE(1, Bundle.SearchData_notPrevNotable_displayName());
+        
+        private final int ranking;
+        private final String displayName;
+        
+        PreviouslyNotable(int ranking, String displayName) {
+            this.ranking = ranking;
+            this.displayName = displayName;
+        }
+        
+        public int getRanking() {
+            return ranking;
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
+    
+    /**
+     * Enum representing the number of page views a domain has received. Page 
+     * views a grouped into ranges for cleaner display and management.
+     */
+    @NbBundle.Messages({
+        "# {0} - minValue",
+        "# {1} - maxValue",
+        "SearchData.PageViews.rangeTemplate={0}-{1} page views",
+        "SearchData.PageViews.over1000=1000+ page views"
+    })
+    public enum PageViews {
+        OVER_1000(1001, Long.MAX_VALUE), // ranking, minValue, maxValue
+        UP_TO_1000(501, 1000),
+        UP_TO_500(101, 500),
+        UP_TO_100(51, 100),
+        UP_TO_50(11, 50),
+        UP_TO_10(0, 10);
+        
+        private final long minValue;
+        private final long maxValue;
+        
+        PageViews(long minValue, long maxValue) {
+            this.maxValue = maxValue;
+            this.minValue = minValue;
+        }
+        
+        @Override
+        public String toString() {
+            if (this == PageViews.OVER_1000) {
+                return Bundle.SearchData_PageViews_over1000();
+            } else {
+                return Bundle.SearchData_PageViews_rangeTemplate(Long.toString(minValue), Long.toString(maxValue));
+            }
+        }
+        
+        /**
+         * Determines if the given count is covered by this PageView interval.
+         */
+        boolean covers(long count) {
+            return count >= minValue && count <= maxValue;
+        }
+        
+        /**
+         * Utility to fetch the appropriate PageView interval for the given count.
+         */
+        public static PageViews fromPageViewCount(long count) {
+            for (PageViews view : PageViews.values()) {
+                if (view.covers(count)) {
+                    return view;
+                }
+            }
+            return null;
+        }
+    }
+    
     /**
      * Enum representing how often the result occurs in the Central Repository.
      */

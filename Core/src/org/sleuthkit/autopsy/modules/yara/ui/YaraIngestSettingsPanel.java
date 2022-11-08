@@ -18,11 +18,13 @@
  */
 package org.sleuthkit.autopsy.modules.yara.ui;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import javax.swing.DefaultListModel;
-import org.sleuthkit.autopsy.guicomponeontutils.AbstractCheckboxListItem;
+import org.sleuthkit.autopsy.guicomponentutils.AbstractCheckboxListItem;
 import org.sleuthkit.autopsy.guiutils.CheckBoxJList;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
@@ -49,24 +51,42 @@ public class YaraIngestSettingsPanel extends IngestModuleIngestJobSettingsPanel 
         checkboxList = new CheckBoxJList<>();
         scrollPane.setViewportView(checkboxList);
     }
-    
+
+    /**
+     * Constructs a new panel with the given JobSetting objects.
+     * 
+     * @param settings Ingest job settings.
+     */
     public YaraIngestSettingsPanel(YaraIngestJobSettings settings) {
         this();
-        
+
         List<String> setNames = settings.getSelectedRuleSetNames();
-        
+
         checkboxList.setModel(listModel);
         checkboxList.setOpaque(false);
-        RuleSetManager manager = new RuleSetManager();
-        List<RuleSet> ruleSetList = manager.getRuleSetList();
+        List<RuleSet> ruleSetList = RuleSetManager.getInstance().getRuleSetList();
         for (RuleSet set : ruleSetList) {
             RuleSetListItem item = new RuleSetListItem(set);
             item.setChecked(setNames.contains(set.getName()));
             listModel.addElement(item);
         }
-        
+
         allFilesButton.setSelected(!settings.onlyExecutableFiles());
         executableFilesButton.setSelected(settings.onlyExecutableFiles());
+
+        RuleSetManager.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                switch (evt.getPropertyName()) {
+                    case RuleSetManager.RULE_SET_ADDED:
+                        handleRuleSetAdded((RuleSet) evt.getNewValue());
+                        break;
+                    case RuleSetManager.RULE_SET_DELETED:
+                        handleRuleSetDeleted((RuleSet) evt.getOldValue());
+                        break;
+                }
+            }
+        });
     }
 
     @Override
@@ -82,6 +102,36 @@ public class YaraIngestSettingsPanel extends IngestModuleIngestJobSettingsPanel 
         }
 
         return new YaraIngestJobSettings(selectedRules, executableFilesButton.isSelected());
+    }
+
+    /**
+     * Handle the addition of a new Rule Set.
+     * 
+     * @param ruleSet 
+     */
+    private void handleRuleSetAdded(RuleSet ruleSet) {
+        if (ruleSet == null) {
+            return;
+        }
+
+        RuleSetListItem item = new RuleSetListItem(ruleSet);
+        listModel.addElement(item);
+    }
+
+    /**
+     * Handle the removal of the rule set.
+     * 
+     * @param ruleSet 
+     */
+    private void handleRuleSetDeleted(RuleSet ruleSet) {
+        Enumeration<RuleSetListItem> enumeration = listModel.elements();
+        while (enumeration.hasMoreElements()) {
+            RuleSetListItem item = enumeration.nextElement();
+            if (item.getDisplayName().equals(ruleSet.getName())) {
+                listModel.removeElement(item);
+                return;
+            }
+        }
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.BorderLayout;
 import java.util.logging.Level;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
@@ -95,8 +96,7 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
         explorerManager = new ExplorerManager();
         associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
         caseBrowserPanel = new MultiUserCasesBrowserPanel(explorerManager, new CasesDashboardCustomizer());
-        caseBrowserScrollPane.add(caseBrowserPanel);
-        caseBrowserScrollPane.setViewportView(caseBrowserPanel);
+        mainPanel.add(caseBrowserPanel, BorderLayout.CENTER);
     }
 
     @Override
@@ -116,11 +116,23 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
-        refreshButton = new javax.swing.JButton();
         caseBrowserScrollPane = new javax.swing.JScrollPane();
+        mainPanel = new javax.swing.JPanel();
+        bottomPanel = new javax.swing.JPanel();
+        buttonPanel = new javax.swing.JPanel();
+        refreshButton = new javax.swing.JButton();
         deleteOrphanCaseNodesButton = new javax.swing.JButton();
         deleteOrphanManifestNodesButton = new javax.swing.JButton();
+
+        setLayout(new java.awt.BorderLayout());
+
+        mainPanel.setLayout(new java.awt.BorderLayout());
+
+        bottomPanel.setLayout(new java.awt.GridBagLayout());
+
+        buttonPanel.setLayout(new java.awt.GridLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(CasesDashboardTopComponent.class, "CasesDashboardTopComponent.refreshButton.text")); // NOI18N
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
@@ -128,6 +140,7 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
                 refreshButtonActionPerformed(evt);
             }
         });
+        buttonPanel.add(refreshButton);
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteOrphanCaseNodesButton, org.openide.util.NbBundle.getMessage(CasesDashboardTopComponent.class, "CasesDashboardTopComponent.deleteOrphanCaseNodesButton.text")); // NOI18N
         deleteOrphanCaseNodesButton.addActionListener(new java.awt.event.ActionListener() {
@@ -135,6 +148,7 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
                 deleteOrphanCaseNodesButtonActionPerformed(evt);
             }
         });
+        buttonPanel.add(deleteOrphanCaseNodesButton);
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteOrphanManifestNodesButton, org.openide.util.NbBundle.getMessage(CasesDashboardTopComponent.class, "CasesDashboardTopComponent.deleteOrphanManifestNodesButton.text")); // NOI18N
         deleteOrphanManifestNodesButton.addActionListener(new java.awt.event.ActionListener() {
@@ -142,43 +156,21 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
                 deleteOrphanManifestNodesButtonActionPerformed(evt);
             }
         });
+        buttonPanel.add(deleteOrphanManifestNodesButton);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(refreshButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deleteOrphanCaseNodesButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deleteOrphanManifestNodesButton)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(caseBrowserScrollPane)
-                        .addContainerGap())))
-        );
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(10, 10, 10, 10);
+        bottomPanel.add(buttonPanel, gridBagConstraints);
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteOrphanCaseNodesButton, deleteOrphanManifestNodesButton, refreshButton});
+        mainPanel.add(bottomPanel, java.awt.BorderLayout.SOUTH);
 
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(caseBrowserScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(refreshButton)
-                    .addComponent(deleteOrphanCaseNodesButton)
-                    .addComponent(deleteOrphanManifestNodesButton))
-                .addContainerGap())
-        );
+        caseBrowserScrollPane.setViewportView(mainPanel);
 
-        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deleteOrphanCaseNodesButton, deleteOrphanManifestNodesButton, refreshButton});
-
+        add(caseBrowserScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
@@ -194,9 +186,12 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
     }//GEN-LAST:event_deleteOrphanManifestNodesButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel bottomPanel;
+    private javax.swing.JPanel buttonPanel;
     private javax.swing.JScrollPane caseBrowserScrollPane;
     private javax.swing.JButton deleteOrphanCaseNodesButton;
     private javax.swing.JButton deleteOrphanManifestNodesButton;
+    private javax.swing.JPanel mainPanel;
     private javax.swing.JButton refreshButton;
     // End of variables declaration//GEN-END:variables
 

@@ -26,6 +26,9 @@ solrAdminApp.controller('CollectionsController',
           Collections.status(function (data) {
               $scope.collections = [];
               for (var name in data.cluster.collections) {
+                  if (name.startsWith("._designer_")) {
+                      continue;
+                  }
                   var collection = data.cluster.collections[name];
                   collection.name = name;
                   collection.type = 'collection';
@@ -216,7 +219,7 @@ solrAdminApp.controller('CollectionsController',
             $scope.nodes = [];
             var children = data.tree[0].children;
             for (var child in children) {
-              $scope.nodes.push(children[child].data.title);
+              $scope.nodes.push(children[child].text);
             }
           });
       };
@@ -225,7 +228,7 @@ solrAdminApp.controller('CollectionsController',
           $scope.hideAll();
           replica.showRemove = !replica.showRemove;
       };
-      
+
       $scope.toggleRemoveShard = function(shard) {
           $scope.hideAll();
           shard.showRemove = !shard.showRemove;
@@ -252,6 +255,7 @@ solrAdminApp.controller('CollectionsController',
         var params = {
           collection: shard.collection,
           shard: shard.name,
+          type: shard.replicaType
         }
         if (shard.replicaNodeName && shard.replicaNodeName != "") {
           params.node = shard.replicaNodeName;
@@ -261,7 +265,7 @@ solrAdminApp.controller('CollectionsController',
           $timeout(function () {
             shard.replicaAdded = false;
             shard.showAdd = false;
-            $$scope.refresh();
+            $scope.refresh();
           }, 2000);
         });
       };

@@ -1,0 +1,157 @@
+﻿/*! \page translations_page Traduire la documentation et l'interface utilisateur
+
+[TOC]
+
+
+La base d'utilisateurs d'Autopsy est globale. Vous pouvez contribuer en traduisant l'interface utilisateur et cette documentation.
+
+\section translations_doc Traduire la documentation
+
+Cette section explique comment traduire cette documentation utilisateur. Pour traduire, vous aurez besoin de:
+- Un compte Github
+- Des connaissances de base de Git
+- Un éditeur de texte
+
+La documentation Autopsy est créée avec [Doxygen](http://www.doxygen.nl/) à partir de fichiers textes ".dox" dans le dossier [docs/doxygen-user](https://github.com/sleuthkit/autopsy/tree/develop/docs/doxygen-user) du dépôt Github.  
+
+La première étape consiste à créer un "Fork" du [dépôt Autopsy](https://github.com/sleuthkit/autopsy) dans votre compte Github et à en faire un clone dans votre environnement afin que vous puissiez apporter des modifications aux fichiers.
+
+Lors de vos modifications, vous pouvez consulter votre documentation en installant Doxygen et en exécutant 'doxygen' à partir du dossier des traductions. Il enregistrera les pages HTML dans un dossier 'user-docs'.
+
+\subsection translations_doc_start Traduire dans une nouvelle langue
+
+S'il n'y a pas encore de documentation dans une langue, vous devez faire une copie du dossier anglais entier 'doxygen-user' et le nommer 'doxygen-user_AB' où AB est remplacé par les deux caratères du [code pays] (http://www.lingoes.net/en/translator/langcode.htm).  Par exemple, 'doxygen-user_fr' pour le français et 'doxygen-user_ja' pour le japonnais. 
+
+Modifiez le fichier Doxyfile pour mettre à jour le champ OUTPUT_LANGUAGE. Pour l'anglais, ce sera:
+
+\code
+OUTPUT_LANGUAGE        = English
+\endcode
+
+Maintenant, commencez simplement à traduire les documents en anglais.
+
+\subsection translations_doc_update Mise à jour de la documentation
+
+Lorsque de nouvelles versions sont publiées et que la documentation en anglais est mise à jour, les autres langues doivent également être mises à jour. Pour déterminer ce qui a changé:
+- Tout d'abord, déterminez la date de la dernière modification de la documentation. À partir d'une ligne de commande, vous pouvez accéder au dossier de documentation traduite et saisir:
+
+\code
+    $ cd docs/doxygen-user_fr
+    $ git log -n 1 .
+    commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1111
+    Author: John Doe <jdoe@sleuthkit.org>
+    Date:   Tue Jan 1 22:56:09 2019 -0500
+    
+        update to quick start
+\endcode    
+
+Cela vous montre que le commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1111 était la dernière mise à jour de traduction pour la version française.
+
+- Ensuite, déterminez ce qui a changé dans la version anglaise depuis lors:
+
+\code
+    $ git diff 94e4b1042af47908dd4a0b2959b3f6c3d4af1111 ../doxygen-user
+    diff --git a/docs/doxygen-user/central_repo.dox b/docs/doxygen-user/central_repo.dox
+index 83d3407e8..e8cd01c1b 100644
+    --- a/docs/doxygen-user/central_repo.dox
+    +++ b/docs/doxygen-user/central_repo.dox
+    @@ -79,6 +79,16 @@ Descriptions of the property types:
+      - Phone numbers are currently only extracted from call logs, contact lists and message, which come from the Android Analyzer module.
+      - <b>USB Devices</b>
+      - USB device properties come from the registry parsing in the Recent Activity Module.
+     +- <b>Wireless Networks</b>
+     + - Wireless networks are correlated on SSIDs, and come from the registry par
+\endcode
+
+- Mettez à jour la documentation traduite en fonction de ce qui a changé dans la version anglaise.
+
+- Si vous ne parvenez pas à effectuer toutes les modifications, vous devez créer un fichier TODO.txt qui répertorie ce qui n'a pas été mis à jour afin que d'autres personnes sachent que tout n'a pas été réactualisé.
+
+\subsection translations_doc_commit Validation de la documentation
+
+Vous devez soumettre une "Pull Request" sur Github lorsque:
+- Vous avez complété une langue.
+- Vous n'avez pas eu le temps de faire plus de travail, mais souhaitez soumettre ce que vous avez fait.
+
+Pour que le code soit validé, envoyez une [Pull Request](https://help.github.com/articles/about-pull-requests/) sur le dépôt principal d'Autopsy. 
+
+\section translations_ui Traduire l'interface utilisateur
+Cette section explique comment traduire l'interface utilisateur. Pour ce faire, vous aurez besoin de:
+
+- Un compte Github
+- Des connaissances de base de Git
+- Un environnement complet de développement d'Autopsy.
+
+\subsection translations_ui_autopsy Environnement de développement d'Autopsy
+
+Vous aurez besoin d'une configuration complète de l'environnement de développement d’Autopsy afin de pouvoir lancer le logiciel avec vos traductions et vérifier qu'elles se trouvent au bon emplacement et qu'elles ne sont pas rognées.  
+
+Vous pourrez trouver des instructions pour ce faire dans le fichier [BUILDING.txt](https://github.com/sleuthkit/autopsy/blob/develop/BUILDING.txt). 
+
+\subsection translations_ui_strings Où sont stockées les chaînes de caractères anglaises
+
+Autopsy utilise deux méthodes différentes pour stocker les chaînes de caractères anglaises de l'interface utilisateur. Certaines sont stockées dans des fichiers Bundle.properties et d'autres sont stockées dans le code sous forme d'annotations \@Message. Les annotations compliquent la traduction du code car les traducteurs doivent chercher à deux endroits, mais cela facilite le développement.
+
+Pour faciliter les traductions, nous avons ajouté une logique dans notre processus de construction en fusionnant les différentes chaînes en un seul endroit. Lorsque le code d'Autopsy est compilé, il fusionne le contenu des annotations et des fichiers Bundle.properties dans un seul fichier nommé Bundle.properties-MERGED. Un de ces fichiers existe pour chaque package Java. 
+
+Voici un exemple dans le package corecomponents (Notez que certains de ces liens peuvent ne pas être tout à fait corrects si ces fichiers ont été mis à jour et que la documentation ne l’a pas été, mais ils servent de référence de base):
+- Il existe un fichier [Bundle.properties](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle.properties).  Au moment où cette documentation a été écrite, il y avait 230 lignes dans ce fichier.
+- Dans ce même package, la classe [AutopsyOptionsPanel.java](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/AutopsyOptionsPanel.java#L53) contient des chaînes de caractères définies au niveau des annotations \@Message. 
+- Il existe un fichier [Bundle.properties-MERGED](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle.properties-MERGED) qui contient les chaînes de caractères de Bundle.properties ainsi que les annotations. Au moment de la rédaction de cet article, ce fichier comportait 277 lignes.
+
+\subsection translations_ui_translation Où les chaînes de caractères traduites sont stockées
+
+Chaque package Java doit avoir un fichier Bundle_AB.properties qui stocke le texte traduit. AB doit être remplacé par les deux caractères du [code pays] (http://www.lingoes.net/en/translator/langcode.htm), comme Bundle_fr.properties pour le français ou Bundle_ja.properties pour le japonnais. 
+
+À titre d'exemple, vous pouvez voir la traduction japonaise du package corecomponents précédemment cité dans [Bundle_ja.properties](https://github.com/sleuthkit/autopsy/blob/develop/Core/src/org/sleuthkit/autopsy/corecomponents/Bundle_ja.properties). 
+
+Ce fichier doit contenir toutes les chaînes de caractères de cette langue. Il doit être basé sur le fichier Bundle.properties-MERGED, et non sur le fichier Bundle.properties (qui ne contient pas toutes les chaînes).
+
+
+
+\subsection translations_ui_start Traduire dans une nouvelle langue
+
+S'il n'y a pas déjà de traduction dans une langue, vous devez:
+- aller dans chaque paquet
+- copier le fichier Bundle.properties-MERGED dans le fichier Bundle_XX.properties où XX est remplacé par le code de langue.
+- modifier le fichier Bundle_XX.properties et traduire les chaînes de caractères en anglais.
+
+
+\subsection translations_ui_update Mise à jour des traductions
+
+Lorsque de nouvelles versions sont publiées et que l'interface utilisateur anglaise est mise à jour, les autres langues doivent également être mises à jour. Pour déterminer ce qui a changé:
+
+- Tout d'abord, déterminez la date de la dernière modification du fichier traduit. À partir d'une ligne de commande, vous pouvez accéder au dossier du package et taper:
+
+\code
+    $ cd Core/src/org/sleuthkit/autopsy/corecomponents
+    $ git log -n 1 Bundle_ja.properties
+    commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1333
+    Author: John Doe <jdoe@sleuthkit.org>
+    Date:   Tue Jan 1 22:56:09 2019 -0500
+\endcode    
+
+Cela vous montre que le commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1333 était la dernière mise à jour de traduction pour la version japonaise.
+
+- Ensuite, déterminez ce qui a changé dans la version anglaise depuis lors:
+
+\code
+    $ git diff 94e4b1042af47908dd4a0b2959b3f6c3d4af1333 Bundle.properties-MERGED
+    -AutopsyOptionsPanel.restartNecessaryWarning.text=A restart is necessary for any changes to max memory to take effect.
+    +AutopsyOptionsPanel.restartNecessaryWarning.text=A restart is necessary for any memory changes to take effect.
+\endcode
+
+- Mettez à jour les chaînes de caractères de Bundle_ja.properties de manière appropriée, en fonction de ce qui a été ajouté, supprimé ou modifié.
+
+- Si vous ne parvenez pas à effectuer toutes les modifications, vous devez créer un fichier TODO_xx.txt qui répertorie ce qui n'a pas été mis à jour afin que d'autres personnes sachent que tout n'a pas été réactualisé.
+
+\subsection translations_ui_commit Validation de la documentation
+
+Vous devez soumettre une "Pull Request" sur Github lorsque:
+- Vous avez complété une langue.
+- Vous n'avez pas eu le temps de faire plus de travail, mais souhaitez soumettre ce que vous avez fait.
+
+Pour que le code soit validé, envoyez une [Pull Request](https://help.github.com/articles/about-pull-requests/) sur le dépôt principal d'Autopsy. 
+
+
+*/

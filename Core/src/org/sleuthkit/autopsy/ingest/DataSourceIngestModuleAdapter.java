@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +21,14 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.Content;
 
 /**
+ * DO NOT USE: As of Java 8, interfaces can have default methods. IngestModule
+ * now provides default no-op versions of startUp() and shutDown(). This class
+ * is no longer needed and can be DEPRECATED when convenient.
+ *
  * An adapter that provides a no-op implementation of the startUp() method for
  * data source ingest modules.
  */
 public abstract class DataSourceIngestModuleAdapter implements DataSourceIngestModule {
-
-    @Override
-    public void startUp(IngestJobContext context) throws IngestModuleException {
-    }
 
     @Override
     public abstract ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar);

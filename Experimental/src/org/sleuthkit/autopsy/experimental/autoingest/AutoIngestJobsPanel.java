@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.AutoIngestJobStatus;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents.AutoIngestRefreshEvent;
+import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 
 /**
@@ -43,6 +44,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
     private static final int INITIAL_CASENAME_WIDTH = 170;
     private static final int INITIAL_DATASOURCE_WIDTH = 270;
     private static final int INITIAL_PRIORITIZED_WIDTH = 20;
+    private static final int INITIAL_OCR_WIDTH = 20;
     private static final int INITIAL_STATUS_WIDTH = 20;
     private static final int INVALID_INDEX = -1;
     private final org.openide.explorer.view.OutlineView outlineView;
@@ -63,6 +65,8 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
         customize();
     }
 
+    
+
     /**
      * Set up the AutoIngestJobsPanel's so that its outlineView is displaying
      * the correct columns for the specified AutoIngestJobStatus
@@ -81,18 +85,25 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
             case PENDING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
                         Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
-                        Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text());
+                        Bundle.AutoIngestJobsNode_priority_text(), Bundle.AutoIngestJobsNode_priority_text(),
+                        Bundle.AutoIngestJobsNode_ocr_text(), Bundle.AutoIngestJobsNode_ocr_text());
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_priority_text());
                 if (indexOfColumn != INVALID_INDEX) {
                     outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_PRIORITIZED_WIDTH);
                     outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new PrioritizedIconCellRenderer());
+                }
+                indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_ocr_text());
+                if (indexOfColumn != INVALID_INDEX) {
+                    outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_OCR_WIDTH);
+                    outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new OcrIconCellRenderer());
                 }
                 break;
             case RUNNING_JOB:
                 outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
                         Bundle.AutoIngestJobsNode_hostName_text(), Bundle.AutoIngestJobsNode_hostName_text(),
                         Bundle.AutoIngestJobsNode_stage_text(), Bundle.AutoIngestJobsNode_stage_text(),
-                        Bundle.AutoIngestJobsNode_stageTime_text(), Bundle.AutoIngestJobsNode_stageTime_text());
+                        Bundle.AutoIngestJobsNode_stageTime_text(DurationCellRenderer.getUnitSeperator()),
+                        Bundle.AutoIngestJobsNode_stageTime_text(DurationCellRenderer.getUnitSeperator()));
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_caseName_text());
                 if (indexOfColumn != INVALID_INDEX) {
                     outline.setColumnSorted(indexOfColumn, true, 1);
@@ -102,7 +113,8 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                 outlineView.setPropertyColumns(Bundle.AutoIngestJobsNode_dataSource_text(), Bundle.AutoIngestJobsNode_dataSource_text(),
                         Bundle.AutoIngestJobsNode_jobCreated_text(), Bundle.AutoIngestJobsNode_jobCreated_text(),
                         Bundle.AutoIngestJobsNode_jobCompleted_text(), Bundle.AutoIngestJobsNode_jobCompleted_text(),
-                        Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text());
+                        Bundle.AutoIngestJobsNode_status_text(), Bundle.AutoIngestJobsNode_status_text(),
+                        Bundle.AutoIngestJobsNode_ocr_text(), Bundle.AutoIngestJobsNode_ocr_text());
                 indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_jobCompleted_text());
                 if (indexOfColumn != INVALID_INDEX) {
                     outline.setColumnSorted(indexOfColumn, false, 1);
@@ -111,6 +123,11 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
                 if (indexOfColumn != INVALID_INDEX) {
                     outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_STATUS_WIDTH);
                     outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new StatusIconCellRenderer());
+                }
+                indexOfColumn = getColumnIndexByName(Bundle.AutoIngestJobsNode_ocr_text());
+                if (indexOfColumn != INVALID_INDEX) {
+                    outline.getColumnModel().getColumn(indexOfColumn).setPreferredWidth(INITIAL_OCR_WIDTH);
+                    outline.getColumnModel().getColumn(indexOfColumn).setCellRenderer(new OcrIconCellRenderer());
                 }
                 break;
             default:
@@ -164,8 +181,8 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
      * Update the contents of this AutoIngestJobsPanel while retaining currently
      * selected node.
      *
-     * @param refreshEvent - the AutoIngestRefreshEvent which will provide the new
-     *                     contents
+     * @param refreshEvent - the AutoIngestRefreshEvent which will provide the
+     *                     new contents
      */
     void refresh(AutoIngestRefreshEvent refreshEvent) {
         synchronized (this) {
@@ -178,7 +195,6 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
             }
             outline.setRowSelectionAllowed(true);
             outline.setFocusable(true);
-
         }
     }
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -40,8 +39,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Create OS INFO artifacts for the Operating Systems believed to be present on
  * the data source.
  */
-@Messages({"ExtractOs.parentModuleName=Recent Activity",
-            "ExtractOS_progressMessage=Checking for OS"})
+@Messages({"ExtractOs.displayName=OS Info Analyzer",
+    "ExtractOS_progressMessage=Checking for OS"})
 class ExtractOs extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractOs.class.getName());
@@ -64,13 +63,23 @@ class ExtractOs extends Extract {
     private static final String LINUX_UBUNTU_PATH = "/etc/lsb-release";
 
     private Content dataSource;
+    private final IngestJobContext context;
+
+    ExtractOs(IngestJobContext context) {
+        super(Bundle.ExtractOs_displayName(), context);
+        this.context = context;
+    }
 
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         try {
             progressBar.progress(Bundle.ExtractOS_progressMessage());
             for (OS_TYPE value : OS_TYPE.values()) {
+                if (context.dataSourceIngestIsCancelled()) {
+                    return;
+                }
+
                 checkForOSFiles(value);
             }
         } catch (TskCoreException ex) {
@@ -96,9 +105,9 @@ class ExtractOs extends Extract {
             //if the os info program name is not empty create an os info artifact on the first of the files found
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                    Bundle.ExtractOs_parentModuleName(),
+                    getRAModuleName(),
                     osType.getOsInfoLabel())); //NON-NLS
-            postArtifact(createArtifactWithAttributes(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, file, bbattributes));
+            postArtifact(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_OS_INFO, file, bbattributes));
         }
     }
 
@@ -112,13 +121,11 @@ class ExtractOs extends Extract {
      * @return the first AbstractFile found which matched a specified path to
      *         search for
      */
-    private AbstractFile getFirstFileFound(List<String> pathsToSearchFor) throws TskCoreException{
-        FileManager fileManager = currentCase.getServices().getFileManager();
+    private AbstractFile getFirstFileFound(List<String> pathsToSearchFor) throws TskCoreException {
         for (String filePath : pathsToSearchFor) {
-            for (AbstractFile file : fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
-                if ((file.getParentPath() + file.getName()).equals(filePath)) {
-                    return file;
-                }
+            List<AbstractFile> files = currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath));
+            if (!files.isEmpty()) {
+                return files.get(0);
             }
         }
         return null;

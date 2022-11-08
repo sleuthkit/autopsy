@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,52 +39,7 @@ import org.openide.util.NbBundle.Messages;
 @Messages({
     "PieChartPanel_noDataLabel=No Data"
 })
-public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.PieChartItem>> {
-
-    /**
-     * An individual pie chart slice in the pie chart.
-     */
-    public static class PieChartItem {
-
-        private final String label;
-        private final double value;
-        private final Color color;
-
-        /**
-         * Main constructor.
-         *
-         * @param label The label for this pie slice.
-         * @param value The value for this item.
-         * @param color The color for the pie slice. Can be null for
-         * auto-determined.
-         */
-        public PieChartItem(String label, double value, Color color) {
-            this.label = label;
-            this.value = value;
-            this.color = color;
-        }
-
-        /**
-         * @return The label for this item.
-         */
-        public String getLabel() {
-            return label;
-        }
-
-        /**
-         * @return The value for this item.
-         */
-        public double getValue() {
-            return value;
-        }
-
-        /**
-         * @return The color for the pie slice or null for auto-determined.
-         */
-        public Color getColor() {
-            return color;
-        }
-    }
+public class PieChartPanel extends AbstractLoadableComponent<List<PieChartItem>> {
 
     private static final long serialVersionUID = 1L;
 
@@ -104,10 +59,16 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
                     "{0}: {1} ({2})", new DecimalFormat("#,###"), new DecimalFormat("0.0%"));
 
     private final ChartMessageOverlay overlay = new ChartMessageOverlay();
-    private final DefaultPieDataset dataset = new DefaultPieDataset();
+    private final DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
     private final JFreeChart chart;
-    private final PiePlot plot;
+    private final PiePlot<String> plot;
 
+    @SuppressWarnings("unchecked")
+    private static PiePlot<String> getTypedPlot(JFreeChart chart) {
+        return ((PiePlot<String>) chart.getPlot());
+    }
+    
+    
     /**
      * Main constructor.
      */
@@ -131,8 +92,7 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
 
         chart.setBackgroundPaint(null);
         chart.getTitle().setFont(DEFAULT_HEADER_FONT);
-
-        this.plot = ((PiePlot) chart.getPlot());
+        this.plot = getTypedPlot(chart);
         plot.setInteriorGap(DEFAULT_CHART_PADDING);
         plot.setLabelGenerator(DEFAULT_LABEL_GENERATOR);
         plot.setLabelFont(DEFAULT_FONT);
@@ -176,12 +136,12 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
     }
 
     @Override
-    protected void setResults(List<PieChartPanel.PieChartItem> data) {
+    protected void setResults(List<PieChartItem> data) {
         this.dataset.clear();
         this.plot.clearSectionPaints(false);
 
         if (data != null && !data.isEmpty()) {
-            for (PieChartPanel.PieChartItem slice : data) {
+            for (PieChartItem slice : data) {
                 this.dataset.setValue(slice.getLabel(), slice.getValue());
                 if (slice.getColor() != null) {
                     this.plot.setSectionPaint(slice.getLabel(), slice.getColor());
@@ -202,7 +162,7 @@ public class PieChartPanel extends AbstractLoadableComponent<List<PieChartPanel.
      * @param data The data.
      * @param message The message.
      */
-    public synchronized void showDataWithMessage(List<PieChartPanel.PieChartItem> data, String message) {
+    public synchronized void showDataWithMessage(List<PieChartItem> data, String message) {
         setResults(data);
         setMessage(true, message);
         repaint();

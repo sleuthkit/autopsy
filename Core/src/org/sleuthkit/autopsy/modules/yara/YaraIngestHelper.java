@@ -35,17 +35,17 @@ import org.sleuthkit.autopsy.yara.YaraJNIWrapper;
 import org.sleuthkit.autopsy.yara.YaraWrapperException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_YARA_HIT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_RULE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Methods for scanning files for yara rule matches.
  */
 final class YaraIngestHelper {
-
+    
     private static final String YARA_DIR = "yara";
     private static final String YARA_C_EXE = "yarac64.exe";
     private static final String MODULE_NAME = YaraIngestModuleFactory.getModuleName();
@@ -109,6 +109,9 @@ final class YaraIngestHelper {
     }
 
     /**
+     * Scan the given AbstractFile for yara rule matches from the rule sets in
+     * the given directory creating a blackboard artifact for each matching
+     * rule.
      *
      * @param file                 The Abstract File being processed.
      * @param baseRuleSetDirectory Base directory of the compiled rule sets.
@@ -138,8 +141,8 @@ final class YaraIngestHelper {
      * Scan the given file byte array for rule matches using the YaraJNIWrapper
      * API.
      *
-     * @param fileBytes
-     * @param ruleSetDirectory
+     * @param fileBytes        An array of the file data.
+     * @param ruleSetDirectory Base directory of the compiled rule sets.
      *
      * @return List of rules that match from the given file from the given rule
      *         set. Empty list is returned if no matches where found.
@@ -158,6 +161,19 @@ final class YaraIngestHelper {
         return matchingRules;
     }
 
+    /**
+     * Scan the given file for rules that match from the given rule set
+     * directory.
+     *
+     * @param scanFile         Locally stored file to scan.
+     * @param ruleSetDirectory Base directory of the compiled rule sets.
+     * @param timeout          YARA Scanner timeout value.
+     *
+     * @return List of matching rules, if none were found the list will be
+     *         empty.
+     *
+     * @throws YaraWrapperException
+     */
     private static List<String> scanFileForMatch(File scanFile, File ruleSetDirectory, int timeout) throws YaraWrapperException {
         List<String> matchingRules = new ArrayList<>();
 
@@ -184,13 +200,15 @@ final class YaraIngestHelper {
     private static List<BlackboardArtifact> createArtifact(AbstractFile abstractFile, String ruleSetName, List<String> matchingRules) throws TskCoreException {
         List<BlackboardArtifact> artifacts = new ArrayList<>();
         for (String rule : matchingRules) {
-            BlackboardArtifact artifact = abstractFile.newArtifact(TSK_YARA_HIT);
+
             List<BlackboardAttribute> attributes = new ArrayList<>();
 
             attributes.add(new BlackboardAttribute(TSK_SET_NAME, MODULE_NAME, ruleSetName));
             attributes.add(new BlackboardAttribute(TSK_RULE, MODULE_NAME, rule));
 
-            artifact.addAttributes(attributes);
+            BlackboardArtifact artifact = abstractFile.newAnalysisResult(BlackboardArtifact.Type.TSK_YARA_HIT, Score.SCORE_NOTABLE, null, ruleSetName, rule, attributes)
+                    .getAnalysisResult();
+
             artifacts.add(artifact);
         }
         return artifacts;
@@ -228,7 +246,7 @@ final class YaraIngestHelper {
             ProcessBuilder builder = new ProcessBuilder(commandList);
             try {
                 int result = ExecUtil.execute(builder);
-                if(result != 0) {
+                if (result != 0) {
                     throw new IngestModuleException(String.format("Failed to compile Yara rules file %s. Compile error %d", file.toString(), result));
                 }
             } catch (SecurityException | IOException ex) {
@@ -249,7 +267,7 @@ final class YaraIngestHelper {
     private static List<RuleSet> getRuleSetsForNames(List<String> names) {
         List<RuleSet> ruleSetList = new ArrayList<>();
 
-        RuleSetManager manager = new RuleSetManager();
+        RuleSetManager manager = RuleSetManager.getInstance();
         for (RuleSet set : manager.getRuleSetList()) {
             if (names.contains(set.getName())) {
                 ruleSetList.add(set);

@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Test Suite",
+    "description": "A description for the test suite",
+    "dataSources": ["..\\path\\to\\datasource.img"],
+    "caseTypes": "singleUser",
+    "configurationModules": [
+      {
+        "resource": "org.sleuthkit.autopsy.integrationtesting.IngestModuleSetupManager",
+        "parameters": {
+          "modules": [
+            "org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory"
+          ]
+        }
+      }
+    ],
+    "integrationTests": {
+      "excludeAllExcept": [
+        "org.sleuthkit.autopsy.datasourcesummary.UserActivitySummaryTests"
+      ]
+    }
+  }
+]

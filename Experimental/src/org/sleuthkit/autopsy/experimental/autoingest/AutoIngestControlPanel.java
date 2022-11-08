@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -122,6 +122,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
     private static final int PRIORITY_COLUMN_PREFERRED_WIDTH = 60;
     private static final int PRIORITY_COLUMN_MAX_WIDTH = 150;
+    private static final int OCR_COLUMN_PREFERRED_WIDTH = 50;
+    private static final int OCR_COLUMN_MAX_WIDTH = 150;
     private static final int ACTIVITY_TIME_COL_MIN_WIDTH = 250;
     private static final int ACTIVITY_TIME_COL_MAX_WIDTH = 450;
     private static final int TIME_COL_MIN_WIDTH = 30;
@@ -133,15 +135,15 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final int ACTIVITY_COL_MIN_WIDTH = 70;
     private static final int ACTIVITY_COL_MAX_WIDTH = 2000;
     private static final int ACTIVITY_COL_PREFERRED_WIDTH = 300;
-    private static final int STATUS_COL_MIN_WIDTH = 55;
+    private static final int STATUS_COL_MIN_WIDTH = 50;
     private static final int STATUS_COL_MAX_WIDTH = 250;
-    private static final int STATUS_COL_PREFERRED_WIDTH = 55;
+    private static final int STATUS_COL_PREFERRED_WIDTH = 50;
     private static final int COMPLETED_TIME_COL_MIN_WIDTH = 30;
     private static final int COMPLETED_TIME_COL_MAX_WIDTH = 2000;
     private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
     private static final String UPDATE_TASKS_THREAD_NAME = "AID-update-tasks-%d";
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private static final String RUNNING_AS_SERVICE_PROPERTY = "autoingest.runningasservice";    
+    private static final String RUNNING_AS_SERVICE_PROPERTY = "autoingest.runningasservice";
     private static final Logger sysLogger = AutoIngestSystemLogger.getLogger();
     private static AutoIngestControlPanel instance;
     private final DefaultTableModel pendingTableModel;
@@ -158,7 +160,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * Maintain a mapping of each service to it's last status update.
      */
     private final ConcurrentHashMap<String, String> statusByService;
-    
+
     /*
      * The enum is used in conjunction with the DefaultTableModel class to
      * provide table models for the JTables used to display a view of the
@@ -175,11 +177,13 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.StartedTime=Stage Started",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CompletedTime=Job Completed",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Stage=Stage",
-        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.StageTime=Time in Stage",
+        "# {0} - unitSeparator",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.StageTime=Time in Stage (dd{0}hh{0}mm{0}ss)",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Status=Status",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CaseFolder=Case Folder",
         "AutoIngestControlPanel.JobsTableModel.ColumnHeader.LocalJob= Local Job?",
-        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath= Manifest File Path"
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath= Manifest File Path",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.OCR=OCR"
     })
     private enum JobsTableModelColumns {
 
@@ -190,12 +194,13 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         STARTED_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.StartedTime")),
         COMPLETED_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CompletedTime")),
         STAGE(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Stage")),
-        STAGE_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.StageTime")),
+        STAGE_TIME(Bundle.AutoIngestControlPanel_JobsTableModel_ColumnHeader_StageTime(DurationCellRenderer.getUnitSeperator())),
         STATUS(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Status")),
         CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CaseFolder")),
         IS_LOCAL_JOB(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.LocalJob")),
         MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath")),
-        PRIORITY(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Priority"));
+        PRIORITY(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Priority")),
+        OCR(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.OCR"));
         private final String header;
 
         private JobsTableModelColumns(String header) {
@@ -219,7 +224,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             CASE_DIRECTORY_PATH.getColumnHeader(),
             IS_LOCAL_JOB.getColumnHeader(),
             MANIFEST_FILE_PATH.getColumnHeader(),
-            PRIORITY.getColumnHeader()};
+            PRIORITY.getColumnHeader(),
+            OCR.getColumnHeader()};
     }
 
     /**
@@ -245,7 +251,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestControlPanel() {
-        
+
         this.statusByService = new ConcurrentHashMap<>();
 
         //Disable the main window so they can only use the dashboard (if we used setVisible the taskBar icon would go away)
@@ -285,10 +291,10 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * Update status of the services on the dashboard
      */
     private void displayServicesStatus() {
-        tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message", 
-                statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()), 
-                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
-                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()), 
+        tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message",
+                statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()),
+                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()),
+                statusByService.get(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()),
                 statusByService.get(ServicesMonitor.Service.MESSAGING.toString())));
         String upStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
         if (statusByService.get(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).compareTo(upStatus) != 0
@@ -299,7 +305,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             tbServicesStatusMessage.setForeground(Color.BLACK);
         }
     }
-    
+
     /**
      * Queries the services monitor and sets the text for the services status
      * text box.
@@ -407,6 +413,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         column.setPreferredWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
         column.setWidth(PRIORITY_COLUMN_PREFERRED_WIDTH);
 
+        column = pendingTable.getColumn(JobsTableModelColumns.OCR.getColumnHeader());
+        column.setCellRenderer(new OcrIconCellRenderer());
+        column.setMaxWidth(OCR_COLUMN_MAX_WIDTH);
+        column.setPreferredWidth(OCR_COLUMN_PREFERRED_WIDTH);
+        column.setWidth(OCR_COLUMN_PREFERRED_WIDTH);
+
         /**
          * Allow sorting when a column header is clicked.
          */
@@ -457,6 +469,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.IS_LOCAL_JOB.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
         runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
+        runningTable.removeColumn(runningTable.getColumn(JobsTableModelColumns.OCR.getColumnHeader()));
+
         /*
          * Set up a column to display the cases associated with the jobs.
          */
@@ -553,6 +567,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.CASE_DIRECTORY_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.MANIFEST_FILE_PATH.getColumnHeader()));
         completedTable.removeColumn(completedTable.getColumn(JobsTableModelColumns.PRIORITY.getColumnHeader()));
+
         /*
          * Set up a column to display the cases associated with the jobs.
          */
@@ -603,6 +618,15 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         column.setMaxWidth(STATUS_COL_MAX_WIDTH);
         column.setPreferredWidth(STATUS_COL_PREFERRED_WIDTH);
         column.setWidth(STATUS_COL_PREFERRED_WIDTH);
+
+        /*
+         * Set up a column to display OCR enabled/disabled flag.
+         */
+        column = completedTable.getColumn(JobsTableModelColumns.OCR.getColumnHeader());
+        column.setCellRenderer(new OcrIconCellRenderer());
+        column.setMaxWidth(OCR_COLUMN_MAX_WIDTH);
+        column.setPreferredWidth(OCR_COLUMN_PREFERRED_WIDTH);
+        column.setWidth(OCR_COLUMN_PREFERRED_WIDTH);
 
         /*
          * Allow sorting when a column header is clicked.
@@ -709,30 +733,30 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         }
 
         PropertyChangeListener propChangeListener = (PropertyChangeEvent evt) -> {
-            
+
             String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).toString();
             String status = evt.getNewValue().toString();
-            
+
             if (status.equals(ServicesMonitor.ServiceStatus.UP.toString())) {
                 status = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
             } else if (status.equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
                 status = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down");
                 sysLogger.log(Level.SEVERE, "Connection to {0} is down", serviceDisplayName); //NON-NLS
             }
-            
+
             // if the status update is for an existing service who's status hasn't changed - do nothing.       
             if (statusByService.containsKey(serviceDisplayName) && status.equals(statusByService.get(serviceDisplayName))) {
                 return;
             }
-            
+
             statusByService.put(serviceDisplayName, status);
             displayServicesStatus();
         };
-        
+
         // Subscribe to all multi-user services in order to display their status
         Set<String> servicesList = new HashSet<>();
         servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
-        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString()); 
+        servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString());
         servicesList.add(ServicesMonitor.Service.MESSAGING.toString());
         ServicesMonitor.getInstance().addSubscriber(servicesList, propChangeListener);
 
@@ -856,6 +880,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 case JOB_COMPLETED:
                 case CASE_DELETED:
                 case REPROCESS_JOB:
+                case OCR_STATE_CHANGE:
                     updateExecutor.submit(new UpdateAllJobsTablesTask());
                     break;
                 case PAUSED_BY_USER_REQUEST:
@@ -1193,7 +1218,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
                     job.getProcessingHostName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
                     job.getManifest().getFilePath(), // MANIFEST_FILE_PATH
-                    job.getPriority()}); // PRIORITY 
+                    job.getPriority(), // PRIORITY 
+                    job.getOcrEnabled()}); // OCR FLAG
             }
         } catch (Exception ex) {
             sysLogger.log(Level.SEVERE, "Dashboard error refreshing table", ex);

@@ -3,6 +3,7 @@
 /*/build/
 */nbproject/private/*
 /nbproject/private/*
+/apidiff_output/
 
 /Core/release/
 /Core/src/org/sleuthkit/autopsy/coreutils/Version.properties
@@ -23,7 +24,12 @@
 !/CoreLibs/nbproject/project.xml
 !/CoreLibs/nbproject/project.properties
 
-/Core/test/qa-functional/data/
+/CoreTestLibs/release/
+/CoreTestLibs/build/
+/CoreTestLibs/dist/
+
+/Core/test/qa-functional/data/*
+!/Core/test/qa-functional/data/PasswordDetection_img1_v1.img
 
 /KeywordSearch/release/
 /KeywordSearch/build/
@@ -69,6 +75,7 @@ genfiles.properties
 *~
 /netbeans-plat
 /docs/doxygen-user/user-docs
+/docs/doxygen-dev/build-docs
 /jdiff-javadocs/*
 /jdiff-logs/*
 /gen_version.txt
@@ -101,3 +108,4 @@ hs_err_pid*.log
 /thirdparty/yara/YaraJNIWrapper/nbproject/private/
 /thirdparty/yara/yarabridge/.vs/
 
+*/path_list.txt

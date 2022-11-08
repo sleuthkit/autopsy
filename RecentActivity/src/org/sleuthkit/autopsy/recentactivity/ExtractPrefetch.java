@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,12 +33,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import static org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
@@ -47,11 +51,8 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -64,10 +65,7 @@ final class ExtractPrefetch extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractPrefetch.class.getName());
 
-    private IngestJobContext context;
-
-    private static final String MODULE_NAME = "extractPREFETCH"; //NON-NLS
-
+    private final IngestJobContext context;    
     private static final String PREFETCH_TSK_COMMENT = "Prefetch File";
     private static final String PREFETCH_FILE_LOCATION = "/windows/prefetch";
     private static final String PREFETCH_TOOL_FOLDER = "markmckinnon"; //NON-NLS
@@ -81,18 +79,30 @@ final class ExtractPrefetch extends Extract {
     private static final String PREFETCH_DIR_NAME = "prefetch"; //NON-NLS
 
     @Messages({
-        "ExtractPrefetch_module_name=Windows Prefetch Extractor",
-        "# {0} - sub module name", 
+        "ExtractPrefetch_module_name=Windows Prefetch Analyzer",
+        "# {0} - sub module name",
         "ExtractPrefetch_errMsg_prefetchParsingFailed={0}: Error analyzing prefetch files"
     })
-    ExtractPrefetch() {
-        this.moduleName = Bundle.ExtractPrefetch_module_name();
+    ExtractPrefetch(IngestJobContext context) {
+        super(Bundle.ExtractPrefetch_module_name(), context);
+        this.context = context;
+    }
+
+    /**
+     * Get the temp folder name.
+     *
+     * @param dataSource Current data source
+     *
+     * @return The folder name
+     */
+    private String getPrefetchTempFolder(Content dataSource) {
+        return dataSource.getId() + "-" + PREFETCH_PARSER_DB_FILE;
     }
 
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
-        this.context = context;
+        long ingestJobId = context.getJobId();
 
         String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + PREFETCH_DIR_NAME;
         File dir = new File(modOutPath);
@@ -104,7 +114,7 @@ final class ExtractPrefetch extends Extract {
             }
         }
 
-        extractPrefetchFiles(dataSource);
+        extractPrefetchFiles(dataSource, ingestJobId);
 
         final String prefetchDumper = getPathForPrefetchDumper();
         if (prefetchDumper == null) {
@@ -116,11 +126,14 @@ final class ExtractPrefetch extends Extract {
             return;
         }
 
-        String modOutFile = modOutPath + File.separator + dataSource.getName() + "-" + PREFETCH_PARSER_DB_FILE;
+        String modOutFile = modOutPath + File.separator + getPrefetchTempFolder(dataSource);
         try {
-            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME);
+            String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), getPrefetchTempFolder(dataSource), ingestJobId);
             parsePrefetchFiles(prefetchDumper, tempDirPath, modOutFile, modOutPath);
-            createAppExecArtifacts(modOutFile, dataSource);
+            File prefetchDatabase = new File(modOutFile);
+            if (prefetchDatabase.exists()) {
+                createAppExecArtifacts(modOutFile, dataSource);
+            }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error parsing prefetch files", ex); //NON-NLS 
             addErrorMessage(Bundle.ExtractPrefetch_errMsg_prefetchParsingFailed(Bundle.ExtractPrefetch_module_name()));
@@ -133,7 +146,7 @@ final class ExtractPrefetch extends Extract {
      *
      * @param dataSource - datasource to search for prefetch files
      */
-    void extractPrefetchFiles(Content dataSource) {
+    void extractPrefetchFiles(Content dataSource, long ingestJobId) {
         List<AbstractFile> pFiles;
 
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
@@ -151,8 +164,13 @@ final class ExtractPrefetch extends Extract {
                 return;
             }
 
-            String prefetchFile = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), dataSource.getName() + "-" + PREFETCH_DIR_NAME) + File.separator + pFile.getName();
-            if (pFile.getParentPath().toLowerCase().contains(PREFETCH_FILE_LOCATION.toLowerCase())) {
+            if (pFile.getParentPath().toLowerCase().contains(PREFETCH_FILE_LOCATION.toLowerCase()) && pFile.getSize() > 0) {
+                String origFileName = pFile.getName();
+                String ext = FilenameUtils.getExtension(origFileName);
+                String baseName = FilenameUtils.getBaseName(origFileName);
+                String fileName = escapeFileName(String.format("%s_%d.%s", baseName, pFile.getId(), ext));
+                String baseRaTempPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), getPrefetchTempFolder(dataSource), ingestJobId);
+                String prefetchFile = Paths.get(baseRaTempPath, fileName).toString();
                 try {
                     ContentUtils.writeToFile(pFile, new File(prefetchFile));
                 } catch (IOException ex) {
@@ -263,9 +281,32 @@ final class ExtractPrefetch extends Extract {
                 String timesProgramRun = resultSet.getString("Number_time_file_run");
                 String filePath = resultSet.getString("file_path");
 
-                AbstractFile pfAbstractFile = getAbstractFile(prefetchFileName, PREFETCH_FILE_LOCATION, dataSource);
-
                 Set<Long> prefetchExecutionTimes = findNonZeroExecutionTimes(executionTimes);
+
+                String baseName = FilenameUtils.getBaseName(prefetchFileName);
+                Matcher match = Pattern.compile("_(?<objId>\\d*)\\s*$").matcher(baseName);
+                if (!match.find()) {
+                    logger.log(Level.WARNING, "Invalid format for PF file: " + prefetchFileName);//NON-NLS
+                    continue;
+                }
+
+                /**
+                 * A prefetch file is created when a program is run and the
+                 * superfetch service collected data about the first 10 seconds
+                 * of the run, the trace data is then written to a new prefetch
+                 * file or merged with an existing prefetch file. If the
+                 * prefetch file gets deleted for some reason then a new one
+                 * will be created. See 7500 in JIRA for more information.
+                 */
+                AbstractFile pfAbstractFile = null;
+                try {
+                    Content c = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(Long.parseLong(match.group("objId")));
+                    if (c instanceof AbstractFile) {
+                        pfAbstractFile = (AbstractFile) c;
+                    }
+                } catch (NoCurrentCaseException | TskCoreException | NumberFormatException ex) {
+                    logger.log(Level.SEVERE, "Unable to find content for: " + prefetchFileName, ex);
+                }
 
                 if (pfAbstractFile != null) {
                     for (Long executionTime : prefetchExecutionTimes) {
@@ -273,21 +314,20 @@ final class ExtractPrefetch extends Extract {
                         // only add prefetch file entries that have an actual date associated with them
                         Collection<BlackboardAttribute> blkBrdAttributes = Arrays.asList(
                                 new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getDisplayName(),
                                         applicationName),//NON-NLS
                                 new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, getName(), filePath),
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH, getDisplayName(), filePath),
                                 new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getDisplayName(),
                                         executionTime),
                                 new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT, getName(), Integer.valueOf(timesProgramRun)),
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COUNT, getDisplayName(), Integer.valueOf(timesProgramRun)),
                                 new BlackboardAttribute(
-                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), PREFETCH_TSK_COMMENT));
+                                        BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getDisplayName(), PREFETCH_TSK_COMMENT));
 
                         try {
-                            BlackboardArtifact blkBrdArt = pfAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
-                            blkBrdArt.addAttributes(blkBrdAttributes);
+                            BlackboardArtifact blkBrdArt = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_PROG_RUN, pfAbstractFile, blkBrdAttributes);
                             blkBrdArtList.add(blkBrdArt);
                             BlackboardArtifact associatedBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), filePath, blkBrdArt, dataSource);
                             if (associatedBbArtifact != null) {
@@ -303,35 +343,13 @@ final class ExtractPrefetch extends Extract {
 
             }
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
+            logger.log(Level.WARNING, String.format("Error while trying to read into a sqlite db %s.", prefetchDb));//NON-NLS
+            logger.log(Level.WARNING, ex.getMessage());
         }
 
-        if (!blkBrdArtList.isEmpty()) {
-            try {
-                blackboard.postArtifacts(blkBrdArtList, MODULE_NAME);
-            } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
-            }
+        if (!blkBrdArtList.isEmpty() && !context.dataSourceIngestIsCancelled()) {
+            postArtifacts(blkBrdArtList);
         }
-    }
-
-    /**
-     * Cycle thru the execution times list and only return a new list of times
-     * that are greater than zero.
-     *
-     * @param executionTimes - list of prefetch execution times 8 possible
-     *                       timestamps
-     *
-     * @return List of timestamps that are greater than zero
-     */
-    private Set<Long> findNonZeroExecutionTimes(List<Long> executionTimes) {
-        Set<Long> prefetchExecutionTimes = new HashSet<>();
-        for (Long executionTime : executionTimes) {                        // only add prefetch file entries that have an actual date associated with them
-            if (executionTime > 0) {
-                prefetchExecutionTimes.add(executionTime);
-            }
-        }
-        return prefetchExecutionTimes;
     }
 
     /**
@@ -345,20 +363,11 @@ final class ExtractPrefetch extends Extract {
      *
      * @returnv BlackboardArtifact or a null value
      */
-    private BlackboardArtifact createAssociatedArtifact(String fileName, String filePathName, BlackboardArtifact bba, Content dataSource) {
+    private BlackboardArtifact createAssociatedArtifact(String fileName, String filePathName, BlackboardArtifact bba, Content dataSource) throws TskCoreException {
         AbstractFile sourceFile = getAbstractFile(fileName, filePathName, dataSource);
         if (sourceFile != null) {
-            Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
-            bbattributes2.addAll(Arrays.asList(
-                    new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
-                            bba.getArtifactID())));
-
-            BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
-            if (associatedObjectBba != null) {
-                return associatedObjectBba;
-            }
+            return createAssociatedArtifact(sourceFile, bba);
         }
-
         return null;
     }
 
@@ -386,7 +395,6 @@ final class ExtractPrefetch extends Extract {
         }
 
         for (AbstractFile pFile : files) {
-
             if (pFile.getParentPath().toLowerCase().endsWith(filePath.toLowerCase() + '/')) {
                 return pFile;
             }
@@ -396,4 +404,22 @@ final class ExtractPrefetch extends Extract {
 
     }
 
+    /**
+     * Cycle thru the execution times list and only return a new list of times
+     * that are greater than zero.
+     *
+     * @param executionTimes - list of prefetch execution times 8 possible
+     *                       timestamps
+     *
+     * @return List of timestamps that are greater than zero
+     */
+    private Set<Long> findNonZeroExecutionTimes(List<Long> executionTimes) {
+        Set<Long> prefetchExecutionTimes = new HashSet<>();
+        for (Long executionTime : executionTimes) {                        // only add prefetch file entries that have an actual date associated with them
+            if (executionTime > 0) {
+                prefetchExecutionTimes.add(executionTime);
+            }
+        }
+        return prefetchExecutionTimes;
+    }
 }

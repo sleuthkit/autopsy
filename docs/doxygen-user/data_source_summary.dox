@@ -32,7 +32,7 @@ The Types tab shows counts of different file types found in the data source.
 
 \subsection ds_summary_user_activity User Activity
 
-The User Activity tab shows the most recent results found in the data source.
+The User Activity tab shows the most recent results found in the data source. You can right click on a row to navigate directly to the corresponding result.
 
 \image html ds_summary_user_activity.png
 
@@ -44,7 +44,7 @@ The Analysis tab shows the sets with the most results from the \ref hash_db_page
 
 \subsection ds_summary_recent_files Recent Files
 
-The Recent Files tab shows information on the most recent files opened and downloaded.
+The Recent Files tab shows information on the most recent files opened and downloaded. You can right click on a row to navigate directly to the corresponding file or result.
 
 \image html ds_summary_recent_files.png
 
@@ -55,6 +55,18 @@ The Past Cases tab shows which cases had results or notable files in common with
 \image html ds_summary_past_cases.png
 
 Note that because these entries are based on the Interesting Items results created during ingest and not querying the central repository, they will not reflect any matches in cases processed after this case. For example, suppose we create Case A and ingest a data source with Device Z. If we make a new case Case B afterward and ingest a data source that also has Device Z, we would see Case A listed in this tab for Case B, but if we reopened Case A we would not see Case B listed unless ingest was run again. 
+
+\subsection ds_summary_geo Geolocation
+
+The Geolocation tab uses the coordinates from geolocation results to find the nearest city for each and displays the most recent cities and most common cities. If the location is more than 150 km from a city then it will be displayed as "Unknown". The "View in Map" button under the recent cities table will open the \ref geolocation_page "Geolocation window" showing all waypoints for this data source with timestamps in the last 30 days. The "View in Map" button under the most common cities will show all waypoints for this data source. 
+
+\image html ds_summary_geo.png
+
+\subsection ds_summary_timeline Timeline
+
+The Timeline tab shows a simplified version of the \ref timeline_page "Timeline Viewer" for the selected data source. It will show events for the last 30 days of activity in the data source and give the first and last dates of activity. "File events" represent file creation, modification, access, and change. "Result events" represent the results from running ingest, such as the time a message was sent or when a URL was accessed. The "View in Timeline" button will open the main \ref timeline_page "Timeline Viewer".
+
+\image html ds_summary_timeline.png
 
 \subsection ds_summary_ingest_history Ingest History
 
@@ -67,5 +79,11 @@ The Ingest History tab shows which ingest modules have been run on the data sour
 The Container tab displays information on the data source itself, such as the size and image paths.
 
 \image html ds_summary_container.png
+
+\subsection ds_summary_export Export
+
+The Export tab allows you to export the contents of the other data source summary tabs to an Excel-formatted file.
+
+\image html ds_summary_export.png
 
 */

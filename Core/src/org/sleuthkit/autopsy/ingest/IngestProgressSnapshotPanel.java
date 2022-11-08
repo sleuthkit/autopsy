@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,7 +136,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = snapshot.getThreadId();
                     break;
                 case 1:
-                    cellValue = snapshot.getActivity();
+                    cellValue = snapshot.getModuleDisplayName();
                     break;
                 case 2:
                     cellValue = snapshot.getDataSourceName();
@@ -165,27 +165,25 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
     private class IngestJobTableModel extends AbstractTableModel {
 
-        private final String[] columnNames = {NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.jobID"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dataSource"),
+        private static final long serialVersionUID = 1L;
+
+        private final String[] columnNames = {
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.jobID"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dataSource"),
             NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.start"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.numProcessed"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.filesPerSec"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.inProgress"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.filesQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dirQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.rootQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.streamingQueued"),
-            NbBundle.getMessage(this.getClass(),
-            "IngestJobTableModel.colName.dsQueued")};
-        private List<Snapshot> jobSnapshots;
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.tier"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.numProcessed"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.filesPerSec"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.inProgress"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.filesQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dirQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.rootQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.streamingQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.dsQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.artifactsQueued"),
+            NbBundle.getMessage(this.getClass(), "IngestJobTableModel.colName.resultsQueued")};
+
+        private List<IngestJobProgressSnapshot> jobSnapshots;
 
         private IngestJobTableModel() {
             refresh();
@@ -213,7 +211,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Snapshot snapShot = jobSnapshots.get(rowIndex);
+            IngestJobProgressSnapshot snapShot = jobSnapshots.get(rowIndex);
             Object cellValue;
             switch (columnIndex) {
                 case 0:
@@ -227,28 +225,37 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = dateFormat.format(new Date(snapShot.getJobStartTime()));
                     break;
                 case 3:
-                    cellValue = snapShot.getFilesProcessed();
+                    cellValue = snapShot.getCurrentIngestModuleTier();
                     break;
                 case 4:
-                    cellValue = snapShot.getSpeed();
+                    cellValue = snapShot.getFilesProcessed();
                     break;
                 case 5:
-                    cellValue = snapShot.getRunningListSize();
+                    cellValue = snapShot.getFilesProcessedPerSec();
                     break;
                 case 6:
-                    cellValue = snapShot.getFileQueueSize();
+                    cellValue = snapShot.getRunningListSize();
                     break;
                 case 7:
-                    cellValue = snapShot.getDirQueueSize();
+                    cellValue = snapShot.getFileQueueSize();
                     break;
                 case 8:
-                    cellValue = snapShot.getRootQueueSize();
+                    cellValue = snapShot.getDirQueueSize();
                     break;
                 case 9:
-                    cellValue = snapShot.getStreamingQueueSize();
+                    cellValue = snapShot.getRootQueueSize();
                     break;
                 case 10:
+                    cellValue = snapShot.getStreamingQueueSize();
+                    break;
+                case 11:
                     cellValue = snapShot.getDsQueueSize();
+                    break;
+                case 12:
+                    cellValue = snapShot.getDataArtifactTasksQueueSize();
+                    break;
+                case 13:
+                    cellValue = snapShot.getAnalysisResultTasksQueueSize();
                     break;
                 default:
                     cellValue = null;
@@ -259,6 +266,8 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
     }
 
     private class ModuleTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
 
         private class ModuleStats implements Comparable<ModuleStats> {
 
@@ -361,6 +370,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         snapshotsScrollPane = new javax.swing.JScrollPane();
         threadActivitySnapshotsTable = new javax.swing.JTable();
@@ -370,6 +380,11 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         closeButton = new javax.swing.JButton();
         moduleScrollPane = new javax.swing.JScrollPane();
         moduleTable = new javax.swing.JTable();
+        jPanel1 = new javax.swing.JPanel();
+
+        setMinimumSize(new java.awt.Dimension(500, 500));
+        setPreferredSize(new java.awt.Dimension(1500, 700));
+        setLayout(new java.awt.GridBagLayout());
 
         threadActivitySnapshotsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -381,6 +396,17 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         ));
         snapshotsScrollPane.setViewportView(threadActivitySnapshotsTable);
 
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(11, 10, 0, 10);
+        add(snapshotsScrollPane, gridBagConstraints);
+
         jobTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -391,12 +417,29 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         ));
         jobScrollPane.setViewportView(jobTable);
 
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 10, 0, 10);
+        add(jobScrollPane, gridBagConstraints);
+
         org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(IngestProgressSnapshotPanel.class, "IngestProgressSnapshotPanel.refreshButton.text")); // NOI18N
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 refreshButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        gridBagConstraints.weightx = 1.0;
+        add(refreshButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(IngestProgressSnapshotPanel.class, "IngestProgressSnapshotPanel.closeButton.text")); // NOI18N
         closeButton.addActionListener(new java.awt.event.ActionListener() {
@@ -404,6 +447,12 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                 closeButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        gridBagConstraints.insets = new java.awt.Insets(6, 6, 11, 10);
+        add(closeButton, gridBagConstraints);
 
         moduleTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -415,44 +464,17 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
         ));
         moduleScrollPane.setViewportView(moduleTable);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(snapshotsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 881, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(refreshButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(closeButton))
-                    .addComponent(jobScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 881, Short.MAX_VALUE)
-                    .addComponent(moduleScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 881, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {closeButton, refreshButton});
-
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(snapshotsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 102, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jobScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 102, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(moduleScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(refreshButton)
-                    .addComponent(closeButton))
-                .addContainerGap())
-        );
-
-        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {closeButton, refreshButton});
-
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(6, 10, 0, 10);
+        add(moduleScrollPane, gridBagConstraints);
+        add(jPanel1, new java.awt.GridBagConstraints());
     }// </editor-fold>//GEN-END:initComponents
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
@@ -466,6 +488,7 @@ class IngestProgressSnapshotPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_refreshButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jobScrollPane;
     private javax.swing.JTable jobTable;
     private javax.swing.JScrollPane moduleScrollPane;

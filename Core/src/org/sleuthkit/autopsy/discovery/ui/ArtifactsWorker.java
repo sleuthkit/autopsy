@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.discovery.search.DiscoveryEventUtils;
+import org.sleuthkit.autopsy.discovery.search.DiscoveryException;
 import org.sleuthkit.autopsy.discovery.search.DomainSearch;
 import org.sleuthkit.autopsy.discovery.search.DomainSearchArtifactsRequest;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -40,23 +41,37 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
     private final BlackboardArtifact.ARTIFACT_TYPE artifactType;
     private final static Logger logger = Logger.getLogger(ArtifactsWorker.class.getName());
     private final String domain;
+    private final boolean grabFocus;
 
     /**
      * Construct a new ArtifactsWorker.
      *
-     * @param artifactType The type of artifact being retrieved.
-     * @param domain       The domain the artifacts should have as an attribute.
+     * @param artifactType    The type of artifact being retrieved.
+     * @param domain          The domain the artifacts should have as an
+     *                        attribute.
+     * @param shouldGrabFocus True if the list of artifacts should have focus,
+     *                        false otherwise.
      */
-    ArtifactsWorker(BlackboardArtifact.ARTIFACT_TYPE artifactType, String domain) {
+    ArtifactsWorker(BlackboardArtifact.ARTIFACT_TYPE artifactType, String domain, boolean shouldGrabFocus) {
         this.artifactType = artifactType;
         this.domain = domain;
+        this.grabFocus = shouldGrabFocus;
     }
 
     @Override
     protected List<BlackboardArtifact> doInBackground() throws Exception {
         if (artifactType != null && !StringUtils.isBlank(domain)) {
             DomainSearch domainSearch = new DomainSearch();
-            return domainSearch.getArtifacts(new DomainSearchArtifactsRequest(Case.getCurrentCase().getSleuthkitCase(), domain, artifactType));
+            try {
+                return domainSearch.getArtifacts(new DomainSearchArtifactsRequest(Case.getCurrentCase().getSleuthkitCase(), domain, artifactType));
+            } catch (DiscoveryException ex) {
+                if (ex.getCause() instanceof InterruptedException) {
+                    this.cancel(true);
+                    //ignore the exception as it was cancelled while the cache was performing its get and we support cancellation
+                } else {
+                    throw ex;
+                }
+            }
         }
         return new ArrayList<>();
     }
@@ -67,6 +82,7 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
         if (!isCancelled()) {
             try {
                 listOfArtifacts.addAll(get());
+                DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, listOfArtifacts, grabFocus));
             } catch (InterruptedException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Exception while trying to get list of artifacts for Domain details for artifact type: "
                         + artifactType.getDisplayName() + " and domain: " + domain, ex);
@@ -74,6 +90,6 @@ class ArtifactsWorker extends SwingWorker<List<BlackboardArtifact>, Void> {
                 //Worker was cancelled after previously finishing its background work, exception ignored to cut down on non-helpful logging
             }
         }
-        DiscoveryEventUtils.getDiscoveryEventBus().post(new DiscoveryEventUtils.ArtifactSearchResultEvent(artifactType, listOfArtifacts));
+
     }
 }

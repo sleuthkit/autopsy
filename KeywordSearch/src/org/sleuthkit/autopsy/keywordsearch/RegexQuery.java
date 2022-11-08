@@ -48,10 +48,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -72,7 +72,7 @@ import org.sleuthkit.datamodel.TskData;
 final class RegexQuery implements KeywordSearchQuery {
 
     public static final Logger LOGGER = Logger.getLogger(RegexQuery.class.getName());
-
+    
     /**
      * Lucene regular expressions do not support the following Java predefined
      * and POSIX character classes. There are other valid Java character classes
@@ -384,6 +384,20 @@ final class RegexQuery implements KeywordSearchQuery {
                         }
                         // Replace all non numeric at the end of the hit.
                         hit = hit.replaceAll("[^0-9]$", "");
+
+                        if (offset > 1) {
+                            /*
+                             * NOTE: our IP and phone number regex patterns look for
+                             * boundary characters immediately before and after
+                             * the keyword hit. After a match, Java pattern
+                             * mather re-starts at the first character not
+                             * matched by the previous match. This basically
+                             * requires two boundary characters to be present
+                             * between each pattern match. To mitigate this we
+                             * are resetting the offest one character back.
+                             */
+                            offset--;
+                        }
                     }
 
                     /**
@@ -397,18 +411,6 @@ final class RegexQuery implements KeywordSearchQuery {
                     if (originalKeyword.searchTermIsLiteral()) {
                         hit = hit.replaceAll("^" + KeywordSearchList.BOUNDARY_CHARACTERS + "*", "");
                         hit = hit.replaceAll(KeywordSearchList.BOUNDARY_CHARACTERS + "*$", "");
-
-                        /**
-                         * The Solr StandardTokenizerFactory maximum token
-                         * length is 255 and attempts to search for tokens
-                         * larger than this limit fail when we attempt to
-                         * highlight later. I have't found a programmatic
-                         * mechanism to get this value so I'm hardcoding it
-                         * here.
-                         */
-                        if (hit.length() > 255) {
-                            break;
-                        }
                     }
 
                     /**
@@ -570,7 +572,7 @@ final class RegexQuery implements KeywordSearchQuery {
      *         creating it.
      */
     @Override
-    public BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         if (content == null) {
@@ -582,7 +584,7 @@ final class RegexQuery implements KeywordSearchQuery {
          * Credit Card number hits are handled differently
          */
         if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-            createCCNAccount(content, foundKeyword, hit, snippet, listName);
+            createCCNAccount(content, foundKeyword, hit, snippet, listName, ingestJobId);
             return null;
         }
 
@@ -590,18 +592,10 @@ final class RegexQuery implements KeywordSearchQuery {
          * Create a "plain vanilla" keyword hit artifact with keyword and regex
          * attributes
          */
-        BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
 
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
-
-        try {
-            newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
-            return null;
-        }
 
         if (StringUtils.isNotBlank(listName)) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
@@ -621,15 +615,17 @@ final class RegexQuery implements KeywordSearchQuery {
         }
 
         try {
-            newArtifact.addAttributes(attributes);
-            return newArtifact;
+            return content.newAnalysisResult(
+                    BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_LIKELY_NOTABLE, 
+                    null, listName, null, attributes)
+                    .getAnalysisResult();
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;
         }
     }
 
-    private void createCCNAccount(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    private void createCCNAccount(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
 
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
@@ -642,7 +638,7 @@ final class RegexQuery implements KeywordSearchQuery {
          * for the hit and looked up based on the parsed bank identifcation
          * number.
          */
-        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+        List<BlackboardAttribute> attributes = new ArrayList<>();
 
         Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
         Matcher matcher = CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
@@ -724,13 +720,10 @@ final class RegexQuery implements KeywordSearchQuery {
          * Create an account instance.
          */
         try {
-            AccountFileInstance ccAccountInstance = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString(), MODULE_NAME, content);
-
-            ccAccountInstance.addAttributes(attributes);
-
+            Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.CREDIT_CARD, 
+                    ccnAttribute.getValueString(), MODULE_NAME, content, attributes, ingestJobId);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             LOGGER.log(Level.SEVERE, "Error creating CCN account instance", ex); //NON-NLS
-
         }
 
     }

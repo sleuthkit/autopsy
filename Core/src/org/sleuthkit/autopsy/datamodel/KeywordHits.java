@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2020 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,10 +42,12 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -55,6 +57,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
+import org.sleuthkit.autopsy.datamodel.Artifacts.UpdatableCountTypeNode;
+import org.sleuthkit.datamodel.AnalysisResult;
 
 /**
  * Keyword hits node support
@@ -71,7 +76,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     @NbBundle.Messages("KeywordHits.singleRegexSearch.text=Single Regular Expression Search")
     private static final String SIMPLE_REGEX_SEARCH = KeywordHits_singleRegexSearch_text();
 
-    public static final String NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel();
+    public static final String NAME = BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeName();
 
     private SleuthkitCase skCase;
     private final KeywordResults keywordResults;
@@ -89,11 +94,11 @@ public class KeywordHits implements AutopsyVisitableItem {
      */
     private static final String KEYWORD_HIT_ATTRIBUTES_QUERY = "SELECT blackboard_attributes.value_text, "//NON-NLS
             + "blackboard_attributes.value_int32, "//NON-NLS
-            + "blackboard_attributes.artifact_id, " //NON-NLS
+            + "blackboard_artifacts.artifact_obj_id, " //NON-NLS
             + "blackboard_attributes.attribute_type_id "//NON-NLS
             + "FROM blackboard_attributes, blackboard_artifacts "//NON-NLS
             + "WHERE blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id "//NON-NLS
-            + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() //NON-NLS
+            + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() //NON-NLS
             + " AND (attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()//NON-NLS
             + " OR attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()//NON-NLS
             + " OR attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()//NON-NLS
@@ -347,12 +352,12 @@ public class KeywordHits implements AutopsyVisitableItem {
             try (CaseDbQuery dbQuery = skCase.executeQuery(queryStr)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
-                    long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
+                    long artifactObjId = resultSet.getLong("artifact_obj_id"); //NON-NLS
                     long typeId = resultSet.getLong("attribute_type_id"); //NON-NLS
                     String valueStr = resultSet.getString("value_text"); //NON-NLS
 
                     //get the map of attributes for this artifact
-                    Map<Long, String> attributesByTypeMap = artifactIds.computeIfAbsent(artifactId, ai -> new LinkedHashMap<>());
+                    Map<Long, String> attributesByTypeMap = artifactIds.computeIfAbsent(artifactObjId, ai -> new LinkedHashMap<>());
                     if (StringUtils.isNotEmpty(valueStr)) {
                         attributesByTypeMap.put(typeId, valueStr);
                     } else {
@@ -375,12 +380,16 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     // Created by CreateAutopsyNodeVisitor
-    public class RootNode extends DisplayableItemNode {
+    public class RootNode extends UpdatableCountTypeNode {
 
         public RootNode() {
-            super(Children.create(new ListFactory(), true), Lookups.singleton(KEYWORD_HITS));
+            super(Children.create(new ListFactory(), true),
+                    Lookups.singleton(KEYWORD_HITS),
+                    KEYWORD_HITS,
+                    filteringDSObjId,
+                    TSK_KEYWORD_HIT);
+
             super.setName(NAME);
-            super.setDisplayName(KEYWORD_HITS);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
         }
 
@@ -429,7 +438,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void removeNotify() {
+        protected void finalize() throws Throwable {
+            super.finalize();
             keywordResults.deleteObserver(this);
         }
 
@@ -464,7 +474,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                          * for the event to have a null oldValue.
                          */
                         ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                        if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
                             keywordResults.update();
                         }
                     } catch (NoCurrentCaseException notUsed) {
@@ -496,22 +506,24 @@ public class KeywordHits implements AutopsyVisitableItem {
 
             }
         };
+        
+        private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
         @Override
         protected void addNotify() {
-            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, pcl);
-            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
+            IngestManager.getInstance().addIngestJobEventListener(INGEST_JOB_EVENTS_OF_INTEREST, weakPcl);
+            IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, weakPcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
             keywordResults.update();
             super.addNotify();
         }
 
         @Override
-        protected void removeNotify() {
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
-            super.removeNotify();
+        protected void finalize() throws Throwable{
+            IngestManager.getInstance().removeIngestJobEventListener(weakPcl);
+            IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), weakPcl);
+            super.finalize();
         }
 
         @Override
@@ -852,7 +864,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         "KeywordHits.createNodeForKey.chgTime.name=ChangeTime",
         "KeywordHits.createNodeForKey.chgTime.displayName=Change Time",
         "KeywordHits.createNodeForKey.chgTime.desc=Change Time"})
-    private BlackboardArtifactNode createBlackboardArtifactNode(BlackboardArtifact art) {
+    private BlackboardArtifactNode createBlackboardArtifactNode(AnalysisResult art) {
         if (skCase == null) {
             return null;
         }
@@ -882,29 +894,29 @@ public class KeywordHits implements AutopsyVisitableItem {
                 KeywordHits_createNodeForKey_modTime_name(),
                 KeywordHits_createNodeForKey_modTime_displayName(),
                 KeywordHits_createNodeForKey_modTime_desc(),
-                ContentUtils.getStringTime(file.getMtime(), file)));
+                TimeZoneUtils.getFormattedTime(file.getMtime())));
         n.addNodeProperty(new NodeProperty<>(
                 KeywordHits_createNodeForKey_accessTime_name(),
                 KeywordHits_createNodeForKey_accessTime_displayName(),
                 KeywordHits_createNodeForKey_accessTime_desc(),
-                ContentUtils.getStringTime(file.getAtime(), file)));
+                TimeZoneUtils.getFormattedTime(file.getAtime())));
         n.addNodeProperty(new NodeProperty<>(
                 KeywordHits_createNodeForKey_chgTime_name(),
                 KeywordHits_createNodeForKey_chgTime_displayName(),
                 KeywordHits_createNodeForKey_chgTime_desc(),
-                ContentUtils.getStringTime(file.getCtime(), file)));
+                TimeZoneUtils.getFormattedTime(file.getCtime())));
         return n;
     }
 
     /**
      * Creates nodes for individual files that had hits
      */
-    private class HitsFactory extends BaseChildFactory<BlackboardArtifact> implements Observer {
+    private class HitsFactory extends BaseChildFactory<AnalysisResult> implements Observer {
 
         private final String keyword;
         private final String setName;
         private final String instance;
-        private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
+        private final Map<Long, AnalysisResult> artifactHits = new HashMap<>();
 
         private HitsFactory(String setName, String keyword, String instance) {
             /**
@@ -920,12 +932,12 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected List<BlackboardArtifact> makeKeys() {
+        protected List<AnalysisResult> makeKeys() {
             if (skCase != null) {
                 keywordResults.getArtifactIds(setName, keyword, instance).forEach((id) -> {
                     try {
                         if (!artifactHits.containsKey(id)) {
-                            BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                            AnalysisResult art = skCase.getBlackboard().getAnalysisResultById(id);
                             //Cache attributes while we are off the EDT.
                             //See JIRA-5969
                             art.getAttributes();
@@ -942,7 +954,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact art) {
+        protected Node createNodeForKey(AnalysisResult art) {
             return createBlackboardArtifactNode(art);
         }
 

@@ -63,7 +63,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  */
 @SuppressWarnings("deprecation")
-final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewer.Waypoint {
+public final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewer.Waypoint {
 
     private static final Logger logger = Logger.getLogger(MapWaypoint.class.getName());
     private final static String HTML_PROP_FORMAT = "<b>%s: </b>%s<br>";
@@ -219,11 +219,13 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
     JMenuItem[] getMenuItems() throws TskCoreException {
         List<JMenuItem> menuItems = new ArrayList<>();
         BlackboardArtifact artifact = dataModelWaypoint.getArtifact();
-        Content content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
+        Content content = dataModelWaypoint.getContent();
 
         menuItems.addAll(getTimelineMenuItems(dataModelWaypoint.getArtifact()));
         menuItems.addAll(getDataModelActionFactoryMenuItems(artifact, content));
-        menuItems.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(Arrays.asList((AbstractFile) content)));
+        if (content instanceof AbstractFile) {
+            menuItems.add(DeleteFileContentTagAction.getInstance().getMenuForFiles(Arrays.asList((AbstractFile) content)));    
+        }
         menuItems.add(DeleteFileBlackboardArtifactTagAction.getInstance().getMenuForArtifacts(Arrays.asList(artifact)));
 
         return menuItems.toArray(new JMenuItem[0]);
@@ -293,7 +295,6 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      * Get the nicely formatted details for the given waypoint.
      *
      * @param point Waypoint object
-     * @param header String details header
      *
      * @return HTML formatted String of details for given waypoint
      */
@@ -364,6 +365,13 @@ final class MapWaypoint extends KdTree.XYZPoint implements org.jxmapviewer.viewe
      */
     Color getColor() {
         return getColor(dataModelWaypoint.getArtifact().getArtifactTypeID());
+    }
+
+    /**
+     * @return The timestamp associated with this map way point or null.
+     */
+    public Long getTimestamp() {
+        return dataModelWaypoint.getTimestamp();
     }
 
     /**

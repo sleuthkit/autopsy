@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,14 +38,13 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.SleuthkitCaseProvider.SleuthkitCaseProviderException;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.EventUpdateHandler;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.DefaultMenuItem;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.SwingWorkerSequentialExecutor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
@@ -73,7 +71,6 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     private static final Logger logger = Logger.getLogger(BaseDataSourceSummaryPanel.class.getName());
 
     private final SwingWorkerSequentialExecutor executor = new SwingWorkerSequentialExecutor();
-    private final IngestModuleCheckUtil ingestModuleCheck = new IngestModuleCheckUtil();
     private final EventUpdateHandler updateHandler;
     private final List<UpdateGovernor> governors;
 
@@ -239,6 +236,12 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     protected BaseDataSourceSummaryPanel(UpdateGovernor... governors) {
         this.governors = (governors == null) ? Collections.emptyList() : Arrays.asList(governors);
         this.updateHandler = new EventUpdateHandler(this::onRefresh, updateGovernor);
+    }
+    
+    /**
+     * Initializes the class so that it listens for events.
+     */
+    void init() {
         this.updateHandler.register();
     }
 
@@ -249,12 +252,12 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param artifact The artifact.
      * @return The menu item for a go to artifact menu item.
      */
-    protected CellModelTableCellRenderer.MenuItem getArtifactNavigateItem(BlackboardArtifact artifact) {
+    protected MenuItem getArtifactNavigateItem(BlackboardArtifact artifact) {
         if (artifact == null) {
             return null;
         }
 
-        return new CellModelTableCellRenderer.DefaultMenuItem(
+        return new DefaultMenuItem(
                 Bundle.BaseDataSourceSummaryPanel_goToArtifact(),
                 () -> {
                     final DirectoryTreeTopComponent dtc = DirectoryTreeTopComponent.findInstance();
@@ -297,7 +300,7 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
      * @param path The path to the file.
      * @return The menu item or null if file cannot be found in data source.
      */
-    protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(String path) {
+    protected MenuItem getFileNavigateItem(String path) {
         if (StringUtils.isNotBlank(path)) {
             Path p = Paths.get(path);
             String fileName = normalizePath(p.getFileName().toString());
@@ -319,18 +322,18 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     }
 
     /**
-     * Given the relevant artifact, navigates to the artifact's content in the
-     * tree and closes data source summary dialog if open.
+     * Given the relevant file, navigates to the file in the tree and closes
+     * data source summary dialog if open.
      *
-     * @param artifact The artifact.
+     * @param file The file.
      * @return The menu item list for a go to artifact menu item.
      */
-    protected CellModelTableCellRenderer.MenuItem getFileNavigateItem(AbstractFile file) {
+    protected MenuItem getFileNavigateItem(AbstractFile file) {
         if (file == null) {
             return null;
         }
 
-        return new CellModelTableCellRenderer.DefaultMenuItem(
+        return new DefaultMenuItem(
                 Bundle.BaseDataSourceSummaryPanel_goToFile(),
                 () -> {
                     new ViewContextAction(Bundle.BaseDataSourceSummaryPanel_goToFile(), file)
@@ -446,6 +449,30 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
     protected abstract void onNewDataSource(DataSource dataSource);
 
     /**
+     * Runs a data fetcher and returns the result handling any possible errors
+     * with a log message.
+     *
+     * @param dataFetcher The means of fetching the data.
+     * @param sheetName The name of the sheet.
+     * @param ds The data source.
+     * @return The fetched data.
+     */
+    protected static <T> T getFetchResult(
+            DataFetcher<DataSource, T> dataFetcher,
+            String sheetName, DataSource ds) {
+
+        try {
+            return dataFetcher.runQuery(ds);
+        } catch (Exception ex) {
+            logger.log(Level.WARNING,
+                    String.format("There was an error while acquiring data for exporting worksheet(s): '%s' for dataSource: %s",
+                            sheetName == null ? "<null>" : sheetName,
+                            ds == null || ds.getName() == null ? "<null>" : ds.getName()), ex);
+            return null;
+        }
+    }
+
+    /**
      * Utility method that shows a loading screen with loadable components,
      * create swing workers from the datafetch components and data source
      * argument and submits them to be executed.
@@ -470,77 +497,5 @@ abstract class BaseDataSourceSummaryPanel extends JPanel {
 
             fetchInformation(dataSource);
         }
-    }
-
-    /**
-     * Get default message when there is a NotIngestedWithModuleException.
-     *
-     * @param moduleName The moduleName.
-     *
-     * @return Message specifying that the ingest module was not run.
-     */
-    @Messages({
-        "# {0} - module name",
-        "BaseDataSourceSummaryPanel_defaultNotIngestMessage=The {0} ingest module has not been run on this data source."
-    })
-    protected String getDefaultNoIngestMessage(String moduleName) {
-        return Bundle.BaseDataSourceSummaryPanel_defaultNotIngestMessage(moduleName);
-    }
-
-    /**
-     * Utility method to return the IngestModuleCheckUtil.
-     *
-     * @return The IngestModuleCheckUtil.
-     */
-    protected IngestModuleCheckUtil getIngestModuleCheckUtil() {
-        return this.ingestModuleCheck;
-    }
-
-    /**
-     * Utility method that in the event of a) there are no results and b) a
-     * relevant ingest module has not been run on this datasource, then a
-     * message indicating the unrun ingest module will be shown. Otherwise, the
-     * default LoadableComponent.showDataFetchResult behavior will be used.
-     *
-     * @param component The component.
-     * @param result The data result.
-     * @param factoryClass The fully qualified class name of the relevant
-     * factory.
-     * @param moduleName The name of the ingest module (i.e. 'Keyword Search').
-     */
-    protected <T> void showResultWithModuleCheck(LoadableComponent<List<T>> component, DataFetchResult<List<T>> result, String factoryClass, String moduleName) {
-        Predicate<List<T>> hasResults = (lst) -> lst != null && !lst.isEmpty();
-        showResultWithModuleCheck(component, result, hasResults, factoryClass, moduleName);
-    }
-
-    /**
-     * Utility method that in the event of a) there are no results and b) a
-     * relevant ingest module has not been run on this datasource, then a
-     * message indicating the unrun ingest module will be shown. Otherwise, the
-     * default LoadableComponent.showDataFetchResult behavior will be used.
-     *
-     * @param component The component.
-     * @param result The data result.
-     * @param hasResults Given the data type, will provide whether or not the
-     * data contains any actual results.
-     * @param factoryClass The fully qualified class name of the relevant
-     * factory.
-     * @param moduleName The name of the ingest module (i.e. 'Keyword Search').
-     */
-    protected <T> void showResultWithModuleCheck(LoadableComponent<T> component, DataFetchResult<T> result,
-            Predicate<T> hasResults, String factoryClass, String moduleName) {
-
-        if (result != null && result.getResultType() == ResultType.SUCCESS && !hasResults.test(result.getData())) {
-            try {
-                if (!ingestModuleCheck.isModuleIngested(getDataSource(), factoryClass)) {
-                    component.showMessage(getDefaultNoIngestMessage(moduleName));
-                    return;
-                }
-            } catch (TskCoreException | SleuthkitCaseProviderException ex) {
-                logger.log(Level.WARNING, "There was an error while checking for ingest modules for datasource.", ex);
-            }
-        }
-
-        component.showDataFetchResult(result);
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,26 +35,26 @@ import java.util.Optional;
 class LanguageSpecificContentIndexingHelper {
 
     private final LanguageDetector languageDetector = new LanguageDetector();
-
-    Optional<Language> detectLanguageIfNeeded(Chunker.Chunk chunk) throws NoOpenCoreException {
+    
+    Optional<Language> detectLanguageIfNeeded(String text) throws NoOpenCoreException {
         double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
         if (2.2 <= indexSchemaVersion) {
-            return languageDetector.detect(chunk.toString());
+            return languageDetector.detect(text);
         } else {
             return Optional.empty();
         }
-    }
+    }    
 
     void updateLanguageSpecificFields(Map<String, Object> fields, Chunker.Chunk chunk, Language language) {
         List<String> values = new ArrayList<>();
         values.add(chunk.toString());
         if (fields.containsKey(Server.Schema.FILE_NAME.toString())) {
-            values.add(fields.get(Server.Schema.FILE_NAME.toString()).toString());
+            values.add(Chunker.sanitize(fields.get(Server.Schema.FILE_NAME.toString()).toString()).toString());
         }
 
         // index the chunk to a language specific field
         fields.put(Server.Schema.CONTENT_JA.toString(), values);
-        fields.put(Server.Schema.LANGUAGE.toString(), language.getValue());
+        fields.put(Server.Schema.LANGUAGE.toString(), Chunker.sanitize(language.getValue()).toString());
     }
 
     void indexMiniChunk(Chunker.Chunk chunk, String sourceName, Map<String, Object> fields, String baseChunkID, Language language)
@@ -62,15 +62,19 @@ class LanguageSpecificContentIndexingHelper {
         //Make a SolrInputDocument out of the field map
         SolrInputDocument updateDoc = new SolrInputDocument();
         for (String key : fields.keySet()) {
-            updateDoc.addField(key, fields.get(key));
-        }
+            if (fields.get(key).getClass() == String.class) {
+                updateDoc.addField(key, Chunker.sanitize((String)fields.get(key)).toString());
+            } else {
+                updateDoc.addField(key, fields.get(key));
+            }
+        } 
 
         try {
-            updateDoc.setField(Server.Schema.ID.toString(), MiniChunkHelper.getChunkIdString(baseChunkID));
+            updateDoc.setField(Server.Schema.ID.toString(), Chunker.sanitize(MiniChunkHelper.getChunkIdString(baseChunkID)).toString());
 
             // index the chunk to a language specific field
-            updateDoc.addField(Server.Schema.CONTENT_JA.toString(), chunk.toString().substring(chunk.getBaseChunkLength()));
-            updateDoc.addField(Server.Schema.LANGUAGE.toString(), language.getValue());
+            updateDoc.addField(Server.Schema.CONTENT_JA.toString(), Chunker.sanitize(chunk.toString().substring(chunk.getBaseChunkLength())).toString());
+            updateDoc.addField(Server.Schema.LANGUAGE.toString(), Chunker.sanitize(language.getValue()).toString());
 
             TimingMetric metric = HealthMonitor.getTimingMetric("Solr: Index chunk");
 

@@ -133,9 +133,9 @@ class FileType implements Serializable {
      *
      * @return True or false.
      */
-    boolean matches(final AbstractFile file) {
+    boolean matches(final AbstractFile file, byte[] startOfFileBuffer, int bufLen) {
         for (Signature sig : this.signatures) {
-            if (!sig.containedIn(file)) {
+            if (!sig.containedIn(file, startOfFileBuffer, bufLen)) {
                 return false;
             }
         }
@@ -327,7 +327,7 @@ class FileType implements Serializable {
          *
          * @return True or false.
          */
-        boolean containedIn(final AbstractFile file) {
+        boolean containedIn(final AbstractFile file, byte[] startOfFileBuffer, int bufLen) {
             if (offset >= file.getSize()) {
                 return false; // File is too small, offset lies outside file.
             }
@@ -340,7 +340,17 @@ class FileType implements Serializable {
             }
             try {
                 byte[] buffer = new byte[signatureBytes.length];
-                int bytesRead = file.read(buffer, actualOffset, signatureBytes.length);
+                int bytesRead;
+                if (actualOffset + signatureBytes.length < bufLen) {
+                    // The signature is contained in the buffer we've already read, so
+                    // just copy the appropriate section.
+                    for (int i = 0; i < signatureBytes.length;i++) {
+                        buffer[i] = startOfFileBuffer[(int)actualOffset + i];
+                    }
+                    bytesRead = signatureBytes.length;
+                } else {
+                    bytesRead = file.read(buffer, actualOffset, signatureBytes.length);
+                }
                 return ((bytesRead == signatureBytes.length) && (Arrays.equals(buffer, signatureBytes)));
             } catch (TskCoreException ex) {
                 /**

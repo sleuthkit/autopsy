@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.EncodingType;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -55,7 +56,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * artifacts.
  */
 class VolatilityProcessor {
-
+    
     private static final Logger logger = Logger.getLogger(VolatilityProcessor.class.getName());
     private static final String VOLATILITY = "Volatility"; //NON-NLS
     private static final String VOLATILITY_EXECUTABLE = "volatility_2.6_win64_standalone.exe"; //NON-NLS
@@ -376,20 +377,20 @@ class VolatilityProcessor {
                     }
                     try {
 
-                        Collection<BlackboardAttribute> attributes = singleton(
-                                new BlackboardAttribute(
-                                        TSK_SET_NAME, VOLATILITY,
-                                        Bundle.VolatilityProcessor_artifactAttribute_interestingFileSet(pluginName))
-                        );
+                        String setName = Bundle.VolatilityProcessor_artifactAttribute_interestingFileSet(pluginName);
+                        Collection<BlackboardAttribute> attributes = singleton(new BlackboardAttribute(TSK_SET_NAME, VOLATILITY, setName));
 
                         // Create artifact if it doesn't already exist.
-                        if (!blackboard.artifactExists(resolvedFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
-                            BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                            volArtifact.addAttributes(attributes);
+                        if (!blackboard.artifactExists(resolvedFile, BlackboardArtifact.Type.TSK_INTERESTING_ITEM, attributes)) {
+                            BlackboardArtifact volArtifact = resolvedFile.newAnalysisResult(
+                                    BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE, 
+                                    null, setName, null, 
+                                    attributes)
+                                    .getAnalysisResult();
 
                             try {
                                 // index the artifact for keyword search
-                                blackboard.postArtifact(volArtifact, VOLATILITY);
+                                blackboard.postArtifact(volArtifact, VOLATILITY, null);
                             } catch (Blackboard.BlackboardException ex) {
                                 errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
                                 /*

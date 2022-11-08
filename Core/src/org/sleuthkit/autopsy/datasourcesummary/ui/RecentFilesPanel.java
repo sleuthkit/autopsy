@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,66 +18,131 @@
  */
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.IngestModuleCheckUtil;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentAttachmentDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentDownloadDetails;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.RecentFilesSummary.RecentFileDetails;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.MenuItem;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataFetcher;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.GuiCellModel.MenuItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.ListTableModel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Data Source Summary recent files panel.
  */
+@Messages({
+    "RecentFilesPanel_docsTable_tabName=Recently Opened Documents",
+    "RecentFilesPanel_downloadsTable_tabName=Recent Downloads",
+    "RecentFilesPanel_attachmentsTable_tabName=Recent Attachments",})
 public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final String EMAIL_PARSER_FACTORY = "org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory";
-    private static final String EMAIL_PARSER_MODULE_NAME = Bundle.RecentFilePanel_emailParserModuleName();
+    private static final String DATETIME_FORMAT_STR = "yyyy/MM/dd HH:mm:ss";
+    private static final DateFormat DATETIME_FORMAT = new SimpleDateFormat(DATETIME_FORMAT_STR, Locale.getDefault());
 
     private final List<JTablePanel<?>> tablePanelList = new ArrayList<>();
     private final List<DataFetchWorker.DataFetchComponents<DataSource, ?>> dataFetchComponents = new ArrayList<>();
 
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
 
-    private final RecentFilesSummary dataHandler;
+    private final DataFetcher<DataSource, List<RecentFileDetails>> docsFetcher;
+    private final DataFetcher<DataSource, List<RecentDownloadDetails>> downloadsFetcher;
+    private final DataFetcher<DataSource, List<RecentAttachmentDetails>> attachmentsFetcher;
 
-    @Messages({
-        "RecentFilesPanel_col_head_date=Date",
-        "RecentFilePanel_col_header_domain=Domain",
-        "RecentFilePanel_col_header_path=Path",
-        "RecentFilePanel_col_header_sender=Sender",
-        "RecentFilePanel_emailParserModuleName=Email Parser"
-    })
+    private final List<ColumnModel<RecentFileDetails, DefaultCellModel<?>>> docsTemplate = Arrays.asList(
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_header_path(),
+                    (prog) -> {
+                        return new DefaultCellModel<>(prog.getPath())
+                                .setPopupMenuRetriever(getPopupFunct(prog));
+                    }, 250),
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
+                    getDateFunct(),
+                    80));
+
+    private final List<ColumnModel<RecentDownloadDetails, DefaultCellModel<?>>> downloadsTemplate = Arrays.asList(
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_header_domain(),
+                    (prog) -> {
+                        return new DefaultCellModel<>(prog.getWebDomain())
+                                .setPopupMenuRetriever(getPopupFunct(prog));
+                    }, 100),
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_header_path(),
+                    (prog) -> {
+                        return new DefaultCellModel<>(prog.getPath())
+                                .setPopupMenuRetriever(getPopupFunct(prog));
+                    }, 250),
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
+                    getDateFunct(),
+                    80));
+
+    private final List<ColumnModel<RecentAttachmentDetails, DefaultCellModel<?>>> attachmentsTemplate = Arrays.asList(
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_header_path(),
+                    (prog) -> {
+                        return new DefaultCellModel<>(prog.getPath())
+                                .setPopupMenuRetriever(getPopupFunct(prog));
+                    }, 250),
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
+                    getDateFunct(),
+                    80),
+            new ColumnModel<>(Bundle.RecentFilesPanel_col_header_sender(),
+                    (prog) -> {
+                        return new DefaultCellModel<>(prog.getSender())
+                                .setPopupMenuRetriever(getPopupFunct(prog));
+                    }, 150));
 
     /**
      * Default constructor.
      */
+    @Messages({
+        "RecentFilesPanel_col_head_date=Date",
+        "RecentFilesPanel_col_header_domain=Domain",
+        "RecentFilesPanel_col_header_path=Path",
+        "RecentFilesPanel_col_header_sender=Sender"
+    })
     public RecentFilesPanel() {
-        this(new RecentFilesSummary());
+        this(new RecentFilesGetter());
     }
 
     /**
      * Creates new form RecentFilesPanel
      */
-    public RecentFilesPanel(RecentFilesSummary dataHandler) {
+    public RecentFilesPanel(RecentFilesGetter dataHandler) {
         super(dataHandler);
-        this.dataHandler = dataHandler;
+        docsFetcher = (dataSource) -> dataHandler.getRecentlyOpenedDocuments(dataSource, 10);
+        downloadsFetcher = (dataSource) -> dataHandler.getRecentDownloads(dataSource, 10);
+        attachmentsFetcher = (dataSource) -> dataHandler.getRecentAttachments(dataSource, 10);
 
         initComponents();
         initalizeTables();
+    }
+
+    /**
+     * Returns a function that gets the date from the RecentFileDetails object
+     * and converts into a DefaultCellModel to be displayed in a table.
+     *
+     * @return The function that determines the date cell from a
+     *         RecentFileDetails object.
+     */
+    private <T extends RecentFileDetails> Function<T, DefaultCellModel<?>> getDateFunct() {
+        return (T lastAccessed) -> {
+            Function<Date, String> dateParser = (dt) -> dt == null ? "" : DATETIME_FORMAT.format(dt);
+            return new DefaultCellModel<>(new Date(lastAccessed.getDateAsLong() * 1000), dateParser)
+                    .setPopupMenuRetriever(getPopupFunct(lastAccessed));
+        };
     }
 
     /**
@@ -85,9 +150,10 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
      * items.
      *
      * @param record The RecentFileDetails instance.
+     *
      * @return The menu items list containing one action or navigating to the
-     * appropriate artifact/file and closing the data source summary dialog if
-     * open.
+     *         appropriate artifact/file and closing the data source summary
+     *         dialog if open.
      */
     private Supplier<List<MenuItem>> getPopupFunct(RecentFileDetails record) {
         return () -> {
@@ -136,42 +202,26 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
     }
 
     @Messages({
-        "RecentFilePanel_no_open_documents=No recently open documents found."
+        "RecentFilesPanel_no_open_documents=No recently open documents found."
     })
     /**
      * Setup the data model and columns for the recently open table.
      */
     @SuppressWarnings("unchecked")
     private void initalizeOpenDocsTable() {
-        List<ColumnModel<RecentFileDetails>> list = Arrays.asList(
-                new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
-                        (prog) -> {
-                            return new DefaultCellModel(prog.getPath())
-                                    .setPopupMenuRetriever(getPopupFunct(prog));
-                        }, 250),
-                new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
-                        (prog) -> {
-                            return new DefaultCellModel(prog.getDateAsString())
-                                    .setPopupMenuRetriever(getPopupFunct(prog));
-                        }, 80));
-
-        ListTableModel<RecentFileDetails> tableModel = JTablePanel.getTableModel(list);
+        ListTableModel<RecentFileDetails> tableModel = JTablePanel.getTableModel(docsTemplate);
 
         JTablePanel<RecentFileDetails> pane = (JTablePanel<RecentFileDetails>) openedDocPane;
         pane.setModel(tableModel);
-        pane.setColumnModel(JTablePanel.getTableColumnModel(list));
+        pane.setColumnModel(JTablePanel.getTableColumnModel(docsTemplate));
         pane.setKeyFunction((recentFile) -> recentFile.getPath());
         pane.setCellListener(CellModelTableCellRenderer.getMouseListener());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentFileDetails>> worker
                 = new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> dataHandler.getRecentlyOpenedDocuments(dataSource, 10),
-                        (result) -> {
-                            showResultWithModuleCheck(pane, result,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
-                        });
+                        docsFetcher,
+                        (result) -> pane.showDataFetchResult(result));
 
         dataFetchComponents.add(worker);
     }
@@ -181,40 +231,19 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
      */
     @SuppressWarnings("unchecked")
     private void initalizeDownloadTable() {
-        List<ColumnModel<RecentDownloadDetails>> list = Arrays.asList(
-                new ColumnModel<>(Bundle.RecentFilePanel_col_header_domain(),
-                        (prog) -> {
-                            return new DefaultCellModel(prog.getWebDomain())
-                                    .setPopupMenuRetriever(getPopupFunct(prog));
-                        }, 100),
-                new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
-                        (prog) -> {
-                            return new DefaultCellModel(prog.getPath())
-                                    .setPopupMenuRetriever(getPopupFunct(prog));
-                        }, 250),
-                new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
-                        (prog) -> {
-                            return new DefaultCellModel(prog.getDateAsString())
-                                    .setPopupMenuRetriever(getPopupFunct(prog));
-                        }, 80));
-
-        ListTableModel<RecentDownloadDetails> tableModel = JTablePanel.getTableModel(list);
+        ListTableModel<RecentDownloadDetails> tableModel = JTablePanel.getTableModel(downloadsTemplate);
 
         JTablePanel<RecentDownloadDetails> pane = (JTablePanel<RecentDownloadDetails>) downloadsPane;
         pane.setModel(tableModel);
         pane.setKeyFunction((download) -> download.getPath());
-        pane.setColumnModel(JTablePanel.getTableColumnModel(list));
+        pane.setColumnModel(JTablePanel.getTableColumnModel(downloadsTemplate));
         pane.setCellListener(CellModelTableCellRenderer.getMouseListener());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentDownloadDetails>> worker
                 = new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> dataHandler.getRecentDownloads(dataSource, 10),
-                        (result) -> {
-                            showResultWithModuleCheck(pane, result,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_FACTORY,
-                                    IngestModuleCheckUtil.RECENT_ACTIVITY_MODULE_NAME);
-                        });
+                        downloadsFetcher,
+                        (result) -> pane.showDataFetchResult(result));
 
         dataFetchComponents.add(worker);
     }
@@ -224,36 +253,19 @@ public final class RecentFilesPanel extends BaseDataSourceSummaryPanel {
      */
     @SuppressWarnings("unchecked")
     private void initalizeAttchementsTable() {
-        List<ColumnModel<RecentAttachmentDetails>> list = Arrays.asList(
-                new ColumnModel<>(Bundle.RecentFilePanel_col_header_path(),
-                        (prog) -> {
-                            return new DefaultCellModel(prog.getPath())
-                                    .setPopupMenuRetriever(getPopupFunct(prog));
-                        }, 250),
-                new ColumnModel<>(Bundle.RecentFilesPanel_col_head_date(),
-                        (prog) -> {
-                            return new DefaultCellModel(prog.getDateAsString())
-                                    .setPopupMenuRetriever(getPopupFunct(prog));
-                        }, 80),
-                new ColumnModel<>(Bundle.RecentFilePanel_col_header_sender(),
-                        (prog) -> {
-                            return new DefaultCellModel(prog.getSender())
-                                    .setPopupMenuRetriever(getPopupFunct(prog));
-                        }, 150));
-
-        ListTableModel<RecentAttachmentDetails> tableModel = JTablePanel.getTableModel(list);
+        ListTableModel<RecentAttachmentDetails> tableModel = JTablePanel.getTableModel(attachmentsTemplate);
 
         JTablePanel<RecentAttachmentDetails> pane = (JTablePanel<RecentAttachmentDetails>) attachmentsPane;
         pane.setModel(tableModel);
         pane.setKeyFunction((attachment) -> attachment.getPath());
-        pane.setColumnModel(JTablePanel.getTableColumnModel(list));
+        pane.setColumnModel(JTablePanel.getTableColumnModel(attachmentsTemplate));
         pane.setCellListener(CellModelTableCellRenderer.getMouseListener());
         tablePanelList.add(pane);
 
         DataFetchWorker.DataFetchComponents<DataSource, List<RecentAttachmentDetails>> worker
                 = new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> dataHandler.getRecentAttachments(dataSource, 10),
-                        (result) -> showResultWithModuleCheck(pane, result, EMAIL_PARSER_FACTORY, EMAIL_PARSER_MODULE_NAME)
+                        attachmentsFetcher,
+                        (result) -> pane.showDataFetchResult(result)
                 );
 
         dataFetchComponents.add(worker);

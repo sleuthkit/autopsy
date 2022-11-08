@@ -75,74 +75,64 @@ The process() method is passed in a reference to an AbstractFile Object. With th
 Now that we have found the files, we want to do something with them. In our situation, we just want to alert the user to them. We do this by making an "Interesting Item" blackboard artifact. The <a href="https://sleuthkit.org/sleuthkit/docs/jni-docs/latest/mod_bbpage.html" target="_blank" rel="noopener noreferrer">Blackboard</a> is where ingest modules can communicate with each other and with the Autopsy GUI. The blackboard has a set of artifacts on it and each artifact:</p>
 <ul>
 <li>Has a type</li>
+<li>Has a category</li>
 <li>Is associated with a file</li>
 <li>Has one or more attributes. Attributes are simply name and value pairs.</li>
 </ul>
 
-For our example, we are going to make an artifact of type "TSK_INTERESTING_FILE" whenever we find a big and round file. These are one of the most generic artifact types and are simply a way of alerting the user that a file is interesting for some reason. Once you make the artifact, it will be shown in the UI. The below code makes an artifact for the file and puts it into the set of "Big and Round Files". You can create whatever set names you want. The Autopsy GUI organizes Interesting Files by their set name.
+A list of standard artifact types can be found in the <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/latest/artifact_catalog_page.html">artifact catalog</a>. It is important to note the catagory for the artifact you want to since this affects which method you will use to create the artifact.
+
+For our example, we are going to make an artifact of type "TSK_INTERESTING_ITEM", which is an analysis result, whenever we find a big and round file. These are one of the most generic artifact types and are simply a way of alerting the user that a file is interesting for some reason. Once you make the artifact, it will be shown in the UI. The below code makes an artifact for the file and puts it into the set of "Big and Round Files". You can create whatever set names you want. The Autopsy GUI organizes Interesting Files by their set name.
 \verbatim            
-   art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-   att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
-      FindBigRoundFilesIngestModuleFactory.moduleName, "Big and Round Files")
-   art.addAttribute(att)\endverbatim
+    art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE,
+        None, "Big and Round Files", None,
+        Arrays.asList(
+            BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
+            FindBigRoundFilesIngestModuleFactory.moduleName,
+            "Big and Round Files"))).getAnalysisResult()\endverbatim
    
-The above code adds the artifact and a single attribute to the blackboard in the embedded database, but it does not notify other modules or the UI. The UI will eventually refresh, but it is faster to fire an event with this:
+The above code adds the artifact and a single attribute to the blackboard in the embedded database, but it does not notify other modules or the UI. Calling postArtifact() will let the tree viewer and other parts of the UI know that a refresh may be necessary, and passes the newly created artifacts to other modules that may do further processing on it.
 \verbatim
-   IngestServices.getInstance().fireModuleDataEvent(
-      ModuleDataEvent(FindBigRoundFilesIngestModuleFactory.moduleName,
-         BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None))\endverbatim
+   blackboard.postArtifact(art, FindBigRoundFilesIngestModuleFactory.moduleName)\endverbatim
 	  
 That's it. Your process() method should look something like this:
 \verbatim
     def process(self, file):
 
+        # Use blackboard class to index blackboard artifacts for keyword search
+        blackboard = Case.getCurrentCase().getSleuthkitCase().getBlackboard()
+
         # Skip non-files
-
-        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or
-
-            (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or
-
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or 
+            (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or 
             (file.isFile() == False)):
-
             return IngestModule.ProcessResult.OK
 
+        # Look for files bigger than 10MB that are a multiple of 4096            
+        if ((file.getSize() > 10485760) and ((file.getSize() % 4096) == 0)):
 
-
-        # Look for files bigger than 10MB that are a multiple of 4096
-
-        if ((file.getSize() &gt; 10485760) and ((file.getSize() % 4096) == 0)):
-
-
-
-            # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
-
+            # Make an artifact on the blackboard.  TSK_INTERESTING_ITEM is a generic type of
             # artifact.  Refer to the developer docs for other examples.
+            art = file.newAnalysisResult(BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_LIKELY_NOTABLE,
+                                         None, "Big and Round Files", None,
+                                         Arrays.asList(
+                                             BlackboardAttribute(BlackboardAttribute.Type.TSK_SET_NAME,
+                                                                 FindBigRoundFilesIngestModuleFactory.moduleName,
+                                                                 "Big and Round Files"))).getAnalysisResult()
 
-            art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
+            try:
+                # post the artifact for listeners of artifact events
+                blackboard.postArtifact(art, FindBigRoundFilesIngestModuleFactory.moduleName)
+            except Blackboard.BlackboardException as e:
+                self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 
-            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(),
-
-                  FindBigRoundFilesIngestModuleFactory.moduleName, "Big and Round Files")
-
-            art.addAttribute(att)
-
-
-
-            # Fire an event to notify the UI and others that there is a new artifact
-
-            IngestServices.getInstance().fireModuleDataEvent(
-
-                ModuleDataEvent(FindBigRoundFilesIngestModuleFactory.moduleName,
-
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None))
-
-
-
-       return IngestModule.ProcessResult.OK\endverbatim
+        return IngestModule.ProcessResult.OK\endverbatim
 	   
 Save this file and run the module on some of your data. If you have any big and round files, you should see an entry under the "Interesting Items" node in the tree.
 
 \image html bigAndRoundFiles.png
+
+The full big and round file module along with test data can be found on <a href="https://github.com/sleuthkit/autopsy/tree/develop/pythonExamples/July2015FileTutorial_BigRound">github</a>.
 
 \subsection python_tutorial1_debug Debugging and Development Tips
 

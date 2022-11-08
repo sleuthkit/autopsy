@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,11 +46,8 @@ import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -62,14 +59,8 @@ final class ExtractSru extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractSru.class.getName());
 
-    private IngestJobContext context;
-
     private static final String APPLICATION_USAGE_SOURCE_NAME = "System Resource Usage - Application Usage"; //NON-NLS
     private static final String NETWORK_USAGE_SOURCE_NAME = "System Resource Usage - Network Usage";
-
-//    private static final String ARTIFACT_ATTRIBUTE_NAME = "TSK_ARTIFACT_NAME"; //NON-NLS
-    private static final String MODULE_NAME = "extractSRU"; //NON-NLS
-
     private static final String SRU_TOOL_FOLDER = "markmckinnon"; //NON-NLS
     private static final String SRU_TOOL_NAME_WINDOWS_32 = "Export_Srudb_32.exe"; //NON-NLS
     private static final String SRU_TOOL_NAME_WINDOWS_64 = "Export_Srudb_64.exe"; //NON-NLS
@@ -79,12 +70,14 @@ final class ExtractSru extends Extract {
     private static final String SRU_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
 
     private static final Map<String, AbstractFile> applicationFilesFound = new HashMap<>();
+    private final IngestJobContext context;
 
     @Messages({
-        "ExtractSru_module_name=System Resource Usage Extractor"
+        "ExtractSru_module_name=System Resource Usage Analyzer"
     })
-    ExtractSru() {
-        this.moduleName = Bundle.ExtractSru_module_name();
+    ExtractSru(IngestJobContext context) {
+        super(Bundle.ExtractSru_module_name(), context);
+        this.context = context;
     }
 
     @Messages({
@@ -93,9 +86,7 @@ final class ExtractSru extends Extract {
     })
 
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
-
-        this.context = context;
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
         String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "sru";
         File dir = new File(modOutPath);
@@ -103,7 +94,7 @@ final class ExtractSru extends Extract {
             dir.mkdirs();
         }
 
-        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru"); //NON-NLS
+        String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "sru", context.getJobId()); //NON-NLS
         String softwareHiveFileName = getSoftwareHiveFile(dataSource, tempDirPath);
 
         if (softwareHiveFileName == null) {
@@ -354,24 +345,23 @@ final class ExtractSru extends Extract {
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getDisplayName(),
                                 formattedApplicationName),//NON-NLS
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getDisplayName(),
                                 userName),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getDisplayName(),
                                 executionTime),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BYTES_SENT, getName(), bytesSent),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BYTES_SENT, getDisplayName(), bytesSent),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BYTES_RECEIVED, getName(), bytesRecvd),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BYTES_RECEIVED, getDisplayName(), bytesRecvd),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), NETWORK_USAGE_SOURCE_NAME));
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getDisplayName(), NETWORK_USAGE_SOURCE_NAME));
 
                 try {
-                    BlackboardArtifact bbart = sruAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
-                    bbart.addAttributes(bbattributes);
+                    BlackboardArtifact bbart = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_PROG_RUN, sruAbstractFile, bbattributes);
                     bba.add(bbart);
                     BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), bbart);
                     if (associateBbArtifact != null) {
@@ -386,10 +376,8 @@ final class ExtractSru extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        try {
-            blackboard.postArtifacts(bba, MODULE_NAME);
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
+        if (!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bba);
         }
     }
 
@@ -417,20 +405,19 @@ final class ExtractSru extends Extract {
 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, getDisplayName(),
                                 formattedApplicationName),//NON-NLS
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME, getDisplayName(),
                                 userName),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getName(),
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME, getDisplayName(),
                                 executionTime),
                         new BlackboardAttribute(
-                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getName(), APPLICATION_USAGE_SOURCE_NAME));
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, getDisplayName(), APPLICATION_USAGE_SOURCE_NAME));
 
                 try {
-                    BlackboardArtifact bbart = sruAbstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN);
-                    bbart.addAttributes(bbattributes);
+                    BlackboardArtifact bbart = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_PROG_RUN, sruAbstractFile, bbattributes);
                     bba.add(bbart);
                     BlackboardArtifact associateBbArtifact = createAssociatedArtifact(applicationName.toLowerCase(), bbart);
                     if (associateBbArtifact != null) {
@@ -445,11 +432,10 @@ final class ExtractSru extends Extract {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
 
-        try {
-            blackboard.postArtifacts(bba, MODULE_NAME);
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
+        if (!context.dataSourceIngestIsCancelled()) {
+            postArtifacts(bba);
         }
+
     }
 
     /**
@@ -462,18 +448,10 @@ final class ExtractSru extends Extract {
      *
      * @returnv BlackboardArtifact or a null value
      */
-    private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) {
+    private BlackboardArtifact createAssociatedArtifact(String filePathName, BlackboardArtifact bba) throws TskCoreException {
         if (applicationFilesFound.containsKey(filePathName)) {
             AbstractFile sourceFile = applicationFilesFound.get(filePathName);
-            Collection<BlackboardAttribute> bbattributes2 = new ArrayList<>();
-            bbattributes2.addAll(Arrays.asList(
-                    new BlackboardAttribute(TSK_ASSOCIATED_ARTIFACT, this.getName(),
-                            bba.getArtifactID())));
-
-            BlackboardArtifact associatedObjectBba = createArtifactWithAttributes(TSK_ASSOCIATED_OBJECT, sourceFile, bbattributes2);
-            if (associatedObjectBba != null) {
-                return associatedObjectBba;
-            }
+            return createAssociatedArtifact(sourceFile, bba);
         }
 
         return null;

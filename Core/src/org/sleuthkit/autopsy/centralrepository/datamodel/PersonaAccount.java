@@ -26,8 +26,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This class represents an association between a Persona and an Account.
@@ -46,7 +48,7 @@ public class PersonaAccount {
     private final long dateAdded;
     private final CentralRepoExaminer examiner;
 
-    public PersonaAccount(long id, Persona persona, CentralRepoAccount account, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
+    private PersonaAccount(long id, Persona persona, CentralRepoAccount account, String justification, Persona.Confidence confidence, long dateAdded, CentralRepoExaminer examiner) {
         this.id = id;
         this.persona = persona;
         this.account = account;
@@ -206,10 +208,15 @@ public class PersonaAccount {
                 );
 
                 // create account
-                CentralRepoAccount.CentralRepoAccountType crAccountType = getCRInstance().getAccountTypeByName(rs.getString("type_name"));
+                String accountTypeName = rs.getString("type_name");
+                Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = getCRInstance().getAccountTypeByName(accountTypeName);
+                if (! optCrAccountType.isPresent()) {
+                    // The CR account can not be null, so throw an exception
+                    throw new CentralRepoException("Account type with name '" + accountTypeName + "' not found in Central Repository");
+                }
                 CentralRepoAccount account = new CentralRepoAccount(
                         rs.getInt("account_id"),
-                        crAccountType,
+                        optCrAccountType.get(),
                         rs.getString("account_unique_identifier"));
 
                 // create persona account
@@ -326,12 +333,12 @@ public class PersonaAccount {
      */
     public static Collection<PersonaAccount> getPersonaAccountsForAccount(Account account) throws CentralRepoException {
         String querySQL = PERSONA_ACCOUNTS_QUERY_CLAUSE
-                + " WHERE LOWER(accounts.account_unique_identifier) LIKE LOWER(?)"
+                + " WHERE LOWER(accounts.account_unique_identifier) = LOWER(?)"
                 + " AND type_name = ?"
                 + " AND personas.status_id != ?";
 
         List<Object> queryParams = new ArrayList<>();
-        queryParams.add("%" + account.getTypeSpecificID() + "%"); // substring match
+        queryParams.add(account.getTypeSpecificID()); // substring match
         queryParams.add(account.getAccountType().getTypeName());
         queryParams.add(Persona.PersonaStatus.DELETED.getStatusId());
 
@@ -389,10 +396,15 @@ public class PersonaAccount {
             while (rs.next()) {
 
                 // create account
-                CentralRepoAccount.CentralRepoAccountType crAccountType = getCRInstance().getAccountTypeByName(rs.getString("type_name"));
+                String accountTypeName = rs.getString("type_name");
+                Optional<CentralRepoAccount.CentralRepoAccountType> optCrAccountType = getCRInstance().getAccountTypeByName(accountTypeName);
+                if (! optCrAccountType.isPresent()) {
+                    // The CR account can not be null, so throw an exception
+                    throw new CentralRepoException("Account type with name '" + accountTypeName + "' not found in Central Repository");
+                }
                 CentralRepoAccount account = new CentralRepoAccount(
                         rs.getInt("account_id"),
-                        crAccountType,
+                        optCrAccountType.get(),
                         rs.getString("account_unique_identifier"));
 
                 accountsList.add(account);

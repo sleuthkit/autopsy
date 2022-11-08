@@ -22,9 +22,11 @@ import java.awt.Component;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerUtility;
 import org.sleuthkit.autopsy.datamodel.StringContent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -81,12 +83,12 @@ public class StringsTextViewer implements TextViewer {
             return false;
         }
         Content content = DataContentViewerUtility.getDefaultContent(node);
-        return (content != null && content.getSize() > 0);
+        return (content != null && !(content instanceof BlackboardArtifact) && content.getSize() > 0);
     }
 
     @Override
     public int isPreferred(Node node) {
-        return 1;
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
     }
 
     @Override

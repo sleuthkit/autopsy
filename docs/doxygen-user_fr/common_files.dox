@@ -1,0 +1,72 @@
+﻿/*! \page common_properties_page Recherche de propriétés communes
+
+[TOC]
+
+
+\section common_properties_overview Aperçu
+
+La fonction de recherche de propriétés communes vous permet de rechercher plusieurs copies d'une propriété dans le cas actuel ou dans le \ref central_repo_page.
+
+Pour lancer une recherche, accédez à Tools->Find Common Properties pour afficher la boîte de dialogue principale. La recherche nécessite au moins l'une des conditions suivantes pour aboutir:
+<ul>
+<li> Le cas actuel a plus d'une source de données
+<li> Le référentiel central contient au moins deux cas
+</ul>
+
+S'il n'existe aucune de ces deux conditions, l'élément de menu sera désactivé. Si une seul n'est pas remplie, une partie de la boîte de dialogue de recherche sera désactivée.
+
+\section common_properties_search_types Portée de la recherche de propriétés communes
+
+Différents paramètres sont nécessaires pour configurer les deux types de recherche. Ceux-ci seront décrits ci-dessous.
+
+\subsection common_properties_intra_case Portée "Between data sources in the current case" (entre les sources de données dans le cas actuel)
+
+Ce type de recherche analyse les fichiers qui se trouvent dans plusieurs sources de données dans le cas actuel. Il ne nécessite pas l'activation du référentiel central et ne recherche actuellement que les fichiers communs. Vous devez exécuter le module \ref hash_db_page pour calculer les hachages MD5 sur chaque source de données avant d'effectuer cette recherche. Les résultats de la recherche n'incluront aucun fichier marqué comme "known" (connus) par le module de hachage (ex: fichiers qui sont dans le NSRL).
+
+\image html common_properties_intra_case.png
+
+Par défaut, la recherche trouvera les fichiers correspondants dans toutes les sources de données. Si vous le souhaitez, vous pouvez modifier cette recherche pour n'afficher que les correspondances où l'un des fichiers se trouve dans une certaine source de données en la sélectionnant dans la liste:
+
+\image html common_properties_select_ds.png
+
+Vous pouvez également choisir d'afficher n'importe quel type de fichiers correspondants ou restreindre la recherche aux images et vidéos et/ou documents.
+
+Enfin, si le référentiel central est activé, vous pouvez choisir de masquer les correspondances qui apparaissent avec une fréquence élevée dans le référentiel central.
+
+\subsection common_properties_central_repo Portée "Between current case and cases in the Central Repository" (entre le cas actuel et les cas dans le référentiel central)
+
+Ce type de recherche analyse les fichiers contenant des propriétés communes entre le cas actuel et les autres cas dans le référentiel central. Vous devez exécuter le module d'acquisition "Central Repository" sur chaque cas en ayant activé la propriété que vous souhaitez rechercher, ainsi que les modules d'acquisition qui produisent ce type de propriété (voir la \ref cr_manage_properties "gestion des propriétés de corrélation"). 
+
+\image html common_properties_cr.png
+
+Vous pouvez restreindre la recherche pour inclure uniquement les résultats où au moins une des correspondances était dans un cas spécifique.
+
+\image html common_properties_cr_case_select.png
+
+Dans l'exemple ci-dessus, toutes les propriétés correspondantes devraient exister dans le cas actuel et dans le cas 2. Notez que les correspondances dans d'autres cas seront également incluses dans les résultats, tant que la propriété existe dans le cas actuel et le cas sélectionné.
+
+Vous pouvez sélectionner le type de propriété à rechercher dans le menu ci-dessous:
+
+\image html common_properties_cr_property.png
+
+La restriction d'une recherche de fichier pour ne renvoyer que des images ou des documents est actuellement désactivée.
+
+Vous pouvez choisir de masquer les correspondances qui apparaissent avec une fréquence élevée dans le référentiel central. Enfin, vous pouvez choisir comment afficher les résultats, ce qui sera décrit ci-dessous.
+
+\section common_properties_results Résultats de recherche
+
+Chaque recherche affiche ses résultats dans un nouvel onglet. Le titre de l'onglet inclura les paramètres de recherche.
+
+\subsection common_properties_sort_by_count Trier par nombre de sources de données
+
+\image html common_properties_result.png
+
+C'est ainsi que sont affichés tous les résultats des recherches dans le cas actuel, avec une option pour afficher les résultats d'une recherche entre le cas actuel et le référentiel central. Le niveau supérieur de l'arborescence des résultats indique le nombre de propriétés correspondantes. Les résultats sont regroupés en fonction du nombre de propriétés correspondantes trouvées, puis regroupés en fonction de la propriété elle-même.
+
+\subsection common_properties_sort_by_case Trier par cas
+
+Cette option n'est disponible que lors d'une recherche entre le cas actuel et le référentiel central. Le niveau supérieur montre chaque cas avec des propriétés correspondantes, puis vous pouvez sélectionner la source de données à afficher. Chaque propriété correspondante sera affichée sous la source de données.
+
+\image html common_properties_result_case_sort.png
+
+*/

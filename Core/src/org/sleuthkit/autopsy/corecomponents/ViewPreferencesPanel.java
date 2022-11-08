@@ -44,7 +44,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
      * Creates new form ViewPreferencesPanel
      *
      * @param immediateUpdates If true, value changes will be persisted at the
-     *                         moment they occur.
+     * moment they occur.
      */
     public ViewPreferencesPanel(boolean immediateUpdates) {
         initComponents();
@@ -52,12 +52,13 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             //disable when case is closed, enable when case is open
             currentCaseSettingsPanel.setEnabled(evt.getNewValue() != null);
-            groupByDataSourceCheckbox.setEnabled(evt.getNewValue() != null);
+            radioGroupByDataType.setEnabled(evt.getNewValue() != null);
+            radioGroupByPersonHost.setEnabled(evt.getNewValue() != null);
         });
         this.timeZoneList.setListData(TimeZoneUtils.createTimeZoneList().stream().toArray(String[]::new));
 
         // Disable manual editing of max results spinner
-        ((JSpinner.DefaultEditor)maxResultsSpinner.getEditor()).getTextField().setEditable(false);
+        ((JSpinner.DefaultEditor) maxResultsSpinner.getEditor()).getTextField().setEditable(false);
     }
 
     @Override
@@ -80,10 +81,10 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         viewsHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInViewsTree());
 
         scoColumnsCheckbox.setSelected(UserPreferences.getHideSCOColumns());
-        
+
         hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
         fileNameTranslationColumnCheckbox.setSelected(UserPreferences.displayTranslatedFileNames());
-        
+
         TextTranslationService tts = TextTranslationService.getInstance();
         fileNameTranslationColumnCheckbox.setEnabled(tts.hasProvider());
 
@@ -92,12 +93,16 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         // Current Case Settings
         boolean caseIsOpen = Case.isCaseOpen();
         currentCaseSettingsPanel.setEnabled(caseIsOpen);
-        groupByDataSourceCheckbox.setEnabled(caseIsOpen);
+        radioGroupByDataType.setEnabled(caseIsOpen);
+        radioGroupByPersonHost.setEnabled(caseIsOpen);
 
-        if (caseIsOpen) {
-            groupByDataSourceCheckbox.setSelected(Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true));
-        } else {
-            groupByDataSourceCheckbox.setSelected(false);
+        boolean groupByHostPersonTypes = Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true);
+        radioGroupByDataType.setSelected(!groupByHostPersonTypes);
+        radioGroupByPersonHost.setSelected(groupByHostPersonTypes);
+            
+        if (!caseIsOpen) {
+            radioGroupByDataType.setEnabled(false);
+            radioGroupByPersonHost.setEnabled(false);
         }
 
         // Current Session Settings
@@ -118,7 +123,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
         UserPreferences.setHideSCOColumns(scoColumnsCheckbox.isSelected());
         UserPreferences.setDisplayTranslatedFileNames(fileNameTranslationColumnCheckbox.isSelected());
-        UserPreferences.setResultsTablePageSize((int)maxResultsSpinner.getValue());
+        UserPreferences.setResultsTablePageSize((int) maxResultsSpinner.getValue());
 
         storeGroupItemsInTreeByDataSource();
 
@@ -126,16 +131,17 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     }
 
     /**
-     * Store the 'groupByDataSourceCheckbox' value.
+     * Store the 'radioGroupByPersonHost' value.
      *
      * Note: The value will not be stored if the value hasn't previously been
-     * stored and the checkbox isn't selected. This is so GroupDataSourcesDialog
-     * can prompt the user for this in the event the value hasn't been
-     * initialized.
+     * stored and the radio button isn't selected. This is so
+     * GroupDataSourcesDialog can prompt the user for this in the event the
+     * value hasn't been initialized.
      */
     private void storeGroupItemsInTreeByDataSource() {
-        if (Case.isCaseOpen() && (CasePreferences.getGroupItemsInTreeByDataSource() != null || groupByDataSourceCheckbox.isSelected())) {
-            CasePreferences.setGroupItemsInTreeByDataSource(groupByDataSourceCheckbox.isSelected());
+
+        if (Case.isCaseOpen() && (CasePreferences.getGroupItemsInTreeByDataSource() != null || radioGroupByPersonHost.isSelected())) {
+            CasePreferences.setGroupItemsInTreeByDataSource(radioGroupByPersonHost.isSelected());
         }
     }
 
@@ -148,6 +154,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        curCaseRadioGroup = new javax.swing.ButtonGroup();
         viewPreferencesScrollPane = new javax.swing.JScrollPane();
         viewPreferencesPanel = new javax.swing.JPanel();
         globalSettingsPanel = new javax.swing.JPanel();
@@ -175,7 +182,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         maxResultsLabel = new javax.swing.JLabel();
         maxResultsSpinner = new javax.swing.JSpinner();
         currentCaseSettingsPanel = new javax.swing.JPanel();
-        groupByDataSourceCheckbox = new javax.swing.JCheckBox();
+        radioGroupByPersonHost = new javax.swing.JRadioButton();
+        radioGroupByDataType = new javax.swing.JRadioButton();
         currentSessionSettingsPanel = new javax.swing.JPanel();
         hideRejectedResultsCheckbox = new javax.swing.JCheckBox();
 
@@ -344,7 +352,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                             .addComponent(displayTimeLabel)
                             .addComponent(selectFileLabel)
                             .addComponent(translateTextLabel))))
-                .addContainerGap(107, Short.MAX_VALUE))
+                .addContainerGap(94, Short.MAX_VALUE))
         );
         globalSettingsPanelLayout.setVerticalGroup(
             globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -400,10 +408,19 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         currentCaseSettingsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.currentCaseSettingsPanel.border.title"))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(groupByDataSourceCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.groupByDataSourceCheckbox.text")); // NOI18N
-        groupByDataSourceCheckbox.addActionListener(new java.awt.event.ActionListener() {
+        curCaseRadioGroup.add(radioGroupByPersonHost);
+        org.openide.awt.Mnemonics.setLocalizedText(radioGroupByPersonHost, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.radioGroupByPersonHost.text")); // NOI18N
+        radioGroupByPersonHost.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                groupByDataSourceCheckboxActionPerformed(evt);
+                radioGroupByPersonHostActionPerformed(evt);
+            }
+        });
+
+        curCaseRadioGroup.add(radioGroupByDataType);
+        org.openide.awt.Mnemonics.setLocalizedText(radioGroupByDataType, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.radioGroupByDataType.text")); // NOI18N
+        radioGroupByDataType.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                radioGroupByDataTypeActionPerformed(evt);
             }
         });
 
@@ -413,14 +430,18 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             currentCaseSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(currentCaseSettingsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(groupByDataSourceCheckbox)
+                .addGroup(currentCaseSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(radioGroupByPersonHost)
+                    .addComponent(radioGroupByDataType))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         currentCaseSettingsPanelLayout.setVerticalGroup(
             currentCaseSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(currentCaseSettingsPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(groupByDataSourceCheckbox))
+                .addComponent(radioGroupByDataType)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(radioGroupByPersonHost)
+                .addGap(0, 6, Short.MAX_VALUE))
         );
 
         currentSessionSettingsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.currentSessionSettingsPanel.border.title"))); // NOI18N
@@ -485,14 +506,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void groupByDataSourceCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupByDataSourceCheckboxActionPerformed
-        if (immediateUpdates) {
-            storeGroupItemsInTreeByDataSource();
-        } else {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
-    }//GEN-LAST:event_groupByDataSourceCheckboxActionPerformed
-
     private void hideRejectedResultsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hideRejectedResultsCheckboxActionPerformed
         if (immediateUpdates) {
             DirectoryTreeTopComponent.getDefault().setShowRejectedResults(hideRejectedResultsCheckbox.isSelected() == false);
@@ -503,7 +516,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
     private void maxResultsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_maxResultsSpinnerStateChanged
         if (immediateUpdates) {
-            UserPreferences.setResultsTablePageSize((int)maxResultsSpinner.getValue());
+            UserPreferences.setResultsTablePageSize((int) maxResultsSpinner.getValue());
         } else {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
@@ -615,8 +628,25 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_useBestViewerRadioButtonActionPerformed
 
+    private void radioGroupByDataTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioGroupByDataTypeActionPerformed
+        if (immediateUpdates) {
+            storeGroupItemsInTreeByDataSource();
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_radioGroupByDataTypeActionPerformed
+
+    private void radioGroupByPersonHostActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioGroupByPersonHostActionPerformed
+        if (immediateUpdates) {
+            storeGroupItemsInTreeByDataSource();
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_radioGroupByPersonHostActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup curCaseRadioGroup;
     private javax.swing.JPanel currentCaseSettingsPanel;
     private javax.swing.JPanel currentSessionSettingsPanel;
     private javax.swing.JCheckBox dataSourcesHideKnownCheckbox;
@@ -624,7 +654,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel displayTimeLabel;
     private javax.swing.JCheckBox fileNameTranslationColumnCheckbox;
     private javax.swing.JPanel globalSettingsPanel;
-    private javax.swing.JCheckBox groupByDataSourceCheckbox;
     private javax.swing.JLabel hideKnownFilesLabel;
     private javax.swing.JCheckBox hideOtherUsersTagsCheckbox;
     private javax.swing.JLabel hideOtherUsersTagsLabel;
@@ -634,6 +663,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JRadioButton keepCurrentViewerRadioButton;
     private javax.swing.JLabel maxResultsLabel;
     private javax.swing.JSpinner maxResultsSpinner;
+    private javax.swing.JRadioButton radioGroupByDataType;
+    private javax.swing.JRadioButton radioGroupByPersonHost;
     private javax.swing.JCheckBox scoColumnsCheckbox;
     private javax.swing.JLabel scoColumnsLabel;
     private javax.swing.JLabel scoColumnsWrapAroundText;

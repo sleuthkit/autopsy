@@ -28,10 +28,12 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
+import org.sleuthkit.datamodel.UnsupportedContent;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.Volume;
 
@@ -99,10 +101,20 @@ public class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<Abs
     public AbstractContentNode<? extends Content> visit(BlackboardArtifact art) {
         return new BlackboardArtifactNode(art);
     }
+    
+    @Override
+    public AbstractContentNode<? extends Content> visit(UnsupportedContent uc) {
+        return new UnsupportedContentNode(uc);
+    }
 
     @Override
     protected AbstractContentNode<? extends Content> defaultVisit(SleuthkitVisitableItem di) {
         throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
                 "AbstractContentChildren.CreateTSKNodeVisitor.exception.noNodeMsg"));
+    }
+    
+    @Override
+    public AbstractContentNode<? extends Content> visit(LocalFilesDataSource ld) {
+        return new LocalFilesDataSourceNode(ld);
     }
 }

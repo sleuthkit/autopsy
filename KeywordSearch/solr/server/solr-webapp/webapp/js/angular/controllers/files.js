@@ -15,8 +15,8 @@
  limitations under the License.
 */
 
-var contentTypeMap = { xml : 'text/xml', html : 'text/html', js : 'text/javascript', json : 'application/json', 'css' : 'text/css' };
-var languages = {js: "javascript", xml:"xml", xsl:"xml", vm: "xml", html: "xml", json: "json", css: "css"};
+var contentTypeMap = { xml : 'application/xml', html : 'application/xml', js : 'application/javascript', json : 'application/json', css : 'text/plain' };
+var languages = {js: "javascript", xml:"xml", xsl:"xml", vm: "xml", html: "xml", json: "json"};
 
 solrAdminApp.controller('FilesController',
     function($scope, $rootScope, $routeParams, $location, Files, Constants) {
@@ -31,9 +31,9 @@ solrAdminApp.controller('FilesController',
 
             var process = function (path, tree) {
                 var params = {core: $routeParams.core};
-                if (path.slice(-1) == '/') {
+                if (path.slice(-1) === '/') {
                     params.file = path.slice(0, -1);
-                } else if (path!='') {
+                } else if (path!=='') {
                     params.file = path;
                 }
 
@@ -48,10 +48,10 @@ solrAdminApp.controller('FilesController',
 
                         if (filedata.directory) {
                             file = file + "/";
-                            if ($scope.file && $scope.file.indexOf(path + file) == 0) {
-                                state = "open";
+                            if ($scope.file && $scope.file.indexOf(path + file) === 0) {
+                                state = {"opened": true};
                             } else {
-                                state = "closed";
+                                state = {"opened": false};
                             }
                             children = [];
                             process(path + file, children);
@@ -68,10 +68,10 @@ solrAdminApp.controller('FilesController',
             $scope.tree = [];
             process("", $scope.tree);
 
-            if ($scope.file && $scope.file != '' && $scope.file.split('').pop()!='/') {
+            if ($scope.file && $scope.file !== '' && $scope.file.split('').pop()!=='/') {
                 var extension;
-                if ($scope.file == "managed-schema") {
-                  extension = contentTypeMap['xml'];
+                if ($scope.file === "managed-schema") {
+                  extension = 'xml';
                 } else {
                   extension = $scope.file.match( /\.(\w+)$/)[1] || '';
                 }

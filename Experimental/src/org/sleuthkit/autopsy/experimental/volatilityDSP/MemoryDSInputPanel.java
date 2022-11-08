@@ -191,6 +191,8 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         pluginTable = new javax.swing.JTable();
         profileLabel = new javax.swing.JLabel();
         profileComboBox = new javax.swing.JComboBox<>();
+        selectAllButton = new javax.swing.JButton();
+        deselectAllButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.pathLabel.text")); // NOI18N
 
@@ -238,6 +240,20 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(selectAllButton, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.selectAllButton.text")); // NOI18N
+        selectAllButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectAllButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(deselectAllButton, org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.deselectAllButton.text")); // NOI18N
+        deselectAllButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deselectAllButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -256,7 +272,11 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
                             .addComponent(listsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addComponent(profileComboBox, javax.swing.GroupLayout.Alignment.LEADING, 0, 243, Short.MAX_VALUE)
-                                .addComponent(timeZoneComboBox, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                .addComponent(timeZoneComboBox, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(selectAllButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(deselectAllButton)))))
                 .addGap(0, 163, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -287,7 +307,11 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(PluginsToRunLabel)
                     .addComponent(listsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(73, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(selectAllButton)
+                    .addComponent(deselectAllButton))
+                .addContainerGap(44, Short.MAX_VALUE))
         );
 
         pathLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(MemoryDSInputPanel.class, "MemoryDSInputPanel.pathLabel.AccessibleContext.accessibleName")); // NOI18N
@@ -316,9 +340,24 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
         // TODO add your handling code here:
     }//GEN-LAST:event_pathTextFieldActionPerformed
 
+    private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
+        for(String name : pluginListStates.keySet()) {
+            pluginListStates.put(name, Boolean.TRUE);
+        }
+        tableModel.fireTableDataChanged();
+    }//GEN-LAST:event_selectAllButtonActionPerformed
+
+    private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
+        for(String name : pluginListStates.keySet()) {
+            pluginListStates.put(name, Boolean.FALSE);
+        }
+        tableModel.fireTableDataChanged();
+    }//GEN-LAST:event_deselectAllButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel PluginsToRunLabel;
     private javax.swing.JButton browseButton;
+    private javax.swing.JButton deselectAllButton;
     private javax.swing.JLabel errorLabel;
     private javax.swing.ButtonGroup infileTypeButtonGroup;
     private javax.swing.JScrollPane listsScrollPane;
@@ -327,6 +366,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     private javax.swing.JTable pluginTable;
     private javax.swing.JComboBox<String> profileComboBox;
     private javax.swing.JLabel profileLabel;
+    private javax.swing.JButton selectAllButton;
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables
@@ -407,7 +447,7 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
     })
     private void warnIfPathIsInvalid(String path) {
         try {
-            if (!PathValidator.isValidForMultiUserCase(path, Case.getCurrentCaseThrows().getCaseType())) {
+            if (!PathValidator.isValidForCaseType(path, Case.getCurrentCaseThrows().getCaseType())) {
                 errorLabel.setVisible(true);
                 errorLabel.setText(Bundle.MemoryDSInputPanel_errorMsg_dataSourcePathOnCdrive());
             }

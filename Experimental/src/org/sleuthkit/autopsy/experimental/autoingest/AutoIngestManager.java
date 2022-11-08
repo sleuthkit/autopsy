@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2016-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,6 +75,7 @@ import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorC
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -108,6 +109,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchJobSettings;
 
 /**
  * An auto ingest manager is responsible for processing auto ingest jobs defined
@@ -141,8 +143,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         ControlEventType.PAUSE.toString(),
         ControlEventType.RESUME.toString(),
         ControlEventType.SHUTDOWN.toString(),
+        ControlEventType.GENERATE_THREAD_DUMP_REQUEST.toString(),
         Event.CANCEL_JOB.toString(),
-        Event.REPROCESS_JOB.toString()}));
+        Event.REPROCESS_JOB.toString(),
+        Event.OCR_STATE_CHANGE.toString()}));
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
@@ -303,9 +307,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 } else if (event instanceof AutoIngestNodeControlEvent) {
                     handleRemoteNodeControlEvent((AutoIngestNodeControlEvent) event);
                 } else if (event instanceof AutoIngestJobCancelEvent) {
-                    handleRemoteJobCancelledEvent((AutoIngestJobCancelEvent) event);
+                    handleRemoteJobCancelEvent((AutoIngestJobCancelEvent) event);
                 } else if (event instanceof AutoIngestJobReprocessEvent) {
                     handleRemoteJobReprocessEvent((AutoIngestJobReprocessEvent) event);
+                } else if (event instanceof AutoIngestOcrStateChangeEvent) {
+                    handleRemoteOcrEvent((AutoIngestOcrStateChangeEvent) event);
                 }
             }
         }
@@ -398,7 +404,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      *
      * @param event
      */
-    private void handleRemoteJobCancelledEvent(AutoIngestJobCancelEvent event) {
+    private void handleRemoteJobCancelEvent(AutoIngestJobCancelEvent event) {
         AutoIngestJob job = event.getJob();
         if (job != null && job.getProcessingHostName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
             sysLogger.log(Level.INFO, "Received cancel job event for data source {0} in case {1} from user {2} on machine {3}",
@@ -464,9 +470,41 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         String hostName = event.getNodeName();
         hostNamesToLastMsgTime.put(hostName, Instant.now());
+        // currently the only way to the get latest ZK manifest node contents is to do an input directory scan
         scanInputDirsNow();
         setChanged();
         notifyObservers(Event.CASE_PRIORITIZED);
+    }
+
+    /**
+     * Processes a case OCR enabled/disabled event from another node.
+     *
+     * @param event OCR enabled/disabled event from another auto ingest node.
+     */
+    private void handleRemoteOcrEvent(AutoIngestOcrStateChangeEvent event) {
+        switch (event.getEventType()) {
+            case OCR_ENABLED:
+                sysLogger.log(Level.INFO, "Received OCR enabled event for case {0} from user {1} on machine {2}",
+                        new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
+                break;
+            case OCR_DISABLED:
+                sysLogger.log(Level.INFO, "Received OCR disabled event for case {0} from user {1} on machine {2}",
+                        new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
+                break;
+            default:
+                sysLogger.log(Level.WARNING, "Received invalid OCR enabled/disabled event from user {0} on machine {1}",
+                        new Object[]{event.getUserName(), event.getNodeName()});
+                break;
+        }
+
+        String hostName = event.getNodeName();
+        hostNamesToLastMsgTime.put(hostName, Instant.now());
+
+        // currently the only way to the get latest ZK manifest node contents is to do an input directory scan
+        scanInputDirsNow();
+
+        setChanged();
+        notifyObservers(Event.OCR_STATE_CHANGE);
     }
 
     /**
@@ -517,11 +555,30 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     setChanged();
                     notifyObservers(Event.SHUTTING_DOWN);
                     break;
+                case GENERATE_THREAD_DUMP_REQUEST:
+                    handleRemoteRequestThreadDumpEvent(event);
+                    break;
                 default:
                     sysLogger.log(Level.WARNING, "Received unsupported control event: {0}", event.getControlEventType());
                     break;
             }
         }
+    }
+
+    /**
+     * Handle a request for a thread dump.
+     */
+    private void handleRemoteRequestThreadDumpEvent(AutoIngestNodeControlEvent event) {
+
+        new Thread(() -> {
+            sysLogger.log(Level.INFO, "Generating thread dump");
+            // generate thread dump
+            String threadDump = ThreadUtils.generateThreadDump();
+
+            // publish the thread dump
+            sysLogger.log(Level.INFO, "Sending thread dump reply to node {0}", event.getOriginatingNodeName());
+            eventPublisher.publishRemotely(new ThreadDumpResponseEvent(LOCAL_HOST_NAME, event.getOriginatingNodeName(), threadDump));
+        }).start();
     }
 
     /**
@@ -973,7 +1030,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * job to be shut down in an orderly fashion.
      */
     void cancelCurrentJob() {
-        if (State.RUNNING != state) {
+        if ((State.RUNNING != state) && (State.SHUTTING_DOWN != state)) {
             return;
         }
         synchronized (jobsLock) {
@@ -1040,7 +1097,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
 
     }
-    
+
     /**
      * A task that submits an input directory scan task to the input directory
      * scan task executor.
@@ -1102,7 +1159,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         private final List<AutoIngestJob> newPendingJobsList = new ArrayList<>();
         private final List<AutoIngestJob> newCompletedJobsList = new ArrayList<>();
-        private Lock currentDirLock;
 
         /**
          * Searches the input directories for manifest files. The search results
@@ -1110,27 +1166,29 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * list.
          */
         private void scan() {
-            synchronized (jobsLock) {
-                if (Thread.currentThread().isInterrupted()) {
-                    return;
-                }
-                try {
-                    newPendingJobsList.clear();
-                    newCompletedJobsList.clear();
-                    Files.walkFileTree(rootInputDirectory, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, this);
-                    Collections.sort(newPendingJobsList);
+
+            if (Thread.currentThread().isInterrupted()) {
+                return;
+            }
+            try {
+                newPendingJobsList.clear();
+                newCompletedJobsList.clear();
+                Files.walkFileTree(rootInputDirectory, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, this);
+                Collections.sort(newPendingJobsList);
+                synchronized (jobsLock) {
                     AutoIngestManager.this.pendingJobs = newPendingJobsList;
                     AutoIngestManager.this.completedJobs = newCompletedJobsList;
-
-                } catch (Exception ex) {
-                    /*
-                     * NOTE: Need to catch all unhandled exceptions here.
-                     * Otherwise uncaught exceptions will propagate up to the
-                     * calling thread and may stop it from running.
-                     */
-                    sysLogger.log(Level.SEVERE, String.format("Error scanning the input directory %s", rootInputDirectory), ex);
                 }
+
+            } catch (Exception ex) {
+                /*
+                 * NOTE: Need to catch all unhandled exceptions here. Otherwise
+                 * uncaught exceptions will propagate up to the calling thread
+                 * and may stop it from running.
+                 */
+                sysLogger.log(Level.SEVERE, String.format("Error scanning the input directory %s", rootInputDirectory), ex);
             }
+
             synchronized (scanMonitor) {
                 scanMonitor.notify();
             }
@@ -2035,10 +2093,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         }
 
                         iterator.remove();
-                        currentJob = job;
+                        // create a new job object based on latest ZK node data (i.e. instead of re-using potentially stale local pending AutoIngestJob object). 
+                        currentJob = new AutoIngestJob(nodeData);
                         break;
 
-                    } catch (AutoIngestJobNodeData.InvalidDataException ex) {
+                    } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJobException ex) {
                         sysLogger.log(Level.WARNING, String.format("Unable to use node data for %s", manifestPath), ex);
                     }
                 }
@@ -2193,10 +2252,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          *                                          auto ingest job.
          */
         private void attemptJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, IOException, JobMetricsCollectionException {
-            updateConfiguration();
-            if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
-                return;
-            }
             verifyRequiredSevicesAreRunning();
             if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                 return;
@@ -2206,8 +2261,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
                     return;
                 }
+                updateConfiguration();
+                if (currentJob.isCanceled() || jobProcessingTaskFuture.isCancelled()) {
+                    return;
+                }
                 runIngestForJob(caseForJob);
-
             } finally {
                 try {
                     Case.closeCurrentCase();
@@ -2220,7 +2278,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         /**
          * Updates the ingest system settings by downloading the latest version
-         * of the settings if using shared configuration.
+         * of the settings if using shared configuration. Also updates the OCR
+         * setting.
          *
          * @throws SharedConfigurationException if there is an error downloading
          *                                      shared configuration.
@@ -2440,7 +2499,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
                 return;
             }
-            
+
             if (SupportedDataSources.shouldSkipFile(dataSource.getPath().toString())) {
                 Manifest manifest = currentJob.getManifest();
                 AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), currentJob.getCaseDirectoryPath());
@@ -2564,6 +2623,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 synchronized (ingestLock) {
                     // Try each DSP in decreasing order of confidence
                     for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
+                        currentJob.setDataSourceProcessor(selectedProcessor);
                         UUID taskId = UUID.randomUUID();
                         caseForJob.notifyAddingDataSource(taskId);
                         DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
@@ -2572,7 +2632,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         sysLogger.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
                         if (selectedProcessor.supportsIngestStream()) {
                             IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
-                            if (! ingestJobSettings.getWarnings().isEmpty()) {
+                            if (!ingestJobSettings.getWarnings().isEmpty()) {
                                 for (String warning : ingestJobSettings.getWarnings()) {
                                     sysLogger.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{manifestPath, warning});
                                 }
@@ -2602,7 +2662,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             // move onto the the next DSP that can process this data source
                             jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
                             logDataSourceProcessorResult(dataSource);
-                            
+
                             // If we had created an ingest stream, close it
                             if (currentIngestStream != null) {
                                 currentIngestStream.stop();
@@ -2719,7 +2779,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     if (currentIngestStream == null) {
                         IngestJobSettings ingestJobSettings = new IngestJobSettings(AutoIngestUserPreferences.getAutoModeIngestModuleContextString());
                         List<String> settingsWarnings = ingestJobSettings.getWarnings();
-                        if (! settingsWarnings.isEmpty()) {
+                        if (!settingsWarnings.isEmpty()) {
                             for (String warning : settingsWarnings) {
                                 sysLogger.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{manifestPath, warning});
                             }
@@ -2728,47 +2788,62 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                             jobLogger.logIngestJobSettingsErrors();
                             throw new AnalysisStartupException("Error(s) in ingest job settings");
                         }
-                        
-                        
+
+                        // update the OCR enabled/disabled setting
+                        if (currentJob.getOcrEnabled()) {
+                            sysLogger.log(Level.INFO, "Enabling OCR for job {0}", currentJob.getManifest().getFilePath());
+                        } else {
+                            sysLogger.log(Level.INFO, "Disabling OCR for job {0}", currentJob.getManifest().getFilePath());
+                        }
+
+                        // find the KeywordSearchJobSettings instance in the templates, and if present, set ocr enabled
+                        ingestJobSettings.getIngestModuleTemplates().stream()
+                                .filter(template -> template.getModuleSettings() instanceof KeywordSearchJobSettings)
+                                .map(template -> (KeywordSearchJobSettings) template.getModuleSettings())
+                                .findFirst()
+                                .ifPresent((keywordJobSettings) -> keywordJobSettings.setOCREnabled(currentJob.getOcrEnabled()));
+
                         ingestJobStartResult = IngestManager.getInstance().beginIngestJob(dataSource.getContent(), ingestJobSettings);
                         ingestJob = ingestJobStartResult.getJob();
                     } else {
                         ingestJob = currentIngestStream.getIngestJob();
                     }
-                    
+
                     if (null != ingestJob) {
                         currentJob.setIngestJob(ingestJob);
                         /*
-                         * Block until notified by the ingest job event
-                         * listener or until interrupted because auto ingest
-                         * is shutting down.
+                         * Block until notified by the ingest job event listener
+                         * or until interrupted because auto ingest is shutting
+                         * down. For very small jobs, it is possible that ingest has
+                         * completed by the time we get here, so check periodically
+                         * in case the event was missed.
                          */
-                        ingestLock.wait();
-                        sysLogger.log(Level.INFO, "Finished ingest modules analysis for {0} ", manifestPath);
+                        while (IngestManager.getInstance().isIngestRunning()) {
+                            ingestLock.wait(60000);  // Check every minute
+                        }
                         IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
-                        for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
-                            AutoIngestJobLogger nestedJobLogger = new AutoIngestJobLogger(manifestPath, snapshot.getDataSource(), caseDirectoryPath);
-                            if (!snapshot.isCancelled()) {
-                                List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
-                                if (!cancelledModules.isEmpty()) {
-                                    sysLogger.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", manifestPath));
-                                    currentJob.setErrorsOccurred(true);
-                                    setErrorsOccurredFlagForCase(caseDirectoryPath);
-                                    for (String module : snapshot.getCancelledDataSourceIngestModules()) {
-                                        sysLogger.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, manifestPath));
-                                        nestedJobLogger.logIngestModuleCancelled(module);
-                                    }
-                                }
-                                nestedJobLogger.logAnalysisCompleted();
-                            } else {
-                                currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING, Date.from(Instant.now()));
+                        IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot = jobSnapshot.getDataSourceProcessingSnapshot();
+                        AutoIngestJobLogger nestedJobLogger = new AutoIngestJobLogger(manifestPath, snapshot.getDataSource(), caseDirectoryPath);
+                        if (!snapshot.isCancelled()) {
+                            List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
+                            if (!cancelledModules.isEmpty()) {
+                                sysLogger.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", manifestPath));
                                 currentJob.setErrorsOccurred(true);
                                 setErrorsOccurredFlagForCase(caseDirectoryPath);
-                                nestedJobLogger.logAnalysisCancelled();
-                                CancellationReason cancellationReason = snapshot.getCancellationReason();
-                                if (CancellationReason.NOT_CANCELLED != cancellationReason && CancellationReason.USER_CANCELLED != cancellationReason) {
-                                    throw new AnalysisStartupException(String.format("Analysis cancelled due to %s for %s", cancellationReason.getDisplayName(), manifestPath));
+                                for (String module : snapshot.getCancelledDataSourceIngestModules()) {
+                                    sysLogger.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, manifestPath));
+                                    nestedJobLogger.logIngestModuleCancelled(module);
                                 }
+                            }
+                            nestedJobLogger.logAnalysisCompleted();
+                        } else {
+                            currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING, Date.from(Instant.now()));
+                            currentJob.setErrorsOccurred(true);
+                            setErrorsOccurredFlagForCase(caseDirectoryPath);
+                            nestedJobLogger.logAnalysisCancelled();
+                            CancellationReason cancellationReason = snapshot.getCancellationReason();
+                            if (CancellationReason.NOT_CANCELLED != cancellationReason && CancellationReason.USER_CANCELLED != cancellationReason) {
+                                throw new AnalysisStartupException(String.format("Analysis cancelled due to %s for %s", cancellationReason.getDisplayName(), manifestPath));
                             }
                         }
                     } else if (ingestJobStartResult != null && !ingestJobStartResult.getModuleErrors().isEmpty()) {
@@ -2930,7 +3005,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     String eventType = event.getPropertyName();
                     if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                         synchronized (ingestLock) {
-                            if (! IngestManager.getInstance().isIngestRunning()) {
+                            if (!IngestManager.getInstance().isIngestRunning()) {
                                 ingestLock.notify();
                             }
                         }
@@ -3127,7 +3202,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         SHUTDOWN,
         REPORT_STATE,
         CANCEL_JOB,
-        REPROCESS_JOB
+        REPROCESS_JOB,
+        GENERATE_THREAD_DUMP_RESPONSE,
+        OCR_STATE_CHANGE
     }
 
     /**

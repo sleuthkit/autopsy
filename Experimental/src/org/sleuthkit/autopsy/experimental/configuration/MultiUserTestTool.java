@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -152,17 +153,17 @@ class MultiUserTestTool {
                 return Bundle.MultiUserTestTool_unableToReadDatabase() + ". " + ex.getMessage();
             }
 
-            // Make a text file in Windows TEMP folder 
-            String tempFilePath = System.getProperty("java.io.tmpdir") + TEST_FILE_NAME + "_" + TimeStampUtils.createTimeStamp() + ".txt";
+            // Make a text file in TEMP folder
+            Path tempFilePath = Paths.get(System.getProperty("java.io.tmpdir"), TEST_FILE_NAME + "_" + TimeStampUtils.createTimeStamp() + ".txt");
             try {
-                FileUtils.writeStringToFile(new File(tempFilePath), "Test", Charset.forName("UTF-8"));
+                FileUtils.writeStringToFile(tempFilePath.toFile(), "Test", Charset.forName("UTF-8"));
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableCreatFile(), ex);
                 return Bundle.MultiUserTestTool_unableCreatFile() + ". " + ex.getMessage();
             }
 
             //  Add it as a logical file set data source.
-            AutoIngestDataSource dataSource = new AutoIngestDataSource("", Paths.get(tempFilePath));
+            AutoIngestDataSource dataSource = new AutoIngestDataSource("", tempFilePath);
             try {
                 String error = runLogicalFilesDSP(caseForJob, dataSource);
                 if (!error.isEmpty()) {
@@ -178,7 +179,7 @@ class MultiUserTestTool {
             FileManager fileManager = caseForJob.getServices().getFileManager();
             List<AbstractFile> listOfFiles = null;
             try {
-                listOfFiles = fileManager.findFiles(new File(tempFilePath).getName());
+                listOfFiles = fileManager.findFiles(tempFilePath.toFile().getName());
                 if (listOfFiles == null || listOfFiles.isEmpty()) {
                     LOGGER.log(Level.SEVERE, Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase());
                     return Bundle.MultiUserTestTool_unableToReadTestFileFromDatabase();
@@ -189,7 +190,7 @@ class MultiUserTestTool {
             }
 
             AbstractFile file = listOfFiles.get(0);
-            
+
             // Set MIME type of the test file (required to test indexing)
             FileTypeDetector fileTypeDetector = null;
             try {
@@ -350,22 +351,21 @@ class MultiUserTestTool {
                         INGEST_LOCK.wait();
                         LOGGER.log(Level.INFO, "Finished ingest modules analysis for {0} ", dataSource.getPath());
                         IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
-                        for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
-                            if (!snapshot.isCancelled()) {
-                                List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
-                                if (!cancelledModules.isEmpty()) {
-                                    LOGGER.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", dataSource.getPath()));
-                                    for (String module : snapshot.getCancelledDataSourceIngestModules()) {
-                                        LOGGER.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, dataSource.getPath()));
-                                    }
+                        IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot = jobSnapshot.getDataSourceProcessingSnapshot();
+                        if (!snapshot.isCancelled()) {
+                            List<String> cancelledModules = snapshot.getCancelledDataSourceIngestModules();
+                            if (!cancelledModules.isEmpty()) {
+                                LOGGER.log(Level.WARNING, String.format("Ingest module(s) cancelled for %s", dataSource.getPath()));
+                                for (String module : snapshot.getCancelledDataSourceIngestModules()) {
+                                    LOGGER.log(Level.WARNING, String.format("%s ingest module cancelled for %s", module, dataSource.getPath()));
                                 }
-                                LOGGER.log(Level.INFO, "Analysis of data source completed");
-                            } else {
-                                LOGGER.log(Level.WARNING, "Analysis of data source cancelled");
-                                IngestJob.CancellationReason cancellationReason = snapshot.getCancellationReason();
-                                if (IngestJob.CancellationReason.NOT_CANCELLED != cancellationReason && IngestJob.CancellationReason.USER_CANCELLED != cancellationReason) {
-                                    return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.ingestCancelled", cancellationReason.getDisplayName());
-                                }
+                            }
+                            LOGGER.log(Level.INFO, "Analysis of data source completed");
+                        } else {
+                            LOGGER.log(Level.WARNING, "Analysis of data source cancelled");
+                            IngestJob.CancellationReason cancellationReason = snapshot.getCancellationReason();
+                            if (IngestJob.CancellationReason.NOT_CANCELLED != cancellationReason && IngestJob.CancellationReason.USER_CANCELLED != cancellationReason) {
+                                return NbBundle.getMessage(MultiUserTestTool.class, "MultiUserTestTool.ingestCancelled", cancellationReason.getDisplayName());
                             }
                         }
                     } else if (!ingestJobStartResult.getModuleErrors().isEmpty()) {

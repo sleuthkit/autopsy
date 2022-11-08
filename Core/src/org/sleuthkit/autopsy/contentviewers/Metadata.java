@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,21 +19,32 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
+import java.awt.Cursor;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Stream;
+import javax.swing.SwingWorker;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.contentviewers.layout.ContentViewerHtmlStyles;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.FsContent;
@@ -45,18 +56,21 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * shows the same data that can also be found in the ResultViewer table, just a
  * different order and allows the full path to be visible in the bottom area.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 6)
+@ServiceProvider(service = DataContentViewer.class, position = 4)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     private static final Logger LOGGER = Logger.getLogger(Metadata.class.getName());
-    
+
+    private MetaDataWorker worker;
+
     /**
      * Creates new form Metadata
      */
     public Metadata() {
         initComponents();
         customizeComponents();
+        ContentViewerHtmlStyles.setupHtmlJTextPane(jTextPane1);
     }
 
     /**
@@ -74,8 +88,6 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
         setPreferredSize(new java.awt.Dimension(100, 52));
 
-        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         jScrollPane2.setPreferredSize(new java.awt.Dimension(610, 52));
 
         jTextPane1.setEditable(false);
@@ -110,30 +122,59 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
          * selectAllMenuItem.addActionListener(actList);
          */
 
-        Utilities.configureTextPaneAsHtml(jTextPane1);
     }
 
     private void setText(String str) {
-        jTextPane1.setText("<html><body>" + str + "</body></html>"); //NON-NLS
+        ContentViewerHtmlStyles.setupHtmlJTextPane(jTextPane1);
+        jTextPane1.setText("<html><head></head><body>" + str + "</body></html>"); //NON-NLS
+    }
+
+    private void addHeader(StringBuilder sb, String header, boolean spaced) {
+        sb.append(MessageFormat.format("<div class=\"{0}\"><h1 class=\"{1}\">{2}</h1></div>",
+                (spaced) ? ContentViewerHtmlStyles.getSpacedSectionClassName() : "",
+                ContentViewerHtmlStyles.getHeaderClassName(),
+                header));
     }
 
     private void startTable(StringBuilder sb) {
-        sb.append("<table>"); //NON-NLS
+        sb.append(MessageFormat.format("<table class=\"{0}\" valign=\"top\" align=\"left\"><tbody>",
+                ContentViewerHtmlStyles.getIndentedClassName())); //NON-NLS
     }
 
     private void endTable(StringBuilder sb) {
-        sb.append("</table>"); //NON-NLS
+        sb.append("</tbody></table>"); //NON-NLS
     }
 
     private void addRow(StringBuilder sb, String key, String value) {
-        sb.append("<tr><td valign=\"top\">"); //NON-NLS
-        sb.append(key);
-        sb.append("</td><td>"); //NON-NLS
-        sb.append(value);
-        sb.append("</td></tr>"); //NON-NLS
+        sb.append(MessageFormat.format("<tr><td class=\"{0}\"><span class=\"{1}\">{2}:</span></td><td class=\"{3}\">{4}</td></tr>",
+                ContentViewerHtmlStyles.getKeyColumnClassName(),
+                ContentViewerHtmlStyles.getTextClassName(),
+                EscapeUtil.escapeHtml(key),
+                ContentViewerHtmlStyles.getTextClassName(),
+                EscapeUtil.escapeHtml(value)
+        ));
+    }
+
+    private void addMonospacedRow(StringBuilder sb, String key) {
+        sb.append(MessageFormat.format("<tr><td class=\"{0}\"><span class=\"{1}\">{2}</span></td></tr>",
+                ContentViewerHtmlStyles.getKeyColumnClassName(),
+                ContentViewerHtmlStyles.getMonospacedClassName(),
+                EscapeUtil.escapeHtml(key)
+        ));
+    }
+
+    private void addRowWithMultipleValues(StringBuilder sb, String key, String[] values) {
+        String[] safeValues = values == null || values.length < 1 ? new String[]{""} : values;
+
+        addRow(sb, key, safeValues[0]);
+        Stream.of(safeValues)
+                .skip(1)
+                .filter(line -> line != null)
+                .forEach(line -> addRow(sb, "", EscapeUtil.escapeHtml(line)));
     }
 
     @Messages({
+        "Metadata.headerTitle=Metadata",
         "Metadata.tableRowTitle.mimeType=MIME Type",
         "Metadata.nodeText.truncated=(results truncated)",
         "Metadata.tableRowTitle.sha1=SHA1",
@@ -145,183 +186,64 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         "Metadata.tableRowTitle.acquisitionDetails=Acquisition Details",
         "Metadata.tableRowTitle.downloadSource=Downloaded From",
         "Metadata.nodeText.unknown=Unknown",
-        "Metadata.nodeText.none=None"})
+        "Metadata.nodeText.none=None",
+        "Metadata.nodeText.loading=Metadata loading..."})
     @Override
     public void setNode(Node node) {
-        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        Image image = node.getLookup().lookup(Image.class);
-        DataSource dataSource = node.getLookup().lookup(DataSource.class);
-        if (file == null && image == null) {
-            setText(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.nonFilePassedIn"));
-            return;
+
+        if (worker != null) {
+            worker.cancel(true);
+            worker = null;
         }
 
-        StringBuilder sb = new StringBuilder();
-        startTable(sb);
-
-        if (file != null) {
-            try {
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getUniquePath());
-            } catch (TskCoreException ex) {
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getParentPath() + "/" + file.getName());
-            }
-
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.type"), file.getType().getName());
-            addRow(sb, Bundle.Metadata_tableRowTitle_mimeType(), file.getMIMEType());
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(file.getSize()));
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.fileNameAlloc"), file.getDirFlagAsString());
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.metadataAlloc"), file.getMetaFlagsAsString());
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), ContentUtils.getStringTime(file.getMtime(), file));
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), ContentUtils.getStringTime(file.getAtime(), file));
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), ContentUtils.getStringTime(file.getCrtime(), file));
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), ContentUtils.getStringTime(file.getCtime(), file));
-
-
-            String md5 = file.getMd5Hash();
-            if (md5 == null) {
-                md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
-            }
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
-            String sha256 = file.getSha256Hash();
-            if (sha256 == null) {
-                sha256 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
-            }
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha256"), sha256);
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
-            addAcquisitionDetails(sb, dataSource);
-            
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(file.getId()));
-            if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), file.getLocalAbsPath());
-            }
-            
-            try {
-                List<BlackboardArtifact> associatedObjectArtifacts = file.getArtifacts(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
-                if (!associatedObjectArtifacts.isEmpty()) {
-                    BlackboardArtifact artifact = associatedObjectArtifacts.get(0);
-                    BlackboardAttribute associatedArtifactAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
-                    if (associatedArtifactAttribute != null) {
-                        long artifactId = associatedArtifactAttribute.getValueLong();
-                        BlackboardArtifact associatedArtifact = artifact.getSleuthkitCase().getBlackboardArtifact(artifactId);
-                        addDownloadSourceRow(sb, associatedArtifact);
-                    }
-                }
-            } catch (TskCoreException ex) {
-               sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
-            }
-            
-            endTable(sb);
-
-            /*
-             * If we have a file system file, grab the more detailed metadata text
-             * too
-             */
-            try {
-                if (file instanceof FsContent) {
-                    FsContent fsFile = (FsContent) file;
-
-                    sb.append("<hr /><pre>\n"); //NON-NLS
-                    sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.text"));
-                    sb.append(" <br /><br />"); // NON-NLS
-                    for (String str : fsFile.getMetaDataText()) {
-                        sb.append(str).append("<br />"); //NON-NLS
-
-                        /* 
-                         * Very long results can cause the UI to hang before displaying,
-                         * so truncate the results if necessary.
-                         */
-                        if(sb.length() > 50000){
-                            sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
-                            break;
+        if (node != null) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            setText(Bundle.Metadata_nodeText_loading());
+            worker = new MetaDataWorker(node) {
+                @Override
+                public void done() {
+                    try {
+                        if (!isCancelled()) {
+                            setText(get());
+                            jTextPane1.setCaretPosition(0);
                         }
+                    } catch (InterruptedException | ExecutionException ex) {
+                        LOGGER.log(Level.SEVERE, "Failed to get metaData for node " + node.getName(), ex);
                     }
-                    sb.append("</pre>\n"); //NON-NLS
+
+                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 }
-            } catch (TskCoreException ex) {
-                sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
-            }
+            };
+
+            worker.execute();
         } else {
-            try {
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), image.getUniquePath());
-            } catch (TskCoreException ex) {
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), image.getName());
-            }
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.imageType"), image.getType().getName());        
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(image.getSize()));
-
-            try {
-                String md5 = image.getMd5();
-                if (md5 == null || md5.isEmpty()) {
-                    md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
-                }
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
-
-                String sha1 = image.getSha1();
-                if (sha1 == null || sha1.isEmpty()) {
-                    sha1 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
-                }
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha1"), sha1);
-
-                String sha256 = image.getSha256();
-                if (sha256 == null || sha256.isEmpty()) {
-                    sha256 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
-                }
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha256"), sha256);
-            } catch (TskCoreException ex) {
-                sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
-            }
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sectorSize"), Long.toString(image.getSsize()));
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.timezone"), image.getTimeZone());
-            addAcquisitionDetails(sb, dataSource);
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.deviceId"), image.getDeviceId());
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(image.getId()));
-
-            // Add all the data source paths to the "Local Path" value cell.
-            String[] imagePaths = image.getPaths();
-            if (imagePaths.length > 0) {
-                StringBuilder pathValues = new StringBuilder("<div>");
-                pathValues.append(imagePaths[0]);
-                pathValues.append("</div>");
-                for (int i=1; i < imagePaths.length; i++) {
-                    pathValues.append("<div>");
-                    pathValues.append(imagePaths[i]);
-                    pathValues.append("</div>");
-                }
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), pathValues.toString());
-            } else {
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), 
-                        NbBundle.getMessage(this.getClass(), "Metadata.nodeText.none"));
-            }
+            setText("");
         }
-        
-        setText(sb.toString());
-        jTextPane1.setCaretPosition(0);
-        this.setCursor(null);
     }
-    
+
     /**
-     * Adds a row for download source from the given associated artifact, 
-     * if the associated artifacts specifies a source.
-     * 
-     * @param sb    string builder.
+     * Adds a row for download source from the given associated artifact, if the
+     * associated artifacts specifies a source.
+     *
+     * @param sb                 string builder.
      * @param associatedArtifact
-     * 
+     *
      * @throws TskCoreException if there is an error
      */
-    private void addDownloadSourceRow(StringBuilder sb, BlackboardArtifact associatedArtifact ) throws TskCoreException {
-        if (associatedArtifact != null && 
-                ((associatedArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) || 
-                 (associatedArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID())) ) {
+    private void addDownloadSourceRow(StringBuilder sb, BlackboardArtifact associatedArtifact) throws TskCoreException {
+        if (associatedArtifact != null
+                && ((associatedArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID())
+                || (associatedArtifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()))) {
             BlackboardAttribute urlAttr = associatedArtifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL));
             if (urlAttr != null) {
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.downloadSource"), urlAttr.getValueString());
             }
         }
     }
-    
+
     /**
      * Add the acquisition details to the results (if applicable)
-     * 
+     *
      * @param sb         The output StringBuilder object
      * @param dataSource The data source (may be null)
      */
@@ -332,8 +254,11 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                 if (StringUtils.isEmpty(details)) {
                     details = Bundle.Metadata_nodeText_unknown();
                 }
-                details = details.replaceAll("\n", "<br>");
-                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.acquisitionDetails"), details);
+                String[] lines = (details != null) ? details.split("\n") : new String[]{""};
+                addRowWithMultipleValues(sb,
+                        NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.acquisitionDetails"),
+                        lines);
+
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error reading acquisition details from case database", ex); //NON-NLS
             }
@@ -342,7 +267,19 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     @Override
     public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "Metadata.title");
+        return getTitle(null);
+    }
+
+    @Messages({
+        "Metadata_dataArtifactTitle=Source File Metadata"
+    })
+    @Override
+    public String getTitle(Node node) {
+        if (node != null && !node.getLookup().lookupAll(DataArtifact.class).isEmpty()) {
+            return Bundle.Metadata_dataArtifactTitle();
+        } else {
+            return NbBundle.getMessage(this.getClass(), "Metadata.title");
+        }
     }
 
     @Override
@@ -374,6 +311,183 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     @Override
     public int isPreferred(Node node) {
-        return 1;
+        return ViewerPriority.viewerPriority.LevelOne.getFlag();
+    }
+
+    /**
+     * SwingWorker for gathering the file metadata.
+     */
+    private class MetaDataWorker extends SwingWorker<String, Void> {
+
+        private final Node node;
+
+        MetaDataWorker(Node node) {
+            this.node = node;
+        }
+
+        @Messages("MetadataWorker.doInBackground.noDataMsg=No Data")
+        @Override
+        protected String doInBackground() throws Exception {
+            AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+            Image image = node.getLookup().lookup(Image.class);
+            DataSource dataSource = node.getLookup().lookup(DataSource.class);
+            if (file == null && image == null) {
+                return NbBundle.getMessage(this.getClass(), "Metadata.nodeText.nonFilePassedIn");
+            }
+
+            StringBuilder sb = new StringBuilder();
+            addHeader(sb, Bundle.Metadata_headerTitle(), false);
+            startTable(sb);
+
+            if (file != null) {
+                try {
+                    addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getUniquePath());
+                } catch (TskCoreException ex) {
+                    addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getParentPath() + "/" + file.getName());
+                }
+
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.type"), file.getType().getName());
+                addRow(sb, Bundle.Metadata_tableRowTitle_mimeType(), file.getMIMEType());
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(file.getSize()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.fileNameAlloc"), file.getDirFlagAsString());
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.metadataAlloc"), file.getMetaFlagsAsString());
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), TimeZoneUtils.getFormattedTime(file.getMtime()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), TimeZoneUtils.getFormattedTime(file.getAtime()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), TimeZoneUtils.getFormattedTime(file.getCrtime()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), TimeZoneUtils.getFormattedTime(file.getCtime()));
+
+                String md5 = file.getMd5Hash();
+                if (md5 == null) {
+                    md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+                }
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
+                String sha256 = file.getSha256Hash();
+                if (sha256 == null) {
+                    sha256 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+                }
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha256"), sha256);
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
+                addAcquisitionDetails(sb, dataSource);
+
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(file.getId()));
+                if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
+                    addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), file.getLocalAbsPath());
+                }
+
+                try {
+                    List<BlackboardArtifact> associatedObjectArtifacts = file.getArtifacts(ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT);
+                    if (!associatedObjectArtifacts.isEmpty()) {
+                        BlackboardArtifact artifact = associatedObjectArtifacts.get(0);
+                        BlackboardAttribute associatedArtifactAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                        if (associatedArtifactAttribute != null) {
+                            long artifactId = associatedArtifactAttribute.getValueLong();
+                            BlackboardArtifact associatedArtifact = artifact.getSleuthkitCase().getBlackboardArtifact(artifactId);
+                            addDownloadSourceRow(sb, associatedArtifact);
+                        }
+                    }
+                } catch (TskCoreException ex) {
+                    sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
+                }
+
+                endTable(sb);
+
+                /*
+                 * If we have a file system file, grab the more detailed
+                 * metadata text too
+                 */
+                if (file instanceof FsContent) {
+                    FsContent fsFile = (FsContent) file;
+
+                    addHeader(sb, NbBundle.getMessage(this.getClass(), "Metadata.nodeText.text"), true);
+
+                    List<String> istatStrings = Collections.emptyList();
+                    try {
+                        istatStrings = fsFile.getMetaDataText();
+                    } catch (TskCoreException ex) {
+                        istatStrings = Arrays.asList(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text") + ex.getLocalizedMessage());
+                    }
+
+                    if (istatStrings.isEmpty() || (istatStrings.size() == 1 && StringUtils.isEmpty(istatStrings.get(0)))) {
+                        sb.append(MessageFormat.format("<div class=\"{0}\"><p class=\"{1}\">{2}</p><div>",
+                                ContentViewerHtmlStyles.getIndentedClassName(),
+                                ContentViewerHtmlStyles.getTextClassName(),
+                                Bundle.MetadataWorker_doInBackground_noDataMsg()));
+                    } else {
+                        startTable(sb);
+
+                        for (String str : istatStrings) {
+                            addMonospacedRow(sb, str);
+
+                            /*
+                             * Very long results can cause the UI to hang before
+                             * displaying, so truncate the results if necessary.
+                             */
+                            if (sb.length() > 50000) {
+                                addMonospacedRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
+                                break;
+                            }
+                        }
+
+                        endTable(sb);
+                    }
+                }
+
+            } else {
+                try {
+                    addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), image.getUniquePath());
+                } catch (TskCoreException ex) {
+                    addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), image.getName());
+                }
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.imageType"), image.getType().getName());
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(image.getSize()));
+
+                try {
+                    String md5 = image.getMd5();
+                    if (md5 == null || md5.isEmpty()) {
+                        md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+                    }
+                    addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
+
+                    String sha1 = image.getSha1();
+                    if (sha1 == null || sha1.isEmpty()) {
+                        sha1 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+                    }
+                    addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha1"), sha1);
+
+                    String sha256 = image.getSha256();
+                    if (sha256 == null || sha256.isEmpty()) {
+                        sha256 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+                    }
+                    addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha256"), sha256);
+                } catch (TskCoreException ex) {
+                    sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
+                }
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sectorSize"), Long.toString(image.getSsize()));
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.timezone"), image.getTimeZone());
+                addAcquisitionDetails(sb, dataSource);
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.deviceId"), image.getDeviceId());
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(image.getId()));
+
+                // Add all the data source paths to the "Local Path" value cell.
+                String[] imagePaths = image.getPaths();
+
+                if (imagePaths.length > 0) {
+                    addRowWithMultipleValues(sb,
+                            NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"),
+                            imagePaths);
+                } else {
+                    addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"),
+                            NbBundle.getMessage(this.getClass(), "Metadata.nodeText.none"));
+                }
+
+                endTable(sb);
+            }
+
+            if (isCancelled()) {
+                return "";
+            }
+
+            return sb.toString();
+        }
     }
 }

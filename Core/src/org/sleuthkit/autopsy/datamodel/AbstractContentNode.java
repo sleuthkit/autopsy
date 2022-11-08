@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,21 +25,22 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-
 import org.openide.util.lookup.Lookups;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -57,7 +58,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     /**
      * Underlying Sleuth Kit Content object
      */
-    T content;
+    protected final T content;
     private static final Logger logger = Logger.getLogger(AbstractContentNode.class.getName());
 
     /**
@@ -99,7 +100,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * @param content Underlying Content instances
      */
     AbstractContentNode(T content) {
-        this(content, Lookups.singleton(content));
+        this(content, Lookups.fixed(content, new TskContentItem<>(content)));
     }
 
     /**
@@ -109,7 +110,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * @param lookup  The Lookup object for the node.
      */
     AbstractContentNode(T content, Lookup lookup) {
-        super(Children.create(new ContentChildren(content), false), lookup);
+        super(Children.create(new ContentChildren(content), true), lookup);
         this.content = content;
         //super.setName(ContentUtils.getSystemName(content));
         super.setName("content_" + Long.toString(content.getId())); //NON-NLS
@@ -298,22 +299,27 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      *                 sheet.
      */
     protected synchronized void updateSheet(NodeProperty<?>... newProps) {
-        //Refresh ONLY those properties in the sheet currently. Subclasses may have 
-        //only added a subset of our properties or their own props.s
-        Sheet visibleSheet = this.getSheet();
-        Sheet.Set visibleSheetSet = visibleSheet.get(Sheet.PROPERTIES);
-        Property<?>[] visibleProps = visibleSheetSet.getProperties();
-        for (NodeProperty<?> newProp : newProps) {
-            for (int i = 0; i < visibleProps.length; i++) {
-                if (visibleProps[i].getName().equals(newProp.getName())) {
-                    visibleProps[i] = newProp;
+        SwingUtilities.invokeLater(() -> {
+            /*
+             * Refresh ONLY those properties in the sheet currently. Subclasses
+             * may have only added a subset of our properties or their own
+             * properties.
+             */
+            Sheet visibleSheet = this.getSheet();
+            Sheet.Set visibleSheetSet = visibleSheet.get(Sheet.PROPERTIES);
+            Property<?>[] visibleProps = visibleSheetSet.getProperties();
+            for (NodeProperty<?> newProp : newProps) {
+                for (int i = 0; i < visibleProps.length; i++) {
+                    if (visibleProps[i].getName().equals(newProp.getName())) {
+                        visibleProps[i] = newProp;
+                    }
                 }
             }
-        }
-        visibleSheetSet.put(visibleProps);
-        visibleSheet.put(visibleSheetSet);
-        //setSheet() will notify Netbeans to update this node in the UI.
-        this.setSheet(visibleSheet);
+            visibleSheetSet.put(visibleProps);
+            visibleSheet.put(visibleSheetSet);
+            //setSheet() will notify Netbeans to update this node in the UI.
+            this.setSheet(visibleSheet);
+        });
     }
 
     /**
@@ -324,42 +330,54 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
     abstract protected List<Tag> getAllTagsFromDatabase();
 
     /**
-     * Returns correlation attribute instance for the underlying content of the
-     * node.
-     *
-     * @return correlation attribute instance for the underlying content of the
-     *         node.
-     */
-    abstract protected CorrelationAttributeInstance getCorrelationAttributeInstance();
-
-    /**
      * Returns Score property for the node.
-     *
-     * @param tags list of tags.
      *
      * @return Score property for the underlying content of the node.
      */
-    abstract protected Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<Tag> tags);
+    @Messages({
+        "# {0} - significanceDisplayName",
+        "AbstractContentNode_getScorePropertyAndDescription_description=Has an {0} analysis result score"
+    })
+    protected Pair<Score, String> getScorePropertyAndDescription() {
+        Score score = Score.SCORE_UNKNOWN;
+        try {
+            score = this.content.getAggregateScore();
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to get aggregate score for content with id: " + this.content.getId(), ex);
+        }
+
+        String significanceDisplay = score.getSignificance().getDisplayName();
+        String description = Bundle.AbstractContentNode_getScorePropertyAndDescription_description(significanceDisplay);
+        return Pair.of(score, description);
+    }
 
     /**
      * Returns comment property for the node.
      *
-     * @param tags      list of tags
-     * @param attribute correlation attribute instance
+     * Default implementation is a null implementation.
+     *
+     * @param tags       The list of tags.
+     * @param attributes The list of correlation attribute instances.
      *
      * @return Comment property for the underlying content of the node.
      */
-    abstract protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, CorrelationAttributeInstance attribute);
+    protected DataResultViewerTable.HasCommentStatus getCommentProperty(List<Tag> tags, List<CorrelationAttributeInstance> attributes) {
+        return DataResultViewerTable.HasCommentStatus.NO_COMMENT;
+    }
 
     /**
      * Returns occurrences/count property for the node.
      *
-     * @param attributeType      the type of the attribute to count
-     * @param attributeValue     the value of the attribute to count
-     * @param defaultDescription a description to use when none is determined by
-     *                           the getCountPropertyAndDescription method
+     * Default implementation is a null implementation.
+     *
+     * @param attribute          The correlation attribute for which data will
+     *                           be retrieved.
+     * @param defaultDescription A description to use when none is determined by
+     *                           the getCountPropertyAndDescription method.
      *
      * @return count property for the underlying content of the node.
      */
-    abstract protected Pair<Long, String> getCountPropertyAndDescription(Type attributeType, String attributeValue, String defaultDescription);
+    protected Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute, String defaultDescription) {
+        return Pair.of(-1L, NO_DESCR);
+    }
 }

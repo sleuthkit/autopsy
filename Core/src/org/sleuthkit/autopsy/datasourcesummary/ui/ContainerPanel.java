@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,53 +28,22 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary.ContainerDetails;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.ContainerSummary.ImageDetails;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult.ResultType;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataFetcher;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultUpdateGovernor;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.UpdateGovernor;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel to display additional details associated with a specific DataSource
  */
+@Messages({
+    "ContainerPanel_tabName=Container"
+})
 class ContainerPanel extends BaseDataSourceSummaryPanel {
-
-    /**
-     * Data payload for the Container panel.
-     */
-    private static class ContainerPanelData {
-
-        private final DataSource dataSource;
-        private final Long unallocatedFilesSize;
-
-        /**
-         * Main constructor.
-         *
-         * @param dataSource The original datasource.
-         * @param unallocatedFilesSize The unallocated file size.
-         */
-        ContainerPanelData(DataSource dataSource, Long unallocatedFilesSize) {
-            this.dataSource = dataSource;
-            this.unallocatedFilesSize = unallocatedFilesSize;
-        }
-
-        /**
-         * @return The original datasource.
-         */
-        DataSource getDataSource() {
-            return dataSource;
-        }
-
-        /**
-         * @return The unallocated file size.
-         */
-        Long getUnallocatedFilesSize() {
-            return unallocatedFilesSize;
-        }
-    }
 
     // set of case events for which to call update (if the name changes, that will impact data shown)
     private static final Set<Case.Events> CASE_EVENT_SET = new HashSet<>(Arrays.asList(
@@ -101,35 +70,30 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
     private static final Logger logger = Logger.getLogger(ContainerPanel.class.getName());
 
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
+    private final DataFetcher<DataSource, ContainerDetails> containerDataFetcher;
 
     /**
      * Creates a new form ContainerPanel.
      */
     ContainerPanel() {
-        this(new ContainerSummary());
+        this(new ContainerSummaryGetter());
     }
 
     /**
      * Creates new form ContainerPanel.
      */
-    ContainerPanel(ContainerSummary containerSummary) {
+    ContainerPanel(ContainerSummaryGetter containerSummary) {
         super(containerSummary, CONTAINER_UPDATES);
+
+        containerDataFetcher = (dataSource) -> containerSummary.getContainerDetails(dataSource);
 
         dataFetchComponents = Arrays.asList(
                 new DataFetchComponents<>(
-                        (dataSource) -> {
-                            return new ContainerPanelData(
-                                    dataSource,
-                                    containerSummary.getSizeOfUnallocatedFiles(dataSource)
-                            );
-                        },
+                        containerDataFetcher,
                         (result) -> {
                             if (result != null && result.getResultType() == ResultType.SUCCESS) {
-                                ContainerPanelData data = result.getData();
-                                DataSource dataSource = (data == null) ? null : data.getDataSource();
-                                Long unallocatedFileSize = (data == null) ? null : data.getUnallocatedFilesSize();
-
-                                updateDetailsPanelData(dataSource, unallocatedFileSize);
+                                ContainerDetails data = result.getData();
+                                updateDetailsPanelData(data);
                             } else {
                                 if (result == null) {
                                     logger.log(Level.WARNING, "No data fetch result was provided to the ContainerPanel.");
@@ -137,8 +101,7 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
                                     logger.log(Level.WARNING, "An exception occurred while attempting to fetch data for the ContainerPanel.",
                                             result.getException());
                                 }
-
-                                updateDetailsPanelData(null, null);
+                                updateDetailsPanelData(null);
                             }
                         }
                 )
@@ -159,33 +122,33 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
     }
 
     /**
-     * Update which DataSource this panel should display details about
+     * Update the swing components with fetched data.
      *
-     * @param selectedDataSource the DataSource to display details about.
+     * @param viewModel The data source view model data.
      */
-    private void updateDetailsPanelData(DataSource selectedDataSource, Long unallocatedFilesSize) {
+    private void updateDetailsPanelData(ContainerDetails viewModel) {
         clearTableValues();
-        if (selectedDataSource != null) {
-            displayNameValue.setText(selectedDataSource.getName());
-            originalNameValue.setText(selectedDataSource.getName());
-            deviceIdValue.setText(selectedDataSource.getDeviceId());
+        if (viewModel == null) {
+            return;
+        }
 
-            try {
-                acquisitionDetailsTextArea.setText(selectedDataSource.getAcquisitionDetails());
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to get aquisition details for selected data source", ex);
-            }
+        displayNameValue.setText(viewModel.getDisplayName());
+        originalNameValue.setText(viewModel.getOriginalName());
+        deviceIdValue.setText(viewModel.getDeviceId());
+        acquisitionDetailsTextArea.setText(viewModel.getAcquisitionDetails());
 
-            if (selectedDataSource instanceof Image) {
-                setFieldsForImage((Image) selectedDataSource, unallocatedFilesSize);
-            } else {
-                setFieldsForNonImageDataSource();
-            }
+        if (viewModel.getImageDetails() != null) {
+            setFieldsForImage(viewModel.getImageDetails());
+        } else {
+            setFieldsForNonImageDataSource();
         }
 
         this.repaint();
     }
 
+    /**
+     * Sets image-only fields to N/A.
+     */
     @Messages({
         "ContainerPanel_setFieldsForNonImageDataSource_na=N/A"
     })
@@ -206,54 +169,30 @@ class ContainerPanel extends BaseDataSourceSummaryPanel {
     }
 
     /**
-     * Sets text fields for an image. This should be called after
-     * clearTableValues and before updateFieldVisibility to ensure the proper
-     * rendering.
+     * Sets fields for images.
      *
-     * @param selectedImage The selected image.
-     * @param unallocatedFilesSize Unallocated file size in bytes.
+     * @param viewModel The image view model data.
      */
-    private void setFieldsForImage(Image selectedImage, Long unallocatedFilesSize) {
-        unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedFilesSize));
-        imageTypeValue.setText(selectedImage.getType().getName());
-        sizeValue.setText(SizeRepresentationUtil.getSizeString(selectedImage.getSize()));
-        sectorSizeValue.setText(SizeRepresentationUtil.getSizeString(selectedImage.getSsize()));
-        timeZoneValue.setText(selectedImage.getTimeZone());
+    private void setFieldsForImage(ImageDetails viewModel) {
+        Long unallocatedSize = viewModel.getUnallocatedSize();
+        if (unallocatedSize == null) {
+            unallocatedSizeValue.setText(Bundle.ContainerPanel_setFieldsForNonImageDataSource_na());
+        } else {
+            unallocatedSizeValue.setText(SizeRepresentationUtil.getSizeString(unallocatedSize));
+        }
 
-        for (String path : selectedImage.getPaths()) {
+        imageTypeValue.setText(viewModel.getImageType());
+        sizeValue.setText(SizeRepresentationUtil.getSizeString(viewModel.getSize()));
+        sectorSizeValue.setText(SizeRepresentationUtil.getSizeString(viewModel.getSectorSize()));
+        timeZoneValue.setText(viewModel.getTimeZone());
+
+        for (String path : viewModel.getPaths()) {
             ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{path});
         }
 
-        try {
-            //older databases may have null as the hash values
-            String md5String = selectedImage.getMd5();
-            if (md5String == null) {
-                md5String = "";
-            }
-            md5HashValue.setText(md5String);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to get MD5 for selected data source", ex);
-        }
-
-        try {
-            String sha1String = selectedImage.getSha1();
-            if (sha1String == null) {
-                sha1String = "";
-            }
-            sha1HashValue.setText(sha1String);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to get SHA1 for selected data source", ex);
-        }
-
-        try {
-            String sha256String = selectedImage.getSha256();
-            if (sha256String == null) {
-                sha256String = "";
-            }
-            sha256HashValue.setText(sha256String);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to get SHA256 for selected data source", ex);
-        }
+        md5HashValue.setText(viewModel.getMd5Hash());
+        sha1HashValue.setText(viewModel.getSha1Hash());
+        sha256HashValue.setText(viewModel.getSha256Hash());
     }
 
     /**

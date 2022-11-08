@@ -70,7 +70,7 @@ public final class IconsUtil {
         } else if (typeID == ARTIFACT_TYPE.TSK_SPEED_DIAL_ENTRY.getTypeID()) {
             imageFile = "speeddialentry.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()) {
-            imageFile = "bluetooth.png"; //NON-NLS
+            imageFile = "Bluetooth.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_GPS_BOOKMARK.getTypeID()) {
             imageFile = "gpsfav.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION.getTypeID()) {
@@ -125,6 +125,14 @@ public final class IconsUtil {
             imageFile = "domain-16.png"; //NON-NLS
         } else if (typeID == ARTIFACT_TYPE.TSK_GPS_AREA.getTypeID()) {
             imageFile = "gps-area.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_YARA_HIT.getTypeID()) {
+            imageFile = "yara_16.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_PREVIOUSLY_SEEN.getTypeID()) {
+            imageFile = "previously-seen.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_PREVIOUSLY_UNSEEN.getTypeID()) {
+            imageFile = "previously-unseen.png"; //NON-NLS
+        } else if (typeID == ARTIFACT_TYPE.TSK_PREVIOUSLY_NOTABLE.getTypeID()) {
+            imageFile = "red-circle-exclamation.png"; //NON-NLS
         } else {
             imageFile = "artifact-icon.png"; //NON-NLS
         }

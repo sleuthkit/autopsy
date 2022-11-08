@@ -25,6 +25,7 @@ import java.util.List;
 import javax.swing.Action;
 
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
@@ -35,6 +36,7 @@ import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.actions.ReplaceBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.ReplaceContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.datamodel.OsAccounts.OsAccountNode;
 import org.sleuthkit.autopsy.datamodel.Reports.ReportNode;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -53,6 +55,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LocalDirectory;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -409,10 +412,10 @@ public class DataModelActionsFactory {
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
-
+    
     public static List<Action> getActions(BlackboardArtifactTag artifactTag, boolean isArtifactSource) {
         List<Action> actionsList = new ArrayList<>();
-        actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), artifactTag.getContent()));
+        actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), artifactTag.getContent()));        
         final BlackboardArtifactTagNode tagNode = new BlackboardArtifactTagNode(artifactTag);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, tagNode));
@@ -446,6 +449,18 @@ public class DataModelActionsFactory {
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
+    
+    public static List<Action> getActions(OsAccount osAccount) {
+        List<Action> actionsList = new ArrayList<>();
+        
+        OsAccountNode node = new OsAccountNode(osAccount);
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, node));
+        actionsList.add(null);
+        actionsList.add(ExportCSVAction.getInstance());
+        actionsList.addAll(ContextMenuExtensionPoint.getActions());
+        return actionsList;
+    }
 
     public static List<Action> getActions(Content content, boolean isArtifactSource) {
         if (content instanceof File) {
@@ -464,7 +479,9 @@ public class DataModelActionsFactory {
             return getActions((SlackFile) content, isArtifactSource);
         } else if (content instanceof Report) {
             return getActions((Report) content, isArtifactSource);
-        } else {
+        } else if (content instanceof OsAccount) {
+            return getActions((OsAccount) content, isArtifactSource);
+        }else {
             return new ArrayList<>();
         }
     }

@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.joda.time.Instant;
 import org.openide.util.NbBundle.Messages;
@@ -47,18 +48,17 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_DELETED;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.OsAccount;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * This module is based on the RecycleBin python module from Mark McKinnon.
@@ -72,21 +72,23 @@ final class ExtractRecycleBin extends Extract {
     private static final Logger logger = Logger.getLogger(ExtractRecycleBin.class.getName());
 
     private static final String RECYCLE_BIN_ARTIFACT_NAME = "TSK_RECYCLE_BIN"; //NON-NLS
-    
+
     private static final String RECYCLE_BIN_DIR_NAME = "$RECYCLE.BIN"; //NON-NLS
 
     private static final int V1_FILE_NAME_OFFSET = 24;
     private static final int V2_FILE_NAME_OFFSET = 28;
+    private final IngestJobContext context;
 
     @Messages({
-        "ExtractRecycleBin_module_name=Recycle Bin"
+        "ExtractRecycleBin_module_name=Recycle Bin Analyzer"
     })
-    ExtractRecycleBin() {
-        this.moduleName = Bundle.ExtractRecycleBin_module_name();
+    ExtractRecycleBin(IngestJobContext context) {
+        super(Bundle.ExtractRecycleBin_module_name(), context);
+        this.context = context;
     }
 
     @Override
-    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+    void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         // At this time it was decided that we would not include TSK_RECYCLE_BIN
         // in the default list of BlackboardArtifact types.
         try {
@@ -98,13 +100,13 @@ final class ExtractRecycleBin extends Extract {
         BlackboardArtifact.Type recycleBinArtifactType;
 
         try {
-            recycleBinArtifactType = tskCase.getArtifactType(RECYCLE_BIN_ARTIFACT_NAME);
+            recycleBinArtifactType = tskCase.getBlackboard().getArtifactType(RECYCLE_BIN_ARTIFACT_NAME);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format("Unable to retrive custom artifact type %s", RECYCLE_BIN_ARTIFACT_NAME), ex); // NON-NLS
             // If this doesn't work bail.
             return;
         }
-        
+
         // map SIDs to user names so that we can include that in the artifact
         Map<String, String> userNameMap;
         try {
@@ -136,7 +138,7 @@ final class ExtractRecycleBin extends Extract {
             return;  // No need to continue
         }
 
-        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin"); //NON-NLS
+        String tempRARecycleBinPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "recyclebin", context.getJobId()); //NON-NLS
 
         // cycle through the $I files and process each. 
         for (AbstractFile iFile : iFiles) {
@@ -152,8 +154,9 @@ final class ExtractRecycleBin extends Extract {
     }
 
     /**
-     * Process each individual iFile.  Each iFile ($I) contains metadata about files that have been deleted.
-     * Each $I file should have a corresponding $R file which is the actuall deleted file.
+     * Process each individual iFile. Each iFile ($I) contains metadata about
+     * files that have been deleted. Each $I file should have a corresponding $R
+     * file which is the actuall deleted file.
      *
      * @param context
      * @param recycleBinArtifactType Module created artifact type
@@ -223,7 +226,7 @@ final class ExtractRecycleBin extends Extract {
 
                             } else {
                                 AbstractFile folder = getOrMakeFolder(Case.getCurrentCase().getSleuthkitCase(), (FsContent) rFile.getParent(), Paths.get(metaData.getFullWindowsPath()).getParent().toString());
-                                addFileSystemFile(skCase, (FsContent)rFile, folder, Paths.get(metaData.getFullWindowsPath()).getFileName().toString(), metaData.getDeletedTimeStamp());
+                                addFileSystemFile(skCase, (FsContent) rFile, folder, Paths.get(metaData.getFullWindowsPath()).getFileName().toString(), metaData.getDeletedTimeStamp());
                             }
                         }
                     } catch (TskCoreException ex) {
@@ -270,25 +273,34 @@ final class ExtractRecycleBin extends Extract {
     }
 
     /**
-     * Parse the $I file.  This file contains metadata information about deleted files
+     * Parse the $I file. This file contains metadata information about deleted
+     * files.
      *
      * File format prior to Windows 10:
-     * Offset  Size  Description
-     *   0       8     Header
-     *   8       8     File Size
-     *  16       8     Deleted Timestamp
-     *  24     520     File Name
-     * 
+     *
+     * Offset Size Description
+     *
+     * 0 8 Header
+     *
+     * 8 8 File Size
+     *
+     * 16 8 Deleted Timestamp
+     *
+     * 24 520 File Name
+     *
      * File format Windows 10+
-     * Offset  Size  Description
-     *   0       8     Header
-     *   8       8     File Size
-     *  16       8     Deleted TimeStamp
-     *  24       4     File Name Length
-     *  28     var     File Name
-     * 
-     * For versions of Windows prior to 10, header = 0x01. Windows 10+ header ==
-     * 0x02
+     *
+     * Offset Size Description
+     *
+     * 0 8 Header
+     *
+     * 8 8 File Size
+     *
+     * 16 8 Deleted TimeStamp
+     *
+     * 24 4 File Name Length
+     *
+     * 28 var File Name
      *
      * @param iFilePath Path to local copy of file in temp folder
      *
@@ -297,35 +309,34 @@ final class ExtractRecycleBin extends Extract {
     private RecycledFileMetaData parseIFile(String iFilePath) throws IOException {
         try {
             byte[] allBytes = Files.readAllBytes(Paths.get(iFilePath));
-        
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(allBytes);
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+            ByteBuffer byteBuffer = ByteBuffer.wrap(allBytes);
+            byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-        long version = byteBuffer.getLong();
-        long fileSize = byteBuffer.getLong();
-        long timestamp = byteBuffer.getLong();
+            long version = byteBuffer.getLong();
+            long fileSize = byteBuffer.getLong();
+            long timestamp = byteBuffer.getLong();
 
-        // Convert from windows FILETIME to Unix Epoch seconds
-        timestamp = Util.filetimeToMillis(timestamp) / 1000;
+            // Convert from windows FILETIME to Unix Epoch seconds
+            timestamp = Util.filetimeToMillis(timestamp) / 1000;
 
-        byte[] stringBytes;
+            byte[] stringBytes;
 
-        if (version == 1) {
-            stringBytes = Arrays.copyOfRange(allBytes, V1_FILE_NAME_OFFSET, allBytes.length);
-        } else {
-            int fileNameLength = byteBuffer.getInt() * 2; //Twice the bytes for unicode
-            stringBytes = Arrays.copyOfRange(allBytes, V2_FILE_NAME_OFFSET, V2_FILE_NAME_OFFSET + fileNameLength);
-        }
+            if (version == 1) {
+                stringBytes = Arrays.copyOfRange(allBytes, V1_FILE_NAME_OFFSET, allBytes.length);
+            } else {
+                int fileNameLength = byteBuffer.getInt() * 2; //Twice the bytes for unicode
+                stringBytes = Arrays.copyOfRange(allBytes, V2_FILE_NAME_OFFSET, V2_FILE_NAME_OFFSET + fileNameLength);
+            }
 
-        String fileName = new String(stringBytes, "UTF-16LE"); //NON-NLS
+            String fileName = new String(stringBytes, "UTF-16LE"); //NON-NLS
 
-        return new RecycledFileMetaData(fileSize, timestamp, fileName);
+            return new RecycledFileMetaData(fileSize, timestamp, fileName);
         } catch (IOException | BufferUnderflowException | IllegalArgumentException | ArrayIndexOutOfBoundsException ex) {
             throw new IOException("Error parsing $I File, file is corrupt or not a valid I$ file", ex);
         }
     }
-    
+
     /**
      * Create a map of userids to usernames from the OS Accounts.
      *
@@ -338,20 +349,10 @@ final class ExtractRecycleBin extends Extract {
     private Map<String, String> makeUserNameMap(Content dataSource) throws TskCoreException {
         Map<String, String> userNameMap = new HashMap<>();
 
-        List<BlackboardArtifact> accounts = blackboard.getArtifacts(TSK_OS_ACCOUNT.getTypeID(), dataSource.getId());
-
-        for (BlackboardArtifact account : accounts) {
-            BlackboardAttribute nameAttribute = getAttributeForArtifact(account, TSK_USER_NAME);
-            BlackboardAttribute idAttribute = getAttributeForArtifact(account, TSK_USER_ID);
-
-            String userName = nameAttribute != null ? nameAttribute.getDisplayString() : "";
-            String userID = idAttribute != null ? idAttribute.getDisplayString() : "";
-
-            if (!userID.isEmpty()) {
-                userNameMap.put(userID, userName);
-            }
+        for (OsAccount account : tskCase.getOsAccountManager().getOsAccounts(((DataSource) dataSource).getHost())) {
+            Optional<String> userName = account.getLoginName();
+            userNameMap.put(account.getName(), userName.isPresent() ? userName.get() : "");
         }
-
         return userNameMap;
     }
 
@@ -447,17 +448,17 @@ final class ExtractRecycleBin extends Extract {
      * @throws TskCoreException
      */
     private BlackboardArtifact createArtifact(AbstractFile rFile, BlackboardArtifact.Type type, String fileName, String userName, long dateTime) throws TskCoreException {
-        BlackboardArtifact bba = rFile.newArtifact(type.getTypeID());
-        bba.addAttribute(new BlackboardAttribute(TSK_PATH, getName(), fileName));
-        bba.addAttribute(new BlackboardAttribute(TSK_DATETIME_DELETED, getName(), dateTime));
-        bba.addAttribute(new BlackboardAttribute(TSK_USER_NAME, getName(), userName == null || userName.isEmpty() ? "" : userName));
-        return bba;
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
+        attributes.add(new BlackboardAttribute(TSK_DATETIME_DELETED, getDisplayName(), dateTime));
+        attributes.add(new BlackboardAttribute(TSK_USER_NAME, getDisplayName(), userName == null || userName.isEmpty() ? "" : userName));
+        return createArtifactWithAttributes(type, rFile, attributes);
     }
 
     /**
-     * Returns a folder for the given path.  If the path does not exist the
-     * the folder is created.  Recursively makes as many parent folders as needed.
-     * 
+     * Returns a folder for the given path. If the path does not exist the the
+     * folder is created. Recursively makes as many parent folders as needed.
+     *
      * @param skCase
      * @param dataSource
      * @param path
@@ -476,8 +477,8 @@ final class ExtractRecycleBin extends Extract {
             if (!parentPath.equals("/")) {
                 parentPath = parentPath + "/";
             }
-            
-            files = skCase.findAllFilesWhere(String.format("fs_obj_id=%s AND parent_path='%s' AND name='%s'", 
+
+            files = skCase.findAllFilesWhere(String.format("fs_obj_id=%s AND parent_path='%s' AND name='%s'",
                     dataSource.getFileSystemId(), SleuthkitCase.escapeSingleQuotes(parentPath), folderName != null ? SleuthkitCase.escapeSingleQuotes(folderName) : ""));
         } else {
             files = skCase.findAllFilesWhere(String.format("fs_obj_id=%s AND parent_path='/' AND name=''", dataSource.getFileSystemId()));
@@ -492,9 +493,9 @@ final class ExtractRecycleBin extends Extract {
     }
 
     /**
-     * Adds a new file system file that is unallocated and maps to the original 
+     * Adds a new file system file that is unallocated and maps to the original
      * file in recycle bin directory.
-     * 
+     *
      * @param skCase         The current case.
      * @param recycleBinFile The file from the recycle bin.
      * @param parentDir      The directory that the recycled file was deleted.
@@ -534,7 +535,7 @@ final class ExtractRecycleBin extends Extract {
 
         Path path = Paths.get(pathString);
         int nameCount = path.getNameCount();
-        if(nameCount > 0) {
+        if (nameCount > 0) {
             String rootless = "/" + path.subpath(0, nameCount);
             return rootless.replace("\\", "/");
         } else {
@@ -543,13 +544,13 @@ final class ExtractRecycleBin extends Extract {
     }
 
     /**
-     * Helper function get from the given path either the file name or
-     * the last directory in the path.
-     * 
+     * Helper function get from the given path either the file name or the last
+     * directory in the path.
+     *
      * @param filePath The file\directory path
      *
-     * @return  If file path, returns the file name.  If directory path the 
-     *          The last directory in the path is returned.
+     * @return If file path, returns the file name. If directory path the The
+     *         last directory in the path is returned.
      */
     String getFileName(String filePath) {
         Path fileNamePath = Paths.get(filePath).getFileName();
@@ -561,10 +562,10 @@ final class ExtractRecycleBin extends Extract {
 
     /**
      * Returns the parent path for the given path.
-     * 
+     *
      * @param path Path string
-     * 
-     * @return The parent path for the given path. 
+     *
+     * @return The parent path for the given path.
      */
     String getParentPath(String path) {
         Path parentPath = Paths.get(path).getParent();
@@ -615,12 +616,12 @@ final class ExtractRecycleBin extends Extract {
         }
 
         /**
-         * Returns the full path to the deleted file or folder.  This path will 
+         * Returns the full path to the deleted file or folder. This path will
          * include the drive letter, ie C:\
          *
          * @return String name of the deleted file
          */
-        String  getFullWindowsPath() {
+        String getFullWindowsPath() {
             return fileName.trim();
         }
     }

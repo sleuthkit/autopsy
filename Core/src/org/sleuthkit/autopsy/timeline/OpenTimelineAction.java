@@ -104,7 +104,7 @@ public final class OpenTimelineAction extends CallableSystemAction {
     synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact, Interval timeSpan) throws TskCoreException {
         try {
             Case currentCase = Case.getCurrentCaseThrows();
-            if (currentCase.hasData() == false) {
+            if (currentCase.hasDataSource() == false) {
                 MessageNotifyUtil.Message.info(Bundle.OpenTimeLineAction_msgdlg_text());
                 logger.log(Level.INFO, "Could not create timeline, there are no data sources.");// NON-NLS
                 return;

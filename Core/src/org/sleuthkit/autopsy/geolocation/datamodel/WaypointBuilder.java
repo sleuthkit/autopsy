@@ -490,8 +490,6 @@ public final class WaypointBuilder {
     static public void getAllWaypoints(SleuthkitCase skCase, List<DataSource> dataSources, List<ARTIFACT_TYPE> artifactTypes, boolean showAll, int cntDaysFromRecent, boolean noTimeStamp, WaypointFilterQueryCallBack queryCallBack) throws GeoLocationDataException {
         String query = buildQuery(dataSources, showAll, cntDaysFromRecent, noTimeStamp);
 
-        logger.log(Level.INFO, query);
-
         try {
             // The CaseDBAccessManager.select function will add a SELECT 
             // to the beginning of the query

@@ -1,0 +1,20 @@
+﻿/*! \page ileapp_page iOS Analyzer (iLEAPP) (Analyseur iOS - iLEAPP)
+
+[TOC]
+
+\section ileapp_overview Aperçu
+
+Le module "iOS Analyzer" exécute iLEAPP (https://github.com/abrignoni/iLEAPP) et convertit les retours en résultats qui peuvent être visualisés dans Autopsy.
+
+\section ileapp_config Utilisation du module
+
+Cochez la case dans l'écran de paramétrage des modules d'acquisition ("Configure Ingest Modules") pour activer le module iOS Analyzer (iLEAPP). Le module fonctionnera sur les fichiers .tar/.zip trouvés dans des sources de données de type \ref ds_log "fichiers logiques" ou \ref ds_img "image disque".
+
+\section ileapp_results Voir les résultats
+
+Les résultats du module iOS Analyzer apparaîtront dans l'\ref tree_viewer_page sous Results->Extracted Content.
+
+\image html ileapp_main.jpg
+
+
+*/

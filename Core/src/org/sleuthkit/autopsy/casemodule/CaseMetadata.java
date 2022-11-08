@@ -218,7 +218,7 @@ public final class CaseMetadata {
      *
      * @return The path to the metadata file
      */
-    Path getFilePath() {
+    public Path getFilePath() {
         return metadataFilePath;
     }
 

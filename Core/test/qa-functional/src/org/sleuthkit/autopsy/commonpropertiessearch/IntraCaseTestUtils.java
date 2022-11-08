@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
+import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -98,23 +99,40 @@ class IntraCaseTestUtils {
     }
 
     void addImageFour(final ImageDSProcessor imageDSProcessor) {
-        IngestUtils.addDataSource(imageDSProcessor, imagePath4);
+        addImage(imageDSProcessor, imagePath4);
     }
 
     void addImageThree(final ImageDSProcessor imageDSProcessor) {
-        IngestUtils.addDataSource(imageDSProcessor, imagePath3);
+        addImage(imageDSProcessor, imagePath3);
     }
 
     void addImageTwo(final ImageDSProcessor imageDSProcessor) {
-        IngestUtils.addDataSource(imageDSProcessor, imagePath2);
+        addImage(imageDSProcessor, imagePath2);
     }
 
     void addImageOne(final ImageDSProcessor imageDSProcessor) {
-        IngestUtils.addDataSource(imageDSProcessor, imagePath1);
+        addImage(imageDSProcessor, imagePath1);
+    }
+
+    private void addImage(final ImageDSProcessor imageDSProcessor, Path path) {
+        try {
+            IngestUtils.addDataSource(imageDSProcessor, path);
+        } catch (TestUtilsException ex) {
+            failOnException(ex);
+        }
     }
 
     void createAsCurrentCase() {
-        CaseUtils.createAsCurrentCase(this.caseName + "_" + TimeStampUtils.createTimeStamp());
+        try {
+            CaseUtils.createAsCurrentCase(this.caseName + "_" + TimeStampUtils.createTimeStamp());
+        } catch (TestUtilsException ex) {
+            failOnException(ex);
+        }
+    }
+
+    private void failOnException(Exception ex) {
+        Exceptions.printStackTrace(ex);
+        Assert.fail(ex.getMessage());
     }
 
     Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
@@ -122,7 +140,11 @@ class IntraCaseTestUtils {
     }
 
     void tearDown() {
-        CaseUtils.closeCurrentCase();
+        try {
+            CaseUtils.closeCurrentCase();
+        } catch (TestUtilsException ex) {
+            failOnException(ex);
+        }
     }
 
     /**
@@ -158,6 +180,37 @@ class IntraCaseTestUtils {
     }
 
     /**
+     * Verify that the given file appears a precise number times in the given
+     * data source.
+     *
+     * @param searchDomain search domain
+     * @param objectIdToDataSourceMap mapping of file ids to data source names
+     * @param fileName name of file to search for
+     * @param dataSource name of data source where file should appear
+     * @param instanceCount number of appearances of the given file
+     * @return The count of items found.
+     */
+    static int getInstanceCount(List<AbstractFile> searchDomain, Map<Long, String> objectIdToDataSourceMap, String fileName, String dataSource) {
+
+        int tally = 0;
+
+        for (AbstractFile file : searchDomain) {
+
+            Long objectId = file.getId();
+
+            String name = file.getName();
+
+            String dataSourceName = objectIdToDataSourceMap.get(objectId);
+
+            if (name.equalsIgnoreCase(fileName) && dataSourceName.equalsIgnoreCase(dataSource)) {
+                tally++;
+            }
+        }
+
+        return tally;
+    }
+
+    /**
      * Convenience method which verifies that a file exists within a given data
      * source exactly once.
      *
@@ -181,15 +234,15 @@ class IntraCaseTestUtils {
      */
     static Map<Long, String> mapFileInstancesToDataSources(CommonAttributeCountSearchResults metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
-            for (Map.Entry<Integer, CommonAttributeValueList> entry : metadata.getMetadata().entrySet()) {
-                entry.getValue().displayDelayedMetadata();
-                for (CommonAttributeValue md : entry.getValue().getMetadataList()) {
-                    for (AbstractCommonAttributeInstance fim : md.getInstances()) {
-                        instanceIdToDataSource.put(fim.getAbstractFileObjectId(), fim.getDataSource());
-                    }
+        for (Map.Entry<Integer, CommonAttributeValueList> entry : metadata.getMetadata().entrySet()) {
+            entry.getValue().displayDelayedMetadata();
+            for (CommonAttributeValue md : entry.getValue().getMetadataList()) {
+                for (AbstractCommonAttributeInstance fim : md.getInstances()) {
+                    instanceIdToDataSource.put(fim.getAbstractFileObjectId(), fim.getDataSource());
                 }
             }
-            return instanceIdToDataSource;
+        }
+        return instanceIdToDataSource;
     }
 
     static List<AbstractFile> getFiles(Set<Long> objectIds) {

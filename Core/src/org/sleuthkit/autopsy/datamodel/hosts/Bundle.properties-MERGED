@@ -1,0 +1,64 @@
+AddEditHostDialog_addHost_title=Add Host
+AddEditHostDialog_editHost_title=Edit Host
+AssociateNewPersonAction_menuTitle=New Person...
+# {0} - hostName
+# {1} - personName
+AssociateNewPersonAction_onError_description=There was an error while associating host {0} with new person {1}.
+AssociateNewPersonAction_onError_title=Error While Associating New Person
+# {0} - hostName
+# {1} - personName
+AssociatePersonAction_onError_description=There was an error associating host {0} with person {1}.
+AssociatePersonAction_onError_title=Error Associating Host with Person
+AssociatePersonAction_unknownPerson=Unknown Person
+AssociatePersonsMenuAction_menuTitle=Associate with Person
+CTL_OpenHosts=Manage Hosts
+HostNameValidator_getValidationMessage_onDuplicate=Another host already has the same name.  Please choose a different name.
+HostNameValidator_getValidationMessage_onEmpty=Please provide some text for the host name.
+HostNameValidator_getValidationMessage_sameAsOriginal=Please provide a new name for this host.
+# {0} - hostname
+ManageHostsDialog.failureToAdd.txt=Unable to add new host {0} at this time.
+# {0} - hostname
+ManageHostsDialog.failureToDelete.txt=Unable to delete host {0} at this time.
+# {0} - hostname
+# {1} - hostId
+ManageHostsDialog.failureToEdit.txt=Unable to update host {0} with id: {1} at this time.
+ManageHostsDialog.failureToGetHosts.txt=There was an error while fetching hosts for current case.
+# To change this license header, choose License Headers in Project Properties.
+# To change this template file, choose Tools | Templates
+# and open the template in the editor.
+ManageHostsDialog.hostDetailsLabel.text=Host Details
+ManageHostsDialog.hostNameLabel.text=Host Name:
+ManageHostsDialog.closeButton.text=Close
+ManageHostsDialog.hostDescriptionTextArea.text=Hosts represent individual devices that may have multiple data sources.
+ManageHostsDialog.hostListLabel.text=Hosts
+ManageHostsDialog.newButton.text=New
+ManageHostsDialog.editButton.text=Edit
+ManageHostsDialog.deleteButton.text=Delete
+AddEditHostDialog.nameLabel.text=Name:
+AddEditHostDialog.okButton.text=OK
+AddEditHostDialog.cancelButton.text=Cancel
+AddEditHostDialog.inputTextField.text=jTextField1
+ManageHostsDialog.seeLog.txt=\  See log for more information.
+ManageHostsDialog_title_text=Manage Hosts
+# {0} - sourceHost
+# {1} - destHost
+MergeHostAction.confirmText=Are you sure you want to merge {0} into {1}?\nThis may include merging OS Accounts and cannot be undone.
+MergeHostAction.confirmTitle=Confirmation
+MergeHostAction.errorText=An error occurred while merging hosts.\nTry again in a few minutes or check the log for details.
+MergeHostAction.errorTitle=Error Merging Hosts
+MergeHostAction.progressIndicatorName=Merging Hosts
+# {0} - sourceHost
+# {1} - destHost
+MergeHostAction.progressText=Merging {0} into {1}...
+# {0} - sourceHostName
+# {1} - destHostName
+MergeHostAction_onError_description=There was an error merging host {0} into host {1}.
+MergeHostAction_onError_title=Error Merging Hosts
+MergeHostMenuAction_menuTitle=Merge Into Other Host
+OpenHostsAction_displayName=Hosts
+# {0} - personName
+RemoveParentPersonAction_menuTitle=Remove from Person ({0})
+# {0} - hostName
+RemoveParentPersonAction_onError_description=There was an error removing person from host: {0}.
+RemoveParentPersonAction_onError_title=Error Removing Host from Person
+RemoveParentPersonAction_unknownPerson=Unknown Person

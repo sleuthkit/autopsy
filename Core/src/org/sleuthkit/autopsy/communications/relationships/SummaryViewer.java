@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,13 +19,11 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.CardLayout;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import javax.swing.JPanel;
-import javax.swing.SwingWorker;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.view.OutlineView;
@@ -33,11 +31,10 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
+import org.sleuthkit.autopsy.centralrepository.datamodel.Persona;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AccountFileInstance;
 
 /**
  * Account Summary View Panel. This panel shows a list of various counts related
@@ -47,10 +44,14 @@ import org.sleuthkit.datamodel.AccountFileInstance;
  */
 public class SummaryViewer extends javax.swing.JPanel implements RelationshipsViewer {
 
+    private static final long serialVersionUID = 1L;
+
     private final Lookup lookup;
     private final DefaultListModel<String> fileRefListModel;
 
     private static final Logger logger = Logger.getLogger(SummaryViewer.class.getName());
+
+    private SummaryPanelWorker worker;
 
     @Messages({
         "SummaryViewer_TabTitle=Summary",
@@ -62,7 +63,9 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_Device_Account_Description=This account was referenced by a device in the case.",
         "SummaryViewer_Account_Description=This account represents a device in the case.",
         "SummaryViewer_Account_Description_MuliSelect=Summary information is not available when multiple accounts are selected.",
-        "SummaryViewer_Country_Code=Country: "
+        "SummaryViewer_Country_Code=Country: ",
+        "SummaryViewer_Select_account_for_persona=<Select a single account to see Persona(s)>",
+        "SummaryViewer_loading_count_message=Loading...."
     })
 
     /**
@@ -85,6 +88,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         clearControls();
 
         caseReferencesPanel.hideOutlineView(Bundle.SummaryViewer_CentralRepository_Message());
+        ((SummaryPersonaPane) personaPanel).setMessage(Bundle.SummaryViewer_Select_account_for_persona());
+        ((SummaryPersonaPane) personaPanel).showMessagePanel();
     }
 
     @Override
@@ -141,19 +146,17 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
                 accoutDescriptionLabel.setText(Bundle.SummaryViewer_Device_Account_Description());
             }
 
-            AccountSummary summaryDetails = new AccountSummary(account, info.getArtifacts());
-
-            thumbnailsDataLabel.setText(Integer.toString(summaryDetails.getThumbnailCnt()));
-            callLogsDataLabel.setText(Integer.toString(summaryDetails.getCallLogCnt()));
-            contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
-            messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt() + summaryDetails.getEmailCnt()));
-            attachmentDataLabel.setText(Integer.toString(summaryDetails.getAttachmentCnt()));
-            referencesDataLabel.setText(Integer.toString(summaryDetails.getReferenceCnt()));
-            contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
+            thumbnailsDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            callLogsDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            contactsDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            messagesDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            attachmentDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            referencesDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
+            contactsDataLabel.setText(Bundle.SummaryViewer_loading_count_message());
 
             caseReferencesPanel.setNode(new AbstractNode(Children.create(new CorrelationCaseChildNodeFactory(info.getAccounts()), true)));
 
-            updateFileReferences(account);
+            updateOtherAccountInfo(info, account);
 
             setEnabled(true);
         }
@@ -202,34 +205,55 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     }
 
     @Messages({
-        "SummaryViewer_Fetching_References=<Fetching File References>"
+        "SummaryViewer_Fetching_References=<Fetching File References>",
+        "SummaryViewer_Persona_CR_Message=<Enable Central Repository to view Personas>"
     })
-    private void updateFileReferences(final Account account) {
-        SwingWorker<List<String>, Void> worker = new SwingWorker<List<String>, Void>() {
-            @Override
-            protected List<String> doInBackground() throws Exception {
-                List<String> stringList = new ArrayList<>();
-                List<AccountFileInstance> accountFileInstanceList = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getAccountFileInstances(account);
-                for (AccountFileInstance instance : accountFileInstanceList) {
-                    stringList.add(instance.getFile().getUniquePath());
-                }
-                return stringList;
-            }
+    private void updateOtherAccountInfo(SelectionInfo info, Account account) {
+        if (worker != null) {
+            worker.cancel(true);
+        }
 
+        worker = new SummaryPanelWorker(info, account) {
             @Override
             protected void done() {
-                try {
-                    List<String> fileRefList = get();
+                if (isCancelled()) {
+                    return;
+                }
 
-                    fileRefList.forEach(value -> {
-                        fileRefListModel.addElement(value);
-                    });
+                try {
+                    SummaryPanelWorker.SummaryWorkerResults results = get();
+
+                    List<String> fileRefList = results.getPaths();
+
+                    if (fileRefList != null) {
+                        fileRefList.forEach(value -> {
+                            fileRefListModel.addElement(value);
+                        });
+                    }
 
                     CardLayout cardLayout = (CardLayout) fileRefPane.getLayout();
                     cardLayout.show(fileRefPane, "listPanelCard");
 
+                    List<Persona> personaList = results.getPersonaList();
+
+                    if (CentralRepository.isEnabled()) {
+                        ((SummaryPersonaPane) personaPanel).updatePersonaList(account, results.getCRAccount(), personaList);
+                    } else {
+                        ((SummaryPersonaPane) personaPanel).setMessage(Bundle.SummaryViewer_Persona_CR_Message());
+                        ((SummaryPersonaPane) personaPanel).showMessagePanel();
+                    }
+
+                    AccountSummary summaryDetails = results.getAccountSummary();
+                    thumbnailsDataLabel.setText(Integer.toString(summaryDetails.getThumbnailCnt()));
+                    callLogsDataLabel.setText(Integer.toString(summaryDetails.getCallLogCnt()));
+                    contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
+                    messagesDataLabel.setText(Integer.toString(summaryDetails.getMessagesCnt() + summaryDetails.getEmailCnt()));
+                    attachmentDataLabel.setText(Integer.toString(summaryDetails.getAttachmentCnt()));
+                    referencesDataLabel.setText(Integer.toString(summaryDetails.getReferenceCnt()));
+                    contactsDataLabel.setText(Integer.toString(summaryDetails.getContactsCnt()));
+
                 } catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.WARNING, String.format(("Failed to get file references for account: %d"), account.getAccountID()), ex);
+                    logger.log(Level.WARNING, String.format(("Failed to get data for account: %d"), account.getAccountID()), ex);
                 }
             }
         };
@@ -273,6 +297,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         fileRefList = new javax.swing.JList<>();
         javax.swing.JPanel selectAccountPane = new javax.swing.JPanel();
         selectAccountFileRefLabel = new javax.swing.JLabel();
+        personaPanel = new SummaryPersonaPane();
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -430,7 +455,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         caseReferencesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.caseReferencesPanel.border.title"))); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 5;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
@@ -464,11 +489,19 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weighty = 1.0;
         add(fileRefPane, gridBagConstraints);
+
+        personaPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.personaPanel.border.title"))); // NOI18N
+        personaPanel.setMinimumSize(new java.awt.Dimension(35, 75));
+        personaPanel.setPreferredSize(new java.awt.Dimension(112, 75));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        add(personaPanel, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
 
@@ -489,6 +522,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     private javax.swing.JPanel fileRefPane;
     private javax.swing.JLabel messagesDataLabel;
     private javax.swing.JLabel messagesLabel;
+    private javax.swing.JPanel personaPanel;
     private javax.swing.JLabel referencesDataLabel;
     private javax.swing.JLabel referencesLabel;
     private javax.swing.JLabel selectAccountFileRefLabel;

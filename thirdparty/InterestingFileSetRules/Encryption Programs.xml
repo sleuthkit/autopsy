@@ -3,7 +3,6 @@
  <INTERESTING_FILE_SET description="Finds Encryption Programs installed on the machine" ignoreKnown="false" name="Encryption Programs" standardSet="true" versionNumber="2">
   <NAME name="aescrypt" regex="false" typeFilter="file">aescrypt.exe</NAME>
   <NAME name="AxCrypt" regex="false" typeFilter="file">AxCrypt.exe</NAME>
-  <NAME name="BitLocker" regex="false" typeFilter="all">BitLockerDeviceEncryption.exe</NAME>
   <NAME name="certainsafe" regex="false" typeFilter="file">certainsafe.exe</NAME>
   <NAME name="CryptoExpert 8" regex="false" typeFilter="file">cexpertcmd.exe</NAME>
   <NAME name="CryptoExpert 8" regex="false" typeFilter="file"> cexpert_gui.exe</NAME>

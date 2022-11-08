@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2020 Basis Technology Corp.
+ * Copyright 2012-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import com.google.common.annotations.Beta;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.awt.Cursor;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -29,6 +30,7 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,6 +41,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,6 +64,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -81,7 +85,24 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsAddedToPersonEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsUpdatedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.HostsRemovedFromPersonEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsUpdatedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAccountsDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.OsAcctInstancesAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.PersonsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.PersonsUpdatedEvent;
+import org.sleuthkit.autopsy.casemodule.events.PersonsDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesUpdatedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagSetsEvent.TagSetsAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TagSetsEvent.TagSetsDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -104,6 +125,8 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.datamodel.hosts.OpenHostsAction;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
@@ -114,6 +137,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
 import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
@@ -127,13 +151,17 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.OsAccount;
+import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.SleuthkitCaseAdminUtil;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
+import org.sleuthkit.datamodel.TskEvent;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
 
 /**
@@ -141,9 +169,10 @@ import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
  */
 public class Case {
 
-    private static final String CASE_TEMP_DIR = Case.class.getSimpleName();
     private static final int CASE_LOCK_TIMEOUT_MINS = 1;
     private static final int CASE_RESOURCES_LOCK_TIMEOUT_HOURS = 1;
+    private static final String APP_NAME = UserPreferences.getAppName();
+    private static final String TEMP_FOLDER = "Temp";
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
     private static final String CACHE_FOLDER = "Cache"; //NON-NLS
@@ -170,6 +199,9 @@ public class Case {
     private final SleuthkitEventListener sleuthkitEventListener;
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
+
+    private volatile boolean hasDataSource = false;
+    private volatile boolean hasData = false;
 
     /*
      * Get a reference to the main window of the desktop application to use to
@@ -409,7 +441,80 @@ public class Case {
          * An item in the central repository has had its comment modified. The
          * old value is null, the new value is string for current comment.
          */
-        CR_COMMENT_CHANGED;
+        CR_COMMENT_CHANGED,
+        /**
+         * One or more OS accounts have been added to the case.
+         */
+        OS_ACCOUNTS_ADDED,
+        /**
+         * One or more OS accounts in the case have been updated.
+         */
+        OS_ACCOUNTS_UPDATED,
+        /**
+         * One or more OS accounts have been deleted from the case.
+         */
+        OS_ACCOUNTS_DELETED,
+        /**
+         * One or more OS account instances have been added to the case.
+         */
+        OS_ACCT_INSTANCES_ADDED,
+        /**
+         * One or more hosts have been added to the case.
+         */
+        HOSTS_ADDED,
+        /**
+         * One or more hosts in the case have been updated.
+         */
+        HOSTS_UPDATED,
+        /**
+         * One or more hosts have been deleted from the case.
+         */
+        HOSTS_DELETED,
+        /**
+         * One or more persons have been added to the case.
+         */
+        PERSONS_ADDED,
+        /**
+         * One or more persons in the case have been updated.
+         */
+        PERSONS_UPDATED,
+        /**
+         * One or more persons been deleted from the case.
+         */
+        PERSONS_DELETED,
+        /**
+         * One or more hosts have been added to a person.
+         */
+        HOSTS_ADDED_TO_PERSON,
+        /**
+         * One or more hosts have been removed from a person.
+         */
+        HOSTS_REMOVED_FROM_PERSON,
+        
+        /**
+         * One or more TagNames have been added.
+         */
+        TAG_NAMES_ADDED,
+        
+        /**
+         * One or more TagNames have been updated.
+         */
+        TAG_NAMES_UPDATED,
+        
+        /**
+         * One or more TagNames have been deleted.
+         */
+        TAG_NAMES_DELETED,
+        
+        /**
+         * One or more TagSets have been added.
+         */
+        TAG_SETS_ADDED,
+        
+        /**
+         * One or more TagSets have been removed.
+         */
+        TAG_SETS_DELETED;
 
     };
 
@@ -425,23 +530,138 @@ public class Case {
             eventPublisher.publish(new TimelineEventAddedEvent(event));
         }
 
-        @SuppressWarnings("deprecation")
         @Subscribe
-        public void publishArtifactsPostedEvent(Blackboard.ArtifactsPostedEvent event) {
-            for (BlackboardArtifact.Type artifactType : event.getArtifactTypes()) {
-                /*
-                 * IngestServices.fireModuleDataEvent is deprecated to
-                 * discourage ingest module writers from using it (they should
-                 * use org.sleuthkit.datamodel.Blackboard.postArtifact(s)
-                 * instead), but a way to publish
-                 * Blackboard.ArtifactsPostedEvents from the SleuthKit layer as
-                 * Autopsy ModuleDataEvents is still needed.
-                 */
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                        event.getModuleName(),
-                        artifactType,
-                        event.getArtifacts(artifactType)));
+        public void publishOsAccountsAddedEvent(TskEvent.OsAccountsAddedTskEvent event) {
+            hasData = true;
+            eventPublisher.publish(new OsAccountsAddedEvent(event.getOsAcounts()));
+        }
+
+        @Subscribe
+        public void publishOsAccountsUpdatedEvent(TskEvent.OsAccountsUpdatedTskEvent event) {
+            eventPublisher.publish(new OsAccountsUpdatedEvent(event.getOsAcounts()));
+        }
+
+        @Subscribe
+        public void publishOsAccountDeletedEvent(TskEvent.OsAccountsDeletedTskEvent event) {
+            try {
+                hasData = dbHasData();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Unable to retrieve the hasData status from the db", ex);
             }
+            eventPublisher.publish(new OsAccountsDeletedEvent(event.getOsAccountObjectIds()));
+        }
+
+        @Subscribe
+        public void publishOsAccountInstancesAddedEvent(TskEvent.OsAcctInstancesAddedTskEvent event) {
+            eventPublisher.publish(new OsAcctInstancesAddedEvent(event.getOsAccountInstances()));            
+        }
+        
+        /**
+         * Publishes an autopsy event from the sleuthkit HostAddedEvent
+         * indicating that hosts have been created.
+         *
+         * @param event The sleuthkit event for the creation of hosts.
+         */
+        @Subscribe
+        public void publishHostsAddedEvent(TskEvent.HostsAddedTskEvent event) {
+            hasData = true;
+            eventPublisher.publish(new HostsAddedEvent(event.getHosts()));
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit HostUpdateEvent
+         * indicating that hosts have been updated.
+         *
+         * @param event The sleuthkit event for the updating of hosts.
+         */
+        @Subscribe
+        public void publishHostsUpdatedEvent(TskEvent.HostsUpdatedTskEvent event) {
+            eventPublisher.publish(new HostsUpdatedEvent(event.getHosts()));
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit HostDeletedEvent
+         * indicating that hosts have been deleted.
+         *
+         * @param event The sleuthkit event for the deleting of hosts.
+         */
+        @Subscribe
+        public void publishHostsDeletedEvent(TskEvent.HostsDeletedTskEvent event) {
+            try {
+                hasData = dbHasData();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Unable to retrieve the hasData status from the db", ex);
+            }
+
+            eventPublisher.publish(new HostsDeletedEvent(event.getHostIds()));
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit PersonAddedEvent
+         * indicating that persons have been created.
+         *
+         * @param event The sleuthkit event for the creation of persons.
+         */
+        @Subscribe
+        public void publishPersonsAddedEvent(TskEvent.PersonsAddedTskEvent event) {
+            eventPublisher.publish(new PersonsAddedEvent(event.getPersons()));
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit PersonChangedEvent
+         * indicating that persons have been updated.
+         *
+         * @param event The sleuthkit event for the updating of persons.
+         */
+        @Subscribe
+        public void publishPersonsUpdatedEvent(TskEvent.PersonsUpdatedTskEvent event) {
+            eventPublisher.publish(new PersonsUpdatedEvent(event.getPersons()));
+        }
+
+        /**
+         * Publishes an autopsy event from the sleuthkit PersonDeletedEvent
+         * indicating that persons have been deleted.
+         *
+         * @param event The sleuthkit event for the deleting of persons.
+         */
+        @Subscribe
+        public void publishPersonsDeletedEvent(TskEvent.PersonsDeletedTskEvent event) {
+            eventPublisher.publish(new PersonsDeletedEvent(event.getPersonIds()));
+        }
+
+        @Subscribe
+        public void publishHostsAddedToPersonEvent(TskEvent.HostsAddedToPersonTskEvent event) {
+            eventPublisher.publish(new HostsAddedToPersonEvent(event.getPerson(), event.getHosts()));
+        }
+
+        @Subscribe
+        public void publisHostsRemovedFromPersonEvent(TskEvent.HostsRemovedFromPersonTskEvent event) {
+            eventPublisher.publish(new HostsRemovedFromPersonEvent(event.getPerson(), event.getHostIds()));
+        }
+        
+        @Subscribe
+        public void publicTagNamesAdded(TskEvent.TagNamesAddedTskEvent event) {
+            eventPublisher.publish(new TagNamesAddedEvent(event.getTagNames()));
+        }
+
+        @Subscribe
+        public void publicTagNamesUpdated(TskEvent.TagNamesUpdatedTskEvent event) {
+            eventPublisher.publish(new TagNamesUpdatedEvent(event.getTagNames()));
+        }
+
+        @Subscribe
+        public void publicTagNamesDeleted(TskEvent.TagNamesDeletedTskEvent event) {
+            eventPublisher.publish(new TagNamesDeletedEvent(event.getTagNameIds()));
+        }
+
+        @Subscribe
+        public void publicTagSetsAdded(TskEvent.TagSetsAddedTskEvent event) {
+            eventPublisher.publish(new TagSetsAddedEvent(event.getTagSets()));
+        }
+
+        @Subscribe
+        public void publicTagSetsDeleted(TskEvent.TagSetsDeletedTskEvent event) {
+            eventPublisher.publish(new TagSetsDeletedEvent(event.getTagSetIds()));
         }
     }
 
@@ -720,13 +940,13 @@ public class Case {
             try {
                 eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), closedCase, null));
                 logger.log(Level.INFO, "Closing current case {0} ({1}) in {2}", new Object[]{closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()}); //NON-NLS
-                currentCase = null;
                 closedCase.doCloseCaseAction();
                 logger.log(Level.INFO, "Closed current case {0} ({1}) in {2}", new Object[]{closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()}); //NON-NLS
             } catch (CaseActionException ex) {
                 logger.log(Level.SEVERE, String.format("Error closing current case %s (%s) in %s", closedCase.getDisplayName(), closedCase.getName(), closedCase.getCaseDirectory()), ex); //NON-NLS                
                 throw ex;
             } finally {
+                currentCase = null;
                 if (RuntimeProperties.runningWithGUI()) {
                     updateGUIForCaseClosed();
                 }
@@ -1066,88 +1286,106 @@ public class Case {
      * Update the GUI to to reflect the current case.
      */
     private static void updateGUIForCaseOpened(Case newCurrentCase) {
-        if (RuntimeProperties.runningWithGUI()) {
-            SwingUtilities.invokeLater(() -> {
-                /*
-                 * If the case database was upgraded for a new schema and a
-                 * backup database was created, notify the user.
-                 */
-                SleuthkitCase caseDb = newCurrentCase.getSleuthkitCase();
-                String backupDbPath = caseDb.getBackupDatabasePath();
-                if (null != backupDbPath) {
-                    JOptionPane.showMessageDialog(
-                            mainFrame,
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg", backupDbPath),
-                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
-                            JOptionPane.INFORMATION_MESSAGE);
-                }
-
-                /*
-                 * Look for the files for the data sources listed in the case
-                 * database and give the user the opportunity to locate any that
-                 * are missing.
-                 */
-                Map<Long, String> imgPaths = getImagePaths(caseDb);
-                for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
-                    long obj_id = entry.getKey();
-                    String path = entry.getValue();
-                    boolean fileExists = (new File(path).isFile() || DriveUtils.driveExists(path));
-                    if (!fileExists) {
-                        int response = JOptionPane.showConfirmDialog(
-                                mainFrame,
-                                NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", path),
-                                NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.title"),
-                                JOptionPane.YES_NO_OPTION);
-                        if (response == JOptionPane.YES_OPTION) {
-                            MissingImageDialog.makeDialog(obj_id, caseDb);
-                        } else {
-                            logger.log(Level.SEVERE, "User proceeding with missing image files"); //NON-NLS
-
-                        }
-                    }
-                }
-
-                /*
-                 * Enable the case-specific actions.
-                 */
-                CallableSystemAction.get(AddImageAction.class).setEnabled(FeatureAccessUtils.canAddDataSources());
-                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
-                CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
-                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(FeatureAccessUtils.canDeleteCurrentCase());
-                CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
-                CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
-                CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(true);
-                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
-                CallableSystemAction.get(OpenDiscoveryAction.class).setEnabled(true);
-
-                /*
-                 * Add the case to the recent cases tracker that supplies a list
-                 * of recent cases to the recent cases menu item and the
-                 * open/create case dialog.
-                 */
-                RecentCases.getInstance().addRecentCase(newCurrentCase.getDisplayName(), newCurrentCase.getMetadata().getFilePath().toString());
-
-                /*
-                 * Open the top components (windows within the main application
-                 * window).
-                 *
-                 * Note: If the core windows are not opened here, they will be
-                 * opened via the DirectoryTreeTopComponent 'propertyChange()'
-                 * method on a DATA_SOURCE_ADDED event.
-                 */
-                if (newCurrentCase.hasData()) {
-                    CoreComponentControl.openCoreWindows();
-                }
-
-                /*
-                 * Reset the main window title to:
-                 *
-                 * [curent case display name] - [application name].
-                 */
-                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + getNameForTitle());
-            });
+        /*
+         * If the case database was upgraded for a new schema and a backup
+         * database was created, notify the user.
+         */
+        SleuthkitCase caseDb = newCurrentCase.getSleuthkitCase();
+        String backupDbPath = caseDb.getBackupDatabasePath();
+        if (null != backupDbPath) {
+            JOptionPane.showMessageDialog(
+                    mainFrame,
+                    NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg", backupDbPath),
+                    NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
+                    JOptionPane.INFORMATION_MESSAGE);
         }
+
+        /*
+         * Look for the files for the data sources listed in the case database
+         * and give the user the opportunity to locate any that are missing.
+         */
+        Map<Long, String> imgPaths = getImagePaths(caseDb);
+        for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
+            long obj_id = entry.getKey();
+            String path = entry.getValue();
+            boolean fileExists = (new File(path).isFile() || DriveUtils.driveExists(path));
+            if (!fileExists) {
+                try {
+                    // Using invokeAndWait means that the dialog will
+                    // open on the EDT but this thread will wait for an 
+                    // answer. Using invokeLater would cause this loop to
+                    // end before all of the dialogs appeared.  
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            int response = JOptionPane.showConfirmDialog(
+                                    mainFrame,
+                                    NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", path),
+                                    NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.title"),
+                                    JOptionPane.YES_NO_OPTION);
+                            if (response == JOptionPane.YES_OPTION) {
+                                MissingImageDialog.makeDialog(obj_id, caseDb);
+                            } else {
+                                logger.log(Level.SEVERE, "User proceeding with missing image files"); //NON-NLS
+
+                            }
+                        }
+
+                    });
+                } catch (InterruptedException | InvocationTargetException ex) {
+                    logger.log(Level.SEVERE, "Failed to show missing image confirmation dialog", ex); //NON-NLS 
+                }
+            }
+        }
+
+        /*
+         * Enable the case-specific actions.
+         */
+        CallableSystemAction.get(AddImageAction.class).setEnabled(FeatureAccessUtils.canAddDataSources());
+        CallableSystemAction.get(OpenHostsAction.class).setEnabled(true);
+        CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+        CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
+        CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
+        CallableSystemAction.get(CaseDeleteAction.class).setEnabled(FeatureAccessUtils.canDeleteCurrentCase());
+        CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+        CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
+        CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(true);
+        CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
+        CallableSystemAction.get(OpenDiscoveryAction.class).setEnabled(true);
+
+        /*
+         * Add the case to the recent cases tracker that supplies a list of
+         * recent cases to the recent cases menu item and the open/create case
+         * dialog.
+         */
+        RecentCases.getInstance().addRecentCase(newCurrentCase.getDisplayName(), newCurrentCase.getMetadata().getFilePath().toString());
+        final boolean hasData = newCurrentCase.hasData();
+
+        SwingUtilities.invokeLater(() -> {
+            /*
+             * Open the top components (windows within the main application
+             * window).
+             *
+             * Note: If the core windows are not opened here, they will be
+             * opened via the DirectoryTreeTopComponent 'propertyChange()'
+             * method on a DATA_SOURCE_ADDED event.
+             */
+            mainFrame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            if (hasData) {
+                CoreComponentControl.openCoreWindows();
+            } else {
+                //ensure that the DirectoryTreeTopComponent is open so that it's listener can open the core windows including making it visible.
+                DirectoryTreeTopComponent.findInstance();
+            }
+            mainFrame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+
+            /*
+             * Reset the main window title to:
+             *
+             * [curent case display name] - [application name].
+             */
+            mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + getNameForTitle());
+        });
     }
 
     /*
@@ -1166,6 +1404,7 @@ public class Case {
                  * Disable the case-specific menu items.
                  */
                 CallableSystemAction.get(AddImageAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenHostsAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseDetailsAction.class).setEnabled(false);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(false);
@@ -1322,22 +1561,58 @@ public class Case {
     }
 
     /**
+     * @return A subdirectory of java.io.tmpdir.
+     */
+    private Path getBaseSystemTempPath() {
+        return Paths.get(System.getProperty("java.io.tmpdir"), APP_NAME, getName());
+    }
+
+    /**
      * Gets the full path to the temp directory for this case, creating it if it
      * does not exist.
      *
      * @return The temp subdirectory path.
      */
     public String getTempDirectory() {
-        // get temp folder scoped to the combination of case name and timestamp 
-        // provided by getName()
-        Path path = Paths.get(UserPreferences.getAppTempDirectory(), CASE_TEMP_DIR, getName());
-        File f = path.toFile();
-        // verify that the folder exists
-        if (!f.exists()) {
-            f.mkdirs();
+        // NOTE: UserPreferences may also be affected by changes in this method.
+        // See JIRA-7505 for more information.
+        Path basePath = null;
+        // get base temp path for the case based on user preference
+        switch (UserMachinePreferences.getTempDirChoice()) {
+            case CUSTOM:
+                String customDirectory = UserMachinePreferences.getCustomTempDirectory();
+                basePath = (StringUtils.isBlank(customDirectory))
+                        ? null
+                        : Paths.get(customDirectory, APP_NAME, getName());
+                break;
+            case CASE:
+                basePath = Paths.get(getCaseDirectory());
+                break;
+            case SYSTEM:
+            default:
+                // at this level, if the case directory is specified for a temp
+                // directory, return the system temp directory instead.
+                basePath = getBaseSystemTempPath();
+                break;
         }
 
-        return path.toAbsolutePath().toString();
+        basePath = basePath == null ? getBaseSystemTempPath() : basePath;
+
+        // get sub directories based on multi user vs. single user
+        Path caseRelPath = (CaseType.MULTI_USER_CASE.equals(getCaseType()))
+                ? Paths.get(NetworkUtils.getLocalHostName(), TEMP_FOLDER)
+                : Paths.get(TEMP_FOLDER);
+
+        File caseTempDir = basePath
+                .resolve(caseRelPath)
+                .toFile();
+
+        // ensure directory exists
+        if (!caseTempDir.exists()) {
+            caseTempDir.mkdirs();
+        }
+
+        return caseTempDir.getAbsolutePath();
     }
 
     /**
@@ -1462,26 +1737,21 @@ public class Case {
     }
 
     /**
-     * Queries whether or not the case has data, i.e., whether or not at least
-     * one data source has been added to the case.
+     * Returns true if there is any data in the case.
      *
      * @return True or false.
      */
     public boolean hasData() {
-        boolean hasDataSources = false;
-        String query = "SELECT count(*) AS count FROM data_source_info";
-        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
-            ResultSet resultSet = dbQuery.getResultSet();
-            if (resultSet.next()) {
-                long numDataSources = resultSet.getLong("count");
-                if (numDataSources > 0) {
-                    hasDataSources = true;
-                }
-            }
-        } catch (TskCoreException | SQLException ex) {
-            logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
-        }
-        return hasDataSources;
+        return hasData;
+    }
+
+    /**
+     * Returns true if there is one or more data sources in the case.
+     *
+     * @return True or false.
+     */
+    public boolean hasDataSource() {
+        return hasDataSource;
     }
 
     /**
@@ -1495,6 +1765,8 @@ public class Case {
      *                notifyNewDataSource after the data source is added.
      */
     public void notifyAddingDataSource(UUID eventId) {
+        hasDataSource = true;
+        hasData = true;
         eventPublisher.publish(new AddingDataSourceEvent(eventId));
     }
 
@@ -1681,6 +1953,8 @@ public class Case {
             String errorMsg = "Invalid local path provided: " + localPath; // NON-NLS
             throw new TskCoreException(errorMsg, ex);
         }
+        hasData = true;
+
         Report report = this.caseDb.addReport(normalizedLocalPath, srcModuleName, reportName, parent);
         eventPublisher.publish(new ReportAddedEvent(report));
         return report;
@@ -1709,6 +1983,15 @@ public class Case {
     public void deleteReports(Collection<? extends Report> reports) throws TskCoreException {
         for (Report report : reports) {
             this.caseDb.deleteReport(report);
+        }
+
+        try {
+            hasData = dbHasData();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to retrieve the hasData status from the db", ex);
+        }
+
+        for (Report report : reports) {
             eventPublisher.publish(new AutopsyEvent(Events.REPORT_DELETED.toString(), report, null));
         }
     }
@@ -1718,7 +2001,7 @@ public class Case {
      *
      * @return A CaseMetaData object.
      */
-    CaseMetadata getMetadata() {
+    public CaseMetadata getMetadata() {
         return metadata;
     }
 
@@ -2466,6 +2749,7 @@ public class Case {
             } else {
                 throw new CaseActionException(Bundle.Case_open_exception_multiUserCaseNotEnabled());
             }
+            updateDataParameters();
         } catch (TskUnsupportedSchemaVersionException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_unsupportedSchemaVersionMessage(ex.getLocalizedMessage()), ex);
         } catch (UserPreferencesException ex) {
@@ -2828,8 +3112,8 @@ public class Case {
      * @throws CaseActionException If the lock cannot be acquired.
      */
     @Messages({
-        "Case.lockingException.couldNotAcquireSharedLock=Failed to get an shared lock on the case.",
-        "Case.lockingException.couldNotAcquireExclusiveLock=Failed to get a exclusive lock on the case."
+        "Case.lockingException.couldNotAcquireSharedLock=Failed to get a shared lock on the case.",
+        "Case.lockingException.couldNotAcquireExclusiveLock=Failed to get an exclusive lock on the case."
     })
     private void acquireCaseLock(CaseLockType lockType) throws CaseActionException {
         String caseDir = metadata.getCaseDirectory();
@@ -3240,6 +3524,78 @@ public class Case {
         } catch (CaseNodeDataException ex) {
             logger.log(Level.SEVERE, String.format("Error updating deleted item flag %s for %s (%s) in %s", flag.name(), caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()), ex);
 
+        }
+    }
+
+    /**
+     * Initialize the hasData and hasDataSource parameters by checking the
+     * database.
+     *
+     * hasDataSource will be true if any data Source exists the db.
+     *
+     * hasData will be true if hasDataSource is true or if there are entries in
+     * the tsk_object or tsk_host tables.
+     *
+     * @throws TskCoreException
+     */
+    private void updateDataParameters() throws TskCoreException {
+        hasDataSource = dbHasDataSource();
+
+        if (!hasDataSource) {
+            hasData = dbHasData();
+        } else {
+            hasData = true;
+        }
+    }
+
+    /**
+     * Returns true of there are any data sources in the case database.
+     *
+     * @return True if this case as a data source.
+     *
+     * @throws TskCoreException
+     */
+    private boolean dbHasDataSource() throws TskCoreException {
+        String query = "SELECT count(*) AS count FROM (SELECT * FROM data_source_info LIMIT 1)t";
+        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            if (resultSet.next()) {
+                return resultSet.getLong("count") > 0;
+            }
+            return false;
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
+            throw new TskCoreException("Error accessing case databse", ex);
+        }
+    }
+
+    /**
+     * Returns true if the case has data. A case has data if there is at least
+     * one row in either the tsk_objects or tsk_hosts table.
+     *
+     * @return True if there is data in this case.
+     *
+     * @throws TskCoreException
+     */
+    private boolean dbHasData() throws TskCoreException {
+        // The LIMIT 1 in the subquery should limit the data returned and 
+        // make the overall query more efficent.
+        String query = "SELECT SUM(cnt) total FROM "
+                + "(SELECT COUNT(*) AS cnt FROM "
+                + "(SELECT * FROM tsk_objects LIMIT 1)t "
+                + "UNION ALL "
+                + "SELECT COUNT(*) AS cnt FROM "
+                + "(SELECT * FROM tsk_hosts LIMIT 1)r) s";
+        try (SleuthkitCase.CaseDbQuery dbQuery = caseDb.executeQuery(query)) {
+            ResultSet resultSet = dbQuery.getResultSet();
+            if (resultSet.next()) {
+                return resultSet.getLong("total") > 0;
+            } else {
+                return false;
+            }
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Error accessing case database", ex); //NON-NLS
+            throw new TskCoreException("Error accessing case databse", ex);
         }
     }
 

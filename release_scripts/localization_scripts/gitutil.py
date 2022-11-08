@@ -1,7 +1,7 @@
 """Functions relating to using git and GitPython with an existing repo.
 """
 
-from git import Repo, Diff, Blob
+from git import Repo, Diff, Blob, Tree
 from typing import List, Union, Iterator, Tuple, Any
 from itemchange import ItemChange, get_changed
 from pathlib import Path
@@ -17,6 +17,7 @@ def get_git_root(child_path: str) -> str:
     """
     Taken from https://stackoverflow.com/questions/22081209/find-the-root-of-the-git-repository-where-the-file-lives,
     this obtains the root path of the git repo in which this file exists.
+
     Args:
         child_path:  The path of a child within the repo.
 
@@ -127,7 +128,7 @@ def get_property_files_diff(repo_path: str, commit_1_id: str, commit_2_id: str,
         yield from get_changed_from_diff(rel_path, diff)
 
 
-def list_paths(root_tree, path: Path = Path('.')) -> Iterator[Tuple[str, Blob]]:
+def list_paths(root_tree: Tree, path: Path = Path('.')) -> Iterator[Tuple[str, Blob]]:
     """
     Given the root path to serve as a prefix, walks the tree of a git commit returning all files and blobs.
     Repurposed from: https://www.enricozini.org/blog/2019/debian/gitpython-list-all-files-in-a-git-commit/
@@ -146,6 +147,21 @@ def list_paths(root_tree, path: Path = Path('.')) -> Iterator[Tuple[str, Blob]]:
         yield from list_paths(tree, path / tree.name)
 
 
+def get_tree(repo_path: str, commit_id: str) -> Tree:
+    """
+    Retrieves the tree that can be walked for files and file content at the specified commit.
+
+    Args:
+        repo_path: The path to the repo or a child directory of the repo.
+        commit_id: The commit id.
+
+    Returns: The tree.
+    """
+    repo = Repo(repo_path, search_parent_directories=True)
+    commit = repo.commit(commit_id.strip())
+    return commit.tree
+
+
 def get_property_file_entries(repo_path: str, at_commit: str = 'HEAD',
                               property_file_extension: str = DEFAULT_PROPS_EXTENSION) -> Iterator[PropEntry]:
     """
@@ -157,11 +173,8 @@ def get_property_file_entries(repo_path: str, at_commit: str = 'HEAD',
         property_file_extension: The extension to use for scanning for property files.
 
     Returns: An iterator of PropEntry objects.
-
     """
-    repo = Repo(repo_path, search_parent_directories=True)
-    commit = repo.commit(at_commit.strip())
-    for item in list_paths(commit.tree):
+    for item in list_paths(get_tree(repo_path, at_commit)):
         path, blob = item
         if path.endswith(property_file_extension):
             for key, val in get_entry_dict(get_text(blob)).items():

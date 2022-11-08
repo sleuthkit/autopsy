@@ -1,0 +1,50 @@
+/*! \page host_page Hosts
+
+
+[TOC]
+
+\section host_use Using Hosts
+
+\subsection host_wizard Associating a Data Source With a Host
+
+Every data source must be associated with a host. The first step in the \ref ds_add "add data source process" is to select a host for the data source you are about to add to the case. This host can be auto-generated, entered by the user, or selected from the list of hosts already present in the case.
+
+\image html data_source_host_select.png
+
+\subsection host_view Viewing Hosts
+
+Hosts are displayed in the \ref tree_viewer_page. Depending on the \ref view_options_page selected, hosts may be grouped together under persons. 
+
+\image html ui_tree_top_ds.png
+
+\subsection host_os_accounts OS Accounts
+
+OS accounts can be viewed in the OS Accounts node of the tree viewer. Each OS account is associated with a host, and the host information is displayed in the OS Account tab of the content viewer.
+
+\image html host_os_accounts.png
+
+\section host_management Managing Hosts
+
+\subsection host_menu Manage Hosts Menu
+
+Go to Case->Manage Hosts to open the host management panel.
+
+\image html manage_hosts.png
+
+Here you can see all hosts in the case, add new hosts, change the name of an existing host, and delete hosts that are not in use. 
+
+\subsection host_merge Merging Hosts
+
+Over the course of processing a case, it may become clear that two (or more) hosts should be combined. Merging one host into another will move all data sources from the source host into the destination host and move or combine any OS accounts found.
+
+
+To merge hosts, right-click on the host you want to merge into another host.
+
+\image html host_merge.png
+
+A confirmation dialog will display stating that this can not be undone. After proceeding, the hosts will be merged together and the tree viewer node will update showing the combined data.
+
+\image html host_merge_result.png
+
+
+*/

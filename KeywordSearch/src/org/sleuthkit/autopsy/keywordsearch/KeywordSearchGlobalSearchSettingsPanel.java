@@ -23,8 +23,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequency;
 
@@ -33,7 +35,8 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequ
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
-
+    
+    private static final long serialVersionUID = 1L;
     private final Logger logger = Logger.getLogger(KeywordSearchGlobalSearchSettingsPanel.class.getName());
 
     /**
@@ -43,7 +46,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         initComponents();
         customizeComponents();
     }
-
+    
     private void activateWidgets() {
         skipNSRLCheckBox.setSelected(KeywordSearchSettings.getSkipKnown());
         showSnippetsCB.setSelected(KeywordSearchSettings.getShowSnippets());
@@ -51,7 +54,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         ingestWarningLabel.setVisible(ingestRunning);
         skipNSRLCheckBox.setEnabled(!ingestRunning);
         setTimeSettingEnabled(!ingestRunning);
-
+        
         final UpdateFrequency curFreq = KeywordSearchSettings.getUpdateFrequency();
         switch (curFreq) {
             case FAST:
@@ -185,40 +188,44 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(16, 16, 16)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(settingsLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(settingsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(skipNSRLCheckBox)
+                            .addComponent(showSnippetsCB))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(ingestWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(informationLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(informationSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 309, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
+                                .addGap(16, 16, 16)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(skipNSRLCheckBox)
-                                    .addComponent(showSnippetsCB)
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(filesIndexedLabel)
                                         .addGap(18, 18, 18)
                                         .addComponent(filesIndexedValue))
                                     .addComponent(frequencyLabel)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addGap(10, 10, 10)
+                                        .addComponent(chunksLabel)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(chunksValLabel))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(16, 16, 16)
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(timeRadioButton2)
                                             .addComponent(timeRadioButton1)
                                             .addComponent(timeRadioButton3)
                                             .addComponent(timeRadioButton4)
-                                            .addComponent(timeRadioButton5)))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(chunksLabel)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(chunksValLabel)))))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(ingestWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                                            .addComponent(timeRadioButton5))))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(settingsLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(settingsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {chunksLabel, filesIndexedLabel});
@@ -260,7 +267,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                     .addComponent(chunksValLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(ingestWarningLabel)
-                .addContainerGap(66, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -319,12 +326,12 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         KeywordSearchSettings.setUpdateFrequency(getSelectedTimeValue());
         KeywordSearchSettings.setShowSnippets(showSnippetsCB.isSelected());
     }
-
+    
     @Override
     public void load() {
         activateWidgets();
     }
-
+    
     private void setTimeSettingEnabled(boolean enabled) {
         timeRadioButton1.setEnabled(enabled);
         timeRadioButton2.setEnabled(enabled);
@@ -333,7 +340,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         timeRadioButton5.setEnabled(enabled);
         frequencyLabel.setEnabled(enabled);
     }
-
+    
     private UpdateFrequency getSelectedTimeValue() {
         if (timeRadioButton1.isSelected()) {
             return UpdateFrequency.FAST;
@@ -348,31 +355,33 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         }
         return UpdateFrequency.DEFAULT;
     }
-
+    
+    @NbBundle.Messages({"KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsOCR=Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)",
+        "KeywordSearchGlobalSearchSettingsPanel.customizeComponents.windowsLimitedOCR=Only process images which are over 100KB in size or extracted from a document. (Beta) (Requires Windows 64-bit)"})
     private void customizeComponents() {
-
+        
         timeGroup.add(timeRadioButton1);
         timeGroup.add(timeRadioButton2);
         timeGroup.add(timeRadioButton3);
         timeGroup.add(timeRadioButton4);
         timeGroup.add(timeRadioButton5);
-
+        
         this.skipNSRLCheckBox.setSelected(KeywordSearchSettings.getSkipKnown());
-
+        
         try {
             filesIndexedValue.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedFiles()));
             chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Could not get number of indexed files/chunks"); //NON-NLS
         }
-
+        
         KeywordSearch.addNumIndexedFilesChangeListener(
                 new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();
                 Object newValue = evt.getNewValue();
-
+                
                 if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
                     int newFilesIndexed = ((Integer) newValue);
                     filesIndexedValue.setText(Integer.toString(newFilesIndexed));
@@ -385,7 +394,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                 }
             }
         });
-        
+
         //allow panel to toggle its enabled status while it is open based on ingest events
         IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
             @Override

@@ -24,7 +24,9 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -38,9 +40,11 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUB
 import org.sleuthkit.datamodel.TskCoreException;
 import static org.sleuthkit.autopsy.communications.relationships.RelationshipsNodeUtilities.getAttributeDisplayString;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.datamodel.Account;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.blackboardutils.attributes.BlackboardJsonAttrUtil;
 import org.sleuthkit.datamodel.blackboardutils.attributes.MessageAttachments;
 
@@ -113,22 +117,48 @@ class MessageNode extends BlackboardArtifactNode {
         String msg_from = getAttributeDisplayString(artifact, TSK_EMAIL_FROM);
         String msg_to = getAttributeDisplayString(artifact, TSK_EMAIL_TO);
         String date = getAttributeDisplayString(artifact, TSK_DATETIME_SENT);
-
-        if (msg_from.isEmpty()) {
-            msg_from = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM);
-
+        
+        Account account_from = null;
+        Account account_to = null;
+        
+        try {
+            CommunicationsManager manager = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager();
+            
+            if (msg_from.isEmpty()) {
+                msg_from = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM);
+                if(manager != null && !msg_from.isEmpty()) {
+                    account_from = manager.getAccount(Account.Type.PHONE, msg_from);
+                }
+            } else if(manager != null) {
+                // To email address sometime is in the format <name>: <email>
+                String toStr = msg_to;
+                String[] strSplit = msg_to.split(":");
+                if(strSplit.length > 0) {
+                    toStr = strSplit[strSplit.length-1].trim();
+                }
+                account_from = manager.getAccount(Account.Type.EMAIL, toStr);
+            }  
+                   
+            if (msg_to.isEmpty()) {
+                msg_to = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO);
+                if(manager != null && !msg_to.isEmpty()) {
+                    account_to = manager.getAccount(Account.Type.PHONE, msg_to);
+                }
+            } else if(manager != null) {
+                account_to = manager.getAccount(Account.Type.EMAIL, msg_to);
+            }
+            
+            if (date.isEmpty()) {
+                date = getAttributeDisplayString(artifact, TSK_DATETIME);
+            }
+        } catch (TskCoreException ex) {
+            
         }
-        if (msg_to.isEmpty()) {
-            msg_to = getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO);
-        }
-        if (date.isEmpty()) {
-            date = getAttributeDisplayString(artifact, TSK_DATETIME);
-        }
 
-        sheetSet.put(new NodeProperty<>("From", Bundle.MessageNode_Node_Property_From(), "",
-                msg_from)); //NON-NLS
-        sheetSet.put(new NodeProperty<>("To", Bundle.MessageNode_Node_Property_To(), "",
-                msg_to)); //NON-NLS
+        sheetSet.put(new AccountNodeProperty<>("From", Bundle.MessageNode_Node_Property_From(), 
+                msg_from, account_from)); //NON-NLS
+        sheetSet.put(new AccountNodeProperty<>("To", Bundle.MessageNode_Node_Property_To(),
+                msg_to, account_to)); //NON-NLS
         sheetSet.put(new NodeProperty<>("Date", Bundle.MessageNode_Node_Property_Date(), "",
                 date)); //NON-NLS
 

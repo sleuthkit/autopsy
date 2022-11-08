@@ -30,6 +30,7 @@ import java.io.IOException;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.texttranslation.TextTranslator;
 import org.sleuthkit.autopsy.texttranslation.TranslationConfigException;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
@@ -46,7 +47,7 @@ public class BingTranslator implements TextTranslator {
     //https://docs.microsoft.com/en-us/azure/cognitive-services/translator/language-support
     private static final String BASE_URL = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&to=";
     private static final int MAX_STRING_LENGTH = 5000;
-    private final BingTranslatorSettingsPanel settingsPanel;
+    private BingTranslatorSettingsPanel settingsPanel;
     private final BingTranslatorSettings settings = new BingTranslatorSettings();
     // This sends messages to Microsoft.
     private final OkHttpClient CLIENT = new OkHttpClient();
@@ -55,11 +56,11 @@ public class BingTranslator implements TextTranslator {
      * Create a Bing Translator
      */
     public BingTranslator() {
-        settingsPanel = new BingTranslatorSettingsPanel(settings.getAuthenticationKey(), settings.getTargetLanguageCode());
+        
     }
 
     /**
-     * Get the tranlationurl for the specified language code
+     * Get the tranlation url for the specified language code
      *
      *
      *
@@ -133,7 +134,11 @@ public class BingTranslator implements TextTranslator {
     }
 
     @Override
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public JPanel getSettingsPanel() {
+        if(settingsPanel == null) {
+            settingsPanel = new BingTranslatorSettingsPanel(settings.getAuthenticationKey(), settings.getTargetLanguageCode());
+        }
         return settingsPanel;
     }
 
@@ -160,9 +165,8 @@ public class BingTranslator implements TextTranslator {
          * the Spanish word for cat: [ { "detectedLanguage": { "language": "es",
          * "score": 1.0 }, "translations": [ { "text": "cat", "to": "en" } ] } ]
          */
-        JsonParser parser = new JsonParser();
         try {
-            JsonArray responses = parser.parse(json_text).getAsJsonArray();
+            JsonArray responses = JsonParser.parseString(json_text).getAsJsonArray();
             //As far as I know, there's always exactly one item in the array.
             JsonObject response0 = responses.get(0).getAsJsonObject();
             JsonArray translations = response0.getAsJsonArray("translations");

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,7 @@ import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.ingest.Snapshot;
+import org.sleuthkit.autopsy.ingest.IngestJobProgressSnapshot;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestThreadActivitySnapshot;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotProvider;
@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotProvider;
 final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSnapshotProvider, Serializable {
 
     private static final long serialVersionUID = 1L;
-    private static final int CURRENT_VERSION = 3;
+    private static final int CURRENT_VERSION = 4;
     private static final int DEFAULT_PRIORITY = 0;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
 
@@ -98,8 +98,13 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
      * Version 3 fields.
      */
     private List<IngestThreadActivitySnapshot> ingestThreadsSnapshot;
-    private List<Snapshot> ingestJobsSnapshot;
+    private List<IngestJobProgressSnapshot> ingestJobsSnapshot;
     private Map<String, Long> moduleRunTimesSnapshot;
+    
+    /*
+     * Version 4 fields.
+     */
+    private boolean ocrEnabled;
 
     /**
      * Constructs a new automated ingest job. All job state not specified in the
@@ -194,6 +199,11 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
             this.ingestJobsSnapshot = Collections.emptyList();
             this.moduleRunTimesSnapshot = Collections.emptyMap();
             
+            /*
+             * Version 4 fields
+             */
+            this.ocrEnabled = nodeData.getOcrEnabled();
+            
         } catch (Exception ex) {
             throw new AutoIngestJobException(String.format("Error creating automated ingest job"), ex);
         }
@@ -253,6 +263,24 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
     synchronized Integer getPriority() {
         return this.priority;
     }
+    
+    /**
+     * Gets the OCR flag for the job.
+     *
+     * @return Flag whether OCR is enabled/disabled.
+     */
+    synchronized boolean getOcrEnabled() {
+        return this.ocrEnabled;
+    }
+
+    /**
+     * Sets the OCR enabled/disabled flag for the job.
+     *
+     * @param enabled Flag whether OCR is enabled/disabled.
+     */
+    synchronized void setOcrEnabled(boolean enabled) {
+        this.ocrEnabled = enabled;
+    }    
 
     /**
      * Sets the processing stage of the job. The start date/time for the stage
@@ -381,7 +409,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
      *
      * @param snapshot
      */
-    synchronized void setIngestJobsSnapshot(List<Snapshot> snapshot) {
+    synchronized void setIngestJobsSnapshot(List<IngestJobProgressSnapshot> snapshot) {
         this.ingestJobsSnapshot = snapshot;
     }
 
@@ -615,7 +643,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
     }
 
     @Override
-    public List<Snapshot> getIngestJobSnapshots() {
+    public List<IngestJobProgressSnapshot> getIngestJobSnapshots() {
         return this.ingestJobsSnapshot;
     }
 

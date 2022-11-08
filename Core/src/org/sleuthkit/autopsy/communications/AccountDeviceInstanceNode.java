@@ -20,27 +20,21 @@ package org.sleuthkit.autopsy.communications;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.centralrepository.datamodel.PersonaAccount;
+import org.sleuthkit.autopsy.communications.relationships.RelationshipsNodeUtilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Node to represent an Account Device Instance in the CVT
@@ -112,54 +106,16 @@ final class AccountDeviceInstanceNode extends AbstractNode {
 
     @Override
     public Action[] getActions(boolean context) {
-        ArrayList<Action> actions = new ArrayList<>(Arrays.asList(super.getActions(context)));
+        ArrayList<Action> actions = new ArrayList<>();
         actions.add(PinAccountsAction.getInstance());
         actions.add(ResetAndPinAccountsAction.getInstance());
+        actions.add(null);
+        actions.addAll(Arrays.asList(super.getActions(context)));
         return actions.toArray(new Action[actions.size()]);
     }
 
-    @Messages({
-        "# {0} - Contact Name",
-        "# {1} - Persona Name",
-        "AccountInstanceNode_Tooltip_Template=Contact: {0} - Persona: {1}",
-        "# {0} - PersonaAccount count",
-        "AccountInstanceNode_Tooltip_suffix=(1 of {0})"
-    })
     @Override
     public String getShortDescription() {
-        List<PersonaAccount> personaList;
-        List<BlackboardArtifact> contactArtifactList;
-        try {
-            personaList = CVTPersonaCache.getPersonaAccounts(account);
-            contactArtifactList = ContactCache.getContacts(account);
-        } catch (ExecutionException ex) {
-            logger.log(Level.WARNING, "Failed to retrieve Persona details for node.", ex);
-            return getDisplayName();
-        }
-
-        String personaName;
-        if (personaList != null && !personaList.isEmpty()) {
-            personaName = personaList.get(0).getPersona().getName();
-            if (personaList.size() > 1) {
-                personaName += Bundle.AccountInstanceNode_Tooltip_suffix(Integer.toString(personaList.size()));
-            }
-        } else {
-            personaName = "None";
-        }
-
-        String contactName = getDisplayName();
-        if (contactArtifactList != null && !contactArtifactList.isEmpty()) {
-            try {
-                BlackboardArtifact contactArtifact = contactArtifactList.get(0);
-                BlackboardAttribute attribute = contactArtifact.getAttribute(NAME_ATTRIBUTE);
-                if (attribute != null) {
-                    contactName = attribute.getValueString();
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Failed to retrive name attribute from contact artifact.", ex);
-            }
-        }
-
-        return Bundle.AccountInstanceNode_Tooltip_Template(contactName, personaName);
+        return RelationshipsNodeUtilities.getAccoutToolTipText(getDisplayName(), account);
     }
 }

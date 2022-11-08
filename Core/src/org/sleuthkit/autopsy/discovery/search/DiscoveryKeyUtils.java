@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,17 +18,23 @@
  */
 package org.sleuthkit.autopsy.discovery.search;
 
-import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Collections;
-import java.util.Date;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.discovery.search.SearchData.PageViews;
+import org.sleuthkit.autopsy.discovery.ui.MonthAbbreviation;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -53,6 +59,7 @@ public class DiscoveryKeyUtils {
         private final List<AbstractFilter> filters;
         private final SleuthkitCase sleuthkitCase;
         private final CentralRepository centralRepository;
+        private final SearchContext context;
 
         /**
          * Construct a new SearchKey with all information that defines a search.
@@ -64,16 +71,20 @@ public class DiscoveryKeyUtils {
          * @param sortingMethod      The method to sort the results by.
          * @param sleuthkitCase      The SleuthkitCase being searched.
          * @param centralRepository  The Central Repository being searched.
+         * @param context            The SearchContext which reflects the search
+         *                           being performed to get results for this
+         *                           key.
          */
         SearchKey(String userName, List<AbstractFilter> filters,
                 DiscoveryAttributes.AttributeType groupAttributeType,
                 Group.GroupSortingAlgorithm groupSortingType,
                 ResultsSorter.SortingMethod sortingMethod,
-                SleuthkitCase sleuthkitCase, CentralRepository centralRepository) {
+                SleuthkitCase sleuthkitCase, CentralRepository centralRepository, SearchContext context) {
             this.groupAttributeType = groupAttributeType;
             this.groupSortingType = groupSortingType;
             this.sortingMethod = sortingMethod;
             this.filters = filters;
+            this.context = context;
 
             StringBuilder searchStringBuilder = new StringBuilder();
             searchStringBuilder.append(userName);
@@ -87,8 +98,8 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * Construct a SearchKey without a SleuthkitCase or CentralRepositry
-         * instance.
+         * Construct a SearchKey without a SearchContext, SleuthkitCase or
+         * CentralRepositry instance.
          *
          * @param userName           The name of the user performing the search.
          * @param filters            The Filters being used for the search.
@@ -101,7 +112,8 @@ public class DiscoveryKeyUtils {
                 Group.GroupSortingAlgorithm groupSortingType,
                 ResultsSorter.SortingMethod sortingMethod) {
             this(userName, filters, groupAttributeType, groupSortingType,
-                    sortingMethod, null, null);
+                    sortingMethod, null, null, null);
+            //this constructor should only be used putting things directly into a map or getting if present since casedb, cr, and search context will be null
         }
 
         @Override
@@ -133,6 +145,23 @@ public class DiscoveryKeyUtils {
             int hash = 5;
             hash = 79 * hash + Objects.hashCode(getKeyString());
             return hash;
+        }
+
+        /**
+         * Get the SearchContext for the search this key is being used in.
+         *
+         * @return The SearchContext the search key is being used in.
+         *
+         * @throws DiscoveryException Thrown when the key being used has a null
+         *                            context indicating it was not created with
+         *                            knowledge of the case or central
+         *                            repository databases.
+         */
+        SearchContext getContext() throws DiscoveryException {
+            if (context == null) {
+                throw new DiscoveryException("The key in use was created without a context and does not support retrieving information from the databases.");
+            }
+            return context;
         }
 
         /**
@@ -794,6 +823,108 @@ public class DiscoveryKeyUtils {
     }
 
     /**
+     * Group key representing a domain category (TSK_WEB_CATEGORY artifact).
+     */
+    static class DomainCategoryGroupKey extends GroupKey {
+
+        private final Set<String> webCategories = new HashSet<>();
+        private final String displayName;
+
+        DomainCategoryGroupKey(Result result) {
+            if (result instanceof ResultDomain) {
+                ResultDomain domain = (ResultDomain) result;
+                this.webCategories.addAll(domain.getWebCategories());
+                displayName = String.join(",", webCategories);
+            } else {
+                throw new IllegalArgumentException("Input result should be of type ResultDomain");
+            }
+        }
+
+        @Override
+        String getDisplayName() {
+
+            return this.displayName;
+        }
+
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey instanceof GroupKey) {
+                return compareTo((GroupKey) otherKey) == 0;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(webCategories);
+        }
+
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof DomainCategoryGroupKey) {
+                if (webCategories.size() != ((DomainCategoryGroupKey) otherGroupKey).getWebCategories().size()) {
+                    return 1;
+                }
+                if (webCategories.containsAll(((DomainCategoryGroupKey) otherGroupKey).getWebCategories())) {
+                    return 0;
+                } else {
+                    return -1;
+                }
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }
+
+        Set<String> getWebCategories() {
+            return Collections.unmodifiableSet(webCategories);
+        }
+    }
+
+    /**
+     * Key representing a central repository notable status.
+     */
+    static class PreviouslyNotableGroupKey extends GroupKey {
+
+        private final SearchData.PreviouslyNotable notableStatus;
+
+        PreviouslyNotableGroupKey(Result result) {
+            this.notableStatus = result.getPreviouslyNotableInCR();
+        }
+
+        @Override
+        String getDisplayName() {
+            return this.notableStatus.toString();
+        }
+
+        @Override
+        public boolean equals(Object otherKey) {
+            if (otherKey instanceof GroupKey) {
+                return compareTo((GroupKey) otherKey) == 0;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getStatus().getRanking());
+        }
+
+        @Override
+        public int compareTo(GroupKey otherGroupKey) {
+            if (otherGroupKey instanceof PreviouslyNotableGroupKey) {
+                PreviouslyNotableGroupKey otherFrequencyGroupKey = (PreviouslyNotableGroupKey) otherGroupKey;
+                return Integer.compare(getStatus().getRanking(), otherFrequencyGroupKey.getStatus().getRanking());
+            } else {
+                return compareClassNames(otherGroupKey);
+            }
+        }
+
+        SearchData.PreviouslyNotable getStatus() {
+            return notableStatus;
+        }
+    }
+
+    /**
      * Key representing a central repository frequency group.
      */
     static class FrequencyGroupKey extends GroupKey {
@@ -1036,33 +1167,38 @@ public class DiscoveryKeyUtils {
     }
 
     /**
-     * Key representing a date of most recent activity.
+     * Key representing a date of last activity.
      */
-    static class MostRecentActivityDateGroupKey extends GroupKey {
+    static class LastActivityDateGroupKey extends GroupKey {
 
-        private final Long epochDate;
-        private final String dateNameString;
+        private ZonedDateTime currentWeekCutOff;
 
         /**
-         * Construct a new MostRecentActivityDateGroupKey.
+         * Construct a new LastActivityDateGroupKey.
          *
          * @param result The Result to create the group key for.
          */
-        @NbBundle.Messages({
-            "DiscoveryKeyUtils.MostRecentActivityDateGroupKey.noDate=No Date Available"})
-        MostRecentActivityDateGroupKey(Result result) {
+        LastActivityDateGroupKey(Result result) {
             if (result instanceof ResultDomain) {
-                epochDate = ((ResultDomain) result).getActivityEnd();
-                dateNameString = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
+                ResultDomain domainResult = ((ResultDomain) result);
+                currentWeekCutOff = getCurrentWeekCutOff(domainResult.getActivityEnd(), domainResult);
             } else {
-                epochDate = Long.MAX_VALUE;
-                dateNameString = Bundle.DiscoveryKeyUtils_MostRecentActivityDateGroupKey_noDate();
+                throw new IllegalArgumentException("Expected a domain result only.");
             }
         }
 
+        @NbBundle.Messages({
+            "# {0} - month abbreviation",
+            "# {1} - day of month",
+            "# {2} - year",
+            "DiscoveryAttributes.ActivityDateGroupKey.getDisplayNameTemplate=Week of {0} {1}, {2}"
+        })
         @Override
         String getDisplayName() {
-            return getDateNameString();
+            MonthAbbreviation currentCutOffMonth = MonthAbbreviation.fromMonthValue(currentWeekCutOff.getMonthValue());
+            return Bundle.DiscoveryAttributes_ActivityDateGroupKey_getDisplayNameTemplate(
+                    currentCutOffMonth.toString(), Integer.toString(currentWeekCutOff.getDayOfMonth()),
+                    Integer.toString(currentWeekCutOff.getYear()));
         }
 
         @Override
@@ -1071,58 +1207,45 @@ public class DiscoveryKeyUtils {
                 return true;
             }
 
-            if (!(otherKey instanceof MostRecentActivityDateGroupKey)) {
+            if (!(otherKey instanceof LastActivityDateGroupKey)) {
                 return false;
             }
 
-            MostRecentActivityDateGroupKey dateGroupKey = (MostRecentActivityDateGroupKey) otherKey;
-            return getDateNameString().equals(dateGroupKey.getDateNameString());
+            LastActivityDateGroupKey dateGroupKey = (LastActivityDateGroupKey) otherKey;
+            return getDisplayName().equals(dateGroupKey.getDisplayName());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getDateNameString());
+            return Objects.hash(getDisplayName());
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
-            if (otherGroupKey instanceof MostRecentActivityDateGroupKey) {
-                MostRecentActivityDateGroupKey otherDateGroupKey = (MostRecentActivityDateGroupKey) otherGroupKey;
-
-                // Put the empty list at the end
-                if (this.getEpochDate().equals(Long.MAX_VALUE)) {
-                    if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
-                        return 0;
-                    } else {
-                        return 1;
-                    }
-                } else if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
-                    return -1;
-                }
-
-                return getDateNameString().compareTo(otherDateGroupKey.getDateNameString());
+            if (otherGroupKey instanceof LastActivityDateGroupKey) {
+                LastActivityDateGroupKey otherDateGroupKey = (LastActivityDateGroupKey) otherGroupKey;
+                return Long.compare(otherDateGroupKey.currentWeekCutOff.toEpochSecond(), currentWeekCutOff.toEpochSecond());
             } else {
                 return compareClassNames(otherGroupKey);
             }
         }
+    }
 
-        /**
-         * Get the date this group is for as a Long.
-         *
-         * @return The date.
-         */
-        Long getEpochDate() {
-            return epochDate;
-        }
-
-        /**
-         * Get the name which identifies this group.
-         *
-         * @return The dateNameString.
-         */
-        String getDateNameString() {
-            return dateNameString;
-        }
+    /**
+     * Get the next closed Sunday given an epoch time and timezone. Dates for
+     * grouping are managed on a weekly basis. Each Sunday acts as the boundary
+     * and representative for the week.
+     */
+    private static ZonedDateTime getCurrentWeekCutOff(long epochSeconds, ResultDomain domainResult) {
+        Instant startActivityAsInsant = Instant.ofEpochSecond(epochSeconds);
+        // Determines the timezone using the settings panel or value parsed from the
+        // parent data source
+        TimeZone currentTimeZone = TimeZoneUtils.getTimeZone();
+        // Convert to a datetime using epoch and timezone.
+        ZonedDateTime startActivityAsDateTime = ZonedDateTime.ofInstant(startActivityAsInsant, currentTimeZone.toZoneId());
+        // Get the closest Sunday, which is the cut off for the current week.
+        // Use this cut off to perform grouping and comparing.
+        return startActivityAsDateTime.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
     }
 
     /**
@@ -1130,29 +1253,28 @@ public class DiscoveryKeyUtils {
      */
     static class FirstActivityDateGroupKey extends GroupKey {
 
-        private final Long epochDate;
-        private final String dateNameString;
+        private ZonedDateTime currentWeekCutOff;
 
         /**
          * Construct a new FirstActivityDateGroupKey.
          *
          * @param result The Result to create the group key for.
          */
-        @NbBundle.Messages({
-            "DiscoveryKeyUtils.FirstActivityDateGroupKey.noDate=No Date Available"})
         FirstActivityDateGroupKey(Result result) {
             if (result instanceof ResultDomain) {
-                epochDate = ((ResultDomain) result).getActivityStart();
-                dateNameString = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(new Date(TimeUnit.SECONDS.toMillis(epochDate)));
+                ResultDomain domainResult = ((ResultDomain) result);
+                currentWeekCutOff = getCurrentWeekCutOff(domainResult.getActivityStart(), domainResult);
             } else {
-                epochDate = Long.MAX_VALUE;
-                dateNameString = Bundle.DiscoveryKeyUtils_FirstActivityDateGroupKey_noDate();
+                throw new IllegalArgumentException("Expected a domain result only.");
             }
         }
 
         @Override
         String getDisplayName() {
-            return getDateNameString();
+            MonthAbbreviation currentCutOffMonth = MonthAbbreviation.fromMonthValue(currentWeekCutOff.getMonthValue());
+            return Bundle.DiscoveryAttributes_ActivityDateGroupKey_getDisplayNameTemplate(
+                    currentCutOffMonth.toString(), Integer.toString(currentWeekCutOff.getDayOfMonth()),
+                    Integer.toString(currentWeekCutOff.getYear()));
         }
 
         @Override
@@ -1166,83 +1288,49 @@ public class DiscoveryKeyUtils {
             }
 
             FirstActivityDateGroupKey dateGroupKey = (FirstActivityDateGroupKey) otherKey;
-            return getDateNameString().equals(dateGroupKey.getDateNameString());
+            return getDisplayName().equals(dateGroupKey.getDisplayName());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getDateNameString());
+            return Objects.hash(getDisplayName());
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
             if (otherGroupKey instanceof FirstActivityDateGroupKey) {
                 FirstActivityDateGroupKey otherDateGroupKey = (FirstActivityDateGroupKey) otherGroupKey;
-
-                // Put the empty list at the end
-                if (this.getEpochDate().equals(Long.MAX_VALUE)) {
-                    if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
-                        return 0;
-                    } else {
-                        return 1;
-                    }
-                } else if (otherDateGroupKey.getEpochDate().equals(Long.MAX_VALUE)) {
-                    return -1;
-                }
-
-                return getDateNameString().compareTo(otherDateGroupKey.getDateNameString());
+                return Long.compare(otherDateGroupKey.currentWeekCutOff.toEpochSecond(), currentWeekCutOff.toEpochSecond());
             } else {
                 return compareClassNames(otherGroupKey);
             }
         }
-
-        /**
-         * Get the date this group is for as a Long.
-         *
-         * @return The date.
-         */
-        Long getEpochDate() {
-            return epochDate;
-        }
-
-        /**
-         * Get the name which identifies this group.
-         *
-         * @return The dateNameString.
-         */
-        String getDateNameString() {
-            return dateNameString;
-        }
     }
 
     /**
-     * Key representing the number of visits.
+     * Key representing the number of page views. Page views are defined as the
+     * number of TSK_WEB_HISTORY artifacts that match a domain value.
      */
-    static class NumberOfVisitsGroupKey extends GroupKey {
+    static class PageViewsGroupKey extends GroupKey {
 
         private final String displayName;
-        private final Long visits;
+        private final PageViews pageViews;
 
         /**
          * Construct a new NumberOfVisitsGroupKey.
          *
          * @param result The Result to create the group key for.
          */
-        @NbBundle.Messages({
-            "# {0} - totalVisits",
-            "DiscoveryKeyUtils.NumberOfVisitsGroupKey.displayName={0} visits",
-            "DiscoveryKeyUtils.NumberOfVisitsGroupKey.noVisits=No visits"})
-        NumberOfVisitsGroupKey(Result result) {
+        PageViewsGroupKey(Result result) {
             if (result instanceof ResultDomain) {
-                Long totalVisits = ((ResultDomain) result).getTotalVisits();
-                if (totalVisits == null) {
-                    totalVisits = 0L;
+                Long totalPageViews = ((ResultDomain) result).getTotalPageViews();
+                if (totalPageViews == null) {
+                    totalPageViews = 0L;
                 }
-                visits = totalVisits;
-                displayName = Bundle.DiscoveryKeyUtils_NumberOfVisitsGroupKey_displayName(Long.toString(visits));
+                pageViews = PageViews.fromPageViewCount(totalPageViews);
+                displayName = pageViews.toString();
             } else {
-                displayName = Bundle.DiscoveryKeyUtils_NumberOfVisitsGroupKey_noVisits();
-                visits = -1L;
+                throw new IllegalArgumentException("Expected a domain instance only.");
             }
         }
 
@@ -1257,12 +1345,12 @@ public class DiscoveryKeyUtils {
         }
 
         /**
-         * Get the number of visits this group is for.
+         * Get the number of page views this group is for.
          *
-         * @return The number of visits this group is for.
+         * @return The number of page views this group is for.
          */
-        Long getVisits() {
-            return visits;
+        PageViews getPageViews() {
+            return pageViews;
         }
 
         @Override
@@ -1271,19 +1359,19 @@ public class DiscoveryKeyUtils {
                 return true;
             }
 
-            if (!(otherKey instanceof NumberOfVisitsGroupKey)) {
+            if (!(otherKey instanceof PageViewsGroupKey)) {
                 return false;
             }
 
-            NumberOfVisitsGroupKey visitsKey = (NumberOfVisitsGroupKey) otherKey;
-            return visits.equals(visitsKey.getVisits());
+            PageViewsGroupKey pageViewsKey = (PageViewsGroupKey) otherKey;
+            return pageViews.equals(pageViewsKey.getPageViews());
         }
 
         @Override
         public int compareTo(GroupKey otherGroupKey) {
-            if (otherGroupKey instanceof NumberOfVisitsGroupKey) {
-                NumberOfVisitsGroupKey visitsKey = (NumberOfVisitsGroupKey) otherGroupKey;
-                return Long.compare(getVisits(), visitsKey.getVisits());
+            if (otherGroupKey instanceof PageViewsGroupKey) {
+                PageViewsGroupKey pageViewsKey = (PageViewsGroupKey) otherGroupKey;
+                return getPageViews().compareTo(pageViewsKey.getPageViews());
             } else {
                 return compareClassNames(otherGroupKey);
             }

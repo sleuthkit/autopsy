@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
+import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -63,7 +64,7 @@ public class EncryptionDetectionTest extends NbTestCase {
     private final Path PASSWORD_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "PasswordDetection_img1_v1.img");
     private final Path VERACRYPT_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "VeracryptDetection_img1_v1.vhd");
     private final Path SQLCIPHER_DETECTION_IMAGE_PATH = Paths.get(this.getDataDir().toString(), "SqlCipherDetection_img1_v1.vhd");
-  
+
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EncryptionDetectionTest.class).
                 clusters(".*").
@@ -74,12 +75,17 @@ public class EncryptionDetectionTest extends NbTestCase {
     public EncryptionDetectionTest(String name) {
         super(name);
     }
-    
+
     @Override
     public void tearDown() {
-        CaseUtils.closeCurrentCase();
+        try {
+            CaseUtils.closeCurrentCase();
+        } catch (TestUtilsException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
-    
+
     /**
      * Test the Encryption Detection module's volume encryption detection.
      */
@@ -89,7 +95,7 @@ public class EncryptionDetectionTest extends NbTestCase {
             Case openCase = CaseUtils.createAsCurrentCase(BITLOCKER_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_DETECTION_IMAGE_PATH);
-            
+
             /*
              * Create ingest job settings and run ingest job.
              */
@@ -145,7 +151,7 @@ public class EncryptionDetectionTest extends NbTestCase {
 
             errorMessage = "Expected to find 'vol2', but no such volume exists.";
             assertEquals(errorMessage, true, vol2Found);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | TestUtilsException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -231,7 +237,7 @@ public class EncryptionDetectionTest extends NbTestCase {
                     }
                 }
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | TestUtilsException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -285,7 +291,7 @@ public class EncryptionDetectionTest extends NbTestCase {
                 numberOfEncryptedContainers += file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED).size();
             }
             assertEquals("Encrypted Container file should have one encyption suspected artifact", 1, numberOfEncryptedContainers);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | TestUtilsException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -349,10 +355,10 @@ public class EncryptionDetectionTest extends NbTestCase {
                     }
                 }
             }
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | TestUtilsException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-    }    
-    
+    }
+
 }

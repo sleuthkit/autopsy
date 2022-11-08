@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +42,8 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.datamodel.Host;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A local/logical files/logical evidence file(.lo1)/or directories data source
@@ -76,7 +78,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      * when the deprecated method setDataSourceOptions is removed.
      */
     private List<String> localFilePaths;
-    private boolean setDataSourceOptionsCalled;
 
     /**
      * Constructs a local/logical files and/or directories data source processor
@@ -153,25 +154,44 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        if (!setDataSourceOptionsCalled) {
-            localFilePaths = configPanel.getContentPaths();
-            if (configPanel.subTypeIsLogicalEvidencePanel()) {
-                try {
-                    //if the L01 option was chosen
-                    localFilePaths = extractLogicalEvidenceFileContents(localFilePaths);
-                } catch (L01Exception ex) {
-                    //contents of l01 could not be extracted don't add data source or run ingest
-                    final List<String> errors = new ArrayList<>();
-                    errors.add(ex.getMessage());
-                    callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
-                    return;
-                } catch (NoCurrentCaseException ex) {
-                    logger.log(Level.WARNING, "Exception while getting open case.", ex);
-                    return;
-                }
+        run(null, progressMonitor, callback);
+    }
+
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param host            Host for this data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
+    @Override
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+
+        localFilePaths = configPanel.getContentPaths();
+        if (configPanel.subTypeIsLogicalEvidencePanel()) {
+            try {
+                //if the L01 option was chosen
+                localFilePaths = extractLogicalEvidenceFileContents(localFilePaths);
+            } catch (L01Exception ex) {
+                //contents of l01 could not be extracted don't add data source or run ingest
+                final List<String> errors = new ArrayList<>();
+                errors.add(ex.getMessage());
+                callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+                return;
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Exception while getting open case.", ex);
+                return;
             }
         }
-        run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, progressMonitor, callback);
+        run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, host, progressMonitor, callback);
     }
 
     /**
@@ -197,7 +217,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             command.add("-f");
             command.add("files");
             command.add("-t");
-            File l01Dir = new File(Case.getCurrentCaseThrows().getModuleDirectory(), L01_EXTRACTION_DIR);  
+            File l01Dir = new File(Case.getCurrentCaseThrows().getModuleDirectory(), L01_EXTRACTION_DIR);
             if (!l01Dir.exists()) {
                 l01Dir.mkdirs();
             }
@@ -304,12 +324,40 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      *                                 form: LogicalFileSet[N]
      * @param localFilePaths           A list of local/logical file and/or
      *                                 directory localFilePaths.
+     * @param host                     The host for this data source.
+     * @param progressMonitor          Progress monitor for reporting progress
+     *                                 during processing.
+     * @param callback                 Callback to call when processing is done.
+     */
+    public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, host, progressMonitor, callback)).start();
+    }
+
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the given settings instead of those provided by the
+     * selection and configuration panel. Returns as soon as the background task
+     * is started and uses the callback object to signal task completion and
+     * return results.
+     *
+     * @param deviceId                 An ASCII-printable identifier for the
+     *                                 device associated with the data source
+     *                                 that is intended to be unique across
+     *                                 multiple cases (e.g., a UUID).
+     * @param rootVirtualDirectoryName The name to give to the virtual directory
+     *                                 that will serve as the root for the
+     *                                 local/logical files and/or directories
+     *                                 that compose the data source. Pass the
+     *                                 empty string to get a default name of the
+     *                                 form: LogicalFileSet[N]
+     * @param localFilePaths           A list of local/logical file and/or
+     *                                 directory localFilePaths.
      * @param progressMonitor          Progress monitor for reporting progress
      *                                 during processing.
      * @param callback                 Callback to call when processing is done.
      */
     public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, progressMonitor, callback)).start();
+        run(deviceId, rootVirtualDirectoryName, localFilePaths, null, progressMonitor, callback);
     }
 
     /**
@@ -334,7 +382,6 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     public void reset() {
         configPanel.select();
         localFilePaths = null;
-        setDataSourceOptionsCalled = false;
     }
 
     @Override
@@ -368,29 +415,13 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
 
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
-        List<String> filePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
-        run(deviceId, "", filePaths, progressMonitor, callBack);
+        process(deviceId, dataSourcePath, null, progressMonitor, callBack);
     }
 
-    /**
-     * Sets the configuration of the data source processor without using the
-     * configuration panel. The data source processor will assign a UUID to the
-     * data source and will use the time zone of the machine executing this code
-     * when when processing dates and times for the image.
-     *
-     * @param paths A list of local/logical file and/or directory
-     *              localFilePaths.
-     *
-     * @deprecated Use the provided overload of the run method instead.
-     */
-    @Deprecated
-    public void setDataSourceOptions(String paths) {
-        // The LocalFilesPanel used to separate file paths with a comma and pass
-        // them as a string, but because file names are allowed to contain
-        // commas, this approach was buggy and replaced. We now pass a list of
-        // String paths.
-        this.localFilePaths = Arrays.asList(paths.split(","));
-        setDataSourceOptionsCalled = true;
+    @Override
+    public void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        List<String> filePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
+        run(deviceId, "", filePaths, host, progressMonitor, callBack);
     }
 
     /**

@@ -1,5 +1,6 @@
-from typing import Iterator, List, Union
+from typing import Iterator, List, Union, Dict
 
+from foundvalue import FoundValue
 from outputresult import OutputResult
 from propsutil import get_entry_dict
 from enum import Enum
@@ -57,6 +58,7 @@ class ItemChange:
 
     def get_row(self, show_translated_col: bool) -> List[str]:
         """Returns the list of values to be entered as a row in csv serialization.
+
         Args:
             show_translated_col (bool): Whether or not the translated columns are showing; otherwise use default.
 
@@ -82,15 +84,21 @@ class ItemChange:
 ITEMCHANGE_DEFAULT_COLS = [RELATIVE_PATH_COL, KEY_COL, 'Change Type', 'Previous Value', 'Current Value']
 
 
-def convert_to_output(items: Iterator[ItemChange], commit1_id: Union[str, None] = None,
-                      commit2_id: Union[str, None] = None, show_translated_col: bool = True,
-                      value_regex: Union[str, None] = None, separate_deleted: bool = True) -> OutputResult:
+def convert_to_output(items: Iterator[ItemChange],
+                      commit1_id: Union[str, None] = None,
+                      commit2_id: Union[str, None] = None,
+                      translation_dict: Union[Dict[str, FoundValue], None] = None,
+                      show_translated_col: bool = True,
+                      value_regex: Union[str, None] = None,
+                      separate_deleted: bool = True) -> OutputResult:
     """
     Converts PropEntry objects to an output result to be written to a tabular datasource.
+
     Args:
         items: The PropEntry items.
         commit1_id: The first commit id to be shown in the header or None.
         commit2_id: The second commit id to be shown in the header or None.
+        translation_dict: A dictionary of English values mapped to the translated value.
         show_translated_col: Whether or not to show an empty translated column.
         value_regex: Regex to determine if a value should be omitted.
         separate_deleted: Deleted items should not be included in regular results.
@@ -109,6 +117,7 @@ def convert_to_output(items: Iterator[ItemChange], commit1_id: Union[str, None] 
 
     results = []
     omitted = []
+    found_translation = []
     deleted = []
 
     for item in items:
@@ -117,10 +126,13 @@ def convert_to_output(items: Iterator[ItemChange], commit1_id: Union[str, None] 
             deleted.append(item_row)
         elif value_regex is not None and re.match(value_regex, item.cur_val):
             omitted.append(item_row)
+        elif translation_dict is not None and item.cur_val.strip() in translation_dict:
+            found_translation.append(item_row + [translation_dict[item.cur_val.strip()].translated_val])
         else:
             results.append(item_row)
 
-    return create_output_result(header, results, omitted=omitted, deleted=deleted, style=style)
+    return create_output_result(header, results, omitted=omitted, deleted=deleted, found_translation=found_translation,
+                                style=style)
 
 
 def get_item_change(rel_path: str, key: str, prev_val: str, cur_val: str) -> Union[ItemChange, None]:

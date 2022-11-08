@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,18 +26,24 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 final class IngestSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
-
+    static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = false;
+    static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = false;
+    static final boolean DEFAULT_FLAG_UNIQUE_DEVICES = false;
+    static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
+    
     private final boolean flagTaggedNotableItems;
     private final boolean flagPreviousDevices;
     private final boolean createCorrelationProperties;
+    private final boolean flagUniqueArtifacts;
 
     /**
      * Instantiate the ingest job settings with default values.
      */
     IngestSettings() {
-        this.flagTaggedNotableItems = CentralRepoIngestModule.DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
-        this.flagPreviousDevices = CentralRepoIngestModule.DEFAULT_FLAG_PREVIOUS_DEVICES;
-        this.createCorrelationProperties = CentralRepoIngestModule.DEFAULT_CREATE_CR_PROPERTIES;
+        this.flagTaggedNotableItems = DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
+        this.flagPreviousDevices = DEFAULT_FLAG_PREVIOUS_DEVICES;
+        this.createCorrelationProperties = DEFAULT_CREATE_CR_PROPERTIES;
+        this.flagUniqueArtifacts = DEFAULT_FLAG_UNIQUE_DEVICES;
     }
 
     /**
@@ -48,11 +54,14 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
      *                                    the Central Repository
      * @param createCorrelationProperties Create correlation properties in the
      *                                    central repository
+     * @param flagUniqueArtifacts         Flag unique artifacts that have not
+     *                                    been seen in any other cases
      */
-    IngestSettings(boolean flagTaggedNotableItems, boolean flagPreviousDevices, boolean createCorrelationProperties) {
+    IngestSettings(boolean flagTaggedNotableItems, boolean flagPreviousDevices, boolean createCorrelationProperties, boolean flagUniqueArtifacts) {
         this.flagTaggedNotableItems = flagTaggedNotableItems;
         this.flagPreviousDevices = flagPreviousDevices;
         this.createCorrelationProperties = createCorrelationProperties;
+        this.flagUniqueArtifacts = flagUniqueArtifacts;
     }
 
     @Override
@@ -85,5 +94,15 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
      */
     boolean shouldCreateCorrelationProperties() {
         return createCorrelationProperties;
+    }
+
+    /**
+     * Are artifacts (apps, domains) previously unseen in other cases to be
+     * flagged?
+     *
+     * @return True if flagging; otherwise false.
+     */
+    public boolean isFlagUniqueArtifacts() {
+        return flagUniqueArtifacts;
     }
 }

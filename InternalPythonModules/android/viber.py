@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2019-2020 Basis Technology Corp.
+Copyright 2019-2021 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,8 +91,8 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                         current_case.getSleuthkitCase(), self._PARSER_NAME, 
-                        contact_and_calllog_db.getDBFile(), Account.Type.VIBER) 
-                self.parse_contacts(contact_and_calllog_db, helper)
+                        contact_and_calllog_db.getDBFile(), Account.Type.VIBER, context.getJobId()) 
+                self.parse_contacts(contact_and_calllog_db, helper, context)
                 self.parse_calllogs(contact_and_calllog_db, helper)
 
             #Extract TSK_MESSAGE information
@@ -100,7 +100,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 current_case = Case.getCurrentCaseThrows()
                 helper = CommunicationArtifactsHelper(
                         current_case.getSleuthkitCase(), self._PARSER_NAME, 
-                        message_db.getDBFile(), Account.Type.VIBER)
+                        message_db.getDBFile(), Account.Type.VIBER, context.getJobId())
                 self.parse_messages(message_db, helper, current_case)
 
         except NoCurrentCaseException as ex:
@@ -113,7 +113,7 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
         for contact_and_calllog_db in contact_and_calllog_dbs:
             contact_and_calllog_db.close()
 
-    def parse_contacts(self, contacts_db, helper):
+    def parse_contacts(self, contacts_db, helper, context):
         try:
             contacts_parser = ViberContactsParser(contacts_db)
             while contacts_parser.next():
@@ -129,12 +129,9 @@ class ViberAnalyzer(general.AndroidComponentAnalyzer):
                 elif (not(not contacts_parser.get_contact_name() or contacts_parser.get_contact_name().isspace())):
                     current_case = Case.getCurrentCase().getSleuthkitCase()
                     attributes = ArrayList()
-                    artifact = contacts_db.getDBFile().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT)
                     attributes.add(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), self._PARSER_NAME, contacts_parser.get_contact_name()))
-                    artifact.addAttributes(attributes)
-                    
-                    # Post the artifact to blackboard
-                    current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME)
+                    artifact = contacts_db.getDBFile().newDataArtifact(BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT), attributes)
+                    current_case.getBlackboard().postArtifact(artifact, self._PARSER_NAME, context.getJobId())
 
             contacts_parser.close()
         except SQLException as ex:

@@ -23,6 +23,7 @@ def _get_props_path(language_updates_file: Union[str, None]):
 def get_commit_for_language(language: str, language_updates_file: Union[str, None] = None) -> Union[str, None]:
     """
     Retrieves the latest commit for a particular language.
+
     Args:
         language: The language key.
         language_updates_file: The file containing the most recent updates.  If not provided, the default file located
@@ -45,6 +46,7 @@ def get_commit_for_language(language: str, language_updates_file: Union[str, Non
 def set_commit_for_language(language: str, latest_commit: str, language_updates_file: Union[str, None] = None):
     """
     Sets the most recent update for a language within the language updates file.
+
     Args:
         language: The language key.
         latest_commit: The commit for how recent the language is.

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
+import org.sleuthkit.autopsy.centralrepository.application.NodeData;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.openide.util.NbBundle.Messages;
 import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.application.OtherOccurrences;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -40,7 +42,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(OtherOccurrencesFilesTableModel.class.getName());
     private final List<String> nodeKeys = new ArrayList<>();
-    private final Map<String, List<OtherOccurrenceNodeData>> nodeMap = new HashMap<>();
+    private final Map<String, List<NodeData>> nodeMap = new HashMap<>();
 
     /**
      * Create a table model for displaying file names
@@ -75,7 +77,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
                 || nodeMap.get(nodeKeys.get(rowIdx)).isEmpty()) {
             return Bundle.OtherOccurrencesFilesTableModel_noData();
         }
-        return FilenameUtils.getName(((OtherOccurrenceNodeInstanceData) nodeMap.get(nodeKeys.get(rowIdx)).get(0)).getFilePath());
+        return FilenameUtils.getName( nodeMap.get(nodeKeys.get(rowIdx)).get(0).getFilePath());
     }
 
     /**
@@ -87,7 +89,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
      * @return a list of OtherOccurrenceNodeData for the specified index or an
      *         empty list if no data was found
      */
-    List<OtherOccurrenceNodeData> getListOfNodesForFile(int rowIdx) {
+    List<NodeData> getListOfNodesForFile(int rowIdx) {
         //if anything would prevent this from working return an empty list
         if (nodeMap.isEmpty() || nodeKeys.isEmpty() || rowIdx < 0
                 || rowIdx >= nodeKeys.size() || nodeKeys.get(rowIdx) == null
@@ -107,9 +109,9 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
      *
      * @param newNodeData data to add to the table
      */
-    void addNodeData(OtherOccurrenceNodeData newNodeData) {
-        String newNodeKey = createNodeKey((OtherOccurrenceNodeInstanceData) newNodeData);//FilenameUtils.getName(((OtherOccurrenceNodeInstanceData)newNodeData).getFilePath());
-        List<OtherOccurrenceNodeData> nodeList = nodeMap.get(newNodeKey);
+    void addNodeData(NodeData newNodeData) {
+        String newNodeKey = createNodeKey(newNodeData);
+        List<NodeData> nodeList = nodeMap.get(newNodeKey);
         if (nodeList == null) {
             nodeKeys.add(newNodeKey);
             nodeList = new ArrayList<>();
@@ -119,7 +121,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    private String createNodeKey(OtherOccurrenceNodeInstanceData nodeData) {
+    private String createNodeKey(NodeData nodeData) {
         String caseUUID;
         try {
             caseUUID = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID();
@@ -130,7 +132,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
                 //place holder value will be used since correlation attribute was unavailble
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "Unable to get current case", ex);
-                caseUUID = DataContentViewerOtherCases.getPlaceholderUUID();
+                caseUUID = OtherOccurrences.getPlaceholderUUID();
             }
         }
         return nodeData.getCaseName() + nodeData.getDataSourceName() + nodeData.getDeviceID() + nodeData.getFilePath() + caseUUID;

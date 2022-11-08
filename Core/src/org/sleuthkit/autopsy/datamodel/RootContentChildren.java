@@ -68,12 +68,12 @@ public class RootContentChildren extends Children.Keys<Object> {
     @Override
     protected Node[] createNodes(Object key) {
         if (key instanceof AutopsyVisitableItem) {
-            return new Node[] {((AutopsyVisitableItem)key).accept(createAutopsyNodeVisitor)};
+            return new Node[]{((AutopsyVisitableItem) key).accept(createAutopsyNodeVisitor)};
         } else {
-            return new Node[] {((SleuthkitVisitableItem)key).accept(createSleuthkitNodeVisitor)};
+            return new Node[]{((SleuthkitVisitableItem) key).accept(createSleuthkitNodeVisitor)};
         }
     }
-    
+
     /**
      * Gets a DisplayableItemNode for use as a subtree root node for the Autopsy
      * tree view from each type of AutopsyVisitableItem visited. There are
@@ -82,11 +82,6 @@ public class RootContentChildren extends Children.Keys<Object> {
      * Set Hits, etc.).
      */
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
-
-        @Override
-        public ExtractedContent.RootNode visit(ExtractedContent ec) {
-            return ec.new RootNode(ec.getSleuthkitCase());
-        }
 
         @Override
         public AbstractNode visit(FileTypesByExtension sf) {
@@ -135,22 +130,17 @@ public class RootContentChildren extends Children.Keys<Object> {
 
         @Override
         public AbstractNode visit(DataSources i) {
-            return new DataSourcesNode(i.filteringDataSourceObjId());
+            return new DataSourceFilesNode(i.filteringDataSourceObjId());
         }
 
         @Override
         public AbstractNode visit(DataSourceGrouping datasourceGrouping) {
             return new DataSourceGroupingNode(datasourceGrouping.getDataSource());
         }
-        
+
         @Override
         public AbstractNode visit(Views v) {
             return new ViewsNode(v.getSleuthkitCase(), v.filteringDataSourceObjId());
-        }
-
-        @Override
-        public AbstractNode visit(Results results) {
-            return new ResultsNode(results.getSleuthkitCase(), results.filteringDataSourceObjId() );
         }
 
         @Override
@@ -169,6 +159,11 @@ public class RootContentChildren extends Children.Keys<Object> {
         }
 
         @Override
+        public AbstractNode visit(OsAccounts osAccountsItem) {
+            return osAccountsItem.new OsAccountListNode();
+        }
+
+        @Override
         protected AbstractNode defaultVisit(AutopsyVisitableItem di) {
             throw new UnsupportedOperationException(
                     NbBundle.getMessage(this.getClass(),
@@ -178,6 +173,38 @@ public class RootContentChildren extends Children.Keys<Object> {
         @Override
         public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
             return ftByMimeTypeItem.new ByMimeTypeNode();
+        }
+
+        @Override
+        public AbstractNode visit(PersonGrouping personGrouping) {
+            return new PersonNode(personGrouping.getPerson());
+        }
+
+        @Override
+        public AbstractNode visit(HostDataSources hosts) {
+            return new HostNode(hosts);
+        }
+
+        @Override
+        public AbstractNode visit(HostGrouping hostGrouping) {
+            return new HostNode(hostGrouping);
+        }
+
+        @Override
+        public AbstractNode visit(DataSourcesByType dataSourceHosts) {
+            return new DataSourcesNode();
+        }
+
+        @Override
+        public AbstractNode visit(AnalysisResults analysisResults) {
+            return new AnalysisResults.RootNode(
+                    analysisResults.getFilteringDataSourceObjId());
+        }
+
+        @Override
+        public AbstractNode visit(DataArtifacts dataArtifacts) {
+            return new DataArtifacts.RootNode(
+                    dataArtifacts.getFilteringDataSourceObjId());
         }
     }
 }

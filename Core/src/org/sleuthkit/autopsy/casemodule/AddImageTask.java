@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.imagewriter.ImageWriterService;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 import org.sleuthkit.datamodel.AddDataSourceCallbacks;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -316,7 +317,7 @@ class AddImageTask implements Runnable {
         boolean ignoreFatOrphanFiles;
         String md5;
         String sha1; 
-        String sha256; 
+        String sha256;
         ImageWriterSettings imageWriterSettings;
         
         ImageDetails(String deviceId, Image image, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings) {

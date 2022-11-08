@@ -32,8 +32,10 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 
@@ -47,6 +49,7 @@ final class AddRawImageTask implements Runnable {
     private final String imageFilePath;
     private final String timeZone;
     private final long chunkSize;
+    private final Host host;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final DataSourceProcessorCallback callback;
     private boolean criticalErrorOccurred;
@@ -68,11 +71,12 @@ final class AddRawImageTask implements Runnable {
      *                                 progressMonitor during processing.
      * @param callback                 Callback to call when processing is done.
      */
-    AddRawImageTask(String deviceId, String imageFilePath, String timeZone, long chunkSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    AddRawImageTask(String deviceId, String imageFilePath, String timeZone, long chunkSize, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
         this.imageFilePath = imageFilePath;
         this.timeZone = timeZone;
         this.chunkSize = chunkSize;
+        this.host = host;
         this.callback = callback;
         this.progressMonitor = progressMonitor;
     }
@@ -150,7 +154,7 @@ final class AddRawImageTask implements Runnable {
             /*
              * Get Image that will be added to case
              */
-            Image dataSource = caseDatabase.addImageInfo(0, imageFilePaths, timeZone); //TODO: change hard coded deviceId.
+            Image dataSource = SleuthkitJNI.addImageToDatabase(caseDatabase, imageFilePaths.stream().toArray(String[]::new), 0, timeZone, null, null, null, deviceId);
             dataSources.add(dataSource);
             List<TskFileRange> fileRanges = new ArrayList<>();
             

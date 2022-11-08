@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * Interface implemented by classes that add data sources of a particular type
@@ -112,6 +113,25 @@ public interface DataSourceProcessor {
     /**
      * Adds a data source to the case database using a background task in a
      * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param host            Host for the data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
+    default void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        run(progressMonitor, callback);
+    }
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
      * configuration panel. Files found during ingest will be sent directly to
      * the IngestStream provided. Returns as soon as the background task is
      * started. The background task uses a callback object to signal task
@@ -130,6 +150,30 @@ public interface DataSourceProcessor {
     default void runWithIngestStream(IngestJobSettings settings, DataSourceProcessorProgressMonitor progress,
             DataSourceProcessorCallback callBack) {
         throw new UnsupportedOperationException("Streaming ingest not supported for this data source processor");
+    }
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Files found during ingest will be sent directly to
+     * the IngestStream provided. Returns as soon as the background task is
+     * started. The background task uses a callback object to signal task
+     * completion and return results.
+     *
+     * This method should not be called unless isPanelValid returns true, and
+     * should only be called for DSPs that support ingest streams. The ingest
+     * settings must be complete before calling this method.
+     *
+     * @param host     Host for this data source.
+     * @param settings The ingest job settings.
+     * @param progress Progress monitor that will be used by the background task
+     *                 to report progress.
+     * @param callBack Callback that will be used by the background task to
+     *                 return results.
+     */
+    default void runWithIngestStream(Host host, IngestJobSettings settings, DataSourceProcessorProgressMonitor progress,
+            DataSourceProcessorCallback callBack) {
+        runWithIngestStream(settings, progress, callBack);
     }
 
     /**

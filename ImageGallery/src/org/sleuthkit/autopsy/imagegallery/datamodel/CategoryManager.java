@@ -99,9 +99,9 @@ public class CategoryManager {
     }
 
     /**
-     * get the number of file with the given {@link DhsImageCategory}
+     * get the number of file with the given tag
      *
-     * @param cat get the number of files with Category = cat
+     * @param tagName get the number of files with Category = tagName
      *
      * @return the number of files with the given Category
      */
@@ -110,20 +110,18 @@ public class CategoryManager {
     }
 
     /**
-     * increment the cached value for the number of files with the given
-     * {@link DhsImageCategory}
+     * increment the cached value for the number of files with the given tag
      *
-     * @param cat the Category to increment
+     * @param tagName the Category to increment
      */
     synchronized public void incrementCategoryCount(TagName tagName) {
         categoryCounts.getUnchecked(tagName).increment();
     }
 
     /**
-     * decrement the cached value for the number of files with the given
-     * DhsImageCategory
+     * decrement the cached value for the number of files with the given tag
      *
-     * @param cat the Category to decrement
+     * @param tagName the Category to decrement
      */
     synchronized public void decrementCategoryCount(TagName tagName) {
         categoryCounts.getUnchecked(tagName).decrement();

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
+import org.sleuthkit.datamodel.Score;
 
 /**
  * Container to bag the S C & O data for an abstract file node.
@@ -27,11 +28,17 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
  */
 class SCOData {
 
-    private Pair<DataResultViewerTable.Score, String> scoreAndDescription = null;  
-    private DataResultViewerTable.HasCommentStatus comment = null;
-    private Pair<Long, String> countAndDescription = null;
+    private final Pair<Score, String> scoreAndDescription;  
+    private final DataResultViewerTable.HasCommentStatus comment;
+    private final Pair<Long, String> countAndDescription;
 
-    Pair<DataResultViewerTable.Score, String> getScoreAndDescription() {
+    SCOData (Pair<Score, String> scoreAndDescription, DataResultViewerTable.HasCommentStatus comment, Pair<Long, String> countAndDescription){
+        this.scoreAndDescription = scoreAndDescription;
+        this.comment = comment;
+        this.countAndDescription = countAndDescription;
+    }
+    
+    Pair<Score, String> getScoreAndDescription() {
         return scoreAndDescription;
     }
 
@@ -42,15 +49,4 @@ class SCOData {
     Pair<Long, String> getCountAndDescription() {
         return countAndDescription;
     }
-    
-    void setScoreAndDescription(Pair<DataResultViewerTable.Score, String> scoreAndDescription) {
-        this.scoreAndDescription = scoreAndDescription;
-    }
-    void setComment(DataResultViewerTable.HasCommentStatus comment) {
-        this.comment = comment;
-    }
-    void setCountAndDescription(Pair<Long, String> countAndDescription) {
-        this.countAndDescription = countAndDescription;
-    }
-    
 }

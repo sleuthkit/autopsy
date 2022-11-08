@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2020 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -187,10 +187,10 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             switch (xryKey) {
                 case TEL:
                 case NUMBER:
-                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                    if (!XRYUtils.isPhoneValid(pair.getValue())) {
                         continue;
                     }
-                    
+
                     // Apply namespace or direction
                     if (xryNamespace == XryNamespace.FROM || direction == CommunicationDirection.INCOMING) {
                         callerId = pair.getValue();
@@ -205,30 +205,30 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
                 // Although confusing, as these are also 'name spaces', it appears
                 // later versions of XRY just made these standardized lines.
                 case TO:
-                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                    if (!XRYUtils.isPhoneValid(pair.getValue())) {
                         continue;
                     }
-                    
+
                     calleeList.add(pair.getValue());
                     break;
                 case FROM:
-                    if(!XRYUtils.isPhoneValid(pair.getValue())) {
+                    if (!XRYUtils.isPhoneValid(pair.getValue())) {
                         continue;
                     }
-                    
+
                     callerId = pair.getValue();
                     break;
                 case TIME:
                     try {
-                        //Tranform value to seconds since epoch
-                        long dateTimeSinceEpoch = XRYUtils.calculateSecondsSinceEpoch(pair.getValue());
-                        startTime = dateTimeSinceEpoch;
-                    } catch (DateTimeParseException ex) {
-                        logger.log(Level.WARNING, String.format("[XRY DSP] Assumption"
-                                + " about the date time formatting of call logs is "
-                                + "not right. Here is the value [ %s ]", pair.getValue()), ex);
-                    }
-                    break;
+                    //Tranform value to seconds since epoch
+                    long dateTimeSinceEpoch = XRYUtils.calculateSecondsSinceEpoch(pair.getValue());
+                    startTime = dateTimeSinceEpoch;
+                } catch (DateTimeParseException ex) {
+                    logger.log(Level.WARNING, String.format("[XRY DSP] Assumption"
+                            + " about the date time formatting of call logs is "
+                            + "not right. Here is the value [ %s ]", pair.getValue()), ex);
+                }
+                break;
                 case DIRECTION:
                     String directionString = pair.getValue().toLowerCase();
                     if (directionString.equals("incoming")) {
@@ -262,7 +262,6 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
 
         // Make sure we have the required fields, otherwise the CommHelper will
         // complain about illegal arguments.
-        
         // These are all the invalid combinations.
         if (callerId == null && calleeList.isEmpty()
                 || direction == CommunicationDirection.INCOMING && callerId == null
@@ -287,10 +286,10 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             // it would have been a valid combination.
             if (callerId != null) {
                 try {
-                currentCase.getCommunicationsManager().createAccountFileInstance(
-                        Account.Type.PHONE, callerId, PARSER_NAME, parent);
+                    currentCase.getCommunicationsManager().createAccountFileInstance(
+                            Account.Type.PHONE, callerId, PARSER_NAME, parent, null, null);
                 } catch (InvalidAccountIDException ex) {
-                   logger.log(Level.WARNING, String.format("Invalid account identifier %s", callerId), ex);
+                    logger.log(Level.WARNING, String.format("Invalid account identifier %s", callerId), ex);
                 }
 
                 otherAttributes.add(new BlackboardAttribute(
@@ -300,12 +299,11 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
 
             for (String phone : calleeList) {
                 try {
-                currentCase.getCommunicationsManager().createAccountFileInstance(
-                        Account.Type.PHONE, phone, PARSER_NAME, parent);
+                    currentCase.getCommunicationsManager().createAccountFileInstance(
+                            Account.Type.PHONE, phone, PARSER_NAME, parent, null, null);
                 } catch (InvalidAccountIDException ex) {
                     logger.log(Level.WARNING, String.format("Invalid account identifier %s", phone), ex);
                 }
-                
 
                 otherAttributes.add(new BlackboardAttribute(
                         BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
@@ -313,16 +311,15 @@ final class XRYCallsFileParser extends AbstractSingleEntityParser {
             }
 
             if (!otherAttributes.isEmpty()) {
-                BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG);
-                artifact.addAttributes(otherAttributes);
+                BlackboardArtifact artifact = parent.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG), otherAttributes);
 
-                currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME);
+                currentCase.getBlackboard().postArtifact(artifact, PARSER_NAME, null);
             }
         } else {
 
             // Otherwise we can safely use the helper.
             CommunicationArtifactsHelper helper = new CommunicationArtifactsHelper(
-                    currentCase, PARSER_NAME, parent, Account.Type.PHONE);
+                    currentCase, PARSER_NAME, parent, Account.Type.PHONE, null);
 
             helper.addCalllog(direction, callerId, calleeList, startTime,
                     endTime, callType, otherAttributes);

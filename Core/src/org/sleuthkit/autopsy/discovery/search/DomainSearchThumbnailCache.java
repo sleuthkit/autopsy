@@ -50,7 +50,8 @@ public class DomainSearchThumbnailCache {
         try {
             return cache.get(request);
         } catch (ExecutionException ex) {
-            throw new DiscoveryException("Error fetching artifacts from cache", ex);
+            //throwing a new exception with the cause so that interrupted exceptions and other causes can be checked inside our wrapper
+            throw new DiscoveryException("Error fetching artifacts from cache " + request.toString(), ex.getCause());
         }
     }
 }

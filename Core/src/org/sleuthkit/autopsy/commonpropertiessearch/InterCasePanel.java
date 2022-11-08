@@ -128,8 +128,10 @@ public final class InterCasePanel extends javax.swing.JPanel {
                 }
             });
             for (CorrelationAttributeInstance.Type type : types) {
-                correlationTypeFilters.put(type.getDisplayName(), type);
-                this.correlationTypeComboBox.addItem(type.getDisplayName());
+                if (! type.getDbTableName().contains("os_account")) {
+                    correlationTypeFilters.put(type.getDisplayName(), type);
+                    this.correlationTypeComboBox.addItem(type.getDisplayName());
+                }
             }
         } catch (CentralRepoException ex) {
             logger.log(Level.WARNING, "Error getting correlation types", ex);

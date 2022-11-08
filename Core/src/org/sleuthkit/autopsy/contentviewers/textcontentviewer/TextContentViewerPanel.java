@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2019-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
@@ -79,9 +80,9 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
     }
 
     /**
-     * Determine whether the content viewer which displays this panel isSupported.
-     * This panel is supported if any of the TextViewer's displayed in it are
-     * supported.
+     * Determine whether the content viewer which displays this panel
+     * isSupported. This panel is supported if any of the TextViewer's displayed
+     * in it are supported.
      *
      * @param node
      *
@@ -106,7 +107,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
      * @return the greatest isPreffered value of the supported TextViewers
      */
     int isPreffered(Node node) {
-        int max = 1;
+        int max = ViewerPriority.viewerPriority.LevelOne.getFlag();
         for (UpdateWrapper textViewer : textViewers) {
             if (textViewer.isSupported(node)) {
                 max = Integer.max(max, textViewer.isPreferred(node));
@@ -213,7 +214,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
 
         // Get and set current selected tab
         int currentTab = pane.getSelectedIndex();
-        if (currentTab != -1) {
+        if (currentTab != -1 && pane.isEnabledAt(currentTab)) {
             UpdateWrapper dcv = textViewers.get(currentTab);
             if (dcv.isOutdated()) {
                 // change the cursor to "waiting cursor" for this operation

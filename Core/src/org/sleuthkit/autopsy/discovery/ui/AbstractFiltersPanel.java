@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.apache.commons.lang3.StringUtils;
@@ -92,7 +93,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
      * @param column          The column to add the DiscoveryFilterPanel to.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    final void addFilter(AbstractDiscoveryFilterPanel filterPanel, boolean isSelected, int[] indicesSelected, int column) {
+    final void addFilter(AbstractDiscoveryFilterPanel filterPanel, boolean isSelected, List<?> selectedItems, int column) {
         if (!isInitialized) {
             constraints.gridy = 0;
             constraints.anchor = GridBagConstraints.FIRST_LINE_START;
@@ -105,7 +106,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
             constraints.gridy = secondColumnY;
         }
         constraints.gridx = 0;
-        filterPanel.configurePanel(isSelected, indicesSelected);
+        filterPanel.configurePanel(isSelected, selectedItems);
         filterPanel.addListeners(this, this);
         filters.add(filterPanel);
         constraints.fill = GridBagConstraints.VERTICAL;
@@ -114,8 +115,8 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         constraints.weightx = LABEL_WEIGHT;
         constraints.weighty = LABEL_WEIGHT;
         constraints.gridwidth = LABEL_WIDTH;
-        addToGridBagLayout(filterPanel.getCheckbox(), filterPanel.getAdditionalLabel(), column);
         if (filterPanel.hasPanel()) {
+            addToGridBagLayout(filterPanel.getCheckbox(), filterPanel.getAdditionalLabel(), column);
             constraints.gridx += constraints.gridwidth;
             constraints.fill = GridBagConstraints.BOTH;
             constraints.gridheight = PANEL_HEIGHT;
@@ -123,6 +124,11 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
             constraints.weighty = PANEL_WEIGHT;
             constraints.gridwidth = PANEL_WIDTH;
             addToGridBagLayout(filterPanel, null, column);
+        } else {
+            constraints.weightx = PANEL_WEIGHT;
+            constraints.fill = GridBagConstraints.BOTH;
+            constraints.gridwidth = PANEL_WIDTH + LABEL_WIDTH;
+            addToGridBagLayout(filterPanel.getCheckbox(), filterPanel.getAdditionalLabel(), column);
         }
         if (column == 0) {
             firstColumnY += constraints.gridheight;
@@ -142,17 +148,6 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
         splitPane.setRightComponent(secondColumnPanel);
         validate();
         repaint();
-    }
-
-    /**
-     * Clear the filters from the panel
-     */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    final void clearFilters() {
-        for (AbstractDiscoveryFilterPanel filterPanel : filters) {
-            filterPanel.removeListeners();
-        }
-        filters.clear();
     }
 
     /**
@@ -209,9 +204,15 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Override
     public void actionPerformed(ActionEvent e) {
-        validateFields();
-        validate();
-        repaint();
+        //invoke it after all the currently queued gui actions are performed
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                validateFields();
+                validate();
+                repaint();
+            }
+        });
     }
 
     /**
@@ -223,7 +224,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     boolean isObjectsFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof ObjectDetectedFilterPanel) {
-                return filter.getList().getModel().getSize() > 0;
+                return filter.isFilterSupported();
             }
         }
         return false;
@@ -238,7 +239,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     boolean isHashSetFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof HashSetFilterPanel) {
-                return filter.getList().getModel().getSize() > 0;
+                return filter.isFilterSupported();
             }
         }
         return false;
@@ -253,7 +254,7 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     boolean isInterestingItemsFilterSupported() {
         for (AbstractDiscoveryFilterPanel filter : filters) {
             if (filter instanceof InterestingItemsFilterPanel) {
-                return filter.getList().getModel().getSize() > 0;
+                return filter.isFilterSupported();
             }
         }
         return false;
@@ -285,9 +286,15 @@ abstract class AbstractFiltersPanel extends JPanel implements ActionListener, Li
     @Override
     public void valueChanged(ListSelectionEvent evt) {
         if (!evt.getValueIsAdjusting()) {
-            validateFields();
-            validate();
-            repaint();
+            //invoke it after all the currently queued gui actions are performed
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    validateFields();
+                    validate();
+                    repaint();
+                }
+            });
         }
     }
 

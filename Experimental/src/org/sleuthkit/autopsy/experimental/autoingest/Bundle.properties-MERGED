@@ -10,6 +10,11 @@ AinStatusNode.status.title=Status
 AinStatusNode.status.unknown=Unknown
 AutoIngestAdminActions.cancelJobAction.title=Cancel Job
 AutoIngestAdminActions.cancelModuleAction.title=Cancel Module
+AutoIngestAdminActions.disableOCR.error=Failed to disable OCR for case "%s".
+AutoIngestAdminActions.disableOCR.title=Disable OCR For This Case
+AutoIngestAdminActions.enableOCR.error=Failed to enable OCR for case "%s".
+AutoIngestAdminActions.enableOCR.title=Enable OCR For This Case
+AutoIngestAdminActions.getThreadDump.title=Generate Thread Dump
 AutoIngestAdminActions.pause.title=Pause Node
 AutoIngestAdminActions.progressDialogAction.title=Ingest Progress
 AutoIngestAdminActions.reprocessJobAction.error=Failed to reprocess job
@@ -70,9 +75,11 @@ AutoIngestControlPanel.JobsTableModel.ColumnHeader.HostName=Host Name
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.ImageFolder=Data Source
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.LocalJob=\ Local Job?
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath=\ Manifest File Path
+AutoIngestControlPanel.JobsTableModel.ColumnHeader.OCR=OCR
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.Priority=Prioritized
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.Stage=Stage
-AutoIngestControlPanel.JobsTableModel.ColumnHeader.StageTime=Time in Stage
+# {0} - unitSeparator
+AutoIngestControlPanel.JobsTableModel.ColumnHeader.StageTime=Time in Stage (dd{0}hh{0}mm{0}ss)
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.StartedTime=Stage Started
 AutoIngestControlPanel.JobsTableModel.ColumnHeader.Status=Status
 AutoIngestControlPanel.OK=OK
@@ -129,11 +136,13 @@ AutoIngestJobsNode.dataSource.text=Data Source
 AutoIngestJobsNode.hostName.text=Host Name
 AutoIngestJobsNode.jobCompleted.text=Job Completed
 AutoIngestJobsNode.jobCreated.text=Job Created
+AutoIngestJobsNode.ocr.text=OCR
 AutoIngestJobsNode.prioritized.false=No
 AutoIngestJobsNode.prioritized.true=Yes
 AutoIngestJobsNode.priority.text=Prioritized
 AutoIngestJobsNode.stage.text=Stage
-AutoIngestJobsNode.stageTime.text=Time in Stage
+# {0} - unitSeparator
+AutoIngestJobsNode.stageTime.text=Time in Stage (dd{0}hh{0}mm{0}ss)
 AutoIngestJobsNode.status.text=Status
 AutoIngestJobsPanel.waitNode.text=Please Wait...
 AutoIngestMetricsDialog.initReportText=Select a date above and click the 'Generate Metrics Report' button to generate\na metrics report.
@@ -205,9 +214,7 @@ DeleteCaseTask.progress.parsingManifest=Parsing manifest file {0}...
 DeleteCaseTask.progress.releasingManifestLock=Releasing lock on the manifest file {0}...
 DeleteCaseTask.progress.startMessage=Starting deletion...
 DeleteOrphanCaseNodesAction.progressDisplayName=Cleanup Case Znodes
-# {0} - item count
 DeleteOrphanCaseNodesDialog.additionalInit.lblNodeCount.text=Znodes found: {0}
-# {0} - item count
 DeleteOrphanCaseNodesDialog.additionalInit.znodesTextArea.countMessage=ZNODES FOUND: {0}
 DeleteOrphanCaseNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service
 # {0} - node path
@@ -223,6 +230,8 @@ DeleteOrphanManifestNodesTask.progress.gettingManifestNodes=Querying the coordin
 DeleteOrphanManifestNodesTask.progress.lookingForOrphanedManifestFileZnodes=Looking for orphaned manifest file znodes
 DeleteOrphanManifestNodesTask.progress.startMessage=Starting orphaned manifest file znode cleanup
 HINT_CasesDashboardTopComponent=This is an adminstrative dashboard for multi-user cases
+OcrIconCellRenderer.disabled.tooltiptext=This job does not have OCR enabled.
+OcrIconCellRenderer.enabled.tooltiptext=This job has OCR enabled.
 OpenAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.
 OpenAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details.
 OpenAutoIngestLogAction.menuItemText=Open Auto Ingest Log File
@@ -332,7 +341,7 @@ PrioritizationAction.deprioritizeCaseAction.error=Failed to deprioritize case "%
 PrioritizationAction.deprioritizeCaseAction.title=Deprioritize Case
 PrioritizationAction.deprioritizeJobAction.error=Failed to deprioritize job "%s".
 PrioritizationAction.deprioritizeJobAction.title=Deprioritize Job
-PrioritizationAction.prioritizeCaseAction.error==Failed to prioritize case "%s".
+PrioritizationAction.prioritizeCaseAction.error=Failed to prioritize case "%s".
 PrioritizationAction.prioritizeCaseAction.title=Prioritize Case
 PrioritizationAction.prioritizeJobAction.error=Failed to prioritize job "%s".
 PrioritizationAction.prioritizeJobAction.title=Prioritize Job

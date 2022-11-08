@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -78,8 +79,7 @@ final class XRYWebBookmarksFileParser extends AbstractSingleEntityParser {
             }
         }
         if(!attributes.isEmpty()) {
-            BlackboardArtifact artifact = parent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-            artifact.addAttributes(attributes);
+            parent.newDataArtifact(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, attributes);
         }
     }
 }

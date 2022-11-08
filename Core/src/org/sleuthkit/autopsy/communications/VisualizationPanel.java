@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2018 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,7 +70,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
@@ -585,30 +584,14 @@ final public class VisualizationPanel extends JPanel {
 
         ModalDialogProgressIndicator progressIndicator = new ModalDialogProgressIndicator(windowAncestor, Bundle.VisualizationPanel_computingLayout());
         progressIndicator.start(Bundle.VisualizationPanel_computingLayout());
-
-        new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() {
-                graph.getModel().beginUpdate();
-                try {
-                    layout.execute(graph.getDefaultParent());
-                    fitGraph();
-                } finally {
-                    graph.getModel().endUpdate();
-                    progressIndicator.finish();
-                }
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.WARNING, "CVT graph layout failed.", ex);
-                }
-            }
-        }.execute();
+        graph.getModel().beginUpdate();
+        try {    
+            layout.execute(graph.getDefaultParent());
+            fitGraph();
+        } finally {
+            graph.getModel().endUpdate();
+            progressIndicator.finish();
+        }
     }
 
     private void clearVizButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_clearVizButtonActionPerformed

@@ -47,6 +47,7 @@ import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import org.openide.util.ImageUtilities;
 import org.sleuthkit.autopsy.centralrepository.datamodel.DatabaseTestResult;
+import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresSettingsLoader;
 
 
 
@@ -151,9 +152,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      *                             as of most recent change.
      */
     @NbBundle.Messages({
-        "GlobalSettingsPanel.onMultiUserChange.enable.title=Use with Central Repository?",
-        "GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to update the Central Repository to use this PostgreSQL database?",
-        "GlobalSettingsPanel.onMultiUserChange.enable.description2=The Central Repository stores hash values and accounts from past cases."
+        "GlobalSettingsPanel.onMultiUserChange.enable.title=Central Repository",
+        "# {0} - server name",
+        "GlobalSettingsPanel.onMultiUserChange.enable.description=Do you want to update the Central Repository to use the PostgreSQL server on {0}?",
+        "GlobalSettingsPanel.onMultiUserChange.enable.description2=Any data in an existing SQLite Central Repository will not be transferred to the new database."
     })
     public static void onMultiUserChange(Component parent, boolean muPreviouslySelected, boolean muCurrentlySelected) {
         boolean crEnabled = CentralRepoDbUtil.allowUseOfCentralRepository();
@@ -161,10 +163,12 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
         if (!muPreviouslySelected && muCurrentlySelected) {
             SwingUtilities.invokeLater(() -> {
+                PostgresCentralRepoSettings multiUserSettings
+                = new PostgresCentralRepoSettings(PostgresSettingsLoader.MULTIUSER_SETTINGS_LOADER);
                 if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(parent,
                         "<html><body>"
                         + "<div style='width: 400px;'>"
-                        + "<p>" + Bundle.GlobalSettingsPanel_onMultiUserChange_enable_description() + "</p>"
+                        + "<p>" + Bundle.GlobalSettingsPanel_onMultiUserChange_enable_description(multiUserSettings.getHost()) + "</p>"
                         + "<p style='margin-top: 10px'>" + Bundle.GlobalSettingsPanel_onMultiUserChange_enable_description2() + "</p>"
                         + "</div>"
                         + "</body></html>",

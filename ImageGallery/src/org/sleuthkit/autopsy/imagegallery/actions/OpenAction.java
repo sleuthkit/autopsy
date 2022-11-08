@@ -40,6 +40,7 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -69,7 +70,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 @Messages({"CTL_OpenAction=Images/Videos",
     "OpenAction.stale.confDlg.msg=The image / video database may be out of date. "
     + "Do you want to update and listen for further ingest results?\n"
-    + "Choosing 'yes' will update the database and enable listening to future ingests.",
+    + "Choosing 'yes' will update the database and enable listening to future ingests.\n\n"
+            + "Database update status will appear in the lower right corner of the application window.",
     "OpenAction.notAnalyzedDlg.msg=No image/video files available to display yet.\n"
     + "Please run FileType and EXIF ingest modules.",
     "OpenAction.stale.confDlg.title=Image Gallery"})
@@ -157,7 +159,10 @@ public final class OpenAction extends CallableSystemAction {
         }
         Platform.runLater(() -> {
             ImageGalleryController controller;
+            // @@@ This call gets a lock. We shouldn't do this in the UI....
             controller = ImageGalleryController.getController(currentCase);
+
+            // Display an error if we could not get the controller and return
             if (controller == null) {
                 Alert errorDIalog = new Alert(Alert.AlertType.ERROR);
                 errorDIalog.initModality(Modality.APPLICATION_MODAL);
@@ -174,6 +179,7 @@ public final class OpenAction extends CallableSystemAction {
                 return;
             }
 
+            // Make sure the user is aware of Single vs Multi-user behaviors
             if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE
                     && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
                 Alert dialog = new Alert(Alert.AlertType.INFORMATION);
@@ -250,28 +256,7 @@ public final class OpenAction extends CallableSystemAction {
                             // They don't want to rebuild. Just open the UI as is.
                             // NOTE: There could be no data....
                         } else if (answer == ButtonType.YES) {
-                            if (controller.getCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-                                /*
-                                 * For a single-user case, we favor user
-                                 * experience, and rebuild the database as soon
-                                 * as Image Gallery is enabled for the case.
-                                 *
-                                 * Turning listening off is necessary in order
-                                 * to invoke the listener that will call
-                                 * controller.rebuildDB();
-                                 */
-                                controller.setListeningEnabled(false);
-                                controller.setListeningEnabled(true);
-                            } else {
-                                /*
-                                 * For a multi-user case, we favor overall
-                                 * performance and user experience, not every
-                                 * user may want to review images, so we rebuild
-                                 * the database only when a user launches Image
-                                 * Gallery.
-                                 */
-                                controller.rebuildDrawablesDb();
-                            }
+                            controller.rebuildDrawablesDb();
                         }
                         openTopComponent();
                         return;

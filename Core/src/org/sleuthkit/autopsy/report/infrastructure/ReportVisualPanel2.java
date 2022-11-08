@@ -200,20 +200,10 @@ final class ReportVisualPanel2 extends JPanel {
         try {
             Case openCase = Case.getCurrentCaseThrows();
             ArrayList<BlackboardArtifact.Type> doNotReport = new ArrayList<>();
-            doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getLabel(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getDisplayName()));
-            doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getLabel(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getDisplayName())); // output is too unstructured for table review
-            doNotReport.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getTypeID(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getLabel(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT.getDisplayName()));
-            doNotReport.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getTypeID(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getLabel(),
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT.getDisplayName()));
+            doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO));
+            doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_TOOL_OUTPUT)); // output is too unstructured for table review
+            doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_ASSOCIATED_OBJECT));
+            doNotReport.add(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT));
             // get artifact types that exist in the current case
             artifacts = openCase.getSleuthkitCase().getArtifactTypesInUse();
 
@@ -321,7 +311,7 @@ final class ReportVisualPanel2 extends JPanel {
         advancedButton = new javax.swing.JButton();
         allTaggedResultsRadioButton = new javax.swing.JRadioButton();
 
-        setPreferredSize(new java.awt.Dimension(650, 275));
+        setPreferredSize(new java.awt.Dimension(834, 374));
 
         optionsButtonGroup.add(specificTaggedResultsRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(specificTaggedResultsRadioButton, org.openide.util.NbBundle.getMessage(ReportVisualPanel2.class, "ReportVisualPanel2.specificTaggedResultsRadioButton.text")); // NOI18N
@@ -376,21 +366,20 @@ final class ReportVisualPanel2 extends JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(allTaggedResultsRadioButton)
+                    .addComponent(dataLabel)
+                    .addComponent(allResultsRadioButton)
+                    .addComponent(specificTaggedResultsRadioButton)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(27, 27, 27)
-                        .addComponent(tagsScrollPane)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(deselectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(selectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(allTaggedResultsRadioButton)
-                            .addComponent(dataLabel)
-                            .addComponent(allResultsRadioButton)
-                            .addComponent(specificTaggedResultsRadioButton)
-                            .addComponent(advancedButton))
-                        .addGap(0, 454, Short.MAX_VALUE)))
+                            .addComponent(advancedButton)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(tagsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 699, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(deselectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(selectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))))
                 .addContainerGap())
         );
 
@@ -407,7 +396,7 @@ final class ReportVisualPanel2 extends JPanel {
                 .addComponent(allTaggedResultsRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(specificTaggedResultsRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(selectAllButton)
@@ -415,10 +404,11 @@ final class ReportVisualPanel2 extends JPanel {
                         .addComponent(deselectAllButton)
                         .addGap(136, 136, 136))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(tagsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(1, 1, 1)
+                        .addComponent(tagsScrollPane)
                         .addGap(5, 5, 5)
-                        .addComponent(advancedButton)
-                        .addContainerGap())))
+                        .addComponent(advancedButton)))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 

@@ -29,9 +29,13 @@ The user account that Autopsy runs as will need access to the shared storage. Th
 
 \subsection multiuser_users_solr Solr Service
 
-Solr will run as a Windows service and will need access to the shared storage.  The default user, which is "LocalService", will not have access to network-based storage.  
+Solr will run as a Windows service and may need access to shared storage if it does not have enough local storage.  Solr performs best when it has fast access to storage, so keeping the indexes on local SSD drives is best. But, some clusters will need to store the indexes on the same shared storage that are used for images and other case outputs. 
 
-So, if you have network-based shared storage, you have three options:
+NOTE: Autopsy 4.17.0 and prior required that indexes were stored on the shared storage drives.  Autopsy 4.18.0 and beyond (which now use Solr 8) can use either local or shared storage. 
+
+If you are using local storage for Solr, then you can run the Solr service as "LocalService".  
+
+If you are going to use network storage for Solr, then you have three options: 
 - <b>NetworkService</b>: If you are on a domain, you may be able to run Solr as the "NetworkService" account.  This account has access to the network, but the challenge can be granting access for this account to the shared storage.  
  - If your shared storage is a Windows file share, you'll need to grant access to the computer account running Solr as follows:
 <ol> <li> Right click on the shared storage folder choose "Properties" and select the "Security" tab.

@@ -18,7 +18,11 @@
  */
 package org.sleuthkit.autopsy.textextractors.configs;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.TimedProcessTerminator;
 
 /**
  * Allows for configuration of OCR on image files. Extractors that use
@@ -28,8 +32,11 @@ import java.util.List;
  */
 public class ImageConfig {
 
-    private Boolean OCREnabled;
-    private List<String> ocrLanguages;
+    private static final int OCR_TIMEOUT_SECONDS = 30 * 60;
+
+    private boolean OCREnabled = false;
+    private List<String> ocrLanguages = null;
+    private final TimedProcessTerminator ocrTimedTerminator = new TimedProcessTerminator(OCR_TIMEOUT_SECONDS);
 
     /**
      * Enables OCR to be run on the text reader responsible for handling image
@@ -49,24 +56,35 @@ public class ImageConfig {
     public boolean getOCREnabled() {
         return this.OCREnabled;
     }
-
+    
     /**
-     * Sets languages for OCR.
-     * 
+     * Sets languages for OCR.  Can be null.
+     *
      * See PlatformUtil for list of installed language packs.
-     * 
+     *
      * @param languages List of languages to use
      */
     public void setOCRLanguages(List<String> languages) {
-        this.ocrLanguages = languages;
+        this.ocrLanguages = languages == null ? 
+                null : 
+                Collections.unmodifiableList(new ArrayList<>(languages));
     }
 
     /**
-     * Gets the list of languages OCR should perform.
-     * 
+     * Gets the list of languages OCR should perform.  Can be null.
+     *
      * @return Collection of OCR languages
      */
     public List<String> getOCRLanguages() {
         return this.ocrLanguages;
+    }
+
+    /**
+     * Returns a ProcessTerminator for timing out the OCR process.
+     *
+     * @return ProcessTerminator instance.
+     */
+    public ProcessTerminator getOCRTimeoutTerminator() {
+        return ocrTimedTerminator;
     }
 }

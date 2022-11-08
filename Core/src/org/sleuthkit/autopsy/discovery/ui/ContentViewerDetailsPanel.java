@@ -18,11 +18,15 @@
  */
 package org.sleuthkit.autopsy.discovery.ui;
 
+import java.util.logging.Level;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Details panel for displaying the collection of content viewers.
@@ -31,6 +35,7 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
 
     private static final long serialVersionUID = 1L;
     private final DataContentPanel contentViewer = DataContentPanel.createInstance();
+    private final static Logger logger = Logger.getLogger(ContentViewerDetailsPanel.class.getName());
 
     /**
      * Creates new form ContentViewerDetailsPanel
@@ -50,6 +55,7 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        setPreferredSize(new java.awt.Dimension(300, 0));
         setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
@@ -58,7 +64,19 @@ final class ContentViewerDetailsPanel extends AbstractArtifactDetailsPanel {
     public void setArtifact(BlackboardArtifact artifact) {
         Node node = Node.EMPTY;
         if (artifact != null) {
-            node = new BlackboardArtifactNode(artifact);
+            boolean useAssociatedFile = artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
+                    || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID();
+            BlackboardAttribute pathIdAttr = null;
+            if (useAssociatedFile) {
+                try {
+                    pathIdAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error getting Path ID Attribute for artifact with ID: " + artifact.getArtifactID(), ex);
+                }
+            }
+            if (!useAssociatedFile || pathIdAttr != null) {
+                node = new BlackboardArtifactNode(artifact, useAssociatedFile);
+            }
         }
         contentViewer.setNode(node);
     }

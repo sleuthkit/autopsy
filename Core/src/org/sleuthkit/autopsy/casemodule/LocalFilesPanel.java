@@ -290,7 +290,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
             final Case.CaseType currentCaseType = Case.getCurrentCaseThrows().getCaseType();
 
             for (String currentPath : pathsList) {
-                if (!PathValidator.isValidForMultiUserCase(currentPath, currentCaseType)) {
+                if (!PathValidator.isValidForCaseType(currentPath, currentCaseType)) {
                     errorLabel.setVisible(true);
                     errorLabel.setText(Bundle.LocalFilesPanel_pathValidation_dataSourceOnCDriveError());
                     return;

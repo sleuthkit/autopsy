@@ -184,6 +184,7 @@ final public class FiltersPanel extends JPanel {
         applyFiltersButton.addActionListener(e -> applyFilters());
         refreshButton.addActionListener(e -> applyFilters());
     }
+    
 
     /**
      * Validate that filters are in a consistent state and will result in some
@@ -220,13 +221,18 @@ final public class FiltersPanel extends JPanel {
     }
 
     void initalizeFilters() {
-        Runnable runnable = new Runnable() {
+        
+        applyFiltersButton.setEnabled(false);
+        refreshButton.setEnabled(true);
+        needsRefreshLabel.setText("Loading filters...");
+        needsRefreshLabel.setVisible(true);
+        
+        (new Thread(new Runnable(){
             @Override
             public void run() {
                 new FilterPanelRefresher(true, true).refresh();
             }
-        };
-        runnable.run();
+        })).start();
     }
 
     private void updateTimeZone() {
@@ -1152,6 +1158,8 @@ final public class FiltersPanel extends JPanel {
             if (!isEnabled()) {
                 setEnabled(true);
             }
+            
+            needsRefreshLabel.setText(org.openide.util.NbBundle.getMessage(FiltersPanel.class, "FiltersPanel.needsRefreshLabel.text")); // NOI18N
 
             validateFilters();
 

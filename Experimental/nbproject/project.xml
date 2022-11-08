@@ -144,7 +144,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.22</specification-version>
+                        <specification-version>10.24</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -171,20 +171,8 @@
                 <package>org.sleuthkit.autopsy.experimental.configuration</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/LGoodDatePicker-10.3.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/LGoodDatePicker-10.3.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackson-core-2.7.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackson-core-2.7.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
+                <runtime-relative-path>ext/jtidy-r938.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jtidy-r938.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

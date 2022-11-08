@@ -24,6 +24,8 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.validator.routines.DomainValidator;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 
 public class NetworkUtils {
 
@@ -113,14 +115,24 @@ public class NetworkUtils {
         } catch (MalformedURLException ex) {
             //do not log if not a valid URL - we will try to extract it ourselves
         }
-
-        // if there is a valid url host, get base domain from that host
-        // otherwise use urlString and parse the domain
+        
         String result = (StringUtils.isNotBlank(urlHost))
                 ? getBaseDomain(urlHost)
                 : getBaseDomain(urlString);
 
-        return result;
+        // if there is a valid url host, get base domain from that host
+        // otherwise use urlString and parse the domain
+        DomainValidator validator = DomainValidator.getInstance(true);
+        if (validator.isValid(result)) {
+            return result;
+        } else {
+            final String validIpAddressRegex = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
+            if (result.matches(validIpAddressRegex)) {
+                return result;
+            } else {
+                return "";
+            }
+        }
     }
 
 }

@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.Account;
  * PersonaAccounts for a given Account typeSpecificID retrieved on first access
  * and evicted from the cache after 5 minutes.
  */
-final class CVTPersonaCache {
+final public class CVTPersonaCache {
 
     private static final Logger logger = Logger.getLogger(CVTPersonaCache.class.getName());
     private final LoadingCache<Account, List<PersonaAccount>> accountMap;
@@ -82,15 +82,15 @@ final class CVTPersonaCache {
     }
 
     /**
-     * Returns the list of PersonaAccounts for the given Account typeSpecificId.
+     * Returns the list of PersonaAccounts for the given Account.
      *
-     * @param typeSpecificID Account typeSpecificId.
+     * @param account The account.
      *
      * @return List of PersonaAccounts for id or empty list if none were found.
      *
      * @throws ExecutionException
      */
-    static synchronized List<PersonaAccount> getPersonaAccounts(Account account) throws ExecutionException {
+    static public synchronized List<PersonaAccount> getPersonaAccounts(Account account) throws ExecutionException {
         return getInstance().accountMap.get(account);
     }
 }

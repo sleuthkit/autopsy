@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2020 Basis Technology Corp.
+ * Copyright 2015-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -66,7 +67,7 @@ public interface CentralRepository {
      * are no in-use connections when you call this method.
      *
      * @throws CentralRepoException if there is a problem closing the connection
-     * pool.
+     *                              pool.
      */
     void shutdownConnections() throws CentralRepoException;
 
@@ -103,20 +104,20 @@ public interface CentralRepository {
     /**
      * Add a new name/value pair in the db_info table.
      *
-     * @param name Key to set
+     * @param name  Key to set
      * @param value Value to set
      *
      * @throws CentralRepoException
      */
-    public void newDbInfo(String name, String value) throws CentralRepoException;
+    void newDbInfo(String name, String value) throws CentralRepoException;
 
     /**
      * Set the data source object id for a specific entry in the data_sources
      * table
      *
-     * @param rowId - the row id for the data_sources table entry
+     * @param rowId              - the row id for the data_sources table entry
      * @param dataSourceObjectId - the object id for the data source from the
-     * caseDb
+     *                           caseDb
      */
     void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws CentralRepoException;
 
@@ -129,17 +130,17 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public String getDbInfo(String name) throws CentralRepoException;
+    String getDbInfo(String name) throws CentralRepoException;
 
     /**
      * Update the value for a name in the name/value db_info table.
      *
-     * @param name Name to find
+     * @param name  Name to find
      * @param value Value to assign to name.
      *
      * @throws CentralRepoException
      */
-    public void updateDbInfo(String name, String value) throws CentralRepoException;
+    void updateDbInfo(String name, String value) throws CentralRepoException;
 
     /**
      * Creates new Case in the database
@@ -169,9 +170,11 @@ public interface CentralRepository {
      * user is not found in the examiner table.
      *
      * @param examinerLoginName user name to look for.
+     *
      * @return CentralRepoExaminer for the given user name.
+     *
      * @throws CentralRepoException If there is an error in looking up or
-     * inserting the user in the examiners table.
+     *                              inserting the user in the examiners table.
      */
     CentralRepoExaminer getOrInsertExaminer(String examinerLoginName) throws CentralRepoException;
 
@@ -217,7 +220,7 @@ public interface CentralRepository {
      * @param eamDataSource the data source to add
      *
      * @return - A CorrelationDataSource object with data source's central
-     * repository id
+     *         repository id
      */
     CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws CentralRepoException;
 
@@ -246,8 +249,8 @@ public interface CentralRepository {
     /**
      * Retrieves Data Source details based on data source device ID
      *
-     * @param correlationCase the current CorrelationCase used for ensuring
-     * uniqueness of DataSource
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
      * @param caseDbDataSourceId the data source device ID number
      *
      * @return The data source
@@ -258,8 +261,8 @@ public interface CentralRepository {
      * Retrieves Data Source details based on data source ID
      *
      * @param correlationCase the current CorrelationCase used for ensuring
-     * uniqueness of DataSource
-     * @param dataSourceId the data source ID number
+     *                        uniqueness of DataSource
+     * @param dataSourceId    the data source ID number
      *
      * @return The data source
      */
@@ -276,7 +279,7 @@ public interface CentralRepository {
      * Changes the name of a data source in the DB
      *
      * @param eamDataSource The data source
-     * @param newName The new name
+     * @param newName       The new name
      *
      * @throws CentralRepoException
      */
@@ -294,12 +297,12 @@ public interface CentralRepository {
      * Retrieves eamArtifact instances from the database that are associated
      * with the eamArtifactType and eamArtifactValues of the given eamArtifact.
      *
-     * @param aType EamArtifact.Type to search for
+     * @param aType  EamArtifact.Type to search for
      * @param values The list of correlation values to get
-     * CorrelationAttributeInstances for
+     *               CorrelationAttributeInstances for
      *
      * @return List of artifact instances for a given type with the specified
-     * values
+     *         values
      *
      * @throws CorrelationAttributeNormalizationException
      * @throws CentralRepoException
@@ -307,32 +310,39 @@ public interface CentralRepository {
     List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
+     * Retrieves correlation attribute instances from the central repository
+     * that match a given attribute type and value.
      *
-     * @param aType The type of the artifact
-     * @param value The correlation value
+     * @param type  The correlation attribute type.
+     * @param value The correlation attribute value.
      *
-     * @return List of artifact instances for a given type/value
+     * @return The matching correlation attribute instances.
      *
-     * @throws CorrelationAttributeNormalizationException
-     * @throws CentralRepoException
+     * @throws CorrelationAttributeNormalizationException The exception is
+     *                                                    thrown if the supplied
+     *                                                    correlation attribute
+     *                                                    value cannot be
+     *                                                    normlaized.
+     * @throws CentralRepoException                       The exception is
+     *                                                    thrown if there is an
+     *                                                    error querying the
+     *                                                    central repository.
      */
-    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type type, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the eamArtifactType and eamArtifactValues of the given eamArtifact
      * for the specified cases.
      *
-     * @param aType The type of the artifact
-     * @param values The list of correlation values to get
-     * CorrelationAttributeInstances for
+     * @param aType   The type of the artifact
+     * @param values  The list of correlation values to get
+     *                CorrelationAttributeInstances for
      * @param caseIds The list of central repository case ids to get
-     * CorrelationAttributeInstances for
+     *                CorrelationAttributeInstances for
      *
      * @return List of artifact instances for a given type with the specified
-     * values for the specified cases
+     *         values for the specified cases
      *
      * @throws CorrelationAttributeNormalizationException
      * @throws CentralRepoException
@@ -347,7 +357,7 @@ public interface CentralRepository {
      * @param value Value to search for
      *
      * @return Number of artifact instances having ArtifactType and
-     * ArtifactValue.
+     *         ArtifactValue.
      */
     Long getCountArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
@@ -373,6 +383,22 @@ public interface CentralRepository {
     Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
+     * Gets the count of cases that have an instance of a given correlation
+     * attribute.
+     *
+     * This count will ignore the specified instance of the correlation
+     * attribute and any other instances of this correlation attribute existing
+     * on the same object.
+     *
+     * @param instance The instance having its cases with other occurrences
+     *                 counted.
+     *
+     * @return Number of cases with additional instances of this
+     *         CorrelationAttributeInstance.
+     */
+    Long getCountCasesWithOtherInstances(CorrelationAttributeInstance instance) throws CentralRepoException, CorrelationAttributeNormalizationException;
+
+    /**
      * Retrieves number of data sources in the database.
      *
      * @return Number of unique data sources
@@ -386,7 +412,7 @@ public interface CentralRepository {
      * @param correlationDataSource Data source to search for
      *
      * @return Number of artifact instances having caseDisplayName and
-     * dataSource
+     *         dataSource
      */
     Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws CentralRepoException;
 
@@ -415,7 +441,7 @@ public interface CentralRepository {
      * in the associated CorrelationAttribute object.
      *
      * @param eamArtifact The correlation attribute whose database instance will
-     * be updated.
+     *                    be updated.
      *
      * @throws CentralRepoException
      */
@@ -428,11 +454,11 @@ public interface CentralRepository {
      * Method exists to support instances added using Central Repository version
      * 1,1 and older
      *
-     * @param type The type of instance.
-     * @param correlationCase The case tied to the instance.
+     * @param type                  The type of instance.
+     * @param correlationCase       The case tied to the instance.
      * @param correlationDataSource The data source tied to the instance.
-     * @param value The value tied to the instance.
-     * @param filePath The file path tied to the instance.
+     * @param value                 The value tied to the instance.
+     * @param filePath              The file path tied to the instance.
      *
      * @return The correlation attribute if it exists; otherwise null.
      *
@@ -445,10 +471,11 @@ public interface CentralRepository {
      * Find a correlation attribute in the Central Repository database given the
      * instance type, case, data source, object id.
      *
-     * @param type The type of instance.
-     * @param correlationCase The case tied to the instance.
+     * @param type                  The type of instance.
+     * @param correlationCase       The case tied to the instance.
      * @param correlationDataSource The data source tied to the instance.
-     * @param objectID The object id of the file tied to the instance.
+     * @param objectID              The object id of the file tied to the
+     *                              instance.
      *
      * @return The correlation attribute if it exists; otherwise null.
      *
@@ -484,7 +511,7 @@ public interface CentralRepository {
      * @param value Value to search for
      *
      * @return List of cases containing this artifact with instances marked as
-     * bad
+     *         bad
      *
      * @throws CentralRepoException
      */
@@ -498,7 +525,7 @@ public interface CentralRepository {
      * @param value Value to search for
      *
      * @return List of cases containing this artifact with instances marked as
-     * bad
+     *         bad
      *
      * @throws CentralRepoException
      */
@@ -511,7 +538,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public void deleteReferenceSet(int referenceSetID) throws CentralRepoException;
+    void deleteReferenceSet(int referenceSetID) throws CentralRepoException;
 
     /**
      * Check whether a reference set with the given parameters exists in the
@@ -526,7 +553,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public boolean referenceSetIsValid(int referenceSetID, String referenceSetName, String version) throws CentralRepoException;
+    boolean referenceSetIsValid(int referenceSetID, String referenceSetName, String version) throws CentralRepoException;
 
     /**
      * Check whether a reference set with the given name/version is in the
@@ -540,7 +567,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public boolean referenceSetExists(String referenceSetName, String version) throws CentralRepoException;
+    boolean referenceSetExists(String referenceSetName, String version) throws CentralRepoException;
 
     /**
      * Check if the given file hash is in this reference set. Only searches the
@@ -553,15 +580,15 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
+    boolean isFileHashInReferenceSet(String hash, int referenceSetID) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves the given file HashHitInfo if the given file hash is in this
      * reference set. Only searches the reference_files table.
      *
-     * @param hash The hash to find in a search.
+     * @param hash           The hash to find in a search.
      * @param referenceSetID The referenceSetID within which the file should
-     * exist.
+     *                       exist.
      *
      * @return The HashHitInfo if found or null if not found.
      *
@@ -579,7 +606,7 @@ public interface CentralRepository {
      *
      * @return true if the hash is found in the reference set
      */
-    public boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws CentralRepoException, CorrelationAttributeNormalizationException;
+    boolean isValueInReferenceSet(String value, int referenceSetID, int correlationTypeID) throws CentralRepoException, CorrelationAttributeNormalizationException;
 
     /**
      * Is the artifact known as bad according to the reference entries?
@@ -637,7 +664,7 @@ public interface CentralRepository {
      * Update an existing organization.
      *
      * @param updatedOrganization the values the Organization with the same ID
-     * will be updated to in the database.
+     *                            will be updated to in the database.
      *
      * @throws CentralRepoException
      */
@@ -689,7 +716,8 @@ public interface CentralRepository {
      * Add a new reference instance
      *
      * @param eamGlobalFileInstance The reference instance to add
-     * @param correlationType Correlation Type that this Reference Instance is
+     * @param correlationType       Correlation Type that this Reference
+     *                              Instance is
      *
      * @throws CentralRepoException
      */
@@ -699,8 +727,8 @@ public interface CentralRepository {
      * Insert the bulk collection of Global File Instances
      *
      * @param globalInstances a Set of EamGlobalFileInstances to insert into the
-     * db.
-     * @param contentType the Type of the global instances
+     *                        db.
+     * @param contentType     the Type of the global instances
      *
      * @throws CentralRepoException
      */
@@ -709,7 +737,7 @@ public interface CentralRepository {
     /**
      * Get all reference entries having a given correlation type and value
      *
-     * @param aType Type to use for matching
+     * @param aType  Type to use for matching
      * @param aValue Value to use for matching
      *
      * @return List of all global file instances with a type and value
@@ -734,7 +762,7 @@ public interface CentralRepository {
      * used to correlate artifacts.
      *
      * @return List of EamArtifact.Type's. If none are defined in the database,
-     * the default list will be returned.
+     *         the default list will be returned.
      *
      * @throws CentralRepoException
      */
@@ -745,7 +773,7 @@ public interface CentralRepository {
      * artifacts.
      *
      * @return List of enabled EamArtifact.Type's. If none are defined in the
-     * database, the default list will be returned.
+     *         database, the default list will be returned.
      *
      * @throws CentralRepoException
      */
@@ -756,7 +784,7 @@ public interface CentralRepository {
      * correlate artifacts.
      *
      * @return List of supported EamArtifact.Type's. If none are defined in the
-     * database, the default list will be returned.
+     *         database, the default list will be returned.
      *
      * @throws CentralRepoException
      */
@@ -787,7 +815,7 @@ public interface CentralRepository {
      *
      * @throws CentralRepoException
      */
-    public void upgradeSchema() throws CentralRepoException, SQLException, IncompatibleCentralRepoException;
+    void upgradeSchema() throws CentralRepoException, SQLException, IncompatibleCentralRepoException;
 
     /**
      * Gets an exclusive lock (if applicable). Will return the lock if
@@ -798,14 +826,14 @@ public interface CentralRepository {
      * @return the lock, or null if locking is not supported
      *
      * @throws CentralRepoException if the coordination service is running but
-     * we fail to get the lock
+     *                              we fail to get the lock
      */
-    public CoordinationService.Lock getExclusiveMultiUserDbLock() throws CentralRepoException;
+    CoordinationService.Lock getExclusiveMultiUserDbLock() throws CentralRepoException;
 
     /**
      * Process the Artifact instance in the EamDb
      *
-     * @param type EamArtifact.Type to search for
+     * @param type                  EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
      *
      * @throws CentralRepoException
@@ -815,9 +843,9 @@ public interface CentralRepository {
     /**
      * Process the Artifact instance in the EamDb
      *
-     * @param type EamArtifact.Type to search for
+     * @param type                  EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
-     * @param whereClause query string to execute
+     * @param whereClause           query string to execute
      *
      * @throws CentralRepoException
      */
@@ -826,18 +854,18 @@ public interface CentralRepository {
     /**
      * Process a SELECT query
      *
-     * @param selectClause query string to execute
+     * @param selectClause          query string to execute
      * @param instanceTableCallback callback to process the instance
      *
      * @throws CentralRepoException
      */
-    public void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;
+    void processSelectClause(String selectClause, InstanceTableCallback instanceTableCallback) throws CentralRepoException;
 
     /**
      * Executes an INSERT/UPDATE/DELETE sql as a prepared statement, on the
      * central repository database.
      *
-     * @param sql sql to execute.
+     * @param sql    sql to execute.
      * @param params List of query params to use, may be empty.
      *
      * @throws CentralRepoException If there is an error.
@@ -848,8 +876,8 @@ public interface CentralRepository {
      * Executes a SELECT query sql as a prepared statement, on the central
      * repository database.
      *
-     * @param sql sql to execute.
-     * @param params List of query params to use, may be empty.
+     * @param sql           sql to execute.
+     * @param params        List of query params to use, may be empty.
      * @param queryCallback Query callback to handle the result of the query.
      *
      * @throws CentralRepoException If there is an error.
@@ -860,10 +888,12 @@ public interface CentralRepository {
      * Get account type by type name.
      *
      * @param accountTypeName account type name to look for
-     * @return CR account type
+     *
+     * @return CR account type (if found)
+     *
      * @throws CentralRepoException
      */
-    CentralRepoAccountType getAccountTypeByName(String accountTypeName) throws CentralRepoException;
+    Optional<CentralRepoAccountType> getAccountTypeByName(String accountTypeName) throws CentralRepoException;
 
     /**
      * Gets all account types.
@@ -878,15 +908,17 @@ public interface CentralRepository {
      * Get an account from the accounts table matching the given type/ID.
      * Inserts a row if one doesn't exists.
      *
-     * @param crAccountType CR account type to look for or create
+     * @param crAccountType   CR account type to look for or create
      * @param accountUniqueID type specific unique account id
+     *
      * @return CR account
-     * 
-     * @throws CentralRepoException  If there is an error accessing Central Repository.
+     *
+     * @throws CentralRepoException      If there is an error accessing Central
+     *                                   Repository.
      * @throws InvalidAccountIDException If the account identifier is not valid.
      */
     CentralRepoAccount getOrCreateAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException;
-    
+
     /**
      * Gets an account from the accounts table matching the given type/ID, if
      * one exists.
@@ -896,7 +928,8 @@ public interface CentralRepository {
      *
      * @return CR account, if found, null otherwise.
      *
-     * @throws CentralRepoException  If there is an error accessing Central Repository.
+     * @throws CentralRepoException      If there is an error accessing Central
+     *                                   Repository.
      * @throws InvalidAccountIDException If the account identifier is not valid.
      */
     CentralRepoAccount getAccount(CentralRepoAccount.CentralRepoAccountType crAccountType, String accountUniqueID) throws InvalidAccountIDException, CentralRepoException;

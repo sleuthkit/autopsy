@@ -13,7 +13,7 @@ We suggest running all \ref ingest_page "ingest modules" before launching discov
 Required ingest modules:
 <ul>
 <li>\ref file_type_identification_page for image, video, and document searches
-<li>\ref recent_activity_page or \ref ileapp_page for domain searches
+<li>\ref recent_activity_page or one of the mobile parsers (\ref android_analyzer_page, \ref ileapp_page, \ref aleapp_page) for domain searches
 </ul>
 
 Optional ingest modules:
@@ -50,7 +50,7 @@ The first step is choosing whether you want to display images, videos, documents
 
 \subsection file_disc_filtering Filtering
 
-The second step is to select and configure your filters. The available filters will vary depending on the result type. For most filters, you enable them using the checkbox on the left and then select your options. Multiple options can be selected by using CTRL + left click. Results must pass all enabled filters to be displayed.
+The second step is to select and configure your filters. The available filters will vary depending on the result type. For most filters, you enable them using the checkbox on the left and then select the checkboxes next to the options you want to be enabled. The "Check All" and "Uncheck All" buttons can be used to check or uncheck all options in the list. Results must pass all enabled filters to be displayed.
 
 \subsubsection file_disc_size_filter File Size Filter
 
@@ -124,6 +124,18 @@ When there are multiple path options in the filter, they will be applied as foll
 
 This allows you to, for example, make rules to include both the "My Documents" and the "My Pictures" folders.
 
+\subsubsection file_disc_prev_notable_filter Previously Notable Filter
+
+The previously notable filter is for domain searches only and is used to restrict results to only those domains that have previously been marked as "Notable" in the \ref central_repo_page.
+
+\image html FileDiscovery/fd_notableFilter.png
+
+\subsubsection file_disc_known_account_filter Known Account Type Filter
+
+The known account type filter is for domain searches only and is used to restrict results to only those domains that have a known account type.
+
+\image html FileDiscovery/fd_knownAccountFilter.png
+
 \subsubsection file_disc_result_filter Result Type Filter
 
 The result type filter is for domain searches only and can be used to restrict which types of web results the domains can come from.
@@ -158,7 +170,7 @@ The last grouping and sorting option is choosing how to sort the results within 
 
 \subsection file_disc_results_overview Overview
 
-Once you select your options and click "Search", you'll see a new window with the list of groups on the left side. Selecting one of these groups will display the results from that group on the right side. For image, video, and document searches, selecting a result will cause a panel to rise showing more details about each instance of that result. You can manually raise and lower this panel using the large arrows on the right side of the divider. This panel is disabled for domain searches.
+Once you select your options and click "Search", you'll see a new window with the list of groups on the left side. Selecting one of these groups will display the results from that group on the right side. Selecting a result will cause a panel to rise showing more details about each instance of that result. You can manually raise and lower this panel using the large arrows on the right side of the divider.
 
 If your results are images, you'll see thumbnails for each image in the top area of the right panel.
 
@@ -181,6 +193,10 @@ For image, video, and document searches, when you select a result from the top o
 \image html FileDiscovery/fd_instanceContext.png
 
 The bottom section of the panel is identical to the standard \ref content_viewer_page and displays data corresponding to the file instance selected in the middle of the panel.
+
+For domain searches, when you select a domain in the top of the right panel you'll see a details area that is a variation on the \ref content_viewer_page. The first tab on details panel displays a simple timeline - selecting a date will show all the results from that date in the center of the panel, with details for the selected result on the right. The other tabs (Web Bookmarks, Web Cookies, etc.) display results of the selected type with a list of results on the left and more details on the right. You can right-click on results to use most of options available in the normal \ref result_viewer_page.
+
+\image html FileDiscovery/fd_domainDetails.png
 
 \subsection file_disc_dedupe De-duplication
 

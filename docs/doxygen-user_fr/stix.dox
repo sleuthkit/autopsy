@@ -1,0 +1,104 @@
+﻿/*! \page stix_page STIX
+
+[TOC]
+
+
+Aperçu
+========
+Ce document décrit l'utilisation de la fonction STIX d'Autopsy. Cette fonction permet à un ou plusieurs fichiers Structured Threat Information Exchange (STIX) de s'exécuter sur une source de données, indiquant quels indicateurs ont été trouvés dans la source de données. Vous trouverez plus d'informations sur STIX sur https://stix.mitre.org/.
+Ce document suppose une connaissance de base d'Autopsy. 
+
+Démarrage rapide
+===========
+-# Créez un cas comme d'habitude et ajoutez une image disque (ou un dossier de fichiers) comme source de données. Pour tirer le meilleur parti du module STIX, assurez-vous que les modules d'acquisition suivants sont sélectionnés:
+    - Recent Activity
+    - Hash Lookup (Case cochée pour calculer les hachages MD5 même si aucune base de données n'est sélectionnée)
+    - File Type Identification
+    - Keyword Search (URLs, IP Addresses, et Email addresses)
+    - Email Parser
+    - Extension Mismatch Detector
+-# Une fois l'image ajoutée et l'acquisition terminée, cliquez sur le bouton "Report" puis sélectionnez STIX. Ensuite, choisissez un seul fichier STIX ou un répertoire de fichiers STIX à exécuter sur l'image. Il est possible de le faire pendant l'acquisition, mais les résultats seront incomplets.
+-# Une fois le module de rapport STIX terminé, il y aura deux ensembles de résultats:
+     - Les entrées seront créées sous "Interesting Items" dans l'arborescence Autopsy, avec une sous-rubrique pour chaque indicateur.
+     - Un journal des indicateurs/observations trouvés est généré par le module de rapport (Suivez le lien sur la fenêtre "Report Generation Progress")
+
+
+Objets CybOX supportés
+======================
+
+- Address Object (adresse)
+    - Address_Value (valeur)
+
+- Domain Name Object (domaine)
+    - Value (valeur)
+	
+- Email Message Object (courriel)
+    - To (A)
+    - CC (Copie)
+    - From (De)
+    - Subject (Sujet)
+
+- File Object (fichier)
+    - Size_In_Bytes (taille en octets)
+    - File_Name (nom)
+    - File_Path (chemin)
+    - File_Extension (extension)
+    - Modified_Time (date de modification)
+    - Accessed_Time (date de dernier accès)
+    - Created_Time (date de création)
+    - Hashes (MD5 uniquement)
+    - File_Format (format du fichier)
+    - is_masqueraded (masqué)
+
+- URI Object (URI)
+    - Value (valeur)
+
+- URL History Object (historique URL)
+    - Browser_Information (nom du navigateur)
+    - URL
+    - Hostname (nom de l'hôte)
+    - Referrer_URL (referer)
+    - Page_Title (titre de la page)
+    - User_Profile_Name (nom du profil de l'utilisateur)
+
+- User Account Object (compte utilisateur)
+    - Home_Directory (répertoire principal de l'utilisateur)
+    - Username (nom de l'utilisateur)
+
+- Win Executable File Object (fichiers Windows exécutables)
+    - Time_Date_Stamp (date et heure)
+
+- Windows Network Share Object (partage réseau Windows)
+    - Local_Path (chemin local)
+    - Netname (nom du répertoire réseau)
+
+- Win Registry Key Object (clé de registre Windows)
+    - Key (obligatoire)
+    - Hive (ruche)
+    - Values (valeur)
+
+- System Object (système)
+    - Hostname (nom de l'hôte)
+    - Processor_Architecture (architecture processeur)
+
+- Win System Object (système Windows)
+    - Product_ID (identifiant produit)
+    - Product_Name (nom du produit)
+    - Registered_Owner (propriétaire enregistré)
+    - Registered_Organization (société enregistrée)
+    - Windows_System_Directory (répertoire système)
+    - Windows_Temp_Directory (répertoire temporaire)
+
+- Win User Account Object (compte utilisateur Windows)
+    - SID
+	
+Voir http://cybox.mitre.org pour plus d'informations sur les obkets CybOX.
+
+Limites
+=======
+- Comme indiqué dans la liste ci-dessus, tous les objets/champs CybOX ne sont pas actuellement pris en charge. Lorsqu'un objet/champ non pris en charge est trouvé dans une observation, son statut est défini commme "indeterminate" au lieu de vrai ou faux. Ces champs indéterminés ne changeront pas le résultat de la composition observable (c'est-à-dire que si le reste est vrai, le résultat global restera vrai).
+- Toutes les valeurs ConditionTypeEnum ne sont pas supportées. Cela varie selon les champs, mais généralement sur les champs "String" les éléments suivant fonctionnent: EQUALS, DOES_NOT_EQUAL, CONTAINS, DOES_NOT_CONTAIN, STARTS_WITH, ENDS_WITH. Si un type de condition n'est pas pris en charge, un avertissement apparaît dans le fichier journal.
+- Les objets liés ne sont pas traités.
+
+
+*/

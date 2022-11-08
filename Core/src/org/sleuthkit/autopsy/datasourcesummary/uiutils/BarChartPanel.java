@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.datasourcesummary.uiutils;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Font;
-import java.util.Collections;
 import java.util.List;
 import javax.swing.JLabel;
 import org.apache.commons.collections4.CollectionUtils;
@@ -34,168 +32,12 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.category.StandardBarPainter;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartSeries.BarChartItem;
 
 /**
  * A bar chart panel.
  */
-public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.BarChartSeries>> {
-
-    /**
-     * Represents a series in a bar chart where all items pertain to one
-     * category.
-     */
-    public static class BarChartSeries {
-
-        private final Comparable<?> key;
-        private final Color color;
-        private final List<BarChartItem> items;
-
-        /**
-         * Main constructor.
-         *
-         * @param color The color for this series.
-         * @param items The bars to be displayed for this series.
-         */
-        public BarChartSeries(Comparable<?> key, Color color, List<BarChartItem> items) {
-            this.key = key;
-            this.color = color;
-            this.items = (items == null) ? Collections.emptyList() : Collections.unmodifiableList(items);
-        }
-
-        /**
-         * @return The color for this series.
-         */
-        public Color getColor() {
-            return color;
-        }
-
-        /**
-         * @return The bars to be displayed for this series.
-         */
-        public List<BarChartItem> getItems() {
-            return items;
-        }
-
-        /**
-         * @return The key for this item.
-         */
-        public Comparable<?> getKey() {
-            return key;
-        }
-    }
-
-    /**
-     * An individual bar to be displayed in the bar chart.
-     */
-    public static class BarChartItem {
-
-        private final Comparable<?> key;
-        private final double value;
-
-        /**
-         * Main constructor.
-         *
-         * @param label The key for this bar. Also serves as the label using
-         * toString().
-         * @param value The value for this item.
-         */
-        public BarChartItem(Comparable<?> key, double value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        /**
-         * @return The key for this item.
-         */
-        public Comparable<?> getKey() {
-            return key;
-        }
-
-        /**
-         * @return The value for this item.
-         */
-        public double getValue() {
-            return value;
-        }
-    }
-
-    /**
-     * JFreeChart bar charts don't preserve the order of bars provided to the
-     * chart, but instead uses the comparable nature to order items. This
-     * provides order using a provided index as well as the value for the axis.
-     */
-    public static class OrderedKey implements Comparable<OrderedKey> {
-
-        private final Object keyValue;
-        private final int keyIndex;
-
-        /**
-         * Main constructor.
-         *
-         * @param keyValue The value for the key to be displayed in the domain
-         * axis.
-         * @param keyIndex The index at which it will be displayed.
-         */
-        public OrderedKey(Object keyValue, int keyIndex) {
-            this.keyValue = keyValue;
-            this.keyIndex = keyIndex;
-        }
-
-        /**
-         * @return The value for the key to be displayed in the domain axis.
-         */
-        Object getKeyValue() {
-            return keyValue;
-        }
-
-        /**
-         * @return The index at which it will be displayed.
-         */
-        int getKeyIndex() {
-            return keyIndex;
-        }
-
-        @Override
-        public int compareTo(OrderedKey o) {
-            // this will have a higher value than null.
-            if (o == null) {
-                return 1;
-            }
-
-            // compare by index
-            return Integer.compare(this.getKeyIndex(), o.getKeyIndex());
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 3;
-            return hash;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final OrderedKey other = (OrderedKey) obj;
-            if (this.keyIndex != other.keyIndex) {
-                return false;
-            }
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            // use toString on the key.
-            return this.getKeyValue() == null ? null : this.getKeyValue().toString();
-        }
-    }
+public class BarChartPanel extends AbstractLoadableComponent<List<BarChartSeries>> {
 
     private static final long serialVersionUID = 1L;
 
@@ -235,7 +77,7 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
         chart.getTitle().setFont(DEFAULT_HEADER_FONT);
 
         this.plot = ((CategoryPlot) chart.getPlot());
-        this.plot.getRenderer().setBaseItemLabelFont(DEFAULT_FONT);
+        this.plot.getRenderer().setDefaultItemLabelFont(DEFAULT_FONT);
         plot.setBackgroundPaint(null);
         plot.setOutlinePaint(null);
 
@@ -285,12 +127,12 @@ public class BarChartPanel extends AbstractLoadableComponent<List<BarChartPanel.
     }
 
     @Override
-    protected void setResults(List<BarChartPanel.BarChartSeries> data) {
+    protected void setResults(List<BarChartSeries> data) {
         this.dataset.clear();
 
         if (CollectionUtils.isNotEmpty(data)) {
             for (int s = 0; s < data.size(); s++) {
-                BarChartPanel.BarChartSeries series = data.get(s);
+                BarChartSeries series = data.get(s);
                 if (series != null && CollectionUtils.isNotEmpty(series.getItems())) {
                     if (series.getColor() != null) {
                         this.plot.getRenderer().setSeriesPaint(s, series.getColor());

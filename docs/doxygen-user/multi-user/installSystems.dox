@@ -14,8 +14,7 @@ You can run each of these on their own dedicated VM, but that is not necessary.
 
 Apache Solr uses a lot of memory, so we recommend keeping it by itself. The exception is if you are using Windows File Sharing for shared storage.  You can get better Solr performance if it is writing to local storage instead of over the network.  So, you can consider using the same computer for both Solr and shared storage. 
 
-Also note that because all computers need to access the shared storage at the same path, you cannot mix operating systems. A Linux system running Solr will not be able to access the shared storage at the same path as a Windows Autopsy client. 
-
+Also note that because all computers need to access the shared storage at the same path, you cannot mix operating systems. 
 
 
 We recommend:
@@ -27,14 +26,13 @@ We recommend:
 
 \subsection multiuser_system_hw Suggested Hardware
 
-TODO
+- PostgreSQL/ActiveMQ (Server 1):
+ - RAM: 16GB or more
+ - Local Storage: 500GB SSD
 
-- PostgreSQL/ActiveMQ (server 1):
- - RAM: 
- - Local Storage: Enough for databases
-- Solr (server 2):
- - RAM: 
- - Local Storage: Minimal 
+- Solr (Server 2):
+ - RAM: 32GB or more
+ - Local Storage: A single index will be roughly the size of the data source being ingested. For example 128GB E01 will usually generate  a 128 GB index.
 
 \subsection multiuser_system_back Backups
 

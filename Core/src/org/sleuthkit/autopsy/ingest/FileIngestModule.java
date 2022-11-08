@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,19 +30,19 @@ public interface FileIngestModule extends IngestModule {
      * Processes a file. Called between calls to startUp() and shutDown(). Will
      * be called for each file in a data source.
      *
+     * IMPORTANT: In addition to returning ProcessResult.OK or
+     * ProcessResult.ERROR, modules should log all errors using methods provided
+     * by the org.sleuthkit.autopsy.coreutils.Logger class. Log messages should
+     * include the name and object ID of the data being processed and any other
+     * information that would be useful for debugging. If an exception has been
+     * caught by the module, the exception should be sent to the logger along
+     * with the log message so that a stack trace will appear in the application
+     * log.
+     *
      * @param file The file to analyze.
      *
      * @return A result code indicating success or failure of the processing.
      */
     ProcessResult process(AbstractFile file);
 
-    /**
-     * Invoked by Autopsy when an ingest job is completed (either because the
-     * data has been analyzed or because the job was canceled - check
-     * IngestJobContext.fileIngestIsCancelled()), before the ingest module
-     * instance is discarded. The module should respond by doing things like
-     * releasing private resources, submitting final results, and posting a
-     * final ingest message.
-     */
-    void shutDown();
 }

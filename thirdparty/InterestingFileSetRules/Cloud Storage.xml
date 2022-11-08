@@ -18,7 +18,6 @@
   <NAME name="MEGA Privacy Windows App" regex="false" typeFilter="file">MegaApp.exe</NAME>
   <NAME name="MEGAsync" regex="false" typeFilter="file">MEGAsync.exe</NAME>
   <NAME name="NextCloud" regex="false" typeFilter="file">nextcloud.exe</NAME>
-  <NAME name="OneDrive" regex="false" typeFilter="file">onedrive.exe</NAME>
   <NAME name="OneDrive Windows App" regex="false" typeFilter="file">microsoft.microsoftskydrive.exe</NAME>
   <NAME name="OwnCloud" regex="false" typeFilter="file">owncloud.exe</NAME>
   <NAME name="pCloud" regex="false" typeFilter="file">pcloud.exe</NAME>

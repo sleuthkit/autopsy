@@ -49,6 +49,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
@@ -146,14 +147,23 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-        currentSelectionInfo = info;
+        if(currentSelectionInfo != null && currentSelectionInfo.equals(info)) {
+            try {
+                // Clear the currently selected thread so that clicks can 
+                // be registered.
+                rootTablePane.getExplorerManager().setSelectedNodes(new Node[0]);
+            } catch (PropertyVetoException ex) {
+                logger.log(Level.WARNING, "Error clearing the selected node", ex);
+            }
+        } else {
+            currentSelectionInfo = info;
+            rootMessageFactory.refresh(info);
+        }
 
         currentPanel = rootTablePane;
 
         CardLayout layout = (CardLayout) this.getLayout();
-        layout.show(this, "threads");
-
-        rootMessageFactory.refresh(info);
+        layout.show(this, "threads"); 
     }
 
     @Override
@@ -192,8 +202,8 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
         if (isDescendingFrom(newFocusOwner, rootTablePane)) {
             proxyLookup.setNewLookups(createLookup(rootTablePane.getExplorerManager(), getActionMap()));
         } else if (isDescendingFrom(newFocusOwner, this)) {
-            proxyLookup.setNewLookups(createLookup(currentPanel.getExplorerManager(), getActionMap()));
-        }
+            proxyLookup.setNewLookups(createLookup(threadMessagesPanel.getExplorerManager(), getActionMap()));
+        } 
     }
 
     @Override
@@ -325,6 +335,8 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
         showingMessagesLabel = new javax.swing.JLabel();
         threadNameLabel = new javax.swing.JLabel();
 
+        setMinimumSize(new java.awt.Dimension(450, 292));
+        setName(""); // NOI18N
         setLayout(new java.awt.CardLayout());
 
         rootMessagesPane.setOpaque(false);
@@ -367,6 +379,7 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
 
         add(rootMessagesPane, "threads");
 
+        messagePanel.setMinimumSize(new java.awt.Dimension(450, 292));
         messagePanel.setLayout(new java.awt.GridBagLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -388,8 +401,8 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
-        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(9, 0, 9, 15);
         messagePanel.add(backButton, gridBagConstraints);
         backButton.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(MessageViewer.class, "MessageViewer.backButton.AccessibleContext.accessibleDescription")); // NOI18N
@@ -406,7 +419,9 @@ final class MessageViewer extends JPanel implements RelationshipsViewer {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(9, 5, 5, 15);
         messagePanel.add(threadNameLabel, gridBagConstraints);
 

@@ -139,7 +139,6 @@ public class EventNode extends DisplayableItemNode {
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         Collections.addAll(actionsList, super.getActions(context));
-
         /*
          * If this event is derived from an artifact, add actions to view the
          * source file and a "linked" file, if present.

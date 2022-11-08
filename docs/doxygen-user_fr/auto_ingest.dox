@@ -1,0 +1,97 @@
+/*! \page auto_ingest_page Acquisition automatisée
+
+[TOC]
+
+
+\section auto_ingest_overview Aperçu
+
+L'acquisition automatisée permet à un ou plusieurs ordinateurs de traiter des \ref ds_page "sources de données" automatiquement avec un support minimal de la part des utilisateurs. Les \ref multiuser_page "cas multi-utilisateurs" qui en résultent peuvent être ouverts et examinés par des analystes, en utilisant l'une des fonctions normales d'Autopsy.
+
+Le \ref experimental_page "Module expérimental" doit être activé pour exécuter l'acquisition automatisée.
+
+Il existe trois types d'ordinateurs dans un déploiement de traitement automatisé:
+<ul>
+<li><b>Automated Ingest Node:</b>
+Ces ordinateurs sont chargés de surveiller le dossier des images partagées et de détecter quand de nouvelles images ont été copiées. Chacun écrit ses résultats dans le dossier des cas partagés.
+<li><b>Examiner Node:</b> Ces ordinateurs peuvent ouvrir un dossier pendant le traitement ou après qu'il ait été analysé par les "Automated Ingest Node". Ils permettent à l'analyste d'examiner les résultats, de marquer les fichiers et d'effectuer des analyses supplémentaires si nécessaire. 
+<li><b>Services/Storage Node:</b> Ces ordinateurs exécutent les services nécessaires pour les \ref multiuser_page "cas multi-utilisateurs", contiennent les images à traiter et stockent les cas Autopsy analysés.
+</ul>
+
+Le flux de travail général est le suivant:
+<ol>
+<li>Les images disque ou d'autres types de sources de données sont ajoutés au <b>dossier des images partagées</b>. Ce dossier contiendra toutes les images du disque ou du téléphone qui sont copiées sur le système. Elles doivent être copiées ici avant de pouvoir être analysées. Comme plusieurs machines peuvent avoir besoin d'accéder à ce dossier sur le réseau, utilisez des chemins UNC (si possible) pour faire référence à ce dossier. 
+<li>Un \ref auto_ingest_manifest_creation "fichier Manifest" est ajouté pour chaque source de données à traiter.
+<li>Un "Automated Ingest Node" trouve ce fichier Manifest et commence le traitement de la source de données. Il créera un cas dans le <b>dossier des cas partagés</b> s'il n'y en a pas déjà un. Ce dossier contiendra tous les résultats de l'analyse une fois cette analyse automatisée effectuée sur les images. Ce dossier ne contiendra pas les images, celles-ci resteront dans le dossier des images partagées. Comme plusieurs machines peuvent avoir besoin d'accéder à ce dossier sur le réseau, utilisez des chemins UNC (si possible) pour faire référence à ce dossier.	
+<li>Un analyste sur un "Examiner Node" ouvre le dossier et commence son analyse. Cela peut se faire pendant qu'un "Automated Ingest Node" traite les données ou après.
+</ol>
+
+Un déploiement de traitement automatisé peut avoir une architecture, telle que celle-ci:
+
+\image html AutoIngest/overview_pic1.png
+
+Une autre illustration comprenant l'infrastructure réseau, est présentée ci-dessous:
+
+\image html AutoIngest/overview_pic2.png
+
+\section auto_ingest_setup_section Configuration
+
+Veuillez consulter la page relative à la \ref auto_ingest_setup_page "configuration d'un groupe d'ordinateurs pour l'acquisition automatisée".
+
+\section auto_ingest_ex_usage Utilisation des "Examiner Node"
+
+Un "Examiner Node" dans un environnement d'acquisition automatisée est généralement le même que tout client Autopsy normal configuré pour les \ref multiuser_page "cas multi-utilisateurs." N'importe quel nombre de "Examiner Node" peut ouvrir des cas qui ont été créés par les "Automated Ingest Node". Les analyses des cas n'ont pas besoin d'être achevées.
+
+L'analyste peut ouvrir le tableau de bord "Auto Ingest Dashboard" via le menu "Tools". Cela permet à l'utilisateur de voir quels cas et quelles sources de données sont planifiés, en cours ou terminés.
+
+\image html AutoIngest/examiner_dashboard.png
+
+\section auto_ingest_ain_usage Utilisation des "Automated Ingest Node"
+
+\subsection auto_ingest_manifest_creation Préparation des données pour l'acquisition automatisée
+
+Les utilisateurs copient manuellement les images dans le dossier des images partagées (en utilisant des sous-dossiers si nécessaire) et planifient leur acquisition en créant un fichier dans le dossier à côté de l'image à analyser. Ce fichier est un fichier Manifest décrivant l'image. Le nom de ce fichier doit se terminer par "_Manifest.xml".
+
+\image html AutoIngest/manifest_file_in_file_explorer.png
+
+Voici un exemple de fichier Manifest d'Autopsy. Les sauts de ligne/espaces ne sont pas obligatoires, mais sont affichés ici pour une meilleure lisibilité.
+\verbatim<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<AutopsyManifest>
+   <CaseName>XperiaCase</CaseName>
+   <DeviceId>50549</DeviceId>
+   <DataSource>mtd3_userdata.bin</DataSource>
+</AutopsyManifest>\endverbatim
+
+Voici une description de chaque champ obligatoire:
+<ul><li><b>CaseName</b>: Nom du cas. Plusieurs sources de données peuvent appartenir au même cas.
+<li><b>DeviceId</b>: (Facultatif) Un identifiant unique représentant l'appareil d'où provient cette source de données. Cela peut être un entier ou un UUID.
+<li><b>DataSource</b>: Nom du fichier de la source de données. N'inclut pas le chemin.
+</ul>
+Toute quantité de données supplémentaires peut être incluse dans le fichier XML tant que les champs ci-dessus sont présents.
+
+Les fichiers Manifest peuvent être générés automatiquement en utilisant l'\ref manifest_tool_page.
+
+\subsection auto_ingest_running Exécution d'un "Automated Ingest Node"
+
+Lorsque le mode d'acquisition automatisée est activé, Autopsy s'ouvre avec une interface utilisateur différente de la normale, permettant à l'utilisateur de voir quels cas sont en cours de traitement, lesquels sont terminés et lesquels sont les suivants dans la file d'attente. Vous pouvez également modifier la priorité des cas et retraiter les cas qui peuvent avoir rencontré une erreur.
+
+\image html AutoIngest/auto_ingest_in_progress.png
+
+L'utilisateur doit appuyer sur le bouton "Start" pour lancer le processus d'acquisition automatisée. Notez que si l'ordinateur exécutant Autopsy en mode d'acquisition automatisée est redémarré, vous devrez vous y connecter pour redémarrer Autopsy. Il ne le fera pas par lui-même. Lorsque vous appuyez sur "Start", le nœud parcourt le dossier des images partagées à la recherche de fichiers Manifest. Cette analyse se produit périodiquement lorsque l'acquisition est en cours. Elle peut également être démarrée manuellement à l'aide du bouton "Refresh".
+
+L'interface utilisateur du "Automated Ingest Node" affiche les images planifiées pour l'analyse, ce qui est en cours d'exécution et ce qui est terminé. Si une image nouvellement ajoutée doit avoir la priorité la plus élevée, vous pouvez la sélectionner et choisir "Prioritize Case". Cela donnera la priorité absolue à toutes les images dans le même cas. Vous pouvez également donner la priorité à une seule source de données ("job") en utilisant le bouton "Prioritize Job" de la même manière. Si vous avez priorisé quelque chose par erreur, les boutons "Deprioritize" l'annuleront.
+
+Dans la zone du milieu, vous pouvez voir les travaux en cours d'exécution. Vous avez la possibilité d'annuler l'analyse complète en cours d'une image ou d'annuler uniquement le module en cours d'exécution. Cette dernière possibilité est utilisée lorsque l'un des modules fonctionne depuis trop longtemps et que vous pensez que le module a des problèmes avec l'image et ne se terminera jamais. Si le "Automated Ingest Node" perd la connexion à la base de données ou aux services Solr, il annulera automatiquement la tâche en cours d'exécution et interrompra le traitement. Une fois le problème de connectivité résolu, vous devrez reprendre manuellement le traitement.
+
+Si une erreur se produit lors du traitement d'une tâche, ou si une tâche a été configurée de manière incorrecte, le bouton "Reprocess Job" peut être utilisé pour replacer une tâche terminée dans le tableau "Pending Jobs" ("tâches en attente"), où il peut être priorisé si vous le souhaitez. Aucune donnée de cas n'est supprimée, ce qui peut entraîner une duplication des résultats.
+
+"Delete Case" supprimera un cas de la liste et supprimera toutes ses données. Cela ne supprimera pas l'image d'origine, le fichier Manifest ou quoi que ce soit d'autre du répertoire d'entrée. Un cas ne peut pas être supprimé s'il est actuellement ouvert dans un "Examiner Node" ou si un "Automated Ingest Node" travaille actuellement sur une tâche liée au cas. Faites attention avec le bouton de suppression de cas. Notez qu'une fois qu'un cas est supprimé, le chemin d'accès à ses sources de données doit être modifié avant de pouvoir être retraité (c'est-à-dire renommer le dossier de base).
+
+Le bouton "Auto Ingest Metrics" affiche les données de traitement pour tous les "Automated Ingest Node" dans le système à partir d'une date de début entrée par l'utilisateur.
+
+\image html AutoIngest/metrics.png
+
+\section auto_ingest_administration_section Administration des "Automated Ingest Node"
+
+Voir la page \ref auto_ingest_admin_page pour plus d'informations sur l'activation des fonctionnalités d'administrateur.
+
+*/

@@ -84,6 +84,7 @@ public final class CorrelationAttributeInstanceNode extends DisplayableItemNode 
         "CorrelationAttributeInstanceNode.columnName.name=Name",
         "CorrelationAttributeInstanceNode.columnName.case=Case",
         "CorrelationAttributeInstanceNode.columnName.dataSource=Data Source",
+        "CorrelationAttributeInstanceNode.columnName.value=Value",        
         "CorrelationAttributeInstanceNode.columnName.known=Known",
         "CorrelationAttributeInstanceNode.columnName.path=Path",
         "CorrelationAttributeInstanceNode.columnName.comment=Comment",
@@ -109,6 +110,7 @@ public final class CorrelationAttributeInstanceNode extends DisplayableItemNode 
         final String dataSourceName = dataSource.getName();
         final String known = centralRepoFile.getKnownStatus().getName();
         final String comment = centralRepoFile.getComment();
+        final String value = centralRepoFile.getCorrelationValue();
         final String device = dataSource.getDeviceID();
         
         final String NO_DESCR = "";
@@ -122,6 +124,9 @@ public final class CorrelationAttributeInstanceNode extends DisplayableItemNode 
         sheetSet.put(new NodeProperty<>(
                 Bundle.CorrelationAttributeInstanceNode_columnName_dataSource(),
                 Bundle.CorrelationAttributeInstanceNode_columnName_dataSource(), NO_DESCR, dataSourceName));
+        sheetSet.put(new NodeProperty<>(
+                Bundle.CorrelationAttributeInstanceNode_columnName_value(),
+                Bundle.CorrelationAttributeInstanceNode_columnName_value(), NO_DESCR, value));
         sheetSet.put(new NodeProperty<>(
                 Bundle.CorrelationAttributeInstanceNode_columnName_known(),
                 Bundle.CorrelationAttributeInstanceNode_columnName_known(), NO_DESCR, known));

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
@@ -63,6 +64,7 @@ class Ingester {
     private static Ingester instance;
     private final LanguageSpecificContentIndexingHelper languageSpecificContentIndexingHelper
         = new LanguageSpecificContentIndexingHelper();
+    private static final int LANGUAGE_DETECTION_STRING_SIZE = 4096;
 
     private Ingester() {
     }
@@ -125,7 +127,55 @@ class Ingester {
     private Map<String, String> getContentFields(SleuthkitVisitableItem item) {
         return item.accept(SOLR_FIELDS_VISITOR);
     }
-
+    
+    /**
+     * Read and chunk the source text for indexing in Solr. Also performs
+     * language detection on the input text.
+     *
+     * @param <A>     The type of the Appendix provider that provides additional
+     *                text to append to the final chunk.
+     * @param <T>     A subclass of SleuthkitVisibleItem.
+     * @param Reader  The reader containing extracted text.
+     * @param source  The source from which text will be extracted, chunked, and
+     *                indexed.
+     * @param context The ingest job context that can be used to cancel this
+     *                process.
+     *
+     * @return True if indexing was completed, false otherwise.
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+     */
+    // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
+    < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+        boolean doLanguageDetection = true;
+        return indexText(sourceReader, sourceID, sourceName, source, context, doLanguageDetection);
+    }
+    
+    /**
+     * Read and chunk the source text for indexing in Solr. Does NOT perform
+     * language detection on the input strings. Per JIRA-7100, it was determined 
+     * that language detection on extracted strings can take a really long time.
+     *
+     * @param <A>     The type of the Appendix provider that provides additional
+     *                text to append to the final chunk.
+     * @param <T>     A subclass of SleuthkitVisibleItem.
+     * @param Reader  The reader containing extracted text.
+     * @param source  The source from which text will be extracted, chunked, and
+     *                indexed.
+     * @param context The ingest job context that can be used to cancel this
+     *                process.
+     *
+     * @return True if indexing was completed, false otherwise.
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+     */
+    // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
+    < T extends SleuthkitVisitableItem> boolean indexStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+        // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
+        boolean doLanguageDetection = false;
+        return indexText(sourceReader, sourceID, sourceName, source, context, doLanguageDetection);
+    }
+    
     /**
      * Read and chunk the source text for indexing in Solr.
      *
@@ -138,16 +188,18 @@ class Ingester {
      *                  and indexed.
      * @param context   The ingest job context that can be used to cancel this
      *                  process.
+     * @param doLanguageDetection A flag whether to perform language detection on the input text/strings.
      *
      * @return True if indexing was completed, false otherwise.
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+    private < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
         
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
+        Optional<Language> language = Optional.empty();
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
@@ -162,7 +214,14 @@ class Ingester {
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
-                Optional<Language> language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk);
+
+                if (doLanguageDetection) {
+                    int size = Math.min(chunk.getBaseChunkLength(), LANGUAGE_DETECTION_STRING_SIZE);
+                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk.toString().substring(0, size));
+                    
+                    // only do language detection on the first chunk of the document
+                    doLanguageDetection = false;
+                }
                 language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
                 try {
                     //add the chunk text to Solr index
@@ -232,7 +291,11 @@ class Ingester {
         //Make a SolrInputDocument out of the field map
         SolrInputDocument updateDoc = new SolrInputDocument();
         for (String key : fields.keySet()) {
-            updateDoc.addField(key, fields.get(key));
+            if (fields.get(key).getClass() == String.class) {
+                updateDoc.addField(key, Chunker.sanitize((String)fields.get(key)).toString());
+            } else {
+                updateDoc.addField(key, fields.get(key));
+            }
         }
 
         try {
@@ -333,10 +396,10 @@ class Ingester {
          */
         private Map<String, String> getCommonAndMACTimeFields(AbstractFile file) {
             Map<String, String> params = getCommonFields(file);
-            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCtime(), file));
-            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(file.getAtime(), file));
-            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTimeISO8601(file.getMtime(), file));
-            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCrtime(), file));
+            params.put(Server.Schema.CTIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getCtime()));
+            params.put(Server.Schema.ATIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getAtime()));
+            params.put(Server.Schema.MTIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getMtime()));
+            params.put(Server.Schema.CRTIME.toString(), TimeZoneUtils.getFormattedTimeISO8601(file.getCrtime()));
             return params;
         }
 

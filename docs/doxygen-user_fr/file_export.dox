@@ -1,0 +1,72 @@
+/*! \page file_export_page File Export (Export de fichiers)
+
+[TOC]
+
+
+\section file_export_overview Aperçu
+
+S'il est activé, l'exportateur de fichiers s'exécutera après chaque tâche d'\ref auto_ingest_page et exportera tous les fichiers de cette source de données qui correspondent aux règles fournies. La plupart des utilisateurs n'auront pas besoin d'utiliser cette fonctionnalité - les analystes peuvent ouvrir les cas d'acquisition automatique dans un "Examiner Node" et y consulter les données.
+
+\section file_export_setup Configuration
+
+Après avoir activé l'exportateur de fichiers, la première chose à faire est de définir deux dossiers de sortie. Le "Files Folder" est le répertoire de base de tous les fichiers exportés et le "Reports Folder" est le répertoire de base des rapports (listes de chaque fichier exporté pour chaque source de données). Si possible, il est préférable d'utiliser des chemins UNC.
+
+\image html AutoIngest/file_exporter_main.png
+
+Ensuite, vous établissez des règles pour les fichiers que vous souhaitez exporter. Chaque règle doit avoir un nom et au moins un ensemble de conditions. Si plusieurs conditions sont définies, toutes les conditions doivent être vraies pour exporter le fichier. Lorsque vous avez terminé de configurer votre règle, appuyez sur le bouton "Save" pour la sauvegarder. Vous verrez la nouvelle règle dans la liste sur le côté gauche.
+
+Toutes les règles enregistrées seront exécutées sur chaque source de données. Il n'y a aucun moyen de définir une règle comme inactive, donc si vous créez une règle et que vous ne voulez pas qu'elle s'exécute, vous devrez utiliser le bouton "Delete Rule" pour la supprimer.
+
+Vous devrez exécuter les modules \ref hash_db_page et \ref file_type_identification_page pour utiliser l'exportateur de fichiers. Vous devrez peut-être exécuter des modules supplémentaires en fonction des attributs de vos règles.
+
+\subsection file_exporter_mime MIME Type (Type MIME)
+
+La première condition est basée sur le type MIME. Pour l'activer, cochez la case avant "MIME Type", puis sélectionnez un type MIME dans la liste et choisissez si vous voulez le faire correspondre ou non. Pour le moment, il est impossible de sélectionner plusieurs types MIME. Ce qui suit montre une règle qui correspondra à toutes les images PNG.
+
+\image html AutoIngest/file_export_png.png
+
+\subsection file_exporter_size File Size (Taille de fichier)
+
+La deuxième condition est basée sur la taille du fichier. Vous pouvez choisir une taille de fichier (en utilisant la liste de droite pour modifier les unités), puis sélectionner si les fichiers doivent être plus grands, plus petits, égaux ou non à cette taille. Ce qui suit montre une règle qui correspondra aux fichiers de texte brut de plus de 1 Ko.
+
+\image html AutoIngest/file_export_size.png
+
+\subsection file_exporter_attributes Attributes (Attributs)
+
+La troisième condition est basée sur les artefacts et les attributs du Blackboard, c'est ainsi qu'Autopsy stocke la plupart de ses résultats d'analyse. Un fichier sera exporté s'il est lié à un attribut correspondant. L'utilisation de ce type de condition exigera une certaine familiarité avec la manière exacte dont ces attributs sont créés et les données que nous nous attendons à y voir. Il y a quelques informations de base dans la <a href="http://sleuthkit.org/sleuthkit/docs/jni-docs/4.6.0/mod_bbpage.html">documentation Sleuthkit</a>. Vous devrez probablement également ouvrir un fichier de base de données d'Autopsy pour vérifier les types d'attributs exacts utilisés pour contenir les données qui vous intéressent.
+
+Pour créer une condition d'attribut, sélectionnez le type d'artefact, puis le type d'attribut qui vous intéresse. Sur la ligne suivante, vous pouvez entrer une valeur et définir la relation que vous voulez qu'ait l'attribut (égal, pas égal, supérieur/inférieur). Toutes les options n'auront pas de sens avec tous les types de données. Utilisez ensuite le bouton "Add Attribute" pour l'ajouter à la liste d'attributs. Si vous faites une erreur, utilisez le bouton "Delete Attribute" pour l'effacer. Ce qui suit montre une règle qui exportera tous les fichiers étant ressortis d'une recherche de mots-clés avec le mot "bomb".
+
+\image html AutoIngest/file_export_keyword.png
+
+Il est possible de paramétrer une correspondance plus générale sur les artefacts. Supposons que vous vouliez exporter tous les fichiers que le module \ref encryption_page a marqué comme "Encryption Suspected". Ces fichiers auront un artefact TSK_ENCRYPTION_SUSPECTED avec un seul attribut "TSK_COMMENT" qui contient l'entropie calculée pour chaque fichier. Dans ce cas, nous pouvons utiliser l'opérateur "non égal" avec la chaîne que nous ne nous attendons pas à trouver dans le champs TSK_COMMENT, afin de modifier efficacement la condition en "possède un artefact TSK_ENCRYPTION_SUSPECTED associé."
+ 
+\image html AutoIngest/file_export_encrypton.png
+
+\section file_export_output Export
+
+Les fichiers exportés se trouvent dans le dossier qui a été spécifié lors de l'étape de \ref file_export_setup, puis organisés au niveau du dossier racine par l'identifiant du périphérique de la source de données.
+
+\image html AutoIngest/file_export_dir_structure.png
+
+Les fichiers exportés sont nommés avec leur hachage et stockés dans des sous-dossiers basés sur les parties de ce hachage, pour éviter qu'un seul dossier ne devienne très volumineux.
+
+\image html AutoIngest/file_export_file_loc.png
+
+Les fichiers de rapport se trouvent également dans les sous-dossiers sous l'identifiant de l'appareil, puis le nom de la règle.
+
+\image html AutoIngest/file_export_json_loc.png
+
+Ce fichier json contiendra des informations sur le fichier et tous les artefacts associés faisant partie des règles de conditions.
+\verbatim
+{"7C89F280C337AB3E997D20527B8EC6F8":{"Filename":"\\\\WIN-4913\\AutopsyData\\FileExportFiles\\37567\\text-plain\\7C\\89\\F2\\80\\7C89F280C337AB3E997D20527B8EC6F8",
+"Type":"text/plain","MD5":"7C89F280C337AB3E997D20527B8EC6F8","File data":{"Modified":["0000-00-00 00:00:00"],"Changed":["0000-00-0000:00:00"],
+"Accessed":["0000-00-00 00:00:00"],"Created":["0000-00-00 00:00:00"],"Extension":["txt"],"Filename":["File about explosions.txt"],"Size":["54"],
+"Source Path":["/kwTest_2019_03_14_12_53_33//File about explosions.txt"],"Flags (Dir)":["Allocated"],"Flags (Meta)":["Allocated"],
+"Mode":["r---------"],"User ID":["0"],"Group ID":["0"],"Meta Addr":["0"],"Attr Addr":["1-0"],"Dir Type":["r"],"MetaType":["r"],
+"Known":["unknown"]},"TSK_KEYWORD_HIT":{"TSK_KEYWORD":["bomb"]},
+"TSK_KEYWORD_HIT":{"TSK_KEYWORD_PREVIEW":["keyword search for the word bomb in this file.\n\n\n------"]},
+"TSK_KEYWORD_HIT":{"TSK_SET_NAME":["bomb"]},"TSK_KEYWORD_HIT":{"TSK_KEYWORD_SEARCH_TYPE":["0"]}}}
+\endverbatim
+
+*/

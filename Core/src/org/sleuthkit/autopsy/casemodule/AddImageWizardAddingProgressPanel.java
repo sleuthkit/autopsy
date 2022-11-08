@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Host;
 
 /**
  * The final panel of the add image wizard. It displays a progress bar and
@@ -115,7 +116,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
                 }
             });
         }
-        
+
         @Override
         public void setProgressMax(final int max) {
             // update the progress bar asynchronously
@@ -302,7 +303,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
     private void startIngest() {
         if (!newContents.isEmpty() && readyToIngest && !ingested) {
             ingested = true;
-            if (dsProcessor != null && ! dsProcessor.supportsIngestStream()) {
+            if (dsProcessor != null && !dsProcessor.supportsIngestStream()) {
                 IngestManager.getInstance().queueIngestJob(newContents, ingestJobSettings);
             }
             setStateFinished();
@@ -323,51 +324,56 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
     /**
      * Starts the Data source processing by kicking off the selected
      * DataSourceProcessor
+     *
+     * @param dsp          The data source processor providing configuration for
+     *                     how to process the specific data source type.
+     * @param selectedHost The host to which this data source belongs or null
+     *                     for a default host.
      */
-    void startDataSourceProcessing(DataSourceProcessor dsp) {
+    void startDataSourceProcessing(DataSourceProcessor dsp, Host selectedHost) {
         if (dsProcessor == null) {  //this can only be run once
             final UUID dataSourceId = UUID.randomUUID();
             newContents.clear();
             cleanupTask = null;
-            readyToIngest = false;
             dsProcessor = dsp;
-
-            // Add a cleanup task to interrupt the background process if the
-            // wizard exits while the background process is running.
-            cleanupTask = addImageAction.new CleanupTask() {
-                @Override
-                void cleanup() throws Exception {
-                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    cancelDataSourceProcessing(dataSourceId);
-                    cancelled = true;
-                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                }
-            };
-
-            cleanupTask.enable();
-
             new Thread(() -> {
+                // Add a cleanup task to interrupt the background process if the
+                // wizard exits while the background process is running.
+                cleanupTask = addImageAction.new CleanupTask() {
+                    @Override
+                    void cleanup() throws Exception {
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        cancelDataSourceProcessing(dataSourceId);
+                        cancelled = true;
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    }
+                };
+
+                cleanupTask.enable();
+
                 try {
                     Case.getCurrentCaseThrows().notifyAddingDataSource(dataSourceId);
                 } catch (NoCurrentCaseException ex) {
-                     Logger.getLogger(AddImageWizardAddingProgressVisual.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+                    Logger.getLogger(AddImageWizardAddingProgressVisual.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+                }
+
+                DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
+                    @Override
+                    public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
+                        dataSourceProcessorDone(dataSourceId, result, errList, contents);
+                    }
+                };
+
+                // Kick off the DSProcessor
+                if (dsProcessor.supportsIngestStream()) {
+                    // Set readyToIngest to false to prevent the wizard from starting ingest a second time.
+                    readyToIngest = false;
+                    dsProcessor.runWithIngestStream(selectedHost, ingestJobSettings, getDSPProgressMonitorImpl(), cbObj);
+                } else {
+                    dsProcessor.run(selectedHost, getDSPProgressMonitorImpl(), cbObj);
                 }
             }).start();
-            DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
-                @Override
-                public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
-                    dataSourceProcessorDone(dataSourceId, result, errList, contents);
-                }
-            };
-
             setStateStarted();
-
-            // Kick off the DSProcessor
-            if (dsProcessor.supportsIngestStream()) {
-                dsProcessor.runWithIngestStream(ingestJobSettings, getDSPProgressMonitorImpl(), cbObj);
-            } else {
-                dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
-            }
         }
     }
 
@@ -419,9 +425,14 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
             //  TBD: there probably should be an error level for each error
             addErrors(err, critErr);
         }
-
-        //notify the UI of the new content added to the case
+        final Level level = critErr ? Level.SEVERE : Level.WARNING;
         new Thread(() -> {
+            //log error messages as Severe if there was a critical error otherwise as Warning.
+            //logging performed off of UI thread
+            for (String err : errList) {
+                Logger.getLogger(AddImageWizardAddingProgressVisual.class.getName()).log(level, "DatasourceID: {0} Error Message: {1}", new Object[]{dataSourceId.toString(), err});
+            }
+            //notify the UI of the new content added to the case
             try {
                 if (!contents.isEmpty()) {
                     Case.getCurrentCaseThrows().notifyDataSourceAdded(contents.get(0), dataSourceId);

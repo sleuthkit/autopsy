@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,14 +23,12 @@ import java.util.List;
 import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.datasourcesummary.datamodel.AnalysisSummary;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.CellModelTableCellRenderer.DefaultCellModel;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.ColumnModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataFetcher;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.JTablePanel.ColumnModel;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
-import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModuleFactory;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -40,38 +38,34 @@ import org.sleuthkit.datamodel.DataSource;
 @Messages({
     "AnalysisPanel_keyColumn_title=Name",
     "AnalysisPanel_countColumn_title=Count",
-    "AnalysisPanel_keywordSearchModuleName=Keyword Search"
-})
+    "AnalysisPanel_keywordSearchModuleName=Keyword Search",
+    "AnalysisPanel_hashsetHits_tabName=Hashset Hits",
+    "AnalysisPanel_keywordHits_tabName=Keyword Hits",
+    "AnalysisPanel_interestingItemHits_tabName=Interesting Item Hits",})
 public class AnalysisPanel extends BaseDataSourceSummaryPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String KEYWORD_SEARCH_MODULE_NAME = Bundle.AnalysisPanel_keywordSearchModuleName();
-    private static final String KEYWORD_SEARCH_FACTORY = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory";
-
-    private static final String INTERESTING_ITEM_MODULE_NAME = new InterestingItemsIngestModuleFactory().getModuleDisplayName();
-    private static final String INTERESTING_ITEM_FACTORY = InterestingItemsIngestModuleFactory.class.getCanonicalName();
-
-    private static final String HASHSET_MODULE_NAME = HashLookupModuleFactory.getModuleName();
-    private static final String HASHSET_FACTORY = HashLookupModuleFactory.class.getCanonicalName();
-
-    /**
-     * Default Column definitions for each table
-     */
-    private static final List<ColumnModel<Pair<String, Long>>> DEFAULT_COLUMNS = Arrays.asList(
+    // Default Column definitions for each table
+    private static final List<ColumnModel<Pair<String, Long>, DefaultCellModel<?>>> DEFAULT_COLUMNS = Arrays.asList(
             new ColumnModel<>(
                     Bundle.AnalysisPanel_keyColumn_title(),
-                    (pair) -> new DefaultCellModel(pair.getKey()),
+                    (pair) -> new DefaultCellModel<>(pair.getKey()),
                     300
             ),
             new ColumnModel<>(
                     Bundle.AnalysisPanel_countColumn_title(),
-                    (pair) -> new DefaultCellModel(String.valueOf(pair.getValue())),
+                    (pair) -> new DefaultCellModel<>(pair.getValue()),
                     100
             )
     );
 
+    // Identifies the key in the records for the tables.
     private static final Function<Pair<String, Long>, String> DEFAULT_KEY_PROVIDER = (pair) -> pair.getKey();
+
+    private final DataFetcher<DataSource, List<Pair<String, Long>>> hashsetsFetcher;
+    private final DataFetcher<DataSource, List<Pair<String, Long>>> keywordsFetcher;
+    private final DataFetcher<DataSource, List<Pair<String, Long>>> interestingItemsFetcher;
 
     private final JTablePanel<Pair<String, Long>> hashsetHitsTable
             = JTablePanel.getJTablePanel(DEFAULT_COLUMNS)
@@ -90,9 +84,8 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             keywordHitsTable,
             interestingItemsTable
     );
-    
+
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
-    
 
     /**
      * All of the components necessary for data fetch swing workers to load data
@@ -104,39 +97,41 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
      * Creates a new DataSourceUserActivityPanel.
      */
     public AnalysisPanel() {
-        this(new AnalysisSummary());
+        this(new AnalysisSummaryGetter());
     }
 
-    public AnalysisPanel(AnalysisSummary analysisData) {
+    public AnalysisPanel(AnalysisSummaryGetter analysisData) {
         super(analysisData);
+
+        hashsetsFetcher = (dataSource) -> analysisData.getHashsetCounts(dataSource);
+        keywordsFetcher = (dataSource) -> analysisData.getKeywordCounts(dataSource);
+        interestingItemsFetcher = (dataSource) -> analysisData.getInterestingItemCounts(dataSource);
 
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
                 // hashset hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> analysisData.getHashsetCounts(dataSource),
-                        (result) -> showResultWithModuleCheck(hashsetHitsTable, result, HASHSET_FACTORY, HASHSET_MODULE_NAME)),
+                        hashsetsFetcher,
+                        (result) -> hashsetHitsTable.showDataFetchResult(result)),
                 // keyword hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> analysisData.getKeywordCounts(dataSource),
-                        (result) -> showResultWithModuleCheck(keywordHitsTable, result, KEYWORD_SEARCH_FACTORY, KEYWORD_SEARCH_MODULE_NAME)),
+                        keywordsFetcher,
+                        (result) -> keywordHitsTable.showDataFetchResult(result)),
                 // interesting item hits loading components
                 new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> analysisData.getInterestingItemCounts(dataSource),
-                        (result) -> showResultWithModuleCheck(interestingItemsTable, result, INTERESTING_ITEM_FACTORY, INTERESTING_ITEM_MODULE_NAME))
+                        interestingItemsFetcher,
+                        (result) -> interestingItemsTable.showDataFetchResult(result))
         );
 
         initComponents();
     }
 
-    
     @Override
     public void close() {
         ingestRunningLabel.unregister();
         super.close();
     }
-    
-    
+
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);
@@ -229,7 +224,6 @@ public class AnalysisPanel extends BaseDataSourceSummaryPanel {
             .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables

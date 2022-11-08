@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -41,12 +42,15 @@ import org.sleuthkit.autopsy.discovery.search.SearchFiltering.ArtifactTypeFilter
 import org.sleuthkit.autopsy.discovery.search.SearchFiltering.DataSourceFilter;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_ACCOUNT_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Loads domain search results for cache misses. This loader is a Guava cache
@@ -61,7 +65,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         // Grouping by CR Frequency, for example, will require further processing
         // in order to make the correct decision. The attribute types that require
         // more information implement their logic by overriding `addAttributeToResults`.
-        List<AttributeType> searchAttributes = new ArrayList<>();
+        Set<AttributeType> searchAttributes = new HashSet<>();
         searchAttributes.add(key.getGroupAttributeType());
         searchAttributes.addAll(key.getFileSortingMethod().getRequiredAttributes());
         for (AttributeType attr : searchAttributes) {
@@ -69,7 +73,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 throw new InterruptedException();
             }
             attr.addAttributeToResults(domainResults,
-                    key.getSleuthkitCase(), key.getCentralRepository());
+                    key.getSleuthkitCase(), key.getCentralRepository(), key.getContext());
         }
         // Apply secondary in memory filters
         for (AbstractFilter filter : key.getFilters()) {
@@ -77,7 +81,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 throw new InterruptedException();
             }
             if (filter.useAlternateFilter()) {
-                domainResults = filter.applyAlternateFilter(domainResults, key.getSleuthkitCase(), key.getCentralRepository());
+                domainResults = filter.applyAlternateFilter(domainResults, key.getSleuthkitCase(), key.getCentralRepository(), key.getContext());
             }
         }
         // Sort the ResultDomains by the requested criteria.
@@ -101,11 +105,9 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
 
         // Filters chosen in the UI are aggregated into SQL statements to be used in 
         // the queries that follow.
-        final Pair<String, String> filterClauses = createWhereAndHavingClause(key.getFilters());
-        final String whereClause = filterClauses.getLeft();
-        final String havingClause = filterClauses.getRight();
-
-        // You may think of each row of this result as a TSK_DOMAIN attribute, where the parent
+        final Pair<String, String> domainsFilterClauses = createWhereAndHavingClause(key.getFilters());
+        final String domainsWhereClause = domainsFilterClauses.getLeft();
+        final String domainsHavingClause = domainsFilterClauses.getRight();
         // artifact type is within the (optional) filter and the parent artifact
         // had a date time attribute that was within the (optional) filter. With this
         // table in hand, we can simply group by domain and apply aggregate functions
@@ -116,13 +118,34 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 + "       artifact_id AS parent_artifact_id,"
                 + "       MAX(artifact_type_id) AS parent_artifact_type_id "
                 + "FROM   blackboard_attributes "
-                + "WHERE  " + whereClause + " "
+                + "WHERE  " + domainsWhereClause + " "
                 + "GROUP BY artifact_id "
-                + "HAVING " + havingClause;
+                + "HAVING " + domainsHavingClause;
+        final SleuthkitCase caseDb = key.getSleuthkitCase();
+        String sqlSpecificAccountAggregator;
+        if (caseDb.getDatabaseType() == TskData.DbType.POSTGRESQL) {
+            sqlSpecificAccountAggregator = "STRING_AGG(DISTINCT(value_text), ',')"; //postgres string aggregator (requires specified separator 
+        } else {
+            sqlSpecificAccountAggregator = "GROUP_CONCAT(DISTINCT(value_text))"; //sqlite string aggregator (uses comma separation by default)
+        }
+        /*
+         * As part of getting the known account types for a domain additional
+         * attribute values are necessary from the blackboard_attributes table
+         * This sub-query aggregates them and associates them with the artifact
+         * they correspond to.
+         */
+        final String accountsTable
+                = "SELECT " + sqlSpecificAccountAggregator + " as value_text," //naming field value_text the same as the field it is aggregating to re-use aggregator
+                + "artifact_id AS account_artifact_id "
+                + "FROM blackboard_attributes "
+                + "WHERE (attribute_type_id = " + TSK_TEXT.getTypeID()
+                + "   AND value_text <> '' "
+                + "   AND (artifact_type_id = " + TSK_WEB_ACCOUNT_TYPE.getTypeID() + ")) "
+                + "GROUP BY artifact_id ";
 
         // Needed to populate the visitsInLast60 data.
-        final Instant currentTime = Instant.now();
-        final Instant sixtyDaysAgo = currentTime.minus(60, ChronoUnit.DAYS);
+        final Instant mostRecentActivityDate = Instant.ofEpochSecond(caseDb.getTimelineManager().getMaxEventTime());
+        final Instant sixtyDaysAgo = mostRecentActivityDate.minus(60, ChronoUnit.DAYS);
 
         // Check the group attribute, if by data source then the GROUP BY clause
         // should group by data source id before grouping by domain.
@@ -154,23 +177,28 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                 + "           SUM(CASE "
                 + "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " THEN 1 "
                 + "                 ELSE 0 "
-                + "               END) AS totalVisits,"
+                + "               END) AS totalPageViews,"
                 + "           SUM(CASE "
                 + "                 WHEN artifact_type_id = " + TSK_WEB_HISTORY.getTypeID() + " AND"
-                + "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + currentTime.getEpochSecond() + " THEN 1 "
+                + "                      date BETWEEN " + sixtyDaysAgo.getEpochSecond() + " AND " + mostRecentActivityDate.getEpochSecond() + " THEN 1 "
                 + "                 ELSE 0 "
-                + "               END) AS last60,"
-                + "           MAX(data_source_obj_id) AS dataSource "
-                + "FROM blackboard_artifacts"
+                + "               END) AS pageViewsInLast60,"
+                + "           SUM(CASE "
+                + "                 WHEN artifact_type_id = " + TSK_WEB_ACCOUNT_TYPE.getTypeID() + " THEN 1 "
+                + "                 ELSE 0 "
+                + "               END) AS countOfKnownAccountTypes,"
+                + "           MAX(data_source_obj_id) AS dataSource, "
+                + sqlSpecificAccountAggregator + " as accountTypes "
+                + "FROM blackboard_artifacts as barts"
                 + "     JOIN (" + domainsTable + ") AS domains_table"
-                + "       ON artifact_id = parent_artifact_id "
+                + "       ON barts.artifact_id = parent_artifact_id "
+                + "     LEFT JOIN (" + accountsTable + ") AS accounts_table"
+                + "       ON barts.artifact_id = account_artifact_id "
                 + // Add the data source where clause here if present.
                 ((dataSourceWhereClause != null) ? "WHERE " + dataSourceWhereClause + " " : "")
                 + "GROUP BY " + groupByClause;
 
-        final SleuthkitCase caseDb = key.getSleuthkitCase();
         final CaseDbAccessManager dbManager = caseDb.getCaseDbAccessManager();
-
         final DomainCallback domainCallback = new DomainCallback(caseDb);
         dbManager.select(domainsQuery, domainCallback);
 
@@ -203,16 +231,18 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
      *         to stress that these clauses are tightly coupled.
      */
     Pair<String, String> createWhereAndHavingClause(List<AbstractFilter> filters) {
-        final StringJoiner whereClause = new StringJoiner(" OR ");
-        final StringJoiner havingClause = new StringJoiner(" AND ");
+        final StringJoiner whereClause = new StringJoiner(" OR ", "(", ")");
+        final StringJoiner havingClause = new StringJoiner(" AND ", "(", ")");
 
-        String artifactTypeFilter = null;
+        // Capture all types by default.
+        ArtifactTypeFilter artifactTypeFilter = new ArtifactTypeFilter(SearchData.Type.DOMAIN.getArtifactTypes());
         boolean hasDateTimeFilter = false;
 
         for (AbstractFilter filter : filters) {
             if (filter instanceof ArtifactTypeFilter) {
-                artifactTypeFilter = filter.getWhereClause();
-            } else if (!(filter instanceof DataSourceFilter) && !filter.useAlternateFilter()) {
+                // Replace with user defined types.
+                artifactTypeFilter = ((ArtifactTypeFilter) filter);
+            } else if (filter != null && !(filter instanceof DataSourceFilter) && !filter.useAlternateFilter()) {
                 if (filter instanceof ArtifactDateRangeFilter) {
                     hasDateTimeFilter = true;
                 }
@@ -233,7 +263,7 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
         havingClause.add("SUM(CASE WHEN " + domainAttributeFilter + " THEN 1 ELSE 0 END) > 0");
 
         return Pair.of(
-                whereClause.toString() + ((artifactTypeFilter != null) ? " AND (" + artifactTypeFilter + ")" : ""),
+                whereClause.toString() + " AND (" + artifactTypeFilter.getWhereClause(Arrays.asList(TSK_WEB_ACCOUNT_TYPE)) + ")",
                 havingClause.toString()
         );
     }
@@ -286,33 +316,19 @@ class DomainSearchCacheLoader extends CacheLoader<SearchKey, Map<GroupKey, List<
                         continue;
                     }
 
-                    Long activityStart = resultSet.getLong("activity_start");
-                    if (resultSet.wasNull()) {
-                        activityStart = null;
-                    }
-                    Long activityEnd = resultSet.getLong("activity_end");
-                    if (resultSet.wasNull()) {
-                        activityEnd = null;
-                    }
-                    Long filesDownloaded = resultSet.getLong("fileDownloads");
-                    if (resultSet.wasNull()) {
-                        filesDownloaded = null;
-                    }
-                    Long totalVisits = resultSet.getLong("totalVisits");
-                    if (resultSet.wasNull()) {
-                        totalVisits = null;
-                    }
-
-                    Long visitsInLast60 = resultSet.getLong("last60");
-                    if (resultSet.wasNull()) {
-                        visitsInLast60 = null;
-                    }
-                    Long dataSourceID = resultSet.getLong("dataSource");
-
+                    long activityStart = resultSet.getLong("activity_start");
+                    long activityEnd = resultSet.getLong("activity_end");
+                    long filesDownloaded = resultSet.getLong("fileDownloads");
+                    long totalPageViews = resultSet.getLong("totalPageViews");
+                    long pageViewsInLast60 = resultSet.getLong("pageViewsInLast60");
+                    long countOfKnownAccountTypes = resultSet.getLong("countOfKnownAccountTypes");
+                    long dataSourceID = resultSet.getLong("dataSource");
+                    String accountTypes = resultSet.getString("accountTypes");
                     Content dataSource = skc.getContentById(dataSourceID);
 
                     resultDomains.add(new ResultDomain(domain, activityStart,
-                            activityEnd, totalVisits, visitsInLast60, filesDownloaded, dataSource));
+                            activityEnd, totalPageViews, pageViewsInLast60, filesDownloaded,
+                            countOfKnownAccountTypes, accountTypes, dataSource));
                 }
             } catch (SQLException ex) {
                 this.sqlCause = ex;

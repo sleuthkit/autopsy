@@ -40,6 +40,7 @@ public final class CentralRepoAccount {
     private final CentralRepoAccountType accountType;
 
     // type specific unique account identifier
+    // Stores what is in the DB which should have been normalized before insertion.
     private final String typeSpecificIdentifier;
 
     /**
@@ -106,7 +107,7 @@ public final class CentralRepoAccount {
 
     }
 
-    public CentralRepoAccount(long accountId, CentralRepoAccountType accountType, String typeSpecificIdentifier) {
+    CentralRepoAccount(long accountId, CentralRepoAccountType accountType, String typeSpecificIdentifier) {
         this.accountId = accountId;
         this.accountType = accountType;
         this.typeSpecificIdentifier = typeSpecificIdentifier;
@@ -115,6 +116,8 @@ public final class CentralRepoAccount {
     /**
      * Gets unique identifier (assigned by a provider) for the account. Example
      * includes an email address, a phone number, or a website username.
+     * 
+     * This is the normalized for of the ID.
      *
      * @return type specific account id.
      */
@@ -336,7 +339,7 @@ public final class CentralRepoAccount {
                 normalizedAccountIdentifier = accountIdentifier.toLowerCase();
             }
         } catch (CorrelationAttributeNormalizationException ex) {
-            throw new InvalidAccountIDException("Invalid account identifier", ex);
+            throw new InvalidAccountIDException(String.format("Account id normaization failed, invalid account identifier %s", accountIdentifier), ex);
         }
 
         return normalizedAccountIdentifier;

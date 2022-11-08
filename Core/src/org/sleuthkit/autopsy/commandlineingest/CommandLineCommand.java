@@ -35,7 +35,8 @@ class CommandLineCommand {
         RUN_INGEST,
         LIST_ALL_DATA_SOURCES,
         GENERATE_REPORTS,
-        OPEN_CASE_IN_UI;
+        OPEN_CASE_IN_UI,
+        LIST_ALL_INGEST_PROFILES;
     }
 
     /**
@@ -45,7 +46,6 @@ class CommandLineCommand {
         CASE_NAME,
         CASE_TYPE,
         CASES_BASE_DIR_PATH,
-        CASE_FOLDER_PATH,
         DATA_SOURCE_PATH,
         DATA_SOURCE_ID,
         INGEST_PROFILE_NAME,

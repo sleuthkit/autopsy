@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.yara.ui;
 
 import java.awt.Component;
 import java.awt.Desktop;
-import java.awt.Graphics;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -58,7 +57,7 @@ public class RuleSetDetailsPanel extends javax.swing.JPanel {
         fileList.setCellRenderer(new FileRenderer());
         openFolderButton.setEnabled(false);
         scrollPane.setViewportView(fileList);
-        
+        refreshButton.setEnabled(false);
     }
 
     /**
@@ -82,6 +81,7 @@ public class RuleSetDetailsPanel extends javax.swing.JPanel {
         }
 
         openFolderButton.setEnabled(ruleSet != null);
+        refreshButton.setEnabled(ruleSet != null);
     }
     
     /**
@@ -120,7 +120,7 @@ public class RuleSetDetailsPanel extends javax.swing.JPanel {
         openFolderButton = new javax.swing.JButton();
         openLabel = new javax.swing.JLabel();
         scrollPane = new javax.swing.JScrollPane();
-        javax.swing.JButton refreshButton = new javax.swing.JButton();
+        refreshButton = new javax.swing.JButton();
 
         setLayout(new java.awt.GridBagLayout());
 
@@ -223,6 +223,7 @@ public class RuleSetDetailsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton openFolderButton;
     private javax.swing.JLabel openLabel;
+    private javax.swing.JButton refreshButton;
     private javax.swing.JScrollPane scrollPane;
     // End of variables declaration//GEN-END:variables
 }

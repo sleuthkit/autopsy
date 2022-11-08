@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,12 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -39,8 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @Deprecated
 public class ArtifactStringContent implements StringContent {
-
-    private final static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    
     private final static Logger logger = Logger.getLogger(ArtifactStringContent.class.getName());
     private final BlackboardArtifact artifact;
     private String stringContent = "";
@@ -130,11 +129,7 @@ public class ArtifactStringContent implements StringContent {
                         // Use Autopsy date formatting settings, not TSK defaults
                         case DATETIME:
                             long epoch = attr.getValueLong();
-                            value = "0000-00-00 00:00:00";
-                            if (null != content && 0 != epoch) {
-                                dateFormatter.setTimeZone(ContentUtils.getTimeZone(content));
-                                value = dateFormatter.format(new java.util.Date(epoch * 1000));
-                            }
+                            value = TimeZoneUtils.getFormattedTime(epoch * 1000);
                             break;
                     }
 

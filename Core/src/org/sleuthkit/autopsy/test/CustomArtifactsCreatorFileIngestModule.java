@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2017-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.test;
 import java.util.logging.Level;
 import org.apache.commons.codec.DecoderException;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -39,6 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapter {
 
     private static final Logger logger = Logger.getLogger(CustomArtifactsCreatorFileIngestModule.class.getName());
+    private IngestJobContext context;
 
     /**
      * Adds the custom artifact type this module uses to the case database of
@@ -52,9 +52,10 @@ final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapt
      */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        this.context = context;
         try {
             CustomArtifactType.addToCaseDatabase();
-        } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
+        } catch (Blackboard.BlackboardException ex) {
             throw new IngestModuleException(Bundle.CustomArtifactsCreatorFileIngestModule_exceptionMessage_errorCreatingCustomType(), ex);
         }
     }
@@ -73,8 +74,8 @@ final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapt
             return ProcessResult.OK;
         }
         try {
-            CustomArtifactType.createInstance(file);
-        } catch (TskCoreException | DecoderException ex) {
+            CustomArtifactType.createAndPostInstance(file, context.getJobId());
+        } catch (TskCoreException | Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process file (obj_id = %d)", file.getId()), ex);
             return ProcessResult.ERROR;
         }

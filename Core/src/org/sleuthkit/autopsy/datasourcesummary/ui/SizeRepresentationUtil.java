@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,8 @@
 package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.List;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.DefaultCellModel;
 
 /**
  * This class provides utilities for representing storage size in most relevant
@@ -32,14 +31,52 @@ public final class SizeRepresentationUtil {
     private static final int SIZE_CONVERSION_CONSTANT = 1000;
     private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##");
 
-    private static List<String> UNITS = Arrays.asList(
-            Bundle.SizeRepresentationUtil_units_bytes(),
-            Bundle.SizeRepresentationUtil_units_kilobytes(),
-            Bundle.SizeRepresentationUtil_units_megabytes(),
-            Bundle.SizeRepresentationUtil_units_gigabytes(),
-            Bundle.SizeRepresentationUtil_units_terabytes(),
-            Bundle.SizeRepresentationUtil_units_petabytes()
-    );
+    /**
+     * A size unit corresponding to orders of magnitude of bytes (kilobyte, gigabytes, etc.).
+     */
+    @NbBundle.Messages({
+        "SizeRepresentationUtil_units_bytes=bytes",
+        "SizeRepresentationUtil_units_kilobytes=KB",
+        "SizeRepresentationUtil_units_megabytes=MB",
+        "SizeRepresentationUtil_units_gigabytes=GB",
+        "SizeRepresentationUtil_units_terabytes=TB",
+        "SizeRepresentationUtil_units_petabytes=PB"
+    })
+    enum SizeUnit {
+        BYTES(Bundle.SizeRepresentationUtil_units_bytes(), 0),
+        KB(Bundle.SizeRepresentationUtil_units_kilobytes(), 1),
+        MB(Bundle.SizeRepresentationUtil_units_megabytes(), 2),
+        GB(Bundle.SizeRepresentationUtil_units_gigabytes(), 3),
+        TB(Bundle.SizeRepresentationUtil_units_terabytes(), 4),
+        PB(Bundle.SizeRepresentationUtil_units_petabytes(), 5);
+
+        private final String suffix;
+        private final long divisor;
+
+        /**
+         * Main constructor.
+         * @param suffix The string suffix to use for size unit.
+         * @param power The power of 1000 of bytes for this size unit.
+         */
+        SizeUnit(String suffix, int power) {
+            this.suffix = suffix;
+            this.divisor = (long) Math.pow(SIZE_CONVERSION_CONSTANT, power);
+        }
+
+        /**
+         * @return The string suffix to use for size unit.
+         */
+        public String getSuffix() {
+            return suffix;
+        }
+
+        /**
+         * @return The divisor to convert from bytes to this unit.
+         */
+        public long getDivisor() {
+            return divisor;
+        }
+    }
 
     /**
      * Get a long size in bytes as a string formated to be read by users.
@@ -47,54 +84,76 @@ public final class SizeRepresentationUtil {
      * @param size Long value representing a size in bytes.
      *
      * @return Return a string formated with a user friendly version of the size
-     *         as a string, returns empty String when provided empty size.
+     * as a string, returns empty String when provided empty size.
      */
-    public static String getSizeString(Long size) {
+    static String getSizeString(Long size) {
         return getSizeString(size, APPROXIMATE_SIZE_FORMAT, true);
     }
 
     /**
-     * Get a long size in bytes as a string formated to be read by users.
-     *
-     * @param size         Long value representing a size in byte.s
-     * @param format       The means of formatting the number.
-     * @param showFullSize Optionally show the number of bytes in the
-     *                     datasource.
-     *
-     * @return Return a string formated with a user friendly version of the size
-     *         as a string, returns empty String when provided empty size.
+     * Determines the relevant size unit that should be used for a particular size.
+     * @param size The size in bytes.
+     * @return The relevant size unit.
      */
-    @NbBundle.Messages({
-        "SizeRepresentationUtil_units_bytes= bytes",
-        "SizeRepresentationUtil_units_kilobytes= kB",
-        "SizeRepresentationUtil_units_megabytes= MB",
-        "SizeRepresentationUtil_units_gigabytes= GB",
-        "SizeRepresentationUtil_units_terabytes= TB",
-        "SizeRepresentationUtil_units_petabytes= PB"
-    })
-    public static String getSizeString(Long size, DecimalFormat format, boolean showFullSize) {
+    static SizeUnit getSizeUnit(Long size) {
+        if (size == null) {
+            return SizeUnit.values()[0];
+        }
+        
+        for (SizeUnit unit : SizeUnit.values()) {
+            long result = size / unit.getDivisor();
+            if (result < SIZE_CONVERSION_CONSTANT) {
+                return unit;
+            }
+        }
+        
+        return SizeUnit.values()[SizeUnit.values().length - 1];
+    }
+
+    /**
+     * Get a long size in bytes as a string formatted to be read by users.
+     *
+     * @param size Long value representing a size in byte.s
+     * @param format The means of formatting the number.
+     * @param showFullSize Optionally show the number of bytes in the
+     * datasource.
+     *
+     * @return Return a string formatted with a user friendly version of the size
+     * as a string, returns empty String when provided empty size.
+     */
+    static String getSizeString(Long size, DecimalFormat format, boolean showFullSize) {
         if (size == null) {
             return "";
         }
-        double approximateSize = size;
-        int unitsIndex = 0;
-        for (; unitsIndex < UNITS.size(); unitsIndex++) {
-            if (approximateSize < SIZE_CONVERSION_CONSTANT) {
-                break;
-            } else {
-                approximateSize /= SIZE_CONVERSION_CONSTANT;
-            }
+
+        SizeUnit sizeUnit = getSizeUnit(size);
+        if (sizeUnit == null) {
+            sizeUnit = SizeUnit.BYTES;
         }
-
-        String fullSize = size + UNITS.get(0);
-        String closestUnitSize = format.format(approximateSize) + UNITS.get(unitsIndex);
-
-        if (unitsIndex == 0) {
+        
+        String closestUnitSize = String.format("%s %s", 
+                format.format(((double) size) / sizeUnit.getDivisor()), sizeUnit.getSuffix());
+        
+        String fullSize = String.format("%d %s", size, SizeUnit.BYTES.getSuffix());
+        if (sizeUnit.equals(SizeUnit.BYTES)) {
             return fullSize;
         } else if (showFullSize) {
             return String.format("%s (%s)", closestUnitSize, fullSize);
         } else {
             return closestUnitSize;
+        }
+    }
+    
+    /**
+     * Returns a default cell model using size units.
+     * @param bytes The number of bytes.
+     * @return The default cell model.
+     */
+    static DefaultCellModel<?> getBytesCell(Long bytes) {
+        if (bytes == null) {
+            return new DefaultCellModel<>("");
+        } else {
+            return new DefaultCellModel<>(bytes, SizeRepresentationUtil::getSizeString);
         }
     }
 

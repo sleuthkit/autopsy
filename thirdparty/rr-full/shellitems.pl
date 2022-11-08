@@ -27,6 +27,7 @@
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 use Time::Local;
+use Encode::Unicode;
 
 my %guids = ("{bb64f8a7-bee7-4e1a-ab8d-7d8273f7fdb6}" => "Action Center",
     "{7a979262-40ce-46ff-aeee-7884ac3b6136}" => "Add Hardware",
@@ -537,6 +538,7 @@ sub parseControlPanelEntry {
 #-----------------------------------------------------------
 sub parseFolderEntry {
 	my $data     = shift;
+    my $data_length = length($data);
 	my %item = ();
 	
 	$item{type} = unpack("C",substr($data,2,1));
@@ -594,6 +596,9 @@ sub parseFolderEntry {
 		}
 		else {
 			$cnt++;
+            if (($ofs + $cnt) > $data_length) {
+                return %item;
+            }
 		}
 	}
 	$item{extver} = unpack("v",substr($data,$ofs + $cnt - 4,2));
@@ -630,10 +635,10 @@ sub parseFolderEntry {
 	$longname =~ s/\x00//g;
 	
 	if ($longname ne "") {
-		$item{name} = $longname;
+		$item{name} = Utf16ToUtf8($longname);
 	}
 	else {
-		$item{name} = $shortname;
+		$item{name} = Utf16ToUtf8($shortname);
 	}
 	return %item;
 }
@@ -712,7 +717,7 @@ sub parseFolderEntry2 {
 		
 	$item{name} = (split(/\x00\x00/,$str,2))[0];
 	$item{name} =~ s/\x13\x20/\x2D\x00/;
-	$item{name} =~ s/\x00//g;
+	$item{name} = Utf16ToUtf8($item{name});
 	
 	return %item;
 }
@@ -831,6 +836,16 @@ sub getNum48 {
 		$n2 = ($n2 *16777216);
 		return $n1 + $n2;
 	}
+}
+
+#---------------------------------------------------------------------
+# Utf16ToUtf8()
+#---------------------------------------------------------------------
+sub Utf16ToUtf8 {
+  my $str = $_[0];
+  Encode::from_to($str,'UTF-16LE','utf8');
+  $str = Encode::decode_utf8($str);
+  return $str;
 }
 
 1;

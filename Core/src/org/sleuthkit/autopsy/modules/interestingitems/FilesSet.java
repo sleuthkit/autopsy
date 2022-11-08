@@ -20,12 +20,15 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -48,7 +51,13 @@ public final class FilesSet implements Serializable {
     private final boolean standardSet;
     private final int versionNumber;
 
-    private final Map<String, Rule> rules = new HashMap<>();
+    private final Map<String, Rule> rules;
+    
+    // NOTE: these fields are derived from 'rules' which may happen at runtime 
+    // due to deserialization of older FilesSet objects before inclusive and 
+    // exclusive rules existed.
+    private Map<String, Rule> inclusiveRules;
+    private Map<String, Rule> exclusiveRules;
 
     /**
      * Constructs an interesting files set.
@@ -100,9 +109,28 @@ public final class FilesSet implements Serializable {
         this.description = (description != null ? description : "");
         this.ignoreKnownFiles = ignoreKnownFiles;
         this.ignoreUnallocatedSpace = ignoreUnallocatedSpace;
-        if (rules != null) {
-            this.rules.putAll(rules);
+        this.rules = rules == null ? Collections.emptyMap() : new HashMap<>(rules);
+        
+        divideInclusiveExclusive();
+    }
+
+    /**
+     * Divides rules into inclusive and exclusive rules setting object fields.
+     */
+    private void divideInclusiveExclusive() {
+        Map<String, Rule> inclusiveRules = new HashMap<>();
+        Map<String, Rule> exclusiveRules = new HashMap<>();
+        if (this.rules != null) {
+            for (Entry<String, Rule> ruleEntry : this.rules.entrySet()) {
+                if (ruleEntry.getValue().isExclusive()) {
+                    exclusiveRules.put(ruleEntry.getKey(), ruleEntry.getValue());
+                } else {
+                    inclusiveRules.put(ruleEntry.getKey(), ruleEntry.getValue());
+                }
+            }
         }
+        this.inclusiveRules = inclusiveRules;
+        this.exclusiveRules = exclusiveRules;
     }
 
     /**
@@ -170,7 +198,8 @@ public final class FilesSet implements Serializable {
     public Map<String, Rule> getRules() {
         return new HashMap<>(this.rules);
     }
-
+    
+    
     /**
      * Determines whether a file is a member of this interesting files set.
      *
@@ -179,6 +208,9 @@ public final class FilesSet implements Serializable {
      * @return The name of the first set membership rule satisfied by the file,
      *         will be null if the file does not belong to the set.
      */
+     @Messages({
+         "FileSet_fileIsMemberOf_noInclusiveRules_ruleName=Not Excluded"
+     })
     public String fileIsMemberOf(AbstractFile file) {
         if ((this.ignoreKnownFiles) && (file.getKnown() == TskData.FileKnown.KNOWN)) {
             return null;
@@ -190,13 +222,40 @@ public final class FilesSet implements Serializable {
                 || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
             return null;
         }
+        
+        if (inclusiveRules == null || exclusiveRules == null) {
+            divideInclusiveExclusive();
+        }
 
-        for (Rule rule : rules.values()) {
-            if (rule.isSatisfied(file)) {
-                return rule.getName();
+
+        String ruleName;
+        if (inclusiveRules.isEmpty()) {
+            // in the event there are no rules, return null for no match
+            if (exclusiveRules.isEmpty()) {
+                return null;
+            // in the event there are exclusion rules, rely on those
+            } else {
+                ruleName = Bundle.FileSet_fileIsMemberOf_noInclusiveRules_ruleName();
+            }
+            
+        } else {
+            // if there are inclusive rules, at least one should be matched
+            ruleName = null;
+            for (Rule rule : inclusiveRules.values()) {
+                if (rule.isSatisfied(file)) {
+                    ruleName = rule.getName();
+                    break;
+                }
             }
         }
-        return null;
+        
+        for (Rule rule : exclusiveRules.values()) {
+            if (rule.isSatisfied(file)) {
+                return null;
+            }
+        }
+        
+        return ruleName;
     }
 
     @Override
@@ -215,6 +274,7 @@ public final class FilesSet implements Serializable {
         private static final long serialVersionUID = 1L;
         private final String uuid;
         private final String ruleName;
+        private final Boolean exclusive;
         private final FileNameCondition fileNameCondition;
         private final MetaTypeCondition metaTypeCondition;
         private final ParentPathCondition pathCondition;
@@ -234,8 +294,14 @@ public final class FilesSet implements Serializable {
          * @param fileSizeCondition A file size condition, may be null.
          * @param dateCondition     A file date created or modified condition,
          *                          may be null
+         * @param exclusive         Whether or not the rule excludes items 
+         *                          matching the rule otherwise including them.
          */
-        public Rule(String ruleName, FileNameCondition fileNameCondition, MetaTypeCondition metaTypeCondition, ParentPathCondition pathCondition, MimeTypeCondition mimeTypeCondition, FileSizeCondition fileSizeCondition, DateCondition dateCondition) {
+        public Rule(String ruleName, FileNameCondition fileNameCondition, MetaTypeCondition metaTypeCondition, 
+                ParentPathCondition pathCondition, MimeTypeCondition mimeTypeCondition, 
+                FileSizeCondition fileSizeCondition, DateCondition dateCondition, 
+                Boolean exclusive) {
+            
             // since ruleName is optional, ruleUUID can be used to uniquely identify a rule.
             this.uuid = UUID.randomUUID().toString();
             if (metaTypeCondition == null) {
@@ -274,6 +340,8 @@ public final class FilesSet implements Serializable {
             if (this.dateCondition != null) {
                 this.conditions.add(this.dateCondition);
             }
+            
+            this.exclusive = exclusive;
         }
 
         /**
@@ -314,6 +382,15 @@ public final class FilesSet implements Serializable {
 
         public DateCondition getDateCondition() {
             return this.dateCondition;
+        }
+
+        /**
+         * @return True if this rule should exclude certain files matching
+         *         criteria, otherwise including files matching criteria if
+         *         false.
+         */
+        public boolean isExclusive() {
+            return exclusive != null && exclusive == true;
         }
 
         /**

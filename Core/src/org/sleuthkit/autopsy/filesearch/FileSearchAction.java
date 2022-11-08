@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,38 +25,53 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
+import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 
-final class FileSearchAction extends CallableSystemAction implements FileSearchProvider {
+final public class FileSearchAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
     private static FileSearchAction instance = null;
+    private static FileSearchDialog searchDialog;
+    private static Long selectedDataSourceId;
 
-    FileSearchAction() {
+    private FileSearchAction() {
         super();
         setEnabled(Case.isCaseOpen());
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 setEnabled(evt.getNewValue() != null);
+                if (searchDialog != null && evt.getNewValue() != null) {
+                    searchDialog.resetCaseDependentFilters();
+                }
             }
         });
     }
 
     public static FileSearchAction getDefault() {
         if (instance == null) {
-            instance = new FileSearchAction();
+            instance = CallableSystemAction.get(FileSearchAction.class);
         }
         return instance;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new FileSearchDialog().setVisible(true);
+        if (searchDialog == null) {
+            searchDialog = new FileSearchDialog();
+        }
+        //Preserve whatever the previously selected data source was
+        selectedDataSourceId = null;
+        searchDialog.setVisible(true);
     }
 
     @Override
     public void performAction() {
-        new FileSearchDialog().setVisible(true);
+        if (searchDialog == null) {
+            searchDialog = new FileSearchDialog();
+        }
+        //
+        searchDialog.setSelectedDataSourceFilter(selectedDataSourceId);
+        searchDialog.setVisible(true);
     }
 
     @Override
@@ -74,8 +89,13 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
         return false;
     }
 
-    @Override
-    public void showDialog() {
+    public void showDialog(Long dataSourceId) {
+        selectedDataSourceId = dataSourceId;
         performAction();
+
+    }
+
+    public void showDialog() {
+        showDialog(null);
     }
 }

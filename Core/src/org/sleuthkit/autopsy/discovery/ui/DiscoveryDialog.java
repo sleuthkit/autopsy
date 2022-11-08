@@ -1,7 +1,7 @@
 /*
  * Autopsy
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.SwingUtilities;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
@@ -140,7 +139,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         });
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.new CasePropertyChangeListener());
         IngestManager.getInstance().addIngestModuleEventListener(INGEST_MODULE_EVENTS_OF_INTEREST, this.new ModuleChangeListener());
-        setPreferredSize(new java.awt.Dimension(1000, 650));
+        setPreferredSize(new java.awt.Dimension(1000, 800));
     }
 
     /**
@@ -319,6 +318,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(600, 300));
+        setPreferredSize(new java.awt.Dimension(1000, 800));
 
         imagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/pictures-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(imagesButton, org.openide.util.NbBundle.getMessage(DiscoveryDialog.class, "DiscoveryDialog.imagesButton.text")); // NOI18N
@@ -402,17 +402,17 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         toolBarPanelLayout.setVerticalGroup(
             toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(toolBarPanelLayout.createSequentialGroup()
-                .addGap(8, 8, 8)
+                .addGap(6, 6, 6)
                 .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(step1Label))
-                .addGap(8, 8, 8)
+                .addGap(6, 6, 6)
                 .addGroup(toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(videosButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(imagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(documentsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(domainsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(8, 8, 8))
+                .addGap(6, 6, 6))
         );
 
         getContentPane().add(toolBarPanel, java.awt.BorderLayout.PAGE_START);
@@ -457,17 +457,17 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         sortingPanelLayout.setVerticalGroup(
             sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(sortingPanelLayout.createSequentialGroup()
-                .addGap(8, 8, 8)
+                .addGap(6, 6, 6)
                 .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(groupByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(groupByLabel)
                     .addComponent(orderByCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(orderByLabel))
-                .addGap(8, 8, 8)
+                .addGap(6, 6, 6)
                 .addGroup(sortingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(groupSortingComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(orderGroupsByLabel))
-                .addGap(8, 8, 8))
+                .addGap(6, 6, 6))
         );
 
         javax.swing.GroupLayout displaySettingsPanelLayout = new javax.swing.GroupLayout(displaySettingsPanel);
@@ -487,13 +487,13 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         displaySettingsPanelLayout.setVerticalGroup(
             displaySettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, displaySettingsPanelLayout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addComponent(sortingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(8, 8, 8)
+                .addGap(6, 6, 6)
+                .addComponent(sortingPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(6, 6, 6)
                 .addGroup(displaySettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(searchButton))
-                .addGap(8, 8, 8))
+                .addGap(6, 6, 6))
         );
 
         getContentPane().add(displaySettingsPanel, java.awt.BorderLayout.PAGE_END);
@@ -573,7 +573,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     }
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        // Get the selected filters
+        setVisible(false); //set visible used here instead of dispose incase dispose code changes
         final DiscoveryTopComponent tc = DiscoveryTopComponent.getTopComponent();
         if (tc == null) {
             setValid("No Top Component Found");
@@ -583,6 +583,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
             tc.open();
         }
         tc.resetTopComponent();
+        // Get the selected filters
         List<AbstractFilter> filters;
         if (videosButton.isSelected()) {
             filters = videoFilterPanel.getFilters();
@@ -616,7 +617,6 @@ final class DiscoveryDialog extends javax.swing.JDialog {
         }
         searchWorker = new SearchWorker(centralRepoDb, type, filters, groupingAttr, groupSortAlgorithm, fileSort);
         searchWorker.execute();
-        dispose();
         tc.toFront();
         tc.requestActive();
     }//GEN-LAST:event_searchButtonActionPerformed
@@ -650,6 +650,7 @@ final class DiscoveryDialog extends javax.swing.JDialog {
     void cancelSearch() {
         if (searchWorker != null) {
             searchWorker.cancel(true);
+            searchWorker = null;
         }
     }
 
@@ -719,8 +720,12 @@ final class DiscoveryDialog extends javax.swing.JDialog {
      */
     private class ModuleChangeListener implements PropertyChangeListener {
 
+        /**
+         * @SuppressWarnings("deprecation") - we need to support already
+         * existing interesting file and artifact hits.
+         */
+        @SuppressWarnings("deprecation")
         @Override
-        @SuppressWarnings("fallthrough")
         public void propertyChange(PropertyChangeEvent evt) {
             if (!shouldUpdate) {
                 String eventType = evt.getPropertyName();
@@ -745,11 +750,11 @@ final class DiscoveryDialog extends javax.swing.JDialog {
                                 shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID(), eventData, objectsDetected);
                             } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                                 shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), eventData, hashSets);
-                            } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
+                            } else if (eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID()
+                                    || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
                                     || eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
                                 shouldUpdate = shouldUpdateFilters(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), eventData, interestingItems);
                             }
-
                         }
                     } catch (NoCurrentCaseException notUsed) {
                         // Case is closed, do nothing.

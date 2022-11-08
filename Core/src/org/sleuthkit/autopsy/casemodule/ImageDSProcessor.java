@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestStream;
+import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -50,8 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * independently of the wizard.
  */
 @ServiceProviders(value = {
-    @ServiceProvider(service = DataSourceProcessor.class)
-    ,
+    @ServiceProvider(service = DataSourceProcessor.class),
     @ServiceProvider(service = AutoIngestDataSourceProcessor.class)}
 )
 public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
@@ -81,7 +81,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     private String md5;
     private String sha1;
     private String sha256;
-    private boolean setDataSourceOptionsCalled;
+    private Host host = null;
 
     static {
         filtersList.add(allFilter);
@@ -181,50 +181,96 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        ingestStream = new DefaultIngestStream();
-        readConfigSettings();
-        try {
-            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
-            final List<String> errors = new ArrayList<>();
-                errors.add(ex.getMessage());
-            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
-            return;
-        }
-        
-        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progressMonitor, callback);
+        run(null, progressMonitor, callback);
     }
-    
+
     /**
      * Adds a data source to the case database using a background task in a
      * separate thread and the settings provided by the selection and
-     * configuration panel. Files found during ingest will be sent directly to the
-     * IngestStream provided. Returns as soon as the background task is started.
+     * configuration panel. Returns as soon as the background task is started.
      * The background task uses a callback object to signal task completion and
      * return results.
      *
-     * This method should not be called unless isPanelValid returns true, and 
-     * should only be called for DSPs that support ingest streams.
-     * 
-     * @param settings        The ingest job settings.
-     * @param progress        Progress monitor that will be used by the
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param host            Host for this data source.
+     * @param progressMonitor Progress monitor that will be used by the
      *                        background task to report progress.
-     * @param callBack        Callback that will be used by the background task
+     * @param callback        Callback that will be used by the background task
      *                        to return results.
      */
     @Override
-    public void runWithIngestStream(IngestJobSettings settings, DataSourceProcessorProgressMonitor progress, 
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        ingestStream = new DefaultIngestStream();
+        readConfigSettings();
+        this.host = host;
+        try {
+            image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
+                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, this.host);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
+            final List<String> errors = new ArrayList<>();
+            errors.add(ex.getMessage());
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
+        }
+
+        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progressMonitor, callback);
+    }
+
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Files found during ingest will be sent directly to
+     * the IngestStream provided. Returns as soon as the background task is
+     * started. The background task uses a callback object to signal task
+     * completion and return results.
+     *
+     * This method should not be called unless isPanelValid returns true, and
+     * should only be called for DSPs that support ingest streams.
+     *
+     * @param settings The ingest job settings.
+     * @param progress Progress monitor that will be used by the background task
+     *                 to report progress.
+     * @param callBack Callback that will be used by the background task to
+     *                 return results.
+     */
+    @Override
+    public void runWithIngestStream(IngestJobSettings settings, DataSourceProcessorProgressMonitor progress,
             DataSourceProcessorCallback callBack) {
-	
+        runWithIngestStream(null, settings, progress, callBack);
+    }
+
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Files found during ingest will be sent directly to
+     * the IngestStream provided. Returns as soon as the background task is
+     * started. The background task uses a callback object to signal task
+     * completion and return results.
+     *
+     * This method should not be called unless isPanelValid returns true, and
+     * should only be called for DSPs that support ingest streams.
+     *
+     * @param host     The host for this data source.
+     * @param settings The ingest job settings.
+     * @param progress Progress monitor that will be used by the background task
+     *                 to report progress.
+     * @param callBack Callback that will be used by the background task to
+     *                 return results.
+     */
+    @Override
+    public void runWithIngestStream(Host host, IngestJobSettings settings, DataSourceProcessorProgressMonitor progress,
+            DataSourceProcessorCallback callBack) {
+
         // Read the settings from the wizard 
         readConfigSettings();
-	
+        this.host = host;
+
         // Set up the data source before creating the ingest stream
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId);
+                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, this.host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -238,51 +284,48 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             ingestStream = IngestManager.getInstance().openIngestStream(image, settings);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error starting ingest modules", ex);
-            final List<String> errors = new ArrayList<>();
-            errors.add(ex.getMessage());
-            callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
-            return;
+            // There was an error with ingest, but the data source has already been added
+            // so proceed with the defaultIngestStream. Code in openIngestStream
+            // should have caused a dialog to popup with the errors.
+            ingestStream = new DefaultIngestStream();
         }
-        
 
         doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
     }
-    
+
     /**
      * Store the options from the config panel.
      */
     private void readConfigSettings() {
-        if (!setDataSourceOptionsCalled) {
-            configPanel.storeSettings();
-            deviceId = UUID.randomUUID().toString();
-            imagePath = configPanel.getContentPaths();
-            sectorSize = configPanel.getSectorSize();
-            timeZone = configPanel.getTimeZone();
-            ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
-            md5 = configPanel.getMd5();
-            if (md5.isEmpty()) {
-                md5 = null;
-            }
-            sha1 = configPanel.getSha1();
-            if (sha1.isEmpty()) {
-                sha1 = null;
-            }
-            sha256 = configPanel.getSha256();
-            if (sha256.isEmpty()) {
-                sha256 = null;
-            }
+        configPanel.storeSettings();
+        deviceId = UUID.randomUUID().toString();
+        imagePath = configPanel.getContentPaths();
+        sectorSize = configPanel.getSectorSize();
+        timeZone = configPanel.getTimeZone();
+        ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
+        md5 = configPanel.getMd5();
+        if (md5.isEmpty()) {
+            md5 = null;
+        }
+        sha1 = configPanel.getSha1();
+        if (sha1.isEmpty()) {
+            sha1 = null;
+        }
+        sha256 = configPanel.getSha256();
+        if (sha256.isEmpty()) {
+            sha256 = null;
         }
     }
-    
+
     /**
      * Check if this DSP supports ingest streams.
-     * 
+     *
      * @return True if this DSP supports an ingest stream, false otherwise.
      */
     @Override
     public boolean supportsIngestStream() {
         return true;
-    }    
+    }
 
     /**
      * Adds a data source to the case database using a background task in a
@@ -309,11 +352,11 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         ingestStream = new DefaultIngestStream();
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId);
+                    new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
-                errors.add(ex.getMessage());
+            errors.add(ex.getMessage());
             callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
             return;
         }
@@ -327,10 +370,10 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * selection and configuration panel. Returns as soon as the background task
      * is started and uses the callback object to signal task completion and
      * return results.
-     * 
-     * The image should be loaded in the database and stored in "image"
-     * before calling this method. Additionally, an ingest stream should be initialized
-     * and stored in "ingestStream". 
+     *
+     * The image should be loaded in the database and stored in "image" before
+     * calling this method. Additionally, an ingest stream should be initialized
+     * and stored in "ingestStream".
      *
      * @param deviceId             An ASCII-printable identifier for the device
      *                             associated with the data source that is
@@ -352,28 +395,28 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     private void doAddImageProcess(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
 
-	// If the data source or ingest stream haven't been initialized, stop processing
-    if (ingestStream == null) {
-        String message = "Ingest stream was not initialized before running the add image process on " + imagePath;
-        logger.log(Level.SEVERE, message);
-        final List<String> errors = new ArrayList<>();
-        errors.add(message);
-        callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
-        return;
-    }
-    if (image == null) {
-        String message = "Image was not added to database before running the add image process on " + imagePath;
-        logger.log(Level.SEVERE, message);
-        final List<String> errors = new ArrayList<>();
-        errors.add(message);
-        callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
-        return;
-	}
+        // If the data source or ingest stream haven't been initialized, stop processing
+        if (ingestStream == null) {
+            String message = "Ingest stream was not initialized before running the add image process on " + imagePath;
+            logger.log(Level.SEVERE, message);
+            final List<String> errors = new ArrayList<>();
+            errors.add(message);
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
+        }
+        if (image == null) {
+            String message = "Image was not added to database before running the add image process on " + imagePath;
+            logger.log(Level.SEVERE, message);
+            final List<String> errors = new ArrayList<>();
+            errors.add(message);
+            callback.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
+            return;
+        }
 
-	AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null);
-	addImageTask = new AddImageTask(imageDetails, 
-                progressMonitor, 
-                new StreamingAddDataSourceCallbacks(ingestStream), 
+        AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null);
+        addImageTask = new AddImageTask(imageDetails,
+                progressMonitor,
+                new StreamingAddDataSourceCallbacks(ingestStream),
                 new StreamingAddImageTaskCallback(ingestStream, callback));
         new Thread(addImageTask).start();
     }
@@ -405,8 +448,8 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         imagePath = null;
         timeZone = null;
         ignoreFatOrphanFiles = false;
+        host = null;
         configPanel.reset();
-        setDataSourceOptionsCalled = false;
     }
 
     private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
@@ -428,7 +471,6 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
 
         try {
             // verify that the image has a file system that TSK can process
-            Case currentCase = Case.getCurrentCaseThrows();
             if (!DataSourceUtils.imageHasFileSystem(dataSourcePath)) {
                 // image does not have a file system that TSK can process
                 return 0;
@@ -443,41 +485,53 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
 
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        process(deviceId, dataSourcePath, null, progressMonitor, callBack);
+    }
+
+    @Override
+    public void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        // this method does not use the config panel
         this.deviceId = deviceId;
         this.imagePath = dataSourcePath.toString();
         this.sectorSize = 0;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
+        this.host = host;
         this.ignoreFatOrphanFiles = false;
-        setDataSourceOptionsCalled = true;
-        
+
         ingestStream = new DefaultIngestStream();
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId);
+                    new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId, host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
-                errors.add(ex.getMessage());
+            errors.add(ex.getMessage());
             callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
             return;
         }
-        
+
         doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
     }
-    
+
     @Override
     public IngestStream processWithIngestStream(String deviceId, Path dataSourcePath, IngestJobSettings settings, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        return processWithIngestStream(deviceId, dataSourcePath, null, settings, progressMonitor, callBack);
+    }
+
+    @Override
+    public IngestStream processWithIngestStream(String deviceId, Path dataSourcePath, Host host, IngestJobSettings settings, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        // this method does not use the config panel
         this.deviceId = deviceId;
         this.imagePath = dataSourcePath.toString();
         this.sectorSize = 0;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
+        this.host = host;
         this.ignoreFatOrphanFiles = false;
-        setDataSourceOptionsCalled = true;
-    
+
         // Set up the data source before creating the ingest stream
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId);
+                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -495,33 +549,10 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             errors.add(ex.getMessage());
             callBack.done(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS, errors, new ArrayList<>());
             return null;
-        }        
-        
+        }
+
         doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
+
         return ingestStream;
     }
-
-    /**
-     * Sets the configuration of the data source processor without using the
-     * selection and configuration panel.
-     *
-     * @param imagePath            Path to the image file.
-     * @param timeZone             The time zone to use when processing dates
-     *                             and times for the image, obtained from
-     *                             java.util.TimeZone.getID.
-     * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
-     *                             FAT filesystem.
-     *
-     * @deprecated Use the provided overload of the run method instead.
-     */
-    @Deprecated
-    public void setDataSourceOptions(String imagePath, String timeZone, boolean ignoreFatOrphanFiles) {
-        this.deviceId = UUID.randomUUID().toString();
-        this.imagePath = imagePath;
-        this.sectorSize = 0;
-        this.timeZone = Calendar.getInstance().getTimeZone().getID();
-        this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
-        setDataSourceOptionsCalled = true;
-    }
-
 }

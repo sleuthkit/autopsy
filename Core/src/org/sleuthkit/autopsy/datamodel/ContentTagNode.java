@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2020 Basis Technology Corp.
+ * Copyright 2013-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -96,22 +97,22 @@ class ContentTagNode extends TagNode {
         properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.displayName"),
                 "",
-                file != null ? ContentUtils.getStringTime(file.getMtime(), file) : ""));
+                file != null ? TimeZoneUtils.getFormattedTime(file.getMtime()) : ""));
         properties.put(new NodeProperty<>(
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.displayName"),
                 "",
-                file != null ? ContentUtils.getStringTime(file.getCtime(), file) : ""));
+                file != null ? TimeZoneUtils.getFormattedTime(file.getCtime()) : ""));
         properties.put(new NodeProperty<>(
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.displayName"),
                 "",
-                file != null ? ContentUtils.getStringTime(file.getAtime(), file) : ""));
+                file != null ? TimeZoneUtils.getFormattedTime(file.getAtime()) : ""));
         properties.put(new NodeProperty<>(
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.displayName"),
                 "",
-                file != null ? ContentUtils.getStringTime(file.getCrtime(), file) : ""));
+                file != null ? TimeZoneUtils.getFormattedTime(file.getCrtime()) : ""));
         properties.put(new NodeProperty<>(
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.name"),
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.displayName"),
@@ -133,7 +134,7 @@ class ContentTagNode extends TagNode {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
-        actions.addAll(Arrays.asList(super.getActions(context)));
+        
 
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (file != null) {
@@ -141,7 +142,8 @@ class ContentTagNode extends TagNode {
         }
 
         actions.addAll(DataModelActionsFactory.getActions(tag, false));
-
+        actions.add(null);
+        actions.addAll(Arrays.asList(super.getActions(context))); 
         return actions.toArray(new Action[actions.size()]);
     }
 

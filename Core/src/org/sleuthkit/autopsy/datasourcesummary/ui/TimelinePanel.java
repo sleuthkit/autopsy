@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2020 Basis Technology Corp.
+ * Copyright 2020-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,31 +20,29 @@ package org.sleuthkit.autopsy.datasourcesummary.ui;
 
 import java.awt.Color;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.logging.Level;
 import org.apache.commons.collections.CollectionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineDataSourceUtils;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.DailyActivityAmount;
 import org.sleuthkit.autopsy.datasourcesummary.datamodel.TimelineSummary.TimelineSummaryData;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel.BarChartItem;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel.BarChartSeries;
-import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartPanel.OrderedKey;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartSeries.OrderedKey;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartSeries.BarChartItem;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchResult;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.DataFetchWorker.DataFetchComponents;
+import org.sleuthkit.autopsy.datasourcesummary.datamodel.DataFetcher;
+import org.sleuthkit.autopsy.datasourcesummary.uiutils.BarChartSeries;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.IngestRunningLabel;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableComponent;
 import org.sleuthkit.autopsy.datasourcesummary.uiutils.LoadableLabel;
@@ -63,24 +61,16 @@ import org.sleuthkit.datamodel.TskCoreException;
     "TimelinePanel_latestLabel_title=Latest",
     "TimlinePanel_last30DaysChart_title=Last 30 Days",
     "TimlinePanel_last30DaysChart_fileEvts_title=File Events",
-    "TimlinePanel_last30DaysChart_artifactEvts_title=Artifact Events",})
+    "TimlinePanel_last30DaysChart_artifactEvts_title=Result Events",})
 public class TimelinePanel extends BaseDataSourceSummaryPanel {
-    
+
     private static final Logger logger = Logger.getLogger(TimelinePanel.class.getName());
     private static final long serialVersionUID = 1L;
-    private static final DateFormat EARLIEST_LATEST_FORMAT = getUtcFormat("MMM d, yyyy");
-    private static final DateFormat CHART_FORMAT = getUtcFormat("MMM d");
-    private static final int MOST_RECENT_DAYS_COUNT = 30;
 
-    /**
-     * Creates a DateFormat formatter that uses UTC for time zone.
-     *
-     * @param formatString The date format string.
-     * @return The data format.
-     */
-    private static DateFormat getUtcFormat(String formatString) {
-        return new SimpleDateFormat(formatString, Locale.getDefault());
-    }
+    private static final String EARLIEST_LATEST_FORMAT_STR = "MMM d, yyyy";
+    private static final DateFormat EARLIEST_LATEST_FORMAT = TimelineSummary.getUtcFormat(EARLIEST_LATEST_FORMAT_STR);
+    private static final DateFormat CHART_FORMAT = TimelineSummary.getUtcFormat("MMM d, yyyy");
+    private static final int MOST_RECENT_DAYS_COUNT = 30;
 
     // components displayed in the tab
     private final IngestRunningLabel ingestRunningLabel = new IngestRunningLabel();
@@ -92,51 +82,45 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     // all loadable components on this tab
     private final List<LoadableComponent<?>> loadableComponents = Arrays.asList(earliestLabel, latestLabel, last30DaysChart);
 
+    private final DataFetcher<DataSource, TimelineSummaryData> dataFetcher;
+
     // actions to load data for this tab
     private final List<DataFetchComponents<DataSource, ?>> dataFetchComponents;
-    
+
     public TimelinePanel() {
-        this(new TimelineSummary());
+        this(new TimelineSummaryGetter());
     }
 
     /**
      * Creates new form PastCasesPanel
      */
-    public TimelinePanel(TimelineSummary timelineData) {
+    public TimelinePanel(TimelineSummaryGetter timelineData) {
+        super(timelineData);
+
+        dataFetcher = (dataSource) -> timelineData.getData(dataSource, MOST_RECENT_DAYS_COUNT);
+
         // set up data acquisition methods
         dataFetchComponents = Arrays.asList(
-                new DataFetchWorker.DataFetchComponents<>(
-                        (dataSource) -> timelineData.getData(dataSource, MOST_RECENT_DAYS_COUNT),
-                        (result) -> handleResult(result))
-        );
-        
+                new DataFetchWorker.DataFetchComponents<>(dataFetcher, (result) -> handleResult(result)));
+
         initComponents();
     }
 
-    /**
-     * Formats a date using a DateFormat. In the event that the date is null,
-     * returns a null string.
-     *
-     * @param date The date to format.
-     * @param formatter The DateFormat to use to format the date.
-     * @return The formatted string generated from the formatter or null if the
-     * date is null.
-     */
-    private static String formatDate(Date date, DateFormat formatter) {
-        return date == null ? null : formatter.format(date);
-    }
-    
     private static final Color FILE_EVT_COLOR = new Color(228, 22, 28);
     private static final Color ARTIFACT_EVT_COLOR = new Color(21, 227, 100);
 
     /**
-     * Converts DailyActivityAmount data retrieved from TimelineSummary into
-     * data to be displayed as a bar chart.
+     * Converts DailyActivityAmount data retrieved from TimelineSummaryGetter
+     * into data to be displayed as a bar chart.
      *
-     * @param recentDaysActivity The data retrieved from TimelineSummary.
+     * @param recentDaysActivity    The data retrieved from
+     *                              TimelineSummaryGetter.
+     * @param showIntermediateDates If true, shows all dates. If false, shows
+     *                              only first and last date.
+     *
      * @return The data to be displayed in the BarChart.
      */
-    private List<BarChartSeries> parseChartData(List<DailyActivityAmount> recentDaysActivity) {
+    private List<BarChartSeries> parseChartData(List<DailyActivityAmount> recentDaysActivity, boolean showIntermediateDates) {
         // if no data, return null indicating no result.
         if (CollectionUtils.isEmpty(recentDaysActivity)) {
             return null;
@@ -145,25 +129,25 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
         // Create a bar chart item for each recent days activity item
         List<BarChartItem> fileEvtCounts = new ArrayList<>();
         List<BarChartItem> artifactEvtCounts = new ArrayList<>();
-        
+
         for (int i = 0; i < recentDaysActivity.size(); i++) {
             DailyActivityAmount curItem = recentDaysActivity.get(i);
-            
+
             long fileAmt = curItem.getFileActivityCount();
             long artifactAmt = curItem.getArtifactActivityCount() * 100;
-            String formattedDate = (i == 0 || i == recentDaysActivity.size() - 1)
-                    ? formatDate(curItem.getDay(), CHART_FORMAT) : "";
-            
+            String formattedDate = (showIntermediateDates || i == 0 || i == recentDaysActivity.size() - 1)
+                    ? TimelineSummary.formatDate(curItem.getDay(), CHART_FORMAT) : "";
+
             OrderedKey thisKey = new OrderedKey(formattedDate, i);
             fileEvtCounts.add(new BarChartItem(thisKey, fileAmt));
             artifactEvtCounts.add(new BarChartItem(thisKey, artifactAmt));
         }
-        
+
         return Arrays.asList(
                 new BarChartSeries(Bundle.TimlinePanel_last30DaysChart_fileEvts_title(), FILE_EVT_COLOR, fileEvtCounts),
                 new BarChartSeries(Bundle.TimlinePanel_last30DaysChart_artifactEvts_title(), ARTIFACT_EVT_COLOR, artifactEvtCounts));
     }
-    
+
     private final Object timelineBtnLock = new Object();
     private TimelineSummaryData curTimelineData = null;
 
@@ -176,14 +160,14 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
      * @param result The result to be displayed on this tab.
      */
     private void handleResult(DataFetchResult<TimelineSummaryData> result) {
-        earliestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> formatDate(r.getMinDate(), EARLIEST_LATEST_FORMAT)));
-        latestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> formatDate(r.getMaxDate(), EARLIEST_LATEST_FORMAT)));
-        last30DaysChart.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseChartData(r.getMostRecentDaysActivity())));
-        
+        earliestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> TimelineSummary.formatDate(r.getMinDate(), EARLIEST_LATEST_FORMAT)));
+        latestLabel.showDataFetchResult(DataFetchResult.getSubResult(result, r -> TimelineSummary.formatDate(r.getMaxDate(), EARLIEST_LATEST_FORMAT)));
+        last30DaysChart.showDataFetchResult(DataFetchResult.getSubResult(result, r -> parseChartData(r.getMostRecentDaysActivity(), false)));
+
         if (result != null
                 && result.getResultType() == DataFetchResult.ResultType.SUCCESS
                 && result.getData() != null) {
-            
+
             synchronized (this.timelineBtnLock) {
                 this.curTimelineData = result.getData();
                 this.viewInTimelineBtn.setEnabled(true);
@@ -208,7 +192,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
             if (curTimelineData == null) {
                 return;
             }
-            
+
             dataSource = curTimelineData.getDataSource();
             if (CollectionUtils.isNotEmpty(curTimelineData.getMostRecentDaysActivity())) {
                 minDate = curTimelineData.getMostRecentDaysActivity().get(0).getDay();
@@ -219,7 +203,7 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
                 }
             }
         }
-        
+
         openFilteredChart(dataSource, minDate, maxDate);
     }
 
@@ -227,8 +211,8 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
      * Action that occurs when 'View in Timeline' button is pressed.
      *
      * @param dataSource The data source to filter to.
-     * @param minDate The min date for the zoom of the window.
-     * @param maxDate The max date for the zoom of the window.
+     * @param minDate    The min date for the zoom of the window.
+     * @param maxDate    The max date for the zoom of the window.
      */
     private void openFilteredChart(DataSource dataSource, Date minDate, Date maxDate) {
         OpenTimelineAction openTimelineAction = CallableSystemAction.get(OpenTimelineAction.class);
@@ -238,40 +222,40 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
 
         // notify dialog (if in dialog) should close.
         TimelinePanel.this.notifyParentClose();
-        
+
         Interval timeSpan = null;
-        
+
         try {
             final TimeLineController controller = TimeLineModule.getController();
-            
+
             if (dataSource != null) {
                 controller.pushFilters(timelineUtils.getDataSourceFilterState(dataSource));
             }
-            
+
             if (minDate != null && maxDate != null) {
                 timeSpan = new Interval(new DateTime(minDate), new DateTime(maxDate));
             }
-        } catch (NoCurrentCaseException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Unable to view time range in Timeline view", ex);
         }
-        
+
         try {
             openTimelineAction.showTimeline(timeSpan);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "An unexpected exception occurred while opening the timeline.", ex);
         }
     }
-    
+
     @Override
     protected void fetchInformation(DataSource dataSource) {
         fetchInformation(dataFetchComponents, dataSource);
     }
-    
+
     @Override
     protected void onNewDataSource(DataSource dataSource) {
         onNewDataSource(dataFetchComponents, loadableComponents, dataSource);
     }
-    
+
     @Override
     public void close() {
         ingestRunningLabel.unregister();
@@ -371,4 +355,5 @@ public class TimelinePanel extends BaseDataSourceSummaryPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton viewInTimelineBtn;
     // End of variables declaration//GEN-END:variables
+
 }

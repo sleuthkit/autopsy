@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +20,11 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.imageio.ImageIO;
-import javax.imageio.spi.IIORegistry;
+import java.util.logging.Level;
+import javax.annotation.concurrent.GuardedBy;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -34,10 +33,13 @@ import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
+import org.sleuthkit.autopsy.apputils.ApplicationLoggers;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Archive;
+import org.sleuthkit.autopsy.threadutils.TaskRetryUtil;
 
 /**
  * A file level ingest module that extracts embedded files from supported
@@ -52,6 +54,11 @@ import org.sleuthkit.autopsy.modules.embeddedfileextractor.SevenZipExtractor.Arc
 })
 public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAdapter {
 
+    private static final String TASK_RETRY_STATS_LOG_NAME = "task_retry_stats";
+    private static final Logger taskStatsLogger = ApplicationLoggers.getLogger(TASK_RETRY_STATS_LOG_NAME);
+    private static final Object execMapLock = new Object();
+    @GuardedBy("execMapLock")
+    private static final Map<Long, FileTaskExecutor> fileTaskExecsByJob = new HashMap<>();
     //Outer concurrent hashmap with keys of JobID, inner concurrentHashmap with keys of objectID
     private static final ConcurrentHashMap<Long, ConcurrentHashMap<Long, Archive>> mapOfDepthTrees = new ConcurrentHashMap<>();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -68,108 +75,95 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     }
 
     @Override
+    @NbBundle.Messages({
+        "EmbeddedFileExtractor_make_output_dir_err=Failed to create module output directory for Embedded File Extractor"
+    })
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        jobId = context.getJobId();
+
         /*
          * Construct absolute and relative paths to the output directory. The
-         * relative path is relative to the case folder, and will be used in the
-         * case database for extracted (derived) file paths. The absolute path
-         * is used to write the extracted (derived) files to local storage.
+         * output directory is a subdirectory of the ModuleOutput folder in the
+         * case directory and is named for the module.
+         *
+         * The absolute path is used to write the extracted (derived) files to
+         * local storage.
+         *
+         * The relative path is relative to the case folder and is used in the
+         * case database for extracted (derived) file paths.
+         *
          */
-        jobId = context.getJobId();
-        String moduleDirRelative = null;
-        String moduleDirAbsolute = null;
+        Case currentCase = Case.getCurrentCase();
+        String moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getOutputFolderName()).toString();
+        String moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getOutputFolderName()).toString();
 
-        try {
-            final Case currentCase = Case.getCurrentCaseThrows();
-            moduleDirRelative = Paths.get(currentCase.getModuleOutputDirectoryRelativePath(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-            moduleDirAbsolute = Paths.get(currentCase.getModuleDirectory(), EmbeddedFileExtractorModuleFactory.getModuleName()).toString();
-        } catch (NoCurrentCaseException ex) {
-            throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_NoOpenCase_errMsg(), ex);
-        }
-        /*
-         * Create the output directory.
-         */
-        File extractionDirectory = new File(moduleDirAbsolute);
-        if (!extractionDirectory.exists()) {
-            try {
-                extractionDirectory.mkdirs();
-            } catch (SecurityException ex) {
-                throw new IngestModuleException(Bundle.CannotCreateOutputFolder(), ex);
+        if (refCounter.incrementAndGet(jobId) == 1) {
+
+            /*
+             * Construct a per ingest job executor that will be used for calling
+             * java.io.File methods as tasks with retries. Retries are employed
+             * here due to observed issues with hangs when attempting these
+             * operations on case directories stored on a certain type of
+             * network file system. See the FileTaskExecutor class header docs
+             * for more details.
+             */
+            FileTaskExecutor fileTaskExecutor = new FileTaskExecutor(context);
+            synchronized (execMapLock) {
+                fileTaskExecsByJob.put(jobId, fileTaskExecutor);
             }
+
+            try {
+                File extractionDirectory = new File(moduleDirAbsolute);
+                if (!fileTaskExecutor.exists(extractionDirectory)) {
+                    fileTaskExecutor.mkdirs(extractionDirectory);
+                }
+            } catch (FileTaskExecutor.FileTaskFailedException | InterruptedException ex) {
+                /*
+                 * The exception message is localized because ingest module
+                 * start up exceptions are displayed to the user when running
+                 * with the RCP GUI.
+                 */
+                throw new IngestModuleException(Bundle.EmbeddedFileExtractor_make_output_dir_err(), ex);
+            }
+
+            /*
+             * Construct a hash map to keep track of depth in archives while
+             * processing archive files.
+             *
+             * TODO (Jira-7119): A ConcurrentHashMap of ConcurrentHashMaps is
+             * almost certainly the wrong data structure here. ConcurrentHashMap
+             * is intended to efficiently provide snapshots to multiple threads.
+             * A thread may not see the current state.
+             */
+            mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
         }
 
-        /*
-         * Construct a file type detector.
-         */
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
+
         try {
-            this.archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+            archiveExtractor = new SevenZipExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileTaskExecsByJob.get(jobId));
         } catch (SevenZipNativeInitializationException ex) {
+            /*
+             * The exception message is localized because ingest module start up
+             * exceptions are displayed to the user when running with the RCP
+             * GUI.
+             */
             throw new IngestModuleException(Bundle.UnableToInitializeLibraries(), ex);
         }
-        if (refCounter.incrementAndGet(jobId) == 1) {
-            /*
-             * Construct a concurrentHashmap to keep track of depth in archives
-             * while processing archive files.
-             */
-            mapOfDepthTrees.put(jobId, new ConcurrentHashMap<>());
-            /**
-             * Initialize Java's Image I/O API so that image reading and writing
-             * (needed for image extraction) happens consistently through the
-             * same providers. See JIRA-6951 for more details.
-             */
-            initializeImageIO();
-        }
-        /*
-         * Construct an embedded content extractor for processing Microsoft
-         * Office documents and PDF documents.
-         */
+
         try {
-            this.documentExtractor = new DocumentEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute);
+            documentExtractor = new DocumentEmbeddedContentExtractor(context, fileTypeDetector, moduleDirRelative, moduleDirAbsolute, fileTaskExecsByJob.get(jobId));
         } catch (NoCurrentCaseException ex) {
+            /*
+             * The exception message is localized because ingest module start up
+             * exceptions are displayed to the user when running with the RCP
+             * GUI.
+             */
             throw new IngestModuleException(Bundle.EmbeddedFileExtractorIngestModule_UnableToGetMSOfficeExtractor_errMsg(), ex);
-        }
-    }
-    
-    /**
-     * Initializes the ImageIO API and sorts the providers for
-     * deterministic image reading and writing.
-     */
-    private void initializeImageIO() {
-        ImageIO.scanForPlugins();
-        
-        // Sift through each registry category and sort category providers by
-        // their canonical class name.
-        IIORegistry pluginRegistry = IIORegistry.getDefaultInstance();
-        Iterator<Class<?>> categories = pluginRegistry.getCategories();
-        while(categories.hasNext()) {
-            sortPluginsInCategory(pluginRegistry, categories.next());
-        }
-    }
-    
-    /**
-     * Sorts all ImageIO SPI providers by their class name.
-     */
-    private <T> void sortPluginsInCategory(IIORegistry pluginRegistry, Class<T> category) {
-        Iterator<T> serviceProviderIter = pluginRegistry.getServiceProviders(category, false);
-        ArrayList<T> providers = new ArrayList<>();
-        while (serviceProviderIter.hasNext()) {
-            providers.add(serviceProviderIter.next());
-        }
-        Collections.sort(providers, (first, second) -> {
-            return first.getClass().getCanonicalName().compareToIgnoreCase(second.getClass().getCanonicalName());
-        });
-        for(int i = 0; i < providers.size() - 1; i++) {
-            for(int j = i + 1; j < providers.size(); j++) {
-                // The registry only accepts pairwise orderings. To guarantee a 
-                // total order, all pairs need to be exhausted.
-                pluginRegistry.setOrdering(category, providers.get(i), 
-                        providers.get(j));
-            }
         }
     }
 
@@ -213,19 +207,25 @@ public final class EmbeddedFileExtractorIngestModule extends FileIngestModuleAda
     public void shutDown() {
         if (refCounter.decrementAndGet(jobId) == 0) {
             mapOfDepthTrees.remove(jobId);
+            FileTaskExecutor fileTaskExecutor;
+            synchronized (execMapLock) {
+                fileTaskExecutor = fileTaskExecsByJob.remove(jobId);
+            }
+            fileTaskExecutor.shutDown();
+            taskStatsLogger.log(Level.INFO, String.format("total tasks: %d, total task timeouts: %d, total task retries: %d, total task failures: %d (ingest job ID = %d)", TaskRetryUtil.getTotalTasksCount(), TaskRetryUtil.getTotalTaskAttemptTimeOutsCount(), TaskRetryUtil.getTotalTaskRetriesCount(), TaskRetryUtil.getTotalFailedTasksCount(), jobId));
         }
     }
 
     /**
-     * Creates a unique name for a file by concatentating the file name and the
-     * file object id.
+     * Creates a unique name for a file.
+     * Currently this is just the file object id to prevent long paths and illegal characters.
      *
      * @param file The file.
      *
      * @return The unique file name.
      */
     static String getUniqueName(AbstractFile file) {
-        return file.getName() + "_" + file.getId();
+        return Long.toString(file.getId());
     }
 
 }

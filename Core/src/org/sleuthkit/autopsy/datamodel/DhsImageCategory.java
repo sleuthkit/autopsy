@@ -30,6 +30,7 @@ import org.openide.util.NbBundle;
 
 /**
  * Enum to represent the six categories in the DHS image categorization scheme.
+ * NOTE: This appears to not be used anywhere anymore after the ImageGallery refactoring
  */
 @NbBundle.Messages({
     "Category.one=CAT-1: Child Exploitation (Illegal)",

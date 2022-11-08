@@ -31,6 +31,7 @@ import javax.annotation.concurrent.Immutable;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.TagName;
@@ -61,19 +62,19 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
     private final TskData.FileKnown knownStatus;
 
     private static final List<TagNameDefinition> STANDARD_TAGS_DEFINITIONS = new ArrayList<>();
-    private static final List<String> OLD_CATEGORY_TAG_NAMES = new ArrayList<>();
+    private static final List<String> PROJECT_VIC_NAMES_NO_LONGER_USED = new ArrayList<>();
 
     static {
         STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
         STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_followUp_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
         STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
 
-        OLD_CATEGORY_TAG_NAMES.add("CAT-1: Child Exploitation (Illegal)");
-        OLD_CATEGORY_TAG_NAMES.add("CAT-2: Child Exploitation (Non-Illegal/Age Difficult)");
-        OLD_CATEGORY_TAG_NAMES.add("CAT-3: CGI/Animation (Child Exploitive)");
-        OLD_CATEGORY_TAG_NAMES.add("CAT-4: Exemplar/Comparison (Internal Use Only)");
-        OLD_CATEGORY_TAG_NAMES.add("CAT-5: Non-pertinent");
-        OLD_CATEGORY_TAG_NAMES.add("CAT-0: Uncategorized");
+        PROJECT_VIC_NAMES_NO_LONGER_USED.add("CAT-1: Child Exploitation (Illegal)");
+        PROJECT_VIC_NAMES_NO_LONGER_USED.add("CAT-2: Child Exploitation (Non-Illegal/Age Difficult)");
+        PROJECT_VIC_NAMES_NO_LONGER_USED.add("CAT-3: CGI/Animation (Child Exploitive)");
+        PROJECT_VIC_NAMES_NO_LONGER_USED.add("CAT-4: Exemplar/Comparison (Internal Use Only)");
+        PROJECT_VIC_NAMES_NO_LONGER_USED.add("CAT-5: Non-pertinent");
+        PROJECT_VIC_NAMES_NO_LONGER_USED.add("CAT-0: Uncategorized");
     }
 
     /**
@@ -236,7 +237,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
     TagName saveToCase(SleuthkitCase caseDb) {
         TagName tagName = null;
         try {
-            tagName = caseDb.addOrUpdateTagName(displayName, description, color, knownStatus);
+            tagName = caseDb.getTaggingManager().addOrUpdateTagName(displayName, description, color, knownStatus);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error saving tag name definition", ex);
         }
@@ -259,7 +260,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      */
     static synchronized Set<TagNameDefinition> getTagNameDefinitions() {
         if (needsVersionUpdate()) {
-            updateTagDefinitions();
+            updatePropertyFile();
         }
 
         String tagsProperty = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
@@ -311,7 +312,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
     /**
      * Updates the Tag Definition file to the current format.
      */
-    private static void updateTagDefinitions() {
+    private static void updatePropertyFile() {
         Integer version = getPropertyFileVersion();
         List<TagNameDefinition> definitions = new ArrayList<>();
 
@@ -355,18 +356,18 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
         }
 
         // Remove the standard and Project VIC tags from the list
-        List<String> tagStrings = new ArrayList<>();
+        List<String> tagStringsToKeep = new ArrayList<>();
         List<String> standardTags = getStandardTagNames();
         for (TagNameDefinition def : definitions) {
             if (!standardTags.contains(def.getDisplayName())
-                    && !OLD_CATEGORY_TAG_NAMES.contains(def.getDisplayName())) {
-                tagStrings.add(def.toSettingsFormat());
+                    && !PROJECT_VIC_NAMES_NO_LONGER_USED.contains(def.getDisplayName())) {
+                tagStringsToKeep.add(def.toSettingsFormat());
             }
         }
 
         // Write out the version and the new tag list.
         ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_SETTING_VERSION_KEY, Integer.toString(TAG_SETTINGS_VERSION));
-        ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, String.join(";", tagStrings));
+        ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY, String.join(";", tagStringsToKeep));
     }
 
     /**
@@ -375,7 +376,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      * @return A list of tag names, or empty list if none were found.
      */
     private static List<String> getCRNotableList() {
-        String notableTagsProp = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
+        String notableTagsProp = ModuleSettings.getConfigSetting(CentralRepoSettings.getInstance().getModuleSettingsKey(), "db.badTags"); // NON-NLS
         if (notableTagsProp != null && !notableTagsProp.isEmpty()) {
             return Arrays.asList(notableTagsProp.split(","));
         }

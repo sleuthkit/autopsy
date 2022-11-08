@@ -75,31 +75,37 @@ Registry hive files can be viewed in a format similar to a registry editor.
 
 \image html content_viewer_registry.png
 
-\section cv_message Message
+\section cv_metadata File Metadata / Source File Metadata
 
-The Message tab shows details of emails and SMS messages. 
-
-\image html content_viewer_message.png
-
-\section cv_metadata File Metadata
-
-The File Metadata tab displays basic information about the file, such as type, size, and hash. It also displays the output of the Sleuth Kit istat tool.
+The File Metadata tab displays basic information about the file selected or the file associated with the result, such as type, size, and hash. It also displays the output of the Sleuth Kit istat tool.
 
 \image html content_viewer_metadata.png
+
+\section cv_os_account OS Accounts
+
+The OS Accounts tab displays information on the OS account associated with a given result, if present. It is also used to give details on accounts listed under the OS Accounts node in the tree.
+
+\image html content_viewer_os_account.png
+
+\section cv_results Data Artifacts
+
+The Data Artifacts tab shows the artifacts associated with the item selected in the result viewer such as web bookmarks, call logs, and messages. The exact fields displayed depend on the type of data artifact. The two images below show the Data Artifacts tab for a call log and a web bookmark.
+
+\image html content_viewer_results_call.png
+<br>
+\image html content_viewer_results_bookmark.png
+
+\section cv_analysis_results Analysis Results
+
+The Analysis Results tab shows all analysis results associated with the item selected in the result viewer. If you select an analysis result, it will auto-scroll to that result in the list. Analysis results come from data such as hash set hits, interesting items, and keyword hits. The image below shows web category analysis results.
+
+\image html content_viewer_analysis_result_webcat.png
 
 \section cv_context Context
 
 The Context tab shows information on where a file came from and allows you to navigate to the original result. For example, it can show the the URL for downloaded files and the email message a file was attached to. In the image below you can see the context for an image that was sent as an email attachment.
 
 \image html content_viewer_context.png
-
-\section cv_results Results
-
-The Results tab is active when selecting items with associated results such as keyword hits, call logs, and messages. The exact fields displayed depend on the type of result. The two images below show the Results tab for a call log and a web bookmark.
-
-\image html content_viewer_results_call.png
-<br>
-\image html content_viewer_results_bookmark.png
 
 \section cv_annotations Annotations
 

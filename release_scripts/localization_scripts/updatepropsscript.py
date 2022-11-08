@@ -1,6 +1,9 @@
 """This script finds all '.properties-MERGED' files and writes relative path, key, and value to a CSV file.
-This script requires the python libraries: jproperties, pyexcel-xlsx, xlsxwriter and pyexcel.
-It also requires Python 3.x.
+
+This script requires the python libraries: gitpython, jproperties, pyexcel-xlsx, xlsxwriter and pyexcel along with
+python >= 3.9.1 or the requirements.txt file found in this directory can be used
+(https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#using-requirements-files).  As a
+consequence of gitpython, this project also requires git >= 1.7.0.
 """
 
 from typing import List, Dict, Tuple, Callable, Iterator, Union
@@ -8,7 +11,7 @@ import sys
 import os
 
 from envutil import get_proj_dir
-from excelutil import excel_to_records
+from excelutil import excel_to_records, FOUND_SHEET_NAME, DELETED_SHEET_NAME, RESULTS_SHEET_NAME
 from fileutil import get_new_path, get_path_pieces
 from gitutil import get_git_root
 from langpropsutil import set_commit_for_language
@@ -125,8 +128,8 @@ def get_prop_entry(row: List[str],
     if path_converter is not None:
         path = path_converter(path)
 
-    key = row[key_idx] if idx_bounded(key_idx, len(row)) else None
-    value = row[value_idx] if idx_bounded(value_idx, len(row)) else None
+    key = str(row[key_idx]) if idx_bounded(key_idx, len(row)) else None
+    value = str(row[value_idx]) if idx_bounded(value_idx, len(row)) else None
     should_delete = False if should_delete_converter is None else should_delete_converter(row)
 
     # delete this key if no value provided
@@ -195,6 +198,7 @@ class DataRows:
                  deleted_results: Union[List[List[str]], None] = None):
         """
         Creates a DataRows object.
+
         Args:
             results: The 2d list of strings representing cells.
             header: The header row if present.
@@ -208,6 +212,7 @@ class DataRows:
 def get_csv_rows(input_path: str, has_header: bool) -> DataRows:
     """
     Gets rows of a csv file in a DataRows format.
+
     Args:
         input_path: The input path of the file.
         has_header: Whether or not it has a header.
@@ -219,13 +224,16 @@ def get_csv_rows(input_path: str, has_header: bool) -> DataRows:
     return DataRows(header=header, results=all_items)
 
 
-def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted_sheet: str) -> DataRows:
+def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str,
+                  found_sheet: Union[str, None], deleted_sheet: Union[str, None]) -> DataRows:
     """
     Gets worksheets of an excel workbook in a DataRows format.
+
     Args:
         input_path: The input path of the file.
         has_header: Whether or not is has a header.
         results_sheet: The name of the results sheet.
+        found_sheet: The name of the found sheet.
         deleted_sheet: The name of the sheet containing deleted items.
 
     Returns: An intermediate result DataRows object for further parsing.
@@ -237,6 +245,14 @@ def get_xlsx_rows(input_path: str, has_header: bool, results_sheet: str, deleted
     if has_header and len(results_items) > 0:
         header = results_items[0]
         results_items = results_items[1:len(results_items)]
+
+    found_items = workbook[found_sheet] if found_sheet and found_sheet in workbook else None
+    if has_header and found_items and len(found_items) > 0:
+        found_items = found_items[1:len(found_items)]
+
+    # add found items to result items to be inserted into properties
+    if found_items:
+        results_items = results_items + found_items
 
     deleted_items = workbook[deleted_sheet] if deleted_sheet and deleted_sheet in workbook else None
     if has_header and deleted_items and len(deleted_items) > 0:
@@ -250,6 +266,7 @@ def get_prop_entries_from_data(datarows: DataRows, path_idx: int, key_idx: int, 
                                path_converter: Callable) -> List[PropEntry]:
     """
     Converts a DataRows object into PropEntry objects.
+
     Args:
         datarows: The DataRows object.
         path_idx: The index of the column containing the path.
@@ -302,11 +319,17 @@ def main():
                         required=False, help='The column index in the csv file providing the commit for which this '
                                              'update applies. The commit should be located in the header row.  ')
     parser.add_argument('-rs', '--results-sheet', dest='results_sheet', action='store', type=str,
-                        default='results', required=False, help='In an excel workbook, the sheet that indicates '
-                                                                'results items.  This is only used for xlsx files.')
+                        default=RESULTS_SHEET_NAME, required=False,
+                        help='In an excel workbook, the sheet that indicates results items.  This is only used for '
+                             'xlsx files.')
     parser.add_argument('-ds', '--deleted-sheet', dest='deleted_sheet', action='store', type=str,
-                        default='deleted', required=False, help='In an excel workbook, the sheet that indicates '
-                                                                'deleted items.  This is only used for xlsx files.')
+                        default=DELETED_SHEET_NAME, required=False,
+                        help='In an excel workbook, the sheet that indicates deleted items.  This is only used for '
+                             'xlsx files.')
+    parser.add_argument('-fs', '--found-sheet', dest='found_sheet', action='store', type=str,
+                        default=FOUND_SHEET_NAME, required=False,
+                        help='In an excel workbook, the sheet that indicates items where the translation was found.  '
+                             'This is only used for xlsx files.')
     parser.add_argument('-di', '--should-delete-idx', dest='should_delete_idx', action='store', type=int, default=-1,
                         required=False, help='The column index in the csv file providing whether or not the file '
                                              'should be deleted.  Any non-blank content will be treated as True.')
@@ -341,6 +364,7 @@ def main():
     overwrite = args.should_overwrite
     deleted_sheet = args.deleted_sheet
     results_sheet = args.results_sheet
+    found_sheet = args.found_sheet
 
     # means of determining if a key should be deleted from a file
     if args.should_delete_idx < 0:
@@ -362,7 +386,7 @@ def main():
     # retrieve records from file
     ext = get_path_pieces(input_path)[2]
     if ext == 'xlsx':
-        data_rows = get_xlsx_rows(input_path, has_header, results_sheet, deleted_sheet)
+        data_rows = get_xlsx_rows(input_path, has_header, results_sheet, found_sheet, deleted_sheet)
     elif ext == 'csv':
         data_rows = get_csv_rows(input_path, has_header)
     else:

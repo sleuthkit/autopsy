@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractor
 import org.sleuthkit.autopsy.modules.hashdatabase.HashLookupModuleFactory;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
+import org.sleuthkit.autopsy.testutils.TestUtilsException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -67,22 +68,21 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void setUp() {
-
-        openCase = CaseUtils.createAsCurrentCase(CASE_NAME);
-        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-        IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
-
-        IngestModuleTemplate embeddedTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
-        IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
-
-        ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
-        templates.add(embeddedTemplate);
-        templates.add(hashLookupTemplate);
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(EmbeddedFileTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
-
         try {
+            openCase = CaseUtils.createAsCurrentCase(CASE_NAME);
+            ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+            IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
+
+            IngestModuleTemplate embeddedTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
+            IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
+
+            ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+            templates.add(embeddedTemplate);
+            templates.add(hashLookupTemplate);
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(EmbeddedFileTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
+
             IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | TestUtilsException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -90,7 +90,12 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void tearDown() {
-        CaseUtils.closeCurrentCase();
+        try {
+            CaseUtils.closeCurrentCase();
+        } catch (TestUtilsException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
 
     public void testAll() {
@@ -102,7 +107,7 @@ public class EmbeddedFileTest extends NbTestCase {
         runTestEmbeddedFile();
         runTestContent();
     }
-    
+
     private void runTestEncryptionAndZipBomb() {
         try {
             Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Starting");
@@ -129,7 +134,7 @@ public class EmbeddedFileTest extends NbTestCase {
                     ArrayList<BlackboardArtifact> artifacts = file.getAllArtifacts();
                     assertEquals("Zip bomb " + file.getName() + " has incorrect number of artifacts", 1, artifacts.size());
                     for (BlackboardArtifact artifact : artifacts) {
-                        assertEquals("Artifact for Zip bomb " + file.getName() + " has incorrect type ID", artifact.getArtifactTypeID(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID());
+                        assertEquals("Artifact for Zip bomb " + file.getName() + " has incorrect type ID", artifact.getArtifactTypeID(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID());
                         BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
                         assertNotNull("No attribute found for artifact on zip bomb " + file.getName(), attribute);
                         assertEquals("Interesting artifact on file, " + file.getName() + ", does not reflect it being a zip bomb", zipBombSetName, attribute.getDisplayString());
