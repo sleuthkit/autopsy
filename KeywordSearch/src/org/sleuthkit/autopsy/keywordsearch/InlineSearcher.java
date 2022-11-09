@@ -104,7 +104,7 @@ final class InlineSearcher {
 
                     try {
                         // validate the regex
-                        Pattern pattern = Pattern.compile(regex);
+                        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
                         Matcher matcher = pattern.matcher(text);
 
                         if (matcher.find()) {
@@ -184,7 +184,7 @@ final class InlineSearcher {
             searchPattern = keywordString;
         }
 
-        final java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(searchPattern, java.util.regex.Pattern.CASE_INSENSITIVE);
+        final java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(searchPattern, Pattern.CASE_INSENSITIVE);
 
         try {
             String content = text;

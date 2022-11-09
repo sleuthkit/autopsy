@@ -723,7 +723,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     return true;
                 }
                 Reader extractedTextReader =  KeywordSearchUtil.getReader(aFile, stringsExtractionContext);
-                if (Ingester.getDefault().indexAndSearchStrings(extractedTextReader, aFile.getId(), aFile.getName(), aFile, KeywordSearchIngestModule.this.context, settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists())) {
+                if (Ingester.getDefault().searchStrings(extractedTextReader, aFile.getId(), aFile.getName(), aFile, KeywordSearchIngestModule.this.context, settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists())) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {

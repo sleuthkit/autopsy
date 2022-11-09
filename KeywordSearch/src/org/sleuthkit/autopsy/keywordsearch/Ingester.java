@@ -146,9 +146,9 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> boolean indexTextAndSearch(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
+    < T extends SleuthkitVisitableItem> boolean search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
         boolean doLanguageDetection = true;
-        return indexTextAndSearch(sourceReader, sourceID, sourceName, source, context, doLanguageDetection,  indexIntoSolr, keywordListNames);
+        return search(sourceReader, sourceID, sourceName, source, context, doLanguageDetection,  indexIntoSolr, keywordListNames);
     }
     
     /**
@@ -170,16 +170,16 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> boolean indexStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr) throws Ingester.IngesterException {
+    < T extends SleuthkitVisitableItem> boolean searchStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr) throws Ingester.IngesterException {
         // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
         boolean doLanguageDetection = false;
-        return indexTextAndSearch(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, null);
+        return search(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, null);
     }
     
-    < T extends SleuthkitVisitableItem> boolean indexAndSearchStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
+    < T extends SleuthkitVisitableItem> boolean searchStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
         // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
         boolean doLanguageDetection = false;
-        return indexTextAndSearch(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, keywordListNames);
+        return search(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, keywordListNames);
     }
     
     /**
@@ -201,7 +201,7 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    private < T extends SleuthkitVisitableItem> boolean indexTextAndSearch(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection, boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
+    private < T extends SleuthkitVisitableItem> boolean search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection, boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
 
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));

@@ -20,12 +20,10 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.Reader;
 import java.util.logging.Level;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.AnalysisResultIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AnalysisResult;

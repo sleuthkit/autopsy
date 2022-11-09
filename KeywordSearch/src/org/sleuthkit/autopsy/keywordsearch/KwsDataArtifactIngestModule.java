@@ -20,12 +20,9 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.Reader;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataArtifactIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -58,7 +55,7 @@ public class KwsDataArtifactIngestModule implements DataArtifactIngestModule {
     public ProcessResult process(DataArtifact artifact) {
         try {
             if (artifact.getType().getTypeID() != TSK_ASSOCIATED_OBJECT_TYPE_ID) {
-                Ingester ingester = Ingester.getDefault();
+                 Ingester ingester = Ingester.getDefault();
                 Reader blackboardExtractedTextReader = KeywordSearchUtil.getReader(artifact);
                 String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
                 ingester.indexMetaDataOnly(artifact, sourceName);

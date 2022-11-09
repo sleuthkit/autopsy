@@ -15,7 +15,6 @@ ExtractAllTermsReport.error.noOpenCase=No currently open case.
 ExtractAllTermsReport.export.error=Error During Unique Word Extraction
 ExtractAllTermsReport.exportComplete=Unique Word Extraction Complete
 ExtractAllTermsReport.getName.text=Extract Unique Words
-# {0} - Number of extracted terms
 ExtractAllTermsReport.numberExtractedTerms=Extracted {0} terms...
 ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and unique word extraction might yield incomplete results.<br />Do you want to proceed with unique word extraction anyway?</html>
 # {0} - Keyword search commit frequency
@@ -24,7 +23,6 @@ ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try aga
 ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress
 ExtractAllTermsReport.startExport=Starting Unique Word Extraction
 ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>
-# {0} - Content name
 ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}
 GlobalEditListPanel.editKeyword.title=Edit Keyword
 GlobalEditListPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
@@ -176,7 +174,7 @@ KeywordSearchListsManagementPanel.fileExtensionFilterLbl=Autopsy Keyword List Fi
 KeywordSearchListsManagementPanel.fileExtensionFilterLb2=Encase Keyword List File (txt)
 KeywordSearch.listImportFeatureTitle=Keyword List Import
 KeywordSearchIngestModule.moduleName=Keyword Search
-KeywordSearchIngestModule.moduleDescription=Performs file indexing and search using selected keyword lists.
+KeywordSearchIngestModule.moduleDescription=Performs file indexing and periodic search using keywords and regular expressions in lists.
 DropdownSearchPanel.keywordTextField.text=
 KeywordSearchPanel.searchDropButton.text=Keyword Search
 DropdownSearchPanel.exactRadioButton.text=Exact Match
@@ -228,7 +226,6 @@ KeywordSearchSettings.propertiesNSRL.text={0}_NSRL
 KeywordSearchSettings.propertiesScripts.text={0}_Scripts
 NoOpenCoreException.err.noOpenSorlCore.msg=No currently open Solr core.
 SearchRunner.query.exception.msg=Error performing query:
-# {0} - colelction name
 Server.deleteCore.exception.msg=Failed to delete Solr colelction {0}
 Server.exceptionMessage.unableToBackupCollection=Unable to backup Solr collection
 Server.exceptionMessage.unableToCreateCollection=Unable to create Solr collection
