@@ -193,7 +193,7 @@ final class InlineSearcher {
 
             while (hitMatcher.find(offset)) {
 
-                String hit = hitMatcher.group();
+                String hit = hitMatcher.group().toLowerCase();
 
                 /**
                  * No need to continue on if the the string is "" nothing to
