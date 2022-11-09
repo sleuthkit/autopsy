@@ -1078,8 +1078,8 @@ public final class LeappFileProcessor {
         String path = PlatformUtil.getUserConfigDirectory() + File.separator + xmlFile;
         loadIndividualConfigFile(path);
         String userPath = PlatformUtil.getUserConfigDirectory() + File.separator + leapModule + "-" + ARTIFACT_ATTRIBUTE_REFERENCE_USER;
-        if (new File(userPath).canExecute()) {
-            loadIndividualConfigFile(path);
+        if (new File(userPath).exists()) {
+            loadIndividualConfigFile(userPath);
         }
     }
 
