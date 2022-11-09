@@ -107,7 +107,8 @@ class Chromium extends Extract {
     private static final String FAVICON_ARTIFACT_NAME = "TSK_FAVICON"; //NON-NLS
     private static final String LOCAL_STATE_ARTIFACT_NAME = "TSK_LOCAL_STATE"; //NON-NLS
     private static final String EXTENSIONS_ARTIFACT_NAME = "TSK_CHROME_EXTENSIONS"; //NON-NLS
-
+    private static final String MALICIOUS_EXTENSION_FOUND = "Malicious Extension Found - ";
+    
     private Boolean databaseEncrypted = false;
     private Boolean fieldEncrypted = false;
 
@@ -616,6 +617,11 @@ class Chromium extends Extract {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ID,
                         RecentActivityExtracterModuleFactory.getModuleName(), extension));
+                if (maliciousChromeExtensions.get(extension) != null) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                        RecentActivityExtracterModuleFactory.getModuleName(), 
+                        MALICIOUS_EXTENSION_FOUND + maliciousChromeExtensions.getOrDefault(extension, "No Source Identified")));
+                }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
                         RecentActivityExtracterModuleFactory.getModuleName(), extName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
@@ -637,26 +643,6 @@ class Chromium extends Extract {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create Extension artifact for file (%d)", extensionFile.getId()), ex);
                 }
-                
-                 if (maliciousChromeExtensions.get(extension) != null & art != null) {
-                    bbattributes = new ArrayList<>();
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ID,
-                        RecentActivityExtracterModuleFactory.getModuleName(), extension));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
-                        RecentActivityExtracterModuleFactory.getModuleName(), 
-                        maliciousChromeExtensions.getOrDefault(extension, "No Source Identified")));
-                    try {
-                        bbartifacts.add(art.newAnalysisResult(
-                                BlackboardArtifact.Type.TSK_INTERESTING_ITEM, Score.SCORE_NOTABLE, 
-                                null, "Malicious Chrome Extensions", null, 
-                                bbattributes)
-                                .getAnalysisResult());
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, String.format("Failed to create Extension artifact for file (%d)", extensionFile.getId()), ex);
-                    }
- 
-                 }
-
             }
 
             if (!context.dataSourceIngestIsCancelled()) {
