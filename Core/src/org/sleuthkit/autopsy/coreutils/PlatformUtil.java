@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -37,8 +39,6 @@ import java.util.Arrays;
 import java.util.List;
 import javax.swing.filechooser.FileSystemView;
 import org.apache.commons.io.FilenameUtils;
-import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.ptql.ProcessFinder;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
@@ -60,7 +60,6 @@ public class PlatformUtil {
     public static final String OS_VERSION_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.verUnknown");
     public static final String OS_ARCH_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.archUnknown");
     private static volatile long pid = -1;
-    private static volatile Sigar sigar = null;
     private static volatile MemoryMXBean memoryManager = null;
 
     /**
@@ -238,7 +237,7 @@ public class PlatformUtil {
     public static String getModuleConfigDirectory() {
         return Paths.get(getUserConfigDirectory(), "ModuleConfig").toString();
     }
-    
+
     /**
      * Get log directory path
      *
@@ -504,25 +503,8 @@ public class PlatformUtil {
      * @return PID of this process or -1 if it couldn't be determined
      */
     public static synchronized long getPID() {
-
-        if (pid != -1) {
-            return pid;
-        }
-
-        try {
-            if (sigar == null) {
-                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
-            }
-            if (sigar != null) {
-                pid = sigar.getPid();
-            } else {
-                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getPID.sigarNotInit.msg"));
-            }
-        } catch (Exception e) {
-            System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getPID.gen.msg", e.toString()));
-        }
-        return pid;
-
+        // taken from https://stackoverflow.com/a/7303433/2375948
+        return ProcessHandle.current().pid();
     }
 
     /**
@@ -536,56 +518,90 @@ public class PlatformUtil {
      * @return PID of a java process or -1 if it couldn't be determined
      */
     public static synchronized long getJavaPID(String sigarSubQuery) {
-        long jpid = -1;
-        final String sigarQuery = "State.Name.sw=java," + sigarSubQuery; //NON-NLS
-        try {
-            if (sigar == null) {
-                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
-            }
-            if (sigar != null) {
-                ProcessFinder finder = new ProcessFinder(sigar);
-                jpid = finder.findSingleProcess(sigarQuery);
-            } else {
-                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPID.sigarNotInit.msg"));
-            }
-        } catch (Exception e) {
-            System.out.println(
-                    NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPID.gen.msg", sigarQuery, e.toString()));
-        }
-        return jpid;
-
+        long[] pids = getJavaPIDs(sigarSubQuery);
+        return pids == null || pids.length < 1
+                ? -1
+                : pids[0];
     }
 
     /**
      * Query and get PIDs of another java processes matching a query
      *
-     * @param sigarSubQuery a sigar subquery to identify a java processes among
-     *                      other java processes, for example, by class name,
-     *                      use: Args.*.eq=org.jboss.Main more examples here:
-     *                      http://support.hyperic.com/display/SIGAR/PTQL
+     * @param argsSubQuery A like query for command line arguments
      *
      * @return array of PIDs of a java processes matching the query or null if
      *         it couldn't be determined
      */
-    public static synchronized long[] getJavaPIDs(String sigarSubQuery) {
-        long[] jpids = null;
-        final String sigarQuery = "State.Name.sw=java," + sigarSubQuery; //NON-NLS
+    public static synchronized long[] getJavaPIDs(String argsSubQuery) {
         try {
-            if (sigar == null) {
-                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
+        if (isWindowsOS()) {
+            Process process = Runtime.getRuntime().exec("wmic process where \"name='java.exe' AND commandline LIKE '%" + argsSubQuery + "%'\" get ProcessID");
+            BufferedReader reader
+                    = new BufferedReader(new InputStreamReader(process.getInputStream()));          
+            List<String> lines = new ArrayList<>();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
             }
-            if (sigar != null) {
-                ProcessFinder finder = new ProcessFinder(sigar);
-                jpids = finder.find(sigarQuery);
-            } else {
-                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPIDs.sigarNotInit"));
-            }
-        } catch (Exception e) {
-            System.out.println(
-                    NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getJavaPIDs.gen.msg", sigarQuery, e.toString()));
-        }
-        return jpids;
+            
+            return lines.stream().skip(1).map(ln -> {
+                if (ln == null || ln.trim().isEmpty()) {
+                    return null;
+                }
+                
+                try {
+                    return Long.parseLong(ln.trim());
+                } catch (NumberFormatException ex) {
+                    return null;
+                }
+            })
+                    .filter(num -> num != null)
+                    .mapToLong(l -> l)
+                    .toArray();
 
+        } else {
+            String sigarRegexQuery = argsSubQuery == null ? "" : argsSubQuery.replaceAll("_", ".").replaceAll("%", ".*");
+            Process process = Runtime.getRuntime().exec("ps -ef | grep -E 'java.*" + sigarRegexQuery + "'");
+            BufferedReader reader
+                    = new BufferedReader(new InputStreamReader(process.getInputStream()));          
+            List<String> lines = new ArrayList<>();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+            
+            if (lines.size() > 0) {
+                // ignore last one as it will be the same as this command
+                lines.remove(lines.size() - 1);
+            }
+            
+            return lines.stream().skip(1).map(ln -> {
+                if (ln == null || ln.trim().isEmpty()) {
+                    return null;
+                }
+                
+                ln = ln.trim();
+                
+                String[] pieces = ln.split("\\s*");
+                if (pieces.length < 2) {
+                    return null;
+                }
+                
+                try {
+                    return Long.parseLong(pieces[1]);
+                } catch (NumberFormatException ex) {
+                    return null;
+                }
+            })
+                    .filter(num -> num != null)
+                    .mapToLong(l -> l)
+                    .toArray();
+        }
+        } catch (IOException ex) {
+            System.out.println("An exception occurred while fetching java pids with query: " + argsSubQuery);
+            ex.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -594,20 +610,16 @@ public class PlatformUtil {
      * @param pid pid of the process to kill
      */
     public static synchronized void killProcess(long pid) {
-        try {
-            if (sigar == null) {
-                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
-            }
-            if (sigar != null) {
-                sigar.kill(pid, 9);
-            } else {
-                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.killProcess.sigarNotInit.msg"));
-            }
-        } catch (Exception e) {
-            System.out.println(
-                    NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.killProcess.gen.msg", pid, e.toString()));
-        }
+        String cmd = isWindowsOS()
+                ? "taskkill /F /PID " + pid
+                : "kill " + pid;
 
+        try {
+            Runtime.getRuntime().exec(cmd);
+        } catch (IOException ex) {
+            System.out.println("An exception occurred while killing process pid: " + pid);
+            ex.printStackTrace();
+        }
     }
 
     /**
@@ -616,23 +628,8 @@ public class PlatformUtil {
      * @return virt memory used in bytes or -1 if couldn't be queried
      */
     public static synchronized long getProcessVirtualMemoryUsed() {
-        long virtMem = -1;
-
-        try {
-            if (sigar == null) {
-                sigar = org.sleuthkit.autopsy.corelibs.SigarLoader.getSigar();
-            }
-
-            if (sigar == null || getPID() == -1) {
-                System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getProcVmUsed.sigarNotInit.msg"));
-                return -1;
-            }
-            virtMem = sigar.getProcMem(getPID()).getSize();
-        } catch (Exception e) {
-            System.out.println(NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.getProcVmUsed.gen.msg", e.toString()));
-        }
-
-        return virtMem;
+        // taken from https://stackoverflow.com/a/17376879/2375948
+        return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
     }
 
     /**
