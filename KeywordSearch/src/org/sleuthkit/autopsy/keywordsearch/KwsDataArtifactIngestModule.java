@@ -59,7 +59,7 @@ public class KwsDataArtifactIngestModule implements DataArtifactIngestModule {
                 Reader blackboardExtractedTextReader = KeywordSearchUtil.getReader(artifact);
                 String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
                 ingester.indexMetaDataOnly(artifact, sourceName);
-                ingester.indexTextAndSearch(blackboardExtractedTextReader, 
+                ingester.search(blackboardExtractedTextReader, 
                         artifact.getArtifactID(), 
                         sourceName, artifact, 
                         context, 

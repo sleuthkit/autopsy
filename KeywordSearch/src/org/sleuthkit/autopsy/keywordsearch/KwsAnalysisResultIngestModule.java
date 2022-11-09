@@ -60,7 +60,7 @@ public class KwsAnalysisResultIngestModule implements AnalysisResultIngestModule
                 Reader blackboardExtractedTextReader = KeywordSearchUtil.getReader(result);
                 String sourceName = result.getDisplayName() + "_" + result.getArtifactID();
                 ingester.indexMetaDataOnly(result, sourceName);
-                ingester.indexTextAndSearch(blackboardExtractedTextReader, 
+                ingester.search(blackboardExtractedTextReader, 
                         result.getArtifactID(), 
                         sourceName, result, 
                         context, 
