@@ -12,20 +12,15 @@
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
     <!-- Supported java versions.-->
 
-    <echo message="Java version is ${java.version} and ant java version is ${ant.java.version}"/>
     <condition property="supported-java-versions">
         <or>
-            <matches string="${java.version}" pattern="11\.0\.*"/>
-            <equals arg1="${ant.java.version}" arg2="11"/>
-            <matches string="${java.version}" pattern="14\.0\.*"/>
-            <equals arg1="${ant.java.version}" arg2="14"/>
-            <matches string="${java.version}" pattern="17\.0\.*"/>
-            <equals arg1="${ant.java.version}" arg2="17"/>
+            <matches string="${java.version}" pattern="[1-9][0-9]\.*\.*"/>
+            <matches string="${ant.java.version}" pattern="[1-9][0-9]"/>
         </or>
     </condition>
     
     <!-- Verify that the java version running is . -->
-    <fail message="Unsupported Java version: ${ant.java.version}. 
+    <fail message="Unsupported Java version: ${ant.java.version} with Ant java version ${ant.java.version}. 
             Make sure that the Java version is 11 or higher."
           unless="supported-java-versions"/>
 
@@ -144,8 +139,8 @@
         <echo file="${zip-tmp}/autopsy/autopsy/.lastModified" message="" />
 
         <!-- step (3) do your copying stuff here, check the ant doc for copy, move, etc file -->
-        <copy file="${nbplatform.active.dir}/platform/modules/ext/junit-4.10.jar"
-              tofile="${zip-tmp}/${app.name}/platform/modules/ext/junit-4.10.jar"/>
+        <!-- <copy file="${nbplatform.active.dir}/platform/modules/ext/junit-4.10.jar"
+              tofile="${zip-tmp}/${app.name}/platform/modules/ext/junit-4.10.jar"/> -->
         <copy file="${basedir}/README.txt" tofile="${zip-tmp}/${app.name}/README.txt"/>
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
