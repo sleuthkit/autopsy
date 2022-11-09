@@ -93,15 +93,15 @@
         <FileName filename="Call History.tsv" description="Call Logs">
             <ArtifactName artifactname="TSK_CALLLOG" comment="Call Logs">
                 <AttributeName attributename="TSK_DATETIME_START" columnName="Timestamp" required="yes" />
-                <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="Address" required="yes" />
-                <AttributeName attributename="null" columnName="Was Answered" required="no" />
+                <AttributeName attributename="TSK_PHONE_NUMBER_FROM" columnName="Phone Number" required="yes" />
+                <AttributeName attributename="null" columnName="Name" required="no" />
+                <AttributeName attributename="null" columnName="Answered" required="no" />
                 <AttributeName attributename="null" columnName="Call Type" required="no" />
-                <AttributeName attributename="null" columnName="Originated" required="no" />
-                <AttributeName attributename="null" columnName="Duration in Secs" required="no" />
+                <AttributeName attributename="null" columnName="Call Direction" required="no" />
+                <AttributeName attributename="null" columnName="Call Duration" required="no" />
                 <AttributeName attributename="null" columnName="ISO County Code" required="no" />
                 <AttributeName attributename="null" columnName="Location" required="no" />
                 <AttributeName attributename="null" columnName="Service Provider" required="no" />
-                <AttributeName attributename="TSK_TEXT_FILE" columnName="source file" required="yes"/>
             </ArtifactName>
         </FileName>
 
