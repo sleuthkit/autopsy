@@ -210,8 +210,11 @@ class Ingester {
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
-            searcher.searchString(sourceName, sourceID);
-
+            String name = sourceName;
+            if(!(source instanceof BlackboardArtifact)) {
+                searcher.searchString(name, sourceID);
+            }
+            
             while (chunker.hasNext()) {
                 if (context != null && context.fileIngestIsCancelled()) {
                     logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
