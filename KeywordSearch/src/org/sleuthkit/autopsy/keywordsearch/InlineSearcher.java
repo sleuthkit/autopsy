@@ -45,6 +45,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskException;
 
 final class InlineSearcher {
 
@@ -333,7 +334,7 @@ final class InlineSearcher {
      * @param context
      * @param sourceID
      */
-    void makeArtifacts(Content content, IngestJobContext context, long sourceID) {
+    void makeArtifacts(Content content, IngestJobContext context, long sourceID) throws TskException{
         for (Map.Entry<Keyword, Map<Keyword, List<KeywordHit>>> item : hitByKeyword.entrySet()) {
             Keyword originalKeyword = item.getKey();
             Map<Keyword, List<KeywordHit>> map = item.getValue();
@@ -348,7 +349,9 @@ final class InlineSearcher {
                     // was found.
                     if (!hitList.isEmpty()) {
                         KeywordHit hit = hitList.get(0);
-                        hitArtifacts.add(RegexQuery.createKeywordHitArtifact(content, originalKeyword, hitKeyword, hit, hit.getSnippet(), hitKeyword.getListName(), sourceID));
+                        SleuthkitCase tskCase = Case.getCurrentCase().getSleuthkitCase();
+                        Content content1 = tskCase.getContentById(hit.getContentID());
+                        hitArtifacts.add(RegexQuery.createKeywordHitArtifact(content1, originalKeyword, hitKeyword, hit, hit.getSnippet(), hitKeyword.getListName(), sourceID));
                     }
                 }
 

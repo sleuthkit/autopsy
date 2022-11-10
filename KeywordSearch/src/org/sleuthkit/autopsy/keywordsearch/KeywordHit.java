@@ -67,8 +67,6 @@ class KeywordHit implements Comparable<KeywordHit> {
          * For every object (file or artifact) there will at least two Solr
          * documents. One contains object metadata (chunk #1) and the second and
          * subsequent documents contain chunks of the text.
-         * 
-         * KeywordHits created from inline search will not have solrDocumentId
          */
         if(!solrDocumentId.isEmpty()) {
         String[] split = solrDocumentId.split(Server.CHUNK_ID_SEPARATOR);
