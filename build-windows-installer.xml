@@ -178,7 +178,7 @@
     <target name="update-config" description="Updates configuration file with correct JVM args.">
         <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
         <!-- Sets max heap size to be ${jvm.max.mem} which is set in the run-ai-(32/64) target -->
-        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem} -J-XX:MaxPermSize=128M -J--illegal-access=warn -J-Xverify:none -J-XX:+UseStringDeduplication -J-Dprism.order=sw -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED&quot;" />
+        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem} -J-XX:MaxPermSize=128M -J-XX:+UseStringDeduplication -J-Dprism.order=sw -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED&quot;" />
         <propertyfile file="${inst.property.file}">
             <entry key="default_options" value="@JVM_OPTIONS" />
             <!-- Update configuration file to include runtime -->
