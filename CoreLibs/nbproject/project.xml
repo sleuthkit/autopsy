@@ -482,7 +482,7 @@
                 <package>org.slf4j.helpers</package>
                 <package>org.slf4j.spi</package>
             </public-packages>
-            <class-path-extension>
+         <class-path-extension>
                 <runtime-relative-path>ext/animal-sniffer-annotations-1.21.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/animal-sniffer-annotations-1.21.jar</binary-origin>
             </class-path-extension>
@@ -505,10 +505,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/AppleJavaExtensions-1.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/AppleJavaExtensions-1.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/assertj-core-3.13.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/assertj-core-3.13.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/auto-value-annotations-1.9.jar</runtime-relative-path>
@@ -599,8 +595,8 @@
                 <binary-origin>release/modules/ext/conscrypt-openjdk-uber-2.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-9.0.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-9.0.0.jar</binary-origin>
+                <runtime-relative-path>ext/controlsfx-11.1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-11.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dd-plist-1.23.jar</runtime-relative-path>
@@ -739,10 +735,6 @@
                 <binary-origin>release/modules/ext/guava-31.1-jre.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/hamcrest-core-1.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/hamcrest-core-1.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/httpclient-4.5.13.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/httpclient-4.5.13.jar</binary-origin>
             </class-path-extension>
@@ -839,20 +831,16 @@
                 <binary-origin>release/modules/ext/jericho-html-3.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-common-11-r1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-common-11-r1.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-common-17-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-common-17-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-controls-11-r1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-controls-11-r1.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-controls-17-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-controls-17-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-fxml-11-r1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-fxml-11-r1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-test-support-11-r1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-test-support-11-r1.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-fxml-17-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-fxml-17-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jna-5.12.1.jar</runtime-relative-path>
@@ -871,10 +859,6 @@
                 <binary-origin>release/modules/ext/jsr305-3.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/junit-4.13.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/junit-4.13.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/LGoodDatePicker-11.2.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/LGoodDatePicker-11.2.1.jar</binary-origin>
             </class-path-extension>
@@ -889,10 +873,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/log4j-core-2.17.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/log4j-core-2.17.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/mockito-all-1.9.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/mockito-all-1.9.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/opencensus-api-0.31.0.jar</runtime-relative-path>
@@ -957,14 +937,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-reload4j-1.7.36.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-reload4j-1.7.36.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/testfx-core-4.0.16-alpha.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/testfx-core-4.0.16-alpha.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/testfx-junit-4.0.15-alpha.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/testfx-junit-4.0.15-alpha.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/threetenbp-1.5.2.jar</runtime-relative-path>

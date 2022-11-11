@@ -261,27 +261,26 @@ public class Installer extends ModuleInstall {
 
     private static void initJavaFx() {
         //initialize java fx if exists
-        // GVDTODO need to fix
-//        System.setProperty("javafx.macosx.embedded", "true");
-//        try {
-//            // Creating a JFXPanel initializes JavaFX
-//            JFXPanel panel = new JFXPanel();
-//            Platform.setImplicitExit(false);
-//            javaFxInit = true;
-//        } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
-//            //in case javafx not present
-//            final String msg = NbBundle.getMessage(Installer.class, "Installer.errorInitJavafx.msg");
-//            final String details = NbBundle.getMessage(Installer.class, "Installer.errorInitJavafx.details");
-//            logger.log(Level.SEVERE, msg
-//                    + details, e);
-//
-//            WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
-//                @Override
-//                public void run() {
-//                    MessageNotifyUtil.Notify.error(msg, details);
-//                }
-//            });
-//        }
+        System.setProperty("javafx.macosx.embedded", "true");
+        try {
+            // Creating a JFXPanel initializes JavaFX
+            new JFXPanel();
+            Platform.setImplicitExit(false);
+            javaFxInit = true;
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
+            //in case javafx not present
+            final String msg = NbBundle.getMessage(Installer.class, "Installer.errorInitJavafx.msg");
+            final String details = NbBundle.getMessage(Installer.class, "Installer.errorInitJavafx.details");
+            logger.log(Level.SEVERE, msg
+                    + details, e);
+
+            WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
+                @Override
+                public void run() {
+                    MessageNotifyUtil.Notify.error(msg, details);
+                }
+            });
+        }
     }
 
     /**

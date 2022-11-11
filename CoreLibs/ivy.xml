@@ -55,14 +55,14 @@
              
              https://github.com/controlsfx/controlsfx/issues/1241
         -->
-        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="9.0.0" />
+        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="11.1.2" />
 
         <dependency conf="autopsy_core->default" org="joda-time" name="joda-time" rev="2.10.14" />
 
         <!-- timeline  -->
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-fxml" rev="11-r1" />
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-controls" rev="11-r1" />
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-common" rev="11-r1" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-fxml" rev="17-r1" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-controls" rev="17-r1" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-common" rev="17-r1" />
         <!-- templateing engine used by timeline to generate its snapshot report -->
         <dependency conf="autopsy_core->default" org="com.github.spullara.mustache.java" name="compiler" rev="0.9.10" />
         
