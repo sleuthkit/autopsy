@@ -46,6 +46,7 @@ import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -662,24 +663,25 @@ public class GroupPane extends BorderPane {
 
         private final DrawableTile tile = new DrawableTile(GroupPane.this, controller);
 
-        DrawableCell() {
-            itemProperty().addListener((ObservableValue<? extends Long> observable, Long oldValue, Long newValue) -> {
-                if (oldValue != null) {
-                    cellMap.remove(oldValue, DrawableCell.this);
-                    tile.setFile(null);
+        protected final ChangeListener<Long> changeListener = (ObservableValue<? extends Long> observable, Long oldValue, Long newValue) -> {
+                if ((oldValue == null && newValue == null) || (oldValue != null && newValue != null && oldValue.equals(newValue))) {
+                    // if no change, do nothing
+                    return;
                 }
+                
+                DrawableCell oldValueCell = oldValue == null ? null : cellMap.remove(oldValue);
+                if (oldValueCell != null) {
+                    // remove change listener to get garbage collected
+                    oldValueCell.itemProperty().removeListener(oldValueCell.changeListener);
+                }
+                
                 if (newValue != null) {
-                    if (cellMap.containsKey(newValue)) {
-                        if (tile != null) {
-                            // Clear out the old value to prevent out-of-date listeners
-                            // from activating.
-                            cellMap.get(newValue).tile.setFile(null);
-                        }
-                    }
                     cellMap.put(newValue, DrawableCell.this);
                 }
-            });
-
+            };
+        
+        DrawableCell() {
+            itemProperty().addListener(changeListener);
             setGraphic(tile);
         }
 
