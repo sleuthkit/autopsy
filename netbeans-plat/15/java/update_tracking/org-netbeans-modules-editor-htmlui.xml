@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.editor.htmlui">
+    <module_version install_time="1668523599962" last="true" origin="Ant" specification_version="1.16">
+        <file crc="763608144" name="config/Modules/org-netbeans-modules-editor-htmlui.xml"/>
+        <file crc="3822317497" name="modules/org-netbeans-modules-editor-htmlui.jar"/>
+    </module_version>
+</module>

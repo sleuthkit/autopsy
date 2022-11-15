@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.selenium2.java">
+    <module_version install_time="1668523610393" last="true" origin="Ant" specification_version="1.19">
+        <file crc="85123766" name="config/Modules/org-netbeans-modules-selenium2-java.xml"/>
+        <file crc="3791468523" name="modules/org-netbeans-modules-selenium2-java.jar"/>
+    </module_version>
+</module>

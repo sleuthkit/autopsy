@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<project name="suite-osgi" basedir=".">
+
+    <target name="init">
+        <property name="osgi.dest.dir" location="${suite.build.dir}/osgi"/>
+        <property name="osgi.cache.dir" location="${suite.build.dir}/osgi-cache"/>
+        <property name="disabled.modules" value=""/>
+        <property name="enabled.clusters" value=""/>
+        <property name="disabled.clusters" value=""/>
+    </target>
+
+    <target name="build" depends="init">
+        <mkdir dir="${osgi.dest.dir}"/>
+        <pathconvert property="osgi.platform.update.tracking">
+            <pathfileset>
+                <path refid="cluster.path.id"/>
+                <filename name="update_tracking/*.xml"/>
+            </pathfileset>
+        </pathconvert>
+        <makeosgi destdir="${osgi.dest.dir}">
+            <pathfileset>
+                <path refid="cluster.path.id"/>
+                <and>
+                    <or>
+                        <filename name="modules/*.jar"/>
+                        <filename name="lib/*.jar"/>
+                        <filename name="core/*.jar"/>
+                        <filename name="modules/locale/*.jar"/>
+                        <filename name="lib/locale/*.jar"/>
+                        <filename name="core/locale/*.jar"/>
+                        <filename name="*.jar"/> <!-- #186371: imported bundles -->
+                        <filename name="modules/ext/org.eclipse.osgi_*.jar"/>
+                    </or>
+                    <custom classpath="${harness.dir}/tasks.jar" classname="org.netbeans.nbbuild.ModuleSelector">
+                        <param name="excludeModules" value="${disabled.modules}"/>
+                        <param name="includeClusters" value="${enabled.clusters}"/>
+                        <param name="excludeClusters" value="${disabled.clusters}"/>
+                        <param name="updateTrackingFiles" value="${osgi.platform.update.tracking}"/>
+                    </custom>
+                </and>
+            </pathfileset>
+            <fileset dir="${cluster}">
+                <include name="modules/*.jar"/>
+                <include name="lib/*.jar"/>
+                <include name="core/*.jar"/>
+                <include name="modules/locale/*.jar"/>
+                <include name="lib/locale/*.jar"/>
+                <include name="core/locale/*.jar"/>
+            </fileset>
+        </makeosgi>
+    </target>
+
+    <target name="obr" depends="init">
+        <taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask">
+            <classpath>
+                <fileset dir="${harness.dir}/antlib" includes="bindex*.jar"/>
+            </classpath>
+        </taskdef>
+        <bindex repositoryfile="${osgi.dest.dir}/repository.xml" quiet="true" root="${osgi.dest.dir}">
+            <fileset dir="${osgi.dest.dir}" includes="*.jar"/>
+        </bindex>
+    </target>
+
+    <target name="run" depends="init">
+        <mkdir dir="${osgi.cache.dir}"/>
+        <property name="felix-sys-prop.felix.auto.deploy.action" value="uninstall,install,update,start"/> <!-- config.properties omits update,uninstall -->
+        <property name="felix-sys-prop.felix.log.level" value="3"/> <!-- config.properties defaults to 4 but it is too noisy -->
+        <property name="felix-sys-prop.org.osgi.service.http.port" value="8080"/> <!-- from config.properties -->
+        <property name="felix-sys-prop.obr.repository.url" value="http://felix.apache.org/obr/releases.xml"/> <!-- from config.properties -->
+        <condition property="felix-sys-prop.branding.token" value="${branding.token}">
+            <isset property="branding.token"/>
+        </condition>
+        <property name="osgi.run.cp.extra" value=""/>
+        <property name="osgi.run.args" value="-ea"/>
+        <property name="osgi.run.args.extra" value=""/>
+        <java fork="true" classname="org.apache.felix.main.Main">
+            <classpath>
+                <pathfileset>
+                    <path refid="cluster.path.id"/>
+                    <or>
+                        <filename name="modules/ext/osgi*.jar"/>
+                        <filename name="modules/ext/felix*.jar"/>
+                    </or>
+                </pathfileset>
+                <pathelement path="${osgi.run.cp.extra}"/>
+            </classpath>
+            <jvmarg line="${osgi.run.args}"/>
+            <jvmarg line="${osgi.run.args.extra}"/>
+            <arg value="-b"/>
+            <arg file="${osgi.dest.dir}"/>
+            <arg file="${osgi.cache.dir}"/>
+            <syspropertyset>
+                <propertyref prefix="felix-sys-prop."/>
+                <mapper type="glob" from="felix-sys-prop.*" to="*"/>
+            </syspropertyset>
+        </java>
+    </target>
+
+    <target name="debug">
+        <fail unless="netbeans.home">This target only works when run from inside the NetBeans IDE.</fail>
+        <nbjpdastart name="NetBeans" addressproperty="debug.port" transport="dt_socket">
+            <classpath>
+                <pathfileset>
+                    <path refid="cluster.path.id"/>
+                    <filename name="**/*.jar"/>
+                </pathfileset>
+                <fileset dir="${cluster}">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+        </nbjpdastart>
+        <property name="debug.pause" value="y"/>
+        <property name="debug.args" value="-agentlib:jdwp=transport=dt_socket,suspend=${debug.pause},server=n,address=${debug.port}"/>
+        <antcall target="run">
+            <param name="osgi.run.args.extra" value="${debug.args}"/>
+            <reference refid="cluster.path.id"/>
+        </antcall>
+    </target>
+    
+    <target name="-profile-check" if="netbeans.home">
+        <condition property="profiler.configured">
+            <or>
+                <contains string="${osgi.run.args}" substring="-agentpath:" casesensitive="true"/>
+                <contains string="${osgi.run.args}" substring="-javaagent:" casesensitive="true"/>
+                <contains string="${osgi.run.args.extra}" substring="-agentpath:" casesensitive="true"/>
+                <contains string="${osgi.run.args.extra}" substring="-javaagent:" casesensitive="true"/>
+                <contains string="${run.args.ide}" substring="-agentpath:" casesensitive="true"/>
+                <contains string="${run.args.ide}" substring="-javaagent:" casesensitive="true"/>
+            </or>
+        </condition>
+    </target>
+    
+    <target name="profile" depends="-profile-check,-profile-pre72" if="profiler.configured" unless="profiler.info.jvmargs.agent" description="Profile a project in the IDE.">        
+        <startprofiler/>
+        <antcall target="run">
+            <reference refid="cluster.path.id"/>
+            <param name="felix-sys-prop.org.osgi.framework.bootdelegation" value="org.netbeans.lib.profiler.*"/>
+            <param name="osgi.run.args.extra" value="${run.args.ide}"/>
+        </antcall>
+    </target>
+    
+    <target name="-profile-pre72" if="profiler.info.jvmargs.agent">
+        <fail unless="netbeans.home">This target only works when run from inside the NetBeans IDE.</fail>
+        <nbprofiledirect jvmargsprefix="" jvmargsproperty="profiler.jvmargs">
+            <classpath>
+                <pathfileset>
+                    <path refid="cluster.path.id"/>
+                    <filename name="**/*.jar"/>
+                </pathfileset>
+                <fileset dir="${cluster}">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+            <rootspath>
+                <fileset dir="${cluster}">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </rootspath>
+        </nbprofiledirect>
+        <antcall target="run">
+            <param name="osgi.run.args.extra" value="${profiler.jvmargs}"/>
+            <param name="felix-sys-prop.org.osgi.framework.bootdelegation" value="org.netbeans.lib.profiler.*"/>
+            <reference refid="cluster.path.id"/>
+        </antcall>
+    </target>
+</project>

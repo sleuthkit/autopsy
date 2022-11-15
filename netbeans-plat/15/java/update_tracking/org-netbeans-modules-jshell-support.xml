@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.jshell.support">
+    <module_version install_time="1668523597513" last="true" origin="Ant" specification_version="1.17.0.3.55.17.1.6">
+        <file crc="3889743634" name="config/Modules/org-netbeans-modules-jshell-support.xml"/>
+        <file crc="1958422987" name="modules/org-netbeans-modules-jshell-support.jar"/>
+    </module_version>
+</module>
