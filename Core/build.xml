@@ -315,36 +315,14 @@
     More information in Jira: 6970.
     -->
     <target name="unit-test-path-simplification" depends="projectized-common.test-init">
+        <property name="unit-test-path-simplification.dir.path" value="${thirdparty.dir}/ClasspathSimplification/target"/>
+        <property name="unit-test-path-simplification.jar.path" value="${unit-test-path-simplification.dir.path}/ClasspathSimplification-1.0-jar-with-dependencies.jar"/>
+        <taskdef name="classpathsimplify" classname="org.sleuthkit.autopsy.classpathsimplification.ClasspathSimplification" classpath="${unit-test-path-simplification.jar.path}"/>
+        
+        
         <sequential>
-            <script language="javascript">
-                <![CDATA[ 
-                    var moduleRunClasspath = project.getProperty("module.run.classpath");
-
-                    var directories = [];
-                    // searches for jar file parent directories with path separators of \ or /
-                    var individualPathRegex = /^\s*(.+?[\\\/])[^\\\/]+?\.jar\s*$/i;
-                    // split on ':' but not 'C:\'
-                    var classPathRegex = /((C:\\)?.+?)(:|$)/gi;
-                    var match;
-                    while((match = classPathRegex.exec(moduleRunClasspath)) !== null) {
-                        var thisPath = match[1];
-                        var pathMatch = thisPath.match(individualPathRegex);
-                        // find unique matches
-                        if (pathMatch && directories.indexOf(pathMatch[1]) < 0) {
-                            directories.push(pathMatch[1]);
-                        }
-                    }
-
-                    // suffix with *
-                    for (var i = 0; i < directories.length; i++) {
-                        directories[i] = directories[i] + "*";
-                    }
-
-                    // set project property
-                    project.setNewProperty("test.unit.abbreviatedModuleRunClassPath", directories.join(":"));
-                ]]>
-            </script>
-
+            <classpathsimplify classpath="${module.run.classpath}" outputprop="test.unit.abbreviatedModuleRunClassPath" />
+            
             <!--grab properties from common.xml:test-init so that "test.unit.run.cp" can be properly formed-->
             <property name="build.test.unit.dir" location="${build.dir}/test/unit"/>
             <property name="build.test.unit.classes.dir" location="${build.test.unit.dir}/classes"/>
