@@ -445,17 +445,6 @@
                 <package>org.freedesktop.gstreamer.message</package>
                 <package>org.freedesktop.gstreamer.query</package>
                 <package>org.freedesktop.gstreamer.webrtc</package>
-                <package>org.hyperic.jni</package>
-                <package>org.hyperic.sigar</package>
-                <package>org.hyperic.sigar.cmd</package>
-                <package>org.hyperic.sigar.jmx</package>
-                <package>org.hyperic.sigar.pager</package>
-                <package>org.hyperic.sigar.ptql</package>
-                <package>org.hyperic.sigar.shell</package>
-                <package>org.hyperic.sigar.test</package>
-                <package>org.hyperic.sigar.util</package>
-                <package>org.hyperic.sigar.vmware</package>
-                <package>org.hyperic.sigar.win32</package>
                 <package>org.imgscalr</package>
                 <package>org.joda.time</package>
                 <package>org.joda.time.base</package>
@@ -925,10 +914,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/reload4j-1.2.19.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/reload4j-1.2.19.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sigar-1.6.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sigar-1.6.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>

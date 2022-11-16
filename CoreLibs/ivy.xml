@@ -41,9 +41,6 @@
         <dependency conf="autopsy_core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.4"/>
 
         <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.13.2"/>
-
-        <!-- process and system monitoring, note: matching native libs pulled from thirdparty -->
-        <dependency conf="autopsy_core->default" org="org.fusesource" name="sigar" rev="1.6.4" />
         
         <!-- better image resizing -->
         <dependency conf="autopsy_core->default" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />

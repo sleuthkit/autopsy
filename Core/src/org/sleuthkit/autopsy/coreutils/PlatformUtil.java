@@ -32,13 +32,16 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.swing.filechooser.FileSystemView;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
@@ -535,16 +538,12 @@ public class PlatformUtil {
     public static synchronized long[] getJavaPIDs(String argsSubQuery) {
         try {
         if (isWindowsOS()) {
-            Process process = Runtime.getRuntime().exec("wmic process where \"name='java.exe' AND commandline LIKE '%" + argsSubQuery + "%'\" get ProcessID");
-            BufferedReader reader
-                    = new BufferedReader(new InputStreamReader(process.getInputStream()));          
-            List<String> lines = new ArrayList<>();
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                lines.add(line);
-            }
             
-            return lines.stream().skip(1).map(ln -> {
+            ProcessBuilder pb = new ProcessBuilder("wmic process where \"name='java.exe' AND commandline LIKE '%" + argsSubQuery + "%'\" get ProcessID");
+            String output = IOUtils.toString(pb.start().getInputStream(), StandardCharsets.UTF_8);
+            String[] lines = output.split("\\r?\\n");
+            
+            return Stream.of(lines).skip(1).map(ln -> {
                 if (ln == null || ln.trim().isEmpty()) {
                     return null;
                 }
@@ -561,14 +560,9 @@ public class PlatformUtil {
 
         } else {
             String sigarRegexQuery = argsSubQuery == null ? "" : argsSubQuery.replaceAll("_", ".").replaceAll("%", ".*");
-            Process process = Runtime.getRuntime().exec("ps -ef | grep -E 'java.*" + sigarRegexQuery + "'");
-            BufferedReader reader
-                    = new BufferedReader(new InputStreamReader(process.getInputStream()));          
-            List<String> lines = new ArrayList<>();
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                lines.add(line);
-            }
+            ProcessBuilder pb = new ProcessBuilder("ps -ef | grep -E 'java.*" + sigarRegexQuery + "'");
+            String output = IOUtils.toString(pb.start().getInputStream(), StandardCharsets.UTF_8);
+            List<String> lines = Arrays.asList(output.split("\\r?\\n"));
             
             if (lines.size() > 0) {
                 // ignore last one as it will be the same as this command
