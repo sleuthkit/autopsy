@@ -1,4 +1,4 @@
-/*
+ /*
  *
  * Autopsy Forensic Browser
  *
@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.modules.browseractivity;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -43,18 +43,19 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Recent activity image ingest module
+ * Browser Activity image ingest module
  */
-public final class RAImageIngestModule implements DataSourceIngestModule {
+public final class BrowserActivityIngestModule implements DataSourceIngestModule {
 
-    private static final String RECENT_ACTIVITY_FOLDER = "RecentActivity";
-    private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
+    private static final String BROWSER_ACTIVITY_FOLDER = "BrowserActivity";
+    private static final Logger logger = Logger.getLogger(BrowserActivityIngestModule.class.getName());
     private final List<Extract> extractors = new ArrayList<>();
+    private final List<Extract> browserExtractors = new ArrayList<>();
     private final IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
     protected SleuthkitCase tskCase;
 
-    RAImageIngestModule() {
+    BrowserActivityIngestModule() {
     }
 
     @Override
@@ -63,25 +64,31 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
         tskCase = Case.getCurrentCase().getSleuthkitCase();
 
-        Extract registry = new ExtractRegistry(context);
-        Extract recentDocuments = new RecentDocumentsByLnk(context);
+        Extract iexplore = new ExtractIE(context);
+        Extract edge = new ExtractEdge(context);
+        Extract chrome = new Chromium(context);
+        Extract firefox = new Firefox(context);
+        Extract SEUQA = new SearchEngineURLQueryAnalyzer(context);
         Extract osExtract = new ExtractOs(context);
-        Extract dataSourceAnalyzer = new DataSourceUsageAnalyzer(context);
-        Extract zoneInfo = new ExtractZoneIdentifier(context);
-        Extract recycleBin = new ExtractRecycleBin(context);
-        Extract sru = new ExtractSru(context);
-        Extract prefetch = new ExtractPrefetch(context);
-        Extract jumpList = new ExtractJumpLists(context);
+        Extract safari = new ExtractSafari(context);
+        Extract webAccountType = new ExtractWebAccountType(context);
+        Extract messageDomainType = new DomainCategoryRunner(context);
 
-        extractors.add(recycleBin);
-        extractors.add(jumpList);
-        extractors.add(recentDocuments);
-        extractors.add(registry); //  needs to run before the DataSourceUsageAnalyzer
         extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
-        extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
-        extractors.add(zoneInfo); // this needs to run after the web browser modules
-        extractors.add(sru);
-        extractors.add(prefetch);
+        extractors.add(chrome);
+        extractors.add(firefox);
+        extractors.add(iexplore);
+        extractors.add(edge);
+        extractors.add(safari);
+        extractors.add(SEUQA); // this needs to run after the web browser modules
+        extractors.add(webAccountType); // this needs to run after the web browser modules
+        extractors.add(messageDomainType);
+
+        browserExtractors.add(chrome);
+        browserExtractors.add(firefox);
+        browserExtractors.add(iexplore);
+        browserExtractors.add(edge);
+        browserExtractors.add(safari);
 
         for (Extract extractor : extractors) {
             extractor.startUp();
@@ -90,9 +97,9 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        services.postMessage(IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(),
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, BrowserActivityModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
-                        "RAImageIngestModule.process.started",
+                        "BrowserActivityIngestModule.process.started",
                         dataSource.getName())));
 
         progressBar.switchToDeterminate(extractors.size());
@@ -102,7 +109,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         for (int i = 0; i < extractors.size(); i++) {
             Extract extracter = extractors.get(i);
             if (context.dataSourceIngestIsCancelled()) {
-                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getDisplayName()); //NON-NLS
+                logger.log(Level.INFO, "Browser Activity has been canceled, quitting before {0}", extracter.getDisplayName()); //NON-NLS
                 break;
             }
 
@@ -112,7 +119,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
                 extracter.process(dataSource, progressBar);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + extracter.getDisplayName(), ex); //NON-NLS
-                errors.add(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModErrs", RecentActivityExtracterModuleFactory.getModuleName()));
+                errors.add(NbBundle.getMessage(this.getClass(), "BrowserActivityIngestModule.process.errModErrs", BrowserActivityModuleFactory.getModuleName()));
             }
             progressBar.progress(i + 1);
             errors.addAll(extracter.getErrorMessages());
@@ -125,36 +132,43 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         if (errors.isEmpty() == false) {
             msgLevel = MessageType.ERROR;
             errorMessage.append(
-                    NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsg.errsEncountered"));
+                    NbBundle.getMessage(this.getClass(), "BrowserActivityIngestModule.process.errMsg.errsEncountered"));
             for (String msg : errors) {
                 errorMessage.append("<li>").append(msg).append("</li>\n"); //NON-NLS
             }
             errorMessage.append("</ul>\n"); //NON-NLS
 
             if (errors.size() == 1) {
-                errorMsgSubject = NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsgSub.oneErr");
+                errorMsgSubject = NbBundle.getMessage(this.getClass(), "BrowserActivityIngestModule.process.errMsgSub.oneErr");
             } else {
                 errorMsgSubject = NbBundle.getMessage(this.getClass(),
-                        "RAImageIngestModule.process.errMsgSub.nErrs", errors.size());
+                        "BrowserActivityIngestModule.process.errMsgSub.nErrs", errors.size());
             }
         } else {
-            errorMessage.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsg.noErrs"));
-            errorMsgSubject = NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errMsgSub.noErrs");
+            errorMessage.append(NbBundle.getMessage(this.getClass(), "BrowserActivityIngestModule.process.errMsg.noErrs"));
+            errorMsgSubject = NbBundle.getMessage(this.getClass(), "BrowserActivityIngestModule.process.errMsgSub.noErrs");
         }
-        final IngestMessage msg = IngestMessage.createMessage(msgLevel, RecentActivityExtracterModuleFactory.getModuleName(),
+        final IngestMessage msg = IngestMessage.createMessage(msgLevel, BrowserActivityModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
-                        "RAImageIngestModule.process.ingestMsg.finished",
+                        "BrowserActivityIngestModule.process.ingestMsg.finished",
                         dataSource.getName(), errorMsgSubject),
                 errorMessage.toString());
         services.postMessage(msg);
 
         StringBuilder historyMsg = new StringBuilder();
         historyMsg.append(
-                NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.title", dataSource.getName()));
+                NbBundle.getMessage(this.getClass(), "BrowserActivityIngestModule.process.histMsg.title", dataSource.getName()));
+        for (Extract module : browserExtractors) {
+            historyMsg.append("<li>").append(module.getDisplayName()); //NON-NLS
+            historyMsg.append(": ").append((module.foundData()) ? NbBundle
+                    .getMessage(this.getClass(), "BrowserActivityIngestModule.process.histMsg.found") : NbBundle
+                    .getMessage(this.getClass(), "BrowserActivityIngestModule.process.histMsg.notFnd"));
+            historyMsg.append("</li>"); //NON-NLS
+        }
         historyMsg.append("</ul>"); //NON-NLS
-        final IngestMessage inboxMsg = IngestMessage.createMessage(MessageType.INFO, RecentActivityExtracterModuleFactory.getModuleName(),
+        final IngestMessage inboxMsg = IngestMessage.createMessage(MessageType.INFO, BrowserActivityModuleFactory.getModuleName(),
                 NbBundle.getMessage(this.getClass(),
-                        "RAImageIngestModule.process.ingestMsg.results",
+                        "BrowserActivityIngestModule.process.ingestMsg.results",
                         dataSource.getName()),
                 historyMsg.toString());
         services.postMessage(inboxMsg);
@@ -186,9 +200,9 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      *
      * @return The path to the folder.
      */
-    private static String getAndMakeRAPath(String basePath, String module, long ingestJobId) {
+    private static String getAndMakeBAPath(String basePath, String module, long ingestJobId) {
         String moduleFolder = String.format("%s_%d", module, ingestJobId);
-        Path tmpPath = Paths.get(basePath, RECENT_ACTIVITY_FOLDER, moduleFolder);
+        Path tmpPath = Paths.get(basePath, BROWSER_ACTIVITY_FOLDER, moduleFolder);
         File dir = tmpPath.toFile();
         if (dir.exists() == false) {
             dir.mkdirs();
@@ -206,8 +220,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      *
      * @return Path to directory
      */
-    static String getRATempPath(Case a_case, String mod, long ingestJobId) {
-        return getAndMakeRAPath(a_case.getTempDirectory(), mod, ingestJobId);
+    static String getBATempPath(Case a_case, String mod, long ingestJobId) {
+        return getAndMakeBAPath(a_case.getTempDirectory(), mod, ingestJobId);
     }
 
     /**
@@ -220,8 +234,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      *
      * @return Path to directory
      */
-    static String getRAOutputPath(Case a_case, String mod, long ingestJobId) {
-        return getAndMakeRAPath(a_case.getModuleDirectory(), mod, ingestJobId);
+    static String getBAOutputPath(Case a_case, String mod, long ingestJobId) {
+        return getAndMakeBAPath(a_case.getModuleDirectory(), mod, ingestJobId);
     }
 
     /**
@@ -231,7 +245,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      * @return the relative path of the module output folder
      */
     static String getRelModuleOutputPath(Case autCase, String mod, long ingestJobId) {
-        return Paths.get(getAndMakeRAPath(autCase.getModuleOutputDirectoryRelativePath(), mod, ingestJobId))
+        return Paths.get(getAndMakeBAPath(autCase.getModuleOutputDirectoryRelativePath(), mod, ingestJobId))
                 .normalize()
                 .toString();
     }

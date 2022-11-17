@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.modules.browseractivity;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.modules.browseractivity.Bundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -185,7 +186,7 @@ class Firefox extends Extract {
             }
 
             String fileName = historyFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(historyFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -275,7 +276,7 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = bookmarkFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -309,23 +310,23 @@ class Firefox extends Extract {
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((url != null) ? url : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("title").toString() != null) ? result.get("title").toString() : ""))); //NON-NLS
                 if (Long.valueOf(result.get("dateAdded").toString()) > 0) { //NON-NLS
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                            RecentActivityExtracterModuleFactory.getModuleName(),
+                            BrowserActivityModuleFactory.getModuleName(),
                             (Long.valueOf(result.get("dateAdded").toString())))); //NON-NLS
                 }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
                 String domain = extractDomain(url);
                 if (domain != null && domain.isEmpty() == false) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
+                            BrowserActivityModuleFactory.getModuleName(), domain)); //NON-NLS
                 }
 
                 try {
@@ -377,7 +378,7 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = cookiesFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -420,26 +421,26 @@ class Firefox extends Extract {
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((host != null) ? host : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         (Long.valueOf(result.get("lastAccessed").toString())))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("name").toString() != null) ? result.get("name").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
 
                 if (checkColumn == true) {
                     String value = result.get("creationTime").toString();
                     if(value != null && !value.isEmpty()) {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                                RecentActivityExtracterModuleFactory.getModuleName(),
+                                BrowserActivityModuleFactory.getModuleName(),
                                 (Long.valueOf(result.get("creationTime").toString())))); //NON-NLS
                     }
                 }
@@ -447,7 +448,7 @@ class Firefox extends Extract {
                 if (domain != null && domain.isEmpty() == false) {
                     domain = domain.replaceFirst("^\\.+(?!$)", "");
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                            BrowserActivityModuleFactory.getModuleName(), domain));
                 }
 
                 try {
@@ -508,7 +509,7 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = downloadsFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
             int errors = 0;
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
@@ -545,11 +546,11 @@ class Firefox extends Extract {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         source)); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? EscapeUtil.decodeURL(result.get("source").toString()) : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         (Long.valueOf(result.get("startTime").toString())))); //NON-NLS
 
                 String target = result.get("target").toString(); //NON-NLS
@@ -558,12 +559,12 @@ class Firefox extends Extract {
                     try {
                         downloadedFilePath = URLDecoder.decode(target.replaceAll("file:///", ""), "UTF-8"); //NON-NLS
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                                RecentActivityExtracterModuleFactory.getModuleName(),
+                                BrowserActivityModuleFactory.getModuleName(),
                                 downloadedFilePath));
                         long pathID = Util.findID(dataSource, downloadedFilePath);
                         if (pathID != -1) {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID,
-                                    RecentActivityExtracterModuleFactory.getModuleName(),
+                                    BrowserActivityModuleFactory.getModuleName(),
                                     pathID));
                         }
                     } catch (UnsupportedEncodingException ex) {
@@ -573,12 +574,12 @@ class Firefox extends Extract {
                 }
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
                 String domain = extractDomain(source);
                 if (domain != null && domain.isEmpty() == false) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            RecentActivityExtracterModuleFactory.getModuleName(),
+                            BrowserActivityModuleFactory.getModuleName(),
                             domain)); //NON-NLS
                 }
                 try {
@@ -643,7 +644,7 @@ class Firefox extends Extract {
                 continue;
             }
             String fileName = downloadsFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + "-downloads" + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + "-downloads" + j + ".db"; //NON-NLS
             int errors = 0;
             try {
                 ContentUtils.writeToFile(downloadsFile, new File(temps), context::dataSourceIngestIsCancelled);
@@ -682,7 +683,7 @@ class Firefox extends Extract {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         url)); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? EscapeUtil.decodeURL(result.get("source").toString()) : "")));
                 //TODO Revisit usage of deprecated constructor as per TSK-583
@@ -694,12 +695,12 @@ class Firefox extends Extract {
                     try {
                         downloadedFilePath = URLDecoder.decode(target.replaceAll("file:///", ""), "UTF-8"); //NON-NLS
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                                RecentActivityExtracterModuleFactory.getModuleName(),
+                                BrowserActivityModuleFactory.getModuleName(),
                                 downloadedFilePath));
                         long pathID = Util.findID(dataSource, downloadedFilePath);
                         if (pathID != -1) {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID,
-                                    RecentActivityExtracterModuleFactory.getModuleName(),
+                                    BrowserActivityModuleFactory.getModuleName(),
                                     pathID));
                         }
                     } catch (UnsupportedEncodingException ex) {
@@ -708,15 +709,15 @@ class Firefox extends Extract {
                     }
                 }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         Long.valueOf(result.get("lastModified").toString()))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
                 String domain = extractDomain(url);
                 if (domain != null && domain.isEmpty() == false) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
+                            BrowserActivityModuleFactory.getModuleName(), domain)); //NON-NLS
                 }
                 try {
                     BlackboardArtifact webDownloadArtifact = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
@@ -786,7 +787,7 @@ class Firefox extends Extract {
             }
 
             String fileName = formHistoryFile.getName();
-            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
+            String tempFilePath = BrowserActivityIngestModule.getBATempPath(currentCase, "firefox", ingestJobId) + File.separator + fileName + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(formHistoryFile, new File(tempFilePath), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -831,25 +832,25 @@ class Firefox extends Extract {
                 }
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         fieldName)); //NON-NLS
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
 
                 // Newer versions of firefox have additional columns
                 if (isFirefoxV64) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                            RecentActivityExtracterModuleFactory.getModuleName(),
+                            BrowserActivityModuleFactory.getModuleName(),
                             (Long.valueOf(result.get("firstUsed").toString()) / 1000000))); //NON-NLS
 
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                            RecentActivityExtracterModuleFactory.getModuleName(),
+                            BrowserActivityModuleFactory.getModuleName(),
                             (Long.valueOf(result.get("lastUsed").toString()) / 1000000))); //NON-NLS
 
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
-                            RecentActivityExtracterModuleFactory.getModuleName(),
+                            BrowserActivityModuleFactory.getModuleName(),
                             (Integer.valueOf(result.get("timesUsed").toString())))); //NON-NLS
 
                 }
@@ -899,7 +900,7 @@ class Firefox extends Extract {
             if (profileFile.getSize() == 0) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "Firefox", ingestJobId) + File.separator + profileFile.getName() + j + ".json"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, "Firefox", ingestJobId) + File.separator + profileFile.getName() + j + ".json"; //NON-NLS
             try {
                 ContentUtils.writeToFile(profileFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.modules.browseractivity;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
+import org.sleuthkit.autopsy.modules.browseractivity.Bundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;

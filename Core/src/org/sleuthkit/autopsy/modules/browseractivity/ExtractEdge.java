@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.modules.browseractivity;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.modules.browseractivity.Bundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK;
@@ -133,7 +134,7 @@ final class ExtractEdge extends Extract {
 
     @Override
     void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        String moduleTempDir = RAImageIngestModule.getRATempPath(getCurrentCase(), EDGE, context.getJobId());
+        String moduleTempDir = BrowserActivityIngestModule.getBATempPath(getCurrentCase(), EDGE, context.getJobId());
         String moduleTempResultDir = Paths.get(moduleTempDir, EDGE_RESULT_FOLDER_NAME).toString();
 
         this.dataSource = dataSource;

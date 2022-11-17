@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.modules.browseractivity;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -29,7 +29,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.recentactivity.BinaryCookieReader.Cookie;
+import org.sleuthkit.autopsy.modules.browseractivity.BinaryCookieReader.Cookie;
 
 /**
  * The binary cookie reader encapsulates all the knowledge of how to read the
