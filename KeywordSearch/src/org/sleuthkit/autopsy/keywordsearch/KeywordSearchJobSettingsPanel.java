@@ -254,9 +254,9 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        titleLabel = new javax.swing.JLabel();
         listsScrollPane = new javax.swing.JScrollPane();
         listsTable = new javax.swing.JTable();
-        titleLabel = new javax.swing.JLabel();
         languagesLabel = new javax.swing.JLabel();
         languagesValLabel = new javax.swing.JLabel();
         encodingsLabel = new javax.swing.JLabel();
@@ -266,9 +266,16 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         ocrOnlyCheckbox = new javax.swing.JCheckBox();
 
         setPreferredSize(new java.awt.Dimension(300, 170));
+        setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS));
+
+        titleLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.titleLabel.text")); // NOI18N
+        add(titleLabel);
 
         listsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        listsScrollPane.setPreferredSize(new java.awt.Dimension(300, 100));
+        listsScrollPane.setAlignmentX(0.0F);
+        listsScrollPane.setMaximumSize(new java.awt.Dimension(800, 200));
+        listsScrollPane.setMinimumSize(new java.awt.Dimension(300, 100));
+        listsScrollPane.setPreferredSize(new java.awt.Dimension(400, 100));
 
         listsTable.setBackground(new java.awt.Color(240, 240, 240));
         listsTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -279,25 +286,33 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
 
             }
         ));
-        listsTable.setMaximumSize(new java.awt.Dimension(32767, 32767));
+        listsTable.setAlignmentX(0.0F);
+        listsTable.setMaximumSize(new java.awt.Dimension(20, 200));
         listsTable.setMinimumSize(new java.awt.Dimension(20, 200));
         listsTable.setPreferredSize(null);
         listsScrollPane.setViewportView(listsTable);
         listsTable.setDefaultRenderer(String.class, new SimpleTableCellRenderer());
 
-        titleLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.titleLabel.text")); // NOI18N
+        add(listsScrollPane);
 
         languagesLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.text")); // NOI18N
         languagesLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.toolTipText")); // NOI18N
         languagesLabel.setPreferredSize(new java.awt.Dimension(294, 35));
         languagesLabel.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        add(languagesLabel);
 
         languagesValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesValLabel.text")); // NOI18N
         languagesValLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesValLabel.toolTipText")); // NOI18N
+        languagesValLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 1, 1, 1));
+        add(languagesValLabel);
 
         encodingsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.encodingsLabel.text")); // NOI18N
+        encodingsLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 1, 1, 1));
+        add(encodingsLabel);
 
         keywordSearchEncodings.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.keywordSearchEncodings.text")); // NOI18N
+        keywordSearchEncodings.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 1, 5, 1));
+        add(keywordSearchEncodings);
 
         ocrCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.ocrCheckBox.text")); // NOI18N
         ocrCheckBox.addActionListener(new java.awt.event.ActionListener() {
@@ -305,72 +320,26 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                 ocrCheckBoxActionPerformed(evt);
             }
         });
+        add(ocrCheckBox);
 
         limitedOcrCheckbox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.limitedOcrCheckbox.text")); // NOI18N
+        limitedOcrCheckbox.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 20, 1, 1));
         limitedOcrCheckbox.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
         limitedOcrCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 limitedOcrCheckboxActionPerformed(evt);
             }
         });
+        add(limitedOcrCheckbox);
 
         ocrOnlyCheckbox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.ocrOnlyCheckbox.text")); // NOI18N
+        ocrOnlyCheckbox.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 20, 1, 1));
         ocrOnlyCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 ocrOnlyCheckboxActionPerformed(evt);
             }
         });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(languagesLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
-                            .addComponent(titleLabel)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(encodingsLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(keywordSearchEncodings))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addComponent(languagesValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(ocrCheckBox)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(21, 21, 21)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(ocrOnlyCheckbox)
-                                    .addComponent(limitedOcrCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 288, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addContainerGap())))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(7, 7, 7)
-                .addComponent(titleLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(languagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(languagesValLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(encodingsLabel)
-                    .addComponent(keywordSearchEncodings))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(ocrCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(ocrOnlyCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(limitedOcrCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
+        add(ocrOnlyCheckbox);
     }// </editor-fold>//GEN-END:initComponents
 
     private void ocrCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ocrCheckBoxActionPerformed

@@ -55,40 +55,6 @@ public class Installer extends ModuleInstall {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static Installer instance;
-    // taken from https://stackoverflow.com/questions/7434845/setting-the-default-font-of-swing-program
-    private static final String[] SWING_FONT_ITEMS = {"Button.font",
-        "ToggleButton.font",
-        "RadioButton.font",
-        "CheckBox.font",
-        "ColorChooser.font",
-        "ComboBox.font",
-        "Label.font",
-        "List.font",
-        "MenuBar.font",
-        "MenuItem.font",
-        "RadioButtonMenuItem.font",
-        "CheckBoxMenuItem.font",
-        "Menu.font",
-        "PopupMenu.font",
-        "OptionPane.font",
-        "Panel.font",
-        "ProgressBar.font",
-        "ScrollPane.font",
-        "Viewport.font",
-        "TabbedPane.font",
-        "Table.font",
-        "TableHeader.font",
-        "TextField.font",
-        "PasswordField.font",
-        "TextArea.font",
-        "TextPane.font",
-        "EditorPane.font",
-        "TitledBorder.font",
-        "ToolBar.font",
-        "ToolTip.font",
-        "Tree.font"};
-    
-    private static final FontUIResource DEFAULT_FONT = new FontUIResource("Tahoma", Font.PLAIN, 12);
 
     public synchronized static Installer getDefault() {
         if (null == instance) {
@@ -165,11 +131,6 @@ public class Installer extends ModuleInstall {
         UIManager.put("OptionPane.warningIcon", warningIcon);
         UIManager.put("OptionPane.questionIcon", questionIcon);
         UIManager.put("OptionPane.informationIcon", informationIcon);
-
-        // set default font for all font items
-        for (String fontKey : SWING_FONT_ITEMS) {
-            UIManager.put(fontKey, DEFAULT_FONT);
-        }
 
         if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
             setUnixLookAndFeel();
