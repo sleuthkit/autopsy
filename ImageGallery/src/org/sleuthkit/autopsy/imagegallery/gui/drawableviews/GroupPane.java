@@ -46,9 +46,7 @@ import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -243,8 +241,6 @@ public class GroupPane extends BorderPane {
     @ThreadConfined(type = ThreadType.JFX)
     private final Map<Long, DrawableCell> cellMap = new HashMap<>();
     
-    
-
     private final InvalidationListener filesSyncListener = (observable) -> {
         final String header = getHeaderString();
         final List<Long> fileIds = getGroup().getFileIDs();
@@ -597,7 +593,10 @@ public class GroupPane extends BorderPane {
                 slideShowToggle.setDisable(true);
                 groupLabel.setText("");
                 resetScrollBar();
-                cellMap.clear();
+                if (false == Case.isCaseOpen()) {
+                    cellMap.values().stream().forEach(DrawableCell::resetItem);
+                    cellMap.clear();
+                }
             });
 
         } else {
