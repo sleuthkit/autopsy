@@ -29,6 +29,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import java.io.BufferedReader;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
@@ -51,9 +52,9 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.modules.browseractivity.Bundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -106,10 +107,14 @@ class Chromium extends Extract {
     private static final String FAVICON_ARTIFACT_NAME = "TSK_FAVICON"; //NON-NLS
     private static final String LOCAL_STATE_ARTIFACT_NAME = "TSK_LOCAL_STATE"; //NON-NLS
     private static final String EXTENSIONS_ARTIFACT_NAME = "TSK_CHROME_EXTENSIONS"; //NON-NLS
-
+    private static final String MALICIOUS_EXTENSION_FOUND = "Malicious Extension Found - ";
+    
     private Boolean databaseEncrypted = false;
     private Boolean fieldEncrypted = false;
 
+    private static final String MALICIOUS_CHROME_EXTENSION_LIST = "malicious_chrome_extensions.csv";
+    private Map<String, String> maliciousChromeExtensions;
+    
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
     private final IngestJobContext context;
@@ -155,7 +160,8 @@ class Chromium extends Extract {
         this.dataSource = dataSource;
         dataFound = false;
         long ingestJobId = context.getJobId();
-
+        String now1 = "";
+        loadMaliciousChromeExetnsions();
         userProfiles = new HashMap<>();
         browserLocations = new HashMap<>();
         for (Map.Entry<String, String> browser : BROWSERS_MAP.entrySet()) {
@@ -606,10 +612,16 @@ class Chromium extends Extract {
                     version = "";
                     description = "";
                     extName = "";
-                }                
+                }      
+                BlackboardArtifact art = null;
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ID,
                         BrowserActivityModuleFactory.getModuleName(), extension));
+                if (maliciousChromeExtensions.get(extension) != null) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                        BrowserActivityModuleFactory.getModuleName(), 
+                        MALICIOUS_EXTENSION_FOUND + maliciousChromeExtensions.getOrDefault(extension, "No Source Identified")));
+                }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
                         BrowserActivityModuleFactory.getModuleName(), extName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
@@ -626,11 +638,11 @@ class Chromium extends Extract {
                         BrowserActivityModuleFactory.getModuleName(), browserName));
 
                 try {
-                    bbartifacts.add(createArtifactWithAttributes(localStateArtifactType, extensionFile, bbattributes));
+                    art = createArtifactWithAttributes(localStateArtifactType, extensionFile, bbattributes);
+                    bbartifacts.add(art);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create Extension artifact for file (%d)", extensionFile.getId()), ex);
                 }
-
             }
 
             if (!context.dataSourceIngestIsCancelled()) {
@@ -1673,4 +1685,35 @@ class Chromium extends Extract {
         return faviconArtifactType;
     }
 
+    /**
+     * Load the malicious chrome extension file to check
+     */
+    private void loadMaliciousChromeExetnsions() {
+        maliciousChromeExtensions = new HashMap<>();
+        try {
+            configExtractor();
+            String malChromeExtenList = PlatformUtil.getUserConfigDirectory() + File.separator + MALICIOUS_CHROME_EXTENSION_LIST;
+            BufferedReader csvReader = new BufferedReader(new FileReader(malChromeExtenList));
+            String row;
+            while ((row = csvReader.readLine()) != null) {
+                if (!row.startsWith("#", 0)) {
+                    String[] data = row.split(",");
+                    maliciousChromeExtensions.put(data[0], data[1]);
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to load Malicious Chrome Extension List file (%s)", MALICIOUS_CHROME_EXTENSION_LIST), ex);
+        }
+    }
+
+    /**
+     * Extract the malicious chrome extension config csv file to the user directory to process
+     *
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
+     */
+    private void configExtractor() throws IOException {
+        PlatformUtil.extractResourceToUserConfigDir(Chromium.class,
+                MALICIOUS_CHROME_EXTENSION_LIST, true);
+    }
+    
 }
