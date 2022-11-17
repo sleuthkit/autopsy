@@ -48,6 +48,7 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -241,6 +242,8 @@ public class GroupPane extends BorderPane {
      */
     @ThreadConfined(type = ThreadType.JFX)
     private final Map<Long, DrawableCell> cellMap = new HashMap<>();
+    
+    
 
     private final InvalidationListener filesSyncListener = (observable) -> {
         final String header = getHeaderString();
@@ -594,10 +597,7 @@ public class GroupPane extends BorderPane {
                 slideShowToggle.setDisable(true);
                 groupLabel.setText("");
                 resetScrollBar();
-                if (false == Case.isCaseOpen()) {
-                    cellMap.values().stream().forEach(DrawableCell::resetItem);
-                    cellMap.clear();
-                }
+                cellMap.clear();
             });
 
         } else {
@@ -659,40 +659,45 @@ public class GroupPane extends BorderPane {
         }
     }
 
-    private class DrawableCell extends GridCell<Long> {
+    private class DrawableCell extends GridCell<Long> implements AutoCloseable {
 
         private final DrawableTile tile = new DrawableTile(GroupPane.this, controller);
-
-        protected final ChangeListener<Long> changeListener = (ObservableValue<? extends Long> observable, Long oldValue, Long newValue) -> {
-                if ((oldValue == null && newValue == null) || (oldValue != null && newValue != null && oldValue.equals(newValue))) {
-                    // if no change, do nothing
-                    return;
-                }
-                
-                DrawableCell oldValueCell = oldValue == null ? null : cellMap.remove(oldValue);
-                if (oldValueCell != null) {
-                    // remove change listener to get garbage collected
-                    oldValueCell.itemProperty().removeListener(oldValueCell.changeListener);
-                }
-                
-                if (newValue != null) {
-                    cellMap.put(newValue, DrawableCell.this);
-                }
-            };
+        
+        /**
+         * This stores the last non-null file id. So that only new file ids for
+         * this item are tracked. This prevents an infinite render loop. See
+         * https://github.com/controlsfx/controlsfx/issues/1241 for more
+         * information
+         */
+        private Long oldItem = null;
         
         DrawableCell() {
-            itemProperty().addListener(changeListener);
             setGraphic(tile);
         }
 
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
-            tile.setFile(item);
+            
+            if (item != null && oldItem != item) {
+                tile.setFile(item);
+            }
+            
+            if (item != null) {
+                cellMap.put(item, this);    
+                oldItem = item;
+            } else if (oldItem != null) {
+                cellMap.remove(oldItem);
+            }
         }
 
         void resetItem() {
             tile.setFile(null);
+        }
+
+        @Override
+        public void close() throws Exception {
+            resetItem();
         }
     }
 
