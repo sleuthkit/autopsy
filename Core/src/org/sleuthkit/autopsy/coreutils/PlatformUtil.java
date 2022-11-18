@@ -37,7 +37,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.swing.filechooser.FileSystemView;
 import org.apache.commons.io.FilenameUtils;
@@ -526,6 +529,48 @@ public class PlatformUtil {
                 ? -1
                 : pids[0];
     }
+    
+    /**
+     * Performs a simple conversion of a sql like statement to regex replacing
+     * '%' and '_' in a like statement with regex equivalents.
+     *
+     * @param originalLikeStatement The original like statement.
+     * @return The equivalent regex string.
+     */
+    private static String convertSqlLikeToRegex(String originalLikeStatement) {
+        if (originalLikeStatement == null) {
+            return "";
+        }
+
+        Map<Character, String> likeEscapeSequences = new HashMap<>() {
+            {
+                put('%', ".*");
+                put('_', ".");
+            }
+        };
+
+        String regexQuoted = Pattern.quote(originalLikeStatement);
+        char[] charArr = regexQuoted.toCharArray();
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < charArr.length; i++) {
+            char curChar = charArr[i];
+            String regexReplacement = likeEscapeSequences.get(curChar);
+            if (regexReplacement == null) {
+                sb.append(curChar);
+            } else {
+                Character nextChar = charArr.length > i + 1 ? charArr[i + 1] : null;
+                if (nextChar != null && curChar == nextChar) {
+                    sb.append(curChar);
+                    i++;
+                } else {
+                    sb.append(regexReplacement);
+                }
+            }
+        }
+
+        return sb.toString();
+    }
 
     /**
      * Query and get PIDs of another java processes matching a query
@@ -559,8 +604,8 @@ public class PlatformUtil {
                     .toArray();
 
         } else {
-            String sigarRegexQuery = argsSubQuery == null ? "" : argsSubQuery.replaceAll("_", ".").replaceAll("%", ".*");
-            ProcessBuilder pb = new ProcessBuilder("ps -ef | grep -E 'java.*" + sigarRegexQuery + "'");
+            String sigarRegexQuery = convertSqlLikeToRegex(argsSubQuery);
+            ProcessBuilder pb = new ProcessBuilder("sh", "-c", "ps -ef | grep -E 'java.*" + sigarRegexQuery + ".*'");
             String output = IOUtils.toString(pb.start().getInputStream(), StandardCharsets.UTF_8);
             List<String> lines = Arrays.asList(output.split("\\r?\\n"));
             
@@ -592,7 +637,7 @@ public class PlatformUtil {
                     .toArray();
         }
         } catch (IOException ex) {
-            System.out.println("An exception occurred while fetching java pids with query: " + argsSubQuery);
+            System.out.println("An exception occurred while fetching java pids with query: " + argsSubQuery + " with IO Exception: " + ex.getMessage());
             ex.printStackTrace();
             return null;
         }
