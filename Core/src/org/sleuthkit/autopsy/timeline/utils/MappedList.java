@@ -14,7 +14,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.TransformationList;
 
 /**
- *
+ * Maps an observable list of type E to an observable list of type F.
  */
 public class MappedList<E, F> extends TransformationList<E, F> {
     private final Function<F, E> mapper;
@@ -114,7 +114,7 @@ public class MappedList<E, F> extends TransformationList<E, F> {
 
     @Override
     public int getViewIndex(int index) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return index;
     }
 
 }
