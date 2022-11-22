@@ -41,7 +41,7 @@ def update_versions(sleuthkit_version_tag: str,
         yaml.dump(yaml_dict, snapcraft_file)
 
 
-def main() -> int:
+def main():
     parser = argparse.ArgumentParser(
         description="Updates snapcraft.yml file with current versions of autopsy and sleuthkit",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -72,4 +72,4 @@ def main() -> int:
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()
