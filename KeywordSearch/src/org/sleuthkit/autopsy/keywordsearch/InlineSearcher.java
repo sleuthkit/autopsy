@@ -21,9 +21,12 @@ package org.sleuthkit.autopsy.keywordsearch;
 import com.twelvemonkeys.lang.StringUtil;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,11 +55,23 @@ final class InlineSearcher {
     private final List<KeywordList> keywordList;
     private static final int MIN_EMAIL_ADDR_LENGTH = 8;
     private static final Logger logger = Logger.getLogger(InlineSearcher.class.getName());
+    
+    private final Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> hitByKeyword = new HashMap<>();
+    private final Long jobId;
+    
+    static final Map<Long, List<UniqueKeywordHit>> uniqueHitMap = new ConcurrentHashMap<>();
 
-    private final Map<Keyword, Map<Keyword, List<KeywordHit>>> hitByKeyword = new HashMap<>();
 
-    InlineSearcher(List<String> keywordListNames) {
+    // Uses mostly native java and the lucene api to search the a given chuck
+    // for Keywords. Create unique KeywordHits for any unique hit.
+    InlineSearcher(List<String> keywordListNames, long jobId, long sourceID) {
         this.keywordList = new ArrayList<>();
+        this.jobId = jobId;
+
+        List<UniqueKeywordHit> listForJob = uniqueHitMap.get(jobId);
+        if (listForJob == null) {
+            uniqueHitMap.put(jobId, new ArrayList<>());
+        }
 
         if (keywordListNames != null) {
             XmlKeywordSearchList loader = XmlKeywordSearchList.getCurrent();
@@ -68,37 +83,39 @@ final class InlineSearcher {
 
     /**
      * Search the chunk for the currently selected keywords.
-     * 
+     *
      * @param chunk
      * @param sourceID
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
-    void searchChunk(Chunk chunk, long sourceID) throws TskCoreException {
-        searchString(chunk.getLowerCasedChunk(), sourceID);
+    void searchChunk(Chunk chunk, long sourceID, int chunkId) throws TskCoreException {
+        searchString(chunk.getLowerCasedChunk(), sourceID, chunkId);
     }
 
     /**
      * Search a string for the currently selected keywords.
-     * 
+     *
      * @param text
      * @param sourceID
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
-    void searchString(String text, long sourceID) throws TskCoreException {
+    void searchString(String text, long sourceID, int chunkId) throws TskCoreException {
         for (KeywordList list : keywordList) {
             List<Keyword> keywords = list.getKeywords();
             for (Keyword originalKeyword : keywords) {
-                Map<Keyword, List<KeywordHit>> hitMap = hitByKeyword.get(originalKeyword);
+                Map<Keyword, List<UniqueKeywordHit>> hitMap = hitByKeyword.get(originalKeyword);
                 if (hitMap == null) {
                     hitMap = new HashMap<>();
                     hitByKeyword.put(originalKeyword, hitMap);
                 }
 
-                List<KeywordHit> keywordHits = new ArrayList<>();
+                List<UniqueKeywordHit> keywordHits = new ArrayList<>();
                 if (originalKeyword.searchTermIsLiteral()) {
                     if (StringUtil.containsIgnoreCase(text, originalKeyword.getSearchTerm())) {
 
-                        keywordHits.addAll(createKeywordHits(text, originalKeyword, sourceID));
+                        keywordHits.addAll(createKeywordHits(text, originalKeyword, sourceID, chunkId, list.getName()));
                     }
                 } else {
                     String regex = originalKeyword.getSearchTerm();
@@ -109,7 +126,7 @@ final class InlineSearcher {
                         Matcher matcher = pattern.matcher(text);
 
                         if (matcher.find()) {
-                            keywordHits.addAll(createKeywordHits(text, originalKeyword, sourceID));
+                            keywordHits.addAll(createKeywordHits(text, originalKeyword, sourceID, chunkId, list.getName()));
                         }
                     } catch (IllegalArgumentException ex) {
                         //TODO What should we do here? Log and continue?
@@ -117,19 +134,22 @@ final class InlineSearcher {
                 }
 
                 if (!keywordHits.isEmpty()) {
-                    for (KeywordHit hit : keywordHits) {
+                    for (UniqueKeywordHit hit : keywordHits) {
                         Keyword keywordCopy = new Keyword(hit.getHit(),
                                 true,
                                 true,
                                 list.getName(),
                                 originalKeyword.getOriginalTerm());
 
-                        List<KeywordHit> mapHitList = hitMap.get(keywordCopy);
+                        List<UniqueKeywordHit> mapHitList = hitMap.get(keywordCopy);
                         if (mapHitList == null) {
                             mapHitList = new ArrayList<>();
                             hitMap.put(keywordCopy, mapHitList);
                         }
-                        mapHitList.add(hit);
+
+                        if (!mapHitList.contains(hit)) {
+                            mapHitList.add(hit);
+                        }
                     }
                 }
             }
@@ -147,11 +167,11 @@ final class InlineSearcher {
      *
      * @throws TskCoreException
      */
-    private List<KeywordHit> createKeywordHits(String text, Keyword originalKeyword, long sourceID) throws TskCoreException {
+    private List<UniqueKeywordHit> createKeywordHits(String text, Keyword originalKeyword, long sourceID, int chunkId, String keywordListName) throws TskCoreException {
 
         if (originalKeyword.searchTermIsLiteral() && originalKeyword.searchTermIsWholeWord()) {
             try {
-                return getExactMatchHits(text, originalKeyword, sourceID);
+                return getExactMatchHits(text, originalKeyword, sourceID, chunkId, keywordListName);
             } catch (IOException ex) {
                 throw new TskCoreException("Failed to create exactMatch hits", ex);
             }
@@ -159,7 +179,7 @@ final class InlineSearcher {
 
         final HashMap<String, String> keywordsFoundInThisDocument = new HashMap<>();
 
-        List<KeywordHit> hits = new ArrayList<>();
+        List<UniqueKeywordHit> hits = new ArrayList<>();
         String keywordString = originalKeyword.getSearchTerm();
 
         boolean queryStringContainsWildcardSuffix = originalKeyword.getSearchTerm().endsWith(".*");
@@ -271,7 +291,7 @@ final class InlineSearcher {
                 keywordsFoundInThisDocument.put(hit, hit);
 
                 if (artifactAttributeType == null) {
-                    hits.add(new KeywordHit(0, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                    hits.add(new UniqueKeywordHit(chunkId, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit, keywordListName, originalKeyword.searchTermIsWholeWord(), originalKeyword.searchTermIsLiteral(), originalKeyword.getArtifactAttributeType(), originalKeyword.getSearchTerm()));
                 } else {
                     switch (artifactAttributeType) {
                         case TSK_EMAIL:
@@ -282,7 +302,7 @@ final class InlineSearcher {
                              */
                             if (hit.length() >= MIN_EMAIL_ADDR_LENGTH
                                     && DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
-                                hits.add(new KeywordHit(0, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                                hits.add(new UniqueKeywordHit(chunkId, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit, keywordListName, originalKeyword.searchTermIsWholeWord(), originalKeyword.searchTermIsLiteral(), originalKeyword.getArtifactAttributeType(), originalKeyword.getSearchTerm()));
                             }
 
                             break;
@@ -299,14 +319,14 @@ final class InlineSearcher {
                                 if (ccnMatcher.find()) {
                                     final String group = ccnMatcher.group("ccn");
                                     if (CreditCardValidator.isValidCCN(group)) {
-                                        hits.add(new KeywordHit(0, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                                        hits.add(new UniqueKeywordHit(chunkId, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit, keywordListName, originalKeyword.searchTermIsWholeWord(), originalKeyword.searchTermIsLiteral(), originalKeyword.getArtifactAttributeType(), originalKeyword.getSearchTerm()));
                                     }
                                 }
                             }
 
                             break;
                         default:
-                            hits.add(new KeywordHit(0, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                            hits.add(new UniqueKeywordHit(chunkId, sourceID, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit, keywordListName, originalKeyword.searchTermIsWholeWord(), originalKeyword.searchTermIsLiteral(), originalKeyword.getArtifactAttributeType(), originalKeyword.getSearchTerm()));
                             break;
                     }
                 }
@@ -334,24 +354,31 @@ final class InlineSearcher {
      * @param context
      * @param sourceID
      */
-    void makeArtifacts(Content content, IngestJobContext context, long sourceID) throws TskException{
-        for (Map.Entry<Keyword, Map<Keyword, List<KeywordHit>>> item : hitByKeyword.entrySet()) {
+    void makeArtifacts(Content content, IngestJobContext context, long sourceID) throws TskException {
+        for (Map.Entry<Keyword, Map<Keyword, List<UniqueKeywordHit>>> item : hitByKeyword.entrySet()) {
             Keyword originalKeyword = item.getKey();
-            Map<Keyword, List<KeywordHit>> map = item.getValue();
+            Map<Keyword, List<UniqueKeywordHit>> map = item.getValue();
 
             List<BlackboardArtifact> hitArtifacts = new ArrayList<>();
             if (!map.isEmpty()) {
-                for (Map.Entry<Keyword, List<KeywordHit>> entry : map.entrySet()) {
+                for (Map.Entry<Keyword, List<UniqueKeywordHit>> entry : map.entrySet()) {
                     Keyword hitKeyword = entry.getKey();
-                    List<KeywordHit> hitList = entry.getValue();
+                    List<UniqueKeywordHit> hitList = entry.getValue();
                     // Only create one hit for the document. 
                     // The first hit in the list should be the first one that
                     // was found.
                     if (!hitList.isEmpty()) {
-                        KeywordHit hit = hitList.get(0);
-                        SleuthkitCase tskCase = Case.getCurrentCase().getSleuthkitCase();
-                        Content content1 = tskCase.getContentById(hit.getContentID());
-                        hitArtifacts.add(RegexQuery.createKeywordHitArtifact(content1, originalKeyword, hitKeyword, hit, hit.getSnippet(), hitKeyword.getListName(), sourceID));
+                        UniqueKeywordHit hit = hitList.get(0);
+                        if (isUniqueHit(jobId, hit)) {
+                            SleuthkitCase tskCase = Case.getCurrentCase().getSleuthkitCase();
+                            Content content1 = tskCase.getContentById(hit.getContentID());
+                            BlackboardArtifact artifact = RegexQuery.createKeywordHitArtifact(content1, originalKeyword, hitKeyword, hit, hit.getSnippet(), hitKeyword.getListName(), sourceID);
+                            // createKeywordHitArtifact has the potential to return null
+                            // when a CCN account is created.
+                            if (artifact != null) {
+                                hitArtifacts.add(artifact);
+                            }
+                        }
                     }
                 }
 
@@ -361,6 +388,7 @@ final class InlineSearcher {
                         Blackboard blackboard = tskCase.getBlackboard();
 
                         blackboard.postArtifacts(hitArtifacts, "KeywordSearch", context.getJobId());
+                        hitArtifacts.clear();
                     } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
                         logger.log(Level.SEVERE, "Failed to post KWH artifact to blackboard.", ex); //NON-NLS
                     }
@@ -374,7 +402,29 @@ final class InlineSearcher {
     }
 
     /**
-     * Searches the chunk for exact matches and creates the approprate keyword
+     * Checks to see if a hit with the given parameters has been seen before, if
+     * it has not been seen the hit is added to the list of unique hits.
+     *
+     * Current this method is only called in one place, if its called in
+     * multiple places we may need to consider breaking the check and the
+     * addition.
+     *
+     * @param jobId
+     * @param hit
+     *
+     * @return
+     */
+    private static synchronized boolean isUniqueHit(long jobId, UniqueKeywordHit hit) {
+        List<UniqueKeywordHit> uniqueList = uniqueHitMap.get(jobId);
+        if (!uniqueList.contains(hit)) {
+            uniqueList.add(hit);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Searches the chunk for exact matches and creates the appropriate keyword
      * hits.
      *
      * @param text
@@ -385,10 +435,10 @@ final class InlineSearcher {
      *
      * @throws IOException
      */
-    public List<KeywordHit> getExactMatchHits(String text, Keyword originalKeyword, long sourceID) throws IOException {
+    public List<UniqueKeywordHit> getExactMatchHits(String text, Keyword originalKeyword, long sourceID, int chunkId, String keywordListName) throws IOException {
         final HashMap<String, String> keywordsFoundInThisDocument = new HashMap<>();
 
-        List<KeywordHit> hits = new ArrayList<>();
+        List<UniqueKeywordHit> hits = new ArrayList<>();
         Analyzer analyzer = new StandardAnalyzer();
 
         //Get the tokens of the keyword
@@ -435,11 +485,105 @@ final class InlineSearcher {
                     }
                     keywordsFoundInThisDocument.put(hit, hit);
 
-                    hits.add(new KeywordHit(0, sourceID, KeywordSearchUtil.makeSnippet(text, startOffset, endOffset, hit), hit));
+                    hits.add(new UniqueKeywordHit(chunkId, sourceID, KeywordSearchUtil.makeSnippet(text, startOffset, endOffset, hit), hit, keywordListName, originalKeyword.searchTermIsWholeWord(), originalKeyword.searchTermIsLiteral(), originalKeyword.getArtifactAttributeType(), originalKeyword.getOriginalTerm()));
                 }
             }
         }
 
         return hits;
+    }
+
+    // KeywordHit is not unique enough for finding duplicates, this class 
+    // extends the KeywordHit class to make truely unique hits.
+    static class UniqueKeywordHit extends KeywordHit {
+
+        private final String listName;
+        private final boolean isLiteral;
+        private final boolean isWholeWord;
+        private final BlackboardAttribute.ATTRIBUTE_TYPE artifactAtrributeType;
+        private final String originalSearchTerm;
+
+        UniqueKeywordHit(int chunkId, long sourceID, String snippet, String hit, String listName, boolean isWholeWord, boolean isLiteral, BlackboardAttribute.ATTRIBUTE_TYPE artifactAtrributeType, String originalSearchTerm) {
+            super(chunkId, sourceID, snippet, hit);
+
+            this.listName = listName;
+            this.isWholeWord = isWholeWord;
+            this.isLiteral = isLiteral;
+            this.artifactAtrributeType = artifactAtrributeType;
+            this.originalSearchTerm = originalSearchTerm;
+        }
+
+        @Override
+        public int compareTo(KeywordHit other) {
+            return compare((UniqueKeywordHit) other);
+        }
+
+        private int compare(UniqueKeywordHit other) {
+            return Comparator.comparing(UniqueKeywordHit::getSolrObjectId)
+                    .thenComparing(UniqueKeywordHit::getChunkId)
+                    .thenComparing(UniqueKeywordHit::getHit)
+                    .thenComparing(UniqueKeywordHit::getSnippet)
+                    .thenComparing(UniqueKeywordHit::isWholeWord)
+                    .thenComparing(UniqueKeywordHit::isLiteral)
+                    .thenComparing(UniqueKeywordHit::getArtifactAtrributeType)
+                    .thenComparing(UniqueKeywordHit::getOriginalSearchTerm)
+                    .thenComparing(UniqueKeywordHit::getListName)
+                    .compare(this, other);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+
+            if (null == obj) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final UniqueKeywordHit other = (UniqueKeywordHit) obj;
+
+            return getSnippet().equalsIgnoreCase(other.getSnippet())
+                    && getSolrObjectId().equals(other.getSolrObjectId())
+                    && getChunkId().equals(other.getChunkId())
+                    && getHit().equalsIgnoreCase(other.getHit())
+                    && listName.equalsIgnoreCase(other.getListName())
+                    && isLiteral == other.isLiteral()
+                    && isWholeWord == other.isWholeWord()
+                    && originalSearchTerm.equalsIgnoreCase(other.getOriginalSearchTerm())
+                    && (artifactAtrributeType != null ? artifactAtrributeType.equals(other.getArtifactAtrributeType()) : true);
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 67 * hash + super.hashCode();
+            hash = 67 * hash + Objects.hashCode(this.listName);
+            hash = 67 * hash + (this.isLiteral ? 1 : 0);
+            hash = 67 * hash + (this.isWholeWord ? 1 : 0);
+            hash = 67 * hash + Objects.hashCode(this.artifactAtrributeType);
+            hash = 67 * hash + Objects.hashCode(this.originalSearchTerm);
+            return hash;
+        }
+
+        String getListName() {
+            return listName;
+        }
+
+        Boolean isLiteral() {
+            return isLiteral;
+        }
+
+        Boolean isWholeWord() {
+            return isWholeWord;
+        }
+
+        BlackboardAttribute.ATTRIBUTE_TYPE getArtifactAtrributeType() {
+            return artifactAtrributeType;
+        }
+
+        String getOriginalSearchTerm() {
+            return originalSearchTerm;
+        }
+
     }
 }

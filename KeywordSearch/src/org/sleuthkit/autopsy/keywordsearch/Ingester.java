@@ -206,16 +206,17 @@ class Ingester {
 
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
         Optional<Language> language = Optional.empty();
-        InlineSearcher searcher = new InlineSearcher(keywordListNames);
+        InlineSearcher searcher = new InlineSearcher(keywordListNames, context.getJobId(), sourceID);
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
             String name = sourceName;
             if(!(source instanceof BlackboardArtifact)) {
-                searcher.searchString(name, sourceID);
+                searcher.searchString(name, sourceID, 0);
             }
             
             while (chunker.hasNext()) {
+                numChunks++;
                 if (context != null && context.fileIngestIsCancelled()) {
                     logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
                     return false;
@@ -225,7 +226,7 @@ class Ingester {
                 String chunkId = "";
                 if (indexIntoSolr) {
                     Map<String, Object> fields = new HashMap<>(contentFields);
-                    chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
+                    chunkId = Server.getChunkIdString(sourceID, numChunks);
                     fields.put(Server.Schema.ID.toString(), chunkId);
                     fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
 
@@ -254,7 +255,7 @@ class Ingester {
                 }
                 
                 if(keywordListNames != null) {
-                    searcher.searchChunk(chunk, sourceID);
+                    searcher.searchChunk(chunk, sourceID, numChunks);
                 }
             }
             if (chunker.hasException()) {

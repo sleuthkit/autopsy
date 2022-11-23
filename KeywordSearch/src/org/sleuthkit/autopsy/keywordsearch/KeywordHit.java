@@ -21,10 +21,12 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -43,7 +45,7 @@ class KeywordHit implements Comparable<KeywordHit> {
     private final int chunkId;
     private final String snippet;
     private final String hit;
-
+   
     /**
      * Constructor
      *
@@ -69,7 +71,7 @@ class KeywordHit implements Comparable<KeywordHit> {
          * subsequent documents contain chunks of the text.
          */
         if(!solrDocumentId.isEmpty()) {
-        String[] split = solrDocumentId.split(Server.CHUNK_ID_SEPARATOR);
+            String[] split = solrDocumentId.split(Server.CHUNK_ID_SEPARATOR);
             if (split.length == 1) {
                 //chunk 0 has only the bare document id without the chunk id.
                 this.solrObjectId = Long.parseLong(solrDocumentId);
@@ -83,7 +85,7 @@ class KeywordHit implements Comparable<KeywordHit> {
             this.chunkId = 0;
         }
     }
-    
+
     KeywordHit(int chunkId, long sourceID, String snippet, String hit) {
         this.snippet = StringUtils.stripToEmpty(snippet);
         this.hit = hit;
@@ -100,11 +102,11 @@ class KeywordHit implements Comparable<KeywordHit> {
         return Long.toString(solrObjectId) + Server.CHUNK_ID_SEPARATOR + Long.toString(chunkId);
     }
 
-    long getSolrObjectId() {
+    Long getSolrObjectId() {
         return this.solrObjectId;
     }
 
-    int getChunkId() {
+    Integer getChunkId() {
         return this.chunkId;
     }
 
@@ -115,7 +117,7 @@ class KeywordHit implements Comparable<KeywordHit> {
     String getSnippet() {
         return this.snippet;
     }
-
+    
     /**
      * Get the content id associated with the content underlying hit. 
      * For hits on files this will be the same as the object id associated 
@@ -185,20 +187,25 @@ class KeywordHit implements Comparable<KeywordHit> {
             return false;
         }
         final KeywordHit other = (KeywordHit) obj;
-        return this.compareTo(other) == 0;
+        return compareTo(other) == 0;
     }
-
+      
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 41 * hash + (int) this.solrObjectId + this.chunkId;
+        int hash = 7;
+        hash = 37 * hash + (int) (this.solrObjectId ^ (this.solrObjectId >>> 32));
+        hash = 37 * hash + this.chunkId;
+        hash = 37 * hash + Objects.hashCode(this.snippet);
+        hash = 37 * hash + Objects.hashCode(this.hit);
         return hash;
     }
 
     @Override
-    public int compareTo(KeywordHit o) {
+    public int compareTo(KeywordHit other) {
         return Comparator.comparing(KeywordHit::getSolrObjectId)
                 .thenComparing(KeywordHit::getChunkId)
-                .compare(this, o);
+                .thenComparing(KeywordHit::getHit)
+                .thenComparing(KeywordHit::getSnippet)
+                .compare(this, other);
     }
 }
