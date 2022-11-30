@@ -217,7 +217,7 @@ class Ingester {
             
             while (chunker.hasNext()) {
                 numChunks++;
-                if (context != null && context.fileIngestIsCancelled()) {
+                if ( context.fileIngestIsCancelled()) {
                     logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
                     return false;
                 }
@@ -263,12 +263,11 @@ class Ingester {
                 return false;
             }
 
-            searcher.makeArtifacts((Content) source, context, sourceID);
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
-            if (context != null && context.fileIngestIsCancelled()) {
+            if (context.fileIngestIsCancelled()) {
                 return false;
             } else if (indexIntoSolr) {
                 Map<String, Object> fields = new HashMap<>(contentFields);

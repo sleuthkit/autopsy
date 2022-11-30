@@ -55,12 +55,29 @@ final class InlineSearcher {
     private final List<KeywordList> keywordList;
     private static final int MIN_EMAIL_ADDR_LENGTH = 8;
     private static final Logger logger = Logger.getLogger(InlineSearcher.class.getName());
-    
+
     private final Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> hitByKeyword = new HashMap<>();
     private final Long jobId;
-    
+
     static final Map<Long, List<UniqueKeywordHit>> uniqueHitMap = new ConcurrentHashMap<>();
 
+    static final Map<Long, Map<Long, Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>>>> uniqueHitMap2 = new ConcurrentHashMap<>();
+
+    static Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> getMap(long jobId, long sourceID) {
+        Map<Long, Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>>> jobMap = uniqueHitMap2.get(jobId);
+        if (jobMap == null) {
+            jobMap = new ConcurrentHashMap<>();
+            uniqueHitMap2.put(jobId, jobMap);
+        }
+
+        Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> sourceMap = jobMap.get(sourceID);
+        if (sourceMap == null) {
+            sourceMap = new ConcurrentHashMap<>();
+            jobMap.put(sourceID, sourceMap);
+        }
+
+        return sourceMap;
+    }
 
     // Uses mostly native java and the lucene api to search the a given chuck
     // for Keywords. Create unique KeywordHits for any unique hit.
@@ -104,11 +121,12 @@ final class InlineSearcher {
     void searchString(String text, long sourceID, int chunkId) throws TskCoreException {
         for (KeywordList list : keywordList) {
             List<Keyword> keywords = list.getKeywords();
+            Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> localhitByKeyword = getMap(jobId, sourceID);
             for (Keyword originalKeyword : keywords) {
-                Map<Keyword, List<UniqueKeywordHit>> hitMap = hitByKeyword.get(originalKeyword);
+                Map<Keyword, List<UniqueKeywordHit>> hitMap = localhitByKeyword.get(originalKeyword);//hitByKeyword.get(originalKeyword);
                 if (hitMap == null) {
                     hitMap = new HashMap<>();
-                    hitByKeyword.put(originalKeyword, hitMap);
+                    localhitByKeyword.put(originalKeyword, hitMap);
                 }
 
                 List<UniqueKeywordHit> keywordHits = new ArrayList<>();
@@ -136,8 +154,8 @@ final class InlineSearcher {
                 if (!keywordHits.isEmpty()) {
                     for (UniqueKeywordHit hit : keywordHits) {
                         Keyword keywordCopy = new Keyword(hit.getHit(),
-                                true,
-                                true,
+                                originalKeyword.searchTermIsLiteral(),
+                                originalKeyword.searchTermIsWholeWord(),
                                 list.getName(),
                                 originalKeyword.getOriginalTerm());
 
@@ -350,54 +368,59 @@ final class InlineSearcher {
      * Generates the artifacts for the found KeywordHits. This method should be
      * called once per content object.
      *
-     * @param content
      * @param context
-     * @param sourceID
      */
-    void makeArtifacts(Content content, IngestJobContext context, long sourceID) throws TskException {
-        for (Map.Entry<Keyword, Map<Keyword, List<UniqueKeywordHit>>> item : hitByKeyword.entrySet()) {
-            Keyword originalKeyword = item.getKey();
-            Map<Keyword, List<UniqueKeywordHit>> map = item.getValue();
+    static void makeArtifacts(IngestJobContext context) throws TskException {
 
-            List<BlackboardArtifact> hitArtifacts = new ArrayList<>();
-            if (!map.isEmpty()) {
-                for (Map.Entry<Keyword, List<UniqueKeywordHit>> entry : map.entrySet()) {
-                    Keyword hitKeyword = entry.getKey();
-                    List<UniqueKeywordHit> hitList = entry.getValue();
-                    // Only create one hit for the document. 
-                    // The first hit in the list should be the first one that
-                    // was found.
-                    if (!hitList.isEmpty()) {
-                        UniqueKeywordHit hit = hitList.get(0);
-                        if (isUniqueHit(jobId, hit)) {
+        Map<Long, Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>>> jobMap = uniqueHitMap2.get(context.getJobId());
+        if (jobMap == null) {
+            return;
+        }
+
+        for (Map.Entry<Long, Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>>> mapBySource : jobMap.entrySet()) {
+            Long sourceId = mapBySource.getKey();
+            Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> mapByKeyword = mapBySource.getValue();
+
+            for (Map.Entry<Keyword, Map<Keyword, List<UniqueKeywordHit>>> item : mapByKeyword.entrySet()) {//hitByKeyword.entrySet()) {
+                Keyword originalKeyword = item.getKey();
+                Map<Keyword, List<UniqueKeywordHit>> map = item.getValue();
+
+                List<BlackboardArtifact> hitArtifacts = new ArrayList<>();
+                if (!map.isEmpty()) {
+                    for (Map.Entry<Keyword, List<UniqueKeywordHit>> entry : map.entrySet()) {
+                        Keyword hitKeyword = entry.getKey();
+                        List<UniqueKeywordHit> hitList = entry.getValue();
+                        // Only create one hit for the document. 
+                        // The first hit in the list should be the first one that
+                        // was found.
+                        if (!hitList.isEmpty()) {
+                            UniqueKeywordHit hit = hitList.get(0);
                             SleuthkitCase tskCase = Case.getCurrentCase().getSleuthkitCase();
-                            Content content1 = tskCase.getContentById(hit.getContentID());
-                            BlackboardArtifact artifact = RegexQuery.createKeywordHitArtifact(content1, originalKeyword, hitKeyword, hit, hit.getSnippet(), hitKeyword.getListName(), sourceID);
+                            Content content = tskCase.getContentById(hit.getContentID());
+                            BlackboardArtifact artifact = RegexQuery.createKeywordHitArtifact(content, originalKeyword, hitKeyword, hit, hit.getSnippet(), hitKeyword.getListName(), sourceId);
                             // createKeywordHitArtifact has the potential to return null
                             // when a CCN account is created.
                             if (artifact != null) {
                                 hitArtifacts.add(artifact);
+
                             }
+
+                        }
+                    }
+
+                    if (!hitArtifacts.isEmpty()) {
+                        try {
+                            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                            Blackboard blackboard = tskCase.getBlackboard();
+
+                            blackboard.postArtifacts(hitArtifacts, "KeywordSearch", context.getJobId());
+                            hitArtifacts.clear();
+                        } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
+                            logger.log(Level.SEVERE, "Failed to post KWH artifact to blackboard.", ex); //NON-NLS
                         }
                     }
                 }
-
-                if (!hitArtifacts.isEmpty()) {
-                    try {
-                        SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                        Blackboard blackboard = tskCase.getBlackboard();
-
-                        blackboard.postArtifacts(hitArtifacts, "KeywordSearch", context.getJobId());
-                        hitArtifacts.clear();
-                    } catch (NoCurrentCaseException | Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, "Failed to post KWH artifact to blackboard.", ex); //NON-NLS
-                    }
-                }
             }
-
-            // Just in case someone calls this method a second time for the given
-            // content object the map will be cleared. 
-            map.clear();
         }
     }
 
@@ -417,7 +440,7 @@ final class InlineSearcher {
     private static synchronized boolean isUniqueHit(long jobId, UniqueKeywordHit hit) {
         List<UniqueKeywordHit> uniqueList = uniqueHitMap.get(jobId);
         if (!uniqueList.contains(hit)) {
-            uniqueList.add(hit);
+//            uniqueList.add(hit);
             return true;
         }
         return false;

@@ -70,6 +70,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * An ingest module on a file level Performs indexing of allocated and Solr
@@ -442,6 +443,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
+            
+            try {
+            InlineSearcher.makeArtifacts(context);
+        } catch (TskException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+            
             try {
                 final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
                 logger.log(Level.INFO, "Indexed files count: {0}", numIndexedFiles); //NON-NLS
