@@ -56,39 +56,17 @@ final class InlineSearcher {
     private static final int MIN_EMAIL_ADDR_LENGTH = 8;
     private static final Logger logger = Logger.getLogger(InlineSearcher.class.getName());
 
-    private final Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> hitByKeyword = new HashMap<>();
-    private final Long jobId;
+    private final IngestJobContext context;
 
     static final Map<Long, List<UniqueKeywordHit>> uniqueHitMap = new ConcurrentHashMap<>();
 
     static final Map<Long, Map<Long, Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>>>> uniqueHitMap2 = new ConcurrentHashMap<>();
 
-    static Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> getMap(long jobId, long sourceID) {
-        Map<Long, Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>>> jobMap = uniqueHitMap2.get(jobId);
-        if (jobMap == null) {
-            jobMap = new ConcurrentHashMap<>();
-            uniqueHitMap2.put(jobId, jobMap);
-        }
-
-        Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> sourceMap = jobMap.get(sourceID);
-        if (sourceMap == null) {
-            sourceMap = new ConcurrentHashMap<>();
-            jobMap.put(sourceID, sourceMap);
-        }
-
-        return sourceMap;
-    }
-
     // Uses mostly native java and the lucene api to search the a given chuck
     // for Keywords. Create unique KeywordHits for any unique hit.
-    InlineSearcher(List<String> keywordListNames, long jobId, long sourceID) {
+    InlineSearcher(List<String> keywordListNames, IngestJobContext context) {
         this.keywordList = new ArrayList<>();
-        this.jobId = jobId;
-
-        List<UniqueKeywordHit> listForJob = uniqueHitMap.get(jobId);
-        if (listForJob == null) {
-            uniqueHitMap.put(jobId, new ArrayList<>());
-        }
+        this.context = context;
 
         if (keywordListNames != null) {
             XmlKeywordSearchList loader = XmlKeywordSearchList.getCurrent();
@@ -121,12 +99,12 @@ final class InlineSearcher {
     void searchString(String text, long sourceID, int chunkId) throws TskCoreException {
         for (KeywordList list : keywordList) {
             List<Keyword> keywords = list.getKeywords();
-            Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> localhitByKeyword = getMap(jobId, sourceID);
+            Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> hitByKeyword = getMap(context.getJobId(), sourceID);
             for (Keyword originalKeyword : keywords) {
-                Map<Keyword, List<UniqueKeywordHit>> hitMap = localhitByKeyword.get(originalKeyword);//hitByKeyword.get(originalKeyword);
+                Map<Keyword, List<UniqueKeywordHit>> hitMap = hitByKeyword.get(originalKeyword);
                 if (hitMap == null) {
                     hitMap = new HashMap<>();
-                    localhitByKeyword.put(originalKeyword, hitMap);
+                    hitByKeyword.put(originalKeyword, hitMap);
                 }
 
                 List<UniqueKeywordHit> keywordHits = new ArrayList<>();
@@ -169,6 +147,10 @@ final class InlineSearcher {
                             mapHitList.add(hit);
                         }
                     }
+                }
+
+                if (context.fileIngestIsCancelled()) {
+                    return;
                 }
             }
         }
@@ -365,6 +347,18 @@ final class InlineSearcher {
     }
 
     /**
+     * Clean up the memory that is being used for the given job.
+     *
+     * @param context
+     */
+    static void cleanup(IngestJobContext context) {
+        Map<Long, Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>>> jobMap = uniqueHitMap2.get(context.getJobId());
+        if (jobMap != null) {
+            jobMap.clear();
+        }
+    }
+
+    /**
      * Generates the artifacts for the found KeywordHits. This method should be
      * called once per content object.
      *
@@ -381,7 +375,7 @@ final class InlineSearcher {
             Long sourceId = mapBySource.getKey();
             Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> mapByKeyword = mapBySource.getValue();
 
-            for (Map.Entry<Keyword, Map<Keyword, List<UniqueKeywordHit>>> item : mapByKeyword.entrySet()) {//hitByKeyword.entrySet()) {
+            for (Map.Entry<Keyword, Map<Keyword, List<UniqueKeywordHit>>> item : mapByKeyword.entrySet()) {
                 Keyword originalKeyword = item.getKey();
                 Map<Keyword, List<UniqueKeywordHit>> map = item.getValue();
 
@@ -419,31 +413,13 @@ final class InlineSearcher {
                             logger.log(Level.SEVERE, "Failed to post KWH artifact to blackboard.", ex); //NON-NLS
                         }
                     }
+
+                    if (context.fileIngestIsCancelled()) {
+                        return;
+                    }
                 }
             }
         }
-    }
-
-    /**
-     * Checks to see if a hit with the given parameters has been seen before, if
-     * it has not been seen the hit is added to the list of unique hits.
-     *
-     * Current this method is only called in one place, if its called in
-     * multiple places we may need to consider breaking the check and the
-     * addition.
-     *
-     * @param jobId
-     * @param hit
-     *
-     * @return
-     */
-    private static synchronized boolean isUniqueHit(long jobId, UniqueKeywordHit hit) {
-        List<UniqueKeywordHit> uniqueList = uniqueHitMap.get(jobId);
-        if (!uniqueList.contains(hit)) {
-//            uniqueList.add(hit);
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -514,6 +490,30 @@ final class InlineSearcher {
         }
 
         return hits;
+    }
+
+    /**
+     * Get the keyword map for the given job and source.
+     *
+     * @param jobId
+     * @param sourceID
+     *
+     * @return
+     */
+    static private Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> getMap(long jobId, long sourceID) {
+        Map<Long, Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>>> jobMap = uniqueHitMap2.get(jobId);
+        if (jobMap == null) {
+            jobMap = new ConcurrentHashMap<>();
+            uniqueHitMap2.put(jobId, jobMap);
+        }
+
+        Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> sourceMap = jobMap.get(sourceID);
+        if (sourceMap == null) {
+            sourceMap = new ConcurrentHashMap<>();
+            jobMap.put(sourceID, sourceMap);
+        }
+
+        return sourceMap;
     }
 
     // KeywordHit is not unique enough for finding duplicates, this class 

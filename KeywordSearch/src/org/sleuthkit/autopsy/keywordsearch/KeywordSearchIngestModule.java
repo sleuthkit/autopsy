@@ -445,10 +445,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         if (refCounter.decrementAndGet(jobId) == 0) {
             
             try {
-            InlineSearcher.makeArtifacts(context);
-        } catch (TskException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+                InlineSearcher.makeArtifacts(context);
+                InlineSearcher.cleanup(context);
+            } catch (TskException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to create search ingest artifacts for job %d", context.getJobId()), ex);
+            }
             
             try {
                 final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();

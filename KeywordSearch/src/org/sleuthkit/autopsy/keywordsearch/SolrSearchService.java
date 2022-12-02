@@ -96,6 +96,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 Reader blackboardExtractedTextReader = KeywordSearchUtil.getReader(content);
                 String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
                 ingester.indexMetaDataOnly(artifact, sourceName);
+                // Will not cause an inline search becauce the keyword list is null
                 ingester.search(blackboardExtractedTextReader, artifact.getArtifactID(), sourceName, content, null, true, null);
             } catch (Ingester.IngesterException | TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
                 throw new TskCoreException("Error indexing artifact", ex);
@@ -104,6 +105,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             try {
                 
                 Reader reader = KeywordSearchUtil.getReader(content);
+                // Will not cause an inline search becauce the keyword list is null
                 ingester.search(reader, content.getId(), content.getName(), content, null, true, null);
             } catch (TextExtractorFactory.NoTextExtractorFound | Ingester.IngesterException | TextExtractor.InitReaderException ex) {
                 throw new TskCoreException("Error indexing content", ex);

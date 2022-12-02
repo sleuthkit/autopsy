@@ -206,7 +206,7 @@ class Ingester {
 
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
         Optional<Language> language = Optional.empty();
-        InlineSearcher searcher = new InlineSearcher(keywordListNames, context.getJobId(), sourceID);
+        InlineSearcher searcher = new InlineSearcher(keywordListNames, context);
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
