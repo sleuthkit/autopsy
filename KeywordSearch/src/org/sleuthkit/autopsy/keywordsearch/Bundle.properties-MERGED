@@ -24,7 +24,6 @@ ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try aga
 ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress
 ExtractAllTermsReport.startExport=Starting Unique Word Extraction
 ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>
-# {0} - Content name
 ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}
 GlobalEditListPanel.editKeyword.title=Edit Keyword
 GlobalEditListPanel.warning.text=Boundary characters ^ and $ do not match word boundaries. Consider\nreplacing with an explicit list of boundary characters, such as [ \\.,]
@@ -371,7 +370,6 @@ SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not conta
 SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from case directory: {0}
 # {0} - collection name
 SolrSearchService.exceptionMessage.unableToDeleteCollection=Unable to delete collection {0}
-SolrSearchService.indexingError=Unable to index blackboard artifact.
 SolrSearchService.ServiceName=Solr Keyword Search Service
 SolrSearchService.DeleteDataSource.msg=Error Deleting Solr data for data source id {0}
 DropdownSingleTermSearchPanel.dataSourceCheckBox.text=Restrict search to the selected data sources:
@@ -405,6 +403,7 @@ ExtractedContentPanel.pagesLabel.text=Page:
 KeywordSearchJobSettingsPanel.ocrCheckBox.text=Enable Optical Character Recognition (OCR)
 KeywordSearchJobSettingsPanel.limitedOcrCheckbox.text=<html>Only process PDFs, MS Office docs and images which are over 100KB in size or extracted from another file (Beta)</html>
 KeywordSearchJobSettingsPanel.ocrOnlyCheckbox.text=Only index text extracted using OCR
+KeywordSearchJobSettingsPanel.solrCheckbox.text=Add text to Solr Index
 TextZoomPanel.zoomInButton.text=
 TextZoomPanel.zoomOutButton.text=
 TextZoomPanel.zoomResetButton.text=Reset
