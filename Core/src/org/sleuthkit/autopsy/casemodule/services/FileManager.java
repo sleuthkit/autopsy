@@ -25,6 +25,8 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -594,9 +596,17 @@ public class FileManager implements Closeable {
 
             return localDirectory;
         } else {
-            return caseDb.addLocalFile(localFile.getName(), localFile.getAbsolutePath(), localFile.length(),
-                    0, 0, 0, 0,
+            try {
+                BasicFileAttributes attrs;
+                attrs = Files.readAttributes(localFile.toPath(), BasicFileAttributes.class);
+                return caseDb.addLocalFile(localFile.getName(), localFile.getAbsolutePath(), localFile.length(),
+                    0, (attrs.creationTime().toMillis()/1000), (attrs.lastAccessTime().toMillis()/1000), (attrs.lastModifiedTime().toMillis()/1000),
                     localFile.isFile(), encodingType, parentDirectory, trans);
+            } catch (IOException ex) {
+                return caseDb.addLocalFile(localFile.getName(), localFile.getAbsolutePath(), localFile.length(),
+                    0, 0, 0, 0,
+                    localFile.isFile(), encodingType, parentDirectory, trans);                
+            }
         }
     }
 
