@@ -18,7 +18,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.modules.browseractivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -54,6 +54,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.modules.browseractivity.Bundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -200,7 +201,7 @@ final class ChromeCacheExtractor {
             outDir.mkdirs();
         }
         
-        String cacheTempPath = RAImageIngestModule.getRATempPath(currentCase, moduleName, context.getJobId()) + cachePath;
+        String cacheTempPath = BrowserActivityIngestModule.getBATempPath(currentCase, moduleName, context.getJobId()) + cachePath;
         File tempDir = new File(cacheTempPath);
         if (tempDir.exists() == false) {
             tempDir.mkdirs();
@@ -216,7 +217,7 @@ final class ChromeCacheExtractor {
     private void cleanup () {
         
         for (Entry<String, FileWrapper> entry : this.fileCopyCache.entrySet()) {
-            Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(currentCase, moduleName, context.getJobId()), entry.getKey() ); 
+            Path tempFilePath = Paths.get(BrowserActivityIngestModule.getBATempPath(currentCase, moduleName, context.getJobId()), entry.getKey() ); 
             try {
                 entry.getValue().getFileCopy().getChannel().close();
                 entry.getValue().getFileCopy().close();
@@ -272,8 +273,8 @@ final class ChromeCacheExtractor {
             
             if (indexFiles.size() > 0) {
                 // Create an output folder to save any derived files
-                absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName, context.getJobId());
-                relOutputFolderName = Paths.get(RAImageIngestModule.getRelModuleOutputPath(currentCase, moduleName, context.getJobId())).normalize().toString();
+                absOutputFolderName = BrowserActivityIngestModule.getBAOutputPath(currentCase, moduleName, context.getJobId());
+                relOutputFolderName = Paths.get(BrowserActivityIngestModule.getRelModuleOutputPath(currentCase, moduleName, context.getJobId())).normalize().toString();
             
                 File dir = new File(absOutputFolderName);
                 if (dir.exists() == false) {
@@ -693,7 +694,7 @@ final class ChromeCacheExtractor {
         // write the file to disk so that we can have a memory-mapped ByteBuffer
         AbstractFile cacheFile = abstractFileOptional.get();
         RandomAccessFile randomAccessFile = null;
-        String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName, context.getJobId()) + cacheFolderName + cacheFile.getName(); //NON-NLS
+        String tempFilePathname = BrowserActivityIngestModule.getBATempPath(currentCase, moduleName, context.getJobId()) + cacheFolderName + cacheFile.getName(); //NON-NLS
         try {
             File newFile = new File(tempFilePathname);
             ContentUtils.writeToFile(cacheFile, newFile, context::dataSourceIngestIsCancelled);

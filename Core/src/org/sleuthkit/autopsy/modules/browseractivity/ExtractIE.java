@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.modules.browseractivity;
 
 import java.io.BufferedReader;
 import org.openide.util.NbBundle;
@@ -54,6 +54,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.modules.browseractivity.Bundle;
 import org.sleuthkit.datamodel.AbstractFile;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -90,7 +91,7 @@ class ExtractIE extends Extract {
 
     @Override
     public void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
-        String moduleTempDir = RAImageIngestModule.getRATempPath(getCurrentCase(), "IE", context.getJobId());
+        String moduleTempDir = BrowserActivityIngestModule.getBATempPath(getCurrentCase(), "IE", context.getJobId());
         String moduleTempResultsDir = Paths.get(moduleTempDir, "results").toString();
 
         this.dataSource = dataSource;
@@ -260,19 +261,19 @@ class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                    RecentActivityExtracterModuleFactory.getModuleName(), url));
+                    BrowserActivityModuleFactory.getModuleName(), url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                    RecentActivityExtracterModuleFactory.getModuleName(), datetime));
+                    BrowserActivityModuleFactory.getModuleName(), datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                    RecentActivityExtracterModuleFactory.getModuleName(), (name != null) ? name : ""));
+                    BrowserActivityModuleFactory.getModuleName(), (name != null) ? name : ""));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
-                    RecentActivityExtracterModuleFactory.getModuleName(), value));
+                    BrowserActivityModuleFactory.getModuleName(), value));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    BrowserActivityModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
             if (domain != null && domain.isEmpty() == false) {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                        BrowserActivityModuleFactory.getModuleName(), domain));
             }
 
             try {

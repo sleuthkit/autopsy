@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.modules.browseractivity;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
@@ -29,6 +29,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import java.io.BufferedReader;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
@@ -51,6 +52,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -105,10 +107,14 @@ class Chromium extends Extract {
     private static final String FAVICON_ARTIFACT_NAME = "TSK_FAVICON"; //NON-NLS
     private static final String LOCAL_STATE_ARTIFACT_NAME = "TSK_LOCAL_STATE"; //NON-NLS
     private static final String EXTENSIONS_ARTIFACT_NAME = "TSK_CHROME_EXTENSIONS"; //NON-NLS
-
+    private static final String MALICIOUS_EXTENSION_FOUND = "Malicious Extension Found - ";
+    
     private Boolean databaseEncrypted = false;
     private Boolean fieldEncrypted = false;
 
+    private static final String MALICIOUS_CHROME_EXTENSION_LIST = "malicious_chrome_extensions.csv";
+    private Map<String, String> maliciousChromeExtensions;
+    
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
     private final IngestJobContext context;
@@ -154,7 +160,8 @@ class Chromium extends Extract {
         this.dataSource = dataSource;
         dataFound = false;
         long ingestJobId = context.getJobId();
-
+        String now1 = "";
+        loadMaliciousChromeExetnsions();
         userProfiles = new HashMap<>();
         browserLocations = new HashMap<>();
         for (Map.Entry<String, String> browser : BROWSERS_MAP.entrySet()) {
@@ -268,7 +275,7 @@ class Chromium extends Extract {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(allocatedLocalStateFiles.get(j).getParentPath());
                 browserName = GOOGLE_PROFILE + " " + FilenameUtils.getBaseName(parentPath);
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + allocatedLocalStateFiles.get(j).getName() + j; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, browserName, ingestJobId) + File.separator + allocatedLocalStateFiles.get(j).getName() + j; //NON-NLS
             final AbstractFile localStateFile = allocatedLocalStateFiles.get(j++);
             if ((localStateFile.getSize() == 0) || (localStateFile.getName().toLowerCase().contains("-slack"))
                     || (localStateFile.getName().toLowerCase().contains("cache")) || (localStateFile.getName().toLowerCase().contains("media"))
@@ -385,19 +392,19 @@ class Chromium extends Extract {
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                        RecentActivityExtracterModuleFactory.getModuleName(), profileName));
+                        BrowserActivityModuleFactory.getModuleName(), profileName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
-                        RecentActivityExtracterModuleFactory.getModuleName(), gaiaId));
+                        BrowserActivityModuleFactory.getModuleName(), gaiaId));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        RecentActivityExtracterModuleFactory.getModuleName(), hostedDomain));
+                        BrowserActivityModuleFactory.getModuleName(), hostedDomain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SHORTCUT,
-                        RecentActivityExtracterModuleFactory.getModuleName(), shortcutName));
+                        BrowserActivityModuleFactory.getModuleName(), shortcutName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), name));
+                        BrowserActivityModuleFactory.getModuleName(), name));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                        BrowserActivityModuleFactory.getModuleName(), userName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+                        BrowserActivityModuleFactory.getModuleName(), browserName));
 
                 try {
                     bbartifacts.add(createArtifactWithAttributes(localStateArtifactType, localStateFile, bbattributes));
@@ -476,7 +483,7 @@ class Chromium extends Extract {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(allocatedExtensionsFiles.get(j).getParentPath());
                 browserName = GOOGLE_PROFILE + " " + FilenameUtils.getBaseName(parentPath);
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + allocatedExtensionsFiles.get(j).getName() + j; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, browserName, ingestJobId) + File.separator + allocatedExtensionsFiles.get(j).getName() + j; //NON-NLS
             final AbstractFile extensionFile = allocatedExtensionsFiles.get(j++);
             if ((extensionFile.getSize() == 0) || (extensionFile.getName().toLowerCase().contains("-slack"))
                     || (extensionFile.getName().toLowerCase().contains("cache")) || (extensionFile.getName().toLowerCase().contains("media"))
@@ -605,31 +612,37 @@ class Chromium extends Extract {
                     version = "";
                     description = "";
                     extName = "";
-                }                
+                }      
+                BlackboardArtifact art = null;
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ID,
-                        RecentActivityExtracterModuleFactory.getModuleName(), extension));
+                        BrowserActivityModuleFactory.getModuleName(), extension));
+                if (maliciousChromeExtensions.get(extension) != null) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                        BrowserActivityModuleFactory.getModuleName(), 
+                        MALICIOUS_EXTENSION_FOUND + maliciousChromeExtensions.getOrDefault(extension, "No Source Identified")));
+                }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), extName));
+                        BrowserActivityModuleFactory.getModuleName(), extName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                        RecentActivityExtracterModuleFactory.getModuleName(), description));
+                        BrowserActivityModuleFactory.getModuleName(), description));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VERSION,
-                        RecentActivityExtracterModuleFactory.getModuleName(), version));
+                        BrowserActivityModuleFactory.getModuleName(), version));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_FLAG,
-                        RecentActivityExtracterModuleFactory.getModuleName(), flag));
+                        BrowserActivityModuleFactory.getModuleName(), flag));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PERMISSIONS,
-                        RecentActivityExtracterModuleFactory.getModuleName(), apiGrantedPermissions.replaceFirst(", ", "")));
+                        BrowserActivityModuleFactory.getModuleName(), apiGrantedPermissions.replaceFirst(", ", "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                        BrowserActivityModuleFactory.getModuleName(), userName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+                        BrowserActivityModuleFactory.getModuleName(), browserName));
 
                 try {
-                    bbartifacts.add(createArtifactWithAttributes(localStateArtifactType, extensionFile, bbattributes));
+                    art = createArtifactWithAttributes(localStateArtifactType, extensionFile, bbattributes);
+                    bbartifacts.add(art);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to create Extension artifact for file (%d)", extensionFile.getId()), ex);
                 }
-
             }
 
             if (!context.dataSourceIngestIsCancelled()) {
@@ -687,7 +700,7 @@ class Chromium extends Extract {
                 String parentPath = FilenameUtils.normalizeNoEndSeparator(allocatedHistoryFiles.get(j).getParentPath());
                 browserName = GOOGLE_PROFILE + " " + FilenameUtils.getBaseName(parentPath);
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + allocatedHistoryFiles.get(j).getName() + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, browserName, ingestJobId) + File.separator + allocatedHistoryFiles.get(j).getName() + j + ".db"; //NON-NLS
             final AbstractFile historyFile = allocatedHistoryFiles.get(j++);
             if ((historyFile.getSize() == 0) || (historyFile.getName().toLowerCase().contains("-slack"))
                     || (historyFile.getName().toLowerCase().contains("cache")) || (historyFile.getName().toLowerCase().contains("media"))
@@ -789,7 +802,7 @@ class Chromium extends Extract {
                     || (bookmarkFile.getName().toLowerCase().contains("bak")) || (bookmarkFile.getParentPath().toLowerCase().contains("backup"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, browserName, ingestJobId) + File.separator + bookmarkFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(bookmarkFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -870,19 +883,19 @@ class Chromium extends Extract {
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                     //TODO Revisit usage of deprecated constructor as per TSK-583
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                            RecentActivityExtracterModuleFactory.getModuleName(), url));
+                            BrowserActivityModuleFactory.getModuleName(), url));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
-                            RecentActivityExtracterModuleFactory.getModuleName(), name));
+                            BrowserActivityModuleFactory.getModuleName(), name));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                            RecentActivityExtracterModuleFactory.getModuleName(), (date / 1000000) - Long.valueOf("11644473600")));
+                            BrowserActivityModuleFactory.getModuleName(), (date / 1000000) - Long.valueOf("11644473600")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                            RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+                            BrowserActivityModuleFactory.getModuleName(), browserName));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                            BrowserActivityModuleFactory.getModuleName(), domain));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                            RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                            BrowserActivityModuleFactory.getModuleName(), userName));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
-                            RecentActivityExtracterModuleFactory.getModuleName(), bookmarkKey));
+                            BrowserActivityModuleFactory.getModuleName(), bookmarkKey));
 
 
                     try {
@@ -947,7 +960,7 @@ class Chromium extends Extract {
             if ((cookiesFile.getSize() == 0) || (cookiesFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + cookiesFile.getName() + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, browserName, ingestJobId) + File.separator + cookiesFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(cookiesFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -974,26 +987,26 @@ class Chromium extends Extract {
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("host_key").toString() != null) ? result.get("host_key").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         (Long.valueOf(result.get("last_access_utc").toString()) / 1000000) - Long.valueOf("11644473600"))); //NON-NLS
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("name").toString() != null) ? result.get("name").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+                        BrowserActivityModuleFactory.getModuleName(), browserName));
                 String domain = result.get("host_key").toString(); //NON-NLS
                 domain = domain.replaceFirst("^\\.+(?!$)", "");
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                        BrowserActivityModuleFactory.getModuleName(), domain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                        BrowserActivityModuleFactory.getModuleName(), userName));
 
                 try {
                     bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_COOKIE, cookiesFile, bbattributes));
@@ -1054,7 +1067,7 @@ class Chromium extends Extract {
                 continue;
             }
 
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, browserName, ingestJobId) + File.separator + downloadFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(downloadFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -1089,7 +1102,7 @@ class Chromium extends Extract {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 String fullPath = result.get("full_path").toString(); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                        RecentActivityExtracterModuleFactory.getModuleName(), fullPath));
+                        BrowserActivityModuleFactory.getModuleName(), fullPath));
                 long pathID = Util.findID(dataSource, fullPath);
                 if (pathID != -1) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID,
@@ -1097,7 +1110,7 @@ class Chromium extends Extract {
                                     "Chrome.parentModuleName"), pathID));
                 }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
                 Long time = (Long.valueOf(result.get("start_time").toString()) / 1000000) - Long.valueOf("11644473600"); //NON-NLS
@@ -1105,14 +1118,14 @@ class Chromium extends Extract {
                 //TODO Revisit usage of deprecated constructor as per TSK-583
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", time));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(), time));
+                        BrowserActivityModuleFactory.getModuleName(), time));
                 String domain = NetworkUtils.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                        BrowserActivityModuleFactory.getModuleName(), domain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                        BrowserActivityModuleFactory.getModuleName(), userName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+                        BrowserActivityModuleFactory.getModuleName(), browserName));
 
                 // find the downloaded file and create a TSK_ASSOCIATED_OBJECT for it, associating it with the TSK_WEB_DOWNLOAD artifact.
                 try {
@@ -1175,7 +1188,7 @@ class Chromium extends Extract {
                 continue;
             }
 
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + faviconFile.getName() + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, browserName, ingestJobId) + File.separator + faviconFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(faviconFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -1216,21 +1229,21 @@ class Chromium extends Extract {
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("page_url").toString() != null) ? result.get("page_url").toString() : ""))); //NON-NLS
                 Long updatedTime = (Long.valueOf(result.get("last_updated").toString()) / 1000000) - Long.valueOf("11644473600"); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED,
-                        RecentActivityExtracterModuleFactory.getModuleName(), updatedTime));
+                        BrowserActivityModuleFactory.getModuleName(), updatedTime));
                 Long requestedTime = (Long.valueOf(result.get("last_requested").toString()) / 1000000) - Long.valueOf("11644473600"); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(), requestedTime));
+                        BrowserActivityModuleFactory.getModuleName(), requestedTime));
                 String domain = NetworkUtils.extractDomain((result.get("page_url").toString() != null) ? result.get("page_url").toString() : ""); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                        BrowserActivityModuleFactory.getModuleName(), domain));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                        BrowserActivityModuleFactory.getModuleName(), userName));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+                        BrowserActivityModuleFactory.getModuleName(), browserName));
 
                 try {
                     bbartifacts.add(createArtifactWithAttributes(faviconArtifactType, faviconFile, bbattributes));
@@ -1291,7 +1304,7 @@ class Chromium extends Extract {
             if ((loginDataFile.getSize() == 0) || (loginDataFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + loginDataFile.getName() + j + ".db"; //NON-NLS
+            String temps = BrowserActivityIngestModule.getBATempPath(currentCase, browserName, ingestJobId) + File.separator + loginDataFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(loginDataFile, new File(temps), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -1318,34 +1331,34 @@ class Chromium extends Extract {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("origin_url").toString() != null) ? result.get("origin_url").toString() : ""))); //NON-NLS
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         (Long.valueOf(result.get("date_created").toString()) / 1000000) - Long.valueOf("11644473600"))); //NON-NLS
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         (NetworkUtils.extractDomain((result.get("origin_url").toString() != null) ? result.get("origin_url").toString() : "")))); //NON-NLS
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : ""))); //NON-NLS
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REALM,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         ((result.get("signon_realm") != null && result.get("signon_realm").toString() != null) ? result.get("signon_realm").toString() : ""))); //NON-NLS
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         result.containsKey("signon_realm") ? NetworkUtils.extractDomain(result.get("signon_realm").toString()) : "")); //NON-NLS
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+                        BrowserActivityModuleFactory.getModuleName(), browserName));
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                        BrowserActivityModuleFactory.getModuleName(), userName));
 
                 try {
                     bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_SERVICE_ACCOUNT, loginDataFile, bbattributes));
@@ -1407,7 +1420,7 @@ class Chromium extends Extract {
             if ((webDataFile.getSize() == 0) || (webDataFile.getName().toLowerCase().contains("-slack"))) {
                 continue;
             }
-            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, browserName, ingestJobId) + File.separator + webDataFile.getName() + j + ".db"; //NON-NLS
+            String tempFilePath = BrowserActivityIngestModule.getBATempPath(currentCase, browserName, ingestJobId) + File.separator + webDataFile.getName() + j + ".db"; //NON-NLS
             try {
                 ContentUtils.writeToFile(webDataFile, new File(tempFilePath), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
@@ -1441,7 +1454,7 @@ class Chromium extends Extract {
                     String comment = String.format("%s Autofill Database Encryption Detected", browserName);
                     Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                             new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
-                                    RecentActivityExtracterModuleFactory.getModuleName(), comment));
+                                    BrowserActivityModuleFactory.getModuleName(), comment));
 
                     bbartifacts.add(
                             webDataFile.newAnalysisResult(
@@ -1491,31 +1504,31 @@ class Chromium extends Extract {
 
             fieldEncrypted = false;
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    BrowserActivityModuleFactory.getModuleName(),
                     processFields(result.get("value")))); //NON-NLS
 
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    BrowserActivityModuleFactory.getModuleName(),
                     (Integer.valueOf(result.get("count").toString())))); //NON-NLS
 
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    BrowserActivityModuleFactory.getModuleName(),
                     Long.valueOf(result.get("date_created").toString()))); //NON-NLS
 
             // get schema version specific attributes
             if (isSchemaV8X) {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         Long.valueOf(result.get("date_last_used").toString()))); //NON-NLS
             }
 
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                    RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                    BrowserActivityModuleFactory.getModuleName(), userName));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                    RecentActivityExtracterModuleFactory.getModuleName(), browser));
+                    BrowserActivityModuleFactory.getModuleName(), browser));
             if (fieldEncrypted) {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
-                        RecentActivityExtracterModuleFactory.getModuleName(), ENCRYPTED_FIELD_MESSAGE));
+                        BrowserActivityModuleFactory.getModuleName(), ENCRYPTED_FIELD_MESSAGE));
             }
 
             // Add an artifact
@@ -1605,11 +1618,11 @@ class Chromium extends Extract {
             List<BlackboardAttribute> otherAttributes = new ArrayList<>();
             if (date_modified > 0) {
                 otherAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED,
-                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BrowserActivityModuleFactory.getModuleName(),
                         date_modified)); //NON-NLS
                 if (fieldEncrypted) {
                     otherAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
-                            RecentActivityExtracterModuleFactory.getModuleName(), ENCRYPTED_FIELD_MESSAGE)); //NON-NLS
+                            BrowserActivityModuleFactory.getModuleName(), ENCRYPTED_FIELD_MESSAGE)); //NON-NLS
 
                 }
             }
@@ -1672,4 +1685,35 @@ class Chromium extends Extract {
         return faviconArtifactType;
     }
 
+    /**
+     * Load the malicious chrome extension file to check
+     */
+    private void loadMaliciousChromeExetnsions() {
+        maliciousChromeExtensions = new HashMap<>();
+        try {
+            configExtractor();
+            String malChromeExtenList = PlatformUtil.getUserConfigDirectory() + File.separator + MALICIOUS_CHROME_EXTENSION_LIST;
+            BufferedReader csvReader = new BufferedReader(new FileReader(malChromeExtenList));
+            String row;
+            while ((row = csvReader.readLine()) != null) {
+                if (!row.startsWith("#", 0)) {
+                    String[] data = row.split(",");
+                    maliciousChromeExtensions.put(data[0], data[1]);
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to load Malicious Chrome Extension List file (%s)", MALICIOUS_CHROME_EXTENSION_LIST), ex);
+        }
+    }
+
+    /**
+     * Extract the malicious chrome extension config csv file to the user directory to process
+     *
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException
+     */
+    private void configExtractor() throws IOException {
+        PlatformUtil.extractResourceToUserConfigDir(Chromium.class,
+                MALICIOUS_CHROME_EXTENSION_LIST, true);
+    }
+    
 }

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.modules.browseractivity;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.modules.browseractivity.Bundle;
 import org.sleuthkit.autopsy.url.analytics.DomainCategorizer;
 import org.sleuthkit.autopsy.url.analytics.DomainCategorizerException;
 import org.sleuthkit.autopsy.url.analytics.DomainCategory;

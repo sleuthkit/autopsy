@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class ExtractZoneIdentifier extends Extract {
 
-    private static final Logger LOG = Logger.getLogger(ExtractEdge.class.getName());
+    private static final Logger LOG = Logger.getLogger(ExtractZoneIdentifier.class.getName());
 
     private static final String ZONE_IDENTIFIER_FILE = "%:Zone.Identifier"; //NON-NLS
     private static final String ZONE_IDENTIFIER = ":Zone.Identifier"; //NON-NLS
