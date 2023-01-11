@@ -114,6 +114,10 @@ Start the "Solr_8.6.3" service, and verify that the service status changes to "R
 
 \image html solr_start_2.png
 
+\subsection install_solr_security AntiVirus Settings
+
+We have observed that Antivirus may detect strings in the Solr indexes as being malware.  You should add the Solr data directory to the exclusion list for your security product. We saw this with Windows Defender.
+
 \section install_solr_testing Testing
 
 There are two tests that you should perform to confirm that the Solr machine is configured correctly.

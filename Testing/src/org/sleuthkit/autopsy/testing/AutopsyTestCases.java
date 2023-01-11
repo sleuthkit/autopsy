@@ -25,18 +25,33 @@ import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.TreePath;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
@@ -59,6 +74,7 @@ import org.netbeans.jemmy.operators.JTreeOperator;
 import org.netbeans.jemmy.operators.JTreeOperator.NoSuchPathException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
@@ -68,6 +84,13 @@ public class AutopsyTestCases {
 
     private static final Logger logger = Logger.getLogger(AutopsyTestCases.class.getName()); // DO NOT USE AUTOPSY LOGGER
     private long start;
+    
+    // by default, how many minutes jemmy waits for a dialog to appear (default is 1 minute).
+    private static final long DIALOG_FIND_TIMEOUT_MINUTES = 5;
+    
+    static {
+        Timeouts.setDefault("Waiter.WaitingTime", DIALOG_FIND_TIMEOUT_MINUTES * 60 * 1000);
+    }
 
     /**
      * Escapes the slashes in a file or directory path.
@@ -104,8 +127,9 @@ public class AutopsyTestCases {
             JButtonOperator jbo = new JButtonOperator(nbdo, 0); // the "New Case" button
             jbo.pushNoBlock();
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -125,8 +149,9 @@ public class AutopsyTestCases {
             start = System.currentTimeMillis();
             wo.btFinish().clickMouse();
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -159,8 +184,9 @@ public class AutopsyTestCases {
             comboBoxOperator.setSelectedItem("(GMT-5:00) America/New_York");
             wo.btNext().clickMouse();
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -194,8 +220,9 @@ public class AutopsyTestCases {
             fileChooserOperator.chooseFile(new File(getEscapedPath(System.getProperty("img_path"))).getName());
             wo.btNext().clickMouse();
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -208,8 +235,9 @@ public class AutopsyTestCases {
             logger.log(Level.INFO, "Add image took {0}ms", (System.currentTimeMillis() - start));
             wo.btFinish().clickMouse();
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -234,8 +262,9 @@ public class AutopsyTestCases {
             jbo1.pushNoBlock();
             logger.info("Pushed Global Settings button for hash lookup module in ingest job settings panel");
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -273,8 +302,9 @@ public class AutopsyTestCases {
             JButtonOperator jbo4 = new JButtonOperator(hashMainDialogOperator, "OK", 0);
             jbo4.pushNoBlock();
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -293,8 +323,9 @@ public class AutopsyTestCases {
             jbo1.pushNoBlock();
             logger.info("Pushed Global Settings button for keyword search module in ingest job settings panel");
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -326,8 +357,9 @@ public class AutopsyTestCases {
             new Timeout("pausing", 10000).sleep(); // let things catch up
             wo.btNext().clickMouse();
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -347,8 +379,9 @@ public class AutopsyTestCases {
             Random rand = new Random();
             new Timeout("pausing", 10000 + (rand.nextInt(15000) + 5000)).sleep();
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
 
     }
@@ -362,8 +395,9 @@ public class AutopsyTestCases {
             TreePath tp = jto.findPath(nodeNames);
             expandNodes(jto, tp);
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -374,8 +408,9 @@ public class AutopsyTestCases {
             JButtonOperator jbo = new JButtonOperator(mwo, "Generate Report");
             jbo.pushNoBlock();
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -409,8 +444,9 @@ public class AutopsyTestCases {
             new Timeout("pausing", 10000).sleep();
             System.setProperty("ReportStr", datenotime);
         } catch (TimeoutExpiredException ex) {
-            screenshot("TimeoutScreenshot");
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
+            logSystemDiagnostics();
+            screenshot("TimeoutScreenshot");
         }
     }
 
@@ -456,6 +492,7 @@ public class AutopsyTestCases {
             UserPreferences.setDatabaseConnectionInfo(connectionInfo);
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
+            logSystemDiagnostics();
         }
         //Solr Index settings
         UserPreferences.setIndexingServerHost(System.getProperty("solrHost"));
@@ -470,6 +507,7 @@ public class AutopsyTestCases {
             UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
         } catch (UserPreferencesException ex) {
             logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
+            logSystemDiagnostics();
         }
         
         UserPreferences.setZkServerHost(System.getProperty("zooKeeperHost"));
@@ -484,6 +522,253 @@ public class AutopsyTestCases {
             }
         } catch (NoSuchPathException ne) {
             logger.log(Level.SEVERE, "Error expanding tree path", ne);
+            logSystemDiagnostics();
+        }
+    }
+    
+    
+    private void logSystemDiagnostics() {
+        logger.log(Level.INFO, getSystemDiagnostics());
+    }
+    
+    private static final String NEWLINE = System.lineSeparator();
+
+    private static final int TOP_NUM = 10;
+
+    private static Set<String> IGNORED_PROCESSES = Stream.of("_Total", "Idle", "Memory Compression").collect(Collectors.toSet());
+
+    
+    
+    /**
+     * @return A string of system diagnostic information.
+     * 
+     * NOTE: currently only works for windows.
+     */
+    private static String getSystemDiagnostics() {
+        if (PlatformUtil.isWindowsOS()) {
+            try {
+                List<Map<String, String>> processPerformance = getWmicTable("wmic path Win32_PerfFormattedData_PerfProc_Process get Name,PercentProcessorTime,IOReadBytesPerSec,IOWriteBytesPerSec,WorkingSetPeak").stream()
+                        .filter(obj -> !IGNORED_PROCESSES.contains(obj.get("name")))
+                        .collect(Collectors.toList());
+
+                List<Pair<String, Long>> cpuUsageProcesses = getKeyValLimited(processPerformance, "name", "percentprocessortime");
+                List<Pair<String, Long>> memUsageProcesses = getKeyValLimited(processPerformance, "name", "workingsetpeak");
+
+                List<Triple<String, Long, Long>> ioProcesses = getFilteredLimited(
+                        processPerformance,
+                        obj -> {
+                            String key = obj.get("name");
+                            if (key == null) {
+                                return null;
+                            }
+
+                            try {
+                                return Triple.of(key, Long.parseLong(obj.get("ioreadbytespersec")), Long.parseLong(obj.get("iowritebytespersec")));
+                            } catch (NumberFormatException | NullPointerException ex) {
+                                return null;
+                            }
+
+                        },
+                        Comparator.comparing(pr -> -(pr.getMiddle() + pr.getRight())));
+
+                String cpuLoad = getWmicString("wmic cpu get loadpercentage", "loadpercentage");
+                String cpuCores = getWmicString("wmic cpu get numberofcores", "numberofcores");
+                String freePhysicalMemory = getWmicString("wmic OS get FreeSpaceInPagingFiles", "freespaceinpagingfiles"); // in kb
+                String totalPhysicalMemory = getWmicString("wmic ComputerSystem get TotalPhysicalMemory", "totalphysicalmemory"); // bytes
+                String memUsage;
+                try {
+                    double freeMemMb = Double.parseDouble(freePhysicalMemory) / 1000;
+                    double totalMemMb = Double.parseDouble(totalPhysicalMemory) / 1000 / 1000;
+                    memUsage = MessageFormat.format("Free Physical Memory: {0,number,#.##}MB and total physical: {1,number,#.##}MB", freeMemMb, totalMemMb);
+                } catch (NumberFormatException ex) {
+                    memUsage = MessageFormat.format("Free Physical Memory: \"{0}\" and total physical: \"{1}\"", freePhysicalMemory, totalPhysicalMemory);
+                }
+
+                List<Triple<String, Long, String>> networkStatus = getFilteredLimited(
+                        getWmicTable("wmic path win32_networkadapter where \"netconnectionstatus = 2 OR NOT errordescription IS NULL\" get netconnectionid, name, speed, maxspeed, errordescription"),
+                        (Map<String, String> obj) -> {
+                            String name = obj.get("netconnectionid");
+                            if (StringUtils.isBlank(name)) {
+                                name = obj.get("name");
+                            }
+
+                            if (StringUtils.isBlank(name)) {
+                                return null;
+                            }
+
+                            String errorDescription = obj.get("errordescription");
+
+                            Long speed = 0L;
+                            try {
+                                speed = Long.parseLong(obj.get("speed"));
+                            } catch (NumberFormatException | NullPointerException ex) {
+                            }
+
+                            return Triple.of(name, speed, errorDescription);
+                        },
+                        (a, b) -> StringUtils.compareIgnoreCase(a.getLeft(), b.getRight()));
+
+                List<Pair<String, Long>> diskStatus = getKeyValLimited(
+                        getWmicTable("wmic path Win32_PerfFormattedData_PerfDisk_LogicalDisk get AvgDiskQueueLength,Name").stream()
+                                .filter(obj -> !IGNORED_PROCESSES.contains(obj.get("name")))
+                                .collect(Collectors.toList()),
+                        "name",
+                        "avgdiskqueuelength");
+
+                return "SYSTEM DIAGNOSTICS:" + NEWLINE
+                        + MessageFormat.format("CPU Load Percentage: {0}% with {1} cores", cpuLoad, cpuCores) + NEWLINE
+                        + MessageFormat.format("Memory Usage: {0}", memUsage) + NEWLINE
+                        + "Disk Usage (disk to average disk queue length): " + NEWLINE
+                        + diskStatus.stream().map(pr -> pr.getKey() + ": " + pr.getValue()).collect(Collectors.joining(NEWLINE)) + NEWLINE
+                        + NEWLINE
+                        + "Network Status (of only connected or error): " + NEWLINE
+                        + networkStatus.stream().map(obj -> {
+                            String errorString = StringUtils.isBlank(obj.getRight()) ? "" : MessageFormat.format(" (error: {0})", obj.getRight());
+                            return MessageFormat.format("{0}: {1,number,#.##}MB/S possible {2}", obj.getLeft(), ((double) obj.getMiddle()) / 1000 / 1000, errorString);
+                        }).collect(Collectors.joining(NEWLINE)) + NEWLINE
+                        + NEWLINE
+                        + "CPU consuming processes: " + NEWLINE
+                        + cpuUsageProcesses.stream().map(pr -> MessageFormat.format("{0}: {1}%", pr.getKey(), pr.getValue())).collect(Collectors.joining(NEWLINE)) + NEWLINE
+                        + NEWLINE
+                        + "Memory consuming processes (working set peak): " + NEWLINE
+                        + memUsageProcesses.stream()
+                                .map(
+                                        pr -> MessageFormat.format(
+                                                "{0}: {1,number,#.##}MB",
+                                                pr.getKey(),
+                                                ((double) pr.getValue()) / 1000 / 1000
+                                        )
+                                )
+                                .collect(Collectors.joining(NEWLINE)) + NEWLINE
+                        + NEWLINE
+                        + "I/O consuming processes (read/write): " + NEWLINE
+                        + ioProcesses.stream()
+                                .map(
+                                        pr -> MessageFormat.format(
+                                                "{0}: {1,number,#.##}MB/{2,number,#.##}MB", pr.getLeft(),
+                                                ((double) pr.getMiddle()) / 1000 / 1000,
+                                                ((double) pr.getRight()) / 1000 / 1000
+                                        )
+                                )
+                                .collect(Collectors.joining(NEWLINE)) + NEWLINE;
+            } catch (Throwable ex) {
+                return "SYSTEM DIAGNOSTICS:" + NEWLINE
+                        + "Encountered IO exception: " + ex.getMessage() + NEWLINE;
+            }
+
+        } else {
+            return "System diagnostics only implemented for windows at this time.";
+        }
+    }
+
+    /**
+     * Returns a pair of a string key and long number value limited to TOP_NUM of the highest number values.
+     * @param objects The list of objects.
+     * @param keyId The id of the key in the map.
+     * @param valId The id of the value in the map.
+     * @return The highest valued key value pairs.
+     */
+    private static List<Pair<String, Long>> getKeyValLimited(List<Map<String, String>> objects, String keyId, String valId) {
+        return getFilteredLimited(
+                objects,
+                obj -> {
+                    String key = obj.get(keyId);
+                    if (key == null) {
+                        return null;
+                    }
+
+                    try {
+                        return Pair.of(key, Long.parseLong(obj.get(valId)));
+                    } catch (NumberFormatException | NullPointerException ex) {
+                        return null;
+                    }
+                },
+                Comparator.comparing(pr -> -pr.getValue()));
+    }
+
+    /**
+     * Returns a list of a given type limited to TOP_NUM of the first values.
+     * @param objects The objects to sort and filter.
+     * @param keyObjMapper Maps the list of map objects to the new new value.
+     * @param comparator Comparator determining first values.
+     * @return The list capped at TOP_NUM.
+     */
+    private static <T> List<T> getFilteredLimited(List<Map<String, String>> objects, Function<Map<String, String>, T> keyObjMapper, Comparator<T> comparator) {
+        return objects.stream()
+                .map(keyObjMapper)
+                .filter(a -> a != null)
+                .sorted(comparator)
+                .limit(TOP_NUM)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Runs the command line entry returning standard output.
+     * @param cmd The command.
+     * @return The standard output.
+     * @throws IOException 
+     */
+    private static String getProcStdOut(String... cmd) throws IOException {
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        String output = IOUtils.toString(pb.start().getInputStream(), StandardCharsets.UTF_8);
+        return output;
+    }
+
+    // matches key=value
+    private static final Pattern EQUALS_PATTERN = Pattern.compile("^([^=]*)=(.*)$");
+
+    /**
+     * Returns a list of maps mapping the wmic header column (lower cased) to
+     * the value for the row.
+     *
+     * @param cmd The wmic command to run.
+     *
+     * @return The list of rows.
+     *
+     * @throws IOException
+     */
+    private static List<Map<String, String>> getWmicTable(String cmd) throws IOException {
+        String stdOut = getProcStdOut("cmd", "/c", cmd + " /format:list");
+
+        List<Map<String, String>> rows = new ArrayList<>();
+        Map<String, String> curObj = new HashMap<>();
+        for (String line : stdOut.split("\\r?\\n")) {
+            // if line, try to parse as key=value
+            if (StringUtils.isNotBlank(line)) {
+                Matcher matcher = EQUALS_PATTERN.matcher(line);
+                if (matcher.find()) {
+                    String key = matcher.group(1).trim().toLowerCase();
+                    String value = matcher.group(2).trim();
+                    curObj.put(key, value);
+                }
+                // if no line and the object has keys, we have finished an entry, add it to the list.
+            } else if (!curObj.isEmpty()) {
+                rows.add(curObj);
+                curObj = new HashMap<>();
+            }
+        }
+
+        if (!curObj.isEmpty()) {
+            rows.add(curObj);
+            curObj = new HashMap<>();
+        }
+
+        return rows;
+    }
+
+    /**
+     * Returns a string from a wmic query.
+     * @param wmicQuery The wmic query.
+     * @param key The key column to return.
+     * @return The first row's value for the given key.
+     * @throws IOException 
+     */
+    private static String getWmicString(String wmicQuery, String key) throws IOException {
+        List<Map<String, String>> retVal = getWmicTable(wmicQuery);
+        if (retVal != null && !retVal.isEmpty() && retVal.get(0) != null && retVal.get(0).get(key) != null) {
+            return retVal.get(0).get(key);
+        } else {
+            return null;
         }
     }
 }
