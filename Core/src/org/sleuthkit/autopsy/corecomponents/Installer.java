@@ -101,7 +101,18 @@ public class Installer extends ModuleInstall {
         // If there were no command line options supplied then the process method will never
         // be called. 
         if (GraphicsEnvironment.isHeadless()) {
-            new CommandLineIngestManager().start();
+            if (finalprocessor.getState() == CommandLineOptionProcessor.ProcessState.COMPLETED) {
+                new CommandLineIngestManager().start();
+            } else {
+                finalprocessor.addPropertyChangeListener(new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        if (evt.getPropertyName().equals(CommandLineOptionProcessor.PROCESSING_COMPLETED)) {
+                            new CommandLineIngestManager().start();
+                        }
+                    }
+                });
+            }   
         } else {
             WindowManager.getDefault().invokeWhenUIReady(() -> {
                 if(WindowManager.getDefault().getMainWindow().isVisible() || finalprocessor == null || finalprocessor.getState() == CommandLineOptionProcessor.ProcessState.COMPLETED) {
