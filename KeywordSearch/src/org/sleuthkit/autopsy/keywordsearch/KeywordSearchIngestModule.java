@@ -414,6 +414,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             try {
                 InlineSearcher.makeArtifacts(context);
                 InlineSearcher.cleanup(context);
+                Ingester.getDefault().commit();
             } catch (TskException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to create search ingest artifacts for job %d", context.getJobId()), ex);
             }

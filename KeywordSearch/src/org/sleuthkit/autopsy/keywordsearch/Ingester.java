@@ -223,10 +223,9 @@ class Ingester {
                 }
 
                 Chunk chunk = chunker.next();
-                String chunkId = "";
                 if (indexIntoSolr) {
                     Map<String, Object> fields = new HashMap<>(contentFields);
-                    chunkId = Server.getChunkIdString(sourceID, numChunks);
+                    String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                     fields.put(Server.Schema.ID.toString(), chunkId);
                     fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
 
@@ -245,7 +244,7 @@ class Ingester {
                         if (chunker.hasNext() && language.isPresent()) {
                             languageSpecificContentIndexingHelper.indexMiniChunk(chunk, sourceName, new HashMap<>(contentFields), chunkId, language.get());
                         }
-                        numChunks++;
+                        
                     } catch (Ingester.IngesterException ingEx) {
                         logger.log(Level.WARNING, "Ingester had a problem with extracted string from file '" //NON-NLS
                                 + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
@@ -257,6 +256,7 @@ class Ingester {
                 if(keywordListNames != null) {
                     searcher.searchChunk(chunk, sourceID, numChunks);
                 }
+                numChunks++;
             }
             if (chunker.hasException()) {
                 logger.log(Level.WARNING, "Error chunking content from " + sourceID + ": " + sourceName, chunker.getException());
