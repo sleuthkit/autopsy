@@ -570,11 +570,13 @@ class Chromium extends Extract {
                     JsonObject permissions = ext.get("active_permissions").getAsJsonObject();
                     JsonArray apiPermissions = permissions.get("api").getAsJsonArray();
                     for (JsonElement apiPermission : apiPermissions) {
-                        String apigrantEl = apiPermission.getAsString();                   
-                        if (apigrantEl != null) {
-                            apiGrantedPermissions = apiGrantedPermissions + ", " + apigrantEl;
-                        } else {
-                            apiGrantedPermissions =  apiGrantedPermissions + "";
+                        if (apiPermission.isJsonPrimitive()) {
+                            String apigrantEl = apiPermission.getAsString();                   
+                            if (apigrantEl != null) {
+                                apiGrantedPermissions = apiGrantedPermissions + ", " + apigrantEl;
+                            } else {
+                                apiGrantedPermissions =  apiGrantedPermissions + "";
+                            }
                         }
                     }                    
                 }
