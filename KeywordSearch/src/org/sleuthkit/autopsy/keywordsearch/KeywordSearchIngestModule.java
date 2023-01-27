@@ -566,21 +566,22 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return false;
             }
             //divide into chunks and index
-            if( Ingester.getDefault().search(otherMethod(extractorOptional, aFile, extractedMetadata), aFile.getId(), aFile.getName(), aFile, context, true,settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists()) && !settings.isIndexToSolrEnabled()){
-                Ingester.getDefault().indexFile(otherMethod(extractorOptional, aFile, extractedMetadata), aFile.getId(), aFile.getName(), aFile, context, true);
+            if( Ingester.getDefault().search(getTikaOrTextExtractor(extractorOptional, aFile, extractedMetadata), aFile.getId(), aFile.getName(), aFile, context, true,settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists()) && !settings.isIndexToSolrEnabled()){
+                Ingester.getDefault().indexFile(getTikaOrTextExtractor(extractorOptional, aFile, extractedMetadata), aFile.getId(), aFile.getName(), aFile, context, true);
             }
-        } catch (Exception ex) {
-            // Text extractor could not be initialized.  No text will be extracted.
-            System.out.println("Error with file: " + aFile.getName());
-            ex.printStackTrace();
+        } catch (TextExtractor.InitReaderException  ex) {
+            return false;
+        } catch(Exception ex) {
+            logger.log(Level.WARNING, String.format("Failed to search file %s [id=%d]",
+                            aFile.getName(), aFile.getId()), ex);
             return false;
         }
         
         return true;
     }
     
-    private Reader otherMethod(Optional<TextExtractor> extractorOptional, AbstractFile aFile,
-                Map<String, String> extractedMetadata) throws Exception {
+    private Reader getTikaOrTextExtractor(Optional<TextExtractor> extractorOptional, AbstractFile aFile,
+                Map<String, String> extractedMetadata) throws TextExtractor.InitReaderException {
             
             TextExtractor extractor = extractorOptional.get();
             Reader fileText = extractor.getReader();
