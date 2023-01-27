@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.textextractors;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
@@ -55,6 +56,10 @@ public final class TextFileExtractor implements TextExtractor {
 
     @Override
     public Reader getReader() throws InitReaderException {
+        return getReader(getEncoding());
+    }
+    
+    public Charset getEncoding() {
         if(encoding == null) {
             try {
                 encoding = EncodingUtils.getEncoding(file);
@@ -68,7 +73,11 @@ public final class TextFileExtractor implements TextExtractor {
             }
         }
         
-        return getReader(encoding);
+        return encoding;
+    }
+    
+    public InputStream getInputStream() {
+        return new BufferedInputStream(new ReadContentInputStream(file));
     }
 
     private Reader getReader(Charset encoding) {
