@@ -4,11 +4,12 @@
 # Named Autopsy4 to avoid conflict with the autopsy formula in repos
 # A package installer can be generated using brew-pkg: https://github.com/timsutton/brew-pkg
 # Can be run locally with `brew install --debug --build-from-source --verbose <path_to_this_file>`
+# sha256 calculated using curl <url> | sha256sum
 class Autopsy4 < Formula
-  AUTOPSY_RESOURCE_URL = "https://github.com/sleuthkit/autopsy/releases/download/autopsy-4.19.2/autopsy-4.19.2.zip".freeze
-  AUTOPSY_RESOURCE_SHA256 = "b1ca770df47f09512276fee16c184644cdd9a2591edfdb622a3177896f299893".freeze
-  TSK_RESOURCE_URL = "https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.11.1/sleuthkit-4.11.1.tar.gz".freeze
-  TSK_RESOURCE_SHA256 = "8ad94f5a69b7cd1a401afd882ab6b8e5daadb39dd2a6a3bbd5aecee2a2ea57a0".freeze
+  AUTOPSY_RESOURCE_URL = "https://github.com/sleuthkit/autopsy/releases/download/autopsy-4.20.0/autopsy-4.20.0.zip".freeze
+  AUTOPSY_RESOURCE_SHA256 = "60964AB135429C2636AB8A1B0DA5EE18D232D4323DB6EDE1B6A9CFBF7E3500CE".freeze
+  TSK_RESOURCE_URL = "https://github.com/sleuthkit/sleuthkit/releases/download/sleuthkit-4.12.0/sleuthkit-4.12.0.tar.gz".freeze
+  TSK_RESOURCE_SHA256 = "0FAE8DBCCA69316A92212374272B8F81EFD0A669FB93D61267CFD855B06ED23B".freeze
 
   desc "Autopsy® is a digital forensics platform and graphical interface to The Sleuth Kit® and other digital forensics tools. It can be used by law enforcement, military, and corporate examiners to investigate what happened on a computer. You can even use it to recover photos from your camera's memory card. "
   homepage "http://www.sleuthkit.org/autopsy/"

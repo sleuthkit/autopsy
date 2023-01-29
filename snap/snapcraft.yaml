@@ -1,7 +1,7 @@
 name: autopsy
 # core22 brings along linting for share object library paths as well as improvements to get java gstreamer working
 base: core22
-version: 4.19.3
+version: 4.20.0
 summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
 description: Autopsy is a graphical interface to The Sleuth Kit and other open source
   digital forensics tools.
@@ -110,7 +110,7 @@ parts:
     - libewf-dev
     - libvhdi-dev
     - libvmdk-dev
-    source-tag: sleuthkit-4.11.1
+    source-tag: sleuthkit-4.12.0
   autopsy:
     after: [sleuthkit]
     build-packages:
@@ -173,4 +173,4 @@ parts:
 
       # include this line to print all set variables
       # sed -i '129 i set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"' "$AUTOPSY_LOCATION/platform/lib/nbexec"
-    source-tag: autopsy-4.19.3
+    source-tag: autopsy-4.20.0
