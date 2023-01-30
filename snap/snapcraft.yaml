@@ -173,4 +173,4 @@ parts:
 
       # include this line to print all set variables
       # sed -i '129 i set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"' "$AUTOPSY_LOCATION/platform/lib/nbexec"
-    source-tag: autopsy-4.20.0
+    source-branch: develop
