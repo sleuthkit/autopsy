@@ -16,11 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.contentviewers.binary;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Font;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -33,9 +37,15 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.SwingWorker;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Utilities;
+import org.exbin.auxiliary.paged_data.ByteArrayData;
+import org.exbin.bined.EditMode;
+import org.exbin.bined.SelectionRange;
+import org.exbin.bined.highlight.swing.HighlightNonAsciiCodeAreaPainter;
+import org.exbin.bined.swing.basic.CodeArea;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
@@ -45,7 +55,8 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
+import org.sleuthkit.autopsy.contentviewers.binary.Bundle;
+import org.sleuthkit.autopsy.corecomponents.DataContentViewerUtility;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
@@ -54,42 +65,74 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Hex view of file contents.
+ * Binary view of file contents.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 @ServiceProvider(service = DataContentViewer.class, position = 1)
-public class DataContentViewerHex extends javax.swing.JPanel implements DataContentViewer {
+public class DataContentViewerBinary extends javax.swing.JPanel implements DataContentViewer {
 
     private static final long PAGE_LENGTH = 16384;
-    private final byte[] data = new byte[(int) PAGE_LENGTH];
     private static int currentPage = 1;
     private int totalPages;
     private Content dataSource;
+    private CodeArea codeArea = new CodeArea();
+    private ValuesPanel valuesPanel;
+    private JScrollPane valuesPanelScrollPane;
 
     private HexWorker worker;
 
-    private static final Logger logger = Logger.getLogger(DataContentViewerHex.class.getName());
+    private static final Logger logger = Logger.getLogger(DataContentViewerBinary.class.getName());
 
     /**
-     * Creates new form DataContentViewerHex
+     * Creates new form DataContentViewerBinary
      */
-    public DataContentViewerHex() {
+    public DataContentViewerBinary() {
         initComponents();
         customizeComponents();
         this.resetComponent();
-        logger.log(Level.INFO, "Created HexView instance: " + this); //NON-NLS
     }
 
     private void customizeComponents() {
+        codeArea.setComponentPopupMenu(rightClickMenu);
+        codeArea.setEditMode(EditMode.READ_ONLY);
+        codeArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        codeArea.setPainter(new HighlightNonAsciiCodeAreaPainter(codeArea));
+        add(codeArea, BorderLayout.CENTER);
+
+        valuesPanel = new ValuesPanel();
+        valuesPanel.setCodeArea(codeArea);
+        valuesPanel.enableUpdate();
+        valuesPanelScrollPane = new JScrollPane(valuesPanel);
+        valuesPanelScrollPane.setBorder(null);
+        add(valuesPanelScrollPane, BorderLayout.EAST);
+
+        invalidate();
         outputTextArea.setComponentPopupMenu(rightClickMenu);
         ActionListener actList = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JMenuItem jmi = (JMenuItem) e.getSource();
                 if (jmi.equals(copyMenuItem)) {
-                    outputTextArea.copy();
+                    if (dataSource == null) {
+                        outputTextArea.copy();
+                    } else {
+                        SelectionRange selectionRange = codeArea.getSelection();
+                        long selectionLength = selectionRange.getLength();
+                        if (!selectionRange.isEmpty() && selectionLength < Integer.MAX_VALUE) {
+                            byte[] selectionData = new byte[(int) selectionLength];
+                            codeArea.getContentData().copyToArray(selectionRange.getStart(), selectionData, 0, (int) selectionLength);
+                            String clipboardContent = DataConversion.byteArrayToHex(selectionData, (int) selectionLength, 0);
+                            StringSelection selection = new StringSelection(clipboardContent);
+                            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                            clipboard.setContents(selection, selection);
+                        }
+                    }
                 } else if (jmi.equals(selectAllMenuItem)) {
-                    outputTextArea.selectAll();
+                    if (dataSource == null) {
+                        outputTextArea.selectAll();
+                    } else {
+                        codeArea.selectAll();
+                    }
                 }
             }
         };
@@ -112,7 +155,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         jScrollPane3 = new javax.swing.JScrollPane();
         outputTextArea = new javax.swing.JTextArea();
         jScrollPane2 = new javax.swing.JScrollPane();
-        hexViewerPanel = new javax.swing.JPanel();
+        binaryViewerPanel = new javax.swing.JPanel();
         totalPageLabel = new javax.swing.JLabel();
         ofLabel = new javax.swing.JLabel();
         currentPageLabel = new javax.swing.JLabel();
@@ -126,13 +169,11 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         goToOffsetTextField = new javax.swing.JTextField();
         launchHxDButton = new javax.swing.JButton();
 
-        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.copyMenuItem.text")); // NOI18N
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
 
-        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.selectAllMenuItem.text")); // NOI18N
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
-
-        setPreferredSize(new java.awt.Dimension(100, 58));
 
         jScrollPane3.setPreferredSize(new java.awt.Dimension(300, 33));
 
@@ -142,23 +183,26 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         outputTextArea.setInheritsPopupMenu(true);
         jScrollPane3.setViewportView(outputTextArea);
 
+        setPreferredSize(new java.awt.Dimension(100, 58));
+        setLayout(new java.awt.BorderLayout());
+
         jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
-        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.totalPageLabel.text_1")); // NOI18N
+        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.totalPageLabel.text_1")); // NOI18N
 
-        ofLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.ofLabel.text_1")); // NOI18N
+        ofLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.ofLabel.text_1")); // NOI18N
 
-        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.currentPageLabel.text_1")); // NOI18N
+        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.currentPageLabel.text_1")); // NOI18N
         currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
         currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
 
-        pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.pageLabel.text_1")); // NOI18N
+        pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.pageLabel.text_1")); // NOI18N
         pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
         pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
 
         prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
-        prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.prevPageButton.text")); // NOI18N
+        prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.prevPageButton.text")); // NOI18N
         prevPageButton.setBorderPainted(false);
         prevPageButton.setContentAreaFilled(false);
         prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
@@ -172,7 +216,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         });
 
         nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
-        nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.nextPageButton.text")); // NOI18N
+        nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.nextPageButton.text")); // NOI18N
         nextPageButton.setBorderPainted(false);
         nextPageButton.setContentAreaFilled(false);
         nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
@@ -185,40 +229,40 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             }
         });
 
-        pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.pageLabel2.text")); // NOI18N
+        pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.pageLabel2.text")); // NOI18N
         pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
         pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
 
-        goToPageTextField.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.goToPageTextField.text")); // NOI18N
+        goToPageTextField.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.goToPageTextField.text")); // NOI18N
         goToPageTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 goToPageTextFieldActionPerformed(evt);
             }
         });
 
-        goToPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.goToPageLabel.text")); // NOI18N
+        goToPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.goToPageLabel.text")); // NOI18N
 
-        goToOffsetLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.goToOffsetLabel.text")); // NOI18N
+        goToOffsetLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.goToOffsetLabel.text")); // NOI18N
 
-        goToOffsetTextField.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.goToOffsetTextField.text")); // NOI18N
+        goToOffsetTextField.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.goToOffsetTextField.text")); // NOI18N
         goToOffsetTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 goToOffsetTextFieldActionPerformed(evt);
             }
         });
 
-        launchHxDButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.launchHxDButton.text")); // NOI18N
+        launchHxDButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.launchHxDButton.text")); // NOI18N
         launchHxDButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 launchHxDButtonActionPerformed(evt);
             }
         });
 
-        javax.swing.GroupLayout hexViewerPanelLayout = new javax.swing.GroupLayout(hexViewerPanel);
-        hexViewerPanel.setLayout(hexViewerPanelLayout);
-        hexViewerPanelLayout.setHorizontalGroup(
-            hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(hexViewerPanelLayout.createSequentialGroup()
+        javax.swing.GroupLayout binaryViewerPanelLayout = new javax.swing.GroupLayout(binaryViewerPanel);
+        binaryViewerPanel.setLayout(binaryViewerPanelLayout);
+        binaryViewerPanelLayout.setHorizontalGroup(
+            binaryViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(binaryViewerPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
@@ -245,12 +289,12 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 .addComponent(launchHxDButton)
                 .addContainerGap(146, Short.MAX_VALUE))
         );
-        hexViewerPanelLayout.setVerticalGroup(
-            hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(hexViewerPanelLayout.createSequentialGroup()
-                .addGroup(hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        binaryViewerPanelLayout.setVerticalGroup(
+            binaryViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(binaryViewerPanelLayout.createSequentialGroup()
+                .addGroup(binaryViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addGroup(binaryViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(ofLabel)
                         .addComponent(totalPageLabel))
@@ -260,7 +304,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                     .addComponent(goToPageLabel)
                     .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(goToOffsetLabel)
-                    .addGroup(hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addGroup(binaryViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(goToOffsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(launchHxDButton)))
                 .addGap(0, 0, 0))
@@ -268,22 +312,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
         launchHxDButton.setEnabled(PlatformUtil.isWindowsOS());
 
-        jScrollPane2.setViewportView(hexViewerPanel);
+        jScrollPane2.setViewportView(binaryViewerPanel);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 827, Short.MAX_VALUE)
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 239, Short.MAX_VALUE))
-        );
+        add(jScrollPane2, java.awt.BorderLayout.PAGE_START);
     }// </editor-fold>//GEN-END:initComponents
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
@@ -307,10 +338,10 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         if (pageNumber > totalPages || pageNumber < 1) {
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
-                            "DataContentViewerHex.goToPageTextField.msgDlg",
+                            "DataContentViewerBinary.goToPageTextField.msgDlg",
                             totalPages),
                     NbBundle.getMessage(this.getClass(),
-                            "DataContentViewerHex.goToPageTextField.err"),
+                            "DataContentViewerBinary.goToPageTextField.err"),
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -355,20 +386,20 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             }
         } catch (NumberFormatException ex) {
             // notify the user and return
-            JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(), "DataContentViewerHex.goToOffsetTextField.msgDlg", goToOffsetTextField.getText()));
+            JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.goToOffsetTextField.msgDlg", goToOffsetTextField.getText()));
             return;
         }
 
         if (offset >= 0) {
             setDataViewByOffset(offset);
         } else {
-            outputTextArea.setText(NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.setDataView.invalidOffset.negativeOffsetValue"));
+            outputTextArea.setText(NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.setDataView.invalidOffset.negativeOffsetValue"));
         }
     }//GEN-LAST:event_goToOffsetTextFieldActionPerformed
 
-    @NbBundle.Messages({"DataContentViewerHex.launchError=Unable to launch HxD Editor. "
+    @NbBundle.Messages({"DataContentViewerBinary.launchError=Unable to launch HxD Editor. "
         + "Please specify the HxD install location in Tools -> Options -> External Viewer",
-        "DataContentViewerHex.copyingFile=Copying file to open in HxD..."})
+        "DataContentViewerBinary.copyingFile=Copying file to open in HxD..."})
     private void launchHxDButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_launchHxDButtonActionPerformed
         new BackgroundFileCopyTask().execute();
     }//GEN-LAST:event_launchHxDButtonActionPerformed
@@ -383,7 +414,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
         @Override
         public Void doInBackground() throws InterruptedException {
-            ProgressHandle progress = ProgressHandle.createHandle(DataContentViewerHex_copyingFile(), () -> {
+            ProgressHandle progress = ProgressHandle.createHandle(Bundle.DataContentViewerBinary_copyingFile(), () -> {
                 //Cancel the swing worker (which will interrupt the ContentUtils call below)
                 this.cancel(true);
                 wasCancelled = true;
@@ -393,7 +424,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             try {
                 File HxDExecutable = new File(UserPreferences.getExternalHexEditorPath());
                 if (!HxDExecutable.exists() || !HxDExecutable.canExecute()) {
-                    JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
+                    JOptionPane.showMessageDialog(null, Bundle.DataContentViewerBinary_launchError());
                     return null;
                 }
 
@@ -418,12 +449,12 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                     launchHxDExecutable.start();
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Unsuccessful attempt to launch HxD", ex);
-                    JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
+                    JOptionPane.showMessageDialog(null, Bundle.DataContentViewerBinary_launchError());
                     tempFile.delete();
                 }
             } catch (NoCurrentCaseException | IOException ex) {
                 logger.log(Level.SEVERE, "Unable to copy file into temp directory", ex);
-                JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
+                JOptionPane.showMessageDialog(null, Bundle.DataContentViewerBinary_launchError());
             }
 
             progress.finish();
@@ -433,13 +464,13 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel binaryViewerPanel;
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JLabel goToOffsetLabel;
     private javax.swing.JTextField goToOffsetTextField;
     private javax.swing.JLabel goToPageLabel;
     private javax.swing.JTextField goToPageTextField;
-    private javax.swing.JPanel hexViewerPanel;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JButton launchHxDButton;
@@ -477,11 +508,11 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }
 
     @Messages({
-        "DataContentViewerHex_loading_text=Loading hex from file..."
+        "DataContentViewerBinary_loading_text=Loading binary from file..."
     })
 
     /**
-     * Launches the worker thread to read the hex from the given source.
+     * Launches the worker thread to read the binary from the given source.
      *
      * @param source
      * @param offset
@@ -494,8 +525,10 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
         worker = new HexWorker(source, offset, page);
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        outputTextArea.setText(Bundle.DataContentViewerHex_loading_text());
+        outputTextArea.setText(Bundle.DataContentViewerBinary_loading_text());
         worker.execute();
+        // codeArea.setContentData(new ContentBinaryData(dataSource));
+        codeArea.setEnabled(true);
     }
 
     @Override
@@ -528,17 +561,17 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
     @Override
     public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerHex.title");
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.title");
     }
 
     @Override
     public String getToolTip() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerHex.toolTip");
+        return NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.toolTip");
     }
 
     @Override
     public DataContentViewer createInstance() {
-        return new DataContentViewerHex();
+        return new DataContentViewerBinary();
     }
 
     @Override
@@ -549,6 +582,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         currentPageLabel.setText("");
         totalPageLabel.setText("");
         outputTextArea.setText("");
+        codeArea.setContentData(null);
+        codeArea.setEnabled(false);
         setComponentsVisibility(false); // hides the components that not needed
     }
 
@@ -570,6 +605,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         goToOffsetTextField.setVisible(isVisible);
         goToOffsetLabel.setVisible(isVisible);
         launchHxDButton.setVisible(isVisible);
+        invalidate();
     }
 
     @Override
@@ -592,7 +628,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }
 
     /**
-     * SwingWorker to fetch hex from the given data source.
+     * SwingWorker to fetch binary from the given data source.
      */
     private class HexWorker extends SwingWorker<String, Void> {
 
@@ -644,6 +680,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             try {
                 String text = get();
                 outputTextArea.setText(text);
+                codeArea.setContentData(new ByteArrayData(data));
 
                 // disable or enable the next button
                 if ((errorText.isEmpty()) && (newCurrentPage < totalPages)) {
