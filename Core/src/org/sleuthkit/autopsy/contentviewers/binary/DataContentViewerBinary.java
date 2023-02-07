@@ -20,28 +20,40 @@ package org.sleuthkit.autopsy.contentviewers.binary;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.ButtonGroup;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
+import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Utilities;
-import org.exbin.auxiliary.paged_data.ByteArrayData;
+import org.exbin.bined.CodeType;
 import org.exbin.bined.EditMode;
 import org.exbin.bined.SelectionRange;
 import org.exbin.bined.highlight.swing.HighlightNonAsciiCodeAreaPainter;
@@ -50,19 +62,18 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.contentviewers.utils.ViewerPriority;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.contentviewers.binary.Bundle;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerUtility;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Binary view of file contents.
@@ -71,15 +82,23 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProvider(service = DataContentViewer.class, position = 1)
 public class DataContentViewerBinary extends javax.swing.JPanel implements DataContentViewer {
 
-    private static final long PAGE_LENGTH = 16384;
-    private static int currentPage = 1;
-    private int totalPages;
     private Content dataSource;
     private CodeArea codeArea = new CodeArea();
     private ValuesPanel valuesPanel;
     private JScrollPane valuesPanelScrollPane;
 
-    private HexWorker worker;
+    private Mode mode = Mode.NO_DATA;
+
+    private final AbstractAction cycleCodeTypesAction;
+    private final JRadioButtonMenuItem binaryCodeTypeAction;
+    private final JRadioButtonMenuItem octalCodeTypeAction;
+    private final JRadioButtonMenuItem decimalCodeTypeAction;
+    private final JRadioButtonMenuItem hexadecimalCodeTypeAction;
+    private final ButtonGroup codeTypeButtonGroup;
+    private DropDownButton codeTypeDropDown;
+    private final JToggleButton codeColorizationToggleButton = new JToggleButton();
+    private final JButton goToButton = new JButton();
+    private final JButton refreshButton = new JButton();
 
     private static final Logger logger = Logger.getLogger(DataContentViewerBinary.class.getName());
 
@@ -87,6 +106,50 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
      * Creates new form DataContentViewerBinary
      */
     public DataContentViewerBinary() {
+        codeTypeButtonGroup = new ButtonGroup();
+        binaryCodeTypeAction = new JRadioButtonMenuItem(new AbstractAction(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.codeType.binary")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                codeArea.setCodeType(CodeType.BINARY);
+                updateCycleButtonState();
+            }
+        });
+        codeTypeButtonGroup.add(binaryCodeTypeAction);
+        octalCodeTypeAction = new JRadioButtonMenuItem(new AbstractAction(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.codeType.octal")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                codeArea.setCodeType(CodeType.OCTAL);
+                updateCycleButtonState();
+            }
+        });
+        codeTypeButtonGroup.add(octalCodeTypeAction);
+        decimalCodeTypeAction = new JRadioButtonMenuItem(new AbstractAction(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.codeType.decimal")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                codeArea.setCodeType(CodeType.DECIMAL);
+                updateCycleButtonState();
+            }
+        });
+        codeTypeButtonGroup.add(decimalCodeTypeAction);
+        hexadecimalCodeTypeAction = new JRadioButtonMenuItem(new AbstractAction(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.codeType.hexadecimal")) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                codeArea.setCodeType(CodeType.HEXADECIMAL);
+                updateCycleButtonState();
+            }
+        });
+        codeTypeButtonGroup.add(hexadecimalCodeTypeAction);
+        cycleCodeTypesAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int codeTypePos = codeArea.getCodeType().ordinal();
+                CodeType[] values = CodeType.values();
+                CodeType next = codeTypePos + 1 >= values.length ? values[0] : values[codeTypePos + 1];
+                codeArea.setCodeType(next);
+                updateCycleButtonState();
+            }
+        };
+
         initComponents();
         customizeComponents();
         this.resetComponent();
@@ -94,27 +157,94 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
 
     private void customizeComponents() {
         codeArea.setComponentPopupMenu(rightClickMenu);
+        textArea.setComponentPopupMenu(rightClickMenu);
         codeArea.setEditMode(EditMode.READ_ONLY);
         codeArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
-        codeArea.setPainter(new HighlightNonAsciiCodeAreaPainter(codeArea));
-        add(codeArea, BorderLayout.CENTER);
+        codeArea.setPainter(new HighlightNonAsciiCodeAreaPainter(codeArea) {
+            @Override
+            public void paintComponent(Graphics g) {
+                try {
+                    super.paintComponent(g);
+                } catch (ContentBinaryData.TskReadException ex) {
+                    String message = NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.textArea.errorText", ex.getPosition(), ex.getPosition() + ex.getLength());
+                    if (mode == Mode.ERROR) {
+                        textArea.append("\n" + message);
+                    } else {
+                        textArea.setText(message);
+                        switchMode(Mode.ERROR);
+                    }
+                } catch (Exception ex) {
+                    String message = NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.textArea.exceptionText", ex.getMessage());
+                    if (mode == Mode.ERROR) {
+                        textArea.append("\n" + message);
+                    } else {
+                        textArea.setText(message);
+                        switchMode(Mode.ERROR);
+                    }
+                }
+            }
+        });
 
         valuesPanel = new ValuesPanel();
         valuesPanel.setCodeArea(codeArea);
         valuesPanel.enableUpdate();
         valuesPanelScrollPane = new JScrollPane(valuesPanel);
         valuesPanelScrollPane.setBorder(null);
-        add(valuesPanelScrollPane, BorderLayout.EAST);
 
-        invalidate();
-        outputTextArea.setComponentPopupMenu(rightClickMenu);
+        cycleCodeTypesAction.putValue(Action.SHORT_DESCRIPTION, NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.cycleCodeTypesAction.text"));
+        JPopupMenu cycleCodeTypesPopupMenu = new JPopupMenu();
+        cycleCodeTypesPopupMenu.add(binaryCodeTypeAction);
+        cycleCodeTypesPopupMenu.add(octalCodeTypeAction);
+        cycleCodeTypesPopupMenu.add(decimalCodeTypeAction);
+        cycleCodeTypesPopupMenu.add(hexadecimalCodeTypeAction);
+        codeTypeDropDown = new DropDownButton(cycleCodeTypesAction, cycleCodeTypesPopupMenu);
+        updateCycleButtonState();
+        controlToolBar.add(codeTypeDropDown);
+
+        controlToolBar.addSeparator();
+
+        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/binary/arrow_refresh.png")));
+        refreshButton.setToolTipText(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.refreshButton.toolTipText"));
+        refreshButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                refreshButtonActionPerformed(evt);
+            }
+        });
+        controlToolBar.add(refreshButton);
+        codeColorizationToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/binary/color_swatch.png")));
+        codeColorizationToggleButton.setToolTipText(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.codeColorizationToggleButton.toolTipText"));
+        codeColorizationToggleButton.setSelected(((HighlightNonAsciiCodeAreaPainter) codeArea.getPainter()).isNonAsciiHighlightingEnabled());
+        codeColorizationToggleButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                codeColorizationToggleButtonActionPerformed(evt);
+            }
+        });
+        controlToolBar.add(codeColorizationToggleButton);
+        goToButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/binary/bullet_go.png")));
+        goToButton.setToolTipText(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.goToButton.toolTipText"));
+        goToButton.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                goToButtonActionPerformed(evt);
+            }
+        });
+        controlToolBar.add(goToButton);
+        codeArea.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK), new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                goToButtonActionPerformed(e);
+            }
+        });
+
         ActionListener actList = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JMenuItem jmi = (JMenuItem) e.getSource();
                 if (jmi.equals(copyMenuItem)) {
                     if (dataSource == null) {
-                        outputTextArea.copy();
+                        textArea.copy();
                     } else {
                         SelectionRange selectionRange = codeArea.getSelection();
                         long selectionLength = selectionRange.getLength();
@@ -129,7 +259,7 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
                     }
                 } else if (jmi.equals(selectAllMenuItem)) {
                     if (dataSource == null) {
-                        outputTextArea.selectAll();
+                        textArea.selectAll();
                     } else {
                         codeArea.selectAll();
                     }
@@ -138,6 +268,49 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
         };
         copyMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
+        textArea.setText(NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.textArea.noDataText"));
+    }
+    
+    private void switchMode(Mode mode) {
+        if (this.mode != mode) {
+            switch (this.mode) {
+                case NO_DATA: {
+                    remove(textAreaScrollPane);
+                    break;
+                }
+                case DATA: {
+                    remove(codeArea);
+                    remove(valuesPanelScrollPane);
+                    remove(toolBarPanel);
+                    break;
+                }
+                case ERROR: {
+                    remove(toolBarPanel);
+                    remove(textAreaScrollPane);
+                    break;
+                }
+            }
+            this.mode = mode;
+            switch (mode) {
+                case NO_DATA: {
+                    textArea.setText(NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.textArea.noDataText"));
+                    add(textAreaScrollPane, BorderLayout.CENTER);
+                    break;
+                }
+                case DATA: {
+                    add(codeArea, BorderLayout.CENTER);
+                    add(valuesPanelScrollPane, BorderLayout.EAST);
+                    add(toolBarPanel, BorderLayout.NORTH);
+                    break;
+                }
+                case ERROR: {
+                    add(toolBarPanel, BorderLayout.NORTH);
+                    add(textAreaScrollPane, BorderLayout.CENTER);
+                    break;
+                }
+            }
+            invalidate();
+        }
     }
 
     /**
@@ -152,22 +325,11 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
         rightClickMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        outputTextArea = new javax.swing.JTextArea();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        binaryViewerPanel = new javax.swing.JPanel();
-        totalPageLabel = new javax.swing.JLabel();
-        ofLabel = new javax.swing.JLabel();
-        currentPageLabel = new javax.swing.JLabel();
-        pageLabel = new javax.swing.JLabel();
-        prevPageButton = new javax.swing.JButton();
-        nextPageButton = new javax.swing.JButton();
-        pageLabel2 = new javax.swing.JLabel();
-        goToPageTextField = new javax.swing.JTextField();
-        goToPageLabel = new javax.swing.JLabel();
-        goToOffsetLabel = new javax.swing.JLabel();
-        goToOffsetTextField = new javax.swing.JTextField();
+        toolBarPanel = new javax.swing.JPanel();
+        controlToolBar = new javax.swing.JToolBar();
         launchHxDButton = new javax.swing.JButton();
+        textAreaScrollPane = new javax.swing.JScrollPane();
+        textArea = new javax.swing.JTextArea();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
@@ -175,81 +337,8 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        jScrollPane3.setPreferredSize(new java.awt.Dimension(300, 33));
-
-        outputTextArea.setEditable(false);
-        outputTextArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
-        outputTextArea.setTabSize(0);
-        outputTextArea.setInheritsPopupMenu(true);
-        jScrollPane3.setViewportView(outputTextArea);
-
-        setPreferredSize(new java.awt.Dimension(100, 58));
-        setLayout(new java.awt.BorderLayout());
-
-        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-
-        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.totalPageLabel.text_1")); // NOI18N
-
-        ofLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.ofLabel.text_1")); // NOI18N
-
-        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.currentPageLabel.text_1")); // NOI18N
-        currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
-        currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
-
-        pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.pageLabel.text_1")); // NOI18N
-        pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
-        pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
-
-        prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
-        prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.prevPageButton.text")); // NOI18N
-        prevPageButton.setBorderPainted(false);
-        prevPageButton.setContentAreaFilled(false);
-        prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
-        prevPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        prevPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
-        prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
-        prevPageButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                prevPageButtonActionPerformed(evt);
-            }
-        });
-
-        nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
-        nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.nextPageButton.text")); // NOI18N
-        nextPageButton.setBorderPainted(false);
-        nextPageButton.setContentAreaFilled(false);
-        nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
-        nextPageButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        nextPageButton.setPreferredSize(new java.awt.Dimension(23, 23));
-        nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
-        nextPageButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nextPageButtonActionPerformed(evt);
-            }
-        });
-
-        pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.pageLabel2.text")); // NOI18N
-        pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
-        pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
-
-        goToPageTextField.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.goToPageTextField.text")); // NOI18N
-        goToPageTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                goToPageTextFieldActionPerformed(evt);
-            }
-        });
-
-        goToPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.goToPageLabel.text")); // NOI18N
-
-        goToOffsetLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.goToOffsetLabel.text")); // NOI18N
-
-        goToOffsetTextField.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.goToOffsetTextField.text")); // NOI18N
-        goToOffsetTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                goToOffsetTextFieldActionPerformed(evt);
-            }
-        });
+        controlToolBar.setBorderPainted(false);
+        controlToolBar.setFocusable(false);
 
         launchHxDButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.launchHxDButton.text")); // NOI18N
         launchHxDButton.addActionListener(new java.awt.event.ActionListener() {
@@ -258,144 +347,68 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
             }
         });
 
-        javax.swing.GroupLayout binaryViewerPanelLayout = new javax.swing.GroupLayout(binaryViewerPanel);
-        binaryViewerPanel.setLayout(binaryViewerPanelLayout);
-        binaryViewerPanelLayout.setHorizontalGroup(
-            binaryViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(binaryViewerPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(ofLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(totalPageLabel)
-                .addGap(50, 50, 50)
-                .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        javax.swing.GroupLayout toolBarPanelLayout = new javax.swing.GroupLayout(toolBarPanel);
+        toolBarPanel.setLayout(toolBarPanelLayout);
+        toolBarPanelLayout.setHorizontalGroup(
+            toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, toolBarPanelLayout.createSequentialGroup()
+                .addComponent(controlToolBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(goToPageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(goToOffsetLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(goToOffsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(launchHxDButton)
-                .addContainerGap(146, Short.MAX_VALUE))
+                .addContainerGap())
         );
-        binaryViewerPanelLayout.setVerticalGroup(
-            binaryViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(binaryViewerPanelLayout.createSequentialGroup()
-                .addGroup(binaryViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(binaryViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(ofLabel)
-                        .addComponent(totalPageLabel))
-                    .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(goToPageLabel)
-                    .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(goToOffsetLabel)
-                    .addGroup(binaryViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(goToOffsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(launchHxDButton)))
-                .addGap(0, 0, 0))
+        toolBarPanelLayout.setVerticalGroup(
+            toolBarPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(launchHxDButton)
+            .addComponent(controlToolBar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         launchHxDButton.setEnabled(PlatformUtil.isWindowsOS());
 
-        jScrollPane2.setViewportView(binaryViewerPanel);
+        setPreferredSize(new java.awt.Dimension(100, 58));
+        setLayout(new java.awt.BorderLayout());
 
-        add(jScrollPane2, java.awt.BorderLayout.PAGE_START);
+        textAreaScrollPane.setPreferredSize(new java.awt.Dimension(300, 33));
+
+        textArea.setEditable(false);
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        textArea.setTabSize(0);
+        textArea.setInheritsPopupMenu(true);
+        textAreaScrollPane.setViewportView(textArea);
+
+        add(textAreaScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
-        setDataViewByPageNumber(currentPage - 1);
-        goToPageTextField.setText(Integer.toString(currentPage));
-    }//GEN-LAST:event_prevPageButtonActionPerformed
-
-    private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
-        setDataViewByPageNumber(currentPage + 1);
-        goToPageTextField.setText(Integer.toString(currentPage));
-    }//GEN-LAST:event_nextPageButtonActionPerformed
-
-    private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
-        String pageNumberStr = goToPageTextField.getText();
-        int pageNumber;
-        try {
-            pageNumber = Integer.parseInt(pageNumberStr);
-        } catch (NumberFormatException ex) {
-            pageNumber = totalPages + 1;
-        }
-        if (pageNumber > totalPages || pageNumber < 1) {
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "DataContentViewerBinary.goToPageTextField.msgDlg",
-                            totalPages),
-                    NbBundle.getMessage(this.getClass(),
-                            "DataContentViewerBinary.goToPageTextField.err"),
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        setDataViewByPageNumber(pageNumber);
-    }//GEN-LAST:event_goToPageTextFieldActionPerformed
-
-    /**
-     * *
-     * Calculates the offset relative to the current caret position.
-     *
-     * @param userInput the user provided signed offset value.
-     *
-     * @return returns the resultant offset value relative to the current caret
-     *         position. -1L is returned if the resultant offset cannot be
-     *         calculated.
-     */
-    private long getOffsetRelativeToCaretPosition(Long userInput) {
-        String userSelectedLine;
-        try {
-            // get the selected line. Extract the current hex offset location.
-            userSelectedLine = outputTextArea.getText().subSequence(
-                    Utilities.getRowStart(outputTextArea, outputTextArea.getCaretPosition()),
-                    Utilities.getRowEnd(outputTextArea, outputTextArea.getCaretPosition()))
-                    .toString();
-            // NOTE: This needs to change if the outputFormat of outputTextArea changes.
-            String hexForUserSelectedLine = userSelectedLine.substring(0, userSelectedLine.indexOf(':'));
-
-            return Long.decode(hexForUserSelectedLine) + userInput;
-        } catch (BadLocationException | StringIndexOutOfBoundsException | NumberFormatException ex) {
-            // thrown in case the caret location is out of the range of the outputTextArea.
-            return -1L;
+    private void updateCycleButtonState() {
+        CodeType codeType = codeArea.getCodeType();
+        codeTypeDropDown.setActionText(codeType.name().substring(0, 3));
+        switch (codeType) {
+            case BINARY: {
+                if (!binaryCodeTypeAction.isSelected()) {
+                    binaryCodeTypeAction.setSelected(true);
+                }
+                break;
+            }
+            case OCTAL: {
+                if (!octalCodeTypeAction.isSelected()) {
+                    octalCodeTypeAction.setSelected(true);
+                }
+                break;
+            }
+            case DECIMAL: {
+                if (!decimalCodeTypeAction.isSelected()) {
+                    decimalCodeTypeAction.setSelected(true);
+                }
+                break;
+            }
+            case HEXADECIMAL: {
+                if (!hexadecimalCodeTypeAction.isSelected()) {
+                    hexadecimalCodeTypeAction.setSelected(true);
+                }
+                break;
+            }
         }
     }
-
-    private void goToOffsetTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToOffsetTextFieldActionPerformed
-        long offset;
-        try {
-            if (goToOffsetTextField.getText().startsWith("+") || goToOffsetTextField.getText().startsWith("-")) {
-                offset = getOffsetRelativeToCaretPosition(Long.decode(goToOffsetTextField.getText()));
-            } else {
-                offset = Long.decode(goToOffsetTextField.getText());
-            }
-        } catch (NumberFormatException ex) {
-            // notify the user and return
-            JOptionPane.showMessageDialog(this, NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.goToOffsetTextField.msgDlg", goToOffsetTextField.getText()));
-            return;
-        }
-
-        if (offset >= 0) {
-            setDataViewByOffset(offset);
-        } else {
-            outputTextArea.setText(NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.setDataView.invalidOffset.negativeOffsetValue"));
-        }
-    }//GEN-LAST:event_goToOffsetTextFieldActionPerformed
 
     @NbBundle.Messages({"DataContentViewerBinary.launchError=Unable to launch HxD Editor. "
         + "Please specify the HxD install location in Tools -> Options -> External Viewer",
@@ -462,82 +475,80 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
         }
     }
 
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel binaryViewerPanel;
+    private javax.swing.JToolBar controlToolBar;
     private javax.swing.JMenuItem copyMenuItem;
-    private javax.swing.JLabel currentPageLabel;
-    private javax.swing.JLabel goToOffsetLabel;
-    private javax.swing.JTextField goToOffsetTextField;
-    private javax.swing.JLabel goToPageLabel;
-    private javax.swing.JTextField goToPageTextField;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JButton launchHxDButton;
-    private javax.swing.JButton nextPageButton;
-    private javax.swing.JLabel ofLabel;
-    private javax.swing.JTextArea outputTextArea;
-    private javax.swing.JLabel pageLabel;
-    private javax.swing.JLabel pageLabel2;
-    private javax.swing.JButton prevPageButton;
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
-    private javax.swing.JLabel totalPageLabel;
+    private javax.swing.JTextArea textArea;
+    private javax.swing.JScrollPane textAreaScrollPane;
+    private javax.swing.JPanel toolBarPanel;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Sets the DataView (The tabbed panel) by page number
-     *
-     * @param page Page to display (1-based counting)
-     */
-    private void setDataViewByPageNumber(int page) {
-        if (page == 0) {
-            return;
-        }
+    private void codeColorizationToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        ((HighlightNonAsciiCodeAreaPainter) codeArea.getPainter()).setNonAsciiHighlightingEnabled(codeColorizationToggleButton.isSelected());
+        codeArea.repaint();
+    }
+    
+    private void goToButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        JDialog dialog = new JDialog(WindowManager.getDefault().getMainWindow(), true);
 
-        launchWorker(dataSource, (page - 1) * PAGE_LENGTH, page);
+        String cancelName = "cancel";
+        InputMap inputMap = dialog.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
+        ActionMap actionMap = dialog.getRootPane().getActionMap();
+
+        actionMap.put(cancelName, new AbstractAction() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispose();
+            }
+        });
+
+        dialog.setTitle(NbBundle.getMessage(this.getClass(), "GoToBinaryPanel.title"));
+        GoToBinaryPanel goToPanel = new GoToBinaryPanel();
+        goToPanel.setCursorPosition(codeArea.getDataPosition());
+        goToPanel.setMaxPosition(codeArea.getDataSize());
+        DefaultControlPanel controlPanel = new DefaultControlPanel();
+        dialog.getContentPane().add(controlPanel, BorderLayout.SOUTH);
+        dialog.getContentPane().add(goToPanel, BorderLayout.CENTER);
+        controlPanel.setHandler((actionType) -> {
+            if (actionType == DefaultControlPanel.ControlActionType.OK) {
+                goToPanel.acceptInput();
+                codeArea.setCaretPosition(goToPanel.getTargetPosition());
+                codeArea.revealCursor();
+            }
+
+            dialog.setVisible(false);
+            dialog.dispose();
+        });
+        SwingUtilities.invokeLater(goToPanel::initFocus);
+        Dimension preferredSize = goToPanel.getPreferredSize();
+        dialog.setSize(preferredSize.width, preferredSize.height + controlPanel.getPreferredSize().height);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
-    /**
-     * Sets the DataView (The tabbed panel) by offset
-     *
-     * @param offset Page to display (1-based counting)
-     */
-    private void setDataViewByOffset(long offset) {
-        launchWorker(dataSource, offset, (int) (offset / PAGE_LENGTH) + 1);
+    private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        if (mode != Mode.NO_DATA) {
+            ((ContentBinaryData) codeArea.getContentData()).clearCache();
+            if (mode == Mode.ERROR) {
+                switchMode(Mode.DATA);
+            }
+            codeArea.repaint();
+        }
     }
 
     @Messages({
         "DataContentViewerBinary_loading_text=Loading binary from file..."
     })
 
-    /**
-     * Launches the worker thread to read the binary from the given source.
-     *
-     * @param source
-     * @param offset
-     * @param page
-     */
-    private void launchWorker(Content source, long offset, int page) {
-        if (this.dataSource == null) {
-            return;
-        }
-
-        worker = new HexWorker(source, offset, page);
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        outputTextArea.setText(Bundle.DataContentViewerBinary_loading_text());
-        worker.execute();
-        // codeArea.setContentData(new ContentBinaryData(dataSource));
-        codeArea.setEnabled(true);
-    }
-
     @Override
     public void setNode(Node selectedNode) {
-        if (worker != null) {
-            worker.cancel(true);
-            worker = null;
-        }
-
         resetComponent();
 
         if ((selectedNode == null)) {
@@ -546,17 +557,13 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
 
         Content content = DataContentViewerUtility.getDefaultContent(selectedNode);
         if (content == null) {
+            switchMode(Mode.NO_DATA);
             return;
         }
 
         dataSource = content;
-        totalPages = 0;
-        if (dataSource.getSize() > 0) {
-            totalPages = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
-        }
-        totalPageLabel.setText(Integer.toString(totalPages));
-
-        this.setDataViewByPageNumber(1);
+        codeArea.setContentData(new ContentBinaryData(dataSource));
+        switchMode(Mode.DATA);
     }
 
     @Override
@@ -577,35 +584,9 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
     @Override
     public void resetComponent() {
         // clear / reset the fields
-        currentPage = 1;
         this.dataSource = null;
-        currentPageLabel.setText("");
-        totalPageLabel.setText("");
-        outputTextArea.setText("");
         codeArea.setContentData(null);
-        codeArea.setEnabled(false);
-        setComponentsVisibility(false); // hides the components that not needed
-    }
-
-    /**
-     * To set the visibility of specific components in this class.
-     *
-     * @param isVisible whether to show or hide the specific components
-     */
-    private void setComponentsVisibility(boolean isVisible) {
-        currentPageLabel.setVisible(isVisible);
-        totalPageLabel.setVisible(isVisible);
-        ofLabel.setVisible(isVisible);
-        prevPageButton.setVisible(isVisible);
-        nextPageButton.setVisible(isVisible);
-        pageLabel.setVisible(isVisible);
-        pageLabel2.setVisible(isVisible);
-        goToPageTextField.setVisible(isVisible);
-        goToPageLabel.setVisible(isVisible);
-        goToOffsetTextField.setVisible(isVisible);
-        goToOffsetLabel.setVisible(isVisible);
-        launchHxDButton.setVisible(isVisible);
-        invalidate();
+        switchMode(Mode.NO_DATA);
     }
 
     @Override
@@ -627,84 +608,9 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
         return this;
     }
 
-    /**
-     * SwingWorker to fetch binary from the given data source.
-     */
-    private class HexWorker extends SwingWorker<String, Void> {
-
-        private final byte[] data = new byte[(int) PAGE_LENGTH];
-        private final long offset;
-        private final Content content;
-        private final int newCurrentPage;
-        private String errorText = "";
-
-        HexWorker(Content content, long offset, int newCurrentPage) {
-            this.content = content;
-            this.offset = offset;
-            this.newCurrentPage = newCurrentPage;
-        }
-
-        @Override
-        protected String doInBackground() throws Exception {
-            int bytesRead = 0;
-            if (content.getSize() > 0) {
-                try {
-                    bytesRead = content.read(data, offset, PAGE_LENGTH); // read the data
-                } catch (TskCoreException ex) {
-                    errorText = NbBundle.getMessage(this.getClass(), "DataContentViewerHex.setDataView.errorText", offset,
-                            offset + PAGE_LENGTH);
-                    logger.log(Level.WARNING, "Error while trying to show the hex content.", ex); //NON-NLS
-                }
-            }
-
-            // set the data on the bottom and show it
-            if (bytesRead <= 0) {
-                errorText = NbBundle.getMessage(this.getClass(), "DataContentViewerHex.setDataView.errorText", offset,
-                        offset + PAGE_LENGTH);
-            }
-
-            if (errorText.isEmpty()) {
-                int showLength = bytesRead < PAGE_LENGTH ? bytesRead : (int) PAGE_LENGTH;
-                return DataConversion.byteArrayToHex(data, showLength, offset);
-            } else {
-                return errorText;
-            }
-        }
-
-        @Override
-        public void done() {
-            if (isCancelled()) {
-                return;
-            }
-
-            try {
-                String text = get();
-                outputTextArea.setText(text);
-                codeArea.setContentData(new ByteArrayData(data));
-
-                // disable or enable the next button
-                if ((errorText.isEmpty()) && (newCurrentPage < totalPages)) {
-                    nextPageButton.setEnabled(true);
-                } else {
-                    nextPageButton.setEnabled(false);
-                }
-
-                if ((errorText.isEmpty()) && (newCurrentPage > 1)) {
-                    prevPageButton.setEnabled(true);
-                } else {
-                    prevPageButton.setEnabled(false);
-                }
-
-                currentPageLabel.setText(Integer.toString(newCurrentPage));
-                setComponentsVisibility(true); // shows the components that not needed
-                outputTextArea.setCaretPosition(0);
-                goToPageTextField.setText(Integer.toString(newCurrentPage));
-                currentPage = newCurrentPage;
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-
-            } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to get hex data from content (%d)", content.getId()), ex);
-            }
-        }
+    private enum Mode {
+        NO_DATA,
+        DATA,
+        ERROR
     }
 }

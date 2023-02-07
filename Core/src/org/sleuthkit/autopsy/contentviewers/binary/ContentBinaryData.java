@@ -177,7 +177,7 @@ public class ContentBinaryData implements BinaryData {
             length -= copyLength;
         }
     }
-    
+
     private byte[] getPage(long pageIndex) {
         long position = pageIndex * PAGE_SIZE;
         long size = dataSource.getSize();
@@ -189,7 +189,7 @@ public class ContentBinaryData implements BinaryData {
         try {
             dataSource.read(bytes, position, pageSize);
         } catch (TskCoreException ex) {
-            throw new RuntimeException("Error when trying to read data", ex);
+            throw new TskReadException("Error when trying to read data", ex, position, pageSize);
         }
         return bytes;
     }
@@ -214,9 +214,39 @@ public class ContentBinaryData implements BinaryData {
         return new IndexOutOfBoundsException("Requested data out of bounds");
     }
 
+    public void clearCache() {
+        pages[0].clear();
+        pages[1].clear();
+    }
+
     private static class CachePage {
 
         long index = 0;
         byte[] data = null;
+
+        void clear() {
+            index = -1;
+            data = null;
+        }
+    }
+
+    public static class TskReadException extends RuntimeException {
+
+        private final long position;
+        private final int length;
+
+        public TskReadException(String string, Throwable thrwbl, long position, int length) {
+            super(string, thrwbl);
+            this.position = position;
+            this.length = length;
+        }
+
+        public long getPosition() {
+            return position;
+        }
+
+        public int getLength() {
+            return length;
+        }
     }
 }
