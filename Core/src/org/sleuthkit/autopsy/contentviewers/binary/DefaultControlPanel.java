@@ -117,6 +117,10 @@ public class DefaultControlPanel extends javax.swing.JPanel {
     public JButton getDefaultButton() {
         return okButton;
     }
+    
+    public void performOk() {
+        okButton.doClick();
+    }
 
     @ParametersAreNonnullByDefault
     public interface DefaultControlHandler {

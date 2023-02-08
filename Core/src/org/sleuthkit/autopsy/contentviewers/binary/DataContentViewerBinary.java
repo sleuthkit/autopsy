@@ -38,7 +38,6 @@ import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.ButtonGroup;
 import javax.swing.InputMap;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -49,7 +48,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
-import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -96,9 +94,6 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
     private final JRadioButtonMenuItem hexadecimalCodeTypeAction;
     private final ButtonGroup codeTypeButtonGroup;
     private DropDownButton codeTypeDropDown;
-    private final JToggleButton codeColorizationToggleButton = new JToggleButton();
-    private final JButton goToButton = new JButton();
-    private final JButton refreshButton = new JButton();
 
     private static final Logger logger = Logger.getLogger(DataContentViewerBinary.class.getName());
 
@@ -156,8 +151,6 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
     }
 
     private void customizeComponents() {
-        codeArea.setComponentPopupMenu(rightClickMenu);
-        textArea.setComponentPopupMenu(rightClickMenu);
         codeArea.setEditMode(EditMode.READ_ONLY);
         codeArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
         codeArea.setPainter(new HighlightNonAsciiCodeAreaPainter(codeArea) {
@@ -199,75 +192,65 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
         cycleCodeTypesPopupMenu.add(hexadecimalCodeTypeAction);
         codeTypeDropDown = new DropDownButton(cycleCodeTypesAction, cycleCodeTypesPopupMenu);
         updateCycleButtonState();
-        controlToolBar.add(codeTypeDropDown);
+        controlToolBar.add(codeTypeDropDown, 0);
 
-        controlToolBar.addSeparator();
-
-        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/binary/arrow_refresh.png")));
-        refreshButton.setToolTipText(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.refreshButton.toolTipText"));
-        refreshButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                refreshButtonActionPerformed(evt);
-            }
-        });
-        controlToolBar.add(refreshButton);
-        codeColorizationToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/binary/color_swatch.png")));
-        codeColorizationToggleButton.setToolTipText(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.codeColorizationToggleButton.toolTipText"));
         codeColorizationToggleButton.setSelected(((HighlightNonAsciiCodeAreaPainter) codeArea.getPainter()).isNonAsciiHighlightingEnabled());
-        codeColorizationToggleButton.addActionListener(new java.awt.event.ActionListener() {
+
+        ActionListener textAreaActionListener = new ActionListener() {
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                codeColorizationToggleButtonActionPerformed(evt);
+            public void actionPerformed(ActionEvent e) {
+                JMenuItem jmi = (JMenuItem) e.getSource();
+                if (jmi.equals(copyMenuItem)) {
+                    textArea.copy();
+                } else if (jmi.equals(selectAllMenuItem)) {
+                    textArea.selectAll();
+                }
             }
-        });
-        controlToolBar.add(codeColorizationToggleButton);
-        goToButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/binary/bullet_go.png")));
-        goToButton.setToolTipText(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.goToButton.toolTipText"));
-        goToButton.addActionListener(new java.awt.event.ActionListener() {
+        };
+        copyMenuItem.addActionListener(textAreaActionListener);
+        selectAllMenuItem.addActionListener(textAreaActionListener);
+
+        ActionListener codeAreaActionListener = new ActionListener() {
             @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                goToButtonActionPerformed(evt);
+            public void actionPerformed(ActionEvent e) {
+                JMenuItem jmi = (JMenuItem) e.getSource();
+                if (jmi.equals(codeAreaCopyMenuItem)) {
+                    codeArea.copy();
+                } else if (jmi.equals(codeAreaCopyTextMenuItem)) {
+                    SelectionRange selectionRange = codeArea.getSelection();
+                    long selectionLength = selectionRange.getLength();
+                    if (!selectionRange.isEmpty() && selectionLength < Integer.MAX_VALUE) {
+                        byte[] selectionData = new byte[(int) selectionLength];
+                        codeArea.getContentData().copyToArray(selectionRange.getStart(), selectionData, 0, (int) selectionLength);
+                        String clipboardContent = DataConversion.byteArrayToHex(selectionData, (int) selectionLength, 0);
+                        StringSelection selection = new StringSelection(clipboardContent);
+                        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                        clipboard.setContents(selection, selection);
+                    }
+                } else if (jmi.equals(codeAreaGoToMenuItem)) {
+                    goToButtonActionPerformed(e);
+                } else if (jmi.equals(codeAreaSelectAllMenuItem)) {
+                    codeArea.selectAll();
+                }
             }
-        });
-        controlToolBar.add(goToButton);
-        codeArea.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK), new AbstractAction() {
+        };
+        codeAreaCopyMenuItem.addActionListener(codeAreaActionListener);
+        codeAreaCopyTextMenuItem.addActionListener(codeAreaActionListener);
+        codeAreaSelectAllMenuItem.addActionListener(codeAreaActionListener);
+        codeAreaGoToMenuItem.addActionListener(codeAreaActionListener);
+        codeArea.setComponentPopupMenu(codeAreaPopupMenu);
+
+        String goToPositionActionId = "go-to-position";
+        ActionMap codeAreaActionMap = codeArea.getActionMap();
+        codeAreaActionMap.put(goToPositionActionId, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 goToButtonActionPerformed(e);
             }
         });
-
-        ActionListener actList = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JMenuItem jmi = (JMenuItem) e.getSource();
-                if (jmi.equals(copyMenuItem)) {
-                    if (dataSource == null) {
-                        textArea.copy();
-                    } else {
-                        SelectionRange selectionRange = codeArea.getSelection();
-                        long selectionLength = selectionRange.getLength();
-                        if (!selectionRange.isEmpty() && selectionLength < Integer.MAX_VALUE) {
-                            byte[] selectionData = new byte[(int) selectionLength];
-                            codeArea.getContentData().copyToArray(selectionRange.getStart(), selectionData, 0, (int) selectionLength);
-                            String clipboardContent = DataConversion.byteArrayToHex(selectionData, (int) selectionLength, 0);
-                            StringSelection selection = new StringSelection(clipboardContent);
-                            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                            clipboard.setContents(selection, selection);
-                        }
-                    }
-                } else if (jmi.equals(selectAllMenuItem)) {
-                    if (dataSource == null) {
-                        textArea.selectAll();
-                    } else {
-                        codeArea.selectAll();
-                    }
-                }
-            }
-        };
-        copyMenuItem.addActionListener(actList);
-        selectAllMenuItem.addActionListener(actList);
+        InputMap codeAreaInputMap = codeArea.getInputMap();
+        codeAreaInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.CTRL_DOWN_MASK), goToPositionActionId);
+        
         textArea.setText(NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.textArea.noDataText"));
     }
     
@@ -322,23 +305,82 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        rightClickMenu = new javax.swing.JPopupMenu();
+        textAreaPopupMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
+        codeAreaPopupMenu = new javax.swing.JPopupMenu();
+        codeAreaCopyMenuItem = new javax.swing.JMenuItem();
+        codeAreaCopyTextMenuItem = new javax.swing.JMenuItem();
+        codeAreaSelectAllMenuItem = new javax.swing.JMenuItem();
+        codeAreaGoToMenuItem = new javax.swing.JMenuItem();
         toolBarPanel = new javax.swing.JPanel();
         controlToolBar = new javax.swing.JToolBar();
+        refreshButton = new javax.swing.JButton();
+        codeColorizationToggleButton = new javax.swing.JToggleButton();
+        jSeparator1 = new javax.swing.JToolBar.Separator();
+        goToButton = new javax.swing.JButton();
         launchHxDButton = new javax.swing.JButton();
         textAreaScrollPane = new javax.swing.JScrollPane();
         textArea = new javax.swing.JTextArea();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.copyMenuItem.text")); // NOI18N
-        rightClickMenu.add(copyMenuItem);
+        textAreaPopupMenu.add(copyMenuItem);
 
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.selectAllMenuItem.text")); // NOI18N
-        rightClickMenu.add(selectAllMenuItem);
+        textAreaPopupMenu.add(selectAllMenuItem);
+
+        codeAreaCopyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.codeAreaCopyMenuItem.text")); // NOI18N
+        codeAreaPopupMenu.add(codeAreaCopyMenuItem);
+
+        codeAreaCopyTextMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.codeAreaCopyTextMenuItem.text")); // NOI18N
+        codeAreaPopupMenu.add(codeAreaCopyTextMenuItem);
+
+        codeAreaSelectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.codeAreaSelectAllMenuItem.text")); // NOI18N
+        codeAreaPopupMenu.add(codeAreaSelectAllMenuItem);
+
+        codeAreaGoToMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_G, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        codeAreaGoToMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.codeAreaGoToMenuItem.text")); // NOI18N
+        codeAreaPopupMenu.add(codeAreaGoToMenuItem);
 
         controlToolBar.setBorderPainted(false);
         controlToolBar.setFocusable(false);
+
+        refreshButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/binary/arrow_refresh.png"))); // NOI18N
+        refreshButton.setToolTipText(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.refreshButton.toolTipText"));
+        refreshButton.setFocusable(false);
+        refreshButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        refreshButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        refreshButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                refreshButtonActionPerformed(evt);
+            }
+        });
+        controlToolBar.add(refreshButton);
+
+        codeColorizationToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/binary/color_swatch.png"))); // NOI18N
+        codeColorizationToggleButton.setToolTipText(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.codeColorizationToggleButton.toolTipText"));
+        codeColorizationToggleButton.setFocusable(false);
+        codeColorizationToggleButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        codeColorizationToggleButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        codeColorizationToggleButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                codeColorizationToggleButtonActionPerformed(evt);
+            }
+        });
+        controlToolBar.add(codeColorizationToggleButton);
+        controlToolBar.add(jSeparator1);
+
+        goToButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/binary/bullet_go.png"))); // NOI18N
+        goToButton.setToolTipText(NbBundle.getMessage(this.getClass(), "DataContentViewerBinary.goToButton.toolTipText"));
+        goToButton.setFocusable(false);
+        goToButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        goToButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        goToButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                goToButtonActionPerformed(evt);
+            }
+        });
+        controlToolBar.add(goToButton);
 
         launchHxDButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerBinary.class, "DataContentViewerBinary.launchHxDButton.text")); // NOI18N
         launchHxDButton.addActionListener(new java.awt.event.ActionListener() {
@@ -373,7 +415,7 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
         textArea.setEditable(false);
         textArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
         textArea.setTabSize(0);
-        textArea.setInheritsPopupMenu(true);
+        textArea.setComponentPopupMenu(textAreaPopupMenu);
         textAreaScrollPane.setViewportView(textArea);
 
         add(textAreaScrollPane, java.awt.BorderLayout.CENTER);
@@ -416,6 +458,72 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
     private void launchHxDButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_launchHxDButtonActionPerformed
         new BackgroundFileCopyTask().execute();
     }//GEN-LAST:event_launchHxDButtonActionPerformed
+
+    private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
+        if (mode != Mode.NO_DATA) {
+            ((ContentBinaryData) codeArea.getContentData()).clearCache();
+            if (mode == Mode.ERROR) {
+                switchMode(Mode.DATA);
+            }
+            codeArea.repaint();
+        }
+    }//GEN-LAST:event_refreshButtonActionPerformed
+
+    private void goToButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToButtonActionPerformed
+        JDialog dialog = new JDialog(WindowManager.getDefault().getMainWindow(), true);
+        dialog.setTitle(NbBundle.getMessage(this.getClass(), "GoToBinaryPanel.title"));
+        GoToBinaryPanel goToPanel = new GoToBinaryPanel();
+        goToPanel.setCursorPosition(codeArea.getDataPosition());
+        goToPanel.setMaxPosition(codeArea.getDataSize());
+        DefaultControlPanel controlPanel = new DefaultControlPanel();
+        dialog.getContentPane().add(controlPanel, BorderLayout.SOUTH);
+        dialog.getContentPane().add(goToPanel, BorderLayout.CENTER);
+        controlPanel.setHandler((actionType) -> {
+            if (actionType == DefaultControlPanel.ControlActionType.OK) {
+                goToPanel.acceptInput();
+                codeArea.setCaretPosition(goToPanel.getTargetPosition());
+                codeArea.revealCursor();
+            }
+
+            dialog.setVisible(false);
+            dialog.dispose();
+        });
+
+        String cancelName = "esc-cancel";
+        String enterOk = "enter-ok";
+        InputMap inputMap = dialog.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), enterOk);
+        ActionMap actionMap = dialog.getRootPane().getActionMap();
+
+        actionMap.put(cancelName, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispose();
+            }
+        });
+
+        actionMap.put(enterOk, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                goToPanel.acceptInput();
+                controlPanel.performOk();
+            }
+        });
+
+        SwingUtilities.invokeLater(goToPanel::initFocus);
+        Dimension preferredSize = goToPanel.getPreferredSize();
+        dialog.getContentPane().setPreferredSize(new Dimension(preferredSize.width, preferredSize.height + controlPanel.getPreferredSize().height));
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }//GEN-LAST:event_goToButtonActionPerformed
+
+    private void codeColorizationToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_codeColorizationToggleButtonActionPerformed
+        ((HighlightNonAsciiCodeAreaPainter) codeArea.getPainter()).setNonAsciiHighlightingEnabled(codeColorizationToggleButton.isSelected());
+        codeArea.repaint();
+    }//GEN-LAST:event_codeColorizationToggleButtonActionPerformed
 
     /**
      * Performs the file copying and process launching in a SwingWorker so that
@@ -476,72 +584,24 @@ public class DataContentViewerBinary extends javax.swing.JPanel implements DataC
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem codeAreaCopyMenuItem;
+    private javax.swing.JMenuItem codeAreaCopyTextMenuItem;
+    private javax.swing.JMenuItem codeAreaGoToMenuItem;
+    private javax.swing.JPopupMenu codeAreaPopupMenu;
+    private javax.swing.JMenuItem codeAreaSelectAllMenuItem;
+    private javax.swing.JToggleButton codeColorizationToggleButton;
     private javax.swing.JToolBar controlToolBar;
     private javax.swing.JMenuItem copyMenuItem;
+    private javax.swing.JButton goToButton;
+    private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JButton launchHxDButton;
-    private javax.swing.JPopupMenu rightClickMenu;
+    private javax.swing.JButton refreshButton;
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JTextArea textArea;
+    private javax.swing.JPopupMenu textAreaPopupMenu;
     private javax.swing.JScrollPane textAreaScrollPane;
     private javax.swing.JPanel toolBarPanel;
     // End of variables declaration//GEN-END:variables
-
-    private void codeColorizationToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        ((HighlightNonAsciiCodeAreaPainter) codeArea.getPainter()).setNonAsciiHighlightingEnabled(codeColorizationToggleButton.isSelected());
-        codeArea.repaint();
-    }
-    
-    private void goToButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        JDialog dialog = new JDialog(WindowManager.getDefault().getMainWindow(), true);
-
-        String cancelName = "cancel";
-        InputMap inputMap = dialog.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
-        ActionMap actionMap = dialog.getRootPane().getActionMap();
-
-        actionMap.put(cancelName, new AbstractAction() {
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dialog.dispose();
-            }
-        });
-
-        dialog.setTitle(NbBundle.getMessage(this.getClass(), "GoToBinaryPanel.title"));
-        GoToBinaryPanel goToPanel = new GoToBinaryPanel();
-        goToPanel.setCursorPosition(codeArea.getDataPosition());
-        goToPanel.setMaxPosition(codeArea.getDataSize());
-        DefaultControlPanel controlPanel = new DefaultControlPanel();
-        dialog.getContentPane().add(controlPanel, BorderLayout.SOUTH);
-        dialog.getContentPane().add(goToPanel, BorderLayout.CENTER);
-        controlPanel.setHandler((actionType) -> {
-            if (actionType == DefaultControlPanel.ControlActionType.OK) {
-                goToPanel.acceptInput();
-                codeArea.setCaretPosition(goToPanel.getTargetPosition());
-                codeArea.revealCursor();
-            }
-
-            dialog.setVisible(false);
-            dialog.dispose();
-        });
-        SwingUtilities.invokeLater(goToPanel::initFocus);
-        Dimension preferredSize = goToPanel.getPreferredSize();
-        dialog.setSize(preferredSize.width, preferredSize.height + controlPanel.getPreferredSize().height);
-        dialog.setLocationRelativeTo(this);
-        dialog.setVisible(true);
-    }
-
-    private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        if (mode != Mode.NO_DATA) {
-            ((ContentBinaryData) codeArea.getContentData()).clearCache();
-            if (mode == Mode.ERROR) {
-                switchMode(Mode.DATA);
-            }
-            codeArea.repaint();
-        }
-    }
 
     @Messages({
         "DataContentViewerBinary_loading_text=Loading binary from file..."
