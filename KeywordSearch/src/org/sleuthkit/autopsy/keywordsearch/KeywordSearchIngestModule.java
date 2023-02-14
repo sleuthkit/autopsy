@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2022 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -375,7 +375,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (context.fileIngestIsCancelled()) {
                 return ProcessResult.OK;
             }
-            indexAndSearchFile(extractorOpt, abstractFile, mimeType, false);
+            searchFile(extractorOpt, abstractFile, mimeType, false);
             return ProcessResult.OK;
         }
 
@@ -383,7 +383,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         if (context.fileIngestIsCancelled()) {
             return ProcessResult.OK;
         }
-        indexAndSearchFile(extractorOpt, abstractFile, mimeType, true);
+        searchFile(extractorOpt, abstractFile, mimeType, true);
 
         return ProcessResult.OK;
     }
@@ -558,7 +558,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      *
      * @throws IngesterException exception thrown if indexing failed
      */
-    private boolean extractTextAndIndex(Optional<TextExtractor> extractorOptional, AbstractFile aFile,
+    private boolean extractTextAndSearch(Optional<TextExtractor> extractorOptional, AbstractFile aFile,
                 Map<String, String> extractedMetadata) throws IngesterException {
 
         try {
@@ -731,7 +731,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      * @param indexContent False if only metadata should be text_ingested. True
      *                     if content and metadata should be index.
      */
-    private void indexAndSearchFile(Optional<TextExtractor> extractor, AbstractFile aFile, String mimeType, boolean indexContent) {
+    private void searchFile(Optional<TextExtractor> extractor, AbstractFile aFile, String mimeType, boolean indexContent) {
         //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
 
         TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
@@ -802,7 +802,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 extractStringsAndIndex(aFile);
                 return;
             }
-            if (!extractTextAndIndex(extractor, aFile, extractedMetadata)) {
+            if (!extractTextAndSearch(extractor, aFile, extractedMetadata)) {
                 // Text extractor not found for file. Extract string only.
                 putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
             } else {
@@ -823,7 +823,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         if ((wasTextAdded == false) && (aFile.getNameExtension().equalsIgnoreCase("txt") && !(aFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)))) {
             //Carved Files should be the only type of unallocated files capable of a txt extension and 
             //should be ignored by the TextFileExtractor because they may contain more than one text encoding
-            wasTextAdded = indexTextFile(aFile);
+            wasTextAdded = searchTextFile(aFile);
         }
 
         // if it wasn't supported or had an error, default to strings
@@ -845,7 +845,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      *
      * @param aFile Text file to analyze
      */
-    private boolean indexTextFile(AbstractFile aFile) {
+    private boolean searchTextFile(AbstractFile aFile) {
         try {
             TextFileExtractor textFileExtractor = new TextFileExtractor(aFile);
             Reader textReader = textFileExtractor.getReader();
