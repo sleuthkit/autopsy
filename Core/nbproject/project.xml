@@ -689,12 +689,12 @@
                 <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-4.11.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-4.11.1.jar</binary-origin>
+                <runtime-relative-path>ext/sleuthkit-4.12.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-4.12.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-caseuco-4.11.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.11.1.jar</binary-origin>
+                <runtime-relative-path>ext/sleuthkit-caseuco-4.12.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-caseuco-4.12.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>

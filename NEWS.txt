@@ -1,3 +1,52 @@
+---------------- VERSION 4.20.0  --------------
+Recent Activity Updates:
+- Added Favicons, Profiles and Extensions to Chromium Browsers
+- Added Security Questions/Answers from SAM registry Hive
+
+Data Source Processing
+- Added Jython Support for Data Source Processor modules.
+- Added example Python DSP plugin
+
+Ingest Pipelines
+- Added new DataArtifact ingest pipeline that artifacts will go down.
+- Moved Keyword search functionality for artifacts to the new pipeline.
+
+Linux / Mac Improvements
+- Script to install prerequisites using Homebrew and Debian package. 
+- Script that allows you to install TSK from source
+- Script that sets JAVA home per install
+- Updating Linux and Mac Installation Documentation
+
+Command Line Interface
+- Simplified command line input parameters
+- The -listAllIngestProfiles switch was added
+- The -nogui switch now works.
+- Return codes now reflect if the application failed
+
+Bug Fixes:
+- Solr 8.11.2 Upgrade which includes update to Log4j to version 2.17.1
+- Change Timezone format for Plaso output.
+- Regex fix for Mbox parsing.
+- Portable Case report string index out of range -1 fixed
+- Extracting files, numbering of files and overwriting of files.
+- Image tagging
+- Joda-Time updated from 2.4 to 2.10 -  fixes certain timezone errors
+
+Misc:
+- Update to USB id's.
+- Update Tesseract to 4.10.
+- Moved configuration settings to separate ones that are machine-dependent. 
+- Interesting files and file filters can now exclude certain features, such as folders.
+- Adds host to artifact content viewer.
+- When an OS Account is selected the Other Occurrences tab will no longer show the open case in the case list.
+
+- The Communication window Message Viewer Threads panel layout was cleaned up so that the buttons are visible despite the subject length.
+- Limit ingest inbox messages to first 20 keyword hits
+- GStreamer update to version 1.20.0
+- libheif v1.12.0 replaces ImageMagick
+- Removal of 32bit version of Autopsy
+
+
 ---------------- VERSION 4.19.3  --------------
 Bug Fixes:
 - Updates for log4j vulnerabilities. 

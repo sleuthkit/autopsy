@@ -832,12 +832,12 @@
                 <binary-origin>release/modules/ext/jfxtras-fxml-17-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jna-5.12.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jna-5.12.1.jar</binary-origin>
+                <runtime-relative-path>ext/jna-5.13.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jna-5.13.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jna-platform-5.12.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jna-platform-5.12.0.jar</binary-origin>
+                <runtime-relative-path>ext/jna-platform-5.13.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jna-platform-5.13.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.10.14.jar</runtime-relative-path>

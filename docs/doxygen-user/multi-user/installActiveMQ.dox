@@ -9,7 +9,7 @@ ActiveMQ is a messaging service that allows the Autopsy clients to communicate w
 
 You will need:
 - 64-bit version of the Java 8 Runtime Environment (JRE) from https://github.com/ojdkbuild/ojdkbuild (<a href="https://github.com/ojdkbuild/ojdkbuild/releases/download/java-1.8.0-openjdk-1.8.0.242-1.b08/java-1.8.0-openjdk-1.8.0.242-1.b08.ojdkbuild.windows.x86_64.msi"> Link to installer</a>)
-- Download ActiveMQ from: http://activemq.apache.org/download.html . Autopsy has been tested with ActiveMQ version 5.14.0.
+- Download ActiveMQ from: http://activemq.apache.org/download.html . Autopsy has been tested with ActiveMQ version 5.14.0. Note that newer versions will not work with Java 8. 
 
 
 \section install_activemq_install Installation
@@ -29,7 +29,9 @@ If you need the JRE, install it with the default settings.
 
 <li>Open the <i>conf\\activemq.xml</i> file in the extracted folder in a text editor and make the following changes:
 <ul>
-<li> Add <i>"schedulePeriodForDestinationPurge="10000""</i> to the _broker_ tag then add <i>"gcInactiveDestinations="true" inactiveTimoutBeforeGC="30000""</i> to the _policyEntry_ tag. This is highlighted in yellow below:
+<li> Add <i>"schedulePeriodForDestinationPurge="10000""</i> to the _broker_ tag</li>
+<li> Add <i>"gcInactiveDestinations="true" inactiveTimoutBeforeGC="30000""</i> to the _policyEntry_ tag. 
+<li> These are both highlighted in yellow below:
 
 \image html activeMQ_node_cleanup.png
 
@@ -41,6 +43,8 @@ If you need the JRE, install it with the default settings.
 
 <li>Install ActiveMQ as a service by navigating to the folder <i>bin\\win64</i>, right-clicking _InstallService.bat_, clicking _Run as administrator_, then click _Yes_.
 
+<li>Add the bin\\win64\\wrapper.exe and java.exe (from the JRE) to the Windows firewall so that they can accept network communications.
+
 <li>Start the ActiveMQ service by pressing _Start_, type _services.msc_, and press _Enter_. Find _ActiveMQ_ in the list and press the _Start the service_ link.
 
 <li>ActiveMQ should now be installed and configured using the default credentials. 
@@ -48,7 +52,7 @@ If you need the JRE, install it with the default settings.
 
 \subsection install_activemq_test Testing
 
-To test your installation, you can access the admin pages in your web browser via a URL like this: http://localhost:8161/admin. 
+To test your installation, you can access the admin pages in your web browser (on the server) via a URL like this: http://localhost:8161/admin. NOTE that you cannot access this page from other hosts unless you go into jetty.xml and change org.apache.activemq.web.WebConsolePort so that host is 0.0.0.0 (and ensure that it is properly secured). 
 
 The default administrator username is _admin_ with a password of _admin_ and the default regular username is _user_ with a default password of _password_.  You can change these passwords by following the instructions below. 
 
@@ -57,7 +61,7 @@ If you can see a page that looks like the following, it confirms that the Active
 \image html activemq.PNG
 <br><br>
 
-You can confirm that your ActiveMQ installation is visible to other computers on the network by attempting to connect to a URL like the following (replacing the host name with that of the ActiveMQ computer) in a web browser: http://activemq-computer:61616
+You can also confirm that your ActiveMQ installation is visible to other computers on the network by attempting to connect to a URL like the following (replacing the host name with that of the ActiveMQ computer) in a web browser: http://activemq-computer:61616. This will not give you a nice web page, but will give you data from the server. 
 
 If you are unable to connect to this address:
 - Double check that the ActiveMQ service is running
