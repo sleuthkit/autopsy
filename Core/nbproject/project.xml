@@ -697,10 +697,6 @@
                 <binary-origin>release/modules/ext/sleuthkit-caseuco-4.12.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-api-1.7.36.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/snakeyaml-1.30.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/snakeyaml-1.30.jar</binary-origin>
             </class-path-extension>
