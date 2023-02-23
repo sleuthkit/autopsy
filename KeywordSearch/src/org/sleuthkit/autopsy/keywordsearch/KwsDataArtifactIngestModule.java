@@ -62,11 +62,11 @@ public class KwsDataArtifactIngestModule implements DataArtifactIngestModule {
                 ingester.search(blackboardExtractedTextReader, 
                         artifact.getArtifactID(), 
                         sourceName, artifact, 
-                        context, 
+                        context, true,
                         settings.isIndexToSolrEnabled(), 
                         settings.getNamesOfEnabledKeyWordLists());
             }
-        } catch (TskCoreException | TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException | Ingester.IngesterException ex) {
+        } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, String.format("Error indexing data artifact '%s' (job ID=%d)", artifact, context.getJobId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } 

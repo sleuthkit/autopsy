@@ -97,8 +97,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
                 ingester.indexMetaDataOnly(artifact, sourceName);
                 // Will not cause an inline search becauce the keyword list is null
-                ingester.search(blackboardExtractedTextReader, artifact.getArtifactID(), sourceName, content, null, true, null);
-            } catch (Ingester.IngesterException | TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+                ingester.search(blackboardExtractedTextReader, artifact.getArtifactID(), sourceName, content, null, true, true, null);
+            } catch (Exception ex) {
                 throw new TskCoreException("Error indexing artifact", ex);
             }
         } else {
@@ -106,8 +106,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 
                 Reader reader = KeywordSearchUtil.getReader(content);
                 // Will not cause an inline search becauce the keyword list is null
-                ingester.search(reader, content.getId(), content.getName(), content, null, true, null);
-            } catch (TextExtractorFactory.NoTextExtractorFound | Ingester.IngesterException | TextExtractor.InitReaderException ex) {
+                ingester.search(reader, content.getId(), content.getName(), content, null, true, true, null);
+            } catch (Exception ex) {
                 throw new TskCoreException("Error indexing content", ex);
             }
             // only do a Solr commit if ingest is not running. If ingest is running, the changes will 
@@ -418,8 +418,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             TextExtractor blackboardExtractor = TextExtractorFactory.getExtractor(artifact, null);
             Reader blackboardExtractedTextReader = blackboardExtractor.getReader();
             ingester.indexMetaDataOnly(artifact, sourceName);
-            ingester.search(blackboardExtractedTextReader, artifact.getId(), sourceName, artifact, null, true, null);
-        } catch (Ingester.IngesterException | TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+            ingester.search(blackboardExtractedTextReader, artifact.getId(), sourceName, artifact, null, true, true, null);
+        } catch (Exception ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
     }
