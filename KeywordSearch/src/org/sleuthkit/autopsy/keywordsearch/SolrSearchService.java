@@ -93,22 +93,28 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 return;
             }
             try {
-                Reader blackboardExtractedTextReader = KeywordSearchUtil.getReader(content);
+                TextExtractor blackboardExtractor = TextExtractorFactory.getExtractor(content, null);
+                Reader blackboardExtractedTextReader = blackboardExtractor.getReader();
                 String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
                 ingester.indexMetaDataOnly(artifact, sourceName);
-                // Will not cause an inline search becauce the keyword list is null
-                ingester.search(blackboardExtractedTextReader, artifact.getArtifactID(), sourceName, content, null, true, null);
+                ingester.indexText(blackboardExtractedTextReader, artifact.getArtifactID(), sourceName, content, null);
             } catch (Ingester.IngesterException | TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
                 throw new TskCoreException("Error indexing artifact", ex);
             }
         } else {
             try {
-                
-                Reader reader = KeywordSearchUtil.getReader(content);
-                // Will not cause an inline search becauce the keyword list is null
-                ingester.search(reader, content.getId(), content.getName(), content, null, true, null);
+                TextExtractor contentExtractor = TextExtractorFactory.getExtractor(content, null);
+                Reader contentExtractedTextReader = contentExtractor.getReader();
+                ingester.indexText(contentExtractedTextReader, content.getId(), content.getName(), content, null);
             } catch (TextExtractorFactory.NoTextExtractorFound | Ingester.IngesterException | TextExtractor.InitReaderException ex) {
-                throw new TskCoreException("Error indexing content", ex);
+                try {
+                    // Try the StringsTextExtractor if Tika extractions fails.
+                    TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(content, null);
+                    Reader stringsExtractedTextReader = stringsExtractor.getReader();
+                    ingester.indexStrings(stringsExtractedTextReader, content.getId(), content.getName(), content, null);
+                } catch (Ingester.IngesterException | TextExtractor.InitReaderException ex1) {
+                    throw new TskCoreException("Error indexing content", ex1);
+                }
             }
             // only do a Solr commit if ingest is not running. If ingest is running, the changes will 
             // be committed via a periodic commit or via final commit after the ingest job has finished.
@@ -415,10 +421,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         try {
             String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
-            TextExtractor blackboardExtractor = TextExtractorFactory.getExtractor(artifact, null);
+            TextExtractor blackboardExtractor = TextExtractorFactory.getExtractor((Content) artifact, null);
             Reader blackboardExtractedTextReader = blackboardExtractor.getReader();
             ingester.indexMetaDataOnly(artifact, sourceName);
-            ingester.search(blackboardExtractedTextReader, artifact.getId(), sourceName, artifact, null, true, null);
+            ingester.indexText(blackboardExtractedTextReader, artifact.getId(), sourceName, artifact, null);
         } catch (Ingester.IngesterException | TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
