@@ -575,9 +575,9 @@ final class RegexQuery implements KeywordSearchQuery {
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
 
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm().toLowerCase()));
-        if(originalKW.searchTermIsWholeWord() && !originalKW.searchTermIsLiteral()) {
+        if(!originalKW.searchTermIsWholeWord() || !originalKW.searchTermIsLiteral()) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, originalKW.getSearchTerm()));
-        }
+        } 
 
         if (StringUtils.isNotBlank(listName)) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
