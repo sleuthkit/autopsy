@@ -24,6 +24,7 @@ import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 
@@ -32,6 +33,7 @@ import org.openide.util.NbBundle.Messages;
  * menu.
  */
 @ActionID(id = "org.sleuthkit.autopsy.corecomponents.AboutWindowAction", category = "Help")
+@ActionRegistration(displayName = "#CTL_CustomAboutAction", iconInMenu = true, lazy = false)
 @ActionReference(path = "Menu/Help", position = 3000, separatorBefore = 2999)
 public class AboutWindowAction extends AboutAction {
 
