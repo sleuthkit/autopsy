@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2022 Basis Technology Corp.
+ * Copyright 2011-2021 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.tika.mime.MimeTypes;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -70,7 +69,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * An ingest module on a file level Performs indexing of allocated and Solr
@@ -171,6 +169,24 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         EXTRACT_UTF8, ///< extract UTF8 text, true/false
     };
 
+    enum UpdateFrequency {
+
+        FAST(20),
+        AVG(10),
+        SLOW(5),
+        SLOWEST(1),
+        NONE(Integer.MAX_VALUE),
+        DEFAULT(5);
+        private final int time;
+
+        UpdateFrequency(int time) {
+            this.time = time;
+        }
+
+        int getTime() {
+            return time;
+        }
+    };
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
@@ -179,6 +195,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 //only search images from current ingest, not images previously ingested/indexed
     //accessed read-only by searcher thread
 
+    private boolean startedSearching = false;
     private Lookup stringsExtractionContext;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
@@ -240,21 +257,18 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         initialized = false;
         jobId = context.getJobId();
 
-        Server server = null;
-        if(settings.isIndexToSolrEnabled()) {
-            server = KeywordSearch.getServer();
-            if (server.coreIsOpen() == false) {
-                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startUp_noOpenCore_msg());
-            }
+        Server server = KeywordSearch.getServer();
+        if (server.coreIsOpen() == false) {
+            throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startUp_noOpenCore_msg());
+        }
 
-            try {
-                Index indexInfo = server.getIndexInfo();
-                if (!indexInfo.isCompatible(IndexFinder.getCurrentSchemaVersion())) {
-                    throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSchemaNotSupported(indexInfo.getSchemaVersion()));
-                }
-            } catch (NoOpenCoreException ex) {
-                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupMessage_failedToGetIndexSchema(), ex);
+        try {
+            Index indexInfo = server.getIndexInfo();
+            if (!indexInfo.isCompatible(IndexFinder.getCurrentSchemaVersion())) {
+                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSchemaNotSupported(indexInfo.getSchemaVersion()));
             }
+        } catch (NoOpenCoreException ex) {
+            throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupMessage_failedToGetIndexSchema(), ex);
         }
 
         try {
@@ -293,24 +307,22 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 }
             } else {
                 // for single-user cases need to verify connection to local SOLR service
-                // server will be null if indexing is disabled
-                if(server != null) {
-                    try {
-                        if (!server.isLocalSolrRunning()) {
-                            throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()));
-                        }
-                    } catch (KeywordSearchModuleException ex) {
-                        //this means Solr is not properly initialized
-                        throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()), ex);
+                try {
+                    if (!server.isLocalSolrRunning()) {
+                        throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()));
                     }
-                    try {
-                        // make an actual query to verify that server is responding
-                        // we had cases where getStatus was OK, but the connection resulted in a 404
-                        server.queryNumIndexedDocuments();
-                    } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                        throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_exception_errConnToSolr_msg(ex.getMessage()), ex);
-                    }
+                } catch (KeywordSearchModuleException ex) {
+                    //this means Solr is not properly initialized
+                    throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_tryStopSolrMsg(Bundle.KeywordSearchIngestModule_init_badInitMsg()), ex);
                 }
+                try {
+                    // make an actual query to verify that server is responding
+                    // we had cases where getStatus was OK, but the connection resulted in a 404
+                    server.queryNumIndexedDocuments();
+                } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                    throw new IngestModuleException(Bundle.KeywordSearchIngestModule_init_exception_errConnToSolr_msg(ex.getMessage()), ex);
+                }
+
                 // check if this job has any searchable keywords    
                 List<KeywordList> keywordLists = XmlKeywordSearchList.getCurrent().getListsL();
                 boolean hasKeywordsForSearch = false;
@@ -377,7 +389,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (context.fileIngestIsCancelled()) {
                 return ProcessResult.OK;
             }
-            indexer.indexAndSearchFile(extractorOpt, abstractFile, mimeType, false);
+            indexer.indexFile(extractorOpt, abstractFile, mimeType, false);
             return ProcessResult.OK;
         }
 
@@ -385,7 +397,17 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         if (context.fileIngestIsCancelled()) {
             return ProcessResult.OK;
         }
-        indexer.indexAndSearchFile(extractorOpt, abstractFile, mimeType, true);
+        indexer.indexFile(extractorOpt, abstractFile, mimeType, true);
+
+        // Start searching if it hasn't started already
+        if (!startedSearching) {
+            if (context.fileIngestIsCancelled()) {
+                return ProcessResult.OK;
+            }
+            List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
+            IngestSearchRunner.getInstance().startJob(context, keywordListNames);
+            startedSearching = true;
+        }
 
         return ProcessResult.OK;
     }
@@ -403,21 +425,17 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
 
         if (context.fileIngestIsCancelled()) {
-            logger.log(Level.INFO, "Keyword search ingest module instance {0} stopping due to ingest cancellation", instanceNum); //NON-NLS
+            logger.log(Level.INFO, "Keyword search ingest module instance {0} stopping search job due to ingest cancellation", instanceNum); //NON-NLS
+            IngestSearchRunner.getInstance().stopJob(jobId);
             cleanup();
             return;
         }
 
+        // Remove from the search list and trigger final commit and final search
+        IngestSearchRunner.getInstance().endJob(jobId);
+
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
-            
-            try {
-                InlineSearcher.makeArtifacts(context);
-                InlineSearcher.cleanup(context);
-            } catch (TskException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to create search ingest artifacts for job %d", context.getJobId()), ex);
-            }
-            
             try {
                 final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
                 logger.log(Level.INFO, "Indexed files count: {0}", numIndexedFiles); //NON-NLS
@@ -598,7 +616,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     finalReader = fileText;
                 }
                 //divide into chunks and index
-                return Ingester.getDefault().search(finalReader, aFile.getId(), aFile.getName(), aFile, context, settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists());
+                return Ingester.getDefault().indexText(finalReader, aFile.getId(), aFile.getName(), aFile, context);
             } catch (TextExtractor.InitReaderException ex) {
                 // Text extractor could not be initialized.  No text will be extracted.
                 return false;
@@ -698,8 +716,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return true;
                 }
-                Reader extractedTextReader =  KeywordSearchUtil.getReader(aFile, stringsExtractionContext);
-                if (Ingester.getDefault().searchStrings(extractedTextReader, aFile.getId(), aFile.getName(), aFile, KeywordSearchIngestModule.this.context, settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists())) {
+                TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(aFile, stringsExtractionContext);
+                Reader extractedTextReader = stringsExtractor.getReader();
+                if (Ingester.getDefault().indexStrings(extractedTextReader, aFile.getId(), aFile.getName(), aFile, KeywordSearchIngestModule.this.context)) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {
@@ -707,11 +726,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     return false;
                 }
-            } catch (IngesterException | TextExtractor.InitReaderException | TextExtractorFactory.NoTextExtractorFound ex) {
+            } catch (IngesterException | TextExtractor.InitReaderException ex) {
                 logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);  //NON-NLS
                 putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                 return false;
-            } 
+            }
         }
 
         /**
@@ -724,7 +743,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @param indexContent False if only metadata should be text_ingested.
          *                     True if content and metadata should be index.
          */
-        private void indexAndSearchFile(Optional<TextExtractor> extractor, AbstractFile aFile, String mimeType, boolean indexContent) {
+        private void indexFile(Optional<TextExtractor> extractor, AbstractFile aFile, String mimeType, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
 
             TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
@@ -845,7 +864,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 Reader textReader = textFileExtractor.getReader();
                 if (textReader == null) {
                     logger.log(Level.INFO, "Unable to extract with TextFileExtractor, Reader was null for file: {0}", aFile.getName());
-                } else if (Ingester.getDefault().search(textReader, aFile.getId(), aFile.getName(), aFile, context, settings.isIndexToSolrEnabled(), settings.getNamesOfEnabledKeyWordLists())) {
+                } else if (Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
                     textReader.close();
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                     return true;
