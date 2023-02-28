@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.Reader;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -31,7 +32,6 @@ import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -146,9 +146,9 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+    < T extends SleuthkitVisitableItem> boolean search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
         boolean doLanguageDetection = true;
-        return indexText(sourceReader, sourceID, sourceName, source, context, doLanguageDetection);
+        return search(sourceReader, sourceID, sourceName, source, context, doLanguageDetection,  indexIntoSolr, keywordListNames);
     }
     
     /**
@@ -170,10 +170,16 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> boolean indexStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+    < T extends SleuthkitVisitableItem> boolean searchStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr) throws Ingester.IngesterException {
         // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
         boolean doLanguageDetection = false;
-        return indexText(sourceReader, sourceID, sourceName, source, context, doLanguageDetection);
+        return search(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, null);
+    }
+    
+    < T extends SleuthkitVisitableItem> boolean searchStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
+        // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
+        boolean doLanguageDetection = false;
+        return search(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, keywordListNames);
     }
     
     /**
@@ -195,60 +201,75 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    private < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
+    private < T extends SleuthkitVisitableItem> boolean search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection, boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
-        
+
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
         Optional<Language> language = Optional.empty();
+        InlineSearcher searcher = new InlineSearcher(keywordListNames, context);
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
+            String name = sourceName;
+            if(!(source instanceof BlackboardArtifact)) {
+                searcher.searchString(name, sourceID, 0);
+            }
+            
             while (chunker.hasNext()) {
-                if (context != null && context.fileIngestIsCancelled()) {
+                numChunks++;
+                if ( context.fileIngestIsCancelled()) {
                     logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
                     return false;
                 }
-                
+
                 Chunk chunk = chunker.next();
-                Map<String, Object> fields = new HashMap<>(contentFields);
-                String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
-                fields.put(Server.Schema.ID.toString(), chunkId);
-                fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
+                String chunkId = "";
+                if (indexIntoSolr) {
+                    Map<String, Object> fields = new HashMap<>(contentFields);
+                    chunkId = Server.getChunkIdString(sourceID, numChunks);
+                    fields.put(Server.Schema.ID.toString(), chunkId);
+                    fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
 
-                if (doLanguageDetection) {
-                    int size = Math.min(chunk.getBaseChunkLength(), LANGUAGE_DETECTION_STRING_SIZE);
-                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk.toString().substring(0, size));
-                    
-                    // only do language detection on the first chunk of the document
-                    doLanguageDetection = false;
-                }
-                language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
-                try {
-                    //add the chunk text to Solr index
-                    indexChunk(chunk.toString(), chunk.geLowerCasedChunk(), sourceName, fields);
-                    // add mini chunk when there's a language specific field
-                    if (chunker.hasNext() && language.isPresent()) {
-                        languageSpecificContentIndexingHelper.indexMiniChunk(chunk, sourceName, new HashMap<>(contentFields), chunkId, language.get());
+                    if (doLanguageDetection) {
+                        int size = Math.min(chunk.getBaseChunkLength(), LANGUAGE_DETECTION_STRING_SIZE);
+                        language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk.toString().substring(0, size));
+
+                        // only do language detection on the first chunk of the document
+                        doLanguageDetection = false;
                     }
-                    numChunks++;
-                } catch (Ingester.IngesterException ingEx) {
-                    logger.log(Level.WARNING, "Ingester had a problem with extracted string from file '" //NON-NLS
-                            + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
+                    language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
+                    try {
+                        //add the chunk text to Solr index
+                        indexChunk(chunk.toString(), chunk.getLowerCasedChunk(), sourceName, fields);
+                        // add mini chunk when there's a language specific field
+                        if (chunker.hasNext() && language.isPresent()) {
+                            languageSpecificContentIndexingHelper.indexMiniChunk(chunk, sourceName, new HashMap<>(contentFields), chunkId, language.get());
+                        }
+                        numChunks++;
+                    } catch (Ingester.IngesterException ingEx) {
+                        logger.log(Level.WARNING, "Ingester had a problem with extracted string from file '" //NON-NLS
+                                + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
 
-                    throw ingEx; //need to rethrow to signal error and move on
+                        throw ingEx; //need to rethrow to signal error and move on
+                    }
+                }
+                
+                if(keywordListNames != null) {
+                    searcher.searchChunk(chunk, sourceID, numChunks);
                 }
             }
             if (chunker.hasException()) {
                 logger.log(Level.WARNING, "Error chunking content from " + sourceID + ": " + sourceName, chunker.getException());
                 return false;
             }
+
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
-            if (context != null && context.fileIngestIsCancelled()) {
+            if (context.fileIngestIsCancelled()) {
                 return false;
-            } else {
+            } else if (indexIntoSolr) {
                 Map<String, Object> fields = new HashMap<>(contentFields);
                 //after all chunks, index just the meta data, including the  numChunks, of the parent file
                 fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));

@@ -420,7 +420,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
          *
          * @return The content of the chunk.
          */
-        public String geLowerCasedChunk() {
+        public String getLowerCasedChunk() {
             return lowerCasedChunk.toString();
         }
 

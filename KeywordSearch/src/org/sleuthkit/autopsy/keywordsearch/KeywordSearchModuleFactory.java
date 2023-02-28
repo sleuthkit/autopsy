@@ -130,7 +130,12 @@ public class KeywordSearchModuleFactory implements IngestModuleFactory {
 
     @Override
     public DataArtifactIngestModule createDataArtifactIngestModule(IngestModuleIngestJobSettings settings) {
-        return new KwsDataArtifactIngestModule();
+        if (!(settings instanceof KeywordSearchJobSettings)) {
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                    "KeywordSearchModuleFactory.createFileIngestModule.exception.msg"));
+        }
+        
+        return new KwsDataArtifactIngestModule((KeywordSearchJobSettings) settings);
     }    
     
     @Override
@@ -140,7 +145,12 @@ public class KeywordSearchModuleFactory implements IngestModuleFactory {
  
     @Override
     public AnalysisResultIngestModule createAnalysisResultIngestModule(IngestModuleIngestJobSettings settings) {
-        return new KwsAnalysisResultIngestModule();
+        if (!(settings instanceof KeywordSearchJobSettings)) {
+            throw new IllegalArgumentException(NbBundle.getMessage(this.getClass(),
+                    "KeywordSearchModuleFactory.createFileIngestModule.exception.msg"));
+        }
+        
+        return new KwsAnalysisResultIngestModule((KeywordSearchJobSettings) settings);
     }    
     
 }
