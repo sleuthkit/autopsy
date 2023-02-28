@@ -2,7 +2,7 @@
 # Unzips an application platform zip to specified directory and does setup
 
 usage() {
-    echo "Usage: install_application_from_zip.sh [-z zip_path] [-i install_directory] [-j java_home] [-n application_name] [-v asc_file]" 1>&2
+    echo "Usage: install_application.sh [-z zip_path] [-i install_directory] [-j java_home] [-n application_name] [-v asc_file]" 1>&2
     echo "If specifying a .asc verification file (with -v flag), the program will attempt to create a temp folder in the working directory and verify the signature with gpg.  If you already have an extracted zip, the '-z' flag can be ignored as long as the directory specifying the extracted contents is provided for the installation directory." 1>&2
 }
 
