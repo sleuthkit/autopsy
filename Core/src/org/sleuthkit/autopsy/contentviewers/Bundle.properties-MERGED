@@ -180,837 +180,776 @@ TranslatablePanel.comboBoxOption.translatedText=Translated Text
 # {0} - exception message
 TranslatablePanel.onSetContentError.text=There was an error displaying the text: {0}
 ## Window toolbar Title
-viewer.window.title.default = ICEpdf Viewer
-viewer.window.title.open.default = ICEpdf Viewer - [{0}]
+viewer.window.title.default=ICEpdf Viewer
+viewer.window.title.open.default=ICEpdf Viewer - [{0}]
 
 #status bar
-viewer.statusbar.currentPage = Page {0} / {1}
+viewer.statusbar.currentPage=Page {0} / {1}
 
-viewer.common.number.one = 1
-viewer.common.number.two = 2
-viewer.common.number.three = 3
-viewer.common.number.four = 4
-viewer.common.number.five = 5
-viewer.common.number.six = 6
-viewer.common.number.seven = 7
-viewer.common.number.eight = 8
-viewer.common.number.nine = 9
-viewer.common.number.ten = 10
-viewer.common.number.eleven = 11
-viewer.common.number.twelve = 12
-viewer.common.number.thirteen = 13
-viewer.common.number.fourteen = 14
-viewer.common.number.fifteen = 15
-viewer.common.number.sixteen = 16
-viewer.common.number.seventeen = 17
-viewer.common.number.eighteen = 18
-viewer.common.number.nineteen = 19
-viewer.common.number.twenty = 20
-viewer.common.number.twentyOne = 21
-viewer.common.number.twentyTwo = 22
-viewer.common.number.twentyThree = 23
-viewer.common.number.twentyFour = 24
-viewer.common.number.twentyFive = 25
-viewer.common.number.twentySix = 26
-viewer.common.number.twentySeven = 27
-viewer.common.number.thirtySix = 36
-viewer.common.number.fortyEight = 48
+viewer.common.number.one=1
+viewer.common.number.two=2
+viewer.common.number.three=3
+viewer.common.number.four=4
+viewer.common.number.five=5
+viewer.common.number.six=6
+viewer.common.number.seven=7
+viewer.common.number.eight=8
+viewer.common.number.nine=9
+viewer.common.number.ten=10
+viewer.common.number.eleven=11
+viewer.common.number.twelve=12
+viewer.common.number.thirteen=13
+viewer.common.number.fourteen=14
+viewer.common.number.fifteen=15
+viewer.common.number.sixteen=16
+viewer.common.number.seventeen=17
+viewer.common.number.eighteen=18
+viewer.common.number.nineteen=19
+viewer.common.number.twenty=20
+viewer.common.number.twentyOne=21
+viewer.common.number.twentyTwo=22
+viewer.common.number.twentyThree=23
+viewer.common.number.twentyFour=24
+viewer.common.number.twentyFive=25
+viewer.common.number.twentySix=26
+viewer.common.number.twentySeven=27
+viewer.common.number.thirtySix=36
+viewer.common.number.fortyEight=48
 
 ## Top Page Control Toolbar
-viewer.toolbar.hideToolBar.label = Hide Toolbar
-viewer.toolbar.showToolBar.label = Show Toolbar
-viewer.toolbar.showUtilityPane.label = Show Utility Pane
-viewer.toolbar.hideUtilityPane.label = Hide Utility Pane
-viewer.toolbar.open.label =
-viewer.toolbar.open.tooltip = Open Document
-viewer.toolbar.saveAs.label = Save As
-viewer.toolbar.saveAs.tooltip = Save As...
-viewer.toolbar.print.label = Print
-viewer.toolbar.print.tooltip = Print Document
-viewer.toolbar.search.label =  Search
-viewer.toolbar.search.tooltip = Search Document
-viewer.toolbar.utilityPane.label =  Utility Pane
-viewer.toolbar.utilityPane.tooltip = Show/Hide Utility Pane
-viewer.toolbar.navigation.label =
-viewer.toolbar.navigation.pages.tooltip = Number of Pages
-viewer.toolbar.navigation.pages.firstPage.label =
-viewer.toolbar.navigation.current.tooltip = Current Page Number
-viewer.toolbar.navigation.current.firstPage.label =
-viewer.toolbar.navigation.firstPage.label =
-viewer.toolbar.navigation.firstPage.tooltip =  First Page
-viewer.toolbar.navigation.previousPage.label  =
-viewer.toolbar.navigation.previousPage.tooltip = Previous Page
-viewer.toolbar.navigation.nextPage.label  =
-viewer.toolbar.navigation.nextPage.tooltip = Next Page
-viewer.toolbar.navigation.lastPage.label =
-viewer.toolbar.navigation.lastPage.tooltip = Last Page
-viewer.toolbar.pageIndicator = of {0}
-viewer.toolbar.zoom.label =
-viewer.toolbar.zoom.tooltip = Zoom
-viewer.toolbar.zoom.out.label =
-viewer.toolbar.zoom.out.tooltip = Zoom Out
-viewer.toolbar.zoom.in.label =
-viewer.toolbar.zoom.in.tooltip = Zoom In
-viewer.toolbar.pageFit.actualsize.label =
-viewer.toolbar.pageFit.actualsize.tooltip = Actual Size
-viewer.toolbar.pageFit.fitWindow.label =
-viewer.toolbar.pageFit.fitWindow.tooltip =  Fit in Window
-viewer.toolbar.pageFit.fitWidth.label =
-viewer.toolbar.pageFit.fitWidth.tooltip =  Fit Width
-viewer.toolbar.rotation.left.label =
-viewer.toolbar.rotation.left.tooltip = Rotate Left
-viewer.toolbar.rotation.right.label =
-viewer.toolbar.rotation.right.tooltip = Rotate Right
-viewer.toolbar.tool.pan.label =
-viewer.toolbar.tool.pan.tooltip = Pan Tool
-viewer.toolbar.tool.text.label =
-viewer.toolbar.tool.text.tooltip = Text Select Tool
-viewer.toolbar.tool.select.label =
-viewer.toolbar.tool.select.tooltip = Select Tool
-viewer.toolbar.tool.link.label =
-viewer.toolbar.tool.link.tooltip = Link Annotation Tool
-viewer.toolbar.tool.highlight.label = Highlight
-viewer.toolbar.tool.highlight.tooltip = Highlight Annotation Tool
-viewer.toolbar.tool.strikeOut.label = Strike Out
-viewer.toolbar.tool.strikeOut.tooltip = Strike Out Annotation Tool
-viewer.toolbar.tool.underline.label = Underline
-viewer.toolbar.tool.underline.tooltip = Underline Annotation Tool
-viewer.toolbar.tool.line.label = Line
-viewer.toolbar.tool.line.tooltip = Line Annotation Tool
-viewer.toolbar.tool.lineArrow.label = Line Arrow
-viewer.toolbar.tool.lineArrow.tooltip = Line Arrow Annotation Tool
-viewer.toolbar.tool.rectangle.label = Rectangle
-viewer.toolbar.tool.rectangle.tooltip = Rectangle Annotation Tool
-viewer.toolbar.tool.circle.label = Circle
-viewer.toolbar.tool.circle.tooltip = Circle Annotation Tool
-viewer.toolbar.tool.ink.label = Ink
-viewer.toolbar.tool.ink.tooltip = Ink Annotation Tool
-viewer.toolbar.tool.freeText.label = Free Text
-viewer.toolbar.tool.freeText.tooltip = Free Text Annotation Tool
-viewer.toolbar.tool.textAnno.label = Text Annotation
-viewer.toolbar.tool.textAnno.tooltip = Text Annotation Tool
-viewer.toolbar.tool.plolyLine.label = Poly Line
-viewer.toolbar.tool.plolyLine.tooltip = Poly Line Annotation Tool
-viewer.toolbar.tool.zoomIn.label =
-viewer.toolbar.tool.zoomIn.tooltip = Zoom In Tool
-viewer.toolbar.tool.zoomMarquis.label =
-viewer.toolbar.tool.zoomMarquis.tooltip = Zoom Marquee Tool
-viewer.toolbar.tool.zoomDynamic.label =
-viewer.toolbar.tool.zoomDynamic.tooltip = Zoom Dynamic Tool
-viewer.toolbar.tool.zoomOut.label =
-viewer.toolbar.tool.zoomOut.tooltip = Zoom Out Tool
-viewer.toolbar.pageFit.fontEngine.label =
-viewer.toolbar.pageFit.fontEngine.tooltip =  Enable/Disable Font Engine
-viewer.toolbar.tool.forms.highlight.label = Highlight Forms
-viewer.toolbar.tool.forms.highlight.tooltip =  Show/Hide Form Highlighting
+viewer.toolbar.hideToolBar.label=Hide Toolbar
+viewer.toolbar.showToolBar.label=Show Toolbar
+viewer.toolbar.showUtilityPane.label=Show Utility Pane
+viewer.toolbar.hideUtilityPane.label=Hide Utility Pane
+viewer.toolbar.open.label=
+viewer.toolbar.open.tooltip=Open Document
+viewer.toolbar.saveAs.label=Save As
+viewer.toolbar.saveAs.tooltip=Save As...
+viewer.toolbar.print.label=Print
+viewer.toolbar.print.tooltip=Print Document
+viewer.toolbar.search.label=Search
+viewer.toolbar.search.tooltip=Search Document
+viewer.toolbar.utilityPane.label=Utility Pane
+viewer.toolbar.utilityPane.tooltip=Show/Hide Utility Pane
+viewer.toolbar.navigation.label=
+viewer.toolbar.navigation.pages.tooltip=Number of Pages
+viewer.toolbar.navigation.pages.firstPage.label=
+viewer.toolbar.navigation.current.tooltip=Current Page Number
+viewer.toolbar.navigation.current.firstPage.label=
+viewer.toolbar.navigation.firstPage.label=
+viewer.toolbar.navigation.firstPage.tooltip=First Page
+viewer.toolbar.navigation.previousPage.label=
+viewer.toolbar.navigation.previousPage.tooltip=Previous Page
+viewer.toolbar.navigation.nextPage.label=
+viewer.toolbar.navigation.nextPage.tooltip=Next Page
+viewer.toolbar.navigation.lastPage.label=
+viewer.toolbar.navigation.lastPage.tooltip=Last Page
+viewer.toolbar.pageIndicator=of {0}
+viewer.toolbar.zoom.label=
+viewer.toolbar.zoom.tooltip=Zoom
+viewer.toolbar.zoom.out.label=
+viewer.toolbar.zoom.out.tooltip=Zoom Out
+viewer.toolbar.zoom.in.label=
+viewer.toolbar.zoom.in.tooltip=Zoom In
+viewer.toolbar.pageFit.actualsize.label=
+viewer.toolbar.pageFit.actualsize.tooltip=Actual Size
+viewer.toolbar.pageFit.fitWindow.label=
+viewer.toolbar.pageFit.fitWindow.tooltip=Fit in Window
+viewer.toolbar.pageFit.fitWidth.label=
+viewer.toolbar.pageFit.fitWidth.tooltip=Fit Width
+viewer.toolbar.rotation.left.label=
+viewer.toolbar.rotation.left.tooltip=Rotate Left
+viewer.toolbar.rotation.right.label=
+viewer.toolbar.rotation.right.tooltip=Rotate Right
+viewer.toolbar.tool.pan.label=
+viewer.toolbar.tool.pan.tooltip=Pan Tool
+viewer.toolbar.tool.text.label=
+viewer.toolbar.tool.text.tooltip=Text Select Tool
+viewer.toolbar.tool.select.label=
+viewer.toolbar.tool.select.tooltip=Select Tool
+viewer.toolbar.tool.link.label=
+viewer.toolbar.tool.link.tooltip=Link Annotation Tool
+viewer.toolbar.tool.highlight.label=Highlight
+viewer.toolbar.tool.highlight.tooltip=Highlight Annotation Tool
+viewer.toolbar.tool.strikeOut.label=Strike Out
+viewer.toolbar.tool.strikeOut.tooltip=Strike Out Annotation Tool
+viewer.toolbar.tool.underline.label=Underline
+viewer.toolbar.tool.underline.tooltip=Underline Annotation Tool
+viewer.toolbar.tool.line.label=Line
+viewer.toolbar.tool.line.tooltip=Line Annotation Tool
+viewer.toolbar.tool.lineArrow.label=Line Arrow
+viewer.toolbar.tool.lineArrow.tooltip=Line Arrow Annotation Tool
+viewer.toolbar.tool.rectangle.label=Rectangle
+viewer.toolbar.tool.rectangle.tooltip=Rectangle Annotation Tool
+viewer.toolbar.tool.circle.label=Circle
+viewer.toolbar.tool.circle.tooltip=Circle Annotation Tool
+viewer.toolbar.tool.ink.label=Ink
+viewer.toolbar.tool.ink.tooltip=Ink Annotation Tool
+viewer.toolbar.tool.freeText.label=Free Text
+viewer.toolbar.tool.freeText.tooltip=Free Text Annotation Tool
+viewer.toolbar.tool.textAnno.label=Text Annotation
+viewer.toolbar.tool.textAnno.tooltip=Text Annotation Tool
+viewer.toolbar.tool.plolyLine.label=Poly Line
+viewer.toolbar.tool.plolyLine.tooltip=Poly Line Annotation Tool
+viewer.toolbar.tool.zoomIn.label=
+viewer.toolbar.tool.zoomIn.tooltip=Zoom In Tool
+viewer.toolbar.tool.zoomMarquis.label=
+viewer.toolbar.tool.zoomMarquis.tooltip=Zoom Marquee Tool
+viewer.toolbar.tool.zoomDynamic.label=
+viewer.toolbar.tool.zoomDynamic.tooltip=Zoom Dynamic Tool
+viewer.toolbar.tool.zoomOut.label=
+viewer.toolbar.tool.zoomOut.tooltip=Zoom Out Tool
+viewer.toolbar.pageFit.fontEngine.label=
+viewer.toolbar.pageFit.fontEngine.tooltip=Enable/Disable Font Engine
+viewer.toolbar.tool.forms.highlight.label=Highlight Forms
+viewer.toolbar.tool.forms.highlight.tooltip=Show/Hide Form Highlighting
 
 ## Bottom Page View Control Toolbar
-viewer.toolbar.pageView.nonContinuous.singlePage.label =
-viewer.toolbar.pageView.nonContinuous.singlePage.tooltip = Single Page View Non-Continuous
-viewer.toolbar.pageView.nonContinuous.facingPage.label =
-viewer.toolbar.pageView.nonContinuous.facingPage.tooltip = Facing Page View Non-Continuous
-viewer.toolbar.pageView.continuous.singlePage.label =
-viewer.toolbar.pageView.continuous.singlePage.tooltip = Single Page View Continuous
-viewer.toolbar.pageView.continuous.facingPage.label =
-viewer.toolbar.pageView.continuous.facingPage.tooltip = Facing Page View Continuous
+viewer.toolbar.pageView.nonContinuous.singlePage.label=
+viewer.toolbar.pageView.nonContinuous.singlePage.tooltip=Single Page View Non-Continuous
+viewer.toolbar.pageView.nonContinuous.facingPage.label=
+viewer.toolbar.pageView.nonContinuous.facingPage.tooltip=Facing Page View Non-Continuous
+viewer.toolbar.pageView.continuous.singlePage.label=
+viewer.toolbar.pageView.continuous.singlePage.tooltip=Single Page View Continuous
+viewer.toolbar.pageView.continuous.facingPage.label=
+viewer.toolbar.pageView.continuous.facingPage.tooltip=Facing Page View Continuous
 
 
 ## File Menu and submenu items
-viewer.menu.file.label = File
-viewer.menu.file.mnemonic = F
-viewer.menu.open.label = Open
-viewer.menu.open.file.label = File...
-viewer.menu.open.URL.label = URL...
-viewer.menu.close.label = Close
-viewer.menu.saveAs.label = Save As...
-viewer.menu.exportText.label = Export Text...
-viewer.menu.exportSVG.label = Export SVG...
-viewer.menu.documentPermission.label = Document Permissions...
-viewer.menu.documentInformation.label = Document Information...
-viewer.menu.documentFonts.label = Document Fonts...
-viewer.menu.printSetup.label = Print Setup...
-viewer.menu.print.label = Print...
-viewer.menu.exit.label = Exit
+viewer.menu.file.label=File
+viewer.menu.file.mnemonic=F
+viewer.menu.open.label=Open
+viewer.menu.open.file.label=File...
+viewer.menu.open.URL.label=URL...
+viewer.menu.close.label=Close
+viewer.menu.saveAs.label=Save As...
+viewer.menu.exportText.label=Export Text...
+viewer.menu.exportSVG.label=Export SVG...
+viewer.menu.documentPermission.label=Document Permissions...
+viewer.menu.documentInformation.label=Document Information...
+viewer.menu.documentFonts.label=Document Fonts...
+viewer.menu.printSetup.label=Print Setup...
+viewer.menu.print.label=Print...
+viewer.menu.exit.label=Exit
 
 ## View Menu and submenu items
-viewer.menu.edit.label = Edit
-viewer.menu.edit.mnemonic = E
-viewer.menu.edit.undo.label = Undo
-viewer.menu.edit.redo.label = Redo
-viewer.menu.edit.copy.label = Copy
-viewer.menu.edit.delete.label = Delete
-viewer.menu.edit.selectAll.label = Select All
-viewer.menu.edit.deselectAll.label = Deselect All
+viewer.menu.edit.label=Edit
+viewer.menu.edit.mnemonic=E
+viewer.menu.edit.undo.label=Undo
+viewer.menu.edit.redo.label=Redo
+viewer.menu.edit.copy.label=Copy
+viewer.menu.edit.delete.label=Delete
+viewer.menu.edit.selectAll.label=Select All
+viewer.menu.edit.deselectAll.label=Deselect All
 ## View Menu and submenu items
-viewer.menu.view.label = View
-viewer.menu.view.mnemonic = V
-viewer.menu.view.actualSize.label = Actual Size
-viewer.menu.view.fitInWindow.label = Fit in Window
-viewer.menu.view.fitWidth.label = Fit Width
-viewer.menu.view.zoomIn.label = Zoom In
-viewer.menu.view.zoomOut.label = Zoom Out
-viewer.menu.view.rotateLeft.label = Rotate Left
-viewer.menu.view.rotateRight.label = Rotate Right
-viewer.menu.view.hideToolBar.label = Hide Toolbar
-viewer.menu.view.showToolBar.label = Show Toolbar
-viewer.menu.view.showUtilityPane.label = Show Utility Pane
-viewer.menu.view.hideUtilityPane.label = Hide Utility Pane
+viewer.menu.view.label=View
+viewer.menu.view.mnemonic=V
+viewer.menu.view.actualSize.label=Actual Size
+viewer.menu.view.fitInWindow.label=Fit in Window
+viewer.menu.view.fitWidth.label=Fit Width
+viewer.menu.view.zoomIn.label=Zoom In
+viewer.menu.view.zoomOut.label=Zoom Out
+viewer.menu.view.rotateLeft.label=Rotate Left
+viewer.menu.view.rotateRight.label=Rotate Right
+viewer.menu.view.hideToolBar.label=Hide Toolbar
+viewer.menu.view.showToolBar.label=Show Toolbar
+viewer.menu.view.showUtilityPane.label=Show Utility Pane
+viewer.menu.view.hideUtilityPane.label=Hide Utility Pane
 
 ## Document Menu and submenu items
-viewer.menu.document.label = Document
-viewer.menu.document.mnemonic = D
-viewer.menu.document.firstPage.label = First Page
-viewer.menu.document.previousPage.label = Previous Page
-viewer.menu.document.nextPage.label = Next Page
-viewer.menu.document.lastPage.label = Last Page
-viewer.menu.document.search.label = Search...
-viewer.menu.document.gotToPage.label = Go To Page...
+viewer.menu.document.label=Document
+viewer.menu.document.mnemonic=D
+viewer.menu.document.firstPage.label=First Page
+viewer.menu.document.previousPage.label=Previous Page
+viewer.menu.document.nextPage.label=Next Page
+viewer.menu.document.lastPage.label=Last Page
+viewer.menu.document.search.label=Search...
+viewer.menu.document.gotToPage.label=Go To Page...
 
 ## Window Menu and submenu items
-viewer.menu.window.label = Window
-viewer.menu.window.mnemonic = W
-viewer.menu.window.minAll.label = Minimize All
-viewer.menu.window.minAll.mnemonic = M
-viewer.menu.window.frontAll.label = Bring All to Front
-viewer.menu.window.frontAll.mnemonic = B
-viewer.menu.window.1.label = 1
-viewer.menu.window.1.mnemonic = 1
-viewer.menu.window.2.label = 2
-viewer.menu.window.2.mnemonic = 2
-viewer.menu.window.3.label = 3
-viewer.menu.window.3.mnemonic = 3
-viewer.menu.window.4.label = 4
-viewer.menu.window.4.mnemonic = 4
-viewer.menu.window.5.label = 5
-viewer.menu.window.5.mnemonic = 5
-viewer.menu.window.6.label = 6
-viewer.menu.window.6.mnemonic = 6
-viewer.menu.window.7.label = 7
-viewer.menu.window.7.mnemonic = 7
-viewer.menu.window.8.label = 8
-viewer.menu.window.8.mnemonic = 8
-viewer.menu.window.9.label = 9
-viewer.menu.window.9.mnemonic = 9
+viewer.menu.window.label=Window
+viewer.menu.window.mnemonic=W
+viewer.menu.window.minAll.label=Minimize All
+viewer.menu.window.minAll.mnemonic=M
+viewer.menu.window.frontAll.label=Bring All to Front
+viewer.menu.window.frontAll.mnemonic=B
+viewer.menu.window.1.label=1
+viewer.menu.window.1.mnemonic=1
+viewer.menu.window.2.label=2
+viewer.menu.window.2.mnemonic=2
+viewer.menu.window.3.label=3
+viewer.menu.window.3.mnemonic=3
+viewer.menu.window.4.label=4
+viewer.menu.window.4.mnemonic=4
+viewer.menu.window.5.label=5
+viewer.menu.window.5.mnemonic=5
+viewer.menu.window.6.label=6
+viewer.menu.window.6.mnemonic=6
+viewer.menu.window.7.label=7
+viewer.menu.window.7.mnemonic=7
+viewer.menu.window.8.label=8
+viewer.menu.window.8.mnemonic=8
+viewer.menu.window.9.label=9
+viewer.menu.window.9.mnemonic=9
 ## Add as many entries as you want, to viewer.menu.window.X.label and mnemonic
 ##  where X is an incrementing integer. The mnemonic should be one unique
 ##  character found within the label
 
 ## Help Menu and submenu items
-viewer.menu.help.label = Help
-viewer.menu.help.mnemonic = H
-viewer.menu.help.about.label = About ICEpdf viewer...
+viewer.menu.help.label=Help
+viewer.menu.help.mnemonic=H
+viewer.menu.help.about.label=About ICEpdf viewer...
 
 ## General error dialog
-viewer.dialog.error.exception.title = ICEsoft ICEpdf - Exception
-viewer.dialog.error.exception.msg =  \
-  There was an error executing your command do to the following exception\n\
-  {0}.
+viewer.dialog.error.exception.title=ICEsoft ICEpdf - Exception
+viewer.dialog.error.exception.msg=There was an error executing your command do to the following exception\n{0}.
 
 ## Open File Dialog
-viewer.dialog.openFile.title = Open File
-viewer.dialog.openFile.error.title = ICEsoft ICEpdf - Open File Error
-viewer.dialog.openFile.error.msg = \
-  ICEpdf could not open the specified file at {0}\n\
-  The file may be corrupt or not a supported file type.
+viewer.dialog.openFile.title=Open File
+viewer.dialog.openFile.error.title=ICEsoft ICEpdf - Open File Error
+viewer.dialog.openFile.error.msg=ICEpdf could not open the specified file at {0}\nThe file may be corrupt or not a supported file type.
 
-viewer.dialog.openDocument.pdfException.title = ICEsoft ICEpdf - PDF Exception
-viewer.dialog.openDocument.pdfException.msg =  \
-  ICEpdf could not open the specified file {0} \n\
-  The file may be corrupt or not a supported file type.
+viewer.dialog.openDocument.pdfException.title=ICEsoft ICEpdf - PDF Exception
+viewer.dialog.openDocument.pdfException.msg=ICEpdf could not open the specified file {0} \nThe file may be corrupt or not a supported file type.
 
-viewer.dialog.openDocument.pdfSecurityException.title = ICEsoft ICEpdf - PDF Security Exception
-viewer.dialog.openDocument.pdfSecurityException.msg =  \
-  ICEpdf could not open the encrypted file at {0}\n\
-  This may be the result of an invalid password or a missing JCE Security Provider.\n\n\
-  Please refer to ICEpdf Developer's Guide for more information.
+viewer.dialog.openDocument.pdfSecurityException.title=ICEsoft ICEpdf - PDF Security Exception
+viewer.dialog.openDocument.pdfSecurityException.msg=ICEpdf could not open the encrypted file at {0}\nThis may be the result of an invalid password or a missing JCE Security Provider.\n\nPlease refer to ICEpdf Developer's Guide for more information.
 
-viewer.dialog.openDocument.exception.title = ICEsoft ICEpdf - Exception
-viewer.dialog.openDocument.exception.msg =  \
-  ICEpdf could not open the specified file at {0}\n\
-  The file may be corrupt or not a supported file type.
+viewer.dialog.openDocument.exception.title=ICEsoft ICEpdf - Exception
+viewer.dialog.openDocument.exception.msg=ICEpdf could not open the specified file at {0}\nThe file may be corrupt or not a supported file type.
 
-viewer.dialog.openURL.exception.title  = ICEsoft ICEpdf - URL Exception
-viewer.dialog.openURL.exception.msg = \
-  ICEpdf could not open the specified file. {0} \n\
-  at URL: {1}
-viewer.dialog.openURL.downloading.msg = Downloading {0}
+viewer.dialog.openURL.exception.title=ICEsoft ICEpdf - URL Exception
+viewer.dialog.openURL.exception.msg=ICEpdf could not open the specified file. {0} \nat URL: {1}
+viewer.dialog.openURL.downloading.msg=Downloading {0}
 
 ## General error dialog
-viewer.dialog.information.copyAll.title = ICEsoft ICEpdf - Information
-viewer.dialog.information.copyAll.msg = \
-  The document has more than {0} pages, please use\n\
-  "Export text..." to extract document text.
+viewer.dialog.information.copyAll.title=ICEsoft ICEpdf - Information
+viewer.dialog.information.copyAll.msg=The document has more than {0} pages, please use\n"Export text..." to extract document text.
 
 ## Open URL Dialog
-viewer.dialog.security.title = Document Security
-viewer.dialog.security.msg = This PDF is protected
-viewer.dialog.security.password.label = Password:
-viewer.dialog.security.okButton.label = Ok
-viewer.dialog.security.okButton.mnemonic = O
-viewer.dialog.security.cancelButton.label = Cancel
-viewer.dialog.security.cancelButton.mnemonic = C
+viewer.dialog.security.title=Document Security
+viewer.dialog.security.msg=This PDF is protected
+viewer.dialog.security.password.label=Password:
+viewer.dialog.security.okButton.label=Ok
+viewer.dialog.security.okButton.mnemonic=O
+viewer.dialog.security.cancelButton.label=Cancel
+viewer.dialog.security.cancelButton.mnemonic=C
 
 
 ## Open URL Dialog
-viewer.dialog.openURL.title = Open URL
+viewer.dialog.openURL.title=Open URL
 
 ### Save a Copy Dialog
-viewer.dialog.saveAs.title = Save As
-viewer.dialog.saveAs.extensionError.title =  ICEsoft ICEpdf - Save Error
-viewer.dialog.saveAs.extensionError.msg = \
-  ICEpdf could not save to {0} because it is not a supported file type.
-viewer.dialog.saveAs.noExtensionError.title =  ICEsoft ICEpdf - Save Error
-viewer.dialog.saveAs.noExtensionError.msg = Please specify a file extension.
-viewer.dialog.saveAs.noneUniqueName.title = ICEsoft ICEpdf - Save Error
-viewer.dialog.saveAs.noneUniqueName.msg = \
-  The file named {0} already exists. Please specify a unique name.
-viewer.dialog.saveAs.noPermission.title = ICEpdf Viewer RI - Save Error
-viewer.dialog.saveAs.noPermission.msg = You do not have permission or the credentials to save this document.
-viewer.dialog.saveAs.noUpdates.title = ICEpdf Viewer RI
-viewer.dialog.saveAs.noUpdates.msg = Document changes will not be saved, please upgrade to ICEpdf PRO.
-viewer.dialog.saveOnClose.noUpdates.title = ICEpdf Viewer RI
-viewer.dialog.saveOnClose.noUpdates.msg = Do you want to save changes to {0}?
+viewer.dialog.saveAs.title=Save As
+viewer.dialog.saveAs.extensionError.title=ICEsoft ICEpdf - Save Error
+viewer.dialog.saveAs.extensionError.msg=ICEpdf could not save to {0} because it is not a supported file type.
+viewer.dialog.saveAs.noExtensionError.title=ICEsoft ICEpdf - Save Error
+viewer.dialog.saveAs.noExtensionError.msg=Please specify a file extension.
+viewer.dialog.saveAs.noneUniqueName.title=ICEsoft ICEpdf - Save Error
+viewer.dialog.saveAs.noneUniqueName.msg=The file named {0} already exists. Please specify a unique name.
+viewer.dialog.saveAs.noPermission.title=ICEpdf Viewer RI - Save Error
+viewer.dialog.saveAs.noPermission.msg=You do not have permission or the credentials to save this document.
+viewer.dialog.saveAs.noUpdates.title=ICEpdf Viewer RI
+viewer.dialog.saveAs.noUpdates.msg=Document changes will not be saved, please upgrade to ICEpdf PRO.
+viewer.dialog.saveOnClose.noUpdates.title=ICEpdf Viewer RI
+viewer.dialog.saveOnClose.noUpdates.msg=Do you want to save changes to {0}?
 
 ## Export Text Dialog
-viewer.dialog.exportText.title = Export Document Text
-viewer.dialog.exportText.progress.msg = Extracting PDF Text
-viewer.dialog.exportText.noExtensionError.title =  ICEsoft ICEpdf - Save Error
-viewer.dialog.exportText.noExtensionError.msg = Please specify a file extension.
+viewer.dialog.exportText.title=Export Document Text
+viewer.dialog.exportText.progress.msg=Extracting PDF Text
+viewer.dialog.exportText.noExtensionError.title=ICEsoft ICEpdf - Save Error
+viewer.dialog.exportText.noExtensionError.msg=Please specify a file extension.
 # Text extraction output file
-viewer.exportText.fileStamp.msg = ICEsoft ICEpdf Viewer, (c) ICEsoft Technologies, Inc.
-viewer.exportText.pageStamp.msg = <!----- Page {0} Text ----> 
+viewer.exportText.fileStamp.msg=ICEsoft ICEpdf Viewer, (c) ICEsoft Technologies, Inc.
+viewer.exportText.pageStamp.msg=<!----- Page {0} Text ----> 
 # Completed x out of y page(s).
-viewer.exportText.fileStamp.progress.msg = \
-  Completed {0} out of {1}.
-viewer.exportText.fileStamp.progress.oneFile.msg =  {2} page
-viewer.exportText.fileStamp.progress.moreFile.msg = {2} pages
+viewer.exportText.fileStamp.progress.msg=Completed {0} out of {1}.
+viewer.exportText.fileStamp.progress.oneFile.msg={2} page
+viewer.exportText.fileStamp.progress.moreFile.msg={2} pages
 
 ## Export SVG Dialog
-viewer.dialog.exportSVG.title = Export to SVG
-viewer.dialog.exportSVG.status.exporting.msg = Exporting page {0} to SVG file {1} ...
-viewer.dialog.exportSVG.status.error.msg = \
-  Problem exporting page {0} to SVG file {1} : {2}
-viewer.dialog.exportSVG.status.finished.msg = \
-  Finished exporting page {0} to SVG file {1}
-viewer.dialog.exportSVG.noExtensionError.title =  ICEsoft ICEpdf - SVG Error
-viewer.dialog.exportSVG.noExtensionError.msg = Please specify a file extension.
-viewer.dialog.exportSVG.exportError.title = ICEsoft ICEpdf - SVG Error
-viewer.dialog.exportSVG.exportError.msg = \
-  ICEpdf could not export to {0} \n\
-  becuase it is either not a supported file type or \n\
-  because the file has been corrupted.
+viewer.dialog.exportSVG.title=Export to SVG
+viewer.dialog.exportSVG.status.exporting.msg=Exporting page {0} to SVG file {1} ...
+viewer.dialog.exportSVG.status.error.msg=Problem exporting page {0} to SVG file {1} : {2}
+viewer.dialog.exportSVG.status.finished.msg=Finished exporting page {0} to SVG file {1}
+viewer.dialog.exportSVG.noExtensionError.title=ICEsoft ICEpdf - SVG Error
+viewer.dialog.exportSVG.noExtensionError.msg=Please specify a file extension.
+viewer.dialog.exportSVG.exportError.title=ICEsoft ICEpdf - SVG Error
+viewer.dialog.exportSVG.exportError.msg=ICEpdf could not export to {0} \nbecuase it is either not a supported file type or \nbecause the file has been corrupted.
 
 # Printing Progress bar
-viewer.dialog.printing.status.progress.msg = Page {0} of {1}
-viewer.dialog.printing.status.start.msg = Spooling Page(s) to Printer
+viewer.dialog.printing.status.progress.msg=Page {0} of {1}
+viewer.dialog.printing.status.start.msg=Spooling Page(s) to Printer
 
 
 ## Document Permissions Dialog
-viewer.dialog.documentPermissions.title = Document Permissions
-viewer.dialog.documentPermissions.securityMethod.label = Security Method:
-viewer.dialog.documentPermissions.userPassword.label = User Password:
-viewer.dialog.documentPermissions.ownerPassword.label = Owner Password:
-viewer.dialog.documentPermissions.printing.label = Printing:
-viewer.dialog.documentPermissions.changing.label = Changing the Document:
-viewer.dialog.documentPermissions.copyExtraction.label = Content Copying or Extraction:
-viewer.dialog.documentPermissions.comments.label = Aurthoring Comments and Form Fields:
-viewer.dialog.documentPermissions.formFillingIn.label = Form Field Fill-in or Signing:
-viewer.dialog.documentPermissions.accessibility.label = Content Accessibility Enabled:
-viewer.dialog.documentPermissions.assembly.label = Document Assembly:
-viewer.dialog.documentPermissions.encryptionLevel.label = Encryption Level:
-viewer.dialog.documentPermissions.securityLevel = {0}-bit v{1} R {2}
-viewer.dialog.documentPermissions.none = None
-viewer.dialog.documentPermissions.no = No
-viewer.dialog.documentPermissions.yes = Yes
-viewer.dialog.documentPermissions.allowed = Allowed
-viewer.dialog.documentPermissions.notAllowed = Not Allowed
-viewer.dialog.documentPermissions.fullyAllowed = Fully Allowed
-viewer.dialog.documentPermissions.standardSecurity = Adobe Acrobat Standard Security
-viewer.dialog.documentPermissions.partial = Partial (Low Quality)
+viewer.dialog.documentPermissions.title=Document Permissions
+viewer.dialog.documentPermissions.securityMethod.label=Security Method:
+viewer.dialog.documentPermissions.userPassword.label=User Password:
+viewer.dialog.documentPermissions.ownerPassword.label=Owner Password:
+viewer.dialog.documentPermissions.printing.label=Printing:
+viewer.dialog.documentPermissions.changing.label=Changing the Document:
+viewer.dialog.documentPermissions.copyExtraction.label=Content Copying or Extraction:
+viewer.dialog.documentPermissions.comments.label=Aurthoring Comments and Form Fields:
+viewer.dialog.documentPermissions.formFillingIn.label=Form Field Fill-in or Signing:
+viewer.dialog.documentPermissions.accessibility.label=Content Accessibility Enabled:
+viewer.dialog.documentPermissions.assembly.label=Document Assembly:
+viewer.dialog.documentPermissions.encryptionLevel.label=Encryption Level:
+viewer.dialog.documentPermissions.securityLevel={0}-bit v{1} R {2}
+viewer.dialog.documentPermissions.none=None
+viewer.dialog.documentPermissions.no=No
+viewer.dialog.documentPermissions.yes=Yes
+viewer.dialog.documentPermissions.allowed=Allowed
+viewer.dialog.documentPermissions.notAllowed=Not Allowed
+viewer.dialog.documentPermissions.fullyAllowed=Fully Allowed
+viewer.dialog.documentPermissions.standardSecurity=Adobe Acrobat Standard Security
+viewer.dialog.documentPermissions.partial=Partial (Low Quality)
 
 
 ## Document Information Dialog
-viewer.dialog.documentInformation.title = Document Information
-viewer.dialog.documentInformation.title.label = Title:
-viewer.dialog.documentInformation.subject.label = Subject:
-viewer.dialog.documentInformation.author.label = Author:
-viewer.dialog.documentInformation.keywords.label = Keywords:
-viewer.dialog.documentInformation.creator.label = Creator:
-viewer.dialog.documentInformation.producer.label = Producer:
-viewer.dialog.documentInformation.created.label = Created:
-viewer.dialog.documentInformation.modified.label = Modified:
-viewer.dialog.documentInformation.notAvailable = Not Available
+viewer.dialog.documentInformation.title=Document Information
+viewer.dialog.documentInformation.title.label=Title:
+viewer.dialog.documentInformation.subject.label=Subject:
+viewer.dialog.documentInformation.author.label=Author:
+viewer.dialog.documentInformation.keywords.label=Keywords:
+viewer.dialog.documentInformation.creator.label=Creator:
+viewer.dialog.documentInformation.producer.label=Producer:
+viewer.dialog.documentInformation.created.label=Created:
+viewer.dialog.documentInformation.modified.label=Modified:
+viewer.dialog.documentInformation.notAvailable=Not Available
 
 ## Go to Page Dialog
-viewer.dialog.goToPage.title = Go to Page...
-viewer.dialog.goToPage.description.label = Page Number
+viewer.dialog.goToPage.title=Go to Page...
+viewer.dialog.goToPage.description.label=Page Number
 
 ## About Dialog
-viewer.dialog.about.title = About ICEpdf Viewer
-viewer.dialog.about.pageNumber.label = \n\
-\n\
-Check the ICEpdf web site for the latest news:\n\
-http://www.icepdf.org/ \n\n
+viewer.dialog.about.title=About ICEpdf Viewer
+viewer.dialog.about.pageNumber.label=\n\nCheck the ICEpdf web site for the latest news:\nhttp://www.icepdf.org/ \n\n
 
 ## Font Properties Dialog
-viewer.dialog.fonts.title = Document Font Properties
-viewer.dialog.fonts.border.label = Fonts used by this document
-viewer.dialog.fonts.info.type.label = Type: {0}
-viewer.dialog.fonts.info.encoding.label = Encoding: {0}
-viewer.dialog.fonts.info.substitution.type.label = Actual Type: {0}
-viewer.dialog.fonts.info.substitution.path.label = Path: {0}
-viewer.dialog.fonts.searching.label = Collecting font data ({0}%).
-viewer.dialog.fonts.resetCache.label = Reset Cache
-viewer.dialog.fonts.resetCache.tip = Reset font properties cache file and rescan system for new fonts.
+viewer.dialog.fonts.title=Document Font Properties
+viewer.dialog.fonts.border.label=Fonts used by this document
+viewer.dialog.fonts.info.type.label=Type: {0}
+viewer.dialog.fonts.info.encoding.label=Encoding: {0}
+viewer.dialog.fonts.info.substitution.type.label=Actual Type: {0}
+viewer.dialog.fonts.info.substitution.path.label=Path: {0}
+viewer.dialog.fonts.searching.label=Collecting font data ({0}%).
+viewer.dialog.fonts.resetCache.label=Reset Cache
+viewer.dialog.fonts.resetCache.tip=Reset font properties cache file and rescan system for new fonts.
 
 ## Utility Pane Bookmarks Tab
-viewer.utilityPane.bookmarks.tab.title = Bookmarks
+viewer.utilityPane.bookmarks.tab.title=Bookmarks
 
 ## Utility Pane Bookmarks Tab
-viewer.utilityPane.attachments.tab.title = Attachments
-viewer.utilityPane.attachments.column.fileName.title = Name
-viewer.utilityPane.attachments.column.description.title = Description
-viewer.utilityPane.attachments.column.modified.title = Modified
-viewer.utilityPane.attachments.column.size.title = Size
-viewer.utilityPane.attachments.column.compressedSize.title = Compressed size
-viewer.utilityPane.attachments.menu.saveAs.label = Save As...
-viewer.utilityPane.attachments.saveAs.replace.title = ICEsoft ICEpdf - Save Error
-viewer.utilityPane.attachments.saveAs.replace.msg = \
-  The file named {0} already exists. Do you want to replace It?
+viewer.utilityPane.attachments.tab.title=Attachments
+viewer.utilityPane.attachments.column.fileName.title=Name
+viewer.utilityPane.attachments.column.description.title=Description
+viewer.utilityPane.attachments.column.modified.title=Modified
+viewer.utilityPane.attachments.column.size.title=Size
+viewer.utilityPane.attachments.column.compressedSize.title=Compressed size
+viewer.utilityPane.attachments.menu.saveAs.label=Save As...
+viewer.utilityPane.attachments.saveAs.replace.title=ICEsoft ICEpdf - Save Error
+viewer.utilityPane.attachments.saveAs.replace.msg=The file named {0} already exists. Do you want to replace It?
 
 ## Utility Pane Thumbnails
-viewer.utilityPane.thumbs.tab.title = Thumbnails
+viewer.utilityPane.thumbs.tab.title=Thumbnails
 
 ## Layers Pane
-viewer.utilityPane.layers.tab.title = Layers
+viewer.utilityPane.layers.tab.title=Layers
 
 ## Signature Pane
-viewer.utilityPane.signatures.tab.title = Signatures
-viewer.utilityPane.signatures.tab.certTree.error.label = \
-  Unsigned Signature Fields Signer certificate could not be validated {0} {1}
-viewer.utilityPane.signatures.tab.certTree.rootSigned.label = Signed by {0} {1}
-viewer.utilityPane.signatures.tab.certTree.rootValidating.label = Validating signature {0} {1}
-viewer.utilityPane.signatures.tab.certTree.cert.invalid.label = Signature is invalid:
-viewer.utilityPane.signatures.tab.certTree.cert.unknown.label = Signature is valid:
-viewer.utilityPane.signatures.tab.certTree.cert.valid.label = Signature validity is unknown:
-viewer.utilityPane.signatures.tab.certTree.doc.modified.label = \
-  This version of the document is unaltered but subsequent changes have been made
-viewer.utilityPane.signatures.tab.certTree.doc.unmodified.label = Document has not been modified since it was signed
-viewer.utilityPane.signatures.tab.certTree.doc.major.label = Document has been altered or corrupted since it was signed
-viewer.utilityPane.signatures.tab.certTree.signature.identity.unknown.label = \
-  Signer's identity is unknown because it could not be found in your keystore
-viewer.utilityPane.signatures.tab.certTree.signature.identity.unchecked.label = \
-  Signature is valid, but revocation of the signer's identity could not be checked
-viewer.utilityPane.signatures.tab.certTree.signature.identity.valid.label = Signer's identity is valid
-viewer.utilityPane.signatures.tab.certTree.signature.time.local.label = Signing time is from the clock on this signer's computer
-viewer.utilityPane.signatures.tab.certTree.signature.time.embedded.label = \
-  Signature included an embedded timestamp but it could not be validated
-viewer.utilityPane.signatures.tab.certTree.signature.details.label = Signature Details
-viewer.utilityPane.signatures.tab.certTree.signature.details.reason.label = Reason: {0}
-viewer.utilityPane.signatures.tab.certTree.signature.details.location.label = Location: {0}
-viewer.utilityPane.signatures.tab.certTree.signature.details.full.label = Certificate Details...
-viewer.utilityPane.signatures.tab.certTree.signature.lastChecked.label = Last Checked: {0}
-viewer.utilityPane.signatures.tab.certTree.unsigned.label = Unsigned Signature Fields
+viewer.utilityPane.signatures.tab.title=Signatures
+viewer.utilityPane.signatures.tab.certTree.error.label=Unsigned Signature Fields Signer certificate could not be validated {0} {1}
+viewer.utilityPane.signatures.tab.certTree.rootSigned.label=Signed by {0} {1}
+viewer.utilityPane.signatures.tab.certTree.rootValidating.label=Validating signature {0} {1}
+viewer.utilityPane.signatures.tab.certTree.cert.invalid.label=Signature is invalid:
+viewer.utilityPane.signatures.tab.certTree.cert.unknown.label=Signature is valid:
+viewer.utilityPane.signatures.tab.certTree.cert.valid.label=Signature validity is unknown:
+viewer.utilityPane.signatures.tab.certTree.doc.modified.label=This version of the document is unaltered but subsequent changes have been made
+viewer.utilityPane.signatures.tab.certTree.doc.unmodified.label=Document has not been modified since it was signed
+viewer.utilityPane.signatures.tab.certTree.doc.major.label=Document has been altered or corrupted since it was signed
+viewer.utilityPane.signatures.tab.certTree.signature.identity.unknown.label=Signer's identity is unknown because it could not be found in your keystore
+viewer.utilityPane.signatures.tab.certTree.signature.identity.unchecked.label=Signature is valid, but revocation of the signer's identity could not be checked
+viewer.utilityPane.signatures.tab.certTree.signature.identity.valid.label=Signer's identity is valid
+viewer.utilityPane.signatures.tab.certTree.signature.time.local.label=Signing time is from the clock on this signer's computer
+viewer.utilityPane.signatures.tab.certTree.signature.time.embedded.label=Signature included an embedded timestamp but it could not be validated
+viewer.utilityPane.signatures.tab.certTree.signature.details.label=Signature Details
+viewer.utilityPane.signatures.tab.certTree.signature.details.reason.label=Reason: {0}
+viewer.utilityPane.signatures.tab.certTree.signature.details.location.label=Location: {0}
+viewer.utilityPane.signatures.tab.certTree.signature.details.full.label=Certificate Details...
+viewer.utilityPane.signatures.tab.certTree.signature.lastChecked.label=Last Checked: {0}
+viewer.utilityPane.signatures.tab.certTree.unsigned.label=Unsigned Signature Fields
 
 ## Signature certificate view dialog.
-viewer.utilityPane.signatures.cert.dialog.title = Certificate Details
-viewer.utilityPane.signatures.cert.dialog.closeButton.label = Close
-viewer.utilityPane.signatures.cert.dialog.closeButton.mnemonic = C
-viewer.utilityPane.signatures.cert.dialog.info.notAvailable.label = N/A
-viewer.utilityPane.signatures.cert.dialog.info.unknownSubject.label = N/A Subject
-viewer.utilityPane.signatures.cert.dialog.info.unknownIssuer.label = N/A Issuer
-viewer.utilityPane.signatures.cert.dialog.info.certificateInfo.label = {0} - {1}
-viewer.utilityPane.signatures.cert.dialog.info.column1.label = Field
-viewer.utilityPane.signatures.cert.dialog.info.column2.label = Value
-viewer.utilityPane.signatures.cert.dialog.info.version.label = Version
-viewer.utilityPane.signatures.cert.dialog.info.version.value = v{0}
-viewer.utilityPane.signatures.cert.dialog.info.serialNumber.label = Serial Number
-viewer.utilityPane.signatures.cert.dialog.info.serialNumber.value = {0}
-viewer.utilityPane.signatures.cert.dialog.info.signatureAlgorithm.label = Signature Algorithm
-viewer.utilityPane.signatures.cert.dialog.info.signatureAlgorithm.value = {0}
-viewer.utilityPane.signatures.cert.dialog.info.issuer.label = Issuer
-viewer.utilityPane.signatures.cert.dialog.info.issuer.value = \
-  Organization: {0} \nOrganization Unit: {1} \nCommon Name: {2} \nLocal: {3} \nState: {4} \nCountry: {5} \nEmail: {6}
-viewer.utilityPane.signatures.cert.dialog.info.validity.label = Validity
-viewer.utilityPane.signatures.cert.dialog.info.validity.value = From: {0}\n  To: {1}
-viewer.utilityPane.signatures.cert.dialog.info.subject.label = Subject
-viewer.utilityPane.signatures.cert.dialog.info.subject.value = \
-  Organization: {0} \nOrganization Unit: {1} \nCommon Name: {2} \nLocal: {3} \nState: {4} \nCountry: {5} \nEmail: {6}
-viewer.utilityPane.signatures.cert.dialog.info.signature.label = Signature
-viewer.utilityPane.signatures.cert.dialog.info.md5.label = MD5 Fingerprint
-viewer.utilityPane.signatures.cert.dialog.info.md5.value = {0}
-viewer.utilityPane.signatures.cert.dialog.info.sha1.label = SHA1 Fingerprint
-viewer.utilityPane.signatures.cert.dialog.info.sha1.value = {0}
-viewer.utilityPane.signatures.verify.initializingMessage.label = Validating {0} of {1} Signatures
-viewer.utilityPane.signatures.verify.completeMessage.label = Validating process complete
-viewer.utilityPane.signatures.verify.validating.label = Validating signature...
+viewer.utilityPane.signatures.cert.dialog.title=Certificate Details
+viewer.utilityPane.signatures.cert.dialog.closeButton.label=Close
+viewer.utilityPane.signatures.cert.dialog.closeButton.mnemonic=C
+viewer.utilityPane.signatures.cert.dialog.info.notAvailable.label=N/A
+viewer.utilityPane.signatures.cert.dialog.info.unknownSubject.label=N/A Subject
+viewer.utilityPane.signatures.cert.dialog.info.unknownIssuer.label=N/A Issuer
+viewer.utilityPane.signatures.cert.dialog.info.certificateInfo.label={0} - {1}
+viewer.utilityPane.signatures.cert.dialog.info.column1.label=Field
+viewer.utilityPane.signatures.cert.dialog.info.column2.label=Value
+viewer.utilityPane.signatures.cert.dialog.info.version.label=Version
+viewer.utilityPane.signatures.cert.dialog.info.version.value=v{0}
+viewer.utilityPane.signatures.cert.dialog.info.serialNumber.label=Serial Number
+viewer.utilityPane.signatures.cert.dialog.info.serialNumber.value={0}
+viewer.utilityPane.signatures.cert.dialog.info.signatureAlgorithm.label=Signature Algorithm
+viewer.utilityPane.signatures.cert.dialog.info.signatureAlgorithm.value={0}
+viewer.utilityPane.signatures.cert.dialog.info.issuer.label=Issuer
+viewer.utilityPane.signatures.cert.dialog.info.issuer.value=Organization: {0} \nOrganization Unit: {1} \nCommon Name: {2} \nLocal: {3} \nState: {4} \nCountry: {5} \nEmail: {6}
+viewer.utilityPane.signatures.cert.dialog.info.validity.label=Validity
+viewer.utilityPane.signatures.cert.dialog.info.validity.value=From: {0}\n  To: {1}
+viewer.utilityPane.signatures.cert.dialog.info.subject.label=Subject
+viewer.utilityPane.signatures.cert.dialog.info.subject.value=Organization: {0} \nOrganization Unit: {1} \nCommon Name: {2} \nLocal: {3} \nState: {4} \nCountry: {5} \nEmail: {6}
+viewer.utilityPane.signatures.cert.dialog.info.signature.label=Signature
+viewer.utilityPane.signatures.cert.dialog.info.md5.label=MD5 Fingerprint
+viewer.utilityPane.signatures.cert.dialog.info.md5.value={0}
+viewer.utilityPane.signatures.cert.dialog.info.sha1.label=SHA1 Fingerprint
+viewer.utilityPane.signatures.cert.dialog.info.sha1.value={0}
+viewer.utilityPane.signatures.verify.initializingMessage.label=Validating {0} of {1} Signatures
+viewer.utilityPane.signatures.verify.completeMessage.label=Validating process complete
+viewer.utilityPane.signatures.verify.validating.label=Validating signature...
 ## Annotation Tab
-viewer.utilityPane.annotation.tab.title = Annotations
+viewer.utilityPane.annotation.tab.title=Annotations
 ## Utility Pane Annotation Link Tab
-viewer.utilityPane.annotation.link.appearance.title = Link Annotation
-viewer.utilityPane.annotation.link.highlightType = Highlight Style:
-viewer.utilityPane.annotation.link.none = None
-viewer.utilityPane.annotation.link.invert = Invert`
-viewer.utilityPane.annotation.link.outline = Outline
-viewer.utilityPane.annotation.link.push = Push
+viewer.utilityPane.annotation.link.appearance.title=Link Annotation
+viewer.utilityPane.annotation.link.highlightType=Highlight Style:
+viewer.utilityPane.annotation.link.none=None
+viewer.utilityPane.annotation.link.invert=Invert`
+viewer.utilityPane.annotation.link.outline=Outline
+viewer.utilityPane.annotation.link.push=Push
 
 ## Utility Pane Annotation text markup Tab
-viewer.utilityPane.annotation.textMarkup.appearance.title = Text Markup Annotation
-viewer.utilityPane.annotation.textMarkup.highlightType = Type:
-viewer.utilityPane.annotation.textMarkup.colorChooserTitle = MarKup Color
-viewer.utilityPane.annotation.textMarkup.colorLabel = Color:
-viewer.utilityPane.annotation.textMarkup.transparencyLabel =  Transparency:
+viewer.utilityPane.annotation.textMarkup.appearance.title=Text Markup Annotation
+viewer.utilityPane.annotation.textMarkup.highlightType=Type:
+viewer.utilityPane.annotation.textMarkup.colorChooserTitle=MarKup Color
+viewer.utilityPane.annotation.textMarkup.colorLabel=Color:
+viewer.utilityPane.annotation.textMarkup.transparencyLabel=Transparency:
 ## Utility Pane Annotation line Tab
-viewer.utilityPane.annotation.line.appearance.title = Line Annotation
-viewer.utilityPane.annotation.line.lineThickness = Line Thickness:
-viewer.utilityPane.annotation.line.lineStyle = Line Style:
-viewer.utilityPane.annotation.line.startStyle = Start:
-viewer.utilityPane.annotation.line.endStyle = End:
-viewer.utilityPane.annotation.line.colorChooserTitle = Line Color
-viewer.utilityPane.annotation.line.colorInternalChooserTitle = Line Internal Color
-viewer.utilityPane.annotation.line.colorLabel = Color:
-viewer.utilityPane.annotation.line.colorInternalLabel = Fill Color:
-viewer.utilityPane.annotation.line.end.none = None
-viewer.utilityPane.annotation.line.end.openArrow = Open Arrow
-viewer.utilityPane.annotation.line.end.closedArrow = Closed Arrow
-viewer.utilityPane.annotation.line.end.diamond = Diamond
-viewer.utilityPane.annotation.line.end.square = Square
-viewer.utilityPane.annotation.line.end.circle = Circle
-viewer.utilityPane.annotation.line.transparencyLabel =  Transparency:
+viewer.utilityPane.annotation.line.appearance.title=Line Annotation
+viewer.utilityPane.annotation.line.lineThickness=Line Thickness:
+viewer.utilityPane.annotation.line.lineStyle=Line Style:
+viewer.utilityPane.annotation.line.startStyle=Start:
+viewer.utilityPane.annotation.line.endStyle=End:
+viewer.utilityPane.annotation.line.colorChooserTitle=Line Color
+viewer.utilityPane.annotation.line.colorInternalChooserTitle=Line Internal Color
+viewer.utilityPane.annotation.line.colorLabel=Color:
+viewer.utilityPane.annotation.line.colorInternalLabel=Fill Color:
+viewer.utilityPane.annotation.line.end.none=None
+viewer.utilityPane.annotation.line.end.openArrow=Open Arrow
+viewer.utilityPane.annotation.line.end.closedArrow=Closed Arrow
+viewer.utilityPane.annotation.line.end.diamond=Diamond
+viewer.utilityPane.annotation.line.end.square=Square
+viewer.utilityPane.annotation.line.end.circle=Circle
+viewer.utilityPane.annotation.line.transparencyLabel=Transparency:
 
 ## Utility Pane Annotation square Tab
-viewer.utilityPane.annotation.square.appearance.title = Square Annotation
-viewer.utilityPane.annotation.square.lineThickness = Border Thickness:
-viewer.utilityPane.annotation.square.lineStyle = Border Style:
-viewer.utilityPane.annotation.square.colorBorderChooserTitle = Border Color
-viewer.utilityPane.annotation.square.colorInteriorChooserTitle = Fill Color
-viewer.utilityPane.annotation.square.borderTypeLabel = Border Type:
-viewer.utilityPane.annotation.square.colorBorderLabel = Border Color:
-viewer.utilityPane.annotation.square.colorInteriorLabel = Fill Color:
-viewer.utilityPane.annotation.square.fillTypeLabel = Fill Type:
-viewer.utilityPane.annotation.square.transparencyLabel =  Transparency:
+viewer.utilityPane.annotation.square.appearance.title=Square Annotation
+viewer.utilityPane.annotation.square.lineThickness=Border Thickness:
+viewer.utilityPane.annotation.square.lineStyle=Border Style:
+viewer.utilityPane.annotation.square.colorBorderChooserTitle=Border Color
+viewer.utilityPane.annotation.square.colorInteriorChooserTitle=Fill Color
+viewer.utilityPane.annotation.square.borderTypeLabel=Border Type:
+viewer.utilityPane.annotation.square.colorBorderLabel=Border Color:
+viewer.utilityPane.annotation.square.colorInteriorLabel=Fill Color:
+viewer.utilityPane.annotation.square.fillTypeLabel=Fill Type:
+viewer.utilityPane.annotation.square.transparencyLabel=Transparency:
 ## Utility Pane Annotation free text Tab
-viewer.utilityPane.annotation.freeText.appearance.title = FreeText Annotation
-viewer.utilityPane.annotation.freeText.font.name = Font Name:
-viewer.utilityPane.annotation.freeText.font.style = Font Style:
-viewer.utilityPane.annotation.freeText.font.size = Font Size:
-viewer.utilityPane.annotation.freeText.font.color = Font Color:
-viewer.utilityPane.annotation.freeText.font.color.ChooserTitle = Font Color
-viewer.utilityPane.annotation.freeText.border.thickness = Border Thickness:
-viewer.utilityPane.annotation.freeText.border.type = Border Type:
-viewer.utilityPane.annotation.freeText.border.style = Border Style:
-viewer.utilityPane.annotation.freeText.border.color = Border Color:
-viewer.utilityPane.annotation.freeText.border.color.ChooserTitle = Border Color
-viewer.utilityPane.annotation.freeText.fill.type = Fill Type:
-viewer.utilityPane.annotation.freeText.fill.color = Fill Color:
-viewer.utilityPane.annotation.freeText.transparencyLabel = Transparency:
-viewer.utilityPane.annotation.freeText.fill.color.ChooserTitle = Fill Color
-viewer.utilityPane.annotation.freeText.font.dialog = Dialog
-viewer.utilityPane.annotation.freeText.font.dialogInput = DialogInput
-viewer.utilityPane.annotation.freeText.font.monospaced = Monospaced
-viewer.utilityPane.annotation.freeText.font.serif = Serif
-viewer.utilityPane.annotation.freeText.font.sanSerif = SansSerif
-viewer.utilityPane.annotation.freeText.font.style.plain = Plain
-viewer.utilityPane.annotation.freeText.font.style.italic = Italic
-viewer.utilityPane.annotation.freeText.font.style.bold = Bold
-viewer.utilityPane.annotation.freeText.font.name.helvetica = Helvetica
-viewer.utilityPane.annotation.freeText.font.name.helveticaOblique = Helvetica-Oblique
-viewer.utilityPane.annotation.freeText.font.name.helveticaBold = Helvetica-Bold
-viewer.utilityPane.annotation.freeText.font.name.HelveticaBoldOblique = Helvetica-BoldOblique
-viewer.utilityPane.annotation.freeText.font.name.timesItalic = Times-Italic
-viewer.utilityPane.annotation.freeText.font.name.timesBold = Times-Bold
-viewer.utilityPane.annotation.freeText.font.name.timesBoldItalic = Times-BoldItalic
-viewer.utilityPane.annotation.freeText.font.name.timesRoman = Times-Roman
-viewer.utilityPane.annotation.freeText.font.name.courier = Courier
-viewer.utilityPane.annotation.freeText.font.name.courierOblique = Courier-Oblique
-viewer.utilityPane.annotation.freeText.font.name.courierBoldOblique = Courier-BoldOblique
-viewer.utilityPane.annotation.freeText.font.name.courierBold = Courier-Bold
+viewer.utilityPane.annotation.freeText.appearance.title=FreeText Annotation
+viewer.utilityPane.annotation.freeText.font.name=Font Name:
+viewer.utilityPane.annotation.freeText.font.style=Font Style:
+viewer.utilityPane.annotation.freeText.font.size=Font Size:
+viewer.utilityPane.annotation.freeText.font.color=Font Color:
+viewer.utilityPane.annotation.freeText.font.color.ChooserTitle=Font Color
+viewer.utilityPane.annotation.freeText.border.thickness=Border Thickness:
+viewer.utilityPane.annotation.freeText.border.type=Border Type:
+viewer.utilityPane.annotation.freeText.border.style=Border Style:
+viewer.utilityPane.annotation.freeText.border.color=Border Color:
+viewer.utilityPane.annotation.freeText.border.color.ChooserTitle=Border Color
+viewer.utilityPane.annotation.freeText.fill.type=Fill Type:
+viewer.utilityPane.annotation.freeText.fill.color=Fill Color:
+viewer.utilityPane.annotation.freeText.transparencyLabel=Transparency:
+viewer.utilityPane.annotation.freeText.fill.color.ChooserTitle=Fill Color
+viewer.utilityPane.annotation.freeText.font.dialog=Dialog
+viewer.utilityPane.annotation.freeText.font.dialogInput=DialogInput
+viewer.utilityPane.annotation.freeText.font.monospaced=Monospaced
+viewer.utilityPane.annotation.freeText.font.serif=Serif
+viewer.utilityPane.annotation.freeText.font.sanSerif=SansSerif
+viewer.utilityPane.annotation.freeText.font.style.plain=Plain
+viewer.utilityPane.annotation.freeText.font.style.italic=Italic
+viewer.utilityPane.annotation.freeText.font.style.bold=Bold
+viewer.utilityPane.annotation.freeText.font.name.helvetica=Helvetica
+viewer.utilityPane.annotation.freeText.font.name.helveticaOblique=Helvetica-Oblique
+viewer.utilityPane.annotation.freeText.font.name.helveticaBold=Helvetica-Bold
+viewer.utilityPane.annotation.freeText.font.name.HelveticaBoldOblique=Helvetica-BoldOblique
+viewer.utilityPane.annotation.freeText.font.name.timesItalic=Times-Italic
+viewer.utilityPane.annotation.freeText.font.name.timesBold=Times-Bold
+viewer.utilityPane.annotation.freeText.font.name.timesBoldItalic=Times-BoldItalic
+viewer.utilityPane.annotation.freeText.font.name.timesRoman=Times-Roman
+viewer.utilityPane.annotation.freeText.font.name.courier=Courier
+viewer.utilityPane.annotation.freeText.font.name.courierOblique=Courier-Oblique
+viewer.utilityPane.annotation.freeText.font.name.courierBoldOblique=Courier-BoldOblique
+viewer.utilityPane.annotation.freeText.font.name.courierBold=Courier-Bold
 
 ## Utility Pane Annotation text Tab
-viewer.utilityPane.annotation.text.appearance.title = Text Annotation
-viewer.utilityPane.annotation.text.iconName = Icon:
-viewer.utilityPane.annotation.text.iconName.comment = Comment
-viewer.utilityPane.annotation.text.iconName.check = Check
-viewer.utilityPane.annotation.text.iconName.checkMark = CheckMark
-viewer.utilityPane.annotation.text.iconName.circle = Circle
-viewer.utilityPane.annotation.text.iconName.cross = Cross
-viewer.utilityPane.annotation.text.iconName.crossHairs = CrossHairs
-viewer.utilityPane.annotation.text.iconName.help = Help
-viewer.utilityPane.annotation.text.iconName.insert = Insert
-viewer.utilityPane.annotation.text.iconName.key = Key
-viewer.utilityPane.annotation.text.iconName.newParagraph = NewParagraph
-viewer.utilityPane.annotation.text.iconName.paragraph = Paragraph
-viewer.utilityPane.annotation.text.iconName.rightArrow = RightArrow
-viewer.utilityPane.annotation.text.iconName.rightPointer = RightPointer
-viewer.utilityPane.annotation.text.iconName.star = Star
-viewer.utilityPane.annotation.text.iconName.upArrow = UpArrow
-viewer.utilityPane.annotation.text.iconName.upLeftArrow = UpLeftArrow
+viewer.utilityPane.annotation.text.appearance.title=Text Annotation
+viewer.utilityPane.annotation.text.iconName=Icon:
+viewer.utilityPane.annotation.text.iconName.comment=Comment
+viewer.utilityPane.annotation.text.iconName.check=Check
+viewer.utilityPane.annotation.text.iconName.checkMark=CheckMark
+viewer.utilityPane.annotation.text.iconName.circle=Circle
+viewer.utilityPane.annotation.text.iconName.cross=Cross
+viewer.utilityPane.annotation.text.iconName.crossHairs=CrossHairs
+viewer.utilityPane.annotation.text.iconName.help=Help
+viewer.utilityPane.annotation.text.iconName.insert=Insert
+viewer.utilityPane.annotation.text.iconName.key=Key
+viewer.utilityPane.annotation.text.iconName.newParagraph=NewParagraph
+viewer.utilityPane.annotation.text.iconName.paragraph=Paragraph
+viewer.utilityPane.annotation.text.iconName.rightArrow=RightArrow
+viewer.utilityPane.annotation.text.iconName.rightPointer=RightPointer
+viewer.utilityPane.annotation.text.iconName.star=Star
+viewer.utilityPane.annotation.text.iconName.upArrow=UpArrow
+viewer.utilityPane.annotation.text.iconName.upLeftArrow=UpLeftArrow
 
 ## Utility Pane Annotation circle Tab
-viewer.utilityPane.annotation.circle.appearance.title = Circle Annotation
-viewer.utilityPane.annotation.circle.lineThickness = Border Thickness:
-viewer.utilityPane.annotation.circle.lineStyle = Border Style:
-viewer.utilityPane.annotation.circle.colorBorderChooserTitle = Border Color
-viewer.utilityPane.annotation.circle.colorInteriorChooserTitle = Interior Color
-viewer.utilityPane.annotation.circle.colorBorderLabel = Border Color:
-viewer.utilityPane.annotation.circle.colorInteriorLabel = Fill Color:
-viewer.utilityPane.annotation.circle.fillTypeLabel =  Fill Type:
-viewer.utilityPane.annotation.circle.transparencyLabel =  Transparency:
+viewer.utilityPane.annotation.circle.appearance.title=Circle Annotation
+viewer.utilityPane.annotation.circle.lineThickness=Border Thickness:
+viewer.utilityPane.annotation.circle.lineStyle=Border Style:
+viewer.utilityPane.annotation.circle.colorBorderChooserTitle=Border Color
+viewer.utilityPane.annotation.circle.colorInteriorChooserTitle=Interior Color
+viewer.utilityPane.annotation.circle.colorBorderLabel=Border Color:
+viewer.utilityPane.annotation.circle.colorInteriorLabel=Fill Color:
+viewer.utilityPane.annotation.circle.fillTypeLabel=Fill Type:
+viewer.utilityPane.annotation.circle.transparencyLabel=Transparency:
 ## Utility Pane Annotation ink Tab
-viewer.utilityPane.annotation.ink.appearance.title = Ink Annotation
-viewer.utilityPane.annotation.ink.lineThickness = Ink Thickness:
-viewer.utilityPane.annotation.ink.lineStyle = Ink Style:
-viewer.utilityPane.annotation.ink.colorBorderChooserTitle = Ink Color
-viewer.utilityPane.annotation.ink.colorBorderLabel = Ink Color:
-viewer.utilityPane.annotation.ink.transparencyLabel =  Transparency:
+viewer.utilityPane.annotation.ink.appearance.title=Ink Annotation
+viewer.utilityPane.annotation.ink.lineThickness=Ink Thickness:
+viewer.utilityPane.annotation.ink.lineStyle=Ink Style:
+viewer.utilityPane.annotation.ink.colorBorderChooserTitle=Ink Color
+viewer.utilityPane.annotation.ink.colorBorderLabel=Ink Color:
+viewer.utilityPane.annotation.ink.transparencyLabel=Transparency:
 ## Utility Pane border Tab
-viewer.utilityPane.annotation.border.title = Border
-viewer.utilityPane.annotation.border.linkType = Border Type:
-viewer.utilityPane.annotation.border.lineThickness = Border Thickness:
-viewer.utilityPane.annotation.border.lineStyle = Border Style:
-viewer.utilityPane.annotation.border.colorChooserTitle = Border Color
-viewer.utilityPane.annotation.border.colorLabel = Color:
-viewer.utilityPane.annotation.border.borderType.visibleRectangle = Visible
-viewer.utilityPane.annotation.border.borderType.invisibleRectangle = Invisible
-viewer.utilityPane.annotation.border.solid = Solid
-viewer.utilityPane.annotation.border.dashed = Dashed
-viewer.utilityPane.annotation.border.beveled = Beveled
-viewer.utilityPane.annotation.border.inset = Inset
-viewer.utilityPane.annotation.border.underline = Underline
+viewer.utilityPane.annotation.border.title=Border
+viewer.utilityPane.annotation.border.linkType=Border Type:
+viewer.utilityPane.annotation.border.lineThickness=Border Thickness:
+viewer.utilityPane.annotation.border.lineStyle=Border Style:
+viewer.utilityPane.annotation.border.colorChooserTitle=Border Color
+viewer.utilityPane.annotation.border.colorLabel=Color:
+viewer.utilityPane.annotation.border.borderType.visibleRectangle=Visible
+viewer.utilityPane.annotation.border.borderType.invisibleRectangle=Invisible
+viewer.utilityPane.annotation.border.solid=Solid
+viewer.utilityPane.annotation.border.dashed=Dashed
+viewer.utilityPane.annotation.border.beveled=Beveled
+viewer.utilityPane.annotation.border.inset=Inset
+viewer.utilityPane.annotation.border.underline=Underline
 ## Utility Pane border Tab
-viewer.utilityPane.annotation.flags.title = Flags
-viewer.utilityPane.annotation.flags.noRotate = No Rotate:
-viewer.utilityPane.annotation.flags.noZoom = No Zoom:
-viewer.utilityPane.annotation.flags.readOnly  = Read Only:
-viewer.utilityPane.annotation.flags.printable  = Printable:
-viewer.utilityPane.annotation.flags.yes  = Printable:
-viewer.utilityPane.annotation.flags.enabled  = Enabled
-viewer.utilityPane.annotation.flags.disabled  = Disabled
+viewer.utilityPane.annotation.flags.title=Flags
+viewer.utilityPane.annotation.flags.noRotate=No Rotate:
+viewer.utilityPane.annotation.flags.noZoom=No Zoom:
+viewer.utilityPane.annotation.flags.readOnly=Read Only:
+viewer.utilityPane.annotation.flags.printable=Printable:
+viewer.utilityPane.annotation.flags.yes=Printable:
+viewer.utilityPane.annotation.flags.enabled=Enabled
+viewer.utilityPane.annotation.flags.disabled=Disabled
 ## annotation action pane and dialogs.
-viewer.utilityPane.action.selectionTitle = Action
-viewer.utilityPane.action.addAction = Add
-viewer.utilityPane.action.editAction = Edit
-viewer.utilityPane.action.removeAction = Remove
-viewer.utilityPane.action.type.destination.label = Destination
-viewer.utilityPane.action.type.uriAction.label = URI Action
-viewer.utilityPane.action.type.goToAction.label = GoTo Action
-viewer.utilityPane.action.type.launchAction.label = Launch Action
-viewer.utilityPane.action.dialog.new.title = Add New Action
-viewer.utilityPane.action.dialog.new.msgs = Action Type:
-viewer.utilityPane.action.dialog.delete.title = Delete Confirmation
-viewer.utilityPane.action.dialog.delete.msgs = Are you sure your want to delete this action?
+viewer.utilityPane.action.selectionTitle=Action
+viewer.utilityPane.action.addAction=Add
+viewer.utilityPane.action.editAction=Edit
+viewer.utilityPane.action.removeAction=Remove
+viewer.utilityPane.action.type.destination.label=Destination
+viewer.utilityPane.action.type.uriAction.label=URI Action
+viewer.utilityPane.action.type.goToAction.label=GoTo Action
+viewer.utilityPane.action.type.launchAction.label=Launch Action
+viewer.utilityPane.action.dialog.new.title=Add New Action
+viewer.utilityPane.action.dialog.new.msgs=Action Type:
+viewer.utilityPane.action.dialog.delete.title=Delete Confirmation
+viewer.utilityPane.action.dialog.delete.msgs=Are you sure your want to delete this action?
 ## uri action dialog test
-viewer.utilityPane.action.dialog.uri.title = URI Action Properties
-viewer.utilityPane.action.dialog.uri.msgs = URI:
+viewer.utilityPane.action.dialog.uri.title=URI Action Properties
+viewer.utilityPane.action.dialog.uri.msgs=URI:
 ## launch action dialog test
-viewer.utilityPane.action.dialog.launch.title = Launch Action Properties
-viewer.utilityPane.action.dialog.launch.msgs = File Path:
+viewer.utilityPane.action.dialog.launch.title=Launch Action Properties
+viewer.utilityPane.action.dialog.launch.msgs=File Path:
 ## GoTo action dialog text
-viewer.utilityPane.action.dialog.goto.title = GoTo Action Properties
-viewer.utilityPane.action.dialog.goto.page.label = Page:
-viewer.utilityPane.action.dialog.goto.type.label = Type
-viewer.utilityPane.action.dialog.goto.type.xyz.label = Absolute
-viewer.utilityPane.action.dialog.goto.type.fit.label = Fit Page
-viewer.utilityPane.action.dialog.goto.type.fith.label = Fit Top Width
-viewer.utilityPane.action.dialog.goto.type.fitv.label = Fit Left Width
-viewer.utilityPane.action.dialog.goto.type.fitr.label = Fit Zoom Box
-viewer.utilityPane.action.dialog.goto.type.fitb.label = Fit Page Bounds
-viewer.utilityPane.action.dialog.goto.type.fitbh.label = Fit Bounds Top
-viewer.utilityPane.action.dialog.goto.type.fitbv.label = Fit Bounds Left
-viewer.utilityPane.action.dialog.goto.right.label = Right:
-viewer.utilityPane.action.dialog.goto.left.label = Left:
-viewer.utilityPane.action.dialog.goto.top.label = Top:
-viewer.utilityPane.action.dialog.goto.bottom.label = Bottom:
-viewer.utilityPane.action.dialog.goto.zoom.label = Zoom:
-viewer.utilityPane.action.dialog.goto.unassigned.label = NaN
-viewer.utilityPane.action.dialog.goto.current.label = Current View:
-viewer.utilityPane.action.dialog.goto.current = Set Location
-viewer.utilityPane.action.dialog.goto.name.label = Name:
-viewer.utilityPane.action.dialog.goto.browse = Browse...
-viewer.utilityPane.action.dialog.goto.explicitDestination.title = Implicit Destination
-viewer.utilityPane.action.dialog.goto.nameDestination.title = Named Destination
+viewer.utilityPane.action.dialog.goto.title=GoTo Action Properties
+viewer.utilityPane.action.dialog.goto.page.label=Page:
+viewer.utilityPane.action.dialog.goto.type.label=Type
+viewer.utilityPane.action.dialog.goto.type.xyz.label=Absolute
+viewer.utilityPane.action.dialog.goto.type.fit.label=Fit Page
+viewer.utilityPane.action.dialog.goto.type.fith.label=Fit Top Width
+viewer.utilityPane.action.dialog.goto.type.fitv.label=Fit Left Width
+viewer.utilityPane.action.dialog.goto.type.fitr.label=Fit Zoom Box
+viewer.utilityPane.action.dialog.goto.type.fitb.label=Fit Page Bounds
+viewer.utilityPane.action.dialog.goto.type.fitbh.label=Fit Bounds Top
+viewer.utilityPane.action.dialog.goto.type.fitbv.label=Fit Bounds Left
+viewer.utilityPane.action.dialog.goto.right.label=Right:
+viewer.utilityPane.action.dialog.goto.left.label=Left:
+viewer.utilityPane.action.dialog.goto.top.label=Top:
+viewer.utilityPane.action.dialog.goto.bottom.label=Bottom:
+viewer.utilityPane.action.dialog.goto.zoom.label=Zoom:
+viewer.utilityPane.action.dialog.goto.unassigned.label=NaN
+viewer.utilityPane.action.dialog.goto.current.label=Current View:
+viewer.utilityPane.action.dialog.goto.current=Set Location
+viewer.utilityPane.action.dialog.goto.name.label=Name:
+viewer.utilityPane.action.dialog.goto.browse=Browse...
+viewer.utilityPane.action.dialog.goto.explicitDestination.title=Implicit Destination
+viewer.utilityPane.action.dialog.goto.nameDestination.title=Named Destination
 # Destination Named Tree
-viewer.utilityPane.action.dialog.goto.nameTree.title = Document Name Tree
-viewer.utilityPane.action.dialog.goto.nameTree.root.label = Name Tree
-viewer.utilityPane.action.dialog.goto.nameTree.branch.label = {0} to {1}
+viewer.utilityPane.action.dialog.goto.nameTree.title=Document Name Tree
+viewer.utilityPane.action.dialog.goto.nameTree.root.label=Name Tree
+viewer.utilityPane.action.dialog.goto.nameTree.branch.label={0} to {1}
 
 ## Utility Pane Search Tab
-viewer.utilityPane.search.tab.title = Search
-viewer.utilityPane.search.searchText.label = Search Text:
-viewer.utilityPane.search.results.label = Results:
-viewer.utilityPane.search.searchButton.label = Search
-viewer.utilityPane.search.clearSearchButton.label = Clear
-viewer.utilityPane.search.caseSenstiveCheckbox.label = Case-sensitive
-viewer.utilityPane.search.wholeWordCheckbox.label = Whole words only
-viewer.utilityPane.search.cumlitiveCheckbox.label = Cumulative
-viewer.utilityPane.search.showPagesCheckbox.label = Show Pages
-viewer.utilityPane.search.stopButton.label = Stop
-viewer.utilityPane.search.searching.msg = Search...
+viewer.utilityPane.search.tab.title=Search
+viewer.utilityPane.search.searchText.label=Search Text:
+viewer.utilityPane.search.results.label=Results:
+viewer.utilityPane.search.searchButton.label=Search
+viewer.utilityPane.search.clearSearchButton.label=Clear
+viewer.utilityPane.search.caseSenstiveCheckbox.label=Case-sensitive
+viewer.utilityPane.search.wholeWordCheckbox.label=Whole words only
+viewer.utilityPane.search.cumlitiveCheckbox.label=Cumulative
+viewer.utilityPane.search.showPagesCheckbox.label=Show Pages
+viewer.utilityPane.search.stopButton.label=Stop
+viewer.utilityPane.search.searching.msg=Search...
 # Searching x out of y page(s)
-viewer.utilityPane.search.searching1.msg = \
-  Searching {0} out of {1}
-viewer.utilityPane.search.searching1.oneFile.msg =  {2} page
-viewer.utilityPane.search.searching1.moreFile.msg = {2} pages
+viewer.utilityPane.search.searching1.msg=Searching {0} out of {1}
+viewer.utilityPane.search.searching1.oneFile.msg={2} page
+viewer.utilityPane.search.searching1.moreFile.msg={2} pages
 # Page x (y result(s))
-viewer.utilityPane.search.result.msg = Page {0} ({1})
-viewer.utilityPane.search.result.oneFile.msg = {2} result
-viewer.utilityPane.search.result.moreFile.msg = {2} results
+viewer.utilityPane.search.result.msg=Page {0} ({1})
+viewer.utilityPane.search.result.oneFile.msg={2} result
+viewer.utilityPane.search.result.moreFile.msg={2} results
 # Searched x page(s) (y matches)
-viewer.utilityPane.search.progress.msg = \
-  Searched {0} {1} ({2})
-viewer.utilityPane.search.progress.onePage.msg = page
-viewer.utilityPane.search.progress.morePage.msg = pages
-viewer.utilityPane.search.progress.oneMatch.msg = {2} match
-viewer.utilityPane.search.progress.moreMatch.msg = {2} matches
+viewer.utilityPane.search.progress.msg=Searched {0} {1} ({2})
+viewer.utilityPane.search.progress.onePage.msg=page
+viewer.utilityPane.search.progress.morePage.msg=pages
+viewer.utilityPane.search.progress.oneMatch.msg={2} match
+viewer.utilityPane.search.progress.moreMatch.msg={2} matches
 
 ## Popup Annotation component
-viewer.annotation.popup.reply.label = Reply
-viewer.annotation.popup.delete.label = Delete
-viewer.annotation.popup.status.label = Set Status
-viewer.annotation.popup.status.accepted.label = Accepted
-viewer.annotation.popup.status.cancelled.label = Cancelled
-viewer.annotation.popup.status.completed.label = Completed
-viewer.annotation.popup.status.rejected.label = Rejected
-viewer.annotation.popup.status.none.label = None
-viewer.annotation.popup.openAll.label = Open all Popups
-viewer.annotation.popup.minimizeAll.label = Minimize Popups
-viewer.annotation.popup.replyTo.label = Re: {0}
-viewer.annotation.popup.status.none.title = None: {0}
-viewer.annotation.popup.status.none.msg = None set by {0}
-viewer.annotation.popup.status.accepted.title = Accepted: {0}
-viewer.annotation.popup.status.accepted.msg = Accepted set by {0}
-viewer.annotation.popup.status.cancelled.title = Cancelled: {0}
-viewer.annotation.popup.status.cancelled.msg = Cancelled set by {0}
-viewer.annotation.popup.status.completed.title = Completed: {0}
-viewer.annotation.popup.status.completed.msg = Completed set by {0}
-viewer.annotation.popup.status.rejected.title = Rejected: {0}
-viewer.annotation.popup.status.rejected.msg = Rejected set by {0}
+viewer.annotation.popup.reply.label=Reply
+viewer.annotation.popup.delete.label=Delete
+viewer.annotation.popup.status.label=Set Status
+viewer.annotation.popup.status.accepted.label=Accepted
+viewer.annotation.popup.status.cancelled.label=Cancelled
+viewer.annotation.popup.status.completed.label=Completed
+viewer.annotation.popup.status.rejected.label=Rejected
+viewer.annotation.popup.status.none.label=None
+viewer.annotation.popup.openAll.label=Open all Popups
+viewer.annotation.popup.minimizeAll.label=Minimize Popups
+viewer.annotation.popup.replyTo.label=Re: {0}
+viewer.annotation.popup.status.none.title=None: {0}
+viewer.annotation.popup.status.none.msg=None set by {0}
+viewer.annotation.popup.status.accepted.title=Accepted: {0}
+viewer.annotation.popup.status.accepted.msg=Accepted set by {0}
+viewer.annotation.popup.status.cancelled.title=Cancelled: {0}
+viewer.annotation.popup.status.cancelled.msg=Cancelled set by {0}
+viewer.annotation.popup.status.completed.title=Completed: {0}
+viewer.annotation.popup.status.completed.msg=Completed set by {0}
+viewer.annotation.popup.status.rejected.title=Rejected: {0}
+viewer.annotation.popup.status.rejected.msg=Rejected set by {0}
 
 ## Signature component
-viewer.annotation.signature.menu.validateSignature.label = Validate Signature
-viewer.annotation.signature.menu.showCertificates.label = Show Certificate Properties
-viewer.annotation.signature.menu.signatureProperties.label = Show Signature Properties
-viewer.annotation.signature.menu.signaturePageNavigation.label = Go to Page...
+viewer.annotation.signature.menu.validateSignature.label=Validate Signature
+viewer.annotation.signature.menu.showCertificates.label=Show Certificate Properties
+viewer.annotation.signature.menu.signatureProperties.label=Show Signature Properties
+viewer.annotation.signature.menu.signaturePageNavigation.label=Go to Page...
 
 ## Signature validation dialog.
-viewer.annotation.signature.validation.dialog.title = Signature Validation Summary
-viewer.annotation.signature.validation.dialog.close.button.label = Close
-viewer.annotation.signature.validation.dialog.signerProperties.button.label = Signature Properties...
+viewer.annotation.signature.validation.dialog.title=Signature Validation Summary
+viewer.annotation.signature.validation.dialog.close.button.label=Close
+viewer.annotation.signature.validation.dialog.signerProperties.button.label=Signature Properties...
 # common validation messages
-viewer.annotation.signature.validation.common.invalid.label = Signature is invalid:
-viewer.annotation.signature.validation.common.unknown.label = Signature is valid:
-viewer.annotation.signature.validation.common.valid.label = Signature validity is unknown:
-viewer.annotation.signature.validation.common.signedBy.label =  - Signed by {0} {1}
-viewer.annotation.signature.validation.common.doc.modified.label = \
-  - This version of the document is unaltered but subsequent changes have been made
-viewer.annotation.signature.validation.common.doc.unmodified.label = - Document has not been modified since it was signed
-viewer.annotation.signature.validation.common.doc.major.label = - Document has been altered or corrupted since it was signed
-viewer.annotation.signature.validation.common.identity.unknown.label = \
-  - Signer's identity is unknown because it could not be found in your keystore
-viewer.annotation.signature.validation.common.identity.unchecked.label = \
-  - Signature is valid, but revocation of the signer's identity could not be checked
-viewer.annotation.signature.validation.common.identity.valid.label = - Signer's identity is valid
-viewer.annotation.signature.validation.common.time.local.label = - Signing time is from the clock on this signer's computer
-viewer.annotation.signature.validation.common.time.embedded.label = \
-  - Signature included an embedded timestamp but it could not be validated
-viewer.annotation.signature.validation.common.notAvailable.label = N/A
+viewer.annotation.signature.validation.common.invalid.label=Signature is invalid:
+viewer.annotation.signature.validation.common.unknown.label=Signature is valid:
+viewer.annotation.signature.validation.common.valid.label=Signature validity is unknown:
+viewer.annotation.signature.validation.common.signedBy.label=- Signed by {0} {1}
+viewer.annotation.signature.validation.common.doc.modified.label=- This version of the document is unaltered but subsequent changes have been made
+viewer.annotation.signature.validation.common.doc.unmodified.label=- Document has not been modified since it was signed
+viewer.annotation.signature.validation.common.doc.major.label=- Document has been altered or corrupted since it was signed
+viewer.annotation.signature.validation.common.identity.unknown.label=- Signer's identity is unknown because it could not be found in your keystore
+viewer.annotation.signature.validation.common.identity.unchecked.label=- Signature is valid, but revocation of the signer's identity could not be checked
+viewer.annotation.signature.validation.common.identity.valid.label=- Signer's identity is valid
+viewer.annotation.signature.validation.common.time.local.label=- Signing time is from the clock on this signer's computer
+viewer.annotation.signature.validation.common.time.embedded.label=- Signature included an embedded timestamp but it could not be validated
+viewer.annotation.signature.validation.common.notAvailable.label=N/A
 
 ## Signatures properties Dialog.
-viewer.annotation.signature.properties.dialog.title = Signature Properties
-viewer.annotation.signature.properties.dialog.invalid.label = Signature is invalid
-viewer.annotation.signature.properties.dialog.unknown.label = Signature is valid
-viewer.annotation.signature.properties.dialog.valid.label = Signature validity is unknown
-viewer.annotation.signature.properties.dialog.signedBy.label = Signed by {0} {1}
-viewer.annotation.signature.properties.dialog.signingTime.label = Signed time: {0}
-viewer.annotation.signature.properties.dialog.reason.label = Reason: {0}
-viewer.annotation.signature.properties.dialog.location.label = Location: {0}
+viewer.annotation.signature.properties.dialog.title=Signature Properties
+viewer.annotation.signature.properties.dialog.invalid.label=Signature is invalid
+viewer.annotation.signature.properties.dialog.unknown.label=Signature is valid
+viewer.annotation.signature.properties.dialog.valid.label=Signature validity is unknown
+viewer.annotation.signature.properties.dialog.signedBy.label=Signed by {0} {1}
+viewer.annotation.signature.properties.dialog.signingTime.label=Signed time: {0}
+viewer.annotation.signature.properties.dialog.reason.label=Reason: {0}
+viewer.annotation.signature.properties.dialog.location.label=Location: {0}
 # SignatureSigner Info
-viewer.annotation.signature.properties.dialog.pathValidation.success  = - Path validation checks were successful.
-viewer.annotation.signature.properties.dialog.pathValidation.failure  = - Path validation checks were unsuccessful.
-viewer.annotation.signature.properties.dialog.revocation.success  = - Signer's certificate is valid and has not been revoked.
-viewer.annotation.signature.properties.dialog.revocation.failure  = - Revocation checking was not performed.
-viewer.annotation.signature.properties.dialog.certificateExpired.failure = - Signer certificate has expired.
-viewer.annotation.signature.properties.dialog.showCertificates.label  = Signer's Certificate...
-viewer.annotation.signature.properties.dialog.validity.title = Validity Summary
-viewer.annotation.signature.properties.dialog.signerInfo.title = Signer Info
+viewer.annotation.signature.properties.dialog.pathValidation.success=- Path validation checks were successful.
+viewer.annotation.signature.properties.dialog.pathValidation.failure=- Path validation checks were unsuccessful.
+viewer.annotation.signature.properties.dialog.revocation.success=- Signer's certificate is valid and has not been revoked.
+viewer.annotation.signature.properties.dialog.revocation.failure=- Revocation checking was not performed.
+viewer.annotation.signature.properties.dialog.certificateExpired.failure=- Signer certificate has expired.
+viewer.annotation.signature.properties.dialog.showCertificates.label=Signer's Certificate...
+viewer.annotation.signature.properties.dialog.validity.title=Validity Summary
+viewer.annotation.signature.properties.dialog.signerInfo.title=Signer Info
 
 ## Common Button Labels
-viewer.button.ok.label = Ok
-viewer.button.ok.mnemonic = O
-viewer.button.cancel.label = Cancel
-viewer.button.cancel.mnemonic = C
+viewer.button.ok.label=Ok
+viewer.button.ok.mnemonic=O
+viewer.button.cancel.label=Cancel
+viewer.button.cancel.mnemonic=C
 
 ## Pilot Specific Mesages
-pilot.title = ICEbrowser - ICEpdf Pilot Errror
-pilot.loading.msg =Opening document {0} ...
-pilot.display.msg = Displaying {0}
-pilot.loading.error.msg = PDF Pilot: Failed to load {0}.
-pilot.error.classLoading = Required class {0} not found. Required library \
-   'icepdf.jar' may not be on the classpath - PDF Pilot disabled.";
+pilot.title=ICEbrowser - ICEpdf Pilot Errror
+pilot.loading.msg=Opening document {0} ...
+pilot.display.msg=Displaying {0}
+pilot.loading.error.msg=PDF Pilot: Failed to load {0}.
+pilot.error.classLoading=Required class {0} not found. Required library 'icepdf.jar' may not be on the classpath - PDF Pilot disabled.";
 
 ###
 # General Error Messages
 
 
 # Command Line Errors
-viewer.commandLin.error = \
-    Usage: java org.icepdf.ri.viewer.Main [-loadfile <value>] [-loadurl <value>]
+viewer.commandLin.error=Usage: java org.icepdf.ri.viewer.Main [-loadfile <value>] [-loadurl <value>]
 # Launcher errors
-viewer.launcher.URLError.dialog.title =ICEsoft ICEpdf
-viewer.launcher.URLError.dialog.message = ICEpdf could not open the specified file. {0} at URL: {1}.
-viewer.launcher.lookAndFeel.error.message = The specified look-and-feel ({0}) is not accessible from this platform.
+viewer.launcher.URLError.dialog.title=ICEsoft ICEpdf
+viewer.launcher.URLError.dialog.message=ICEpdf could not open the specified file. {0} at URL: {1}.
+viewer.launcher.lookAndFeel.error.message=The specified look-and-feel ({0}) is not accessible from this platform.
 
 # Pilot Loading Errors
 
 
 ### parser error dialogs
-parse.title = Properties Parsing Error
-parse.integer = Warning : {0} is not a correct integer.
-parse.float = Warning : {0} is not a correct float.
-parse.double = Warning : {0} is not a correct double.
-parse.choice = Warning : {0} is not a valid choice.
-parse.laf = Warning : look-and-feel {0} is not supported.
+parse.title=Properties Parsing Error
+parse.integer=Warning : {0} is not a correct integer.
+parse.float=Warning : {0} is not a correct float.
+parse.double=Warning : {0} is not a correct double.
+parse.choice=Warning : {0} is not a valid choice.
+parse.laf=Warning : look-and-feel {0} is not supported.
 
 ### Properties Manager Errors
-manager.properties.title = ICEpdf Properties Manager
-fontManager.properties.title = ICEpdf Font Manager
+manager.properties.title=ICEpdf Properties Manager
+fontManager.properties.title=ICEpdf Font Manager
 
-manager.properties.createNewDirectory = \
-    To create the directory {0},\n\
-    where the ICEpdf Viewer will store changes to its setup, click Yes.\n\n\
-    If you click "No", all changes you make to the ICEpdf Viewer setup\n\
-    will be lost when you quit the application. \n\n
+manager.properties.createNewDirectory=To create the directory {0},\nwhere the ICEpdf Viewer will store changes to its setup, click Yes.\n\nIf you click "No", all changes you make to the ICEpdf Viewer setup\nwill be lost when you quit the application. \n\n
 
-manager.properties.failedCreation = \
-    ICEpdf Viewer directory to store user data can not be created:\n\
-    {0}\n\
-    ICEpdf Viewer will not save changes to its default setup.
+manager.properties.failedCreation=ICEpdf Viewer directory to store user data can not be created:\n{0}\nICEpdf Viewer will not save changes to its default setup.
 
-manager.properties.session.nolock = \
-    Error creating the lock file :\n\
-    {0}\n
+manager.properties.session.nolock=Error creating the lock file :\n{0}\n
 
-manager.properties.session.readError = \
-    Error loading properties file: \n\
-    {0}
+manager.properties.session.readError=Error loading properties file: \n{0}
 
-manager.properties.deleted = Property file has been deleted\n\
-    ({0})\n\
-    Recreate it ?
+manager.properties.deleted=Property file has been deleted\n({0})\nRecreate it ?
 
-manager.properties.modified = Property file has been modified since last update\n\
-({0,date,long})\n\
-Would you like to merge changes in the file with the current properties?
+manager.properties.modified=Property file has been modified since last update\n({0,date,long})\nWould you like to merge changes in the file with the current properties?
 
-manager.properties.saveError = Impossible to save property file.\n\
-Encountered the folowing error :\n\
-{0}
+manager.properties.saveError=Impossible to save property file.\nEncountered the folowing error :\n{0}
 
-manager.properties.lafError  =\
-  Look&Feel {0} given in the default properties is unsupported.\n\
-  Using system default.
+manager.properties.lafError=Look&Feel {0} given in the default properties is unsupported.\nUsing system default.
 
-manager.properties.brokenProperty =  Broken default property {0} value: {1}
+manager.properties.brokenProperty=Broken default property {0} value: {1}
 
-manager.properties.missingProperty =  Missing default property {0} value: {1}
+manager.properties.missingProperty=Missing default property {0} value: {1}
 
