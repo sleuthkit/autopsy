@@ -1,10 +1,10 @@
 #!/bin/bash
 # Clones sleuthkit repo from github (if necessary) and installs
 # this script does require sudo privileges
-# called like: build_tsk.sh -p <repo path to be created or existing> -b <tsk branch to checkout> -r <non-standard remote repo (optional)>
+# called like: install_tsk_from_src.sh -p <repo path to be created or existing> -b <tsk branch to checkout> -r <non-standard remote repo (optional)>
 
 usage() {
-    echo "Usage: install_tsk_from_src [-p repo_path (should end with '/sleuthkit')] [-b tsk_branch] [-r sleuthkit_repo]" 1>&2
+    echo "Usage: install_tsk_from_src.sh [-p repo_path (should end with '/sleuthkit')] [-b tsk_branch] [-r sleuthkit_repo]" 1>&2
 }
 
 # default repo path
