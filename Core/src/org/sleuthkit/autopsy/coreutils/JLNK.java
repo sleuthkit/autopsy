@@ -292,7 +292,16 @@ public class JLNK {
         } else if (linkTargetIdList != null && !linkTargetIdList.isEmpty()) {
             String ret = "";
             for (String s : linkTargetIdList) {
-                ret += s;
+                if (s.endsWith("\\")) {
+                    ret += s;        
+                } else {
+                    if (ret.endsWith("\\")) {
+                        ret +=s;
+                    } else {
+                        ret += "\\";
+                        ret += s;
+                    }
+                }
             }
             return ret;
         }
