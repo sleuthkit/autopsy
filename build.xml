@@ -262,7 +262,7 @@
         
         <!-- step (1) use the general ZIP target  -->
         <antcall inheritAll="false" target="suite.build-zip">
-            <param name="modules" value="CoreLibs:Tika:Core" />
+            <param name="modules" value="CoreLibs:Tika:Core:RecentActivity" />
         </antcall>
         
         <!-- step (2) unzip the result  -->
