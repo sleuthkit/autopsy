@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -402,7 +403,7 @@ public final class IngestJobSettings {
         }
         for (String moduleName : disabledModuleNames) {
             if (!loadedModuleNames.contains(moduleName)) {
-                missingModuleNames.add(moduleName);
+                logger.log(Level.WARNING, MessageFormat.format("A module marked as disabled in the ingest job settings, ''{0}'', could not be found.", moduleName));
             }
         }
         for (String moduleName : missingModuleNames) {
