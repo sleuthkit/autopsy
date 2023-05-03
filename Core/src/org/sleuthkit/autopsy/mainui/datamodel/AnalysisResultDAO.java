@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,6 +64,7 @@ import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -194,29 +196,109 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
 
-        // We currently can't make a query on the configuration field because need to use a prepared statement
-        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() + " ";
-        if (dataSourceId != null) {
-            originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
-        }
-
         String expectedConfiguration = cacheKey.getParamData().getConfiguration();
 
-        List<AnalysisResult> allResults = new ArrayList<>();
-        allResults.addAll(blackboard.getAnalysisResultsWhere(originalWhereClause));
-        blackboard.loadBlackboardAttributes(allResults);
-
-        // Filter for the selected configuration
-        List<BlackboardArtifact> arts = new ArrayList<>();
-        for (AnalysisResult analysisResult : allResults) {
-            if (Objects.equals(expectedConfiguration, analysisResult.getConfiguration())) {
-                arts.add(analysisResult);
-            }
+        // We currently can't make a query on the configuration field because need to use a prepared statement
+        String originalWhereClause = " artifacts.artifact_type_id = ? AND analysis_results.configuration = ? ";
+        if (dataSourceId != null) {
+            originalWhereClause += " AND artifacts.data_source_obj_id = ? ";
         }
 
-        List<BlackboardArtifact> pagedArtifacts = getPaged(arts, cacheKey);
+        String pagedWhereClause = originalWhereClause
+                + " ORDER BY artifacts.obj_id ASC"
+                + (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0 ? " LIMIT ? " : "")
+                + (cacheKey.getStartItem() > 0 ? " OFFSET ? " : "");
+
+        String baseQuery = " FROM blackboard_artifacts artifacts "
+                + "INNER JOIN tsk_analysis_results analysis_results "
+                + "ON artifacts.artifact_obj_id = analysis_results.artifact_obj_id " + pagedWhereClause;
+
+        int paramIdx = 0;
+
+        List<Long> artifactIds = new ArrayList<>();
+        try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(
+                " artifacts.artifact_id " + baseQuery)) {
+
+            preparedStatement.setInt(++paramIdx, artType.getTypeID());
+            preparedStatement.setString(++paramIdx, expectedConfiguration);
+
+            if (dataSourceId != null) {
+                preparedStatement.setLong(++paramIdx, dataSourceId);
+            }
+
+            if (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0) {
+                preparedStatement.setLong(++paramIdx, cacheKey.getMaxResultsCount());
+            }
+
+            if (cacheKey.getStartItem() > 0) {
+                preparedStatement.setLong(++paramIdx, cacheKey.getStartItem());
+            }
+
+            getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        artifactIds.add(resultSet.getLong("artifact_id"));
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
+                }
+
+            });
+
+        } catch (SQLException ex) {
+            throw new TskCoreException(MessageFormat.format(
+                    "An error occurred while fetching analysis result type: {0} with configuration: {1}.",
+                    artType.getTypeName(),
+                    expectedConfiguration),
+                    ex);
+        }
+
+        AtomicLong analysisResultCount = new AtomicLong(0);
+        try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(
+                " COUNT(DISTINCT artifacts.artifact_id) AS count " + baseQuery)) {
+
+            preparedStatement.setInt(++paramIdx, artType.getTypeID());
+            preparedStatement.setString(++paramIdx, expectedConfiguration);
+
+            if (dataSourceId != null) {
+                preparedStatement.setLong(++paramIdx, dataSourceId);
+            }
+
+            if (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0) {
+                preparedStatement.setLong(++paramIdx, cacheKey.getMaxResultsCount());
+            }
+
+            if (cacheKey.getStartItem() > 0) {
+                preparedStatement.setLong(++paramIdx, cacheKey.getStartItem());
+            }
+
+            getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
+                try {
+                    if (resultSet.next()) {
+                        analysisResultCount.set(resultSet.getLong("count"));
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
+                }
+
+            });
+
+        } catch (SQLException ex) {
+            throw new TskCoreException(MessageFormat.format(
+                    "An error occurred while fetching analysis result type: {0} with configuration: {1}.",
+                    artType.getTypeName(),
+                    expectedConfiguration),
+                    ex);
+        }
+
+        String artifactQueryWhere = " artifacts.artifact_id IN (" + artifactIds.stream().map(l -> Long.toString(l)).collect(Collectors.joining(",")) + ") ";
+
+        List<BlackboardArtifact> pagedArtifacts = new ArrayList<>();
+        pagedArtifacts.addAll(blackboard.getAnalysisResultsWhere(artifactQueryWhere));
+        blackboard.loadBlackboardAttributes(pagedArtifacts);
+
         TableData tableData = createTableData(artType, pagedArtifacts);
-        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), arts.size());
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), analysisResultCount.get());
     }
 
     @Override
@@ -589,8 +671,8 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         } catch (NoCurrentCaseException | TskCoreException ex) {
             throw new ExecutionException("An error occurred while fetching keyword set hits.", ex);
         }
-        
-        Collections.sort(allSets, (a,b) -> compareStrings(a.getSearchParams().getSetName(), b.getSearchParams().getSetName()));
+
+        Collections.sort(allSets, (a, b) -> compareStrings(a.getSearchParams().getSetName(), b.getSearchParams().getSetName()));
 
         return new TreeResultsDTO<>(allSets);
     }
@@ -1109,10 +1191,10 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             );
         } else {
             return getConfigTreeItem(
-                    arEvt.getArtifactType(), 
-                    arEvt.getDataSourceId(), 
-                    arEvt.getConfiguration(), 
-                    StringUtils.isBlank(arEvt.getConfiguration()) ? arEvt.getArtifactType().getDisplayName() : arEvt.getConfiguration(), 
+                    arEvt.getArtifactType(),
+                    arEvt.getDataSourceId(),
+                    arEvt.getConfiguration(),
+                    StringUtils.isBlank(arEvt.getConfiguration()) ? arEvt.getArtifactType().getDisplayName() : arEvt.getConfiguration(),
                     displayCount);
         }
     }
