@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import org.sleuthkit.autopsy.guicomponentutils.AutoCompletion;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
@@ -76,6 +77,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      */
     FilesSetRulePanel(JButton okButton, JButton cancelButton, PANEL_TYPE panelType) {
         initComponents();
+        AutoCompletion.enable(mimeTypeComboBox);
         if (panelType == FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS) { //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
             mimeTypeComboBox.setVisible(false);
             mimeCheck.setVisible(false);
@@ -102,6 +104,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      */
     FilesSetRulePanel(FilesSet.Rule rule, JButton okButton, JButton cancelButton, PANEL_TYPE panelType) {
         initComponents();
+        AutoCompletion.enable(mimeTypeComboBox);
         if (panelType == FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS) { //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
             mimeTypeComboBox.setVisible(false);
             mimeCheck.setVisible(false);
