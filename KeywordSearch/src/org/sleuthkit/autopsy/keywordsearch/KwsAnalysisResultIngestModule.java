@@ -24,11 +24,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.AnalysisResultIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
-import org.sleuthkit.autopsy.textextractors.TextExtractor;
-import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An analysis result ingest module that indexes text for keyword search. All
@@ -63,11 +60,11 @@ public class KwsAnalysisResultIngestModule implements AnalysisResultIngestModule
                 ingester.search(blackboardExtractedTextReader, 
                         result.getArtifactID(), 
                         sourceName, result, 
-                        context, 
+                        context, true,
                         settings.isIndexToSolrEnabled(), 
                         settings.getNamesOfEnabledKeyWordLists());
             }
-        } catch (TskCoreException | TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException | Ingester.IngesterException ex) {
+        } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, String.format("Error indexing analysis result '%s' (job ID=%d)", result, context.getJobId()), ex); //NON-NLS
             return IngestModule.ProcessResult.ERROR;
         }

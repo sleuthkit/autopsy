@@ -84,8 +84,8 @@ final class InlineSearcher {
      *
      * @throws TskCoreException
      */
-    void searchChunk(Chunk chunk, long sourceID, int chunkId) throws TskCoreException {
-        searchString(chunk.getLowerCasedChunk(), sourceID, chunkId);
+    boolean searchChunk(Chunk chunk, long sourceID, int chunkId) throws TskCoreException {
+        return searchString(chunk.getLowerCasedChunk(), sourceID, chunkId);
     }
 
     /**
@@ -96,10 +96,11 @@ final class InlineSearcher {
      *
      * @throws TskCoreException
      */
-    void searchString(String text, long sourceID, int chunkId) throws TskCoreException {
+    boolean searchString(String text, long sourceID, int chunkId) throws TskCoreException {
+        boolean hitFound = false;
+        Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> hitByKeyword = getMap(context.getJobId(), sourceID);
         for (KeywordList list : keywordList) {
             List<Keyword> keywords = list.getKeywords();
-            Map<Keyword, Map<Keyword, List<UniqueKeywordHit>>> hitByKeyword = getMap(context.getJobId(), sourceID);
             for (Keyword originalKeyword : keywords) {
                 Map<Keyword, List<UniqueKeywordHit>> hitMap = hitByKeyword.get(originalKeyword);
                 if (hitMap == null) {
@@ -110,7 +111,6 @@ final class InlineSearcher {
                 List<UniqueKeywordHit> keywordHits = new ArrayList<>();
                 if (originalKeyword.searchTermIsLiteral()) {
                     if (StringUtil.containsIgnoreCase(text, originalKeyword.getSearchTerm())) {
-
                         keywordHits.addAll(createKeywordHits(text, originalKeyword, sourceID, chunkId, list.getName()));
                     }
                 } else {
@@ -130,6 +130,7 @@ final class InlineSearcher {
                 }
 
                 if (!keywordHits.isEmpty()) {
+                    hitFound = true;
                     for (UniqueKeywordHit hit : keywordHits) {
                         Keyword keywordCopy = new Keyword(hit.getHit(),
                                 originalKeyword.searchTermIsLiteral(),
@@ -150,10 +151,11 @@ final class InlineSearcher {
                 }
 
                 if (context.fileIngestIsCancelled()) {
-                    return;
+                    return hitFound;
                 }
             }
         }
+        return hitFound;
     }
 
     /**
