@@ -112,9 +112,9 @@ abstract class AdHocSearchPanel extends javax.swing.JPanel {
         }
         if (filesIndexed == 0) {
             if (isIngestRunning) {
+                // ELTODO this message should be dependent on whether Solr indexing is enabled or not
                 KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
-                        "AbstractKeywordSearchPerformer.search.noFilesInIdxMsg",
-                        KeywordSearchSettings.getUpdateFrequency().getTime()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                        "AbstractKeywordSearchPerformer.search.noFilesInIdxMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             } else {
                 KeywordSearchUtil.displayDialog(keywordSearchErrorDialogHeader, NbBundle.getMessage(this.getClass(),
                         "AbstractKeywordSearchPerformer.search.noFilesIdxdMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);

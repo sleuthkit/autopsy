@@ -398,6 +398,8 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         private final StringBuilder sb;
         private final int baseChunkSizeChars;
         private final StringBuilder lowerCasedChunk;
+        private boolean hasHit = false;
+        private int chunkId = 0;
 
         Chunk(StringBuilder sb, int baseChunkSizeChars, StringBuilder lowerCasedChunk) {
             this.sb = sb;
@@ -420,7 +422,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
          *
          * @return The content of the chunk.
          */
-        public String geLowerCasedChunk() {
+        public String getLowerCasedChunk() {
             return lowerCasedChunk.toString();
         }
 
@@ -431,6 +433,22 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
          */
         int getBaseChunkLength() {
             return baseChunkSizeChars;
+        }
+        
+        boolean hasHit() {
+            return hasHit;
+        }
+        
+        void setHasHit(boolean b) {
+            hasHit = b;
+        } 
+        
+        void setChunkId(int id) {
+            chunkId = id;
+        }
+        
+        int getChunkId() {
+            return chunkId;
         }
     }
 }
