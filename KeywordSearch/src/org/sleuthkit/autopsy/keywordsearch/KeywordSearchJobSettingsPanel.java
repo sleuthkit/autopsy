@@ -258,9 +258,9 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
-        titleLabel = new javax.swing.JLabel();
         listsScrollPane = new javax.swing.JScrollPane();
         listsTable = new javax.swing.JTable();
+        titleLabel = new javax.swing.JLabel();
         languagesLabel = new javax.swing.JLabel();
         languagesValLabel = new javax.swing.JLabel();
         encodingsLabel = new javax.swing.JLabel();
@@ -270,14 +270,15 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         ocrOnlyCheckbox = new javax.swing.JCheckBox();
         solrCheckbox = new javax.swing.JCheckBox();
 
-        setPreferredSize(new java.awt.Dimension(300, 170));
+        setMinimumSize(new java.awt.Dimension(250, 275));
+        setPreferredSize(new java.awt.Dimension(250, 275));
         setLayout(new java.awt.GridBagLayout());
 
         listsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         listsScrollPane.setAlignmentX(0.0F);
         listsScrollPane.setMaximumSize(new java.awt.Dimension(800, 200));
-        listsScrollPane.setMinimumSize(new java.awt.Dimension(300, 100));
-        listsScrollPane.setPreferredSize(new java.awt.Dimension(400, 100));
+        listsScrollPane.setMinimumSize(new java.awt.Dimension(250, 48));
+        listsScrollPane.setPreferredSize(new java.awt.Dimension(400, 48));
 
         listsTable.setBackground(new java.awt.Color(240, 240, 240));
         listsTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -298,7 +299,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 7;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.ipadx = 284;
         gridBagConstraints.ipady = -71;
@@ -324,7 +325,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 8;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.ipadx = 25;
         gridBagConstraints.ipady = -22;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -333,16 +334,18 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
 
         languagesValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesValLabel.text")); // NOI18N
         languagesValLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesValLabel.toolTipText")); // NOI18N
+        languagesValLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 1, 1, 1));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
-        gridBagConstraints.gridwidth = 6;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.ipadx = 270;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(6, 20, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(6, 10, 0, 0);
         add(languagesValLabel, gridBagConstraints);
 
         encodingsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.encodingsLabel.text")); // NOI18N
+        encodingsLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 1, 1, 1));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 4;
@@ -351,6 +354,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         add(encodingsLabel, gridBagConstraints);
 
         keywordSearchEncodings.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.keywordSearchEncodings.text")); // NOI18N
+        keywordSearchEncodings.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 1, 5, 1));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 4;
