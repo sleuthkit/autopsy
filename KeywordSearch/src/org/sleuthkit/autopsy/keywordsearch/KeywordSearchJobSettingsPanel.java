@@ -271,14 +271,7 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         solrCheckbox = new javax.swing.JCheckBox();
 
         setPreferredSize(new java.awt.Dimension(300, 170));
-<<<<<<< HEAD
-        setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS));
-
-        titleLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.titleLabel.text")); // NOI18N
-        add(titleLabel);
-=======
         setLayout(new java.awt.GridBagLayout());
->>>>>>> aae905c78496f2405c2af41a79e6fbb3a4c00e1c
 
         listsScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         listsScrollPane.setAlignmentX(0.0F);
@@ -302,9 +295,6 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         listsScrollPane.setViewportView(listsTable);
         listsTable.setDefaultRenderer(String.class, new SimpleTableCellRenderer());
 
-<<<<<<< HEAD
-        add(listsScrollPane);
-=======
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -326,28 +316,11 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 10, 0, 0);
         add(titleLabel, gridBagConstraints);
->>>>>>> aae905c78496f2405c2af41a79e6fbb3a4c00e1c
 
         languagesLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.text")); // NOI18N
         languagesLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesLabel.toolTipText")); // NOI18N
         languagesLabel.setPreferredSize(new java.awt.Dimension(294, 35));
         languagesLabel.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-<<<<<<< HEAD
-        add(languagesLabel);
-
-        languagesValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesValLabel.text")); // NOI18N
-        languagesValLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.languagesValLabel.toolTipText")); // NOI18N
-        languagesValLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 1, 1, 1));
-        add(languagesValLabel);
-
-        encodingsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.encodingsLabel.text")); // NOI18N
-        encodingsLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 1, 1, 1));
-        add(encodingsLabel);
-
-        keywordSearchEncodings.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.keywordSearchEncodings.text")); // NOI18N
-        keywordSearchEncodings.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 1, 5, 1));
-        add(keywordSearchEncodings);
-=======
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
@@ -384,7 +357,6 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(11, 10, 0, 0);
         add(keywordSearchEncodings, gridBagConstraints);
->>>>>>> aae905c78496f2405c2af41a79e6fbb3a4c00e1c
 
         ocrCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.ocrCheckBox.text")); // NOI18N
         ocrCheckBox.addActionListener(new java.awt.event.ActionListener() {
@@ -392,9 +364,6 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                 ocrCheckBoxActionPerformed(evt);
             }
         });
-<<<<<<< HEAD
-        add(ocrCheckBox);
-=======
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 5;
@@ -402,7 +371,6 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 10, 0, 0);
         add(ocrCheckBox, gridBagConstraints);
->>>>>>> aae905c78496f2405c2af41a79e6fbb3a4c00e1c
 
         limitedOcrCheckbox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.limitedOcrCheckbox.text")); // NOI18N
         limitedOcrCheckbox.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 20, 1, 1));
@@ -412,9 +380,6 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                 limitedOcrCheckboxActionPerformed(evt);
             }
         });
-<<<<<<< HEAD
-        add(limitedOcrCheckbox);
-=======
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 7;
@@ -423,7 +388,6 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 31, 0, 0);
         add(limitedOcrCheckbox, gridBagConstraints);
->>>>>>> aae905c78496f2405c2af41a79e6fbb3a4c00e1c
 
         ocrOnlyCheckbox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchJobSettingsPanel.class, "KeywordSearchJobSettingsPanel.ocrOnlyCheckbox.text")); // NOI18N
         ocrOnlyCheckbox.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 20, 1, 1));
@@ -432,9 +396,6 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
                 ocrOnlyCheckboxActionPerformed(evt);
             }
         });
-<<<<<<< HEAD
-        add(ocrOnlyCheckbox);
-=======
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 6;
@@ -452,7 +413,6 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(7, 10, 0, 0);
         add(solrCheckbox, gridBagConstraints);
->>>>>>> aae905c78496f2405c2af41a79e6fbb3a4c00e1c
     }// </editor-fold>//GEN-END:initComponents
 
     private void ocrCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ocrCheckBoxActionPerformed
