@@ -150,6 +150,7 @@ class Ingester {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
+    
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
 //    < T extends SleuthkitVisitableItem> boolean search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
 //        boolean doLanguageDetection = true;
@@ -174,6 +175,7 @@ class Ingester {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
+    
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
 //    < T extends SleuthkitVisitableItem> boolean searchStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr) throws Ingester.IngesterException {
 //        // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
@@ -205,6 +207,7 @@ class Ingester {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
+    
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
     < T extends SleuthkitVisitableItem> void search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection, boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException, IOException, TskCoreException, Exception {
         int numChunks = 0; //unknown until chunking is done
