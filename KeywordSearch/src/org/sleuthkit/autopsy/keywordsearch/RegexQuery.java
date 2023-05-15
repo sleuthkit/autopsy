@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.datamodel.CreditCards;
 import static org.sleuthkit.autopsy.keywordsearch.KeywordSearchSettings.MODULE_NAME;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountFileInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -430,7 +431,7 @@ final class RegexQuery implements KeywordSearchQuery {
                     keywordsFoundInThisDocument.put(hit, hit);
 
                     if (artifactAttributeType == null) {
-                        hits.add(new KeywordHit(docId, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                        hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                     } else {
                         switch (artifactAttributeType) {
                             case TSK_EMAIL:
@@ -441,7 +442,7 @@ final class RegexQuery implements KeywordSearchQuery {
                                  */
                                 if (hit.length() >= MIN_EMAIL_ADDR_LENGTH
                                         && DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
-                                    hits.add(new KeywordHit(docId, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                                    hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                                 }
 
                                 break;
@@ -458,14 +459,14 @@ final class RegexQuery implements KeywordSearchQuery {
                                     if (ccnMatcher.find()) {
                                         final String group = ccnMatcher.group("ccn");
                                         if (CreditCardValidator.isValidCCN(group)) {
-                                            hits.add(new KeywordHit(docId, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                                            hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                                         }
                                     }
                                 }
 
                                 break;
                             default:
-                                hits.add(new KeywordHit(docId, KeywordSearchUtil.makeSnippet(content, hitMatcher, hit), hit));
+                                hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                                 break;
                         }
                     }
@@ -483,6 +484,30 @@ final class RegexQuery implements KeywordSearchQuery {
             throw new TskCoreException("Failed to create keyword hits for Solr document id " + docId + " due to " + error.getMessage());
         }
         return hits;
+    }
+
+    /**
+     * Make a snippet from the given content that has the given hit plus some
+     * surrounding context.
+     *
+     * @param content    The content to extract the snippet from.
+     *
+     * @param hitMatcher The Matcher that has the start/end info for where the
+     *                   hit is in the content.
+     * @param hit        The actual hit in the content.
+     *
+     * @return A snippet extracted from content that contains hit plus some
+     *         surrounding context.
+     */
+    private String makeSnippet(String content, Matcher hitMatcher, String hit) {
+        // Get the snippet from the document.
+        int maxIndex = content.length() - 1;
+        final int end = hitMatcher.end();
+        final int start = hitMatcher.start();
+
+        return content.substring(Integer.max(0, start - 20), Integer.max(0, start))
+                + SNIPPET_DELIMITER + hit + SNIPPET_DELIMITER
+                + content.substring(Integer.min(maxIndex, end), Integer.min(maxIndex, end + 20));
     }
 
     @Override
@@ -548,11 +573,6 @@ final class RegexQuery implements KeywordSearchQuery {
      */
     @Override
     public BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
-        return createKeywordHitArtifact(content, originalKeyword, foundKeyword, hit, snippet, listName, ingestJobId);
-    }
-    
-    
-    public static BlackboardArtifact createKeywordHitArtifact(Content content,  Keyword originalKW, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         if (content == null) {
@@ -563,8 +583,8 @@ final class RegexQuery implements KeywordSearchQuery {
         /*
          * Credit Card number hits are handled differently
          */
-        if (originalKW.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-            createCCNAccount(content, originalKW, foundKeyword, hit, snippet, listName, ingestJobId);
+        if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            createCCNAccount(content, foundKeyword, hit, snippet, listName, ingestJobId);
             return null;
         }
 
@@ -573,15 +593,11 @@ final class RegexQuery implements KeywordSearchQuery {
          * attributes
          */
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
+        String configuration = originalKeyword.getOriginalTerm();
 
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm().toLowerCase()));
-        if(!originalKW.searchTermIsWholeWord() || !originalKW.searchTermIsLiteral()) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, originalKW.getSearchTerm()));
-        } 
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
 
-        if (StringUtils.isNotBlank(listName)) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
-        }
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
@@ -590,22 +606,23 @@ final class RegexQuery implements KeywordSearchQuery {
                 -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
 
-        if (originalKW.searchTermIsLiteral()) {
-            
-            if(!originalKW.searchTermIsWholeWord()) {
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
-            } else {
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.LITERAL.ordinal()));
-            }
-            
+        if (originalKeyword.searchTermIsLiteral()) {
+            configuration += " (" + TskData.KeywordSearchQueryType.SUBSTRING.name() + ")";
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.SUBSTRING.ordinal()));
         } else {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
+            configuration += " (" + TskData.KeywordSearchQueryType.REGEX.name() + ")";
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.REGEX.ordinal()));
+        }
+        
+        if (StringUtils.isNotBlank(listName)) {
+            configuration += " - " + listName;
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
         }
 
         try {
             return content.newAnalysisResult(
                     BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_LIKELY_NOTABLE, 
-                    null, listName, null, attributes)
+                    null, configuration, null, attributes)
                     .getAnalysisResult();
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
@@ -613,11 +630,11 @@ final class RegexQuery implements KeywordSearchQuery {
         }
     }
 
-    private static void createCCNAccount(Content content, Keyword originalKW, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
+    private void createCCNAccount(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
 
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
-        if (originalKW.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+        if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
             LOGGER.log(Level.SEVERE, "Keyword hit is not a credit card number"); //NON-NLS
             return;
         }
@@ -702,7 +719,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
 
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.REGEX.getType()));
 
         /*
          * Create an account instance.

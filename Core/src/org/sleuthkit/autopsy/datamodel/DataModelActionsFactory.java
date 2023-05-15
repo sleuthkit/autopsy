@@ -25,19 +25,12 @@ import java.util.List;
 import javax.swing.Action;
 
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
-import org.sleuthkit.autopsy.actions.DeleteBlackboardArtifactTagAction;
-import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.actions.ReplaceBlackboardArtifactTagAction;
-import org.sleuthkit.autopsy.actions.ReplaceContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.datamodel.OsAccounts.OsAccountNode;
-import org.sleuthkit.autopsy.datamodel.Reports.ReportNode;
 import org.sleuthkit.autopsy.directorytree.ExportCSVAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
@@ -46,9 +39,7 @@ import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
@@ -352,112 +343,6 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        return actionsList;
-    }
-
-    public static List<Action> getActions(Report report, boolean isArtifactSource) {
-        List<Action> actionsList = new ArrayList<>();
-        final ReportNode reportNode = new ReportNode(report);
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, reportNode));
-        actionsList.add(null); // creates a menu separator
-        if (isArtifactSource) {
-            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
-        }
-        if (isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList
-                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if (selectedArtifactsList.size() == 1) {
-                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
-            }
-        }
-        actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        return actionsList;
-    }
-
-    public static List<Action> getActions(ContentTag contentTag, boolean isArtifactSource) {
-        List<Action> actionsList = new ArrayList<>();
-        actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), contentTag.getContent()));
-        final ContentTagNode tagNode = new ContentTagNode(contentTag);
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, tagNode));
-        final Collection<AbstractFile> selectedFilesList
-                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if (selectedFilesList.size() == 1) {
-            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, tagNode));
-        } else {
-            actionsList.add(ExternalViewerShortcutAction.getInstance());
-        }
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(AddContentTagAction.getInstance());
-        if (isArtifactSource) {
-            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
-        }
-        if (selectedFilesList.size() == 1) {
-            actionsList.add(DeleteFileContentTagAction.getInstance());
-        }
-        if (isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList
-                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if (selectedArtifactsList.size() == 1) {
-                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
-            }
-        }
-        actionsList.add(DeleteContentTagAction.getInstance());
-        actionsList.add(ReplaceContentTagAction.getInstance());
-        actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        return actionsList;
-    }
-    
-    public static List<Action> getActions(BlackboardArtifactTag artifactTag, boolean isArtifactSource) {
-        List<Action> actionsList = new ArrayList<>();
-        actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), artifactTag.getContent()));        
-        final BlackboardArtifactTagNode tagNode = new BlackboardArtifactTagNode(artifactTag);
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, tagNode));
-        final Collection<AbstractFile> selectedFilesList
-                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if (selectedFilesList.size() == 1) {
-            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, tagNode));
-        } else {
-            actionsList.add(ExternalViewerShortcutAction.getInstance());
-        }
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(ExtractAction.getInstance());
-        actionsList.add(ExportCSVAction.getInstance());
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(AddContentTagAction.getInstance());
-        if (isArtifactSource) {
-            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
-        }
-        if (selectedFilesList.size() == 1) {
-            actionsList.add(DeleteFileContentTagAction.getInstance());
-        }
-        if (isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList
-                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if (selectedArtifactsList.size() == 1) {
-                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
-            }
-        }
-        actionsList.add(DeleteBlackboardArtifactTagAction.getInstance());
-        actionsList.add(ReplaceBlackboardArtifactTagAction.getInstance());
-        actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        return actionsList;
-    }
-    
-    public static List<Action> getActions(OsAccount osAccount) {
-        List<Action> actionsList = new ArrayList<>();
-        
-        OsAccountNode node = new OsAccountNode(osAccount);
-        actionsList.add(null); // creates a menu separator
-        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, node));
-        actionsList.add(null);
-        actionsList.add(ExportCSVAction.getInstance());
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }

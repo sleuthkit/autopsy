@@ -19,14 +19,9 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -34,7 +29,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
 import org.openide.util.NbBundle;
-import org.openide.util.io.ReaderInputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
@@ -52,8 +46,7 @@ import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
-import org.sleuthkit.datamodel.SleuthkitItemVisitor;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
+import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -125,11 +118,11 @@ class Ingester {
      * Creates a field map from a SleuthkitVisitableItem, that is later sent to
      * Solr.
      *
-     * @param item SleuthkitVisitableItem to get fields from
+     * @param item Content to get fields from
      *
      * @return the map from field name to value (as a string)
      */
-    private Map<String, String> getContentFields(SleuthkitVisitableItem item) {
+    private Map<String, String> getContentFields(Content item) {
         return item.accept(SOLR_FIELDS_VISITOR);
     }
     
@@ -152,10 +145,10 @@ class Ingester {
      */
     
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-//    < T extends SleuthkitVisitableItem> boolean search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
-//        boolean doLanguageDetection = true;
-//        return search(sourceReader, sourceID, sourceName, source, context, doLanguageDetection,  indexIntoSolr, keywordListNames);
-//    }
+    < T extends Content> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+        boolean doLanguageDetection = true;
+        return indexText(sourceReader, sourceID, sourceName, source, context, doLanguageDetection);
+    }
     
     /**
      * Read and chunk the source text for indexing in Solr. Does NOT perform
@@ -177,17 +170,11 @@ class Ingester {
      */
     
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-//    < T extends SleuthkitVisitableItem> boolean searchStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr) throws Ingester.IngesterException {
-//        // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
-//        boolean doLanguageDetection = false;
-//        return search(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, null);
-//    }
-//    
-//    < T extends SleuthkitVisitableItem> boolean searchStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context,  boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException {
-//        // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
-//        boolean doLanguageDetection = false;
-//        return search(sourceReader, sourceID, sourceName, source, context, doLanguageDetection, indexIntoSolr, keywordListNames);
-//    }
+    < T extends Content> boolean indexStrings(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
+        // Per JIRA-7100, it was determined that language detection on extracted strings can take a really long time.
+        boolean doLanguageDetection = false;
+        return indexText(sourceReader, sourceID, sourceName, source, context, doLanguageDetection);
+    }
     
     /**
      * Read and chunk the source text for indexing in Solr.
@@ -209,159 +196,60 @@ class Ingester {
      */
     
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> void search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection, boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException, IOException, TskCoreException, Exception {
+    private < T extends Content> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
-        Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
-        Optional<Language> language = Optional.empty();
-        InlineSearcher searcher = new InlineSearcher(keywordListNames, context);
-        List<Chunk> activeChunkList = new ArrayList<>();
-        boolean fileIndexed = false;
-
-        //Get a reader for the content of the given source
-        try (BufferedReader reader = new BufferedReader(sourceReader)) {
-            Chunker chunker = new Chunker(reader);
-            String name = sourceName;
-            if(!(source instanceof BlackboardArtifact)) {
-                searcher.searchString(name, sourceID, 0);
-            }
-            
-            while (chunker.hasNext()) {
-                if ( context.fileIngestIsCancelled()) {
-                    logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
-                    return;
-                }
-
-                Chunk chunk = chunker.next();
-                chunk.setChunkId(numChunks+1);
-                
-                if (doLanguageDetection) {
-                    int size = Math.min(chunk.getBaseChunkLength(), LANGUAGE_DETECTION_STRING_SIZE);
-                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk.toString().substring(0, size));
-
-                    // only do language detection on the first chunk of the document
-                    doLanguageDetection = false;
-                }
-                
-                if(keywordListNames != null) {
-                    boolean hitFoundInChunk = searcher.searchChunk(chunk, sourceID, numChunks);
-                    if(!indexIntoSolr) {
-                        if(!hitFoundInChunk) {
-                            if(!activeChunkList.isEmpty() ) {
-                                if(activeChunkList.get(activeChunkList.size() - 1).hasHit()) {
-                                    activeChunkList.add(chunk);
-                                    // Write List
-                                    for(Chunk c: activeChunkList) {
-                                        indexChunk(c, sourceID, sourceName, language, contentFields, chunker.hasNext());
-                                    }
-                                    activeChunkList.clear();
-                                } else {
-                                    activeChunkList.clear();
-                                    activeChunkList.add(chunk);
-                                }
-                            } else {
-                                activeChunkList.add(chunk);
-                            }
-                        } else {
-                            fileIndexed = true;
-                            chunk.setHasHit(true);
-                            activeChunkList.add(chunk);
-                        }   
-                    } else {
-                        indexChunk(chunk, sourceID, sourceName, language, contentFields, chunker.hasNext());
-                    }
-                } 
-                                
-                numChunks++;
-                
-            }
-            
-            if(activeChunkList.size() > 1 || (activeChunkList.size() == 1 && activeChunkList.get(0).hasHit())) {
-                for(Chunk c: activeChunkList) {
-                    indexChunk(c, sourceID, sourceName, language, contentFields, true);
-                }
-            }
-            
-            
-            if (chunker.hasException()) {
-                logger.log(Level.WARNING, "Error chunking content from " + sourceID + ": " + sourceName, chunker.getException());
-                throw chunker.getException();
-            }
-
-        } finally {          
-            if (context.fileIngestIsCancelled()) {
-                return ;
-            }
-            
-            if (fileIndexed) {
-                Map<String, Object> fields = new HashMap<>(contentFields);
-                //after all chunks, index just the meta data, including the  numChunks, of the parent file
-                fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-                //reset id field to base document id
-                fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
-                //"parent" docs don't have chunk_size
-                fields.remove(Server.Schema.CHUNK_SIZE.toString());
-                indexChunk(null, null, sourceName, fields);
-            }
-        }
-    }
-    
-    < T extends SleuthkitVisitableItem> boolean indexFile(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
-        int numChunks = 0; //unknown until chunking is done
+        
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
         Optional<Language> language = Optional.empty();
         //Get a reader for the content of the given source
         try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
             while (chunker.hasNext()) {
-                if ( context.fileIngestIsCancelled()) {
+                if (context != null && context.fileIngestIsCancelled()) {
                     logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
                     return false;
                 }
                 
                 Chunk chunk = chunker.next();
-                
-                if (doLanguageDetection) {
-                    int size = Math.min(chunk.getBaseChunkLength(), LANGUAGE_DETECTION_STRING_SIZE);
-                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk.toString().substring(0, size));
-
-                    // only do language detection on the first chunk of the document
-                    doLanguageDetection = false;
-                }
-
                 Map<String, Object> fields = new HashMap<>(contentFields);
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
 
+                if (doLanguageDetection) {
+                    int size = Math.min(chunk.getBaseChunkLength(), LANGUAGE_DETECTION_STRING_SIZE);
+                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk.toString().substring(0, size));
+                    
+                    // only do language detection on the first chunk of the document
+                    doLanguageDetection = false;
+                }
                 language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
                 try {
                     //add the chunk text to Solr index
-                    indexChunk(chunk.toString(), chunk.getLowerCasedChunk(), sourceName, fields);
+                    indexChunk(chunk.toString(), chunk.geLowerCasedChunk(), sourceName, fields);
                     // add mini chunk when there's a language specific field
                     if (chunker.hasNext() && language.isPresent()) {
                         languageSpecificContentIndexingHelper.indexMiniChunk(chunk, sourceName, new HashMap<>(contentFields), chunkId, language.get());
                     }
-                     numChunks++;
-
+                    numChunks++;
                 } catch (Ingester.IngesterException ingEx) {
                     logger.log(Level.WARNING, "Ingester had a problem with extracted string from file '" //NON-NLS
                             + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
 
                     throw ingEx; //need to rethrow to signal error and move on
-                } 
+                }
             }
             if (chunker.hasException()) {
                 logger.log(Level.WARNING, "Error chunking content from " + sourceID + ": " + sourceName, chunker.getException());
                 return false;
             }
-
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
-        } finally {          
-            if (context.fileIngestIsCancelled()) {
+        } finally {
+            if (context != null && context.fileIngestIsCancelled()) {
                 return false;
-            } else  {
+            } else {
                 Map<String, Object> fields = new HashMap<>(contentFields);
                 //after all chunks, index just the meta data, including the  numChunks, of the parent file
                 fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
@@ -372,33 +260,7 @@ class Ingester {
                 indexChunk(null, null, sourceName, fields);
             }
         }
-        
-        
         return true;
-    }
-    
-    private void indexChunk(Chunk chunk, long sourceID, String sourceName, Optional<Language> language, Map<String, String> contentFields, boolean hasNext) throws IngesterException {
-        Map<String, Object> fields = new HashMap<>(contentFields);
-        String chunkId = Server.getChunkIdString(sourceID, chunk.getChunkId());
-        fields.put(Server.Schema.ID.toString(), chunkId);
-        fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
-
-
-        language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
-        try {
-            //add the chunk text to Solr index
-            indexChunk(chunk.toString(), chunk.getLowerCasedChunk(), sourceName, fields);
-            // add mini chunk when there's a language specific field
-            if (hasNext && language.isPresent()) {
-                languageSpecificContentIndexingHelper.indexMiniChunk(chunk, sourceName, new HashMap<>(contentFields), chunkId, language.get());
-            }
-
-        } catch (Ingester.IngesterException ingEx) {
-            logger.log(Level.WARNING, "Ingester had a problem with extracted string from file '" //NON-NLS
-                    + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
-
-            throw ingEx; //need to rethrow to signal error and move on
-        }
     }
 
     /**
@@ -481,10 +343,10 @@ class Ingester {
     /**
      * Visitor used to create fields to send to SOLR index.
      */
-    static private class SolrFieldsVisitor extends SleuthkitItemVisitor.Default<Map<String, String>> {
+    static private class SolrFieldsVisitor extends ContentVisitor.Default<Map<String, String>> {
 
         @Override
-        protected Map<String, String> defaultVisit(SleuthkitVisitableItem svi) {
+        protected Map<String, String> defaultVisit(Content svi) {
             return new HashMap<>();
         }
 

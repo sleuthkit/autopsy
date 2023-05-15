@@ -418,10 +418,6 @@
                 <runtime-relative-path>ext/zookeeper-jute-3.8.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/zookeeper-jute-3.8.0.jar</binary-origin>
             </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/lucene-core-8.11.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/lucene-core-8.11.2.jar</binary-origin>
-            </class-path-extension>
         </data>
     </configuration>
 </project>

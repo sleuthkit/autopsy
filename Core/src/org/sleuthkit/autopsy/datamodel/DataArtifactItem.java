@@ -36,7 +36,7 @@ public class DataArtifactItem extends BlackboardArtifactItem<DataArtifact> {
      * @param sourceContent The source content of the DataArtifact.
      */
     @Beta
-    DataArtifactItem(DataArtifact dataArtifact, Content sourceContent) {
+    public DataArtifactItem(DataArtifact dataArtifact, Content sourceContent) {
         super(dataArtifact, sourceContent);
     }
 

@@ -49,7 +49,7 @@ public final class RunIngestModulesAction extends AbstractAction {
 
     @Messages("RunIngestModulesAction.name=Run Ingest Modules")
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(SpecialDirectoryNode.class.getName());
+    private static final Logger logger = Logger.getLogger(RunIngestModulesAction.class.getName());
 
     /*
      * Note that the execution context is the name of the dialog that used to be

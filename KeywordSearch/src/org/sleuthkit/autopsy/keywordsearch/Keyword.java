@@ -211,10 +211,8 @@ public class Keyword {
     public int hashCode() {
         int hash = 7;
         hash = 17 * hash + this.searchTerm.hashCode();
-        hash = 17 * hash + this.listName.hashCode();
         hash = 17 * hash + (this.isLiteral ? 1 : 0);
         hash = 17 * hash + (this.isWholeWord ? 1 : 0);
-        hash = 17 * hash + this.originalTerm.hashCode();
         return hash;
     }
 
