@@ -82,8 +82,6 @@
         </Component>
       </SubComponents>
     </Container>
-<<<<<<< HEAD
-=======
     <Component class="javax.swing.JLabel" name="titleLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -96,7 +94,6 @@
         </Constraint>
       </Constraints>
     </Component>
->>>>>>> aae905c78496f2405c2af41a79e6fbb3a4c00e1c
     <Component class="javax.swing.JLabel" name="languagesLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
