@@ -52,8 +52,7 @@ import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SlackFile;
-import org.sleuthkit.datamodel.SleuthkitItemVisitor;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
+import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -125,11 +124,11 @@ class Ingester {
      * Creates a field map from a SleuthkitVisitableItem, that is later sent to
      * Solr.
      *
-     * @param item SleuthkitVisitableItem to get fields from
+     * @param item Content to get fields from
      *
      * @return the map from field name to value (as a string)
      */
-    private Map<String, String> getContentFields(SleuthkitVisitableItem item) {
+    private Map<String, String> getContentFields(Content item) {
         return item.accept(SOLR_FIELDS_VISITOR);
     }
     
@@ -206,7 +205,7 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> void search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection, boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException, IOException, TskCoreException, Exception {
+    private < T extends Content> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
         Optional<Language> language = Optional.empty();
@@ -478,10 +477,10 @@ class Ingester {
     /**
      * Visitor used to create fields to send to SOLR index.
      */
-    static private class SolrFieldsVisitor extends SleuthkitItemVisitor.Default<Map<String, String>> {
+    static private class SolrFieldsVisitor extends ContentVisitor.Default<Map<String, String>> {
 
         @Override
-        protected Map<String, String> defaultVisit(SleuthkitVisitableItem svi) {
+        protected Map<String, String> defaultVisit(Content svi) {
             return new HashMap<>();
         }
 

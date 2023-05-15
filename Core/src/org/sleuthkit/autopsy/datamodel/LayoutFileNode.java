@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskData;
  * Node for layout file
  */
 public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
-    
+
     private static final Logger logger = Logger.getLogger(LayoutFileNode.class.getName());
 
     @Deprecated
@@ -85,10 +85,6 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         }
     }
 
-    public <T> T accept(ContentNodeVisitor<T> visitor) {
-        return visitor.visit(this);
-    }
-
     @Override
     public boolean isLeafTypeNode() {
         return false;
@@ -106,7 +102,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(new ViewContextAction(Bundle.LayoutFileNode_getActions_viewFileInDir_text(), this));
         actionsList.add(null); // Creates an item separator
-        
+
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.getActions.viewInNewWin.text"), this));
         final Collection<AbstractFile> selectedFilesList

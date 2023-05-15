@@ -50,8 +50,6 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStat
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
-import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
-import org.sleuthkit.autopsy.datamodel.BaseChildFactory.RefreshKeysEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.CONTENT_CHANGED;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -65,6 +63,8 @@ import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.RefreshKeysEvent;
 import org.sleuthkit.autopsy.texttranslation.utils.FileNameTranslationUtil;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.VirtualDirectory;

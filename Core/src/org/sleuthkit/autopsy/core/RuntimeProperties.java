@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2013-2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,7 @@ public class RuntimeProperties {
     
     /**
      * Sets or unsets a flag indicating whether or not the application is running in a target system.
-     * The flag can only be set once per application innvocation
+     * The flag can only be set once per application invocation
      * 
      * @param runningInTarget
      * 
