@@ -18,7 +18,8 @@
 	    <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.10.4" transitive="false" /> <!-- the war file for embedded Solr 4 -->
         
         <dependency conf="solr-libs->default" name="solr-cell" rev="8.11.2" org="org.apache.solr"/>
-        
+        <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-core -->
+        <dependency conf="autopsy->default" org="org.apache.lucene" name="lucene-core" rev="8.11.2"/>     
         <!-- Autopsy -->
         <dependency conf="autopsy->default" org="org.apache.solr" name="solr-solrj" rev="8.11.2"/>
         <dependency conf="autopsy->default" org="com.optimaize.languagedetector" name="language-detector" rev="0.6"/>       
