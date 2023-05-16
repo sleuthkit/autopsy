@@ -205,7 +205,7 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    private < T extends Content> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
+    < T extends Content> void search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection, boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException, IOException, TskCoreException, Exception {
         int numChunks = 0; //unknown until chunking is done
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
         Optional<Language> language = Optional.empty();
@@ -301,6 +301,7 @@ class Ingester {
         }
     }
     
+    /* ELTODO
     < T extends SleuthkitVisitableItem> boolean indexFile(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
@@ -371,7 +372,7 @@ class Ingester {
         
         
         return true;
-    }
+    }*/
     
     private void indexChunk(Chunk chunk, long sourceID, String sourceName, Optional<Language> language, Map<String, String> contentFields, boolean hasNext) throws IngesterException {
         Map<String, Object> fields = new HashMap<>(contentFields);
