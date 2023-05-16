@@ -205,7 +205,7 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    private < T extends Content> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
+    < T extends Content> void search(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection, boolean indexIntoSolr, List<String> keywordListNames) throws Ingester.IngesterException, IOException, TskCoreException, Exception {
         int numChunks = 0; //unknown until chunking is done
         Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
         Optional<Language> language = Optional.empty();
@@ -299,78 +299,6 @@ class Ingester {
                 indexChunk(null, null, sourceName, fields);
             }
         }
-    }
-    
-    < T extends SleuthkitVisitableItem> boolean indexFile(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context, boolean doLanguageDetection) throws Ingester.IngesterException {
-        int numChunks = 0; //unknown until chunking is done
-        Map<String, String> contentFields = Collections.unmodifiableMap(getContentFields(source));
-        Optional<Language> language = Optional.empty();
-        //Get a reader for the content of the given source
-        try (BufferedReader reader = new BufferedReader(sourceReader)) {
-            Chunker chunker = new Chunker(reader);
-            while (chunker.hasNext()) {
-                if ( context.fileIngestIsCancelled()) {
-                    logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
-                    return false;
-                }
-                
-                Chunk chunk = chunker.next();
-                
-                if (doLanguageDetection) {
-                    int size = Math.min(chunk.getBaseChunkLength(), LANGUAGE_DETECTION_STRING_SIZE);
-                    language = languageSpecificContentIndexingHelper.detectLanguageIfNeeded(chunk.toString().substring(0, size));
-
-                    // only do language detection on the first chunk of the document
-                    doLanguageDetection = false;
-                }
-
-                Map<String, Object> fields = new HashMap<>(contentFields);
-                String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
-                fields.put(Server.Schema.ID.toString(), chunkId);
-                fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
-
-                language.ifPresent(lang -> languageSpecificContentIndexingHelper.updateLanguageSpecificFields(fields, chunk, lang));
-                try {
-                    //add the chunk text to Solr index
-                    indexChunk(chunk.toString(), chunk.getLowerCasedChunk(), sourceName, fields);
-                    // add mini chunk when there's a language specific field
-                    if (chunker.hasNext() && language.isPresent()) {
-                        languageSpecificContentIndexingHelper.indexMiniChunk(chunk, sourceName, new HashMap<>(contentFields), chunkId, language.get());
-                    }
-                     numChunks++;
-
-                } catch (Ingester.IngesterException ingEx) {
-                    logger.log(Level.WARNING, "Ingester had a problem with extracted string from file '" //NON-NLS
-                            + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
-
-                    throw ingEx; //need to rethrow to signal error and move on
-                } 
-            }
-            if (chunker.hasException()) {
-                logger.log(Level.WARNING, "Error chunking content from " + sourceID + ": " + sourceName, chunker.getException());
-                return false;
-            }
-
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
-            return false;
-        } finally {          
-            if (context.fileIngestIsCancelled()) {
-                return false;
-            } else  {
-                Map<String, Object> fields = new HashMap<>(contentFields);
-                //after all chunks, index just the meta data, including the  numChunks, of the parent file
-                fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-                //reset id field to base document id
-                fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
-                //"parent" docs don't have chunk_size
-                fields.remove(Server.Schema.CHUNK_SIZE.toString());
-                indexChunk(null, null, sourceName, fields);
-            }
-        }
-        
-        
-        return true;
     }
     
     private void indexChunk(Chunk chunk, long sourceID, String sourceName, Optional<Language> language, Map<String, String> contentFields, boolean hasNext) throws IngesterException {
