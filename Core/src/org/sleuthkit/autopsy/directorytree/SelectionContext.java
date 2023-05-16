@@ -22,9 +22,9 @@ import java.util.Objects;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
-import org.sleuthkit.autopsy.datamodel.DataSourceFilesNode;
-import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import static org.sleuthkit.autopsy.directorytree.Bundle.*;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.AllDataSourcesNode;
+import org.sleuthkit.autopsy.mainui.nodes.RootFactory.DataSourceFilesNode;
 
 @NbBundle.Messages({"SelectionContext.dataSources=Data Sources",
     "SelectionContext.dataSourceFiles=Data Source Files",
@@ -66,8 +66,10 @@ enum SelectionContext {
         if (n == null || n.getParentNode() == null) {
             // Parent of root node or root node. Occurs during case open / close.
             return SelectionContext.OTHER;
-        } else if ((!Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) && DataSourcesNode.getNameIdentifier().equals(n.getParentNode().getName()))
-                || (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) && DataSourceFilesNode.getNameIdentifier().equals(n.getParentNode().getName()))) {
+        } else if ((!Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) && AllDataSourcesNode.getNameIdentifier().equals(n.getParentNode().getName()))
+                || (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) 
+                    && n.getParentNode().getName() != null
+                    && n.getParentNode().getName().startsWith(DataSourceFilesNode.getNamePrefix()))) {
             // if group by data type and root is the DataSourcesNode or
             // if group by persons/hosts and parent of DataSourceFilesNode
             // then it is a data source node

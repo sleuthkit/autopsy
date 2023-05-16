@@ -23,6 +23,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
+import org.sleuthkit.autopsy.experimental.cleanup.AutoIngestCleanup.DeleteOptions;
 
 /**
  * An action that completely deletes one or more multi-user cases. Only the
@@ -69,6 +70,6 @@ final class DeleteCaseAction extends DeleteCaseComponentsAction {
 
     @Override
     DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
-        return new DeleteCaseTask(caseNodeData, DeleteCaseTask.DeleteOptions.DELETE_CASE, progress);
+        return new DeleteCaseTask(caseNodeData, DeleteOptions.DELETE_CASE, progress);
     }
 }

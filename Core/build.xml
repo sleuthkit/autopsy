@@ -116,6 +116,10 @@
             <fileset dir="${thirdparty.dir}/yara/bin"/>
         </copy>
         <copy file="${thirdparty.dir}/yara/bin/YaraJNIWrapper.jar" todir="${ext.dir}" />
+		<!--Copy ffmpeg to release-->
+        <copy todir="${basedir}/release/ffmpeg" >
+            <fileset dir="${thirdparty.dir}/ffmpeg"/>
+        </copy>
     </target>
     
     

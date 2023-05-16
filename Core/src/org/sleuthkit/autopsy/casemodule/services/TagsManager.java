@@ -66,9 +66,9 @@ public class TagsManager implements Closeable {
     private static String PROJECT_VIC_TAG_SET_NAME = "Project VIC";
 
     private static final Object lock = new Object();
-    
+
     private final Map<String, TagName> allTagNameMap = Collections.synchronizedMap(new HashMap<>());
-    
+
     private final PropertyChangeListener listener = new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
@@ -95,7 +95,7 @@ public class TagsManager implements Closeable {
             }
         }
     };
-    
+
     private final PropertyChangeListener weakListener = WeakListeners.propertyChange(listener, null);
 
     static {
@@ -300,12 +300,12 @@ public class TagsManager implements Closeable {
         try {
             List<TagSet> tagSetsInCase = taggingMgr.getTagSets();
             if (tagSetsInCase.isEmpty()) {
-                
+
                 // add the standard tag names
                 for (TagNameDefinition def : TagNameDefinition.getStandardTagNameDefinitions()) {
                     taggingMgr.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
                 }
-                
+
                 //Assume new case and add all tag sets
                 for (TagSetDefinition setDef : TagSetDefinition.readTagSetDefinitions()) {
                     List<TagName> tagNamesInSet = new ArrayList<>();
@@ -317,12 +317,12 @@ public class TagsManager implements Closeable {
                         taggingMgr.addTagSet(setDef.getName(), tagNamesInSet);
                     }
                 }
-            }         
+            }
 
-            for(TagName tagName: caseDb.getAllTagNames()) {
+            for (TagName tagName : caseDb.getAllTagNames()) {
                 allTagNameMap.put(tagName.getDisplayName(), tagName);
             }
-            
+
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error updating standard tag name and tag set definitions", ex);
         } catch (IOException ex) {
@@ -332,7 +332,7 @@ public class TagsManager implements Closeable {
         for (TagNameDefinition tagName : TagNameDefinition.getTagNameDefinitions()) {
             tagName.saveToCase(caseDb);
         }
-        
+
         Case.addEventTypeSubscriber(Collections.singleton(Case.Events.TAG_NAMES_UPDATED), weakListener);
         Case.addEventTypeSubscriber(Collections.singleton(Case.Events.TAG_NAMES_ADDED), weakListener);
         Case.addEventTypeSubscriber(Collections.singleton(Case.Events.TAG_NAMES_DELETED), weakListener);
@@ -359,7 +359,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error querying the case database.
      */
     public TagSet getTagSet(TagName tagName) throws TskCoreException {
-        return caseDb.getTaggingManager().getTagSet(tagName);        
+        return caseDb.getTaggingManager().getTagSet(tagName);
     }
 
     /**
@@ -383,7 +383,7 @@ public class TagsManager implements Closeable {
      * @return A list, possibly empty, of TagName objects.
      */
     public synchronized List<TagName> getAllTagNames() {
-        
+
         List<TagName> tagNames = new ArrayList<>();
         tagNames.addAll(allTagNameMap.values());
         return tagNames;
@@ -636,14 +636,6 @@ public class TagsManager implements Closeable {
      */
     public ContentTag addContentTag(Content content, TagName tagName, String comment, long beginByteOffset, long endByteOffset) throws TskCoreException {
         TaggingManager.ContentTagChange tagChange = caseDb.getTaggingManager().addContentTag(content, tagName, comment, beginByteOffset, endByteOffset);
-        try {
-            Case currentCase = Case.getCurrentCaseThrows();
-
-            currentCase.notifyContentTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags());
-
-        } catch (NoCurrentCaseException ex) {
-            throw new TskCoreException("Added a tag to a closed case", ex);
-        }
         return tagChange.getAddedTag();
     }
 
@@ -657,11 +649,6 @@ public class TagsManager implements Closeable {
      */
     public void deleteContentTag(ContentTag tag) throws TskCoreException {
         caseDb.deleteContentTag(tag);
-        try {
-            Case.getCurrentCaseThrows().notifyContentTagDeleted(tag);
-        } catch (NoCurrentCaseException ex) {
-            throw new TskCoreException("Deleted a tag from a closed case", ex);
-        }
     }
 
     /**
@@ -857,12 +844,6 @@ public class TagsManager implements Closeable {
      */
     public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
         TaggingManager.BlackboardArtifactTagChange tagChange = caseDb.getTaggingManager().addArtifactTag(artifact, tagName, comment);
-        try {
-            Case currentCase = Case.getCurrentCaseThrows();
-            currentCase.notifyBlackBoardArtifactTagAdded(tagChange.getAddedTag(), tagChange.getRemovedTags().isEmpty() ? null : tagChange.getRemovedTags());
-        } catch (NoCurrentCaseException ex) {
-            throw new TskCoreException("Added a tag to a closed case", ex);
-        }
         return tagChange.getAddedTag();
     }
 
@@ -876,11 +857,6 @@ public class TagsManager implements Closeable {
      */
     public void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
         caseDb.deleteBlackboardArtifactTag(tag);
-        try {
-            Case.getCurrentCaseThrows().notifyBlackBoardArtifactTagDeleted(tag);
-        } catch (NoCurrentCaseException ex) {
-            throw new TskCoreException("Deleted a tag from a closed case", ex);
-        }
     }
 
     /**

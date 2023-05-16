@@ -107,11 +107,6 @@ public class PoolNode extends AbstractContentNode<Pool> {
     }
 
     @Override
-    public <T> T accept(ContentNodeVisitor<T> visitor) {
-        return visitor.visit(this);
-    }
-
-    @Override
     public boolean isLeafTypeNode() {
         return false;
     }

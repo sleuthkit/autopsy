@@ -21,12 +21,10 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dialog;
-import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
@@ -34,7 +32,7 @@ import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SortOrder;
-import javax.swing.SwingWorker;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.DialogDescriptor;
@@ -56,6 +54,7 @@ import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.autopsy.guiutils.WrapLayout;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -85,6 +84,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int totalPages;
     private int currentPageImages;
     private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
+    private DataResultPanel.PagingControls pagingControls = null;
 
     /**
      * Constructs a thumbnail result viewer, with paging support, that displays
@@ -128,6 +128,11 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         // impact on the initally designed layout.  This change will just effect
         // how the components are laid out as size of the window changes.
         buttonBarPanel.setLayout(new WrapLayout());
+    }
+    
+    @Override
+    public void setPagingControls(DataResultPanel.PagingControls pagingControls) {
+        this.pagingControls = pagingControls;
     }
 
     /**
@@ -450,8 +455,19 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         return (selectedNode != null);
     }
 
-    @Override
+  @Override
     public void setNode(Node givenNode) {
+        setNode(givenNode, null);
+    }
+
+    @Override
+    public void setNode(Node givenNode, SearchResultsDTO searchResults) {
+        
+        // enable paging controls (they could have been disabled by different viewer)
+        if (pagingControls != null) {
+            pagingControls.setPageControlsEnabled(true);
+        }
+        
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (selectionListener == null) {
             this.getExplorerManager().addPropertyChangeListener(new NodeSelectionListener());
@@ -467,7 +483,11 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             // case where the DataResultViewerThumbnail stands along from the 
             // DataResultViewer.  See DataResultViewer setNode for more information.
             if (givenNode != null && givenNode.getChildren().getNodesCount() > 0) {
-                rootNode = (TableFilterNode) givenNode;
+                
+                rootNode = (givenNode instanceof TableFilterNode) 
+                        ? (TableFilterNode) givenNode 
+                        : new TableFilterNode(givenNode, true);
+                
                 /*
                  * Wrap the given node in a ThumbnailViewChildren that will
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
@@ -521,6 +541,16 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         if (currentPage < totalPages) {
             currentPage++;
             switchPage();
+        } else {
+            // current page was the last thumbnail subpage. advance to the next top level
+            // page and go to first thumbnail subpage. For example, if we were on
+            // top level page 3 and thumbnail subpage 5 of 5, then go to top level 
+            // page 4 and thumbnail sub-page 1 of 5.
+            if (pagingControls.getCurrentPage() < pagingControls.getTotalPages()) {
+                pagingControls.gotoPage( pagingControls.getCurrentPage() + 1 );
+                currentPage = 1;
+                switchPage();
+            }
         }
     }
 
@@ -552,56 +582,39 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         switchPage();
     }
 
-    private void switchPage() {
-
-        EventQueue.invokeLater(() -> {
+    private void switchPage() {        
+        SwingUtilities.invokeLater(() -> {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        });
-
-        //Note the nodes factories are likely creating nodes in EDT anyway, but worker still helps 
-        new SwingWorker<Object, Void>() {
-            private ProgressHandle progress;
-
-            @Override
-            protected Object doInBackground() throws Exception {
+            try {
                 pagePrevButton.setEnabled(false);
                 pageNextButton.setEnabled(false);
                 goToPageField.setEnabled(false);
-                progress = ProgressHandle.createHandle(
+                ProgressHandle progress = ProgressHandle.createHandle(
                         NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.genThumbs"));
                 progress.start();
                 progress.switchToIndeterminate();
+                
                 ExplorerManager explorerManager = DataResultViewerThumbnail.this.getExplorerManager();
                 Node root = explorerManager.getRootContext();
                 Node pageNode = root.getChildren().getNodeAt(currentPage - 1);
-                explorerManager.setExploredContext(pageNode);
-                currentPageImages = pageNode.getChildren().getNodesCount();
-                return null;
-            }
-
-            @Override
-            protected void done() {
+                if (pageNode != null) {
+                    explorerManager.setExploredContext(pageNode);
+                    currentPageImages = pageNode.getChildren().getNodesCount();
+                }
                 progress.finish();
+            } catch (Exception ex) {
+                NotifyDescriptor d
+                        = new NotifyDescriptor.Message(
+                                NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
+                                        ex.getMessage()),
+                                NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(d);
+                logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex); //NON-NLS
+            } finally {
                 setCursor(null);
                 updateControls();
-                // see if any exceptions were thrown
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    NotifyDescriptor d
-                            = new NotifyDescriptor.Message(
-                                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
-                                            ex.getMessage()),
-                                    NotifyDescriptor.ERROR_MESSAGE);
-                    DialogDisplayer.getDefault().notify(d);
-                    logger.log(Level.SEVERE, "Error making thumbnails: {0}", ex.getMessage()); //NON-NLS
-                }
-                catch (java.util.concurrent.CancellationException ex) {
-                    // catch and ignore if we were cancelled
-                }
             }
-        }.execute();
-
+        });
     }
 
     @NbBundle.Messages({
@@ -624,8 +637,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             final int imagesFrom = (currentPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
             final int imagesTo = currentPageImages + (currentPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
             imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);
-
-            pageNextButton.setEnabled(!(currentPage == totalPages));
+            
+            // enable "next page" button if there is either next thumbnail subpage or next top level page
+            pageNextButton.setEnabled(!(currentPage == totalPages && pagingControls.getCurrentPage() == pagingControls.getTotalPages()));
+            
             pagePrevButton.setEnabled(!(currentPage == 1));
             goToPageField.setEnabled(totalPages > 1);
             sortButton.setEnabled(true);
