@@ -26,9 +26,9 @@ If you are on macOS, run [linux_macos_install_scripts/add_macos_jna.sh](./linux_
   the wrong version of Java is being used to run Autopsy.
   Check the version of Java reported in the `messages.log` file in the log directory.  The log directory can be found by opening Autopsy, and, with no cases open, go to 'Help' > 'Open Log Folder'. `messages.log` should contain lines that looks like:
   ```
-  Java; VM; Vendor        = 17.0.5; OpenJDK 64-Bit Server VM 17.0.5+8-LTS; BellSoft
-  Runtime                 = OpenJDK Runtime Environment 17.0.5+8-LTS
-  Java Home               = /usr/lib/jvm/bellsoft-java17-full-amd64/jre
+  Java; VM; Vendor        = 17.0.7; OpenJDK 64-Bit Server VM 17.0.7+7-LTS; BellSoft
+  Runtime                 = OpenJDK Runtime Environment 17.0.7+7-LTS
+  Java Home               = /usr/lib/jvm/bellsoft-java17-full-amd64
   ```
 
   If your `messages.log` file indicates that Java 17 is not being used:
