@@ -127,8 +127,8 @@
         <echo file="${zip-tmp}/autopsy/autopsy/.lastModified" message="" />
 
         <!-- step (3) do your copying stuff here, check the ant doc for copy, move, etc file -->
-        <!-- <copy file="${nbplatform.active.dir}/platform/modules/ext/junit-4.10.jar"
-              tofile="${zip-tmp}/${app.name}/platform/modules/ext/junit-4.10.jar"/> -->
+        <copy file="${nbplatform.active.dir}/platform/modules/ext/junit-4.10.jar"
+              tofile="${zip-tmp}/${app.name}/platform/modules/ext/junit-4.10.jar"/>
         <copy file="${basedir}/README.txt" tofile="${zip-tmp}/${app.name}/README.txt"/>
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
@@ -148,7 +148,7 @@
         </copy>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
-        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-XX:+UseG1GC -J-Dprism.order=sw -J-XX:+UseStringDeduplication -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED -J--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED"/>
+        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-XX:+UseStringDeduplication -J-Dprism.order=sw -J--add-opens=java.base/java.net=ALL-UNNAMED -J--add-opens=java.desktop/javax.swing=ALL-UNNAMED -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=java.desktop/sun.awt=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED -J--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED"/>
         <!-- for Japanese localized version add option:  -Duser.language=ja -->
         
             
