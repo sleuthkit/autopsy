@@ -234,6 +234,10 @@ class LuceneQuery implements KeywordSearchQuery {
      */
     @Override
     public BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
+                return createKeywordHitArtifact(content, originalKeyword, foundKeyword, hit, snippet, listName, ingestJobId);
+    }    
+
+    public static BlackboardArtifact createKeywordHitArtifact(Content content,  Keyword originalKW, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         String configuration;
@@ -243,14 +247,14 @@ class LuceneQuery implements KeywordSearchQuery {
         }
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
 
-        if (originalKeyword != null) {
-            configuration = originalKeyword.getOriginalTerm();
-            BlackboardAttribute.ATTRIBUTE_TYPE selType = originalKeyword.getArtifactAttributeType();
+        if (originalKW != null) {
+            configuration = originalKW.getOriginalTerm();
+            BlackboardAttribute.ATTRIBUTE_TYPE selType = originalKW.getArtifactAttributeType();
             if (selType != null) {
                 attributes.add(new BlackboardAttribute(selType, MODULE_NAME, foundKeyword.getSearchTerm()));
             }
 
-            if (originalKeyword.searchTermIsWholeWord()) {
+            if (originalKW.searchTermIsWholeWord()) {
                 configuration += " (" + TskData.KeywordSearchQueryType.LITERAL.name() + ")";
                 attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.LITERAL.getType()));
             } else {
