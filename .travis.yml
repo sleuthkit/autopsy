@@ -52,16 +52,16 @@ before_script:
         wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -;
         echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list; 
         sudo apt-get update;
-        sudo apt-get install bellsoft-java11-full;
+        sudo apt-get install bellsoft-java17-full;
         export PATH=/usr/bin:$PATH;
-        export JAVA_HOME=/usr/lib/jvm/bellsoft-java11-full-amd64; 
+        export JAVA_HOME=/usr/lib/jvm/bellsoft-java17-full-amd64; 
     fi
   - if [ $TRAVIS_OS_NAME = osx ]; then 
         brew uninstall java --force --ignore-dependencies; 
         brew cask uninstall java --force; 
         brew tap bell-sw/liberica; 
-        brew cask install liberica-jdk11-full; 
-        export JAVA_HOME=/Library/Java/JavaVirtualMachines/liberica-jdk-11-full.jdk/Contents/Home;
+        brew install --cask liberica-jdk17-full; 
+        export JAVA_HOME=/Library/Java/JavaVirtualMachines/liberica-jdk-17-full.jdk/Contents/Home;
     fi
   - java -version
 
