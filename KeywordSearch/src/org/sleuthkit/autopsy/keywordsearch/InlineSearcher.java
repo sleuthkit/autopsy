@@ -393,7 +393,13 @@ final class InlineSearcher {
                             UniqueKeywordHit hit = hitList.get(0);
                             SleuthkitCase tskCase = Case.getCurrentCase().getSleuthkitCase();
                             Content content = tskCase.getContentById(hit.getContentID());
-                            BlackboardArtifact artifact = RegexQuery.createKeywordHitArtifact(content, originalKeyword, hitKeyword, hit, hit.getSnippet(), hitKeyword.getListName(), sourceId);
+                            BlackboardArtifact artifact;
+                            if (hit.isLiteral() && hit.isWholeWord()) {
+                                artifact = LuceneQuery.createKeywordHitArtifact(content, originalKeyword, hitKeyword, hit, hit.getSnippet(), hitKeyword.getListName(), sourceId);
+                            } else {
+                                artifact = RegexQuery.createKeywordHitArtifact(content, originalKeyword, hitKeyword, hit, hit.getSnippet(), hitKeyword.getListName(), sourceId);
+                            }
+
                             // createKeywordHitArtifact has the potential to return null
                             // when a CCN account is created.
                             if (artifact != null) {
