@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2022 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,9 +51,8 @@ public class ExtractAllTermsReport implements GeneralReportModule {
     
     @NbBundle.Messages({
         "ExtractAllTermsReport.error.noOpenCase=No currently open case.",
-        "# {0} - Keyword search commit frequency",
-        "ExtractAllTermsReport.search.noFilesInIdxMsg=No files are in index yet. Try again later. Index is updated every {0} minutes.",
-        "ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Try again later",
+        "ExtractAllTermsReport.search.noFilesInIdxMsg=No files are in index yet. If Solr keyword search indexing and Solr indexing were enabled, wait for ingest to complete.",
+        "ExtractAllTermsReport.search.noFilesInIdxMsg2=No files are in index yet. Re-ingest the image with the Keyword Search Module and Solr indexing enabled.",
         "ExtractAllTermsReport.search.searchIngestInProgressTitle=Keyword Search Ingest in Progress",
         "ExtractAllTermsReport.search.ingestInProgressBody=<html>Keyword Search Ingest is currently running.<br />Not all files have been indexed and unique word extraction might yield incomplete results.<br />Do you want to proceed with unique word extraction anyway?</html>",
         "ExtractAllTermsReport.startExport=Starting Unique Word Extraction",
@@ -83,7 +82,7 @@ public class ExtractAllTermsReport implements GeneralReportModule {
 
         if (filesIndexed == 0) {
             if (isIngestRunning) {
-                progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ExtractAllTermsReport_search_noFilesInIdxMsg(KeywordSearchSettings.getUpdateFrequency().getTime()));
+                progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ExtractAllTermsReport_search_noFilesInIdxMsg());
             } else {
                 progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR, Bundle.ExtractAllTermsReport_search_noFilesInIdxMsg2());
             }

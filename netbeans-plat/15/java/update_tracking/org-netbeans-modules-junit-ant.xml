@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.junit.ant">
+    <module_version install_time="1668523583877" last="true" origin="Ant" specification_version="1.20">
+        <file crc="593694189" name="config/Modules/org-netbeans-modules-junit-ant.xml"/>
+        <file crc="3130569173" name="modules/org-netbeans-modules-junit-ant.jar"/>
+    </module_version>
+</module>

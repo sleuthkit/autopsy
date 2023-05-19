@@ -182,7 +182,7 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
 
-        casePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.casePanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        casePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.casePanel.border.title"))); // NOI18N
 
         caseNameLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.caseNameLabel.text")); // NOI18N
         caseNameLabel.setMaximumSize(new java.awt.Dimension(82, 14));
@@ -295,7 +295,7 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
                 .addGap(6, 6, 6))
         );
 
-        examinerPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.examinerPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        examinerPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.examinerPanel.border.title"))); // NOI18N
 
         lbNotesLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbNotesLabel.text")); // NOI18N
         lbNotesLabel.setMaximumSize(new java.awt.Dimension(82, 14));
@@ -381,7 +381,7 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
                 .addGap(6, 6, 6))
         );
 
-        pnOrganization.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.pnOrganization.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnOrganization.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.pnOrganization.border.title"))); // NOI18N
 
         lbOrganizationNameLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbOrganizationNameLabel.text")); // NOI18N
         lbOrganizationNameLabel.setMaximumSize(new java.awt.Dimension(82, 14));
@@ -484,8 +484,7 @@ final class CaseDetailsPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(detailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+                .addComponent(detailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

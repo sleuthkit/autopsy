@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.hudson.ant">
+    <module_version install_time="1668523593852" last="true" origin="Ant" specification_version="1.44">
+        <file crc="698110016" name="config/Modules/org-netbeans-modules-hudson-ant.xml"/>
+        <file crc="3359442990" name="modules/org-netbeans-modules-hudson-ant.jar"/>
+    </module_version>
+</module>

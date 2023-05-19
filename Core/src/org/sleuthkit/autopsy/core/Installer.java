@@ -264,8 +264,15 @@ public class Installer extends ModuleInstall {
         //initialize java fx if exists
         System.setProperty("javafx.macosx.embedded", "true");
         try {
+            
+            // Due to a lingering issue https://bugs.openjdk.org/browse/JDK-8223377 where glass.dll from java 8 gets loaded instead of the java 17 one.
+            String javaLibraryPath = "java.library.path";
+            String jvmBinPathStr = Paths.get(System.getProperty("java.home"), "bin").toAbsolutePath().toString();
+            String path = System.getProperty(javaLibraryPath);
+            System.setProperty(javaLibraryPath, StringUtils.isBlank(path) ? jvmBinPathStr : jvmBinPathStr + File.pathSeparator + path);
+            
             // Creating a JFXPanel initializes JavaFX
-            JFXPanel panel = new JFXPanel();
+            new JFXPanel();
             Platform.setImplicitExit(false);
             javaFxInit = true;
         } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {

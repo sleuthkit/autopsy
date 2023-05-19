@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.maven.junit">
+    <module_version install_time="1668523589959" last="true" origin="Ant" specification_version="1.51">
+        <file crc="1632183097" name="config/Modules/org-netbeans-modules-maven-junit.xml"/>
+        <file crc="463774403" name="modules/org-netbeans-modules-maven-junit.jar"/>
+    </module_version>
+</module>
