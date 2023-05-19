@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.libs.nbjavacapi">
+    <module_version install_time="1668523585894" last="true" origin="Ant" specification_version="18.1">
+        <file crc="2796673379" name="config/Modules/org-netbeans-libs-nbjavacapi.xml"/>
+        <file crc="2628287451" name="modules/ext/nb-javac-jdk-18-api.jar"/>
+        <file crc="4101047581" name="modules/ext/nb-javac-jdk-18.jar"/>
+        <file crc="1498178556" name="modules/org-netbeans-libs-nbjavacapi.jar"/>
+    </module_version>
+</module>

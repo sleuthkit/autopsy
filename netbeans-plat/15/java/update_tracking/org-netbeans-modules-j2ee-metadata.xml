@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.j2ee.metadata">
+    <module_version install_time="1668523601883" last="true" origin="Ant" specification_version="1.49">
+        <file crc="1967465328" name="config/Modules/org-netbeans-modules-j2ee-metadata.xml"/>
+        <file crc="4079522123" name="modules/org-netbeans-modules-j2ee-metadata.jar"/>
+    </module_version>
+</module>

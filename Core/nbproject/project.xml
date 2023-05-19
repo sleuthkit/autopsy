@@ -12,7 +12,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>1</release-version>
-                        <specification-version>1.28.1</specification-version>
+                        <specification-version>1.65</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -20,7 +20,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>1.46.1</specification-version>
+                        <specification-version>1.64</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -28,7 +28,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>1.46.1</specification-version>
+                        <specification-version>1.65</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -36,11 +36,29 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>1.6.1</specification-version>
+                        <specification-version>1.25</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
                     <code-name-base>org.netbeans.core</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>2</release-version>
+                        <implementation-version/>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.core.multitabs</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <implementation-version/>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.netbeans.core.windows</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
@@ -54,7 +72,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>1</release-version>
-                        <specification-version>1.26.1</specification-version>
+                        <specification-version>1.62</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -63,7 +81,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>2</release-version>
-                        <specification-version>2.25.1</specification-version>
+                        <specification-version>2.53</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -72,7 +90,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>1</release-version>
-                        <specification-version>1.35.1</specification-version>
+                        <specification-version>1.66</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -80,7 +98,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>1.14.1</specification-version>
+                        <specification-version>1.44</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -88,7 +106,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>1.20.1</specification-version>
+                        <specification-version>1.51</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -96,7 +114,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>1.25.1</specification-version>
+                        <specification-version>1.59</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -104,7 +122,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>1.36.1</specification-version>
+                        <specification-version>1.74</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -112,7 +130,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>6.26.1</specification-version>
+                        <specification-version>6.56</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -120,7 +138,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>7.46.1</specification-version>
+                        <specification-version>7.85</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -128,7 +146,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>7.25.1</specification-version>
+                        <specification-version>7.63</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -136,7 +154,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>6.45.1</specification-version>
+                        <specification-version>6.79</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -144,23 +162,23 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>7.62.1</specification-version>
+                        <specification-version>9.29</specification-version>
                     </run-dependency>
                 </dependency>
-                <dependency>
+                <!-- <dependency>
                     <code-name-base>org.openide.filesystems.compat8</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>9.7.1</specification-version>
+                        <specification-version>9.26</specification-version>
                     </run-dependency>
-                </dependency>
+                </dependency> -->
                 <dependency>
                     <code-name-base>org.openide.filesystems.nb</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>9.7.1</specification-version>
+                        <specification-version>9.27</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -168,7 +186,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>7.63.2</specification-version>
+                        <specification-version>7.87</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -176,7 +194,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>7.32.1</specification-version>
+                        <specification-version>7.65</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -184,7 +202,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>7.28.1</specification-version>
+                        <specification-version>7.62</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -192,7 +210,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>6.49.1</specification-version>
+                        <specification-version>6.85</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -200,7 +218,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>8.25.1</specification-version>
+                        <specification-version>9.25</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -208,7 +226,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>8.15.1</specification-version>
+                        <specification-version>8.51</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -216,7 +234,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>9.4.1</specification-version>
+                        <specification-version>9.25</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -224,7 +242,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>6.55.1</specification-version>
+                        <specification-version>6.94</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -365,8 +383,32 @@
                 <binary-origin>release/modules/ext/batik-awt-util-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/batik-constants-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-constants-1.14.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/batik-css-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-css-1.14.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/batik-dom-1.14.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/batik-dom-1.14.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/batik-ext-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-ext-1.14.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/batik-i18n-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-i18n-1.14.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/batik-parser-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-parser-1.14.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/batik-shared-resources-1.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-shared-resources-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/batik-svg-dom-1.14.jar</runtime-relative-path>
@@ -395,6 +437,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/bcprov-jdk15on-1.70.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/bcprov-jdk15on-1.70.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/bcutil-jdk15on-1.70.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcutil-jdk15on-1.70.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.5.5.jar</runtime-relative-path>
@@ -465,6 +511,10 @@
                 <binary-origin>release/modules/ext/icepdf-viewer-6.2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/istack-commons-runtime-3.0.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/istack-commons-runtime-3.0.11.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/j2objc-annotations-1.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/j2objc-annotations-1.3.jar</binary-origin>
             </class-path-extension>
@@ -485,12 +535,32 @@
                 <binary-origin>release/modules/ext/jai_imageio-1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jakarta.activation-1.2.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.activation-1.2.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jakarta.xml.bind-api-2.3.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.xml.bind-api-2.3.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/java-diff-utils-4.11.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/java-diff-utils-4.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/javax.activation-api-1.2.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javax.activation-api-1.2.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/javax.ws.rs-api-2.1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javax.ws.rs-api-2.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jaxb-api-2.3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jaxb-api-2.3.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jaxb-runtime-2.3.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jaxb-runtime-2.3.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
@@ -507,6 +577,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jsoup-1.14.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jsoup-1.14.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jsr305-3.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jutf7-1.0.0.jar</runtime-relative-path>
@@ -605,6 +679,10 @@
                 <binary-origin>release/modules/ext/Rejistry-1.1-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/serializer-2.7.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/serializer-2.7.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/sevenzipjbinding-AllPlatforms.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sevenzipjbinding-AllPlatforms.jar</binary-origin>
             </class-path-extension>
@@ -635,6 +713,26 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.36.0.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.36.0.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/txw2-2.3.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/txw2-2.3.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xalan-2.7.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xalan-2.7.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xml-apis-1.4.01.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xml-apis-1.4.01.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xml-apis-ext-1.3.04.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xml-apis-ext-1.3.04.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xmlgraphics-commons-2.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmlgraphics-commons-2.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xmpcore-6.1.11.jar</runtime-relative-path>

@@ -12,7 +12,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>1</release-version>
-                        <specification-version>1.47.1</specification-version>
+                        <specification-version>1.65</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -20,7 +20,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>8.25.1</specification-version>
+                        <specification-version>9.25</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -28,7 +28,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>8.19.1</specification-version>
+                        <specification-version>8.51</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -36,7 +36,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>9.4.1</specification-version>
+                        <specification-version>9.25</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -82,16 +82,24 @@
                 <binary-origin>release/modules/ext/apache-mime4j-mbox-iterator-0.8.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.12.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang3-3.12.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/ez-vcard-0.11.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/ez-vcard-0.11.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/freemarker-2.3.31.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/freemarker-2.3.31.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackson-core-2.13.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-core-2.13.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/java-libpst-0.9.5-SNAPSHOT.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/java-libpst-0.9.5-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jsoup-1.14.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jsoup-1.14.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/vinnie-2.0.2.jar</runtime-relative-path>

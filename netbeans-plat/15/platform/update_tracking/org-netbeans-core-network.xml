@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.core.network">
+    <module_version install_time="1668523628315" last="true" origin="Ant" specification_version="1.29">
+        <file crc="2799144563" name="config/Modules/org-netbeans-core-network.xml"/>
+        <file crc="3728844243" name="modules/org-netbeans-core-network.jar"/>
+    </module_version>
+</module>

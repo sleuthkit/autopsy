@@ -11,7 +11,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>8.25.1</specification-version>
+                        <specification-version>9.25</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -19,7 +19,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>9.4.1</specification-version>
+                        <specification-version>9.25</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
@@ -244,6 +244,19 @@
                 <package>javax.annotation</package>
                 <package>javax.annotation.concurrent</package>
                 <package>javax.annotation.meta</package>
+                <package>javax.jms</package>
+                <package>javax.mail</package>
+                <package>javax.mail.event</package>
+                <package>javax.mail.internet</package>
+                <package>javax.mail.search</package>
+                <package>javax.mail.util</package>
+                <package>javax.servlet</package>
+                <package>javax.servlet.http</package>
+                <package>javax.xml.parsers</package>
+                <package>javax.xml.transform</package>
+                <package>javax.xml.transform.dom</package>
+                <package>javax.xml.transform.sax</package>
+                <package>javax.xml.transform.stream</package>
                 <package>jfxtras.animation</package>
                 <package>jfxtras.css</package>
                 <package>jfxtras.css.converters</package>
@@ -322,6 +335,16 @@
                 <package>org.apache.commons.lang3.tuple</package>
                 <package>org.apache.commons.logging</package>
                 <package>org.apache.commons.logging.impl</package>
+                <package>org.apache.log</package>
+                <package>org.apache.log.filter</package>
+                <package>org.apache.log.format</package>
+                <package>org.apache.log.output</package>
+                <package>org.apache.log.output.db</package>
+                <package>org.apache.log.output.io</package>
+                <package>org.apache.log.output.io.rotate</package>
+                <package>org.apache.log.output.jms</package>
+                <package>org.apache.log.output.net</package>
+                <package>org.apache.log.util</package>
                 <package>org.apache.commons.text</package>
                 <package>org.apache.commons.validator</package>
                 <package>org.apache.commons.validator.routines</package>
@@ -405,7 +428,6 @@
                 <package>org.controlsfx.control.action</package>
                 <package>org.controlsfx.control.cell</package>
                 <package>org.controlsfx.control.decoration</package>
-                <package>org.controlsfx.control.spreadsheet</package>
                 <package>org.controlsfx.control.table</package>
                 <package>org.controlsfx.control.table.model</package>
                 <package>org.controlsfx.control.textfield</package>
@@ -427,17 +449,6 @@
                 <package>org.freedesktop.gstreamer.message</package>
                 <package>org.freedesktop.gstreamer.query</package>
                 <package>org.freedesktop.gstreamer.webrtc</package>
-                <package>org.hyperic.jni</package>
-                <package>org.hyperic.sigar</package>
-                <package>org.hyperic.sigar.cmd</package>
-                <package>org.hyperic.sigar.jmx</package>
-                <package>org.hyperic.sigar.pager</package>
-                <package>org.hyperic.sigar.ptql</package>
-                <package>org.hyperic.sigar.shell</package>
-                <package>org.hyperic.sigar.test</package>
-                <package>org.hyperic.sigar.util</package>
-                <package>org.hyperic.sigar.vmware</package>
-                <package>org.hyperic.sigar.win32</package>
                 <package>org.imgscalr</package>
                 <package>org.joda.time</package>
                 <package>org.joda.time.base</package>
@@ -465,7 +476,7 @@
                 <package>org.slf4j.helpers</package>
                 <package>org.slf4j.spi</package>
             </public-packages>
-            <class-path-extension>
+         <class-path-extension>
                 <runtime-relative-path>ext/animal-sniffer-annotations-1.21.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/animal-sniffer-annotations-1.21.jar</binary-origin>
             </class-path-extension>
@@ -578,8 +589,8 @@
                 <binary-origin>release/modules/ext/conscrypt-openjdk-uber-2.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-8.40.11.jar</binary-origin>
+                <runtime-relative-path>ext/controlsfx-11.1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-11.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dd-plist-1.23.jar</runtime-relative-path>
@@ -814,16 +825,16 @@
                 <binary-origin>release/modules/ext/jericho-html-3.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-common-8.0-r4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-common-8.0-r4.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-common-17-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-common-17-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-controls-8.0-r4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-controls-8.0-r4.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-controls-17-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-controls-17-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jfxtras-fxml-8.0-r4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jfxtras-fxml-8.0-r4.jar</binary-origin>
+                <runtime-relative-path>ext/jfxtras-fxml-17-r1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jfxtras-fxml-17-r1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jna-5.13.0.jar</runtime-relative-path>
@@ -856,10 +867,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/log4j-core-2.17.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/log4j-core-2.17.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/ooxml-schemas-1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/ooxml-schemas-1.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/opencensus-api-0.31.0.jar</runtime-relative-path>
@@ -912,10 +919,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/reload4j-1.2.19.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/reload4j-1.2.19.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sigar-1.6.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sigar-1.6.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>
