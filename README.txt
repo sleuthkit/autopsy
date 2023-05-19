@@ -46,7 +46,7 @@ JRE (Java Runtime Environment) 1.8
 - Web page: http://www.oracle.com/technetwork/java/index.html
 - License: http://www.oracle.com/technetwork/java/javase/terms/license/index.html
 
-Netbeans 11.3 RCP platform and .jar files bundled with the platform
+Netbeans 15 RCP platform and .jar files bundled with the platform
 - Web page: https://netbeans.apache.org/
 - License: https://www.apache.org/licenses/LICENSE-2.0
 

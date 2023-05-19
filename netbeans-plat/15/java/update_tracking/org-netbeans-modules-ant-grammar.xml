@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.ant.grammar">
+    <module_version install_time="1668523656818" last="true" origin="Ant" specification_version="1.61">
+        <file crc="3428998798" name="config/Modules/org-netbeans-modules-ant-grammar.xml"/>
+        <file crc="3310470565" name="modules/org-netbeans-modules-ant-grammar.jar"/>
+    </module_version>
+</module>

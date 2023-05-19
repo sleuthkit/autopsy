@@ -240,7 +240,7 @@ public class GroupPane extends BorderPane {
      */
     @ThreadConfined(type = ThreadType.JFX)
     private final Map<Long, DrawableCell> cellMap = new HashMap<>();
-
+    
     private final InvalidationListener filesSyncListener = (observable) -> {
         final String header = getHeaderString();
         final List<Long> fileIds = getGroup().getFileIDs();
@@ -658,39 +658,45 @@ public class GroupPane extends BorderPane {
         }
     }
 
-    private class DrawableCell extends GridCell<Long> {
+    private class DrawableCell extends GridCell<Long> implements AutoCloseable {
 
         private final DrawableTile tile = new DrawableTile(GroupPane.this, controller);
-
+        
+        /**
+         * This stores the last non-null file id. So that only new file ids for
+         * this item are tracked. This prevents an infinite render loop. See
+         * https://github.com/controlsfx/controlsfx/issues/1241 for more
+         * information
+         */
+        private Long oldItem = null;
+        
         DrawableCell() {
-            itemProperty().addListener((ObservableValue<? extends Long> observable, Long oldValue, Long newValue) -> {
-                if (oldValue != null) {
-                    cellMap.remove(oldValue, DrawableCell.this);
-                    tile.setFile(null);
-                }
-                if (newValue != null) {
-                    if (cellMap.containsKey(newValue)) {
-                        if (tile != null) {
-                            // Clear out the old value to prevent out-of-date listeners
-                            // from activating.
-                            cellMap.get(newValue).tile.setFile(null);
-                        }
-                    }
-                    cellMap.put(newValue, DrawableCell.this);
-                }
-            });
-
             setGraphic(tile);
         }
 
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
-            tile.setFile(item);
+            
+            if (item != null && oldItem != item) {
+                tile.setFile(item);
+            }
+            
+            if (item != null) {
+                cellMap.put(item, this);    
+                oldItem = item;
+            } else if (oldItem != null) {
+                cellMap.remove(oldItem);
+            }
         }
 
         void resetItem() {
             tile.setFile(null);
+        }
+
+        @Override
+        public void close() throws Exception {
+            resetItem();
         }
     }
 

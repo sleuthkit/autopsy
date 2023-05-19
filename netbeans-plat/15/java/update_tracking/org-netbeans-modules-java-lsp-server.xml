@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.java.lsp.server">
+    <module_version install_time="1668523613780" last="true" origin="Ant" specification_version="2.0.0.1.2.12.1.17.32.6.2.1.8.1.1.13">
+        <file crc="1212840409" name="config/Modules/org-netbeans-modules-java-lsp-server.xml"/>
+        <file crc="1260452356" name="modules/ext/commons-io-2.5.jar"/>
+        <file crc="2369079638" name="modules/ext/org.eclipse.lsp4j-0.13.0.jar"/>
+        <file crc="1867547885" name="modules/ext/org.eclipse.lsp4j.debug-0.13.0.jar"/>
+        <file crc="4067768547" name="modules/ext/org.eclipse.lsp4j.generator-0.13.0.jar"/>
+        <file crc="3375351071" name="modules/ext/org.eclipse.lsp4j.jsonrpc-0.13.0.jar"/>
+        <file crc="3597249865" name="modules/ext/org.eclipse.lsp4j.jsonrpc.debug-0.13.0.jar"/>
+        <file crc="638938772" name="modules/ext/org.eclipse.xtend.lib-2.24.0.jar"/>
+        <file crc="2810665387" name="modules/ext/org.eclipse.xtend.lib.macro-2.24.0.jar"/>
+        <file crc="3849505532" name="modules/ext/org.eclipse.xtext.xbase.lib-2.24.0.jar"/>
+        <file crc="1138013984" name="modules/org-netbeans-modules-java-lsp-server.jar"/>
+    </module_version>
+</module>

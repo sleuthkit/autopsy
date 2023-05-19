@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.openide.windows">
+    <module_version install_time="1668523624384" last="true" origin="Ant" specification_version="6.94">
+        <file crc="3877728110" name="config/Modules/org-openide-windows.xml"/>
+        <file crc="727497785" name="modules/org-openide-windows.jar"/>
+    </module_version>
+</module>

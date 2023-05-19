@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.junitlib">
+    <module_version install_time="1668523589658" last="true" origin="Ant" specification_version="1.22">
+        <file crc="736645064" name="config/Modules/org-netbeans-modules-junitlib.xml"/>
+        <file crc="2938134127" name="docs/junit-4.13.2-javadoc.jar"/>
+        <file crc="3904506905" name="docs/junit-4.13.2-sources.jar"/>
+        <file crc="243129668" name="docs/junit-jupiter-api-5.6.0-javadoc.jar"/>
+        <file crc="827145001" name="docs/junit-jupiter-api-5.6.0-sources.jar"/>
+        <file crc="4141872605" name="docs/junit-jupiter-engine-5.6.0-javadoc.jar"/>
+        <file crc="1454379969" name="docs/junit-jupiter-engine-5.6.0-sources.jar"/>
+        <file crc="84804514" name="docs/junit-jupiter-params-5.6.0-javadoc.jar"/>
+        <file crc="494071460" name="docs/junit-jupiter-params-5.6.0-sources.jar"/>
+        <file crc="476526040" name="modules/org-netbeans-modules-junitlib.jar"/>
+    </module_version>
+</module>
