@@ -632,9 +632,9 @@ public final class CaseMetadata {
             }
             
             this.fileContentPath = null;
-            NodeList caseElementChildren = caseElement.getElementsByTagName(FILE_CONTENT_PATH);
-            if (caseElementChildren.getLength() == 1) {
-                 String fileContentTextPath = caseElementChildren.item(0).getTextContent();
+            NodeList fileContentChildren = doc.getElementsByTagName(FILE_CONTENT_PATH);
+            if (fileContentChildren.getLength() == 1) {
+                 String fileContentTextPath = fileContentChildren.item(0).getTextContent();
                  if (StringUtils.isNotBlank(fileContentTextPath)) {
                      this.fileContentPath = fileContentTextPath;
                  }
