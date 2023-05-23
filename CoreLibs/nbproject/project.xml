@@ -337,6 +337,8 @@
                 <package>org.apache.log.output.net</package>
                 <package>org.apache.log.util</package>
                 <package>org.apache.commons.text</package>
+                <package>org.apache.commons.text.lookup</package>
+                <package>org.apache.commons.text.matcher</package>
                 <package>org.apache.commons.validator.routines</package>
                 <package>org.apache.commons.validator.routines.checkdigit</package>
                 <package>org.apache.log4j</package>

@@ -103,6 +103,7 @@ import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesDeletedEven
 import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.TagSetsEvent.TagSetsAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.TagSetsEvent.TagSetsDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.filecontent.CustomFileContentProvider;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -2743,9 +2744,11 @@ public class Case {
         try {
             String databaseName = metadata.getCaseDatabaseName();
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
-                caseDb = SleuthkitCase.openCase(Paths.get(metadata.getCaseDirectory(), databaseName).toString());
+                caseDb = SleuthkitCase.openCase(Paths.get(metadata.getCaseDirectory(), databaseName).toString(), 
+                        CustomFileContentProvider.getProvider(metadata.getFileContentPath()));
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
-                caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory());
+                caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory(), 
+                        CustomFileContentProvider.getProvider(metadata.getFileContentPath()));
             } else {
                 throw new CaseActionException(Bundle.Case_open_exception_multiUserCaseNotEnabled());
             }
