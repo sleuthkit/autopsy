@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.i18n">
+    <module_version install_time="1668523670971" last="true" origin="Ant" specification_version="1.70">
+        <file crc="2108769092" name="config/Modules/org-netbeans-modules-i18n.xml"/>
+        <file crc="2317135027" name="modules/org-netbeans-modules-i18n.jar"/>
+    </module_version>
+</module>

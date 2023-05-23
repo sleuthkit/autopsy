@@ -14,7 +14,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.TransformationList;
 
 /**
- *
+ * Maps an observable list of type E to an observable list of type F.
  */
 public class MappedList<E, F> extends TransformationList<E, F> {
     private final Function<F, E> mapper;
@@ -110,6 +110,11 @@ public class MappedList<E, F> extends TransformationList<E, F> {
                 c.reset();
             }
         });
+    }
+
+    @Override
+    public int getViewIndex(int index) {
+        return index;
     }
 
 }

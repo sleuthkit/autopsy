@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.debugger.jpda">
+    <module_version install_time="1668523648596" last="true" origin="Ant" specification_version="1.125.0.80">
+        <file crc="2639665929" name="config/Modules/org-netbeans-modules-debugger-jpda.xml"/>
+        <file crc="1571473223" name="modules/org-netbeans-modules-debugger-jpda.jar"/>
+    </module_version>
+</module>

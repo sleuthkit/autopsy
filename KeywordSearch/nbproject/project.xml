@@ -12,7 +12,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>1</release-version>
-                        <specification-version>1.24.1</specification-version>
+                        <specification-version>1.65</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -20,7 +20,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>1.46.1</specification-version>
+                        <specification-version>1.64</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -28,7 +28,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>1.46.1</specification-version>
+                        <specification-version>1.65</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -37,7 +37,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>1</release-version>
-                        <specification-version>1.26.1</specification-version>
+                        <specification-version>1.62</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -46,7 +46,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>1</release-version>
-                        <specification-version>1.31.1</specification-version>
+                        <specification-version>1.66</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -54,7 +54,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>7.31.1</specification-version>
+                        <specification-version>7.85</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -62,7 +62,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>6.50.3</specification-version>
+                        <specification-version>6.79</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -70,7 +70,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>7.23.1</specification-version>
+                        <specification-version>7.65</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -78,7 +78,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>7.21.1</specification-version>
+                        <specification-version>7.62</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -86,7 +86,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>8.15.1</specification-version>
+                        <specification-version>9.25</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -94,7 +94,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>8.8.1</specification-version>
+                        <specification-version>8.51</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -102,7 +102,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>9.4.1</specification-version>
+                        <specification-version>9.25</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -110,7 +110,7 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <specification-version>6.40.1</specification-version>
+                        <specification-version>6.94</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -267,6 +267,10 @@
                 <binary-origin>release/modules/ext/guava-31.1-jre.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/hamcrest-core-1.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/hamcrest-core-1.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/http2-client-9.4.44.v20210927.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/http2-client-9.4.44.v20210927.jar</binary-origin>
             </class-path-extension>
@@ -339,6 +343,14 @@
                 <binary-origin>release/modules/ext/jsonic-1.2.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jsr305-3.0.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/junit-4.13.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/junit-4.13.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/language-detector-0.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/language-detector-0.6.jar</binary-origin>
             </class-path-extension>
@@ -395,6 +407,10 @@
                 <binary-origin>release/modules/ext/netty-transport-native-unix-common-4.1.68.Final.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-api-1.7.36.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/snappy-java-1.1.7.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/snappy-java-1.1.7.6.jar</binary-origin>
             </class-path-extension>
@@ -417,6 +433,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/zookeeper-jute-3.8.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/zookeeper-jute-3.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/lucene-core-8.11.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/lucene-core-8.11.2.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

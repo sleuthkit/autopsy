@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.core.windows">
+    <module_version install_time="1668523669883" last="true" origin="Ant" specification_version="2.102">
+        <file crc="1059846727" name="config/Modules/org-netbeans-core-windows.xml"/>
+        <file crc="2093053054" name="modules/org-netbeans-core-windows.jar"/>
+    </module_version>
+</module>

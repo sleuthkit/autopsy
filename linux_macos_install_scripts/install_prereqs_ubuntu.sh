@@ -24,18 +24,18 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-echo "Installing bellsoft Java 8..."
+echo "Installing bellsoft Java 17..."
 pushd /usr/src/ &&
     wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add - &&
     echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list &&
     sudo apt update &&
-    sudo apt -y install bellsoft-java8-full &&
+    sudo apt -y install bellsoft-java17-full &&
     popd
 if [[ $? -ne 0 ]]; then
-    echo "Failed to install bellsoft java 8" >>/dev/stderr
+    echo "Failed to install bellsoft java 17" >>/dev/stderr
     exit 1
 fi
 
 echo "Autopsy prerequisites installed."
-echo "Java path at /usr/lib/jvm/bellsoft-java8-full-amd64: "
-ls /usr/lib/jvm/bellsoft-java8-full-amd64
+echo "Java path at /usr/lib/jvm/bellsoft-java17-full-amd64: "
+ls /usr/lib/jvm/bellsoft-java17-full-amd64

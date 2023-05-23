@@ -583,7 +583,7 @@ public class Server {
         List<Long> pids = new ArrayList<>();
 
         //NOTE: these needs to be in sync with process start string in start()
-        final String pidsQuery = "Args.*.eq=-DSTOP.KEY=" + KEY + ",Args.*.eq=start.jar"; //NON-NLS
+        final String pidsQuery = "-DSTOP.KEY=" + KEY + "%start.jar"; //NON-NLS
 
         long[] pidsArr = PlatformUtil.getJavaPIDs(pidsQuery);
         if (pidsArr != null) {

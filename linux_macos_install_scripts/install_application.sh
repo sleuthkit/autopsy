@@ -2,7 +2,7 @@
 # Unzips an application platform zip to specified directory and does setup
 
 usage() {
-    echo "Usage: install_application_from_zip.sh [-z zip_path] [-i install_directory] [-j java_home] [-n application_name] [-v asc_file]" 1>&2
+    echo "Usage: install_application.sh [-z zip_path] [-i install_directory] [-j java_home] [-n application_name] [-v asc_file]" 1>&2
     echo "If specifying a .asc verification file (with -v flag), the program will attempt to create a temp folder in the working directory and verify the signature with gpg.  If you already have an extracted zip, the '-z' flag can be ignored as long as the directory specifying the extracted contents is provided for the installation directory." 1>&2
 }
 
@@ -60,14 +60,12 @@ if [[ -n "$ASC_FILE" ]] && [[ -n "$APPLICATION_ZIP_PATH" ]]; then
     fi
 fi
 
-ZIP_FILE_NAME=$(basename -- "$APPLICATION_ZIP_PATH")
-ZIP_NAME="${ZIP_FILE_NAME%.*}"
-APPLICATION_EXTRACTED_PATH=$INSTALL_DIR/$ZIP_NAME/
+APPLICATION_EXTRACTED_PATH=$INSTALL_DIR/
 
 # if specifying a zip path, ensure directory doesn't exist and then create and extract
 if [[ -n "$APPLICATION_ZIP_PATH" ]]; then
-    if [[ -d $APPLICATION_EXTRACTED_PATH || -f $APPLICATION_EXTRACTED_PATH ]]; then
-        echo "A file or directory already exists at $APPLICATION_EXTRACTED_PATH" >>/dev/stderr
+    if [[ -f $APPLICATION_EXTRACTED_PATH ]]; then
+        echo "A file already exists at $APPLICATION_EXTRACTED_PATH" >>/dev/stderr
         exit 1
     fi
 

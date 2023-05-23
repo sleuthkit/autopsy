@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.templatesui">
+    <module_version install_time="1668523652976" last="true" origin="Ant" specification_version="1.20">
+        <file crc="1388336889" name="config/Modules/org-netbeans-modules-templatesui.xml"/>
+        <file crc="1624044971" name="modules/org-netbeans-modules-templatesui.jar"/>
+    </module_version>
+</module>

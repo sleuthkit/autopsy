@@ -40,7 +40,7 @@ To install PostgreSQL, perform the following steps:
 <br><br>
 \image html newPassword.PNG
 <br><br>
-- Check <i>"Can create databases"</i> on the <i>"Role Privileges"</i> tab.
+- For <i>"Role Privileges"</i>, give the user <i>"Can Login?"</i> and <i>"Can create databases"</i>.
 <br><br>
 \image html newRights.PNG
 <br><br>
@@ -86,7 +86,7 @@ To this:
 Note the removal of the leading number symbol-this uncomments that entry.
 <br><br>
 
-4. Still in <i id="max_connections">"C:\Program Files\PostgreSQL\9.5\data\postgresql.conf"</i>, find the entry named _max_connections_ and set it to the number of suggested connections for your configuration. A rule of thumb is add 100 connections for each Automated Ingest Node and 100 connections for each Reviewer node you plan to have in the network.  See the screenshot below.
+4. Still in <i id="max_connections">"C:\Program Files\PostgreSQL\9.5\data\postgresql.conf"</i>, find the entry named _max_connections_ and set it to the number of suggested connections for your configuration. A rule of thumb is 100 connections per each Automated Ingest node and reviewer node. See the screenshot below.
 <br><br>
 \image html maxConnections.PNG
 <br><br>
@@ -97,6 +97,8 @@ Note the removal of the leading number symbol-this uncomments that entry.
 <br><br>
 \image html postgresqlinstall7.PNG
 <br><br>
+
+6. Add the bin\\postgres.exe file to the Windows firewall to allow it to receive connections.
 
 
 \section install_post_test Testing

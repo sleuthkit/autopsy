@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.spi.debugger.jpda.ui">
+    <module_version install_time="1668523598356" last="true" origin="Ant" specification_version="3.20">
+        <file crc="523118389" name="config/Modules/org-netbeans-spi-debugger-jpda-ui.xml"/>
+        <file crc="2935941685" name="modules/org-netbeans-spi-debugger-jpda-ui.jar"/>
+    </module_version>
+</module>
