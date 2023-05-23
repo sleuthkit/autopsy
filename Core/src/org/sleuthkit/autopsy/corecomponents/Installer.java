@@ -23,16 +23,19 @@ import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.plaf.FontUIResource;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
@@ -128,7 +131,7 @@ public class Installer extends ModuleInstall {
         UIManager.put("OptionPane.warningIcon", warningIcon);
         UIManager.put("OptionPane.questionIcon", questionIcon);
         UIManager.put("OptionPane.informationIcon", informationIcon);
-        
+
         if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
             setUnixLookAndFeel();
             setModuleSettings("false");

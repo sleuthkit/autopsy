@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.maven.indexer">
+    <module_version install_time="1668523604305" last="true" origin="Ant" specification_version="2.57">
+        <file crc="3741439804" name="config/Modules/org-netbeans-modules-maven-indexer.xml"/>
+        <file crc="2799077179" name="modules/ext/maven/indexer-core-6.2.2.jar"/>
+        <file crc="1922846449" name="modules/ext/maven/javax.annotation-api-1.2.jar"/>
+        <file crc="1073367392" name="modules/ext/maven/lucene-analyzers-common-8.11.1.jar"/>
+        <file crc="3239262036" name="modules/ext/maven/lucene-core-8.11.1.jar"/>
+        <file crc="3999642854" name="modules/ext/maven/lucene-highlighter-8.11.1.jar"/>
+        <file crc="3221683217" name="modules/ext/maven/lucene-queryparser-8.11.1.jar"/>
+        <file crc="3175152587" name="modules/org-netbeans-modules-maven-indexer.jar"/>
+    </module_version>
+</module>

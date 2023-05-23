@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.libs.cglib">
+    <module_version install_time="1668523593198" last="true" origin="Ant" specification_version="1.43">
+        <file crc="881319839" name="config/Modules/org-netbeans-libs-cglib.xml"/>
+        <file crc="2696327360" name="modules/ext/cglib-2.2.jar"/>
+        <file crc="1268603802" name="modules/org-netbeans-libs-cglib.jar"/>
+    </module_version>
+</module>

@@ -47,6 +47,7 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
+import org.sleuthkit.autopsy.filesearch.DeletedFilesSearchPanel.DeletedFileSearchFilter;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -105,18 +106,19 @@ class FileSearchPanel extends javax.swing.JPanel {
         SizeSearchFilter sizeFilter = new SizeSearchFilter();
         DateSearchFilter dateFilter = new DateSearchFilter();
         KnownStatusSearchFilter knowStatusFilter = new KnownStatusSearchFilter();
+        DeletedFileSearchFilter deleltedFilter = new DeletedFileSearchFilter();
         HashSearchFilter hashFilter = new HashSearchFilter();
         panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.name"), nameFilter));
 
         panel3.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), sizeFilter));
-
         panel2.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), dateFilter));
         panel3.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), knowStatusFilter));
 
         panel5.add(new FilterArea(NbBundle.getMessage(this.getClass(), "HashSearchPanel.md5CheckBox.text"), hashFilter));
-        panel5.add(new JLabel(""));
         panel4.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), mimeTypeFilter));
         panel4.add(new FilterArea(NbBundle.getMessage(this.getClass(), "DataSourcePanel.dataSourceCheckBox.text"), dataSourceFilter));
+        panel5.add(new FilterArea(NbBundle.getMessage(this.getClass(), "DeletedFilesSearchPanel.deletedCheckbox.text"), deleltedFilter));   
+        
         filterPanel.add(panel1);
         filterPanel.add(panel2);
         filterPanel.add(panel3);
@@ -130,6 +132,7 @@ class FileSearchPanel extends javax.swing.JPanel {
         filters.add(hashFilter);
         filters.add(mimeTypeFilter);
         filters.add(dataSourceFilter);
+        filters.add(deleltedFilter);
 
         for (FileSearchFilter filter : this.getFilters()) {
             filter.addPropertyChangeListener(new PropertyChangeListener() {
@@ -294,15 +297,7 @@ class FileSearchPanel extends javax.swing.JPanel {
      *
      * @throws
      * org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException
-     *                                                                           if
-     *                                                                           an
-     *                                                                           enabled
-     *                                                                           filter
-     *                                                                           is
-     *                                                                           in
-     *                                                                           an
-     *                                                                           invalid
-     *                                                                           state
+     * if an enabled filter is in an invalid state
      */
     private String getQuery() throws FilterValidationException {
 

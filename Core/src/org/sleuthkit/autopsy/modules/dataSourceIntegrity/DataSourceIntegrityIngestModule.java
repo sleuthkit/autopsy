@@ -23,8 +23,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
+import org.apache.commons.codec.binary.Hex;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -250,8 +250,8 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
         }
 
         // Produce the final hashes
-        for (HashData hashData : hashDataList) {
-            hashData.calculatedHash = DatatypeConverter.printHexBinary(hashData.digest.digest()).toLowerCase();
+        for(HashData hashData: hashDataList) {
+            hashData.calculatedHash = Hex.encodeHexString(hashData.digest.digest()).toLowerCase();
             logger.log(Level.INFO, "Hash calculated from {0}: {1}", new Object[]{imgName, hashData.calculatedHash}); //NON-NLS
         }
 

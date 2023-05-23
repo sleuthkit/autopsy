@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.masterfs.linux">
+    <module_version install_time="1668523643121" last="true" origin="Ant" specification_version="1.30">
+        <file crc="367044464" name="config/Modules/org-netbeans-modules-masterfs-linux.xml"/>
+        <file crc="3588312600" name="modules/org-netbeans-modules-masterfs-linux.jar"/>
+    </module_version>
+</module>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.java.testrunner.ui">
+    <module_version install_time="1668523631177" last="true" origin="Ant" specification_version="1.21">
+        <file crc="842956287" name="config/Modules/org-netbeans-modules-java-testrunner-ui.xml"/>
+        <file crc="860888883" name="modules/org-netbeans-modules-java-testrunner-ui.jar"/>
+    </module_version>
+</module>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.maven.kit">
+    <module_version install_time="1668523587100" last="true" origin="Ant" specification_version="4.48">
+        <file crc="4258591221" name="config/Modules/org-netbeans-modules-maven-kit.xml"/>
+        <file crc="4163476595" name="modules/org-netbeans-modules-maven-kit.jar"/>
+    </module_version>
+</module>

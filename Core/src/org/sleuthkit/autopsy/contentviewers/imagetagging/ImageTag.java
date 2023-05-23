@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.contentviewers.imagetagging;
 
-import com.sun.javafx.event.EventDispatchChainImpl;
+
+// TODO: See JIRA-6693
+//import com.sun.javafx.event.EventDispatchChainImpl;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -46,7 +48,7 @@ import org.sleuthkit.autopsy.casemodule.services.contentviewertags.ContentViewer
 public final class ImageTag extends Group {
 
     // Used to tell the 8 edit handles to hide if this tag is no longer selected
-    private final EventDispatchChainImpl ALL_CHILDREN;
+//    private final EventDispatchChainImpl ALL_CHILDREN;
     
     private final PhysicalTag physicalTag;
     
@@ -57,13 +59,13 @@ public final class ImageTag extends Group {
     private final ContentViewerTag<ImageTagRegion> appTag;
 
     public ImageTag(ContentViewerTag<ImageTagRegion> contentViewerTag, ImageView image) {
-        ALL_CHILDREN = new EventDispatchChainImpl();
+//        ALL_CHILDREN = new EventDispatchChainImpl();
         this.appTag = contentViewerTag;
 
-        this.getChildren().addListener((ListChangeListener<Node>) change -> {
-            change.next();
-            change.getAddedSubList().forEach((node) -> ALL_CHILDREN.append(node.getEventDispatcher()));
-        });
+//        this.getChildren().addListener((ListChangeListener<Node>) change -> {
+//            change.next();
+//            change.getAddedSubList().forEach((node) -> ALL_CHILDREN.append(node.getEventDispatcher()));
+//        });
 
         ImageTagRegion details = contentViewerTag.getDetails();
         physicalTag = new PhysicalTag(details);
@@ -120,8 +122,8 @@ public final class ImageTag extends Group {
         Tooltip.install(this, new Tooltip(contentViewerTag.getContentTag()
                 .getName().getDisplayName()));
 
-        this.addEventHandler(ImageTagControls.NOT_FOCUSED, event -> ALL_CHILDREN.dispatchEvent(event));
-        this.addEventHandler(ImageTagControls.FOCUSED, event -> ALL_CHILDREN.dispatchEvent(event));
+//        this.addEventHandler(ImageTagControls.NOT_FOCUSED, event -> ALL_CHILDREN.dispatchEvent(event));
+//        this.addEventHandler(ImageTagControls.FOCUSED, event -> ALL_CHILDREN.dispatchEvent(event));
     }
 
     /**

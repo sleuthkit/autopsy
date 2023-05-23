@@ -163,7 +163,9 @@ final public class VisualizationPanel extends JPanel {
         this.relationshipBrowser = relationshipBrowser;
         initComponents();
         //initialize invisible JFXPanel that is used to show JFXNotifications over this window.
-        notificationsJFXPanel.setScene(new Scene(new Pane()));
+        Platform.runLater(() -> {
+            notificationsJFXPanel.setScene(new Scene(new Pane()));
+        });
 
         graph = new CommunicationsGraph(pinnedAccountModel, lockedVertexModel);
 
