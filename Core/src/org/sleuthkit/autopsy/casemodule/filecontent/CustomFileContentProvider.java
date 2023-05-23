@@ -32,6 +32,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FileContentStream;
 import org.sleuthkit.datamodel.FileContentStream.FileContentProvider;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.CollectedStatus;
 
 /**
  *
@@ -93,6 +94,10 @@ public class CustomFileContentProvider implements FileContentProvider {
 
     @Override
     public FileContentStream getFileContentStream(AbstractFile af) throws TskCoreException {
+        if (af.getCollected() != CollectedStatus.YES_REPO) {
+            return null;
+        }
+        
         File localFile = getFilePath(af);
         if (localFile != null && localFile.exists() && localFile.isFile()) {
             try {
