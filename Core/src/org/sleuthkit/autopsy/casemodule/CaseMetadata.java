@@ -198,8 +198,8 @@ public final class CaseMetadata {
         createdByVersion = Version.getVersion();
         createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
         this.originalMetadata = originalMetadata;
-        this.contentProvider = originalMetadata.contentProvider;
-        this.contentProviderArgs = originalMetadata.contentProviderArgs;
+        this.contentProvider = originalMetadata == null ? null : originalMetadata.contentProvider;
+        this.contentProviderArgs = originalMetadata == null ? null : originalMetadata.contentProviderArgs;
     }
 
     /**
@@ -505,7 +505,7 @@ public final class CaseMetadata {
          */
         Element originalCaseElement = doc.createElement(ORIGINAL_CASE_ELEMENT_NAME);
         rootElement.appendChild(originalCaseElement);
-        if (originalMetadata != null) {            
+        if (originalMetadata != null) {
             createChildElement(doc, originalCaseElement, CREATED_DATE_ELEMENT_NAME, originalMetadata.createdDate);
             Element originalCaseDetailsElement = doc.createElement(CASE_ELEMENT_NAME);
             originalCaseElement.appendChild(originalCaseDetailsElement);
