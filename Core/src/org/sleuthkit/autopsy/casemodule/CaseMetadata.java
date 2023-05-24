@@ -32,6 +32,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -142,6 +143,7 @@ public final class CaseMetadata {
     private String createdByVersion;
     private CaseMetadata originalMetadata = null; // For portable cases
     private ContentProvider contentProvider;
+    private Map<String, Object> contentProviderArgs;
 
     /**
      * Gets the file extension used for case metadata files.
@@ -197,6 +199,8 @@ public final class CaseMetadata {
         createdByVersion = Version.getVersion();
         createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
         this.originalMetadata = originalMetadata;
+        this.contentProvider = originalMetadata.contentProvider;
+        this.contentProviderArgs = originalMetadata.contentProviderArgs;
     }
 
     /**
@@ -487,6 +491,11 @@ public final class CaseMetadata {
         Element caseElement = doc.createElement(CASE_ELEMENT_NAME);
         rootElement.appendChild(caseElement);
 
+        // serialize content provider args if they exist
+        Element contentProviderEl = doc.createElement(CONTENT_PROVIDER_ELEMENT_NAME);
+        rootElement.appendChild(contentProviderEl);
+        serializeContentProviderArgs(doc, this.contentProviderArgs, contentProviderEl);
+            
         /*
          * Create the children of the case element.
          */
@@ -497,11 +506,7 @@ public final class CaseMetadata {
          */
         Element originalCaseElement = doc.createElement(ORIGINAL_CASE_ELEMENT_NAME);
         rootElement.appendChild(originalCaseElement);
-        if (originalMetadata != null) {
-            Element contentProviderEl = doc.createElement(CONTENT_PROVIDER_ELEMENT_NAME);
-            originalCaseElement.appendChild(contentProviderEl);
-            serializeContentProviderArgs(doc, argsTODO, contentProviderEl);
-            
+        if (originalMetadata != null) {            
             createChildElement(doc, originalCaseElement, CREATED_DATE_ELEMENT_NAME, originalMetadata.createdDate);
             Element originalCaseDetailsElement = doc.createElement(CASE_ELEMENT_NAME);
             originalCaseElement.appendChild(originalCaseDetailsElement);
@@ -577,8 +582,19 @@ public final class CaseMetadata {
                 this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_CREATED_BY_ELEMENT_NAME, true);
             }
             
-            serialize TODO;
-
+            // load content provider args
+            NodeList contentProviderArgsNL = rootElement.getElementsByTagName(CONTENT_PROVIDER_ELEMENT_NAME);
+            if (contentProviderArgsNL != null && contentProviderArgsNL.getLength() > 0 && contentProviderArgsNL.item(0) instanceof Element) {
+                Object contentProviderArgs = loadContentProviderArgs((Element) contentProviderArgsNL.item(0));
+                this.contentProviderArgs = (contentProviderArgs instanceof Map) ? 
+                        (Map<String, Object>) contentProviderArgs : 
+                        Collections.singletonMap(CONTENT_PROVIDER_ARG_DEFAULT_KEY, contentProviderArgs);
+                this.contentProvider = loadContentProvider(this.contentProviderArgs);
+            } else {
+                this.contentProviderArgs = null;
+                this.contentProvider = null;
+            }
+             
             /*
              * Get the content of the children of the case element.
              */
