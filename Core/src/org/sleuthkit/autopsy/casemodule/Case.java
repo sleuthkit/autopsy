@@ -41,7 +41,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -103,7 +102,6 @@ import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesDeletedEven
 import org.sleuthkit.autopsy.casemodule.events.TagNamesEvent.TagNamesUpdatedEvent;
 import org.sleuthkit.autopsy.casemodule.events.TagSetsEvent.TagSetsAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.TagSetsEvent.TagSetsDeletedEvent;
-import org.sleuthkit.autopsy.casemodule.filecontent.CustomFileContentProvider;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -134,8 +132,6 @@ import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.discovery.ui.OpenDiscoveryAction;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.machinesettings.UserMachinePreferences;
@@ -144,18 +140,14 @@ import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.autopsy.timeline.events.TimelineEventAddedEvent;
-import org.sleuthkit.datamodel.Blackboard;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentStream.ContentProvider;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Host;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.OsAccount;
-import org.sleuthkit.datamodel.Person;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
@@ -194,6 +186,7 @@ public class Case {
     private static volatile Frame mainFrame;
     private static volatile Case currentCase;
     private final CaseMetadata metadata;
+    private final ContentProvider contentProvider;
     private volatile ExecutorService caseActionExecutor;
     private CoordinationService.Lock caseLock;
     private SleuthkitCase caseDb;
@@ -2077,6 +2070,7 @@ public class Case {
      */
     private Case(CaseMetadata caseMetaData) {
         metadata = caseMetaData;
+        this.contentProvider = caseMetaData.getContentProvider();
         sleuthkitEventListener = new SleuthkitEventListener();
     }
 
@@ -2744,11 +2738,9 @@ public class Case {
         try {
             String databaseName = metadata.getCaseDatabaseName();
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
-                caseDb = SleuthkitCase.openCase(Paths.get(metadata.getCaseDirectory(), databaseName).toString(), 
-                        CustomFileContentProvider.getProvider(metadata.getFileContentPath()));
+                caseDb = SleuthkitCase.openCase(Paths.get(metadata.getCaseDirectory(), databaseName).toString(), this.contentProvider);
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
-                caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory(), 
-                        CustomFileContentProvider.getProvider(metadata.getFileContentPath()));
+                caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory(), this.contentProvider);
             } else {
                 throw new CaseActionException(Bundle.Case_open_exception_multiUserCaseNotEnabled());
             }

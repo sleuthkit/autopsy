@@ -42,9 +42,9 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.datamodel.ContentStream.ContentProvider;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -103,21 +103,14 @@ public final class CaseMetadata {
      */
     private static final String SCHEMA_VERSION_FIVE = "5.0";
     private final static String ORIGINAL_CASE_ELEMENT_NAME = "OriginalCase"; //NON-NLS  
-    
-    /**
-     * Fields from schema version 6
-     */
-    private static final String SCHEMA_VERSION_SIX = "6.0";
-    // specifies a path to where file content resides
-    private static final String FILE_CONTENT_PATH = "FileContentPath";
-    
+
     /*
      * Unread fields, regenerated on save.
      */
     private final static String MODIFIED_DATE_ELEMENT_NAME = "ModifiedDate"; //NON-NLS
     private final static String AUTOPSY_SAVED_BY_ELEMENT_NAME = "SavedByAutopsyVersion"; //NON-NLS
 
-    private final static String CURRENT_SCHEMA_VERSION = SCHEMA_VERSION_SIX;
+    private final static String CURRENT_SCHEMA_VERSION = SCHEMA_VERSION_FIVE;
 
     private final Path metadataFilePath;
     private Case.CaseType caseType;
@@ -128,7 +121,6 @@ public final class CaseMetadata {
     private String textIndexName; // Legacy
     private String createdDate;
     private String createdByVersion;
-    private String fileContentPath;
     private CaseMetadata originalMetadata = null; // For portable cases
 
     /**
@@ -221,6 +213,10 @@ public final class CaseMetadata {
         }
         return null;
     }
+    
+    public ContentProvider getContentProvider() {
+        return TODO;
+    }
 
     /**
      * Gets the full path to the case metadata file.
@@ -266,15 +262,7 @@ public final class CaseMetadata {
     public CaseDetails getCaseDetails() {
         return caseDetails;
     }
-    
-    /**
-     * @return The template path for where file content bytes resides.  This is only used if non-null.
-     */
-    public String getFileContentPath() {
-        return fileContentPath;
-    }
 
-    
     /**
      * Gets the case display name.
      *
@@ -348,24 +336,6 @@ public final class CaseMetadata {
             writeToFile();
         } catch (CaseMetadataException ex) {
             this.caseDatabaseName = oldCaseDatabaseName;
-            throw ex;
-        }
-    }
-    
-    /**
-     * Sets the path template for file content bytes.  This is only used if non-null.
-     *
-     * @param fileContentPath The template for the file content path.
-     *
-     * @throws CaseMetadataException If the operation fails.
-     */
-    void setFileContentPath(String fileContentPath) throws CaseMetadataException {
-        String oldFileContentPath = this.fileContentPath;
-        this.fileContentPath = fileContentPath;
-        try {
-            writeToFile();
-        } catch (CaseMetadataException ex) {
-            this.fileContentPath = oldFileContentPath;
             throw ex;
         }
     }
@@ -532,7 +502,6 @@ public final class CaseMetadata {
         createChildElement(doc, caseElement, CASE_DB_ABSOLUTE_PATH_ELEMENT_NAME, metadataToWrite.caseDatabasePath);
         createChildElement(doc, caseElement, CASE_DB_NAME_RELATIVE_ELEMENT_NAME, metadataToWrite.caseDatabaseName);
         createChildElement(doc, caseElement, TEXT_INDEX_ELEMENT, metadataToWrite.textIndexName);
-        createChildElement(doc, caseElement, FILE_CONTENT_PATH, metadataToWrite.getFileContentPath());
     }
 
     /**
@@ -629,15 +598,6 @@ public final class CaseMetadata {
                     this.caseDatabaseName = getElementTextContent(caseElement, CASE_DB_NAME_RELATIVE_ELEMENT_NAME, true);
                     this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, false);
                     break;
-            }
-            
-            this.fileContentPath = null;
-            NodeList fileContentChildren = doc.getElementsByTagName(FILE_CONTENT_PATH);
-            if (fileContentChildren.getLength() == 1) {
-                 String fileContentTextPath = fileContentChildren.item(0).getTextContent();
-                 if (StringUtils.isNotBlank(fileContentTextPath)) {
-                     this.fileContentPath = fileContentTextPath;
-                 }
             }
 
             /*
