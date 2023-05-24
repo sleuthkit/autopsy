@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import com.sun.xml.bind.v2.TODO;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,8 +30,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -42,11 +50,15 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.datamodel.ContentStream.ContentProvider;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -105,12 +117,19 @@ public final class CaseMetadata {
     private final static String ORIGINAL_CASE_ELEMENT_NAME = "OriginalCase"; //NON-NLS  
 
     /*
+     * Fields from schema version 5
+     */
+    private static final String SCHEMA_VERSION_SIX = "6.0";
+    private final static String CONTENT_PROVIDER_ELEMENT_NAME = "ContentProviderArgs";
+    private final static String CONTENT_PROVIDER_ARG_DEFAULT_KEY = "DEFAULT";
+    
+    /*
      * Unread fields, regenerated on save.
      */
     private final static String MODIFIED_DATE_ELEMENT_NAME = "ModifiedDate"; //NON-NLS
     private final static String AUTOPSY_SAVED_BY_ELEMENT_NAME = "SavedByAutopsyVersion"; //NON-NLS
 
-    private final static String CURRENT_SCHEMA_VERSION = SCHEMA_VERSION_FIVE;
+    private final static String CURRENT_SCHEMA_VERSION = SCHEMA_VERSION_SIX;
 
     private final Path metadataFilePath;
     private Case.CaseType caseType;
@@ -122,6 +141,7 @@ public final class CaseMetadata {
     private String createdDate;
     private String createdByVersion;
     private CaseMetadata originalMetadata = null; // For portable cases
+    private ContentProvider contentProvider;
 
     /**
      * Gets the file extension used for case metadata files.
@@ -213,9 +233,13 @@ public final class CaseMetadata {
         }
         return null;
     }
-    
+
+    /**
+     * @return The custom provider for content byte data or null if no custom
+     * provider.
+     */
     public ContentProvider getContentProvider() {
-        return TODO;
+        return contentProvider;
     }
 
     /**
@@ -474,6 +498,10 @@ public final class CaseMetadata {
         Element originalCaseElement = doc.createElement(ORIGINAL_CASE_ELEMENT_NAME);
         rootElement.appendChild(originalCaseElement);
         if (originalMetadata != null) {
+            Element contentProviderEl = doc.createElement(CONTENT_PROVIDER_ELEMENT_NAME);
+            originalCaseElement.appendChild(contentProviderEl);
+            serializeContentProviderArgs(doc, argsTODO, contentProviderEl);
+            
             createChildElement(doc, originalCaseElement, CREATED_DATE_ELEMENT_NAME, originalMetadata.createdDate);
             Element originalCaseDetailsElement = doc.createElement(CASE_ELEMENT_NAME);
             originalCaseElement.appendChild(originalCaseDetailsElement);
@@ -548,6 +576,8 @@ public final class CaseMetadata {
             } else {
                 this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_CREATED_BY_ELEMENT_NAME, true);
             }
+            
+            serialize TODO;
 
             /*
              * Get the content of the children of the case element.
@@ -618,6 +648,105 @@ public final class CaseMetadata {
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             throw new CaseMetadataException(String.format("Error reading from case metadata file %s", metadataFilePath), ex);
         }
+    }
+    
+    /**
+     * Loads custom content provider arguments from an xml element.
+     * @param element The xml element.
+     * @return The custom content provider arguments.
+     */
+    private Object loadContentProviderArgs(Element element) {
+        if (element == null) {
+            return null;
+        }
+        
+        NodeList nodeList = element.getChildNodes();
+        if (nodeList != null && nodeList.getLength() > 0) {
+            String nodeTag = element.getTagName();
+            boolean childrenHaveSameTag = true;
+            List<Pair<String, Object>> children = new ArrayList<>();
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Node child = nodeList.item(i);
+                if (child instanceof Element) {
+                    Element childElement = (Element) child;
+                    String childTagName = childElement.getTagName();
+                    Object childArg = loadContentProviderArgs(childElement);
+                    children.add(Pair.of(childTagName, childArg));
+                    
+                    if (childrenHaveSameTag && !childTagName.equalsIgnoreCase(nodeTag)) {
+                        childrenHaveSameTag = false;
+                    }
+                }
+            }
+            
+            if (childrenHaveSameTag) {
+                return children.stream().map(Pair::getValue).collect(Collectors.toList());
+            } else {
+                Map<String, Object> toRet = new HashMap<>();
+                for (Pair<String, Object> child: children) {
+                    toRet.put(child.getKey(), child.getValue());
+                }
+                return toRet;
+            }
+        } else {
+            return element.getTextContent();
+        }
+    }
+    
+    /**
+     * Serializes custom content provider arguments to an xml element.
+     * @param doc The root xml document.
+     * @param arg The argument to serialize.
+     * @param el The xml element for the argument.
+     */
+    private void serializeContentProviderArgs(Document doc, Object arg, Element el) {
+        if (arg == null) {
+            return;
+        } else if (arg instanceof List) {
+            String parentTagName = el.getTagName();
+            List<? extends Object> argList = (List<? extends Object>) arg;
+            for (Object childArg: argList) {
+                Element childEl = doc.createElement(parentTagName);
+                el.appendChild(childEl);
+                serializeContentProviderArgs(doc, childArg, childEl);
+            }
+        } else if (arg instanceof Map) {
+            Map<? extends Object, ? extends Object> argMap = (Map<? extends Object, ? extends Object>) arg;
+            for (Entry<? extends Object, ? extends Object> childEntry: argMap.entrySet()) {
+                String childTag = childEntry.getKey() == null ? null : childEntry.getKey().toString();
+                if (StringUtils.isBlank(childTag)) {
+                    continue;
+                }
+                
+                Element childEl = doc.createElement(childTag);
+                el.appendChild(childEl);
+                serializeContentProviderArgs(doc, childEntry.getValue(), childEl);
+            }
+        } else {
+            el.setTextContent(arg.toString());
+        }
+    }
+    
+    /**
+     * Attempts to load a content provider for the provided arguments. Returns
+     * null if no content provider for the arguments can be identified.
+     *
+     * @param args The arguments.
+     * @return The content provider or null if no content provider can be
+     * provisioned for the arguments
+     */
+    private ContentProvider loadContentProvider(Map<String, Object> args) {
+        Collection<? extends CustomContentProvider> customContentProviders = Lookup.getDefault().lookupAll(CustomContentProvider.class);
+        if (customContentProviders != null) {
+            for (CustomContentProvider customProvider : customContentProviders) {
+                ContentProvider contentProvider = customProvider.load(args);
+                if (contentProvider != null) {
+                    return contentProvider;
+                }
+            }
+        }
+        
+        return null;
     }
 
     /**
