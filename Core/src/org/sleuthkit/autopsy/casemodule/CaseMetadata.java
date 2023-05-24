@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import com.sun.xml.bind.v2.TODO;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;

@@ -2738,7 +2738,12 @@ public class Case {
         try {
             String databaseName = metadata.getCaseDatabaseName();
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
-                caseDb = SleuthkitCase.openCase(Paths.get(metadata.getCaseDirectory(), databaseName).toString(), this.contentProvider);
+                // only prefix with metadata directory if databaseName is a relative path
+                String fullDatabasePath = (new File(databaseName).isAbsolute())
+                        ? databaseName
+                        : Paths.get(metadata.getCaseDirectory(), databaseName).toString();
+                        
+                caseDb = SleuthkitCase.openCase(fullDatabasePath, this.contentProvider);
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
                 caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory(), this.contentProvider);
             } else {
