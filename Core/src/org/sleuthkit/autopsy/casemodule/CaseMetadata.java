@@ -676,7 +676,14 @@ public final class CaseMetadata {
         }
         
         NodeList nodeList = element.getChildNodes();
-        if (nodeList != null && nodeList.getLength() > 0) {
+        List<Element> elements = new ArrayList<>();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            if (nodeList.item(i) instanceof Element) {
+                elements.add((Element) nodeList.item(i));
+            }
+        }
+        
+        if (elements.size() > 0) {
             String nodeTag = element.getTagName();
             boolean childrenHaveSameTag = true;
             List<Pair<String, Object>> children = new ArrayList<>();
