@@ -68,6 +68,7 @@ import org.netbeans.jemmy.operators.JLabelOperator;
 import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
+import org.netbeans.jemmy.operators.JTextAreaOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.jemmy.operators.JToggleButtonOperator;
 import org.netbeans.jemmy.operators.JTreeOperator;
@@ -438,7 +439,7 @@ public class AutopsyTestCases {
             jbo1.pushNoBlock();
             JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
             JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
-            JLabelOperator.waitJLabel(previewDialog, "Complete", false, false);
+            JTextAreaOperator.waitJTextArea(previewDialog, "Complete", false, false);
             JButtonOperator jbo2 = new JButtonOperator(previewDialogOperator, "Close");
             jbo2.pushNoBlock();
             new Timeout("pausing", 10000).sleep();
