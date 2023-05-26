@@ -265,6 +265,7 @@ class Ingester {
                         }   
                     } else {
                         indexChunk(chunk, sourceID, sourceName, language, contentFields, chunker.hasNext());
+                        fileIndexed = true;
                     }
                 } 
                                 
