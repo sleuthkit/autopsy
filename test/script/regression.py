@@ -464,7 +464,6 @@ class TestRunner(object):
         test_data.ant.append("regression-test")
         test_data.ant.append("-l")
         test_data.ant.append(test_data.antlog_dir)
-        test_data.ant.append("-J--add-opens=java.base/java.security=ALL-UNNAMED")
         test_data.ant.append("-Dimg_path=" + test_data.image_file)
         test_data.ant.append("-Dknown_bad_path=" + test_config.known_bad_path)
         test_data.ant.append("-Dkeyword_path=" + test_config.keyword_path)
