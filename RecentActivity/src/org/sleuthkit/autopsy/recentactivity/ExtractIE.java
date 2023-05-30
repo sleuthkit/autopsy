@@ -413,6 +413,7 @@ class ExtractIE extends Extract {
             logger.log(Level.INFO, "Writing pasco results to: {0}", outputFileFullPath); //NON-NLS   
             List<String> commandLine = new ArrayList<>();
             commandLine.add(JAVA_PATH);
+            commandLine.add("--add-exports=java.xml/com.sun.org.apache.xalan.internal.xsltc.dom=ALL-UNNAMED");
             commandLine.add("-cp"); //NON-NLS
             commandLine.add(PASCO_LIB_PATH);
             commandLine.add("isi.pasco2.Main"); //NON-NLS
