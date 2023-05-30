@@ -58,6 +58,7 @@
                 <classpath refid="test.classpath"/>
                 <syspropertyset refid="test.@{test.type}.properties"/>
                 <jvmarg line="${test.bootclasspath.prepend.args}"/>
+                <jvmarg line="--add-opens=java.base/java.security=ALL-UNNAMED"/>
                 <jvmarg line="${test.run.args}"/>
                 <!--  should be in sync with project.properties and build.xml of autopsy main project -->
                 <!-- disable for now, causes issues with Java 7 -->
