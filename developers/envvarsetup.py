@@ -34,11 +34,9 @@ open_jdk_64_home is the 64 bit jdk and is the assumed default
 source_base_path is the directory containing all necessary repos (i.e. autopsy, sleuthkit, etc.)
 open_jdk_32_home and postgres_32_home are only necessary if building binaries
 '''
-open_jdk_64_home = "C:\\Program Files\\ojdkbuild\\java-1.8.0-openjdk-1.8.0.222-1"
+open_jdk_64_home = "C:\\Program Files\\BellSoft\\LibericaJDK-17-Full"
 postgres_home = "C:\\Program Files\\PostgreSQL\\9.5"
-ant_home = "C:\\Program Files\\NetBeans 8.2\\extide\\ant"
-open_jdk_32_home = "C:\\Program Files (x86)\\ojdkbuild\\java-1.8.0-openjdk-1.8.0.222-1"
-postgres_32_home = "C:\\Program Files (x86)\\PostgreSQL\\9.5"
+ant_home = "C:\\Program Files\\NetBeans-17\\netbeans\\extide\\ant"
 open_jdk_home = open_jdk_64_home
 
 
@@ -60,17 +58,8 @@ def add_path(paths):
 
 
 set_var("JAVA_HOME", open_jdk_home)
-set_var("JRE_HOME", path_join(open_jdk_home, "jre"))
+set_var("JRE_HOME", open_jdk_home)
 set_var("JDK_HOME", open_jdk_home)
-set_var("POSTGRESQL_HOME_64", postgres_home)
 set_var("TSK_HOME", path_join(source_base_path, "sleuthkit"))
-
-set_var("JDK_HOME_64", open_jdk_64_home)
-set_var("JRE_HOME_64", path_join(open_jdk_64_home, "jre"))
-
-set_var("JDK_HOME_32", open_jdk_32_home)
-set_var("JRE_HOME_32", path_join(open_jdk_32_home, "jre"))
-
-set_var("POSTGRESQL_HOME_32", postgres_32_home)
-
+set_var("JRE_HOME_64", open_jdk_64_home)
 add_path([path_join(postgres_home, "bin"), ant_home])

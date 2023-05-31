@@ -12,7 +12,7 @@ This page describes the basic concepts and setup that are needed for all types o
 
 Autopsy is built on top of the NetBeans Rich Client Platform, which makes it easy to make plug-in infrastructures. To do any development, you really need to download NetBeans first. You can in theory develop modules by command line only, but this document assumes that you are using the IDE. Download and install the latest version of the IDE from http://www.netbeans.org. 
 
-Autopsy currently requires Java 1.8.  Ensure that it is installed.
+Autopsy currently requires Java 17.  Ensure that it is installed.
 
 \subsection mod_dev_setup_platform Obtain the Autopsy Platform
 
