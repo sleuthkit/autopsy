@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.openide.execution.compat8">
+    <module_version install_time="1668523607400" last="true" origin="Ant" specification_version="9.19">
+        <file crc="2906034987" name="config/Modules/org-openide-execution-compat8.xml"/>
+        <file crc="3321255427" name="modules/org-openide-execution-compat8.jar"/>
+    </module_version>
+</module>

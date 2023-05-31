@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.jemmy">
+    <module_version install_time="1668523653856" last="true" origin="Ant" specification_version="3.44">
+        <file crc="2792960258" name="config/Modules/org-netbeans-modules-jemmy.xml"/>
+        <file crc="4195459132" name="docs/jemmy-2.3.1.1-doc.zip"/>
+        <file crc="1182184280" name="docs/jemmy-2.3.1.1-src.zip"/>
+        <file crc="779326821" name="modules/ext/jemmy-2.3.1.1.jar"/>
+        <file crc="2260866627" name="modules/org-netbeans-modules-jemmy.jar"/>
+    </module_version>
+</module>

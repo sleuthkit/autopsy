@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.libs.batik.read">
+    <module_version install_time="1668523626313" last="true" origin="Ant" specification_version="1.10.0.1">
+        <file crc="3329565948" name="config/Modules/org-netbeans-libs-batik-read.xml"/>
+        <file crc="1629825203" name="modules/ext/batik-anim-1.14.jar"/>
+        <file crc="1971098077" name="modules/ext/batik-awt-util-1.14.jar"/>
+        <file crc="3573338053" name="modules/ext/batik-bridge-1.14.jar"/>
+        <file crc="246628674" name="modules/ext/batik-constants-1.14.jar"/>
+        <file crc="919426328" name="modules/ext/batik-css-1.14.jar"/>
+        <file crc="139263416" name="modules/ext/batik-dom-1.14.jar"/>
+        <file crc="2370999284" name="modules/ext/batik-ext-1.14.jar"/>
+        <file crc="1630802165" name="modules/ext/batik-gvt-1.14.jar"/>
+        <file crc="3259433212" name="modules/ext/batik-i18n-1.14.jar"/>
+        <file crc="2001137234" name="modules/ext/batik-parser-1.14.jar"/>
+        <file crc="1981620855" name="modules/ext/batik-script-1.14.jar"/>
+        <file crc="2500695356" name="modules/ext/batik-svg-dom-1.14.jar"/>
+        <file crc="562397695" name="modules/ext/batik-util-1.14.jar"/>
+        <file crc="1895364530" name="modules/ext/batik-xml-1.14.jar"/>
+        <file crc="3203011316" name="modules/ext/xml-apis-1.4.01.jar"/>
+        <file crc="2268634152" name="modules/ext/xml-apis-ext-1.3.04.jar"/>
+        <file crc="1824859418" name="modules/ext/xmlgraphics-commons-2.6.jar"/>
+        <file crc="1389428169" name="modules/org-netbeans-libs-batik-read.jar"/>
+    </module_version>
+</module>

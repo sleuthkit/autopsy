@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.testng.maven">
+    <module_version install_time="1668523605941" last="true" origin="Ant" specification_version="2.33">
+        <file crc="52012517" name="config/Modules/org-netbeans-modules-testng-maven.xml"/>
+        <file crc="2548842248" name="modules/org-netbeans-modules-testng-maven.jar"/>
+    </module_version>
+</module>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.openide.util">
+    <module_version install_time="1668523615686" last="true" origin="Ant" specification_version="9.25">
+        <file crc="2286822072" name="config/ModuleAutoDeps/org-openide-util.xml"/>
+        <file crc="95247441" name="lib/org-openide-util.jar"/>
+    </module_version>
+</module>

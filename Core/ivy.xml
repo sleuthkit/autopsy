@@ -40,6 +40,10 @@
 
         <!-- for handling diffs -->
         <dependency conf="core->default" org="io.github.java-diff-utils" name="java-diff-utils" rev="4.11"/>
+        
+        <!-- JAXB -->
+        <dependency conf="core->default" org="javax.xml.bind" name="jaxb-api" rev="2.3.1"/>
+        <dependency conf="core->default" org="org.glassfish.jaxb" name="jaxb-runtime" rev="2.3.3"/>
 
         <dependency conf="core->default" org="org.icepdf.os" name="icepdf-viewer" rev="6.2.2">
             <!-- get the new latest batik items below, override bouncy castle -->

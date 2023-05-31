@@ -41,24 +41,25 @@
         <dependency conf="autopsy_core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.4"/>
 
         <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.13.2"/>
-
-        <!-- process and system monitoring, note: matching native libs pulled from thirdparty -->
-        <dependency conf="autopsy_core->default" org="org.fusesource" name="sigar" rev="1.6.4" />
         
         <!-- better image resizing -->
         <dependency conf="autopsy_core->default" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />
         
+        <!-- timeline and image analyzer -->
+        <!-- ControlsFX after version 9.0.0 has a bug that causes the Image Gallery GridView
+             to constantly reload images (JIRA-6724). Do not upgrade ControlsFX unless you can
+             confirm that the following issue is fixed.
+             
+             https://github.com/controlsfx/controlsfx/issues/1241
+        -->
+        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="11.1.2" />
+
         <dependency conf="autopsy_core->default" org="joda-time" name="joda-time" rev="2.10.14" />
 
-
         <!-- timeline  -->
-        <!-- NOTE: the version of these dependencies appears to be tied to javafx / java version -->
-        <dependency conf="autopsy_core->default" org="org.controlsfx" name="controlsfx" rev="8.40.11" />
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-fxml" rev="8.0-r4" />
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-controls" rev="8.0-r4" />
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-common" rev="8.0-r4" />
-
-
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-fxml" rev="17-r1" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-controls" rev="17-r1" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-common" rev="17-r1" />
         <!-- templateing engine used by timeline to generate its snapshot report -->
         <dependency conf="autopsy_core->default" org="com.github.spullara.mustache.java" name="compiler" rev="0.9.10" />
         

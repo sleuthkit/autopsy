@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<module codename="org.netbeans.modules.junitlib">
+    <module_version install_time="1372096954498" last="true" origin="Certified Plugins" specification_version="1.1">
+        <file crc="2475187599" name="config/Modules/org-netbeans-modules-junitlib.xml"/>
+        <file crc="1744174913" name="docs/junit-3.8.2-api.zip"/>
+        <file crc="860368969" name="docs/junit-4.10-javadoc.jar"/>
+        <file crc="1030013463" name="docs/junit-4.10-sources.jar"/>
+        <file crc="857334496" name="modules/ext/junit-3.8.2.jar"/>
+        <file crc="1477166891" name="modules/org-netbeans-modules-junitlib.jar"/>
+    </module_version>
+</module>

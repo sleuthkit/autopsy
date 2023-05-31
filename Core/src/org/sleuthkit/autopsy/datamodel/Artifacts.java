@@ -515,7 +515,7 @@ public class Artifacts {
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error getting child count", ex); //NON-NLS
             }
-            super.setDisplayName(this.baseName + " \u200E(\u200E" + this.childCount + ")\u200E");
+            super.setDisplayName(this.baseName + " (" + this.childCount + ")");
         }
     }
 

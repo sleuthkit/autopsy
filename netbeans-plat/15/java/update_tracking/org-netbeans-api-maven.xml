@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.api.maven">
+    <module_version install_time="1668523592082" last="true" origin="Ant" specification_version="1.23">
+        <file crc="198060656" name="config/Modules/org-netbeans-api-maven.xml"/>
+        <file crc="709265242" name="modules/org-netbeans-api-maven.jar"/>
+    </module_version>
+</module>

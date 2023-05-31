@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.openide.filesystems.nb">
+    <module_version install_time="1668523628044" last="true" origin="Ant" specification_version="9.27">
+        <file crc="282384882" name="config/Modules/org-openide-filesystems-nb.xml"/>
+        <file crc="4074653640" name="modules/org-openide-filesystems-nb.jar"/>
+    </module_version>
+</module>
