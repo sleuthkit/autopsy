@@ -75,7 +75,9 @@ The Ingest Settings for the Keyword Search module allow the user to enable or di
 
 As of Autopsy 4.21.0 release, two types of keyword searching are supported - Solr search with full text indexing, and/or an built-in Autopsy "In-Line" Keyword Search. See \ref keyword_ingest_settings on details regarding search type configuraiton. See sections \ref keyword_SolrSearch and \ref keyword_InlineSearch for details of each search type.
 
-The keyword searh type selection is accomplished via "Add text to Solr Index" checkbox. If the checkbox is unchecked, Autopsy will perform "In-Line" Keyword Search during ingest but most of the extracted text will not be indexed by Solr, effectively disabling \ref ad_hoc_keyword_search_page functionality. If the checkbox is selected, Autopsy will perform "In-Line" Keyword Search during ingest, as well as add all of the extracted text to Solr index so that it can be searched later using \ref ad_hoc_keyword_search_page .
+The keyword searh type selection is accomplished via "Add text to Solr Index" checkbox. If the checkbox is unchecked, Autopsy will perform "In-Line" Keyword Search during ingest but most of the extracted text will not be indexed by Solr, effectively disabling \ref ad_hoc_keyword_search_page functionality. If the checkbox is selected, Autopsy will perform "In-Line" Keyword Search during ingest, as well as add all of the extracted text to Solr index so that it can be searched later using \ref ad_hoc_keyword_search_page.
+
+It is also worth noting that regular expression search results might ocasionally differ between "In-Line" Keyword Search and Solr search. This is because "In-Line" Keyword Search uses Java regular expressions whereas Solr search uses Lucene regular expressions (see \ref regex_match for details).
 
 \image html keyword-search-ingest-settings.PNG
 
