@@ -2513,11 +2513,29 @@ public class Server {
          * @throws SolrServerException
          */
         private int queryNumFileChunks(long contentID) throws SolrServerException, IOException {
-            String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
-            final SolrQuery q
-                    = new SolrQuery(Server.Schema.ID + ":" + id + Server.CHUNK_ID_SEPARATOR + "*");
-            q.setRows(0);
-            return (int) query(q).getResults().getNumFound();
+            final SolrQuery q = new SolrQuery();
+            q.setQuery("*:*");
+            String filterQuery = Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
+            q.addFilterQuery(filterQuery);
+            q.setFields(Schema.NUM_CHUNKS.toString());
+            try {
+                SolrDocumentList solrDocuments = query(q).getResults();
+                if (!solrDocuments.isEmpty()) {
+                    SolrDocument solrDocument = solrDocuments.get(0);
+                    if (solrDocument != null) {
+                        Object fieldValue = solrDocument.getFieldValue(Schema.NUM_CHUNKS.toString());
+                        return (Integer)fieldValue;
+                    }
+                } 
+            } catch (Exception ex) {
+                // intentional "catch all" as Solr is known to throw all kinds of Runtime exceptions
+                logger.log(Level.SEVERE, "Error getting content from Solr. Solr document id " + contentID + ", query: " + filterQuery, ex); //NON-NLS
+                return 0;
+            }
+            
+            // ERROR: we should never get here
+            logger.log(Level.SEVERE, "Error getting content from Solr. Solr document id " + contentID + ", query: " + filterQuery); //NON-NLS
+            return 0;
         }
     }
 
