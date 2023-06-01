@@ -13,15 +13,15 @@ Autopsy ships with some built-in lists that define regular expressions and enabl
 
 Refer to \ref ad_hoc_keyword_search_page for more details on specifying regular expressions and other types of searches. 
 
-As of Autopsy 4.21.0 release, two types of keyword searching are supported - Solr search with full text indexing, or an built-in Autopsy "In-Line" Keyword Search. It is also possible to combine both searches during ingest process - perform In-Line keyword search as well as index all extracted text in Solr to allow for ad-hoc searching after the ingest has completed. See \ref keyword_ingest_settings on details regarding search type configuraiton. 
+As of Autopsy 4.21.0 release, two types of keyword searching are supported - Solr search with full text indexing, or an built-in Autopsy "In-Line" Keyword Search. See \ref keyword_ingest_settings on details regarding search type configuraiton. 
 
 \subsection keyword_SolrSearch Solr Search With Indexing
 
-Full text indexing with Solr allows user the flexibility to run ad-hoc manual text searching after ingest has completed (see \ref ad_hoc_keyword_search_page). However, the process of full text indexing can greately slow down ingest speed for large datasources and/or cases. Once files are placed in the Solr index, they can be searched quickly for specific keywords, regular expressions, or keyword search lists that can contain a mixture of keywords and regular expressions. Search queries can be executed automatically at the end of the ingest.  
+Full text indexing with Solr allows user the flexibility to run ad-hoc manual text searching after ingest has completed (see \ref ad_hoc_keyword_search_page). However, the process of full text indexing can greately slow down ingest speed for large datasources and/or cases. Once files are placed in the Solr index, they can be searched quickly for specific keywords, regular expressions, or keyword search lists that can contain a mixture of keywords and regular expressions.  
 
 \subsection keyword_InlineSearch In-Line Keyword Search
 
-The In-Line Keyword Search performs the searching during ingest at the time of text extraction and only indexes small sections of the files that have keyword hits. Our profiling runs show that in most cases this has reduced data source ingest time in half, meaning that using In-Line Keyword Search the ingest on a data source is completed in roughly half the time that it takes to ingest and search the same data source using Solr indexing. The downside is that all of the search terms must be specified ahead of the ingest, and there is no way to run ad-hoc search on the entire extracted text after ingest has completed. 
+The In-Line Keyword Search performs the keyword searching during ingest at the time of text extraction and only indexes small sections of the files that have keyword hits for display purposes. Our profiling runs show that in most cases this has reduced data source ingest time in half, meaning that using In-Line Keyword Search a data source ingest is completed in roughly half the time that it takes to ingest and search the same data source using Solr indexing. The downside is that all of the search terms must be specified ahead of the ingest, and there is no way to run ad-hoc search on the entire extracted text after ingest has completed. 
 
 \section keyword_search_configuration_dialog Keyword Search Configuration Dialog
 
@@ -67,21 +67,15 @@ The hash lookup ingest service can be configured to use the NIST NSRL hash set o
 
 \section keyword_usage Using the Module
 
-After the ingest has completed, \ref ad_hoc_keyword_search_page will be available for manual search. The amount of files/text available for Ad Hoc Search depends on the Keyword Search module settings at the time of the ingest. As of Autopsy 4.21.0 release, two types of keyword searching are supported - Solr search with full text indexing, and/or an built-in Autopsy "In-Line" Keyword Search. It is also possible to combine both searches during ingest process - perform In-Line keyword search as well as index all extracted text in Solr to allow for ad-hoc searching after the ingest has completed. 
-
-If full text indexing with Solr was enabled during ingest then ad-hoc manual text searching will be able to search all of the text extracted from all of the files and artifacts. 
-
-The In-Line Keyword Search performs the searching during ingest at the time of text extraction and only indexes small sections of the files that have keyword hits. Therefore unless full text indexing with Solr is enabled, the ad-hoc search will only be able to search those small sections of the files that had keyword hits (as opposed to all of the text extracted from all of the files and artifacts). 
-
-Other situations which will result in not being able to search all of the text extracted from all of the files and artifacts include:
-<ul>
-<li>If file filtering was used during ingest, resulting in only a subset of files getting ingested. See \ref file_filters for information in file filtering.
-<li>If Autopsy case contains multiple data sources and one or more of those data sources was not indexed during it's ingest.
-</ul>
+After the ingest has completed, \ref ad_hoc_keyword_search_page will be available for manual search. The amount of files/text available for Ad Hoc Search depends on the Keyword Search module settings at the time of the ingest. See section \ref adhoc_limitations for details. 
 
 \subsection keyword_ingest_settings Ingest Settings
 
 The Ingest Settings for the Keyword Search module allow the user to enable or disable the specific built-in search expressions, Phone Numbers, IP Addresses, Email Addresses, and URLs. Using the Advanced button (covered below), one can add custom keyword groups.
+
+As of Autopsy 4.21.0 release, two types of keyword searching are supported - Solr search with full text indexing, and/or an built-in Autopsy "In-Line" Keyword Search. See \ref keyword_ingest_settings on details regarding search type configuraiton. See sections \ref keyword_SolrSearch and \ref keyword_InlineSearch for details of each search type.
+
+The keyword searh type selection is accomplished via "Add text to Solr Index" checkbox. If the checkbox is unchecked, Autopsy will perform "In-Line" Keyword Search during ingest but most of the extracted text will not be indexed by Solr, effectively disabling \ref ad_hoc_keyword_search_page functionality. If the checkbox is selected, Autopsy will perform "In-Line" Keyword Search during ingest, as well as add all of the extracted text to Solr index so that it can be searched later using \ref ad_hoc_keyword_search_page .
 
 \image html keyword-search-ingest-settings.PNG
 

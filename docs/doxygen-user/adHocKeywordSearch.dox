@@ -10,6 +10,20 @@ The ad hoc keyword search features allows you to run single keyword terms or lis
 
 The \ref keyword_search_page must be selected during ingest before doing an ad hoc keyword search. If you don't want to search for any of the existing keyword lists, you can deselect everything to just index the files for later searching.
 
+\subsection adhoc_limitations Limitations of Ad Hoc Keyword Search
+
+As of Autopsy 4.21.0 release, two types of keyword searching are supported - Solr search with full text indexing, and/or an built-in Autopsy "In-Line" Keyword Search.
+
+If full text indexing with Solr was enabled during ingest then ad-hoc manual text searching will be able to search all of the text extracted from all of the files and artifacts. 
+
+The In-Line Keyword Search performs the searching during ingest at the time of text extraction and only indexes small sections of the files that have keyword hits for display purposes. Therefore unless full text indexing with Solr is enabled, the ad-hoc search will only be able to search those small sections of the files that had keyword hits (as opposed to all of the text extracted from all of the files and artifacts). 
+
+Other situations which will result in not being able to search all of the text extracted from all of the files and artifacts include:
+<ul>
+<li>If file filtering was used during ingest, resulting in only a subset of files getting ingested. See \ref file_filters for information on file filtering.
+<li>If Autopsy case contains multiple data sources and one or more of those data sources was not indexed during it's ingest.
+</ul>
+
 \section ad_hoc_kw_types_section Creating Keywords
 
 The following sections will give a description of each keyword type, then will show some sample text and how various search terms would work against it. 
