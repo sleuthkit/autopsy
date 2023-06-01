@@ -176,6 +176,9 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
 
         localFilePaths = configPanel.getContentPaths();
+        Boolean createTimestamp = configPanel.getCreateTimestamp();
+        Boolean modifiedTimestamp = configPanel.getModifiedTimestamp();
+        Boolean accessTimestamp = configPanel.getAccessTimestamp();
         if (configPanel.subTypeIsLogicalEvidencePanel()) {
             try {
                 //if the L01 option was chosen
@@ -191,7 +194,8 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
                 return;
             }
         }
-        run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, host, progressMonitor, callback);
+        run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, host, createTimestamp, 
+              modifiedTimestamp, accessTimestamp, progressMonitor, callback);
     }
 
     /**
@@ -330,7 +334,40 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      * @param callback                 Callback to call when processing is done.
      */
     public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, host, progressMonitor, callback)).start();
+        new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, host, false, false, false,progressMonitor, callback)).start();
+    }
+
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the given settings instead of those provided by the
+     * selection and configuration panel. Returns as soon as the background task
+     * is started and uses the callback object to signal task completion and
+     * return results.
+     *
+     * @param deviceId                 An ASCII-printable identifier for the
+     *                                 device associated with the data source
+     *                                 that is intended to be unique across
+     *                                 multiple cases (e.g., a UUID).
+     * @param rootVirtualDirectoryName The name to give to the virtual directory
+     *                                 that will serve as the root for the
+     *                                 local/logical files and/or directories
+     *                                 that compose the data source. Pass the
+     *                                 empty string to get a default name of the
+     *                                 form: LogicalFileSet[N]
+     * @param localFilePaths           A list of local/logical file and/or
+     *                                 directory localFilePaths.
+     * @param createTime               Boolean value to add the time the file was locally created
+     * @param modifiedTime             Boolean value to add the time the file was locally modified
+     * @param accessTime               Boolean value to add the time the file was last accessed
+     * @param host                     The host for this data source.
+     * @param progressMonitor          Progress monitor for reporting progress
+     *                                 during processing.
+     * @param callback                 Callback to call when processing is done.
+     */
+    public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, Host host, Boolean createTimestamp, Boolean accessTimestamp,
+                      Boolean modifiedTimestamp, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, host, createTimestamp, accessTimestamp, modifiedTimestamp, 
+                      progressMonitor, callback)).start();
     }
 
     /**
@@ -356,7 +393,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      *                                 during processing.
      * @param callback                 Callback to call when processing is done.
      */
-    public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths,  DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         run(deviceId, rootVirtualDirectoryName, localFilePaths, null, progressMonitor, callback);
     }
 

@@ -47,6 +47,9 @@ class AddLocalFilesTask implements Runnable {
     private final List<String> localFilePaths;
     private final DataSourceProcessorProgressMonitor progress;
     private final DataSourceProcessorCallback callback;
+    private final Boolean createTimestamp;
+    private final Boolean accessTimestamp;
+    private final Boolean modifiedTimestamp;
 
     /**
      * Constructs a runnable that adds a set of local/logical files and/or
@@ -71,11 +74,15 @@ class AddLocalFilesTask implements Runnable {
      *                                 during processing.
      * @param callback                 Callback to call when processing is done.
      */
-    AddLocalFilesTask(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    AddLocalFilesTask(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, Host host, Boolean createTimestamp, 
+                         Boolean accessTimestamp, Boolean modifiedTimestamp, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
         this.rootVirtualDirectoryName = rootVirtualDirectoryName;
         this.localFilePaths = localFilePaths;
         this.host = host;
+        this.createTimestamp = createTimestamp;
+        this.accessTimestamp = accessTimestamp;
+        this.modifiedTimestamp = modifiedTimestamp;
         this.callback = callback;
         this.progress = progressMonitor;
     }
@@ -92,7 +99,8 @@ class AddLocalFilesTask implements Runnable {
         try {
             progress.setIndeterminate(true);
             FileManager fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
-            LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, rootVirtualDirectoryName, "", host, localFilePaths, new ProgressUpdater());
+            LocalFilesDataSource newDataSource = fileManager.addLocalFilesDataSource(deviceId, rootVirtualDirectoryName, "", host, localFilePaths, createTimestamp, 
+                           accessTimestamp, modifiedTimestamp, new ProgressUpdater());
             newDataSources.add(newDataSource);
         } catch (TskDataException | TskCoreException | NoCurrentCaseException ex) {
             errors.add(ex.getMessage());
