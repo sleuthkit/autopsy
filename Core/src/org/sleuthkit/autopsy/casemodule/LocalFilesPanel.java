@@ -19,31 +19,33 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import javax.swing.JFileChooser;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.swing.AbstractListModel;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
 /**
- *  A panel which allows the user to select local files and/or directories.
+ * A panel which allows the user to select local files and/or directories.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class LocalFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private final Set<File> currentFiles = new TreeSet<>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
     private String displayName = "";
+    private final LocalFilesModel listModel = new LocalFilesModel();
 
     /**
      * Creates new form LocalFilesPanel
@@ -56,7 +58,8 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     private void customInit() {
         localFileChooser.setMultiSelectionEnabled(true);
         errorLabel.setVisible(false);
-        selectedPaths.setText("");
+        this.fileList.setModel(listModel);
+        listModel.clear();
         this.displayNameLabel.setText(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.displayNameLabel.text"));
     }
 
@@ -71,16 +74,17 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         java.awt.GridBagConstraints gridBagConstraints;
 
         localFileChooser = new javax.swing.JFileChooser();
-        javax.swing.JPanel fileSelectPanel = new javax.swing.JPanel();
         selectButton = new javax.swing.JButton();
         deleteButon = new javax.swing.JButton();
         clearButton = new javax.swing.JButton();
-        selectedPathsScrollPane = new javax.swing.JScrollPane();
-        selectedPaths = new javax.swing.JTextArea();
+        javax.swing.JScrollPane fileListScrollpane = new javax.swing.JScrollPane();
+        fileList = new javax.swing.JList<>();
         javax.swing.JPanel displayNamePanel = new javax.swing.JPanel();
         changeNameButton = new javax.swing.JButton();
         displayNameLabel = new javax.swing.JLabel();
+        javax.swing.JPanel padding = new javax.swing.JPanel();
         errorLabel = new javax.swing.JLabel();
+        javax.swing.JPanel paddingBottom = new javax.swing.JPanel();
 
         localFileChooser.setApproveButtonText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonText")); // NOI18N
         localFileChooser.setApproveButtonToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonToolTipText")); // NOI18N
@@ -88,8 +92,6 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         localFileChooser.setFileSelectionMode(javax.swing.JFileChooser.FILES_AND_DIRECTORIES);
 
         setLayout(new java.awt.GridBagLayout());
-
-        fileSelectPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(selectButton, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.selectButton.text")); // NOI18N
         selectButton.setToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.selectButton.toolTipText")); // NOI18N
@@ -105,11 +107,14 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
-        fileSelectPanel.add(selectButton, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        add(selectButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteButon, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.deleteButon.text")); // NOI18N
+        deleteButon.setMaximumSize(new java.awt.Dimension(70, 23));
+        deleteButon.setMinimumSize(new java.awt.Dimension(70, 23));
         deleteButon.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteButonActionPerformed(evt);
@@ -118,10 +123,10 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
-        fileSelectPanel.add(deleteButon, gridBagConstraints);
+        add(deleteButon, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(clearButton, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.clearButton.text")); // NOI18N
         clearButton.setToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.clearButton.toolTipText")); // NOI18N
@@ -136,33 +141,21 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
-        fileSelectPanel.add(clearButton, gridBagConstraints);
+        add(clearButton, gridBagConstraints);
 
-        selectedPathsScrollPane.setPreferredSize(new java.awt.Dimension(379, 96));
-
-        selectedPaths.setEditable(false);
-        selectedPaths.setColumns(20);
-        selectedPaths.setRows(5);
-        selectedPaths.setToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.selectedPaths.toolTipText")); // NOI18N
-        selectedPathsScrollPane.setViewportView(selectedPaths);
+        fileListScrollpane.setViewportView(fileList);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridheight = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        fileSelectPanel.add(selectedPathsScrollPane, gridBagConstraints);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.ipadx = 181;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        add(fileSelectPanel, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 0);
+        add(fileListScrollpane, gridBagConstraints);
 
         displayNamePanel.setLayout(new java.awt.GridBagLayout());
 
@@ -175,35 +168,80 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 0, 0);
         displayNamePanel.add(changeNameButton, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(displayNameLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.displayNameLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
         displayNamePanel.add(displayNameLabel, gridBagConstraints);
+
+        padding.setMinimumSize(new java.awt.Dimension(0, 0));
+        padding.setPreferredSize(new java.awt.Dimension(0, 0));
+
+        javax.swing.GroupLayout paddingLayout = new javax.swing.GroupLayout(padding);
+        padding.setLayout(paddingLayout);
+        paddingLayout.setHorizontalGroup(
+            paddingLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        paddingLayout.setVerticalGroup(
+            paddingLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.weightx = 1.0;
+        displayNamePanel.add(padding, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
         add(displayNamePanel, gridBagConstraints);
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.errorLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
         add(errorLabel, gridBagConstraints);
+
+        paddingBottom.setMinimumSize(new java.awt.Dimension(0, 0));
+        paddingBottom.setPreferredSize(new java.awt.Dimension(0, 0));
+
+        javax.swing.GroupLayout paddingBottomLayout = new javax.swing.GroupLayout(paddingBottom);
+        paddingBottom.setLayout(paddingBottomLayout);
+        paddingBottomLayout.setHorizontalGroup(
+            paddingBottomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        paddingBottomLayout.setVerticalGroup(
+            paddingBottomLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
+        gridBagConstraints.weighty = 1.0;
+        add(paddingBottom, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     private void selectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectButtonActionPerformed
@@ -211,20 +249,10 @@ final class LocalFilesPanel extends javax.swing.JPanel {
 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = localFileChooser.getSelectedFiles();
-            StringBuilder allPaths = new StringBuilder();
-            for (File f : files) {
-                currentFiles.add(f);
-            }
-            for (File f : currentFiles) { 
-                //loop over set of all files to ensure list is accurate
-                //update label
-                allPaths.append(f.getAbsolutePath()).append("\n");
-            }
-            this.selectedPaths.setText(allPaths.toString());
-            this.selectedPaths.setToolTipText(allPaths.toString());
+            this.listModel.add(files);
         }
 
-        enableNext = !currentFiles.isEmpty();
+        enableNext = !this.listModel.getFiles().isEmpty();
 
         try {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
@@ -249,31 +277,14 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_changeNameButtonActionPerformed
 
     private void deleteButonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButonActionPerformed
-        String selectedText = this.selectedPaths.getSelectedText();
-        
-        if (selectedText.contains("\n")) {
-            String[] selectedFiles = selectedText.split("\n");
-            for (String fileName : selectedFiles) {
-                File deletedFile = new File(fileName);
-                currentFiles.remove(deletedFile);        
-            }
-        } else {
-            File deletedFile = new File(selectedText);
-            currentFiles.remove(deletedFile);
-        }
-        
-        StringBuilder allPaths = new StringBuilder();
+        int minIdx = this.fileList.getMinSelectionIndex();
+        int maxIdx = this.fileList.getMaxSelectionIndex();
 
-        for (File f : currentFiles) { 
-            //loop over set of all files to ensure list is accurate
-            //update label
-            allPaths.append(f.getAbsolutePath()).append("\n");
+        if (minIdx >= 0 && maxIdx >= minIdx) {
+            this.listModel.remove(minIdx, maxIdx);
         }
-        
-        this.selectedPaths.setText(allPaths.toString());
-        this.selectedPaths.setToolTipText(allPaths.toString());
-        
-        enableNext = !currentFiles.isEmpty();
+
+        enableNext = !this.listModel.getFiles().isEmpty();
 
         try {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
@@ -289,8 +300,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
      * Clear the fields and undo any selection of files.
      */
     void reset() {
-        currentFiles.clear();
-        selectedPaths.setText("");
+        this.listModel.clear();
         enableNext = false;
         errorLabel.setVisible(false);
         displayName = "";
@@ -304,20 +314,17 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                     MessageNotifyUtil.MessageType.ERROR);
         }
     }
+
     /**
      * Get the path(s) which have been selected on this panel
      *
-     * @return a List of Strings representing the path(s) for the selected files or directories
+     * @return a List of Strings representing the path(s) for the selected files
+     * or directories
      */
     List<String> getContentPaths() {
-        List<String> pathsList = new ArrayList<>();
-        if (currentFiles == null) {
-            return pathsList;
-        }
-        for (File f : currentFiles) {
-            pathsList.add(f.getAbsolutePath());
-        }
-        return pathsList;
+        return this.listModel.getFiles().stream()
+                .map(File::getAbsolutePath)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -370,15 +377,101 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         return this.displayName;
     }
 
+    /**
+     * A record of a file for the specific purposes of displaying in a JList
+     * (with toString).
+     */
+    private static class FileRecord {
+
+        private final File file;
+
+        FileRecord(File file) {
+            this.file = file;
+        }
+
+        @Override
+        public String toString() {
+            return file == null ? "" : file.getAbsolutePath();
+        }
+
+        /**
+         * @return The underlying file.
+         */
+        File getFile() {
+            return file;
+        }
+    }
+
+    /**
+     * JListModel for displaying files.
+     */
+    private static class LocalFilesModel extends AbstractListModel<FileRecord> {
+
+        private List<File> items = Collections.emptyList();
+
+        @Override
+        public int getSize() {
+            return items.size();
+        }
+
+        @Override
+        public FileRecord getElementAt(int index) {
+            File f = items.get(index);
+            return new FileRecord(f);
+        }
+
+        /**
+         * Adds a series of files to the list model.
+         *
+         * @param files The files.
+         */
+        void add(File... files) {
+            items = Stream.concat(items.stream(), Stream.of(files))
+                    .sorted(Comparator.comparing(f -> f.getAbsolutePath().toLowerCase()))
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            this.fireContentsChanged(this, 0, items.size() - 1);
+        }
+
+        /**
+         * Removes files in the list starting at minIdx going to maxIdx.
+         *
+         * @param minIdx The minimum index of items to be removed.
+         * @param maxIdx The maximum index to be removed.
+         */
+        void remove(int minIdx, int maxIdx) {
+            for (int i = maxIdx; i >= minIdx; i--) {
+                items.remove(i);
+            }
+            this.fireContentsChanged(this, 0, items.size() - 1);
+        }
+
+        /**
+         * @return The files to be added to the local files data source.
+         */
+        List<File> getFiles() {
+            return items;
+        }
+
+        /**
+         * Clears currently tracked local files.
+         */
+        void clear() {
+            items.clear();
+            this.fireContentsChanged(this, 0, 0);
+        }
+
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton changeNameButton;
     private javax.swing.JButton clearButton;
     private javax.swing.JButton deleteButon;
     private javax.swing.JLabel displayNameLabel;
     private javax.swing.JLabel errorLabel;
+    private javax.swing.JList<FileRecord> fileList;
     private javax.swing.JFileChooser localFileChooser;
     private javax.swing.JButton selectButton;
-    private javax.swing.JTextArea selectedPaths;
-    private javax.swing.JScrollPane selectedPathsScrollPane;
     // End of variables declaration//GEN-END:variables
 }
