@@ -220,6 +220,10 @@ public final class LeappFileProcessor {
         loadConfigFile();
 
     }
+    
+    private static String normalizeKey(String origKey) {
+        return StringUtils.defaultString(origKey).trim().toLowerCase();
+    }
 
     @NbBundle.Messages({
         "LeappFileProcessor.error.running.Leapp=Error running Leapp, see log file.",
@@ -280,7 +284,7 @@ public final class LeappFileProcessor {
                     .filter(f -> f.toLowerCase().endsWith(".tsv")).collect(Collectors.toList());
 
             for (String tsvFile : allTsvFiles) {
-                if (tsvFiles.containsKey(FilenameUtils.getName(tsvFile.toLowerCase()))) {
+                if (tsvFiles.containsKey(normalizeKey(FilenameUtils.getName(tsvFile)))) {
                     foundTsvFiles.add(tsvFile);
                 }
             }
@@ -329,9 +333,10 @@ public final class LeappFileProcessor {
             progress.progress(Bundle.LeappFileProcessor_tsvProcessed(fileName), i);
 
             File LeappFile = new File(LeappFileName);
-            if (tsvFileAttributes.containsKey(fileName)) {
-                List<TsvColumn> attrList = tsvFileAttributes.get(fileName);
-                BlackboardArtifact.Type artifactType = tsvFileArtifacts.get(fileName);
+            String fileKey = fileName.toLowerCase().trim();
+            if (tsvFileAttributes.containsKey(normalizeKey(fileKey))) {
+                List<TsvColumn> attrList = tsvFileAttributes.get(normalizeKey(fileKey));
+                BlackboardArtifact.Type artifactType = tsvFileArtifacts.get(normalizeKey(fileKey));
 
                 try {
                     processFile(LeappFile, attrList, fileName, artifactType, dataSource);
@@ -940,8 +945,8 @@ public final class LeappFileProcessor {
             attrsToRet.add(attr);
         }
 
-        if (tsvFileArtifactComments.containsKey(fileName)) {
-            attrsToRet.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, tsvFileArtifactComments.get(fileName)));
+        if (tsvFileArtifactComments.containsKey(normalizeKey(fileName))) {
+            attrsToRet.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, tsvFileArtifactComments.get(normalizeKey(fileName))));
         }
 
         return attrsToRet;
@@ -1121,7 +1126,7 @@ public final class LeappFileProcessor {
 
         for (int i = 0; i < nlist.getLength(); i++) {
             NamedNodeMap nnm = nlist.item(i).getAttributes();
-            tsvFiles.put(nnm.getNamedItem("filename").getNodeValue().toLowerCase(), nnm.getNamedItem("description").getNodeValue());
+            tsvFiles.put(normalizeKey(nnm.getNamedItem("filename").getNodeValue()), nnm.getNamedItem("description").getNodeValue());
 
         }
 
@@ -1147,11 +1152,11 @@ public final class LeappFileProcessor {
                 logger.log(Level.SEVERE, String.format("No known artifact mapping found for [artifact: %s, %s]",
                         artifactName, getXmlFileIdentifier(parentName)));
             } else {
-                tsvFileArtifacts.put(parentName, foundArtifactType);
+                tsvFileArtifacts.put(normalizeKey(parentName), foundArtifactType);
             }
 
             if (!comment.toLowerCase().matches("null")) {
-                tsvFileArtifactComments.put(parentName, comment);
+                tsvFileArtifactComments.put(normalizeKey(parentName), comment);
             }
         }
 
@@ -1213,14 +1218,14 @@ public final class LeappFileProcessor {
                         columnName.trim().toLowerCase(),
                         "yes".compareToIgnoreCase(required) == 0);
 
-                if (tsvFileAttributes.containsKey(parentName)) {
-                    List<TsvColumn> attrList = tsvFileAttributes.get(parentName);
+                if (tsvFileAttributes.containsKey(normalizeKey(parentName))) {
+                    List<TsvColumn> attrList = tsvFileAttributes.get(normalizeKey(parentName));
                     attrList.add(thisCol);
                     tsvFileAttributes.replace(parentName, attrList);
                 } else {
                     List<TsvColumn> attrList = new ArrayList<>();
                     attrList.add(thisCol);
-                    tsvFileAttributes.put(parentName, attrList);
+                    tsvFileAttributes.put(normalizeKey(parentName), attrList);
                 }
             }
 
