@@ -146,6 +146,10 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
         add(clearButton, gridBagConstraints);
 
+        fileListScrollpane.setMaximumSize(new java.awt.Dimension(32767, 100));
+        fileListScrollpane.setMinimumSize(new java.awt.Dimension(100, 100));
+        fileListScrollpane.setPreferredSize(new java.awt.Dimension(258, 100));
+
         fileListScrollpane.setViewportView(fileList);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -283,6 +287,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         if (minIdx >= 0 && maxIdx >= minIdx) {
             this.listModel.remove(minIdx, maxIdx);
         }
+        this.fileList.clearSelection();
 
         enableNext = !this.listModel.getFiles().isEmpty();
 
