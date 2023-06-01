@@ -12,11 +12,11 @@ The \ref keyword_search_page must be selected during ingest before doing an ad h
 
 \subsection adhoc_limitations Limitations of Ad Hoc Keyword Search
 
-As of Autopsy 4.21.0 release, two types of keyword searching are supported - Solr search with full text indexing, and/or an built-in Autopsy "In-Line" Keyword Search.
+With the release of Autopsy 4.21.0, two types of keyword searching are supported: Solr search with full text indexing and the built-in Autopsy "In-Line" Keyword Search.
 
-If full text indexing with Solr was enabled during ingest then ad-hoc manual text searching will be able to search all of the text extracted from all of the files and artifacts. 
+Enabling full text indexing with Solr during the ingest process allows for comprehensive ad-hoc manual text searching, encompassing all of the extracted text from files and artifacts.
 
-The In-Line Keyword Search performs the searching during ingest at the time of text extraction and only indexes small sections of the files that have keyword hits for display purposes. Therefore unless full text indexing with Solr is enabled, the ad-hoc search will only be able to search those small sections of the files that had keyword hits thus greately limiting the amount of text being searched. 
+On the other hand, the In-Line Keyword Search conducts the search during ingest, specifically at the time of text extraction. It only indexes small sections of the files that contain keyword matches (for display purposes). Consequently, unless full text indexing with Solr is enabled, the ad-hoc search will be restricted to these limited sections of the files that had keyword hits. This limitation significantly reduces the amount of searchable text available for ad-hoc searches.
 
 Other situations which will result in not being able to search all of the text extracted from all of the files and artifacts include:
 <ul>
@@ -85,7 +85,7 @@ If you want to override this default behavior:
 In general all three types of keyword searches will work as expected but the feature has not been thoroughly tested with all character sets. For example, the searches may no longer be case-insensitive. As with regex above, we suggest testing on a sample file.
 
 ### Differences between "In-Line" and Solr regular expression search
-It is also worth noting that regular expression search results might ocasionally differ between "In-Line" Keyword Search and Solr search. This is because "In-Line" Keyword Search uses Java regular expressions whereas Solr search uses Lucene regular expressions.
+It's important to be aware that there might be occasional differences in the results of regular expression searches between the "In-Line" Keyword Search and Solr search. This is because the "In-Line" Keyword Search uses Java regular expressions, while Solr search employs Lucene regular expressions.
 
 \section ad_hoc_kw_search Keyword Search
 

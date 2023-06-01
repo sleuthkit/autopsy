@@ -13,15 +13,15 @@ Autopsy ships with some built-in lists that define regular expressions and enabl
 
 Refer to \ref ad_hoc_keyword_search_page for more details on specifying regular expressions and other types of searches. 
 
-As of Autopsy 4.21.0 release, two types of keyword searching are supported - Solr search with full text indexing, or an built-in Autopsy "In-Line" Keyword Search. See \ref keyword_ingest_settings on details regarding search type configuraiton. 
+With the release of Autopsy 4.21.0, two types of keyword searching are supported: Solr search with full text indexing and the built-in Autopsy "In-Line" Keyword Search. For detailed information on configuring the search type, refer to \ref keyword_ingest_settings.
 
 \subsection keyword_SolrSearch Solr Search With Indexing
 
-Full text indexing with Solr allows user the flexibility to run ad-hoc manual text searching after ingest has completed (see \ref ad_hoc_keyword_search_page). However, the process of full text indexing can greately slow down ingest speed for large datasources and/or cases. Once files are placed in the Solr index, they can be searched quickly for specific keywords, regular expressions, or keyword search lists that can contain a mixture of keywords and regular expressions.  
+Full text indexing with Solr provides users with the flexibility to perform ad-hoc manual text searches after the ingest process is complete (see \ref ad_hoc_keyword_search_page). However, it's important to note that full text indexing can significantly slow down the ingest speed for large data sources and cases. Once files are indexed in the Solr index, they can be quickly searched for specific keywords, regular expressions, or a combination of both in keyword search lists.
 
 \subsection keyword_InlineSearch In-Line Keyword Search
 
-The In-Line Keyword Search performs the keyword searching during ingest at the time of text extraction and only indexes small sections of the files that have keyword hits for display purposes. Our profiling runs show that in most cases this has reduced data source ingest time in half, meaning that using In-Line Keyword Search a data source ingest is completed in roughly half the time that it takes to ingest and search the same data source using Solr indexing. The downside is that all of the search terms must be specified ahead of the ingest, and there is no way to run ad-hoc search on the entire extracted text after ingest has completed. 
+On the other hand, the In-Line Keyword Search conducts keyword searches during the ingest process at the time of text extraction. It only indexes small sections of the files that contain keyword matches for display purposes. Our profiling runs indicate that, in most cases, this approach reduces the data source ingest time by half. This means that using the In-Line Keyword Search, a data source can be ingested in approximately half the time it takes to ingest and search the same data source using Solr indexing. However, a drawback of this method is that all search terms must be specified before the ingest begins, and there is no option to perform ad-hoc searches on the entire extracted text after the ingest process is complete.
 
 \section keyword_search_configuration_dialog Keyword Search Configuration Dialog
 
@@ -73,11 +73,11 @@ After the ingest has completed, \ref ad_hoc_keyword_search_page will be availabl
 
 The Ingest Settings for the Keyword Search module allow the user to enable or disable the specific built-in search expressions, Phone Numbers, IP Addresses, Email Addresses, and URLs. Using the Advanced button (covered below), one can add custom keyword groups.
 
-As of Autopsy 4.21.0 release, two types of keyword searching are supported - Solr search with full text indexing, and/or an built-in Autopsy "In-Line" Keyword Search. See \ref keyword_ingest_settings on details regarding search type configuraiton. See sections \ref keyword_SolrSearch and \ref keyword_InlineSearch for details of each search type.
+With the release of Autopsy 4.21.0, two types of keyword searching are supported: Solr search with full text indexing and the built-in Autopsy "In-Line" Keyword Search. See \ref keyword_ingest_settings on details regarding search type configuraiton. See sections \ref keyword_SolrSearch and \ref keyword_InlineSearch for details of each search type.
 
-The keyword searh type selection is accomplished via "Add text to Solr Index" checkbox. If the checkbox is unchecked, Autopsy will perform "In-Line" Keyword Search during ingest but most of the extracted text will not be indexed by Solr, effectively disabling \ref ad_hoc_keyword_search_page functionality. If the checkbox is selected, Autopsy will perform "In-Line" Keyword Search during ingest, as well as add all of the extracted text to Solr index so that it can be searched later using \ref ad_hoc_keyword_search_page.
+To select the keyword search type, you can use the "Add text to Solr Index" checkbox. When this checkbox is unchecked, Autopsy will perform the "In-Line" Keyword Search during ingest. However, most of the extracted text will not be indexed by Solr, effectively disabling the functionality described in \ref ad_hoc_keyword_search_page. On the other hand, if the checkbox is selected, Autopsy will perform the "In-Line" Keyword Search during ingest and also add all of the extracted text to the Solr index. This allows you to search the indexed text later using \ref ad_hoc_keyword_search_page.
 
-It is also worth noting that regular expression search results might ocasionally differ between "In-Line" Keyword Search and Solr search. This is because "In-Line" Keyword Search uses Java regular expressions whereas Solr search uses Lucene regular expressions (see \ref regex_match for details).
+Additionally, it's important to be aware that there might be occasional differences in the results of regular expression searches between the "In-Line" Keyword Search and Solr search. This is because the "In-Line" Keyword Search uses Java regular expressions, while Solr search employs Lucene regular expressions. You can find more details about this in \ref regex_match.
 
 \image html keyword-search-ingest-settings.PNG
 
