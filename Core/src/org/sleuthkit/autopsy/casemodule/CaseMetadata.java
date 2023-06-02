@@ -758,9 +758,9 @@ public final class CaseMetadata {
      * provisioned for the arguments
      */
     private ContentProvider loadContentProvider(Map<String, Object> args) {
-        Collection<? extends CustomContentProvider> customContentProviders = Lookup.getDefault().lookupAll(CustomContentProvider.class);
+        Collection<? extends FileContentProvider> customContentProviders = Lookup.getDefault().lookupAll(FileContentProvider.class);
         if (customContentProviders != null) {
-            for (CustomContentProvider customProvider : customContentProviders) {
+            for (FileContentProvider customProvider : customContentProviders) {
                 ContentProvider contentProvider = customProvider.load(args);
                 if (contentProvider != null) {
                     return contentProvider;

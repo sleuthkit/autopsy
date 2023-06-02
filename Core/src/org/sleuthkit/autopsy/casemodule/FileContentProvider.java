@@ -22,9 +22,9 @@ import java.util.Map;
 import org.sleuthkit.datamodel.ContentStream.ContentProvider;
 
 /**
- * Loads content byte stream from custom source.
+ * A factory that generates a TSK ContentProvider.
  */
-public interface CustomContentProvider {
+public interface FileContentProvider {
 
     /**
      * Attempts to create a ContentProvider given the specified args. Returns
