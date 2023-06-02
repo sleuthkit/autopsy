@@ -123,7 +123,7 @@ public class SuspectContent implements AutopsyVisitableItem {
 
     public static class SuspectContentsNode extends DisplayableItemNode {
 
-        @NbBundle.Messages("SuspectContent_SuspectContentNode_name=Suspect Files")
+        @NbBundle.Messages("SuspectContent_SuspectContentNode_name=Score")
         private static final String NAME = Bundle.SuspectContent_SuspectContentNode_name();
 
         SuspectContentsNode(SleuthkitCase skCase, long datasourceObjId) {
