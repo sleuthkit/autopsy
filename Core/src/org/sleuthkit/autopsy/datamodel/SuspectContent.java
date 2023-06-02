@@ -47,6 +47,8 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.Score.Priority;
+import org.sleuthkit.datamodel.Score.Significance;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -120,12 +122,12 @@ public class SuspectContent implements AutopsyVisitableItem {
         return this.skCase;
     }
 
-    public static class SuspectContentNode extends DisplayableItemNode {
+    public static class SuspectContentsNode extends DisplayableItemNode {
 
         @NbBundle.Messages("SuspectContent_SuspectContentNode_name=Suspect Files")
         private static final String NAME = Bundle.SuspectContent_SuspectContentNode_name();
 
-        SuspectContentNode(SleuthkitCase skCase, long datasourceObjId) {
+        SuspectContentsNode(SleuthkitCase skCase, long datasourceObjId) {
             super(Children.create(new SuspectContentsChildren(skCase, datasourceObjId), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
@@ -402,39 +404,22 @@ public class SuspectContent implements AutopsyVisitableItem {
             }
 
             static private String makeQuery(SuspectContent.SuspectContentFilter filter, long filteringDSObjId) {
-                String query = "";
+                String aggregateScoreFilter = "";
                 switch (filter) {
                     case SUS_ITEM_FILTER:
-                        query = "dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
-                                + " AND meta_flags != " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
-                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType(); //NON-NLS
+                        aggregateScoreFilter = " tsk_aggregate_score.significance = " + Significance.LIKELY_NOTABLE.getId() + " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
 
                         break;
                     case BAD_ITEM_FILTER:
-                        query = " ( "
-                                + "( "
-                                + "(dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue() //NON-NLS
-                                + " OR " //NON-NLS
-                                + "meta_flags = " + TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getValue() //NON-NLS
-                                + ")"
-                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
-                                + " )"
-                                + " OR type = " + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.getFileType() //NON-NLS
-                                + " OR (dir_flags = " + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
-                                + " AND type = " + TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE.getFileType() + " )"
-                                + " )";
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.getFileType()
-                        //+ " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType();
+                        aggregateScoreFilter = " tsk_aggregate_score.significance = " + Significance.NOTABLE.getId() + " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
                         break;
 
                     default:
-                        logger.log(Level.SEVERE, "Unsupported filter type to get deleted content: {0}", filter); //NON-NLS
+                        logger.log(Level.SEVERE, "Unsupported filter type to get suspect content: {0}", filter); //NON-NLS
 
                 }
+
+                String query = " obj_id IN (SELECT tsk_aggregate_score.obj_id FROM tsk_aggregate_score WHERE " + aggregateScoreFilter + ") ";
 
                 if (filteringDSObjId > 0) {
                     query += " AND data_source_obj_id = " + filteringDSObjId;
