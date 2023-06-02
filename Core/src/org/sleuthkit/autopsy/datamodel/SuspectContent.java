@@ -51,7 +51,6 @@ import org.sleuthkit.datamodel.Score.Priority;
 import org.sleuthkit.datamodel.Score.Significance;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -131,8 +130,7 @@ public class SuspectContent implements AutopsyVisitableItem {
             super(Children.create(new SuspectContentsChildren(skCase, datasourceObjId), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
-            // GVDTODO icon?
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/red-circle-exclamation.png"); //NON-NLS
         }
 
         @Override
@@ -294,8 +292,16 @@ public class SuspectContent implements AutopsyVisitableItem {
 
                 String tooltip = filter.getDisplayName();
                 this.setShortDescription(tooltip);
-                // GVDTODO icon
-                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+                switch (this.filter) {
+                    case SUS_ITEM_FILTER:
+                        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/yellow-circle-yield.png"); //NON-NLS
+                        break;
+                    default:
+                    case BAD_ITEM_FILTER:
+                        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/red-circle-exclamation.png"); //NON-NLS
+                        break;
+                }
+                
                 updateDisplayName();
             }
 
