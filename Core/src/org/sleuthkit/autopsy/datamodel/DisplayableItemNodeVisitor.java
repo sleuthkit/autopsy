@@ -78,6 +78,10 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(DeletedContentsNode dcn);
 
+    T visit(SuspectContentNode dcn);
+
+    T visit(SuspectContentsNode dcn);
+    
     T visit(FileSizeRootNode fsrn);
 
     T visit(FileSizeNode fsn);
