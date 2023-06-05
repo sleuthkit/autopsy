@@ -47,7 +47,7 @@ public class ViewsNode extends DisplayableItemNode {
                     // new RecentFiles(sleuthkitCase),
                     new DeletedContent(sleuthkitCase, dsObjId),
                     new FileSize(sleuthkitCase, dsObjId),
-                    new SuspectContent(sleuthkitCase, dsObjId))
+                    new ScoreContent(sleuthkitCase, dsObjId))
                 ),
                 Lookups.singleton(NAME)
             );

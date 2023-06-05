@@ -49,9 +49,9 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(DeletedContent.DeletedContentFilter dcf);
     
-    T visit(SuspectContent sc);
+    T visit(ScoreContent sc);
 
-    T visit(SuspectContent.SuspectContentFilter scf);
+    T visit(ScoreContent.ScoreContentFilter scf);
 
     T visit(FileSize fs);
 
@@ -130,12 +130,12 @@ public interface AutopsyItemVisitor<T> {
         }
         
         @Override
-        public T visit(SuspectContent dc) {
+        public T visit(ScoreContent dc) {
             return defaultVisit(dc);
         }
 
         @Override
-        public T visit(SuspectContent.SuspectContentFilter dcf) {
+        public T visit(ScoreContent.ScoreContentFilter dcf) {
             return defaultVisit(dcf);
         }
 

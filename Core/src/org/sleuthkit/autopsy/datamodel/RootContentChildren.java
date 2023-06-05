@@ -24,8 +24,8 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.SuspectContent.SuspectContentsChildren;
-import org.sleuthkit.autopsy.datamodel.SuspectContent.SuspectContentsChildren.SuspectContentNode;
+import org.sleuthkit.autopsy.datamodel.ScoreContent.ScoreContentsChildren;
+import org.sleuthkit.autopsy.datamodel.ScoreContent.ScoreContentsChildren.ScoreContentNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
@@ -101,8 +101,8 @@ public class RootContentChildren extends Children.Keys<Object> {
         }
 
         @Override
-        public AbstractNode visit(SuspectContent sc) {
-            return new SuspectContent.SuspectContentsNode(sc.getSleuthkitCase(), sc.filteringDataSourceObjId());
+        public AbstractNode visit(ScoreContent sc) {
+            return new ScoreContent.ScoreContentsNode(sc.getSleuthkitCase(), sc.filteringDataSourceObjId());
         }
 
         @Override

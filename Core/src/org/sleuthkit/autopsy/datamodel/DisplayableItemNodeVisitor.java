@@ -32,8 +32,8 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.allcasessearch.CorrelationAttributeInstanceNode;
-import org.sleuthkit.autopsy.datamodel.SuspectContent.SuspectContentsNode;
-import org.sleuthkit.autopsy.datamodel.SuspectContent.SuspectContentsChildren.SuspectContentNode;
+import org.sleuthkit.autopsy.datamodel.ScoreContent.ScoreContentsNode;
+import org.sleuthkit.autopsy.datamodel.ScoreContent.ScoreContentsChildren.ScoreContentNode;
 
 /**
  * Visitor pattern that goes over all nodes in the directory tree. This includes
@@ -80,9 +80,9 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(DeletedContentsNode dcn);
 
-    T visit(SuspectContentNode scn);
+    T visit(ScoreContentNode scn);
     
-    T visit(SuspectContentsNode scn);
+    T visit(ScoreContentsNode scn);
     
     T visit(FileSizeRootNode fsrn);
 
@@ -342,12 +342,12 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(SuspectContentNode scn) {
+        public T visit(ScoreContentNode scn) {
             return defaultVisit(scn);
         }
 
         @Override
-        public T visit(SuspectContentsNode scn) {
+        public T visit(ScoreContentsNode scn) {
             return defaultVisit(scn);
         }
         
