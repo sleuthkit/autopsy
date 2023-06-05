@@ -508,7 +508,7 @@ public class FileManager implements Closeable {
             LocalFilesDataSource dataSource = caseDb.addLocalFilesDataSource(deviceId, rootDirectoryName, timeZone, host, trans);
             List<AbstractFile> filesAdded = new ArrayList<>();
             for (java.io.File localFile : localFiles) {
-                AbstractFile fileAdded = addLocalFile(trans, dataSource, localFile, false, false, false, TskData.EncodingType.NONE, progressUpdater);
+                AbstractFile fileAdded = addLocalFile(trans, dataSource, localFile, createTimestamp, accessTimestamp, modifiedTimestamp, TskData.EncodingType.NONE, progressUpdater);
                 if (null != fileAdded) {
                     filesAdded.add(fileAdded);
                 } else {
