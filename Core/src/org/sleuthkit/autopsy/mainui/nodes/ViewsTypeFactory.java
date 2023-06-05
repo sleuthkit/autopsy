@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtDocumentFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtExecutableFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.FileExtRootFilter;
@@ -38,6 +37,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
+import org.sleuthkit.autopsy.mainui.datamodel.ScoreViewFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.ScoreViewSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
@@ -57,8 +57,6 @@ public class ViewsTypeFactory {
     private static final String FILE_TYPES_ICON = "org/sleuthkit/autopsy/images/file_types.png";
     private static final String SIZE_ICON = "org/sleuthkit/autopsy/images/file-size-16.png";
     private static final String SCORE_ICON = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
-    private static final String BAD_SCORE_ICON = SCORE_ICON;
-    private static final String SUS_SCORE_ICON = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
 
     /**
      * Node for file extensions parent in the tree.
@@ -123,7 +121,7 @@ public class ViewsTypeFactory {
             );
         }
     }
-    
+
     /**
      * Parent of file size nodes in the tree.
      */
@@ -454,9 +452,9 @@ public class ViewsTypeFactory {
         /**
          * Main constructor.
          *
-         * @param dataSourceId   The data source to filter files to or null.
+         * @param dataSourceId The data source to filter files to or null.
          * @param mimeTypePrefix The mime type prefix (i.e. 'audio',
-         *                       'multipart').
+         * 'multipart').
          */
         private FileMimeSuffixFactory(Long dataSourceId, String mimeTypePrefix) {
             this.dataSourceId = dataSourceId;
@@ -548,7 +546,7 @@ public class ViewsTypeFactory {
          *
          * @param dataSourceId The data source to filter files to or null.
          * @param childFilters The file extension filters that will each be a
-         *                     child tree node of this factory.
+         * child tree node of this factory.
          */
         private FileExtFactory(Long dataSourceId, Collection<FileExtSearchFilter> childFilters) {
             this.childFilters = childFilters;
@@ -628,9 +626,9 @@ public class ViewsTypeFactory {
             /**
              * Main constructor.
              *
-             * @param itemData     The data for the node.
+             * @param itemData The data for the node.
              * @param childFilters The file filters that will be used to make
-             *                     children of this node.
+             * children of this node.
              */
             public FileExtNode(TreeResultsDTO.TreeItemDTO<? extends FileTypeExtensionsSearchParams> itemData, Collection<FileExtSearchFilter> childFilters) {
                 super("FILE_EXT_" + itemData.getSearchParams().getFilter().getName(),
@@ -654,8 +652,6 @@ public class ViewsTypeFactory {
         }
     }
 
-    
-    
     /**
      * The factory for creating deleted content tree nodes.
      */
@@ -729,13 +725,26 @@ public class ViewsTypeFactory {
          */
         static class ScoreContentTypeNode extends TreeNode<ScoreViewSearchParams> {
 
+            private static final String BAD_SCORE_ICON = SCORE_ICON;
+            private static final String SUS_SCORE_ICON = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
+
+            private static String getIcon(ScoreViewFilter filter) {
+                switch (filter) {
+                    case SUSPICIOUS:
+                        return SUS_SCORE_ICON;
+                    case BAD:
+                    default:
+                        return BAD_SCORE_ICON;
+                }
+            }
+
             /**
              * Main constructor.
              *
              * @param itemData The data for the node.
              */
             ScoreContentTypeNode(TreeResultsDTO.TreeItemDTO<? extends ScoreViewSearchParams> itemData) {
-                super("SCORE_CONTENT_" + itemData.getSearchParams().getFilter().name(), NodeIconUtil.DELETED_FILE.getPath(), itemData);
+                super("SCORE_CONTENT_" + itemData.getSearchParams().getFilter().name(), getIcon(itemData.getSearchParams().getFilter()), itemData);
             }
 
             @Override

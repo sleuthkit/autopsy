@@ -43,7 +43,7 @@ public enum ScoreViewFilter {
             new Score(Significance.LIKELY_NOTABLE, Priority.NORMAL),
             new Score(Significance.LIKELY_NOTABLE, Priority.OVERRIDE)),
             2,
-            Bundle.ScoreViewFilter_bad_name());
+            Bundle.ScoreViewFilter_suspicious_name());
 
     private final Collection<Score> scores;
     private final String displayName;
