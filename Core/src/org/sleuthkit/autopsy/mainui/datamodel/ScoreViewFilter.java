@@ -31,8 +31,8 @@ import org.sleuthkit.datamodel.Score.Significance;
  * Filters for the score view
  */
 @Messages({
-    "ScoreViewFilter_bad_name=Bad",
-    "ScoreViewFilter_suspicious_name=Suspicious",})
+    "ScoreViewFilter_bad_name=Bad Items",
+    "ScoreViewFilter_suspicious_name=Suspicious Items",})
 public enum ScoreViewFilter {
     BAD(Arrays.asList(
             new Score(Significance.NOTABLE, Priority.NORMAL),
