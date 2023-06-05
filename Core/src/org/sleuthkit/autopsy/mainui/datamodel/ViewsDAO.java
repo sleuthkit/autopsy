@@ -42,11 +42,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -65,10 +70,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
-import org.sleuthkit.datamodel.Score;
-import org.sleuthkit.datamodel.Score.Priority;
-import org.sleuthkit.datamodel.Score.Significance;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -238,7 +241,9 @@ public class ViewsDAO extends AbstractDAO {
         Long evtDsId = scoreContentEvt.getDataSourceId();
         Long paramsDsId = params.getDataSourceId();
 
-        return Objects.equals(evtFilter, paramsFilter) && Objects.equals(evtDsId, paramsDsId);
+        return (evtFilter == null || evtFilter.equals(paramsFilter))
+                && (paramsDsId == null || evtDsId == null
+                || Objects.equals(paramsDsId, evtDsId));
     }
 
     /**
@@ -1169,7 +1174,7 @@ public class ViewsDAO extends AbstractDAO {
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
         SubDAOUtils.invalidateKeys(this.searchParamsCache,
-                (searchParams) -> searchParamsMatchEvent(null, null, null, null, null, null, true, searchParams));
+                (searchParams) -> searchParamsMatchEvent(null, null, null, null, true, null, true, searchParams));
 
         Set<? extends DAOEvent> treeEvts = SubDAOUtils.getIngestCompleteEvents(this.treeCounts,
                 (daoEvt, count) -> createTreeItem(daoEvt, count));
@@ -1190,15 +1195,6 @@ public class ViewsDAO extends AbstractDAO {
         return SubDAOUtils.getRefreshEvents(this.treeCounts,
                 (daoEvt, count) -> createTreeItem(daoEvt, count));
     }
-    
-    private static Set<String> SCORE_AFFECTING_EVTS = Stream.of(
-            Case.Events.CONTENT_TAG_ADDED, 
-            Case.Events.CONTENT_TAG_DELETED, 
-            Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED, 
-            Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED
-    )
-            .map(evt -> evt.toString())
-            .collect(Collectors.toSet());
 
     @Override
     Set<DAOEvent> processEvent(PropertyChangeEvent evt) {
@@ -1206,19 +1202,18 @@ public class ViewsDAO extends AbstractDAO {
         boolean dataSourceAdded = false;
         Set<FileExtSearchFilter> evtExtFilters = null;
         Set<DeletedContentFilter> deletedContentFilters = null;
-        ScoreViewFilter scoreViewFilter = null;
         String evtMimeType = null;
         FileSizeFilter evtFileSize = null;
+        boolean scoreInvalidating = false;
 
-        ModuleDataEvent dataEvt = DAOEventUtils.getModuelDataFromArtifactEvent(evt);
-        
+        AbstractFile af;
+
         if (Case.Events.DATA_SOURCE_ADDED.toString().equals(evt.getPropertyName())) {
             dsId = evt.getNewValue() instanceof Long ? (Long) evt.getNewValue() : null;
             dataSourceAdded = true;
-        } else if (SCORE_AFFECTING_EVTS.contains(SCORE_AFFECTING_EVTS)) {
-            // GVDTODO
-        } else {
-            AbstractFile af = DAOEventUtils.getFileFromFileEvent(evt);
+            scoreInvalidating = true;
+            return invalidateAndReturnEvents(evtExtFilters, evtMimeType, evtFileSize, deletedContentFilters, scoreInvalidating, dsId, dataSourceAdded);
+        } else if ((af = DAOEventUtils.getFileFromFileEvent(evt)) != null) {
             if (af == null) {
                 return Collections.emptySet();
             } else if (hideKnownFilesInViewsTree() && TskData.FileKnown.KNOWN.equals(af.getKnown())) {
@@ -1250,9 +1245,31 @@ public class ViewsDAO extends AbstractDAO {
             if (evtExtFilters == null || evtExtFilters.isEmpty() && deletedContentFilters.isEmpty() && evtMimeType == null && evtFileSize == null) {
                 return Collections.emptySet();
             }
+
+            // a file is being added, so invalidate all score items where data source id is in scope
+            scoreInvalidating = true;
+            return invalidateAndReturnEvents(evtExtFilters, evtMimeType, evtFileSize, deletedContentFilters, scoreInvalidating, dsId, dataSourceAdded);
         }
 
-        return invalidateAndReturnEvents(evtExtFilters, evtMimeType, evtFileSize, deletedContentFilters, scoreViewFilter, dsId, dataSourceAdded);
+        ModuleDataEvent dataEvt;
+        if (Case.Events.CONTENT_TAG_ADDED.toString().equals(evt.getPropertyName()) && (evt instanceof ContentTagAddedEvent) && ((ContentTagAddedEvent) evt).getAddedTag().getContent() instanceof AbstractFile) {
+            ContentTagAddedEvent tagAddedEvt = (ContentTagAddedEvent) evt;
+            return invalidateScoreParamsAndReturnEvents(((AbstractFile) tagAddedEvt.getAddedTag().getContent()).getDataSourceObjectId());
+        } else if (Case.Events.CONTENT_TAG_DELETED.toString().equals(evt.getPropertyName())) {
+            return invalidateScoreParamsAndReturnEvents(null);
+        } else if (Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString().equals(evt.getPropertyName()) && (evt instanceof BlackBoardArtifactTagAddedEvent)) {
+            BlackBoardArtifactTagAddedEvent artifactAddedEvt = (BlackBoardArtifactTagAddedEvent) evt;
+            return invalidateScoreParamsAndReturnEvents(artifactAddedEvt.getAddedTag().getArtifact().getDataSourceObjectID());
+        } else if (Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString().equals(evt.getPropertyName())) {
+            return invalidateScoreParamsAndReturnEvents(null);
+        } else if ((dataEvt = DAOEventUtils.getModuelDataFromArtifactEvent(evt)) != null
+                && Category.ANALYSIS_RESULT.equals(dataEvt.getBlackboardArtifactType().getCategory())) {
+            Set<Long> dsIds = dataEvt.getArtifacts().stream().map(ar -> ar.getDataSourceObjectID()).distinct().collect(Collectors.toSet());
+            return invalidateScoreParamsAndReturnEventsFromSet(dsIds);
+
+        } else {
+            return Collections.emptySet();
+        }
     }
 
     /**
@@ -1262,7 +1279,7 @@ public class ViewsDAO extends AbstractDAO {
      * @param evtMimeType           The mime type or null.
      * @param evtFileSize           The file size filter or null.
      * @param deletedContentFilters The set of affected deleted content filters.
-     * @param scoreFilter           The filter associated with the score or null.
+     * @param invalidateScore       All score views should be invalidated if data source id is in scope.
      * @param dsId                  The data source id or null.
      * @param dataSourceAdded       Whether or not this is a data source added
      *                              event.
@@ -1270,20 +1287,42 @@ public class ViewsDAO extends AbstractDAO {
      * @return The set of dao events to be fired.
      */
     private Set<DAOEvent> invalidateAndReturnEvents(Set<FileExtSearchFilter> evtExtFilters, String evtMimeType,
-            FileSizeFilter evtFileSize, Set<DeletedContentFilter> deletedContentFilters, ScoreViewFilter scoreFilter, Long dsId, boolean dataSourceAdded) {
+            FileSizeFilter evtFileSize, Set<DeletedContentFilter> deletedContentFilters, boolean invalidateScore, Long dsId, boolean dataSourceAdded) {
 
         SubDAOUtils.invalidateKeys(this.searchParamsCache,
                 (searchParams) -> searchParamsMatchEvent(evtExtFilters, deletedContentFilters,
-                        evtMimeType, evtFileSize, scoreFilter, dsId, dataSourceAdded, searchParams));
+                        evtMimeType, evtFileSize, invalidateScore, dsId, dataSourceAdded, searchParams));
 
-        return getDAOEvents(evtExtFilters, deletedContentFilters, evtMimeType, evtFileSize, scoreFilter, dsId, dataSourceAdded);
+        return getDAOEvents(evtExtFilters, deletedContentFilters, evtMimeType, evtFileSize, invalidateScore, dsId, dataSourceAdded);
+    }
+    
+    private Set<DAOEvent> invalidateScoreParamsAndReturnEvents(Long dataSourceId) {
+        return invalidateScoreParamsAndReturnEventsFromSet(dataSourceId != null ? Collections.singleton(dataSourceId) : null);
+    }
+    
+    
+    private Set<DAOEvent> invalidateScoreParamsAndReturnEventsFromSet(Set<Long> dataSourceIds) {
+
+        SubDAOUtils.invalidateKeys(this.searchParamsCache,
+                (searchParams) -> {
+                    if (searchParams instanceof ScoreViewSearchParams) {
+                        ScoreViewSearchParams scoreParams = (ScoreViewSearchParams) searchParams;
+                        return (CollectionUtils.isEmpty(dataSourceIds) || scoreParams.getDataSourceId() == null || dataSourceIds.contains(scoreParams.getDataSourceId()));
+                    } else {
+                        return false;    
+                    }
+                });
+        
+        return CollectionUtils.isEmpty(dataSourceIds)
+                ? Collections.singleton(new ScoreContentEvent(null, null))
+                : dataSourceIds.stream().map(dsId -> new ScoreContentEvent(null, dsId)).collect(Collectors.toSet());
     }
 
     private boolean searchParamsMatchEvent(Set<FileExtSearchFilter> evtExtFilters,
             Set<DeletedContentFilter> deletedContentFilters,
             String evtMimeType,
             FileSizeFilter evtFileSize,
-            ScoreViewFilter evtScore,
+            boolean invalidatesScore,
             Long dsId,
             boolean dataSourceAdded,
             Object searchParams) {
@@ -1312,8 +1351,7 @@ public class ViewsDAO extends AbstractDAO {
                     && (deletedParams.getDataSourceId() == null || dsId == null || Objects.equals(deletedParams.getDataSourceId(), dsId));
         } else if (searchParams instanceof ScoreViewSearchParams) {
             ScoreViewSearchParams scoreParams = (ScoreViewSearchParams) searchParams;
-            return (dataSourceAdded || (deletedContentFilters != null && evtScore == scoreParams.getFilter()))
-                    && (scoreParams.getDataSourceId() == null || dsId == null || Objects.equals(scoreParams.getDataSourceId(), dsId));
+            return (dataSourceAdded || (invalidatesScore && (scoreParams.getDataSourceId() == null || dsId == null || Objects.equals(scoreParams.getDataSourceId(), dsId))));
         } else {
             return false;
         }
@@ -1336,7 +1374,7 @@ public class ViewsDAO extends AbstractDAO {
             Set<DeletedContentFilter> deletedContentFilters,
             String mimeType,
             FileSizeFilter sizeFilter,
-            ScoreViewFilter scoreFilter,
+            boolean invalidateScore,
             Long dsId,
             boolean dataSourceAdded) {
 
@@ -1361,8 +1399,8 @@ public class ViewsDAO extends AbstractDAO {
             daoEvents.add(new FileTypeSizeEvent(sizeFilter, dsId));
         }
         
-        if (scoreFilter != null) {
-            daoEvents.add(new ScoreContentEvent(scoreFilter, dsId));
+        if (invalidateScore) {
+            daoEvents.add(new ScoreContentEvent(null, dsId));
         }
 
         List<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
