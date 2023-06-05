@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,7 @@
  */
 package org.sleuthkit.autopsy.mainui.datamodel;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javafx.scene.layout.Priority;
-import org.apache.commons.lang3.tuple.Pair;
-import org.sleuthkit.datamodel.Score;
-import org.sleuthkit.datamodel.Score.Significance;
+import java.util.Objects;
 
 /**
  * Key for accessing data about files with a score from the DAO.
@@ -42,36 +34,46 @@ public class ScoreViewSearchParams {
         return TYPE_ID;
     }
 
-    private final Set<Pair<Significance, Priority>> scoreFilters;
+    private final ScoreViewFilter filter;
     private final Long dataSourceId;
 
-    public ScoreViewSearchParams(Collection<Score> scoreFilters, Long dataSourceId) {
-        this(
-                
-                scoreFilters == null 
-                        ? Collections.emptySet() : 
-                        scoreFilters.stream().map(s -> Pair.of(s.getSignificance(), s.getPriority())).collect(Collectors.toSet()),
-                dataSourceId
-        );
-    }
-    
-    public ScoreViewSearchParams(Set<Pair<Significance, Priority>> scoreFilters, Long dataSourceId) {
-            this.scoreFilters = scoreFilters == null ? Collections.emptySet() : scoreFilters;
+    public ScoreViewSearchParams(ScoreViewFilter filter, Long dataSourceId) {
+        this.filter = filter;
         this.dataSourceId = dataSourceId;
     }
 
-    public Collection<Score> getScoreFilters() {
-        List<Score> scores = scoreFilters.stream().map(pr -> new Score(pr.getLeft(), pr.getRight())).collect(Collectors.toList());
-        return scores;
-    }
-    
-    public Set<Pair<Significance, Priority>> getScoreItemsFilters() {
-        return scoreFilters;
+    public ScoreViewFilter getFilter() {
+        return filter;
     }
 
     public Long getDataSourceId() {
         return dataSourceId;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 53 * hash + Objects.hashCode(this.filter);
+        hash = 53 * hash + Objects.hashCode(this.dataSourceId);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ScoreViewSearchParams other = (ScoreViewSearchParams) obj;
+        if (this.filter != other.filter) {
+            return false;
+        }
+        return Objects.equals(this.dataSourceId, other.dataSourceId);
+    }
 
 }
