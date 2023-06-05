@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +30,9 @@ import org.sleuthkit.datamodel.TskData;
 
 /**
  * A "source" for the extracted content viewer that displays "raw" (not
- * highlighted) indexed text for a file or an artifact.
+ * highlighted) Solr indexed text for a file or an artifact.
  */
-class RawText implements IndexedText {
+class SolrIndexedText implements IndexedText {
 
     private int numPages = 0;
     private int currentPage = 0;
@@ -43,12 +43,12 @@ class RawText implements IndexedText {
     //keep last content cached
     private String cachedString;
     private int cachedChunk;
-    private static final Logger logger = Logger.getLogger(RawText.class.getName());
+    private static final Logger logger = Logger.getLogger(SolrIndexedText.class.getName());
 
     /**
-     * Construct a new RawText object for the given content and object id. This
+     * Construct a new SolrIndexedText object for the given content and object id. This
      * constructor needs both a content object and an object id because the
-     * RawText implementation attempts to provide useful messages in the text
+     * SolrIndexedText implementation attempts to provide useful messages in the text
      * content viewer for (a) the case where a file has not been indexed because
      * known files are being skipped and (b) the case where the file content has
      * not yet been indexed.
@@ -56,14 +56,14 @@ class RawText implements IndexedText {
      * @param content  Used to get access to file names and "known" status.
      * @param objectId Either a file id or an artifact id.
      */
-    RawText(Content content, long objectId) {
+    SolrIndexedText(Content content, long objectId) {
         this.content = content;
         this.blackboardArtifact = null;
         this.objectId = objectId;
         initialize();
     }
 
-    RawText(BlackboardArtifact bba, long objectId) {
+    SolrIndexedText(BlackboardArtifact bba, long objectId) {
         this.content = null;
         this.blackboardArtifact = bba;
         this.objectId = objectId;
@@ -159,14 +159,14 @@ class RawText implements IndexedText {
     }
 
     @NbBundle.Messages({
-        "RawText.FileText=File Text",
-        "RawText.ResultText=Result Text"})
+        "SolrIndexedText.FileText=File Text",
+        "SolrIndexedText.ResultText=Result Text"})
     @Override
     public String toString() {
         if (null != content) {
-            return Bundle.RawText_FileText();
+            return Bundle.SolrIndexedText_FileText();
         } else {
-            return Bundle.RawText_ResultText();
+            return Bundle.SolrIndexedText_ResultText();
         }
     }
 

@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.tika.mime.MimeTypes;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -34,7 +36,11 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.keywordsearch.AdHocSearchChildFactory.AdHocQueryResult;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -45,6 +51,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASS
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A text viewer that displays the indexed text associated with a file or an
@@ -61,14 +68,20 @@ public class ExtractedTextViewer implements TextViewer {
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
     private IndexedText currentSource = null;
+    private FileTypeDetector fileTypeDetector = null;
 
     /**
      * Constructs a text viewer that displays the indexed text associated with a
      * file or an artifact, possibly marked up with HTML to highlight keyword
-     * hits.
+     * hits. If text for the Content has not been fully indexed by Solr then 
+     * attempt to extract text using one of text extractors. 
      */
     public ExtractedTextViewer() {
-        // This constructor is intentionally empty.
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            logger.log(Level.SEVERE, "Failed to initialize FileTypeDetector", ex); //NON-NLS
+        }
     }
 
     /**
@@ -155,8 +168,23 @@ public class ExtractedTextViewer implements TextViewer {
          */
         IndexedText rawContentText = null;
         if (file != null) {
-            rawContentText = new RawText(file, file.getId());
-            sources.add(rawContentText);
+
+            // see if Solr has fully indexed this file
+            if (solrHasFullyIndexedContent(file.getId())) {
+                rawContentText = new SolrIndexedText(file, file.getId());
+                sources.add(rawContentText);
+            }
+
+            // Solr does not have fully indexed content. 
+            // see if it's a file type for which we can extract text            
+            if (ableToExtractTextFromFile(file)) {
+                try {
+                    rawContentText = new ExtractedText(file, file.getId());
+                    sources.add(rawContentText);
+                } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+                    // do nothing
+                }              
+            }
         }
 
         /*
@@ -164,7 +192,7 @@ public class ExtractedTextViewer implements TextViewer {
          * associated with the node.
          */
         if (report != null) {
-            rawContentText = new RawText(report, report.getId());
+            rawContentText = new SolrIndexedText(report, report.getId());
             sources.add(rawContentText);
         }
 
@@ -222,12 +250,11 @@ public class ExtractedTextViewer implements TextViewer {
                 if (attribute != null) {
                     long artifactId = attribute.getValueLong();
                     BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(artifactId);
-                    rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
-
+                    rawArtifactText = new SolrIndexedText(associatedArtifact, associatedArtifact.getArtifactID());
                 }
 
             } else {
-                rawArtifactText = new RawText(artifact, artifact.getArtifactID());
+                rawArtifactText = new SolrIndexedText(artifact, artifact.getArtifactID());
             }
         }
         return rawArtifactText;
@@ -340,8 +367,18 @@ public class ExtractedTextViewer implements TextViewer {
          * data source instead of a file.
          */
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file != null && solrHasContent(file.getId())) {
-            return true;
+        if (file != null) {
+            
+            // see if Solr has fully indexed this file
+            if (solrHasFullyIndexedContent(file.getId())) {
+                return true;
+            }
+
+            // Solr does not have fully indexed content. 
+            // see if it's a file type for which we can extract text            
+            if (ableToExtractTextFromFile(file)) {
+                return true;
+            }
         }
 
         /*
@@ -351,7 +388,7 @@ public class ExtractedTextViewer implements TextViewer {
          * indexed text for the artifact.
          */
         if (artifact != null) {
-            return solrHasContent(artifact.getArtifactID());
+            return solrHasFullyIndexedContent(artifact.getArtifactID());
         }
 
         /*
@@ -361,7 +398,7 @@ public class ExtractedTextViewer implements TextViewer {
          */
         Report report = node.getLookup().lookup(Report.class);
         if (report != null) {
-            return solrHasContent(report.getId());
+            return solrHasFullyIndexedContent(report.getId());
         }
 
         /*
@@ -397,18 +434,77 @@ public class ExtractedTextViewer implements TextViewer {
      *
      * @return true if Solr has content, else false
      */
-    private boolean solrHasContent(Long objectId) {
+    private boolean solrHasFullyIndexedContent(Long objectId) {
         final Server solrServer = KeywordSearch.getServer();
         if (solrServer.coreIsOpen() == false) {
             return false;
         }
 
+        // ELTODO get total number of chunks in the file, and verify that
+        // all of the chunks have been indexed.
         try {
             return solrServer.queryIsIndexed(objectId);
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
             logger.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
             return false;
         }
+    }
+
+    /**
+     * Check if we can extract text for this file type.
+     *
+     * @param file Abstract File
+     *
+     * @return true if text can be extracted from file, else false
+     */
+    private boolean ableToExtractTextFromFile(AbstractFile file) {
+
+        TskData.TSK_DB_FILES_TYPE_ENUM fileType = file.getType();
+        
+        if (fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
+            return false;
+        }
+
+        /**
+         * Extract unicode strings from unallocated and unused blocks and carved
+         * text files. The reason for performing string extraction on these is
+         * because they all may contain multiple encodings which can cause text
+         * to be missed by the more specialized text extractors.
+         */
+        if ((fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))
+                || (fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED))) {
+            return false;
+        }
+        
+        final long size = file.getSize();
+        //if not to index content, or a dir, or 0 content, index meta data only
+
+        if (file.isDir() || size == 0) {
+            return false;
+        }
+        
+        // ELTODO do we need to skip text files here? probably not.
+        if (file.getNameExtension().equalsIgnoreCase("txt")) {
+            return false;
+        }
+        
+        // ELTODO do we need to skip known files here? probably not.
+        if (KeywordSearchSettings.getSkipKnown() && file.getKnown().equals(TskData.FileKnown.KNOWN)) {
+            return false;
+        }
+        
+        String mimeType = fileTypeDetector.getMIMEType(file).trim().toLowerCase();
+        
+        if (KeywordSearchIngestModule.ARCHIVE_MIME_TYPES.contains(mimeType)) {
+            return false;
+        }
+        
+        if (MimeTypes.OCTET_STREAM.equals(mimeType)) {
+            return false;
+        }
+        
+        return true;
     }
 
     /**
