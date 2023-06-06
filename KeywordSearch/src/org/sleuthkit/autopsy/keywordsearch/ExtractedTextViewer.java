@@ -67,6 +67,9 @@ public class ExtractedTextViewer implements TextViewer {
     private volatile Node currentNode = null;
     private IndexedText currentSource = null;
     private FileTypeDetector fileTypeDetector = null;
+    
+    private long cachedObjId = -1;
+    private boolean chachedIsFullyIndexed = false;
 
     /**
      * Constructs a text viewer that displays the indexed text associated with a
@@ -426,25 +429,39 @@ public class ExtractedTextViewer implements TextViewer {
     }
 
     /**
-     * Check if Solr has extracted content for a given node
+     * Check if Solr has indexed ALL of the content for a given node. Note that
+     * in some situations Solr only indexes parts of a file. This happens when
+     * an in-line KWS finds a KW hit in the file - only the chunks with the KW
+     * hit (+/- 1 chunk) get indexed by Solr. That is not enough for the
+     * purposes of this text viewer as we need to display all of the text in the
+     * file.
      *
      * @param objectId
      *
      * @return true if Solr has content, else false
      */
     private boolean solrHasFullyIndexedContent(Long objectId) {
+        
+        // check if we have cached this decision
+        if (objectId == cachedObjId) {
+            return chachedIsFullyIndexed;
+        }
+        
+        cachedObjId = objectId;
         final Server solrServer = KeywordSearch.getServer();
         if (solrServer.coreIsOpen() == false) {
-            return false;
+            chachedIsFullyIndexed = false;
+            return chachedIsFullyIndexed;
         }
 
-        // ELTODO get total number of chunks in the file, and verify that
-        // all of the chunks have been indexed.
+        // verify that all of the chunks in the file have been indexed.
         try {
-            return solrServer.queryIsIndexed(objectId);
+            chachedIsFullyIndexed = solrServer.queryIsFullyIndexed(objectId);
+            return chachedIsFullyIndexed;
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
             logger.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
-            return false;
+            chachedIsFullyIndexed = false;
+            return chachedIsFullyIndexed;
         }
     }
 

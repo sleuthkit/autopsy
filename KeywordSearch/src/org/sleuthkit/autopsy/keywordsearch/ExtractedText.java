@@ -56,7 +56,15 @@ class ExtractedText implements IndexedText {
     ExtractedText(AbstractFile file) throws TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException {
         this.abstractFile = file;
         this.numPages = -1; // We don't know how many pages there are until we reach end of the document
-        initialize();
+        
+        TextExtractor extractor = TextExtractorFactory.getExtractor(abstractFile, null);
+
+        Map<String, String> extractedMetadata = new HashMap<>();
+        Reader sourceReader = getTikaOrTextExtractor(extractor, abstractFile, extractedMetadata);
+
+        //Get a reader for the content of the given source
+        BufferedReader reader = new BufferedReader(sourceReader);
+        this.chunker = new Chunker(reader);
     }
 
     @Override
@@ -162,17 +170,6 @@ class ExtractedText implements IndexedText {
     @Override
     public int getNumberPages() {
         return numPages;
-    }
-
-    private void initialize() throws TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException {
-        TextExtractor extractor = TextExtractorFactory.getExtractor(abstractFile, null);
-
-        Map<String, String> extractedMetadata = new HashMap<>();
-        Reader sourceReader = getTikaOrTextExtractor(extractor, abstractFile, extractedMetadata);
-
-        //Get a reader for the content of the given source
-        BufferedReader reader = new BufferedReader(sourceReader);
-        chunker = new Chunker(reader);
     }
 
     /**
