@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.tika.mime.MimeTypes;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -36,7 +35,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.autopsy.keywordsearch.AdHocSearchChildFactory.AdHocQueryResult;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
@@ -178,7 +176,7 @@ public class ExtractedTextViewer implements TextViewer {
                 // see if it's a file type for which we can extract text            
                 if (ableToExtractTextFromFile(file)) {
                     try {
-                        rawContentText = new ExtractedText(file, file.getId());
+                        rawContentText = new ExtractedText(file);
                         sources.add(rawContentText);
                     } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
                         // do nothing
@@ -451,7 +449,9 @@ public class ExtractedTextViewer implements TextViewer {
     }
 
     /**
-     * Check if we can extract text for this file type.
+     * Check if we can extract text for this file type using one of our text extractors. 
+     * NOTE: the logic in this method should be similar and based on the 
+     * logic of how KeywordSearchIngestModule decides which files to index.
      *
      * @param file Abstract File
      *
@@ -465,12 +465,6 @@ public class ExtractedTextViewer implements TextViewer {
             return false;
         }
 
-        /**
-         * Extract unicode strings from unallocated and unused blocks and carved
-         * text files. The reason for performing string extraction on these is
-         * because they all may contain multiple encodings which can cause text
-         * to be missed by the more specialized text extractors.
-         */
         if ((fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))
                 || (fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED))) {
@@ -478,19 +472,7 @@ public class ExtractedTextViewer implements TextViewer {
         }
         
         final long size = file.getSize();
-        //if not to index content, or a dir, or 0 content, index meta data only
-
         if (file.isDir() || size == 0) {
-            return false;
-        }
-        
-        // ELTODO do we need to skip text files here? probably not.
-        if (file.getNameExtension().equalsIgnoreCase("txt")) {
-            return false;
-        }
-        
-        // ELTODO do we need to skip known files here? probably not.
-        if (KeywordSearchSettings.getSkipKnown() && file.getKnown().equals(TskData.FileKnown.KNOWN)) {
             return false;
         }
         
@@ -501,7 +483,7 @@ public class ExtractedTextViewer implements TextViewer {
         }
         
         if (MimeTypes.OCTET_STREAM.equals(mimeType)) {
-            // ELTODO return false;
+            return false;
         }
         
         return true;

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2021 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -659,14 +659,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         int totalPages = source.getNumberPages();
         updateTotalPagesDisplay(totalPages);
 
-        // ELTODO
-        //if (totalPages < 2) {
-        //    enableNextPageControl(false);
-        //    enablePrevPageControl(false);
-        //} else {
-            enableNextPageControl(source.hasNextPage());
-            enablePrevPageControl(source.hasPreviousPage());
-        //}
+        enableNextPageControl(source.hasNextPage());
+        enablePrevPageControl(source.hasPreviousPage());
     }
 
     /**

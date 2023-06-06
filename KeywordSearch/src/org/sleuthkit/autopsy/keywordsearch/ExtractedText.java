@@ -32,44 +32,31 @@ import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 
-/** ELTODO
- * A "source" for the extracted abstractFile viewer that displays "raw" (not
- * highlighted) indexed text for a file or an artifact.
+/**
+ * A "source" for abstractFile viewer that displays "raw" extracted text for a
+ * file. Only supports file types for which there are text extractors. Uses
+ * chunking algorithm used by KeywordSearchIngestModule. The readers used in
+ * chunking don't have ability to go backwards or to fast forward to a specific
+ * offset. Therefore there is no way to scroll pages back, or to determine how
+ * many total pages there are.
  */
 class ExtractedText implements IndexedText {
 
     private int numPages = 0;
     private int currentPage = 0;
     private final AbstractFile abstractFile;
-    private final long objectId;
     private Chunker chunker = null;
     private static final Logger logger = Logger.getLogger(ExtractedText.class.getName());
 
     /**
-     * Construct a new ExtractedText object for the given content and object id.
-     * This constructor needs both a content object and an object id because the
-     * ExtractedText implementation attempts to provide useful messages in the
-     * text content viewer for (a) the case where a file has not been indexed
-     * because known files are being skipped and (b) the case where the file
-     * content has not yet been indexed.
+     * Construct a new ExtractedText object for the given abstract file.
      *
-     * @param file     Abstract file.
-     * @param objectId Either a file id or an artifact id.
+     * @param file Abstract file.
      */
-    ExtractedText(AbstractFile file, long objectId) throws TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException {
+    ExtractedText(AbstractFile file) throws TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException {
         this.abstractFile = file;
-        this.objectId = objectId;
         this.numPages = -1; // We don't know how many pages there are until we reach end of the document
         initialize();
-    }
-
-    /**
-     * Return the ID that this object is associated with -- to help with caching
-     *
-     * @return
-     */
-    public long getObjectId() {
-        return this.objectId;
     }
 
     @Override
@@ -177,9 +164,6 @@ class ExtractedText implements IndexedText {
         return numPages;
     }
 
-    /**
-     * Set the internal values, such as pages
-     */
     private void initialize() throws TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException {
         TextExtractor extractor = TextExtractorFactory.getExtractor(abstractFile, null);
 
@@ -194,7 +178,6 @@ class ExtractedText implements IndexedText {
     /**
      * Extract text from abstractFile
      *
-     * @param node        a node that has extracted abstractFile
      * @param currentPage currently used page
      *
      * @return the extracted text
@@ -209,7 +192,7 @@ class ExtractedText implements IndexedText {
                 logger.log(Level.WARNING, "Error chunking content from " + abstractFile.getId() + ": " + abstractFile.getName(), chunker.getException());
                 throw chunker.getException();
             }
-            
+
             indexedText = chunk.toString();
         } else {
             return Bundle.IndexedText_errorMessage_errorGettingText();
@@ -229,9 +212,7 @@ class ExtractedText implements IndexedText {
         try {
             Map<String, String> metadata = extractor.getMetadata();
             if (!metadata.isEmpty()) {
-                // Creating the metadata artifact here causes occasional problems
-                // when indexing the text, so we save the metadata map to 
-                // use after this method is complete.
+                // save the metadata map to use after this method is complete.
                 extractedMetadata.putAll(metadata);
             }
             CharSource formattedMetadata = KeywordSearchIngestModule.getMetaDataCharSource(metadata);
@@ -249,9 +230,8 @@ class ExtractedText implements IndexedText {
             //Just send file text.
             finalReader = fileText;
         }
-        //divide into chunks and index
+        //divide into chunks
         return finalReader;
-
     }
 
 }
