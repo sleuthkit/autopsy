@@ -17,7 +17,7 @@ REMARQUE : ce document suppose que vous exécuterez Solr sur Windows en tant que
 
 Vous aurez besoin de:
 <ul>
-  <li>Une version 64 bits de Java 8 Runtime Environment (JRE) que vous pourrez trouver sur <a href="https://github.com/ojdkbuild/ojdkbuild">https://github.com/ojdkbuild/ojdkbuild</a>. (<a href="https://github.com/ojdkbuild/ojdkbuild/blob/master/README.md">Lien de téléchargement</a>)
+  <li>Une version 64 bits de Java 17 Runtime Environment (JRE) que vous pourrez trouver sur <a href="https://bell-sw.com/pages/downloads/</a>. (<a href="https://bell-sw.com/pages/downloads/">Lien de téléchargement</a>)
   <li>Une version Autopsy pré-packagée avec Solr que vous pourrez trouver <a href="https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr/SOLR_8.6.3_AutopsyService.zip/download">ici</a>. Cela contient Solr, <a href="https://nssm.cc/">NSSM</a> pour le faire fonctionner en tant que service, ainsi que les fichiers de configuration de schéma nécessaires.
   <li>Une machine accessible en réseau sur laquelle installer Solr. Notez que le processus Solr peut avoir besoin d'écrire sur un lecteur de stockage partagé (si c'est ainsi que vous le configurez) et aura donc besoin des autorisations adéquates.
 </ul>
@@ -52,7 +52,7 @@ Suivez ces étapes pour configurer Solr:
 
 Paramètres de configuration requis pour Solr:
 <ul>
-<li><b>JAVA_HOME</b> – chemin d'accès à l'installation du JRE 64 bits. Par exemple \c "JAVA_HOME=C:\Program Files\Java\jre1.8.0_151" ou \c "JAVA_HOME=C:\Program Files\ojdkbuild\java-1.8.0-openjdk-1.8.0.222-1"
+<li><b>JAVA_HOME</b> – chemin d'accès à l'installation du JRE 64 bits. Par exemple \c "JAVA_HOME=C:\Program Files\Java\jre1.8.0_151" ou \c "JAVA_HOME=C:\Program Files\BellSoft\LibericaJDK-17-Full"
 <li><b>DEFAULT_CONFDIR</b> – chemin vers le répertoire de configuration d'Autopsy. Si l'archive Solr a été extraite dans le répertoire \c "C:\solr-8.6.3", alors ce chemin sera \c "C:\ solr-8.6.3\server\solr\configsets\AutopsyConfig\conf". N'incluez pas de guillemets autour du chemin.
 <li><b>SOLR_JAVA_MEM</b> - La taille du tas JVM Solr doit être aussi grande que les ressources de la machine Solr le permettent, au moins la moitié de la RAM totale disponible sur la machine. Une règle empirique serait d'utiliser "set SOLR_JAVA_MEM=-Xms2G -Xmx40G" pour une machine avec 64 Go de RAM, "set SOLR_JAVA_MEM=-Xms2G -Xmx20G" pour une machine avec 32 Go de RAM, et "set SOLR_JAVA_MEM=-Xms2G -Xmx8G" pour une machine avec 16 Go de RAM. Veuillez consulter la \ref install_solr_heap_usage "rubrique dépannage" pour plus d'informations sur l'utilisation du tas Solr et sur les informations de dépannage.
 <li><b>SOLR_DATA_HOME</b> – emplacement où les index Solr seront stockés. Si ce n'est pas configuré, les index seront stockés dans le répertoire \c "C:\solr-8.6.3\server\solr". REMARQUE: pour les cas d'Autopsy composés d'un grand nombre de sources de données, les index Solr peuvent devenir très volumineux (des centaines de Go ou de To), ils devront donc probablement être stockés sur un partage réseau plus important.
