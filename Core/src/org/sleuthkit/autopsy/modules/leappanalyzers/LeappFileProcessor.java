@@ -1287,7 +1287,7 @@ public final class LeappFileProcessor {
     private static final Set<String> ALLOWED_EXTENSIONS = new HashSet<>(Arrays.asList("zip", "tar", "tgz"));
 
     /**
-     * Find the files that will be processed by the iLeapp program
+     * Find the files that will be processed by the Leapp program
      *
      * @param dataSource
      *
