@@ -49,12 +49,15 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.Score.Priority;
 import org.sleuthkit.datamodel.Score.Significance;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -564,8 +567,27 @@ public class ScoreContent implements AutopsyVisitableItem {
                     }
 
                     @Override
+                    public AbstractNode visit(SlackFile sf) {
+                        return new FileNode(sf, false);
+                    }
+
+                    @Override
+                    public AbstractNode visit(LocalFile lf) {
+                        return new FileNode(lf, false);
+                    }
+
+                    @Override
+                    public AbstractNode visit(DerivedFile df) {
+                        return new FileNode(df, false);
+                    }
+                    
+                    @Override
                     protected AbstractNode defaultVisit(Content di) {
-                        throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
+                        if (di instanceof AbstractFile) {
+                            return visit((AbstractFile) di);
+                        } else {
+                            throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());    
+                        }
                     }
                 });
             }
