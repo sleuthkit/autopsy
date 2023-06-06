@@ -71,9 +71,9 @@ public class ScoreContent implements AutopsyVisitableItem {
         "ScoreContent_susFilter_text=Suspicious Items"})
     public enum ScoreContentFilter implements AutopsyVisitableItem {
 
-        BAD_ITEM_FILTER(0, "BAD_ITEM_FILTER", //NON-NLS
+        BAD_ITEM_FILTER(0, "BAD_ITEM_FILTER",
                 Bundle.ScoreContent_badFilter_text()),
-        SUS_ITEM_FILTER(1, "SUS_ITEM_FILTER", //NON-NLS
+        SUS_ITEM_FILTER(1, "SUS_ITEM_FILTER",
                 Bundle.ScoreContent_susFilter_text());
 
         private int id;
@@ -105,15 +105,27 @@ public class ScoreContent implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Constructor assuming no data source filtering.
+     * @param skCase The sleuthkit case.
+     */
     public ScoreContent(SleuthkitCase skCase) {
         this(skCase, 0);
     }
 
+    /**
+     * Constructor.
+     * @param skCase The sleuthkit case.
+     * @param dsObjId The data source object id to filter on if > 0.
+     */
     public ScoreContent(SleuthkitCase skCase, long dsObjId) {
         this.skCase = skCase;
         this.filteringDSObjId = dsObjId;
     }
 
+    /**
+     * @return The data source object id to filter on if > 0.
+     */
     long filteringDataSourceObjId() {
         return this.filteringDSObjId;
     }
@@ -123,6 +135,9 @@ public class ScoreContent implements AutopsyVisitableItem {
         return visitor.visit(this);
     }
 
+    /**
+     * @return The sleuthkit case used.
+     */
     public SleuthkitCase getSleuthkitCase() {
         return this.skCase;
     }
@@ -138,21 +153,19 @@ public class ScoreContent implements AutopsyVisitableItem {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestModuleEvent.CONTENT_CHANGED);
 
+    /**
+     * Returns a property change listener listening for possible updates to aggregate score updates for files.
+     * @param onRefresh Action on refresh.
+     * @param onRemove Action to remove listener (i.e. case close).
+     * @return The property change listener.
+     */
     private static PropertyChangeListener getPcl(final Runnable onRefresh, final Runnable onRemove) {
         return (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
-                /**
-                 * + // @@@ COULD CHECK If the new file is deleted before
-                 * notifying... Checking for a current case is a stop gap
-                 * measure	+ update(); until a different way of handling the
-                 * closing of cases is worked out. Currently, remote events may
-                 * be received for a case that is already closed.
-                 */
+                // only refresh if there is a current case.
                 try {
                     Case.getCurrentCaseThrows();
-                    // new file was added
-                    // @@@ COULD CHECK If the new file is deleted before notifying...
                     if (onRefresh != null) {
                         onRefresh.run();
                     }
@@ -167,12 +180,7 @@ public class ScoreContent implements AutopsyVisitableItem {
                     onRemove.run();
                 }
             } else if (CASE_EVENTS_OF_INTEREST.contains(eventType)) {
-                /**
-                 * Checking for a current case is a stop gap measure until a
-                 * different way of handling the closing of cases is worked out.
-                 * Currently, remote events may be received for a case that is
-                 * already closed.
-                 */
+                // only refresh if there is a current case.
                 try {
                     Case.getCurrentCaseThrows();
                     if (onRefresh != null) {
@@ -187,6 +195,13 @@ public class ScoreContent implements AutopsyVisitableItem {
         };
     }
 
+    /**
+     * The sql where statement for the files.
+     * @param filter The filter type.
+     * @param filteringDSObjId The data source object id to filter on if > 0.
+     * @return The sql where statement.
+     * @throws IllegalArgumentException 
+     */
     static private String getFileFilter(ScoreContent.ScoreContentFilter filter, long filteringDSObjId) throws IllegalArgumentException {
         String aggregateScoreFilter = "";
         switch (filter) {
@@ -221,18 +236,9 @@ public class ScoreContent implements AutopsyVisitableItem {
     private static boolean isRefreshRequired(PropertyChangeEvent evt) {
         String eventType = evt.getPropertyName();
         if (eventType.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
-            /**
-             * This is a stop gap measure until a different way of handling the
-             * closing of cases is worked out. Currently, remote events may be
-             * received for a case that is already closed.
-             */
+            // check if current case is active before updating
             try {
                 Case.getCurrentCaseThrows();
-                /**
-                 * Due to some unresolved issues with how cases are closed, it
-                 * is possible for the event to have a null oldValue if the
-                 * event is a remote event.
-                 */
                 final ModuleDataEvent event = (ModuleDataEvent) evt.getOldValue();
                 if (null != event && Category.ANALYSIS_RESULT.equals(event.getBlackboardArtifactType().getCategory())) {
                     return true;
@@ -246,6 +252,9 @@ public class ScoreContent implements AutopsyVisitableItem {
         return false;
     }
 
+    /**
+     * Parent node in views section for content with score.
+     */
     public static class ScoreContentsNode extends DisplayableItemNode {
 
         @NbBundle.Messages("ScoreContent_ScoreContentNode_name=Score")
@@ -293,6 +302,9 @@ public class ScoreContent implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Children that display a node for Bad Items and Score Items.
+     */
     public static class ScoreContentsChildren extends ChildFactory.Detachable<ScoreContent.ScoreContentFilter> implements RefreshThrottler.Refresher {
 
         private SleuthkitCase skCase;
@@ -355,6 +367,9 @@ public class ScoreContent implements AutopsyVisitableItem {
             return nd;
         }
 
+        /**
+         * Parent node showing files matching a score filter.
+         */
         public class ScoreContentNode extends DisplayableItemNode {
 
             private static final Logger logger = Logger.getLogger(ScoreContentNode.class.getName());
@@ -387,14 +402,13 @@ public class ScoreContent implements AutopsyVisitableItem {
             }
 
             void updateDisplayName() {
-                //get count of children without preloading all children nodes
+                //get count of children without preloading all child nodes
                 long count = 0;
                 try {
                     count = calculateItems(skCase, filter, datasourceObjId);
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching file counts", ex);
                 }
-                //final long count = getChildren().getNodesCount(true);
                 super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
             }
 
@@ -442,14 +456,13 @@ public class ScoreContent implements AutopsyVisitableItem {
 
             @Override
             public String getItemType() {
-                /**
-                 * Return getClass().getName() + filter.getName() if custom
-                 * settings are desired for different filters.
-                 */
                 return DisplayableItemNode.FILE_PARENT_NODE_KEY;
             }
         }
 
+        /**
+         * Children showing files for a score filter.
+         */
         static class ScoreContentChildren extends BaseChildFactory<AbstractFile> implements RefreshThrottler.Refresher {
 
             private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
