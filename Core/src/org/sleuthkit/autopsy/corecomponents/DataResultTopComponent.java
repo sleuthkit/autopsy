@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.KeywordHitSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.OsAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.ScoreViewSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.TagsSearchParams;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 
@@ -425,6 +426,15 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      */
     public void displayDeletedContent(DeletedContentSearchParams deletedSearchParams) {
         dataResultPanel.displayDeletedContent(deletedSearchParams);
+    }
+    
+    /**
+     * Displays content with bad or suspicious scores in the file views section.
+     * 
+     * @param scoreSearchParams The scored content search params.
+     */
+    public void displayScoreContent(ScoreViewSearchParams scoreSearchParams) {
+        dataResultPanel.displayScoreContent(scoreSearchParams);
     }
 
     /**

@@ -105,6 +105,8 @@ import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.DeletedFileFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsDAO.ReportsFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.ScoreViewSearchParams;
+import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.ScoreFileFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.events.CacheClearEvent;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
@@ -1363,6 +1365,25 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ex);
         }
     }
+    
+    /**
+     * Displays content with bad or suspicious scores in the file views section.
+     * 
+     * @param scoreSearchParams The scored content search params.
+     */
+     void displayScoreContent(ScoreViewSearchParams scoreSearchParams) {
+        try {
+            this.searchResultManager = new SearchManager(new ScoreFileFetcher(scoreSearchParams), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true);
+        } catch (ExecutionException ex) {
+            logger.log(Level.WARNING,
+                    MessageFormat.format("There was an error displaying search results for [filter: {0}, data source id: {1}]",
+                            scoreSearchParams.getFilter() == null ? "<null>" : scoreSearchParams.getFilter(),
+                            scoreSearchParams.getDataSourceId() == null ? "<null>" : scoreSearchParams.getDataSourceId()),
+                    ex);
+        }
+     }
 
     /**
      * Displays results of querying the DAO for files matching the file

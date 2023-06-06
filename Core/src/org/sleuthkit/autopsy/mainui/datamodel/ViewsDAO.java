@@ -42,13 +42,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_SIZE;
@@ -59,10 +65,12 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DeletedContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeExtensionsEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeMimeEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.FileTypeSizeEvent;
+import org.sleuthkit.autopsy.mainui.datamodel.events.ScoreContentEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -146,6 +154,15 @@ public class ViewsDAO extends AbstractDAO {
         SearchParams<Object> searchParams = new SearchParams<>(key, startItem, maxCount);
         return searchParamsCache.get(searchParams, () -> fetchSizeSearchResultsDTOs(key.getSizeFilter(), key.getDataSourceId(), startItem, maxCount));
     }
+    
+    public SearchResultsDTO getFilesByScore(ScoreViewSearchParams key, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
+        if (key.getDataSourceId() != null && key.getDataSourceId() <= 0) {
+            throw new IllegalArgumentException("Data source id must be greater than 0 or null");
+        }
+
+        SearchParams<Object> searchParams = new SearchParams<>(key, startItem, maxCount);
+        return searchParamsCache.get(searchParams, () -> fetchScoreSearchResultsDTOs(key.getFilter(), key.getDataSourceId(), startItem, maxCount));
+    }
 
     /**
      * Returns search results for the given deleted content search params.
@@ -209,6 +226,24 @@ public class ViewsDAO extends AbstractDAO {
         return (deletedContentEvt.getFilter() == null || deletedContentEvt.getFilter().equals(params.getFilter()))
                 && (params.getDataSourceId() == null || deletedContentEvt.getDataSourceId() == null
                 || Objects.equals(params.getDataSourceId(), deletedContentEvt.getDataSourceId()));
+    }
+    
+    private boolean isScoreContentInvalidating(ScoreViewSearchParams params, DAOEvent eventData) {
+        if (!(eventData instanceof ScoreContentEvent)) {
+            return false;
+        }
+
+        ScoreContentEvent scoreContentEvt = (ScoreContentEvent) eventData;
+        
+        ScoreViewFilter evtFilter = scoreContentEvt.getFilter();
+        ScoreViewFilter paramsFilter = params.getFilter();
+
+        Long evtDsId = scoreContentEvt.getDataSourceId();
+        Long paramsDsId = params.getDataSourceId();
+
+        return (evtFilter == null || evtFilter.equals(paramsFilter))
+                && (paramsDsId == null || evtDsId == null
+                || Objects.equals(paramsDsId, evtDsId));
     }
 
     /**
@@ -420,6 +455,31 @@ public class ViewsDAO extends AbstractDAO {
                 + " AND " + getFileSizeClause(filter)
                 + getDataSourceAndClause(dataSourceId);
 
+        return query;
+    }
+    
+    /**
+     * Creates a clause to be proceeded with 'where' or 'and' that will show
+     * files specified by the filter and the specified data source.
+     *
+     * @param filter       The scores filter.
+     * @param dataSourceId The id of the data source or null if no data source
+     *                     filtering.
+     *
+     * @return The clause to be proceeded with 'where' or 'and'.
+     */
+    private String getFileScoreWhereStatement(ScoreViewFilter filter, Long dataSourceId) {
+        String scoreWhereClause = filter.getScores().stream()
+                .map(s -> MessageFormat.format(
+                " (tsk_aggregate_score.significance = {0} AND tsk_aggregate_score.priority = {1}) ",
+                s.getSignificance().getId(),
+                s.getPriority().getId()))
+                .collect(Collectors.joining(" OR "));
+        String query = MessageFormat.format(
+                " obj_id IN (SELECT tsk_aggregate_score.obj_id FROM tsk_aggregate_score WHERE {0}) {1}",
+                scoreWhereClause,
+                getDataSourceAndClause(dataSourceId));
+        
         return query;
     }
 
@@ -634,11 +694,85 @@ public class ViewsDAO extends AbstractDAO {
             throw new ExecutionException("An error occurred while fetching file counts with query:\n" + queryStr, ex);
         }
     }
+    
+    
+
+    /**
+     * Returns counts for deleted content categories.
+     *
+     * @param dataSourceId The data source object id or null if no data source
+     *                     filtering should occur.
+     *
+     * @return The results.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<ScoreViewSearchParams> getScoreContentCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        Set<ScoreViewFilter> indeterminateFilters = new HashSet<>();
+        for (DAOEvent evt : this.treeCounts.getEnqueued()) {
+            if (evt instanceof ScoreContentEvent) {
+                ScoreContentEvent scoreEvt = (ScoreContentEvent) evt;
+                if (dataSourceId == null || scoreEvt.getDataSourceId() == null || Objects.equals(scoreEvt.getDataSourceId(), dataSourceId)) {
+                    if (scoreEvt.getFilter() == null) {
+                        // if null filter, indicates full refresh and all file sizes need refresh.
+                        indeterminateFilters.addAll(Arrays.asList(ScoreViewFilter.values()));
+                        break;
+                    } else {
+                        indeterminateFilters.add(scoreEvt.getFilter());
+                    }
+                }
+            }
+        }
+
+        String queryStr = Stream.of(ScoreViewFilter.values())
+                .map((filter) -> {
+                    String clause = getFileScoreWhereStatement(filter, dataSourceId);
+                    return MessageFormat.format("    (SELECT COUNT(*) FROM tsk_files WHERE {0}) AS {1}", clause, filter.name());
+                })
+                .collect(Collectors.joining(", \n"));
+
+        try {
+            SleuthkitCase skCase = getCase();
+
+            List<TreeItemDTO<ScoreViewSearchParams>> treeList = new ArrayList<>();
+            skCase.getCaseDbAccessManager().select(queryStr, (resultSet) -> {
+                try {
+                    if (resultSet.next()) {
+                        for (ScoreViewFilter filter : ScoreViewFilter.values()) {
+                            long count = resultSet.getLong(filter.name());
+                            TreeDisplayCount displayCount = indeterminateFilters.contains(filter)
+                                    ? TreeDisplayCount.INDETERMINATE
+                                    : TreeDisplayCount.getDeterminate(count);
+
+                            treeList.add(createScoreContentTreeItem(filter, dataSourceId, displayCount));
+                        }
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching file type counts.", ex);
+                }
+            });
+
+            return new TreeResultsDTO<>(treeList);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching file counts with query:\n" + queryStr, ex);
+        }
+    }
 
     private static TreeItemDTO<DeletedContentSearchParams> createDeletedContentTreeItem(DeletedContentFilter filter, Long dataSourceId, TreeDisplayCount displayCount) {
         return new TreeItemDTO<>(
                 "DELETED_CONTENT",
                 new DeletedContentSearchParams(filter, dataSourceId),
+                filter,
+                filter == null ? "" : filter.getDisplayName(),
+                displayCount);
+    }
+    
+    
+    private static TreeItemDTO<ScoreViewSearchParams> createScoreContentTreeItem(ScoreViewFilter filter, Long dataSourceId, TreeDisplayCount displayCount) {
+        return new TreeItemDTO<>(
+                "SCORE_CONTENT",
+                new ScoreViewSearchParams(filter, dataSourceId),
                 filter,
                 filter == null ? "" : filter.getDisplayName(),
                 displayCount);
@@ -954,6 +1088,11 @@ public class ViewsDAO extends AbstractDAO {
         String whereStatement = getFileSizesWhereStatement(filter, dataSourceId);
         return fetchFileViewFiles(whereStatement, filter.getDisplayName(), startItem, maxResultCount);
     }
+    
+    private SearchResultsDTO fetchScoreSearchResultsDTOs(ScoreViewFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
+        String whereStatement = getFileScoreWhereStatement(filter, dataSourceId);
+        return fetchFileViewFiles(whereStatement, filter.getDisplayName(), startItem, maxResultCount);
+    }
 
     private SearchResultsDTO fetchFileViewFiles(String originalWhereStatement, String displayName, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
 
@@ -1017,6 +1156,9 @@ public class ViewsDAO extends AbstractDAO {
         } else if (daoEvent instanceof DeletedContentEvent) {
             DeletedContentEvent sizeEvt = (DeletedContentEvent) daoEvent;
             return createDeletedContentTreeItem(sizeEvt.getFilter(), sizeEvt.getDataSourceId(), count);
+        } else if (daoEvent instanceof ScoreContentEvent) {
+            ScoreContentEvent scoreEvt = (ScoreContentEvent) daoEvent;
+            return createScoreContentTreeItem(scoreEvt.getFilter(), scoreEvt.getDataSourceId(), count);
         } else {
             return null;
         }
@@ -1032,7 +1174,7 @@ public class ViewsDAO extends AbstractDAO {
     @Override
     Set<? extends DAOEvent> handleIngestComplete() {
         SubDAOUtils.invalidateKeys(this.searchParamsCache,
-                (searchParams) -> searchParamsMatchEvent(null, null, null, null, null, true, searchParams));
+                (searchParams) -> searchParamsMatchEvent(null, null, null, null, true, null, true, searchParams));
 
         Set<? extends DAOEvent> treeEvts = SubDAOUtils.getIngestCompleteEvents(this.treeCounts,
                 (daoEvt, count) -> createTreeItem(daoEvt, count));
@@ -1062,12 +1204,16 @@ public class ViewsDAO extends AbstractDAO {
         Set<DeletedContentFilter> deletedContentFilters = null;
         String evtMimeType = null;
         FileSizeFilter evtFileSize = null;
+        boolean scoreInvalidating = false;
+
+        AbstractFile af;
 
         if (Case.Events.DATA_SOURCE_ADDED.toString().equals(evt.getPropertyName())) {
             dsId = evt.getNewValue() instanceof Long ? (Long) evt.getNewValue() : null;
             dataSourceAdded = true;
-        } else {
-            AbstractFile af = DAOEventUtils.getFileFromFileEvent(evt);
+            scoreInvalidating = true;
+            return invalidateAndReturnEvents(evtExtFilters, evtMimeType, evtFileSize, deletedContentFilters, scoreInvalidating, dsId, dataSourceAdded);
+        } else if ((af = DAOEventUtils.getFileFromFileEvent(evt)) != null) {
             if (af == null) {
                 return Collections.emptySet();
             } else if (hideKnownFilesInViewsTree() && TskData.FileKnown.KNOWN.equals(af.getKnown())) {
@@ -1099,9 +1245,31 @@ public class ViewsDAO extends AbstractDAO {
             if (evtExtFilters == null || evtExtFilters.isEmpty() && deletedContentFilters.isEmpty() && evtMimeType == null && evtFileSize == null) {
                 return Collections.emptySet();
             }
+
+            // a file is being added, so invalidate all score items where data source id is in scope
+            scoreInvalidating = true;
+            return invalidateAndReturnEvents(evtExtFilters, evtMimeType, evtFileSize, deletedContentFilters, scoreInvalidating, dsId, dataSourceAdded);
         }
 
-        return invalidateAndReturnEvents(evtExtFilters, evtMimeType, evtFileSize, deletedContentFilters, dsId, dataSourceAdded);
+        ModuleDataEvent dataEvt;
+        if (Case.Events.CONTENT_TAG_ADDED.toString().equals(evt.getPropertyName()) && (evt instanceof ContentTagAddedEvent) && ((ContentTagAddedEvent) evt).getAddedTag().getContent() instanceof AbstractFile) {
+            ContentTagAddedEvent tagAddedEvt = (ContentTagAddedEvent) evt;
+            return invalidateScoreParamsAndReturnEvents(((AbstractFile) tagAddedEvt.getAddedTag().getContent()).getDataSourceObjectId());
+        } else if (Case.Events.CONTENT_TAG_DELETED.toString().equals(evt.getPropertyName())) {
+            return invalidateScoreParamsAndReturnEvents(null);
+        } else if (Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString().equals(evt.getPropertyName()) && (evt instanceof BlackBoardArtifactTagAddedEvent)) {
+            BlackBoardArtifactTagAddedEvent artifactAddedEvt = (BlackBoardArtifactTagAddedEvent) evt;
+            return invalidateScoreParamsAndReturnEvents(artifactAddedEvt.getAddedTag().getArtifact().getDataSourceObjectID());
+        } else if (Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString().equals(evt.getPropertyName())) {
+            return invalidateScoreParamsAndReturnEvents(null);
+        } else if ((dataEvt = DAOEventUtils.getModuelDataFromArtifactEvent(evt)) != null
+                && Category.ANALYSIS_RESULT.equals(dataEvt.getBlackboardArtifactType().getCategory())) {
+            Set<Long> dsIds = dataEvt.getArtifacts().stream().map(ar -> ar.getDataSourceObjectID()).distinct().collect(Collectors.toSet());
+            return invalidateScoreParamsAndReturnEventsFromSet(dsIds);
+
+        } else {
+            return Collections.emptySet();
+        }
     }
 
     /**
@@ -1111,6 +1279,7 @@ public class ViewsDAO extends AbstractDAO {
      * @param evtMimeType           The mime type or null.
      * @param evtFileSize           The file size filter or null.
      * @param deletedContentFilters The set of affected deleted content filters.
+     * @param invalidateScore       All score views should be invalidated if data source id is in scope.
      * @param dsId                  The data source id or null.
      * @param dataSourceAdded       Whether or not this is a data source added
      *                              event.
@@ -1118,19 +1287,42 @@ public class ViewsDAO extends AbstractDAO {
      * @return The set of dao events to be fired.
      */
     private Set<DAOEvent> invalidateAndReturnEvents(Set<FileExtSearchFilter> evtExtFilters, String evtMimeType,
-            FileSizeFilter evtFileSize, Set<DeletedContentFilter> deletedContentFilters, Long dsId, boolean dataSourceAdded) {
+            FileSizeFilter evtFileSize, Set<DeletedContentFilter> deletedContentFilters, boolean invalidateScore, Long dsId, boolean dataSourceAdded) {
 
         SubDAOUtils.invalidateKeys(this.searchParamsCache,
                 (searchParams) -> searchParamsMatchEvent(evtExtFilters, deletedContentFilters,
-                        evtMimeType, evtFileSize, dsId, dataSourceAdded, searchParams));
+                        evtMimeType, evtFileSize, invalidateScore, dsId, dataSourceAdded, searchParams));
 
-        return getDAOEvents(evtExtFilters, deletedContentFilters, evtMimeType, evtFileSize, dsId, dataSourceAdded);
+        return getDAOEvents(evtExtFilters, deletedContentFilters, evtMimeType, evtFileSize, invalidateScore, dsId, dataSourceAdded);
+    }
+    
+    private Set<DAOEvent> invalidateScoreParamsAndReturnEvents(Long dataSourceId) {
+        return invalidateScoreParamsAndReturnEventsFromSet(dataSourceId != null ? Collections.singleton(dataSourceId) : null);
+    }
+    
+    
+    private Set<DAOEvent> invalidateScoreParamsAndReturnEventsFromSet(Set<Long> dataSourceIds) {
+
+        SubDAOUtils.invalidateKeys(this.searchParamsCache,
+                (searchParams) -> {
+                    if (searchParams instanceof ScoreViewSearchParams) {
+                        ScoreViewSearchParams scoreParams = (ScoreViewSearchParams) searchParams;
+                        return (CollectionUtils.isEmpty(dataSourceIds) || scoreParams.getDataSourceId() == null || dataSourceIds.contains(scoreParams.getDataSourceId()));
+                    } else {
+                        return false;    
+                    }
+                });
+        
+        return CollectionUtils.isEmpty(dataSourceIds)
+                ? Collections.singleton(new ScoreContentEvent(null, null))
+                : dataSourceIds.stream().map(dsId -> new ScoreContentEvent(null, dsId)).collect(Collectors.toSet());
     }
 
     private boolean searchParamsMatchEvent(Set<FileExtSearchFilter> evtExtFilters,
             Set<DeletedContentFilter> deletedContentFilters,
             String evtMimeType,
             FileSizeFilter evtFileSize,
+            boolean invalidatesScore,
             Long dsId,
             boolean dataSourceAdded,
             Object searchParams) {
@@ -1157,6 +1349,9 @@ public class ViewsDAO extends AbstractDAO {
             DeletedContentSearchParams deletedParams = (DeletedContentSearchParams) searchParams;
             return (dataSourceAdded || (deletedContentFilters != null && deletedContentFilters.contains(deletedParams.getFilter())))
                     && (deletedParams.getDataSourceId() == null || dsId == null || Objects.equals(deletedParams.getDataSourceId(), dsId));
+        } else if (searchParams instanceof ScoreViewSearchParams) {
+            ScoreViewSearchParams scoreParams = (ScoreViewSearchParams) searchParams;
+            return (dataSourceAdded || (invalidatesScore && (scoreParams.getDataSourceId() == null || dsId == null || Objects.equals(scoreParams.getDataSourceId(), dsId))));
         } else {
             return false;
         }
@@ -1179,6 +1374,7 @@ public class ViewsDAO extends AbstractDAO {
             Set<DeletedContentFilter> deletedContentFilters,
             String mimeType,
             FileSizeFilter sizeFilter,
+            boolean invalidateScore,
             Long dsId,
             boolean dataSourceAdded) {
 
@@ -1201,6 +1397,10 @@ public class ViewsDAO extends AbstractDAO {
 
         if (sizeFilter != null) {
             daoEvents.add(new FileTypeSizeEvent(sizeFilter, dsId));
+        }
+        
+        if (invalidateScore) {
+            daoEvents.add(new ScoreContentEvent(null, dsId));
         }
 
         List<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
@@ -1256,9 +1456,12 @@ public class ViewsDAO extends AbstractDAO {
         return ImmutableSet.of(
                 new DeletedContentEvent(null, dataSourceId),
                 new FileTypeSizeEvent(null, dataSourceId),
-                new FileTypeExtensionsEvent(null, dataSourceId)
+                new FileTypeExtensionsEvent(null, dataSourceId),
+                new ScoreContentEvent(null, dataSourceId)
         );
     }
+
+
 
     /**
      * Handles fetching and paging of data for file types by extension.
@@ -1373,6 +1576,37 @@ public class ViewsDAO extends AbstractDAO {
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
             return getDAO().isDeletedContentInvalidating(this.getParameters(), evt);
+        }
+
+    }
+    
+    
+    /**
+     * Handles fetching and paging of data for deleted content.
+     */
+    public static class ScoreFileFetcher extends DAOFetcher<ScoreViewSearchParams> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public ScoreFileFetcher(ScoreViewSearchParams params) {
+            super(params);
+        }
+
+        protected ViewsDAO getDAO() {
+            return MainDAO.getInstance().getViewsDAO();
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getFilesByScore(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        }
+
+        @Override
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return getDAO().isScoreContentInvalidating(this.getParameters(), evt);
         }
 
     }
