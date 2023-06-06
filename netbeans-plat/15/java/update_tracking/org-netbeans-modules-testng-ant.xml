@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.testng.ant">
+    <module_version install_time="1668523637012" last="true" origin="Ant" specification_version="2.32">
+        <file crc="523715355" name="config/Modules/org-netbeans-modules-testng-ant.xml"/>
+        <file crc="1636218051" name="modules/org-netbeans-modules-testng-ant.jar"/>
+    </module_version>
+</module>

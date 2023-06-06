@@ -20,7 +20,8 @@ package org.sleuthkit.autopsy.test;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.DatatypeConverter;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Blackboard;
@@ -95,13 +96,13 @@ final class CustomArtifactType {
      * @throws Blackboard.BlackboardException If there is an error posting the
      *                                        artifact to the blackboard.
      */
-    static BlackboardArtifact createAndPostInstance(Content source, long ingestJobId) throws TskCoreException, Blackboard.BlackboardException {
+    static BlackboardArtifact createAndPostInstance(Content source, long ingestJobId) throws TskCoreException, Blackboard.BlackboardException, DecoderException {
         List<BlackboardAttribute> attributes = new ArrayList<>();
         attributes.add(new BlackboardAttribute(intAttrType, MODULE_NAME, 0));
         attributes.add(new BlackboardAttribute(doubleAttrType, MODULE_NAME, 0.0));
         attributes.add(new BlackboardAttribute(longAttributeType, MODULE_NAME, 0L));
-        attributes.add(new BlackboardAttribute(dateTimeAttrType, MODULE_NAME, DateTime.now().getMillis()/1000));
-        attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, DatatypeConverter.parseHexBinary("ABCD")));
+        attributes.add(new BlackboardAttribute(dateTimeAttrType, MODULE_NAME, 60L));
+        attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, Hex.decodeHex("ABCD")));
         attributes.add(new BlackboardAttribute(stringAttrType, MODULE_NAME, "Zero"));
         attributes.add(new BlackboardAttribute(jsonAttrType, MODULE_NAME, "{\"fruit\": \"Apple\",\"size\": \"Large\",\"color\": \"Red\"}"));
 

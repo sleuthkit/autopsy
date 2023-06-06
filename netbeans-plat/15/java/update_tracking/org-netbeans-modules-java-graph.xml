@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.java.graph">
+    <module_version install_time="1668523648918" last="true" origin="Ant" specification_version="1.17">
+        <file crc="121261126" name="config/Modules/org-netbeans-modules-java-graph.xml"/>
+        <file crc="82446878" name="modules/org-netbeans-modules-java-graph.jar"/>
+    </module_version>
+</module>

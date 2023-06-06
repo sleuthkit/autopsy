@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.libs.testng">
+    <module_version install_time="1668523614348" last="true" origin="Ant" specification_version="1.31">
+        <file crc="1204579547" name="config/Modules/org-netbeans-libs-testng.xml"/>
+        <file crc="1960348609" name="docs/testng-6.13.1-javadoc.jar"/>
+        <file crc="4106020423" name="modules/ext/jcommander-1.78.jar"/>
+        <file crc="3385902687" name="modules/ext/testng-6.14.3.jar"/>
+        <file crc="2176824113" name="modules/org-netbeans-libs-testng.jar"/>
+    </module_version>
+</module>

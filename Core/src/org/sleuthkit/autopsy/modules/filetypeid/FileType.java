@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
-import javax.xml.bind.DatatypeConverter;
+import org.apache.commons.codec.binary.Hex;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -389,7 +389,7 @@ class FileType implements Serializable {
         public String toString() {
             String signatureBytesString;
             if (Signature.Type.RAW == this.getType()) {
-                signatureBytesString = DatatypeConverter.printHexBinary(this.getSignatureBytes());
+                signatureBytesString = Hex.encodeHexString(this.getSignatureBytes());
                 signatureBytesString = "0x" + signatureBytesString;
             } else {
                 try {
