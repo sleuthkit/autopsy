@@ -40,9 +40,6 @@ class SolrIndexedText implements IndexedText {
     private final Content content;
     private final BlackboardArtifact blackboardArtifact;
     private final long objectId;
-    //keep last content cached
-    private String cachedString;
-    private int cachedChunk;
     private static final Logger logger = Logger.getLogger(SolrIndexedText.class.getName());
 
     /**
@@ -249,14 +246,6 @@ class SolrIndexedText implements IndexedText {
         }
 
         int chunkId = currentPage;
-
-        //check if cached
-        if (cachedString != null) {
-            if (cachedChunk == chunkId) {
-                return cachedString;
-            }
-        }
-
         //not cached
         String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
         if (indexedText == null) {
@@ -269,13 +258,10 @@ class SolrIndexedText implements IndexedText {
             return Bundle.IndexedText_warningMessage_noTextAvailable();
         }
 
-        cachedString = EscapeUtil.escapeHtml(indexedText).trim();
-        StringBuilder sb = new StringBuilder(cachedString.length() + 20);
-        sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
-        cachedString = sb.toString();
-        cachedChunk = chunkId;
-
-        return cachedString;
+        indexedText = EscapeUtil.escapeHtml(indexedText).trim();
+        StringBuilder sb = new StringBuilder(indexedText.length() + 20);
+        sb.append("<pre>").append(indexedText).append("</pre>"); //NON-NLS
+        return sb.toString();
     }
 
     /**

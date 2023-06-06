@@ -556,7 +556,11 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
      * @param total total number of pages to update the display with
      */
     void updateTotalPagesDisplay(int total) {
-        pageTotalLabel.setText(Integer.toString(total));
+        if (total >= 0) {
+            pageTotalLabel.setText(Integer.toString(total));
+        } else {
+            pageTotalLabel.setText("-");
+        }
     }
 
     /**
@@ -655,13 +659,14 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         int totalPages = source.getNumberPages();
         updateTotalPagesDisplay(totalPages);
 
-        if (totalPages < 2) {
-            enableNextPageControl(false);
-            enablePrevPageControl(false);
-        } else {
+        // ELTODO
+        //if (totalPages < 2) {
+        //    enableNextPageControl(false);
+        //    enablePrevPageControl(false);
+        //} else {
             enableNextPageControl(source.hasNextPage());
             enablePrevPageControl(source.hasPreviousPage());
-        }
+        //}
     }
 
     /**

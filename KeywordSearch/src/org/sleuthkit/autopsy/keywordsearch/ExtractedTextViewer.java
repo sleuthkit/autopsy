@@ -173,17 +173,17 @@ public class ExtractedTextViewer implements TextViewer {
             if (solrHasFullyIndexedContent(file.getId())) {
                 rawContentText = new SolrIndexedText(file, file.getId());
                 sources.add(rawContentText);
-            }
-
-            // Solr does not have fully indexed content. 
-            // see if it's a file type for which we can extract text            
-            if (ableToExtractTextFromFile(file)) {
-                try {
-                    rawContentText = new ExtractedText(file, file.getId());
-                    sources.add(rawContentText);
-                } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
-                    // do nothing
-                }              
+            } else {
+                // Solr does not have fully indexed content. 
+                // see if it's a file type for which we can extract text            
+                if (ableToExtractTextFromFile(file)) {
+                    try {
+                        rawContentText = new ExtractedText(file, file.getId());
+                        sources.add(rawContentText);
+                    } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+                        // do nothing
+                    }
+                }
             }
         }
 
@@ -501,7 +501,7 @@ public class ExtractedTextViewer implements TextViewer {
         }
         
         if (MimeTypes.OCTET_STREAM.equals(mimeType)) {
-            return false;
+            // ELTODO return false;
         }
         
         return true;

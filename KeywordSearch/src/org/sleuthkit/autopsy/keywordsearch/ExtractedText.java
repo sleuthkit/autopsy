@@ -32,19 +32,16 @@ import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 
-/**
+/** ELTODO
  * A "source" for the extracted abstractFile viewer that displays "raw" (not
  * highlighted) indexed text for a file or an artifact.
  */
-class ExtractedText implements IndexedText { // ELTODO
+class ExtractedText implements IndexedText {
 
     private int numPages = 0;
     private int currentPage = 0;
     private final AbstractFile abstractFile;
     private final long objectId;
-    //keep last abstractFile cached
-    private String cachedString;
-    private int cachedChunk;
     private Chunker chunker = null;
     private static final Logger logger = Logger.getLogger(ExtractedText.class.getName());
 
@@ -62,8 +59,7 @@ class ExtractedText implements IndexedText { // ELTODO
     ExtractedText(AbstractFile file, long objectId) throws TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException {
         this.abstractFile = file;
         this.objectId = objectId;
-        this.currentPage = 0; // ELTODO
-        this.numPages = 1;
+        this.numPages = -1; // We don't know how many pages there are until we reach end of the document
         initialize();
     }
 
@@ -83,7 +79,10 @@ class ExtractedText implements IndexedText { // ELTODO
 
     @Override
     public boolean hasNextPage() {
-        return true;
+        if (chunker.hasNext()) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -144,7 +143,7 @@ class ExtractedText implements IndexedText { // ELTODO
     @Override
     public String getText() {
         try {
-            return getContentText(currentPage + 1); // ELTODO
+            return getContentText(currentPage);
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Couldn't get extracted text", ex); //NON-NLS
         }
@@ -201,15 +200,6 @@ class ExtractedText implements IndexedText { // ELTODO
      * @return the extracted text
      */
     private String getContentText(int currentPage) throws TextExtractor.InitReaderException, IOException, Exception {
-
-        // ELTODO
-        //check if cached
-        if (cachedString != null) {
-            if (cachedChunk == currentPage) {
-                return cachedString;
-            }
-        }
-
         String indexedText;
         if (chunker.hasNext()) {
             Chunker.Chunk chunk = chunker.next();
@@ -225,13 +215,10 @@ class ExtractedText implements IndexedText { // ELTODO
             return Bundle.IndexedText_errorMessage_errorGettingText();
         }
 
-        cachedString = EscapeUtil.escapeHtml(indexedText).trim();
-        StringBuilder sb = new StringBuilder(cachedString.length() + 20);
-        sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
-        cachedString = sb.toString();
-        cachedChunk = currentPage;
-
-        return cachedString;
+        indexedText = EscapeUtil.escapeHtml(indexedText).trim();
+        StringBuilder sb = new StringBuilder(indexedText.length() + 20);
+        sb.append("<pre>").append(indexedText).append("</pre>"); //NON-NLS
+        return sb.toString();
     }
 
     private Reader getTikaOrTextExtractor(TextExtractor extractor, AbstractFile aFile,
