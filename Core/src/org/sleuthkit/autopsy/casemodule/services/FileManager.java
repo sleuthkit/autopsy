@@ -628,7 +628,7 @@ public class FileManager implements Closeable {
             final java.io.File[] childFiles = localFile.listFiles();
             if (childFiles != null && childFiles.length > 0) {
                 for (java.io.File childFile : childFiles) {
-                    addLocalFile(trans, localDirectory, childFile, createTime, modifiedTime, accessTime, encodingType, progressUpdater);
+                    addLocalFile(trans, localDirectory, childFile, createTime, accessTime, modifiedTime, encodingType, progressUpdater);
                 }
             }
 
