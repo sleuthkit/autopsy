@@ -480,6 +480,9 @@ public class FileManager implements Closeable {
      * @param host                     The host for this data source (may be null).
      * @param localFilePaths           A list of local/logical file and/or
      *                                 directory localFilePaths.
+     * @param createTime               Boolean value to add the time the file was locally created
+     * @param accessTime               Boolean value to add the time the file was last accessed
+     * @param modifiedTime             Boolean value to add the time the file was locally modified
      * @param progressUpdater          Called after each file/directory is added
      *                                 to the case database.
      *
@@ -491,7 +494,7 @@ public class FileManager implements Closeable {
      *                          directory that does not exist or cannot be read.
      */
     public LocalFilesDataSource addLocalFilesDataSource(String deviceId, String rootVirtualDirectoryName, String timeZone, Host host,
-            List<String> localFilePaths, Boolean createTimestamp, Boolean accessTimestamp, Boolean modifiedTimestamp, FileAddProgressUpdater progressUpdater) throws TskCoreException, TskDataException {
+            List<String> localFilePaths, boolean createTimestamp, boolean accessTimestamp, boolean modifiedTimestamp, FileAddProgressUpdater progressUpdater) throws TskCoreException, TskDataException {
         List<java.io.File> localFiles = getFilesAndDirectories(localFilePaths);
         CaseDbTransaction trans = null;
         try {
@@ -610,8 +613,8 @@ public class FileManager implements Closeable {
      * @throws TskCoreException If there is a problem completing a database
      *                          operation.
      */
-    private AbstractFile addLocalFile(CaseDbTransaction trans, SpecialDirectory parentDirectory, java.io.File localFile, Boolean createTime,
-            Boolean accessTime, Boolean modifiedTime, TskData.EncodingType encodingType, FileAddProgressUpdater progressUpdater) throws TskCoreException {
+    private AbstractFile addLocalFile(CaseDbTransaction trans, SpecialDirectory parentDirectory, java.io.File localFile, boolean createTime,
+            boolean accessTime, boolean modifiedTime, TskData.EncodingType encodingType, FileAddProgressUpdater progressUpdater) throws TskCoreException {
         if (localFile.isDirectory()) {
             /*
              * Add the directory as a local directory.

@@ -45,7 +45,6 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
     private String displayName = "";
 
-    private Integer timeBoxesSelected = 0;
     /**
      * Creates new form LocalFilesPanel
      */
@@ -56,8 +55,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
 
     private void customInit() {
         localFileChooser.setMultiSelectionEnabled(true);
-        errorLabel.setVisible(true);
-        errorLabel.setText("An Error");
+        errorLabel.setVisible(false);
         selectedPaths.setText("");
         this.displayNameLabel.setText(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.displayNameLabel.text"));
     }

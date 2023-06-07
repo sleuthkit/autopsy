@@ -176,9 +176,9 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
 
         localFilePaths = configPanel.getContentPaths();
-        Boolean createTimestamp = configPanel.getCreateTimestamp();
-        Boolean modifiedTimestamp = configPanel.getModifiedTimestamp();
-        Boolean accessTimestamp = configPanel.getAccessTimestamp();
+        boolean createTimestamp = configPanel.getCreateTimestamp();
+        boolean modifiedTimestamp = configPanel.getModifiedTimestamp();
+        boolean accessTimestamp = configPanel.getAccessTimestamp();
         if (configPanel.subTypeIsLogicalEvidencePanel()) {
             try {
                 //if the L01 option was chosen
@@ -195,7 +195,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
             }
         }
         run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, host, createTimestamp, 
-              modifiedTimestamp, accessTimestamp, progressMonitor, callback);
+              accessTimestamp, modifiedTimestamp, progressMonitor, callback);
     }
 
     /**
@@ -357,15 +357,15 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
      * @param localFilePaths           A list of local/logical file and/or
      *                                 directory localFilePaths.
      * @param createTime               Boolean value to add the time the file was locally created
-     * @param modifiedTime             Boolean value to add the time the file was locally modified
      * @param accessTime               Boolean value to add the time the file was last accessed
+     * @param modifiedTime             Boolean value to add the time the file was locally modified
      * @param host                     The host for this data source.
      * @param progressMonitor          Progress monitor for reporting progress
      *                                 during processing.
      * @param callback                 Callback to call when processing is done.
      */
-    public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, Host host, Boolean createTimestamp, Boolean accessTimestamp,
-                      Boolean modifiedTimestamp, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    public void run(String deviceId, String rootVirtualDirectoryName, List<String> localFilePaths, Host host, boolean createTimestamp, boolean accessTimestamp,
+                      boolean modifiedTimestamp, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         new Thread(new AddLocalFilesTask(deviceId, rootVirtualDirectoryName, localFilePaths, host, createTimestamp, accessTimestamp, modifiedTimestamp, 
                       progressMonitor, callback)).start();
     }
