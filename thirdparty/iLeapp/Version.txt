@@ -1,1 +1,1 @@
-iLEAPP v1.18.7: iLEAPP Logs, Events, and Properties Parser
+iLEAPP v1.18.6: iLEAPP Logs, Events, and Properties Parser
