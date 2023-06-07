@@ -520,6 +520,15 @@ public class ExtractedTextViewer implements TextViewer {
             return false;
         }
         
+        // Often times there is an exception when trying to initiale a reader,
+        // thus making that specific file "unsupported". The only way to identify 
+        // this situation is to initialize the reader.
+        try {
+            FileReaderExtractedText tmp = new FileReaderExtractedText(file);
+        } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+            return false;
+        }
+
         return true;
     }
 
