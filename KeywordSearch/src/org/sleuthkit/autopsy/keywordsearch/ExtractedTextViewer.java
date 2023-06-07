@@ -67,7 +67,7 @@ public class ExtractedTextViewer implements TextViewer {
 
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
-    private IndexedText currentSource = null;
+    private ExtractedText currentSource = null;
     private FileTypeDetector fileTypeDetector = null;
     
     // cache of last 10 solrHasFullyIndexedContent() requests sent to Solr. 
@@ -118,7 +118,7 @@ public class ExtractedTextViewer implements TextViewer {
          * Assemble a collection of all of the indexed text "sources" for the
          * node.
          */
-        List<IndexedText> sources = new ArrayList<>();
+        List<ExtractedText> sources = new ArrayList<>();
         Lookup nodeLookup = node.getLookup();
 
         /**
@@ -134,7 +134,7 @@ public class ExtractedTextViewer implements TextViewer {
          * First, get text with highlighted hits if this node is for a search
          * result.
          */
-        IndexedText highlightedHitText = null;
+        ExtractedText highlightedHitText = null;
         if (adHocQueryResult != null) {
             /*
              * The node is an ad hoc search result node.
@@ -172,7 +172,7 @@ public class ExtractedTextViewer implements TextViewer {
          * Next, add the "raw" (not highlighted) text, if any, for any file
          * associated with the node.
          */
-        IndexedText rawContentText = null;
+        ExtractedText rawContentText = null;
         if (file != null) {
 
             // see if Solr has fully indexed this file
@@ -184,7 +184,7 @@ public class ExtractedTextViewer implements TextViewer {
                 // see if it's a file type for which we can extract text            
                 if (ableToExtractTextFromFile(file)) {
                     try {
-                        rawContentText = new ExtractedText(file);
+                        rawContentText = new FileReaderExtractedText(file);
                         sources.add(rawContentText);
                     } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
                         // do nothing
@@ -209,7 +209,7 @@ public class ExtractedTextViewer implements TextViewer {
          * Finally, add the "raw" (not highlighted) text, if any, for any
          * artifact associated with the node.
          */
-        IndexedText rawArtifactText = null;
+        ExtractedText rawArtifactText = null;
         try {
             rawArtifactText = getRawArtifactText(artifact);
             if (rawArtifactText != null) {
@@ -229,7 +229,7 @@ public class ExtractedTextViewer implements TextViewer {
         }
 
         // Push the text sources into the panel.
-        for (IndexedText source : sources) {
+        for (ExtractedText source : sources) {
             int currentPage = source.getCurrentPage();
             if (currentPage == 0 && source.hasNextPage()) {
                 source.nextPage();
@@ -245,8 +245,8 @@ public class ExtractedTextViewer implements TextViewer {
 
     }
 
-    private IndexedText getRawArtifactText(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
-        IndexedText rawArtifactText = null;
+    private ExtractedText getRawArtifactText(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
+        ExtractedText rawArtifactText = null;
         if (null != artifact) {
             /*
              * For keyword hit artifacts, add the text of the artifact that hit,
@@ -273,7 +273,7 @@ public class ExtractedTextViewer implements TextViewer {
         return rawArtifactText;
     }
 
-    static private IndexedText getAccountsText(Content content, Lookup nodeLookup) throws TskCoreException {
+    static private ExtractedText getAccountsText(Content content, Lookup nodeLookup) throws TskCoreException {
         /*
          * get all the credit card artifacts
          */
@@ -287,7 +287,7 @@ public class ExtractedTextViewer implements TextViewer {
     }
 
     private void scrollToCurrentHit() {
-        final IndexedText source = panel.getSelectedSource();
+        final ExtractedText source = panel.getSelectedSource();
         if (source == null || !source.isSearchable()) {
             return;
         }
@@ -431,10 +431,10 @@ public class ExtractedTextViewer implements TextViewer {
      * panel hasn't been created yet)
      *
      * @param contentName The name of the content to be displayed
-     * @param sources     A list of IndexedText that have different 'views' of
-     *                    the content.
+     * @param sources     A list of ExtractedText that have different 'views' of
+                    the content.
      */
-    private void setPanel(String contentName, List<IndexedText> sources) {
+    private void setPanel(String contentName, List<ExtractedText> sources) {
         if (panel != null) {
             panel.setSources(contentName, sources);
         }
@@ -525,7 +525,7 @@ public class ExtractedTextViewer implements TextViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            IndexedText source = panel.getSelectedSource();
+            ExtractedText source = panel.getSelectedSource();
             if (source == null) {
                 // reset
                 panel.updateControls(null);
@@ -568,7 +568,7 @@ public class ExtractedTextViewer implements TextViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            IndexedText source = panel.getSelectedSource();
+            ExtractedText source = panel.getSelectedSource();
             final boolean hasPreviousItem = source.hasPreviousItem();
             final boolean hasPreviousPage = source.hasPreviousPage();
             int indexVal;

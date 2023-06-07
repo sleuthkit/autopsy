@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2023 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,217 +18,131 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import com.google.common.io.CharSource;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.EscapeUtil;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.textextractors.TextExtractor;
-import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * A "source" for abstractFile viewer that displays "raw" extracted text for a
- * file. Only supports file types for which there are text extractors. Uses
- * chunking algorithm used by KeywordSearchIngestModule. The readers used in
- * chunking don't have ability to go backwards or to fast forward to a specific
- * offset. Therefore there is no way to scroll pages back, or to determine how
- * many total pages there are.
+ * Interface to provide HTML text to display in ExtractedContentViewer. There is
+ * a SOLR implementation of this that interfaces with SOLR to highlight the
+ * keyword hits and a version that does not do markup so that you can simply
+ * view the stored text. There is also an implementation that extracts text from
+ * a file using one os TextExtractors.
  */
-class ExtractedText implements IndexedText {
-
-    private int numPages = 0;
-    private int currentPage = 0;
-    private final AbstractFile abstractFile;
-    private Chunker chunker = null;
-    private static final Logger logger = Logger.getLogger(ExtractedText.class.getName());
-
-    /**
-     * Construct a new ExtractedText object for the given abstract file.
-     *
-     * @param file Abstract file.
-     */
-    ExtractedText(AbstractFile file) throws TextExtractorFactory.NoTextExtractorFound, TextExtractor.InitReaderException {
-        this.abstractFile = file;
-        this.numPages = -1; // We don't know how many pages there are until we reach end of the document
-        
-        TextExtractor extractor = TextExtractorFactory.getExtractor(abstractFile, null);
-
-        Map<String, String> extractedMetadata = new HashMap<>();
-        Reader sourceReader = getTikaOrTextExtractor(extractor, abstractFile, extractedMetadata);
-
-        //Get a reader for the content of the given source
-        BufferedReader reader = new BufferedReader(sourceReader);
-        this.chunker = new Chunker(reader);
-    }
-
-    @Override
-    public int getCurrentPage() {
-        return this.currentPage;
-    }
-
-    @Override
-    public boolean hasNextPage() {
-        if (chunker.hasNext()) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean hasPreviousPage() {
-        return false;
-    }
-
-    @Override
-    public int nextPage() {
-        if (!hasNextPage()) {
-            throw new IllegalStateException(
-                    NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.nextPage.exception.msg"));
-        }
-        ++currentPage;
-        return currentPage;
-    }
-
-    @Override
-    public int previousPage() {
-        if (!hasPreviousPage()) {
-            throw new IllegalStateException(
-                    NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.previousPage.exception.msg"));
-        }
-        --currentPage;
-        return currentPage;
-    }
-
-    @Override
-    public boolean hasNextItem() {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.hasNextItem.exception.msg"));
-    }
-
-    @Override
-    public boolean hasPreviousItem() {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.hasPreviousItem.exception.msg"));
-    }
-
-    @Override
-    public int nextItem() {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.nextItem.exception.msg"));
-    }
-
-    @Override
-    public int previousItem() {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.previousItem.exception.msg"));
-    }
-
-    @Override
-    public int currentItem() {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "ExtractedContentViewer.currentItem.exception.msg"));
-    }
-
-    @Override
-    public String getText() {
-        try {
-            return getContentText(currentPage);
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Couldn't get extracted text", ex); //NON-NLS
-        }
-        return Bundle.IndexedText_errorMessage_errorGettingText();
-    }
-
-    @NbBundle.Messages({
-        "ExtractedText.FileText=File Text"})
-    @Override
-    public String toString() {
-        return Bundle.ExtractedText_FileText();
-    }
-
-    @Override
-    public boolean isSearchable() {
-        return false;
-    }
-
-    @Override
-    public String getAnchorPrefix() {
-        return "";
-    }
-
-    @Override
-    public int getNumberHits() {
-        return 0;
-    }
-
-    @Override
-    public int getNumberPages() {
-        return numPages;
-    }
+@NbBundle.Messages({
+    "ExtractedText.errorMessage.errorGettingText=<span style='font-style:italic'>Error retrieving text.</span>",
+    "ExtractedText.warningMessage.knownFile=<span style='font-style:italic'>This file is a known file (based on MD5 hash) and does not have indexed text.</span>",
+    "ExtractedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No text available for this file.</span>"
+})
+interface ExtractedText {
 
     /**
-     * Extract text from abstractFile
+     * @return text optionally marked up with the subset of HTML that Swing
+     *         components can handle in their setText() method.
      *
-     * @param currentPage currently used page
-     *
-     * @return the extracted text
      */
-    private String getContentText(int currentPage) throws TextExtractor.InitReaderException, IOException, Exception {
-        String indexedText;
-        if (chunker.hasNext()) {
-            Chunker.Chunk chunk = chunker.next();
-            chunk.setChunkId(currentPage);
+    String getText();
 
-            if (chunker.hasException()) {
-                logger.log(Level.WARNING, "Error chunking content from " + abstractFile.getId() + ": " + abstractFile.getName(), chunker.getException());
-                throw chunker.getException();
-            }
+    /**
+     *
+     * @return true if text is marked to be searchable
+     */
+    boolean isSearchable();
 
-            indexedText = chunk.toString();
-        } else {
-            return Bundle.IndexedText_errorMessage_errorGettingText();
-        }
+    /**
+     * If searchable text, returns prefix of anchor, otherwise return empty
+     * string
+     *
+     * @return
+     */
+    String getAnchorPrefix();
 
-        indexedText = EscapeUtil.escapeHtml(indexedText).trim();
-        StringBuilder sb = new StringBuilder(indexedText.length() + 20);
-        sb.append("<pre>").append(indexedText).append("</pre>"); //NON-NLS
-        return sb.toString();
-    }
+    /**
+     * if searchable text, returns number of hits found and encoded in the text
+     *
+     * @return
+     */
+    int getNumberHits();
 
-    private Reader getTikaOrTextExtractor(TextExtractor extractor, AbstractFile aFile,
-            Map<String, String> extractedMetadata) throws TextExtractor.InitReaderException {
+    /**
+     * @return title of text source
+     */
+    @Override
+    String toString();
 
-        Reader fileText = extractor.getReader();
-        Reader finalReader;
-        try {
-            Map<String, String> metadata = extractor.getMetadata();
-            if (!metadata.isEmpty()) {
-                // save the metadata map to use after this method is complete.
-                extractedMetadata.putAll(metadata);
-            }
-            CharSource formattedMetadata = KeywordSearchIngestModule.getMetaDataCharSource(metadata);
-            //Append the metadata to end of the file text
-            finalReader = CharSource.concat(new CharSource() {
-                //Wrap fileText reader for concatenation
-                @Override
-                public Reader openStream() throws IOException {
-                    return fileText;
-                }
-            }, formattedMetadata).openStream();
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, String.format("Could not format extracted metadata for file %s [id=%d]",
-                    aFile.getName(), aFile.getId()), ex);
-            //Just send file text.
-            finalReader = fileText;
-        }
-        //divide into chunks
-        return finalReader;
-    }
+    /**
+     * get number pages/chunks
+     *
+     * @return number pages
+     */
+    int getNumberPages();
+
+    /**
+     * get the current page number
+     *
+     * @return current page number
+     */
+    int getCurrentPage();
+
+    /**
+     * Check if has next page
+     *
+     * @return true, if next page exists in the source
+     */
+    boolean hasNextPage();
+
+    /**
+     * Move to next page
+     *
+     * @return the new page number
+     */
+    int nextPage();
+
+    /**
+     * Check if has previous page
+     *
+     * @return true, if previous page exists in the source
+     */
+    boolean hasPreviousPage();
+
+    /**
+     * Move to previous page
+     *
+     * @return the new page number
+     */
+    int previousPage();
+
+    /**
+     * Check if has next searchable item
+     *
+     * @return true, if next item exists in the source
+     */
+    boolean hasNextItem();
+
+    /**
+     * Move to next item
+     *
+     * @return the new item number
+     */
+    int nextItem();
+
+    /**
+     * Check if has previous item
+     *
+     * @return true, if previous item exists in the source
+     */
+    boolean hasPreviousItem();
+
+    /**
+     * Move to previous item
+     *
+     * @return the new item number
+     */
+    int previousItem();
+
+    /**
+     * Get the current item number, do not change anything
+     *
+     * @return the current item number
+     */
+    int currentItem();
 
 }

@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.TskData;
  * A "source" for the extracted content viewer that displays "raw" (not
  * highlighted) Solr indexed text for a file or an artifact.
  */
-class SolrIndexedText implements IndexedText {
+class SolrIndexedText implements ExtractedText {
 
     private int numPages = 0;
     private int currentPage = 0;
@@ -152,7 +152,7 @@ class SolrIndexedText implements IndexedText {
         } catch (SolrServerException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Couldn't get extracted text", ex); //NON-NLS
         }
-        return Bundle.IndexedText_errorMessage_errorGettingText();
+        return Bundle.ExtractedText_errorMessage_errorGettingText();
     }
 
     @NbBundle.Messages({
@@ -236,11 +236,11 @@ class SolrIndexedText implements IndexedText {
                 //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
                 boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile) content).getKnown());
                 if (isKnown && KeywordSearchSettings.getSkipKnown()) {
-                    msg = Bundle.IndexedText_warningMessage_knownFile();
+                    msg = Bundle.ExtractedText_warningMessage_knownFile();
                 }
             }
             if (msg == null) {
-                msg = Bundle.IndexedText_warningMessage_noTextAvailable();
+                msg = Bundle.ExtractedText_warningMessage_noTextAvailable();
             }
             return msg;
         }
@@ -250,12 +250,12 @@ class SolrIndexedText implements IndexedText {
         String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
         if (indexedText == null) {
             if (content instanceof AbstractFile) {
-                return Bundle.IndexedText_errorMessage_errorGettingText();
+                return Bundle.ExtractedText_errorMessage_errorGettingText();
             } else {
-                return Bundle.IndexedText_warningMessage_noTextAvailable();
+                return Bundle.ExtractedText_warningMessage_noTextAvailable();
             }
         } else if (indexedText.isEmpty()) {
-            return Bundle.IndexedText_warningMessage_noTextAvailable();
+            return Bundle.ExtractedText_warningMessage_noTextAvailable();
         }
 
         indexedText = EscapeUtil.escapeHtml(indexedText).trim();
@@ -276,7 +276,7 @@ class SolrIndexedText implements IndexedText {
     private String getArtifactText() throws NoOpenCoreException, SolrServerException {
         String indexedText = KeywordSearch.getServer().getSolrContent(this.objectId, 1);
         if (indexedText == null || indexedText.isEmpty()) {
-            return Bundle.IndexedText_errorMessage_errorGettingText();
+            return Bundle.ExtractedText_errorMessage_errorGettingText();
         }
 
         indexedText = EscapeUtil.escapeHtml(indexedText).trim();
