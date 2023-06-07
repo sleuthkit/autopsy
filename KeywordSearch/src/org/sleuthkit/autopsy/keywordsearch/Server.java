@@ -2531,7 +2531,7 @@ public class Server {
                 SolrDocumentList solrDocuments = query(q).getResults();
                 if (!solrDocuments.isEmpty()) {
                     SolrDocument solrDocument = solrDocuments.get(0);
-                    if (solrDocument != null) {
+                    if (solrDocument != null && !solrDocument.isEmpty()) {
                         Object fieldValue = solrDocument.getFieldValue(Schema.NUM_CHUNKS.toString());
                         return (Integer)fieldValue;
                     }
@@ -2541,9 +2541,7 @@ public class Server {
                 logger.log(Level.SEVERE, "Error getting content from Solr. Solr document id " + contentID + ", query: " + filterQuery, ex); //NON-NLS
                 return 0;
             }
-            
-            // ERROR: we should never get here
-            logger.log(Level.SEVERE, "Error getting content from Solr. Solr document id " + contentID + ", query: " + filterQuery); //NON-NLS
+            // File not indexed
             return 0;
         }
         
@@ -2559,7 +2557,7 @@ public class Server {
          * @throws SolrServerException
          */
         int queryNumIndexedChunks(long contentID) throws SolrServerException, IOException {
-            SolrQuery q = new SolrQuery(Server.Schema.ID + ":" + contentID + Server.CHUNK_ID_SEPARATOR + "*");
+            SolrQuery q = new SolrQuery(Server.Schema.ID + ":" + KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID)) + Server.CHUNK_ID_SEPARATOR + "*");
             q.setRows(0);
             int numChunks = (int) query(q).getResults().getNumFound();
             return numChunks;

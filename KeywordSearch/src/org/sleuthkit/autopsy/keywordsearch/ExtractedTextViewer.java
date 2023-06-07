@@ -24,7 +24,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import org.apache.tika.mime.MimeTypes;
 import org.openide.nodes.Node;
@@ -68,8 +70,9 @@ public class ExtractedTextViewer implements TextViewer {
     private IndexedText currentSource = null;
     private FileTypeDetector fileTypeDetector = null;
     
-    private long cachedObjId = -1;
-    private boolean chachedIsFullyIndexed = false;
+    // cache of last 10 solrHasFullyIndexedContent() requests sent to Solr. 
+    private SolrIsFullyIndexedCache solrCache = null;
+    // ELTODO clear the cache when case closes
 
     /**
      * Constructs a text viewer that displays the indexed text associated with a
@@ -83,6 +86,8 @@ public class ExtractedTextViewer implements TextViewer {
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             logger.log(Level.SEVERE, "Failed to initialize FileTypeDetector", ex); //NON-NLS
         }
+        
+        solrCache = new SolrIsFullyIndexedCache();
     }
 
     /**
@@ -193,8 +198,11 @@ public class ExtractedTextViewer implements TextViewer {
          * associated with the node.
          */
         if (report != null) {
-            rawContentText = new SolrIndexedText(report, report.getId());
-            sources.add(rawContentText);
+            // see if Solr has fully indexed this file
+            if (solrHasFullyIndexedContent(report.getId())) {
+                rawContentText = new SolrIndexedText(report, report.getId());
+                sources.add(rawContentText);
+            }
         }
 
         /*
@@ -237,7 +245,7 @@ public class ExtractedTextViewer implements TextViewer {
 
     }
 
-    static private IndexedText getRawArtifactText(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
+    private IndexedText getRawArtifactText(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
         IndexedText rawArtifactText = null;
         if (null != artifact) {
             /*
@@ -251,11 +259,15 @@ public class ExtractedTextViewer implements TextViewer {
                 if (attribute != null) {
                     long artifactId = attribute.getValueLong();
                     BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(artifactId);
-                    rawArtifactText = new SolrIndexedText(associatedArtifact, associatedArtifact.getArtifactID());
+                    if (solrHasFullyIndexedContent(associatedArtifact.getArtifactID())) {
+                        rawArtifactText = new SolrIndexedText(associatedArtifact, associatedArtifact.getArtifactID());
+                    }
                 }
 
             } else {
-                rawArtifactText = new SolrIndexedText(artifact, artifact.getArtifactID());
+                if (solrHasFullyIndexedContent(artifact.getArtifactID())) {
+                    rawArtifactText = new SolrIndexedText(artifact, artifact.getArtifactID());
+                }
             }
         }
         return rawArtifactText;
@@ -443,25 +455,25 @@ public class ExtractedTextViewer implements TextViewer {
     private boolean solrHasFullyIndexedContent(Long objectId) {
         
         // check if we have cached this decision
-        if (objectId == cachedObjId) {
-            return chachedIsFullyIndexed;
+        if (solrCache.containsKey(objectId)) {
+            return solrCache.getCombination(objectId);
         }
         
-        cachedObjId = objectId;
         final Server solrServer = KeywordSearch.getServer();
         if (solrServer.coreIsOpen() == false) {
-            chachedIsFullyIndexed = false;
-            return chachedIsFullyIndexed;
+            solrCache.putCombination(objectId, false);
+            return false;
         }
 
         // verify that all of the chunks in the file have been indexed.
         try {
-            chachedIsFullyIndexed = solrServer.queryIsFullyIndexed(objectId);
-            return chachedIsFullyIndexed;
+            boolean isFullyIndexed = solrServer.queryIsFullyIndexed(objectId);
+            solrCache.putCombination(objectId, isFullyIndexed);
+            return isFullyIndexed;
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
             logger.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
-            chachedIsFullyIndexed = false;
-            return chachedIsFullyIndexed;
+            solrCache.putCombination(objectId, false);
+            return false;
         }
     }
 
@@ -691,6 +703,41 @@ public class ExtractedTextViewer implements TextViewer {
         @Override
         public void actionPerformed(ActionEvent e) {
             previousPage();
+        }
+    }
+    
+    /**
+     * This class maintains a cache of last 10 solrHasFullyIndexedContent() 
+     * requests sent to Solr. 
+     */
+    private class SolrIsFullyIndexedCache {
+
+        private static final int CACHE_SIZE = 10;
+        private final LinkedHashMap<Long, Boolean> cache;
+
+        private SolrIsFullyIndexedCache() {
+            this.cache = new LinkedHashMap<Long, Boolean>(CACHE_SIZE, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<Long, Boolean> eldest) {
+                    return size() > CACHE_SIZE;
+                }
+            };
+        }
+
+        public void putCombination(long key, boolean value) {
+            cache.put(key, value);
+        }
+
+        public Boolean getCombination(long key) {
+            return cache.get(key);
+        }
+
+        public void clearCache() {
+            cache.clear();
+        }
+        
+        public boolean containsKey(long key) {
+            return cache.containsKey(key);
         }
     }
 }
