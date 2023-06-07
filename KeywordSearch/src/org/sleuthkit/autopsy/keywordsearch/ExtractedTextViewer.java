@@ -22,8 +22,10 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +74,6 @@ public class ExtractedTextViewer implements TextViewer {
     
     // cache of last 10 solrHasFullyIndexedContent() requests sent to Solr. 
     private SolrIsFullyIndexedCache solrCache = null;
-    // ELTODO clear the cache when case closes
 
     /**
      * Constructs a text viewer that displays the indexed text associated with a
@@ -88,6 +89,10 @@ public class ExtractedTextViewer implements TextViewer {
         }
         
         solrCache = new SolrIsFullyIndexedCache();
+        // clear the cache when case opens or closes
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
+            solrCache.clearCache();
+        });
     }
 
     /**
