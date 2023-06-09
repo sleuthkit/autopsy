@@ -83,9 +83,11 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         changeNameButton = new javax.swing.JButton();
         displayNameLabel = new javax.swing.JLabel();
         javax.swing.JPanel padding = new javax.swing.JPanel();
+        javax.swing.JLabel timeStampToIncludeLabel = new javax.swing.JLabel();
         accessTimeCheckBox = new javax.swing.JCheckBox();
         createTimeCheckBox = new javax.swing.JCheckBox();
         modifiedTimeCheckBox = new javax.swing.JCheckBox();
+        javax.swing.JLabel timeStampNoteLabel = new javax.swing.JLabel();
         errorLabel = new javax.swing.JLabel();
         javax.swing.JPanel paddingBottom = new javax.swing.JPanel();
 
@@ -217,38 +219,56 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
         add(displayNamePanel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(accessTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.accessTimeCheckBox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(timeStampToIncludeLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.timeStampToIncludeLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 4;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
-        add(accessTimeCheckBox, gridBagConstraints);
+        add(timeStampToIncludeLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(createTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.createTimeCheckBox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(accessTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.accessTimeCheckBox.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 5;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
-        add(createTimeCheckBox, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(0, 15, 5, 5);
+        add(accessTimeCheckBox, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(modifiedTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.modifiedTimeCheckBox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(createTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.createTimeCheckBox.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 6;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        gridBagConstraints.insets = new java.awt.Insets(0, 15, 5, 5);
+        add(createTimeCheckBox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(modifiedTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.modifiedTimeCheckBox.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 7;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 15, 5, 5);
         add(modifiedTimeCheckBox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(timeStampNoteLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.timeStampNoteLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(10, 5, 5, 5);
+        add(timeStampNoteLabel, gridBagConstraints);
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.errorLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 7;
+        gridBagConstraints.gridy = 9;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -271,7 +291,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridy = 10;
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.weighty = 1.0;
         add(paddingBottom, gridBagConstraints);
