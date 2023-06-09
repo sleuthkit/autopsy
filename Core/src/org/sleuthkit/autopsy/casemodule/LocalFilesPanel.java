@@ -83,6 +83,9 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         changeNameButton = new javax.swing.JButton();
         displayNameLabel = new javax.swing.JLabel();
         javax.swing.JPanel padding = new javax.swing.JPanel();
+        accessTimeCheckBox = new javax.swing.JCheckBox();
+        createTimeCheckBox = new javax.swing.JCheckBox();
+        modifiedTimeCheckBox = new javax.swing.JCheckBox();
         errorLabel = new javax.swing.JLabel();
         javax.swing.JPanel paddingBottom = new javax.swing.JPanel();
 
@@ -214,11 +217,38 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
         add(displayNamePanel, gridBagConstraints);
 
+        org.openide.awt.Mnemonics.setLocalizedText(accessTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.accessTimeCheckBox.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(accessTimeCheckBox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(createTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.createTimeCheckBox.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(createTimeCheckBox, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(modifiedTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.modifiedTimeCheckBox.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(modifiedTimeCheckBox, gridBagConstraints);
+
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.errorLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 7;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -227,7 +257,6 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         add(errorLabel, gridBagConstraints);
 
         paddingBottom.setMinimumSize(new java.awt.Dimension(0, 0));
-        paddingBottom.setPreferredSize(new java.awt.Dimension(0, 0));
 
         javax.swing.GroupLayout paddingBottomLayout = new javax.swing.GroupLayout(paddingBottom);
         paddingBottom.setLayout(paddingBottomLayout);
@@ -242,7 +271,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 8;
         gridBagConstraints.fill = java.awt.GridBagConstraints.VERTICAL;
         gridBagConstraints.weighty = 1.0;
         add(paddingBottom, gridBagConstraints);
@@ -497,13 +526,16 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox accessTimeCheckBox;
     private javax.swing.JButton changeNameButton;
     private javax.swing.JButton clearButton;
+    private javax.swing.JCheckBox createTimeCheckBox;
     private javax.swing.JButton deleteButon;
     private javax.swing.JLabel displayNameLabel;
     private javax.swing.JLabel errorLabel;
     private javax.swing.JList<FileRecord> fileList;
     private javax.swing.JFileChooser localFileChooser;
+    private javax.swing.JCheckBox modifiedTimeCheckBox;
     private javax.swing.JButton selectButton;
     // End of variables declaration//GEN-END:variables
 }
