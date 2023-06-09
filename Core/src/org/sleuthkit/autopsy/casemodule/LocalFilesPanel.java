@@ -75,9 +75,14 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         clearButton = new javax.swing.JButton();
         selectedPathsScrollPane = new javax.swing.JScrollPane();
         selectedPaths = new javax.swing.JTextArea();
-        errorLabel = new javax.swing.JLabel();
         changeNameButton = new javax.swing.JButton();
         displayNameLabel = new javax.swing.JLabel();
+        timestampToIncludeLabel = new javax.swing.JLabel();
+        createTimeCheckBox = new javax.swing.JCheckBox();
+        accessTimeCheckBox = new javax.swing.JCheckBox();
+        modifiedTimeCheckBox = new javax.swing.JCheckBox();
+        jLabel2 = new javax.swing.JLabel();
+        errorLabel = new javax.swing.JLabel();
 
         localFileChooser.setApproveButtonText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonText")); // NOI18N
         localFileChooser.setApproveButtonToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.localFileChooser.approveButtonToolTipText")); // NOI18N
@@ -115,9 +120,6 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         selectedPaths.setToolTipText(org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.selectedPaths.toolTipText")); // NOI18N
         selectedPathsScrollPane.setViewportView(selectedPaths);
 
-        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.errorLabel.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(changeNameButton, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.changeNameButton.text")); // NOI18N
         changeNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -126,6 +128,31 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(displayNameLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.displayNameLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(timestampToIncludeLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.timestampToIncludeLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(createTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.createTimeCheckBox.text")); // NOI18N
+        createTimeCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createTimeCheckBoxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(accessTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.accessTimeCheckBox.text")); // NOI18N
+        accessTimeCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                accessTimeCheckBoxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(modifiedTimeCheckBox, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.modifiedTimeCheckBox.text")); // NOI18N
+        modifiedTimeCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                modifiedTimeCheckBoxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.jLabel2.text")); // NOI18N
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -142,13 +169,25 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                             .addComponent(clearButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(2, 2, 2))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(displayNameLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(changeNameButton))
-                            .addComponent(errorLabel))
+                        .addComponent(timestampToIncludeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(displayNameLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(changeNameButton)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(23, 23, 23)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(modifiedTimeCheckBox)
+                            .addComponent(accessTimeCheckBox)
+                            .addComponent(createTimeCheckBox)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel2)))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         jPanel1Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {clearButton, selectButton});
@@ -167,20 +206,40 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(changeNameButton)
                     .addComponent(displayNameLabel))
-                .addGap(13, 13, 13)
-                .addComponent(errorLabel)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timestampToIncludeLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(modifiedTimeCheckBox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(createTimeCheckBox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(accessTimeCheckBox)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(17, Short.MAX_VALUE))
         );
+
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalFilesPanel.class, "LocalFilesPanel.errorLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(errorLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(errorLabel))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -226,6 +285,18 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_changeNameButtonActionPerformed
 
+    private void createTimeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createTimeCheckBoxActionPerformed
+        
+    }//GEN-LAST:event_createTimeCheckBoxActionPerformed
+
+    private void accessTimeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_accessTimeCheckBoxActionPerformed
+
+    }//GEN-LAST:event_accessTimeCheckBoxActionPerformed
+
+    private void modifiedTimeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modifiedTimeCheckBoxActionPerformed
+
+    }//GEN-LAST:event_modifiedTimeCheckBoxActionPerformed
+
     /**
      * Clear the fields and undo any selection of files.
      */
@@ -259,6 +330,33 @@ final class LocalFilesPanel extends javax.swing.JPanel {
             pathsList.add(f.getAbsolutePath());
         }
         return pathsList;
+    }
+    
+    /**
+     * Get whether the createTimestampcheckbox has been checked or not
+     * @return  boolean if box was checked
+     */
+
+    Boolean getCreateTimestamps() {
+        return createTimeCheckBox.isSelected();
+    }
+
+    /**
+     * Get whether the ModifiedTimestampcheckbox has been checked or not
+     * @return  boolean if box was checked
+     */
+
+    Boolean getModifiedTimestamps() {
+        return modifiedTimeCheckBox.isSelected();
+    }
+
+    /**
+     * Get whether the accessTimestampcheckbox has been checked or not
+     * @return  boolean if box was checked
+     */
+
+    Boolean getAccessTimestamps() {
+        return accessTimeCheckBox.isSelected();
     }
 
     /**
@@ -312,14 +410,19 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox accessTimeCheckBox;
     private javax.swing.JButton changeNameButton;
     private javax.swing.JButton clearButton;
+    private javax.swing.JCheckBox createTimeCheckBox;
     private javax.swing.JLabel displayNameLabel;
     private javax.swing.JLabel errorLabel;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JFileChooser localFileChooser;
+    private javax.swing.JCheckBox modifiedTimeCheckBox;
     private javax.swing.JButton selectButton;
     private javax.swing.JTextArea selectedPaths;
     private javax.swing.JScrollPane selectedPathsScrollPane;
+    private javax.swing.JLabel timestampToIncludeLabel;
     // End of variables declaration//GEN-END:variables
 }
