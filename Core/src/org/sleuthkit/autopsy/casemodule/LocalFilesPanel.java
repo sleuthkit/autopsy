@@ -331,6 +331,33 @@ final class LocalFilesPanel extends javax.swing.JPanel {
                 .map(File::getAbsolutePath)
                 .collect(Collectors.toList());
     }
+    
+    /**
+     * Get whether the createTimestampcheckbox has been checked or not
+     * @return  boolean if box was checked
+     */
+
+    Boolean getCreateTimestamps() {
+        return createTimeCheckBox.isSelected();
+    }
+
+    /**
+     * Get whether the ModifiedTimestampcheckbox has been checked or not
+     * @return  boolean if box was checked
+     */
+
+    Boolean getModifiedTimestamps() {
+        return modifiedTimeCheckBox.isSelected();
+    }
+
+    /**
+     * Get whether the accessTimestampcheckbox has been checked or not
+     * @return  boolean if box was checked
+     */
+
+    Boolean getAccessTimestamps() {
+        return accessTimeCheckBox.isSelected();
+    }
 
     /**
      * Validates path to selected data source and displays warning if it is
