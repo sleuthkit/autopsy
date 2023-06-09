@@ -167,6 +167,9 @@ class RecentDocumentsByLnk extends Extract {
         String fileName = FilenameUtils.getName(normalizePathName);
         String filePath = FilenameUtils.getPath(normalizePathName);
         List<AbstractFile> sourceFiles;
+        if (filePath == null) {
+            return null;
+        }
         try {
             sourceFiles = currentCase.getSleuthkitCase().getFileManager().findFilesExactNameExactPath(dataSource, fileName, filePath);
             for (AbstractFile sourceFile : sourceFiles) {
