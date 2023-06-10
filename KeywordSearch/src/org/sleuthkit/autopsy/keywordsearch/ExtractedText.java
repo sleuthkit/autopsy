@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,14 +24,15 @@ import org.openide.util.NbBundle;
  * Interface to provide HTML text to display in ExtractedContentViewer. There is
  * a SOLR implementation of this that interfaces with SOLR to highlight the
  * keyword hits and a version that does not do markup so that you can simply
- * view the stored text.
+ * view the stored text. There is also an implementation that extracts text from
+ * a file using one os TextExtractors.
  */
 @NbBundle.Messages({
-    "IndexedText.errorMessage.errorGettingText=<span style='font-style:italic'>Error retrieving indexed text.</span>",
-    "IndexedText.warningMessage.knownFile=<span style='font-style:italic'>This file is a known file (based on MD5 hash) and does not have indexed text.</span>",
-    "IndexedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No indexed text for this file.</span>"
+    "ExtractedText.errorMessage.errorGettingText=<span style='font-style:italic'>Error retrieving text.</span>",
+    "ExtractedText.warningMessage.knownFile=<span style='font-style:italic'>This file is a known file (based on MD5 hash) and does not have indexed text.</span>",
+    "ExtractedText.warningMessage.noTextAvailable=<span style='font-style:italic'>No text available for this file.</span>"
 })
-interface IndexedText {
+interface ExtractedText {
 
     /**
      * @return text optionally marked up with the subset of HTML that Swing
