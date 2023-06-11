@@ -99,7 +99,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
 
     /**
      * Determine the isPreffered score for the content viewer which is
-     * displaying this panel. Score is depenedent on the score of the supported
+     * displaying this panel. Score is dependent on the score of the supported
      * TextViewers which exist.
      *
      * @param node

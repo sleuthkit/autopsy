@@ -18,20 +18,24 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SequenceWriter;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
@@ -57,7 +61,8 @@ import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
  * Exports CSV version of result nodes to a location selected by the user.
  */
 public final class ExportCSVAction extends AbstractAction {
-
+    // number of rows to sample for different columns
+    private static final int COLUMN_SAMPLING_ROW_NUM = 100;
     private static final Logger logger = Logger.getLogger(ExportCSVAction.class.getName());
     private final static String DEFAULT_FILENAME = "Results";
     private final static List<String> columnsToSkip = Arrays.asList(AbstractFilePropertyType.SCORE.toString(),
@@ -276,43 +281,64 @@ public final class ExportCSVAction extends AbstractAction {
             progress.start();
             progress.switchToIndeterminate();
 
-            try (BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), StandardCharsets.UTF_8))) {
-                // Write BOM
-                br.write('\ufeff');
+            if (this.isCancelled()) {
+                return null;
+            }
+
+            Set<String> columnHeaderStrs = new HashSet<>();
+            List<CsvSchema.Column> columnHeaders = new ArrayList<>();
+            int remainingRowsToSample = 0;
+            int columnIdx = 0;
+            for (Node nd: nodesToExport) {
+                // sample up to 100 rows
+                if (remainingRowsToSample >= COLUMN_SAMPLING_ROW_NUM) {
+                    break;
+                }
+                remainingRowsToSample++;
                 
-                // Write the header
-                List<String> headers = new ArrayList<>();
-                PropertySet[] sets = nodesToExport.iterator().next().getPropertySets();
-                for(PropertySet set : sets) {
-                    for (Property<?> prop : set.getProperties()) {
-                        if ( ! columnsToSkip.contains(prop.getDisplayName())) {
-                            headers.add(prop.getDisplayName());
+                for (PropertySet ps: nd.getPropertySets()) {
+                    for (Property prop: ps.getProperties()) {
+                        if (!columnHeaderStrs.contains(prop.getDisplayName()) && !columnsToSkip.contains(prop.getName())) {
+                            columnHeaderStrs.add(prop.getDisplayName());
+                            columnHeaders.add(new CsvSchema.Column(columnIdx, prop.getDisplayName()));
+                            columnIdx++;
                         }
                     }
                 }
-                br.write(listToCSV(headers));
-                
+            }
+            
+            if (this.isCancelled()) {
+                return null;
+            }
+            
+            CsvSchema schema = CsvSchema.builder()
+                    .addColumns(columnHeaders)
+                    .setUseHeader(true)
+                    .setNullValue("")
+                    .build();
+
+            CsvMapper mapper = new CsvMapper();
+            ObjectWriter writer = mapper.writerFor(Map.class).with(schema);
+            try (SequenceWriter seqWriter = writer.writeValues(outputFile)) {
                 // Write each line
                 Iterator<?> nodeIterator = nodesToExport.iterator();
                 while (nodeIterator.hasNext()) {
                     if (this.isCancelled()) {
-                        break;
+                        return null;
                     }
-                    
+
+                    Map<String, Object> rowMap = new HashMap<>();
                     Node node = (Node)nodeIterator.next();
-                    List<String> values = new ArrayList<>();
-                    sets = node.getPropertySets();
-                    for(PropertySet set : sets) {
+                    for(PropertySet set : node.getPropertySets()) {
                         for (Property<?> prop : set.getProperties()) {
-                            if ( ! columnsToSkip.contains(prop.getDisplayName())) {
-                                values.add(escapeQuotes(prop.getValue().toString()));
+                            if (!columnsToSkip.contains(prop.getName())) {
+                                rowMap.put(prop.getDisplayName(), prop.getValue());
                             }
                         }
                     }
-                    br.write(listToCSV(values));
+                    seqWriter.write(rowMap);
                 }
             }
-
             return null;
         }
         

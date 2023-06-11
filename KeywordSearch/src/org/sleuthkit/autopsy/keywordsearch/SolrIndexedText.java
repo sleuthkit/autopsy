@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +30,9 @@ import org.sleuthkit.datamodel.TskData;
 
 /**
  * A "source" for the extracted content viewer that displays "raw" (not
- * highlighted) indexed text for a file or an artifact.
+ * highlighted) Solr indexed text for a file or an artifact.
  */
-class RawText implements IndexedText {
+class SolrIndexedText implements ExtractedText {
 
     private int numPages = 0;
     private int currentPage = 0;
@@ -40,15 +40,12 @@ class RawText implements IndexedText {
     private final Content content;
     private final BlackboardArtifact blackboardArtifact;
     private final long objectId;
-    //keep last content cached
-    private String cachedString;
-    private int cachedChunk;
-    private static final Logger logger = Logger.getLogger(RawText.class.getName());
+    private static final Logger logger = Logger.getLogger(SolrIndexedText.class.getName());
 
     /**
-     * Construct a new RawText object for the given content and object id. This
+     * Construct a new SolrIndexedText object for the given content and object id. This
      * constructor needs both a content object and an object id because the
-     * RawText implementation attempts to provide useful messages in the text
+     * SolrIndexedText implementation attempts to provide useful messages in the text
      * content viewer for (a) the case where a file has not been indexed because
      * known files are being skipped and (b) the case where the file content has
      * not yet been indexed.
@@ -56,14 +53,14 @@ class RawText implements IndexedText {
      * @param content  Used to get access to file names and "known" status.
      * @param objectId Either a file id or an artifact id.
      */
-    RawText(Content content, long objectId) {
+    SolrIndexedText(Content content, long objectId) {
         this.content = content;
         this.blackboardArtifact = null;
         this.objectId = objectId;
         initialize();
     }
 
-    RawText(BlackboardArtifact bba, long objectId) {
+    SolrIndexedText(BlackboardArtifact bba, long objectId) {
         this.content = null;
         this.blackboardArtifact = bba;
         this.objectId = objectId;
@@ -155,18 +152,18 @@ class RawText implements IndexedText {
         } catch (SolrServerException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Couldn't get extracted text", ex); //NON-NLS
         }
-        return Bundle.IndexedText_errorMessage_errorGettingText();
+        return Bundle.ExtractedText_errorMessage_errorGettingText();
     }
 
     @NbBundle.Messages({
-        "RawText.FileText=File Text",
-        "RawText.ResultText=Result Text"})
+        "SolrIndexedText.FileText=File Text",
+        "SolrIndexedText.ResultText=Result Text"})
     @Override
     public String toString() {
         if (null != content) {
-            return Bundle.RawText_FileText();
+            return Bundle.SolrIndexedText_FileText();
         } else {
-            return Bundle.RawText_ResultText();
+            return Bundle.SolrIndexedText_ResultText();
         }
     }
 
@@ -239,43 +236,32 @@ class RawText implements IndexedText {
                 //we know it's AbstractFile, but do quick check to make sure if we index other objects in future
                 boolean isKnown = TskData.FileKnown.KNOWN.equals(((AbstractFile) content).getKnown());
                 if (isKnown && KeywordSearchSettings.getSkipKnown()) {
-                    msg = Bundle.IndexedText_warningMessage_knownFile();
+                    msg = Bundle.ExtractedText_warningMessage_knownFile();
                 }
             }
             if (msg == null) {
-                msg = Bundle.IndexedText_warningMessage_noTextAvailable();
+                msg = Bundle.ExtractedText_warningMessage_noTextAvailable();
             }
             return msg;
         }
 
         int chunkId = currentPage;
-
-        //check if cached
-        if (cachedString != null) {
-            if (cachedChunk == chunkId) {
-                return cachedString;
-            }
-        }
-
         //not cached
         String indexedText = solrServer.getSolrContent(this.objectId, chunkId);
         if (indexedText == null) {
             if (content instanceof AbstractFile) {
-                return Bundle.IndexedText_errorMessage_errorGettingText();
+                return Bundle.ExtractedText_errorMessage_errorGettingText();
             } else {
-                return Bundle.IndexedText_warningMessage_noTextAvailable();
+                return Bundle.ExtractedText_warningMessage_noTextAvailable();
             }
         } else if (indexedText.isEmpty()) {
-            return Bundle.IndexedText_warningMessage_noTextAvailable();
+            return Bundle.ExtractedText_warningMessage_noTextAvailable();
         }
 
-        cachedString = EscapeUtil.escapeHtml(indexedText).trim();
-        StringBuilder sb = new StringBuilder(cachedString.length() + 20);
-        sb.append("<pre>").append(cachedString).append("</pre>"); //NON-NLS
-        cachedString = sb.toString();
-        cachedChunk = chunkId;
-
-        return cachedString;
+        indexedText = EscapeUtil.escapeHtml(indexedText).trim();
+        StringBuilder sb = new StringBuilder(indexedText.length() + 20);
+        sb.append("<pre>").append(indexedText).append("</pre>"); //NON-NLS
+        return sb.toString();
     }
 
     /**
@@ -290,7 +276,7 @@ class RawText implements IndexedText {
     private String getArtifactText() throws NoOpenCoreException, SolrServerException {
         String indexedText = KeywordSearch.getServer().getSolrContent(this.objectId, 1);
         if (indexedText == null || indexedText.isEmpty()) {
-            return Bundle.IndexedText_errorMessage_errorGettingText();
+            return Bundle.ExtractedText_errorMessage_errorGettingText();
         }
 
         indexedText = EscapeUtil.escapeHtml(indexedText).trim();
