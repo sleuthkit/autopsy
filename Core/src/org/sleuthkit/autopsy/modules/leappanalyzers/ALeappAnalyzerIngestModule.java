@@ -86,7 +86,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     @NbBundle.Messages({
         "ALeappAnalyzerIngestModule.executable.not.found=aLeapp Executable Not Found.",
         "ALeappAnalyzerIngestModule.requires.windows=aLeapp module requires windows.",
-        "ALeappAnalyzerIngestModule.error.ileapp.file.processor.init=Failure to initialize aLeappProcessFile"})
+        "ALeappAnalyzerIngestModule.error.aleapp.file.processor.init=Failure to initialize aLeappProcessFile"})
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
@@ -102,7 +102,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         try {
             aLeappFileProcessor = new LeappFileProcessor(XMLFILE, ALeappAnalyzerModuleFactory.getModuleName(), ALEAPP, context);
         } catch (IOException | IngestModuleException | NoCurrentCaseException ex) {
-            throw new IngestModuleException(Bundle.ALeappAnalyzerIngestModule_error_ileapp_file_processor_init(), ex);
+            throw new IngestModuleException(Bundle.ALeappAnalyzerIngestModule_error_aleapp_file_processor_init(), ex);
         }
 
         try {
@@ -148,7 +148,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
                 writeErrorMsgToIngestInbox();
                 return ProcessResult.ERROR;
             }
-            aLeappPathsToProcess = loadIleappPathFile(tempOutputPath);
+            aLeappPathsToProcess = loadAleappPathFile(tempOutputPath);
             if (aLeappPathsToProcess.isEmpty()) {
                 logger.log(Level.SEVERE, String.format("Error getting file paths to search, list is empty"));
                 writeErrorMsgToIngestInbox();
@@ -178,7 +178,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         }
 
         statusHelper.switchToIndeterminate();
-        statusHelper.progress(Bundle.ILeappAnalyzerIngestModule_processing_iLeapp_results());
+        statusHelper.progress(Bundle.ALeappAnalyzerIngestModule_processing_aLeapp_results());
         extractFilesFromDataSource(dataSource, aLeappPathsToProcess, tempOutputPath);
         processALeappFs(dataSource, currentCase, statusHelper, tempOutputPath.toString());
 
@@ -219,7 +219,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
                 return;
             }
 
-            addILeappReportToReports(moduleOutputPath, currentCase);
+            addALeappReportToReports(moduleOutputPath, currentCase);
 
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Error when trying to execute aLeapp program against file %s", aLeappFile.getLocalAbsPath()), ex);
@@ -227,7 +227,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         }
 
         if (context.dataSourceIngestIsCancelled()) {
-            logger.log(Level.INFO, "ILeapp Analyser ingest module run was canceled"); //NON-NLS
+            logger.log(Level.INFO, "aLeapp Analyser ingest module run was canceled"); //NON-NLS
             return;
         }
 
@@ -262,7 +262,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
                 return;
             }
 
-            addILeappReportToReports(moduleOutputPath, currentCase);
+            addALeappReportToReports(moduleOutputPath, currentCase);
 
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Error when trying to execute aLeapp program against file system"), ex);
@@ -270,7 +270,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         }
 
         if (context.dataSourceIngestIsCancelled()) {
-            logger.log(Level.INFO, "ILeapp Analyser ingest module run was canceled"); //NON-NLS
+            logger.log(Level.INFO, "aLeapp Analyser ingest module run was canceled"); //NON-NLS
             return;
         }
 
@@ -335,7 +335,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
      * Find the index.html file in the aLeapp output directory so it can be
      * added to reports
      */
-    private void addILeappReportToReports(Path aLeappOutputDir, Case currentCase) {
+    private void addALeappReportToReports(Path aLeappOutputDir, Case currentCase) {
         List<String> allIndexFiles = new ArrayList<>();
 
         try (Stream<Path> walk = Files.walk(aLeappOutputDir)) {
@@ -363,7 +363,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
      * Reads the aLeapp paths file to get the paths that we want to extract
      *
      */
-    private List<String> loadIleappPathFile(Path moduleOutputPath) throws FileNotFoundException, IOException {
+    private List<String> loadAleappPathFile(Path moduleOutputPath) throws FileNotFoundException, IOException {
         List<String> aLeappPathsToProcess = new ArrayList<>();
 
         Path filePath = Paths.get(moduleOutputPath.toString(), ALEAPP_PATHS_FILE);
