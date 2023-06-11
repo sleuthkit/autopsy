@@ -221,6 +221,13 @@ public final class LeappFileProcessor {
 
     }
     
+    /**
+     * Generates a key trimmed and case-insensitive that can be used for a
+     * case-insensitive lookup in a map.
+     *
+     * @param origKey The original key.
+     * @return The normalized key.
+     */
     private static String normalizeKey(String origKey) {
         return StringUtils.defaultString(origKey).trim().toLowerCase();
     }
@@ -909,12 +916,13 @@ public final class LeappFileProcessor {
         if (MapUtils.isEmpty(columnIndexes) || CollectionUtils.isEmpty(lineValues)
                 || (lineValues.size() == 1 && StringUtils.isEmpty(lineValues.get(0)))) {
             return Collections.emptyList();
-        } else if (lineValues.size() != columnIndexes.size()) {
-            logger.log(Level.WARNING, String.format(
-                    "Row at line number %d in file %s has %d columns when %d were expected based on the header row.",
-                    lineNum, fileName, lineValues.size(), columnIndexes.size()));
-            return Collections.emptyList();
-        }
+        } 
+//        else if (lineValues.size() < columnIndexes.size()) {
+//            logger.log(Level.WARNING, String.format(
+//                    "Row at line number %d in file %s has %d columns when %d were expected based on the header row.",
+//                    lineNum, fileName, lineValues.size(), columnIndexes.size()));
+//            return Collections.emptyList();
+//        }
 
         List<BlackboardAttribute> attrsToRet = new ArrayList<>();
         for (TsvColumn colAttr : attrList) {
@@ -938,11 +946,12 @@ public final class LeappFileProcessor {
             String formattedValue = formatValueBasedOnAttrType(colAttr, value);
 
             BlackboardAttribute attr = getAttribute(colAttr.getAttributeType(), formattedValue, fileName);
-            if (attr == null) {
+            if (attr != null) {
+                attrsToRet.add(attr);
+            } else if (colAttr.isRequired()) {
                 logger.log(Level.WARNING, String.format("Blackboard attribute could not be parsed column %s at line %d in file %s.  Omitting row.", colAttr.getColumnName(), lineNum, fileName));
                 return Collections.emptyList();
             }
-            attrsToRet.add(attr);
         }
 
         if (tsvFileArtifactComments.containsKey(normalizeKey(fileName))) {
