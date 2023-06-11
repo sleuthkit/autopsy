@@ -36,6 +36,14 @@
             </ArtifactName>
         </FileName>
 
+        <FileName filename="accounts ce 10.tsv" description="Accounts_ce">
+            <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="accounts ce 0">
+                <AttributeName attributename="TSK_USER_ID" columnName="Name" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="Type" required="yes" />
+                <AttributeName attributename="TSK_PASSWORD" columnName="Password" required="yes" />
+            </ArtifactName>
+        </FileName>
+
         <FileName filename="authtokens 0.tsv" description="Authtokens">
             <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="Authtokens">
                 <AttributeName attributename="null" columnName="ID" required="no" />
@@ -47,6 +55,14 @@
         </FileName>
 
         <FileName filename="accounts de 0.tsv" description="Accounts_de">
+            <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="accounts de 0">
+                <AttributeName attributename="null" columnName="Last password entry" required="no" />
+                <AttributeName attributename="TSK_USER_ID" columnName="Name" required="yes" />
+                <AttributeName attributename="TSK_PROG_NAME" columnName="Type" required="yes" />
+            </ArtifactName>
+        </FileName>
+
+        <FileName filename="accounts de 10.tsv" description="Accounts_de">
             <ArtifactName artifactname="TSK_SERVICE_ACCOUNT" comment="accounts de 0">
                 <AttributeName attributename="null" columnName="Last password entry" required="no" />
                 <AttributeName attributename="TSK_USER_ID" columnName="Name" required="yes" />
@@ -173,7 +189,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Chrome - History.tsv" description="Chrome History">
+    <FileName filename="Chrome - Web History.tsv" description="Chrome History">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Chrome History">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
@@ -246,7 +262,7 @@
         </ArtifactName>
     </FileName>
 
-    <FileName filename="Edge - History.tsv" description="Edge History">
+    <FileName filename="Edge - Web History.tsv" description="Edge History">
         <ArtifactName artifactname="TSK_WEB_HISTORY" comment="Edge History">
             <AttributeName attributename="TSK_DATETIME_ACCESSED" columnName="Last Visit Time" required="yes"/>
             <AttributeName attributename="TSK_URL" columnName="URL" required="yes"/>
@@ -329,6 +345,12 @@
         </ArtifactName>
     </FileName>
     
+    <FileName filename="installed apps - GMS_0.tsv" description="Installed Apps">
+        <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Installed Apps GSM">
+            <AttributeName attributename="TSK_PROG_NAME" columnName="Bundle ID" required="yes" />
+        </ArtifactName>
+    </FileName>
+
     <FileName filename="installed apps vending.tsv" description="Installed Apps (Vending)">
         <ArtifactName artifactname="TSK_INSTALLED_PROG" comment="Installed Apps (Vending)">
             <AttributeName attributename="TSK_DATETIME" columnName="First Download" required="yes" />
