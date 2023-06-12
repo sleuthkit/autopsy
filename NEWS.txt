@@ -1,3 +1,27 @@
+---------------- VERSION 4.21.0  --------------
+General
+- Update Java to version 17
+
+Recent Activity Updates:
+- Check For Malicious Chrome Extensions
+
+Ingest Module Updates:
+- Update aLeapp/iLeapp executables.
+- Inline Keyword Search
+
+GUI Updates:
+- Add has attachments flag for email's
+
+Bugs:
+- Fix path with lnk files
+- Fix exporting of CSV files
+
+Misc:
+- Add timestamps when adding localfiles as a data source
+- Update JNA Version
+- Update SQLite library version
+- Add export for Pasco
+
 ---------------- VERSION 4.20.0  --------------
 Recent Activity Updates:
 - Added Favicons, Profiles and Extensions to Chromium Browsers
