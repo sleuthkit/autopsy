@@ -67,8 +67,8 @@
 
         <FileName filename="Bluetooth paired.tsv" description="Bluetooth Paired">
             <ArtifactName artifactname="TSK_BLUETOOTH_PAIRING" comment="Bluetooth Paired">
-                <AttributeName attributename="TSK_DATETIME" columnName="Last Seen Time" required="yes" />
-                <AttributeName attributename="TSK_MAC_ADDRESS" columnName="MAC Address" required="yes" />
+                <AttributeName attributename="TSK_DATETIME" columnName="Last Seen Time" required="no" />
+                <AttributeName attributename="TSK_MAC_ADDRESS" columnName="MAC Address" required="no" />
                 <AttributeName attributename="TSK_DEVICE_NAME" columnName="Name Key" required="yes" />
                 <AttributeName attributename="null" columnName="Name" required="no" />
                 <AttributeName attributename="null" columnName="Device Product ID" required="no" />
@@ -766,10 +766,10 @@
                 <AttributeName attributename="null" columnName="Read Timestamp" required="no" />
                 <AttributeName attributename="TSK_TEXT" columnName="Message" required="yes" />
                 <AttributeName attributename="null" columnName="Service" required="no" />
-                <AttributeName attributename="TSK_DIRECTION" columnName="Message Direction" required="no" />
+                <AttributeName attributename="null" columnName="Message Direction" required="no" />
                 <AttributeName attributename="null" columnName="Message Sent" required="no" />
                 <AttributeName attributename="null" columnName="Message Delivered" required="no" />
-                <AttributeName attributename="TSK_READ_STATUS" columnName="Message Read" required="no" />
+                <AttributeName attributename="null" columnName="Message Read" required="no" />
                 <AttributeName attributename="null" columnName="Account" required="no" />
                 <AttributeName attributename="null" columnName="Account Login" required="no" />
                 <AttributeName attributename="null" columnName="Chat" required="no" />
