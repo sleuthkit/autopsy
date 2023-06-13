@@ -90,7 +90,7 @@ The following shows a sample image containing text:
 
 \image html keyword-search-ocr-image.png
 
-The "Indexed Text" tab shows the results when running the keyword search module with the OCR option enabled. If we were to use Keyword Search to look for the word "forensics", this file would be a match.
+The "Extracted Text" tab shows the results when running the keyword search module with the OCR option enabled. If we were to use Keyword Search to look for the word "forensics", this file would be a match.
 
 \image html keyword-search-ocr-indexed-text.png
 
@@ -119,7 +119,7 @@ The language files will now be supported when OCR is enabled in the Keyword Sear
 
 The Keyword Search module will save the search results regardless whether the search is performed by the ingest process, or manually by the user. The saved results are available in the Directory Tree in the left hand side panel.
 
-The keyword results will appear in the tree under "Keyword Hits". Each keyword search term will display the number of matches, and can be expanded to show the matches. From here, clicking on one of the matches will show a list of files on the right side of the screen. Select a file and go to the Indexed Text tab to see exactly where the matches occurred in the file.
+The keyword results will appear in the tree under "Keyword Hits". Each keyword search term will display the number of matches, and can be expanded to show the matches. From here, clicking on one of the matches will show a list of files on the right side of the screen. Select a file and go to the "Extracted Text" tab to see exactly where the matches occurred in the file.
 
 \image html keyword_results.PNG
 
