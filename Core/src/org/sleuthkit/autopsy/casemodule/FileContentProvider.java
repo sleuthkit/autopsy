@@ -34,4 +34,10 @@ public interface FileContentProvider {
      * @return The created content provider or null if arguments are invalid.
      */
     ContentProvider load(Map<String, Object> args);
+    
+    /**
+     * Returns the uniquely identifying name of this FileContentProvider.
+     * @return The unique name.
+     */
+    String getName();
 }

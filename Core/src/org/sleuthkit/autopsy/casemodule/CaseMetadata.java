@@ -120,7 +120,9 @@ public final class CaseMetadata {
      * Fields from schema version 5
      */
     private static final String SCHEMA_VERSION_SIX = "6.0";
-    private final static String CONTENT_PROVIDER_ELEMENT_NAME = "ContentProviderArgs";
+    private final static String CONTENT_PROVIDER_ELEMENT_NAME = "ContentProvider";
+    private final static String CONTENT_PROVIDER_ARGS_ELEMENT_NAME = "Args";
+    private final static String CONTENT_PROVIDER_NAME_ELEMENT_NAME = "Name";
     private final static String CONTENT_PROVIDER_ARG_DEFAULT_KEY = "DEFAULT";
     
     /*
@@ -142,6 +144,7 @@ public final class CaseMetadata {
     private String createdByVersion;
     private CaseMetadata originalMetadata = null; // For portable cases
     private ContentProvider contentProvider;
+    private String contentProviderName;
     private Map<String, Object> contentProviderArgs;
 
     /**
@@ -493,7 +496,17 @@ public final class CaseMetadata {
         // serialize content provider args if they exist
         Element contentProviderEl = doc.createElement(CONTENT_PROVIDER_ELEMENT_NAME);
         rootElement.appendChild(contentProviderEl);
-        serializeContentProviderArgs(doc, this.contentProviderArgs, contentProviderEl);
+        
+        Element contentProviderNameEl = doc.createElement(CONTENT_PROVIDER_NAME_ELEMENT_NAME);
+        if (this.contentProviderName != null) {
+            contentProviderNameEl.setTextContent(this.contentProviderName);   
+        }
+        contentProviderEl.appendChild(contentProviderNameEl);
+        
+        Element contentProviderArgsEl = doc.createElement(CONTENT_PROVIDER_ARGS_ELEMENT_NAME);
+        contentProviderEl.appendChild(contentProviderArgsEl);
+        
+        serializeContentProviderArgs(doc, this.contentProviderArgs, contentProviderArgsEl);
             
         /*
          * Create the children of the case element.
@@ -582,15 +595,19 @@ public final class CaseMetadata {
             }
             
             // load content provider args
-            NodeList contentProviderArgsNL = rootElement.getElementsByTagName(CONTENT_PROVIDER_ELEMENT_NAME);
-            if (contentProviderArgsNL != null && contentProviderArgsNL.getLength() > 0 && contentProviderArgsNL.item(0) instanceof Element) {
-                Object contentProviderArgs = loadContentProviderArgs((Element) contentProviderArgsNL.item(0));
+            Element contentProviderEl = getChildElOrNull(rootElement, CONTENT_PROVIDER_ELEMENT_NAME);
+            if (contentProviderEl != null) {
+                Element contentProviderNameEl = getChildElOrNull(contentProviderEl, CONTENT_PROVIDER_NAME_ELEMENT_NAME);
+                this.contentProviderName = contentProviderNameEl != null ? contentProviderNameEl.getTextContent() : null;
+                Element contentProviderArgsEl =  getChildElOrNull(contentProviderEl, CONTENT_PROVIDER_ARGS_ELEMENT_NAME);
+                Object contentProviderArgs = loadContentProviderArgs(contentProviderArgsEl);
                 this.contentProviderArgs = (contentProviderArgs instanceof Map) ? 
-                        (Map<String, Object>) contentProviderArgs : 
-                        Collections.singletonMap(CONTENT_PROVIDER_ARG_DEFAULT_KEY, contentProviderArgs);
-                this.contentProvider = loadContentProvider(this.contentProviderArgs);
+                    (Map<String, Object>) contentProviderArgs : 
+                    Collections.singletonMap(CONTENT_PROVIDER_ARG_DEFAULT_KEY, contentProviderArgs);
+                this.contentProvider = loadContentProvider(contentProviderName, this.contentProviderArgs);
             } else {
                 this.contentProviderArgs = null;
+                this.contentProviderName = null;
                 this.contentProvider = null;
             }
              
@@ -662,6 +679,15 @@ public final class CaseMetadata {
 
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             throw new CaseMetadataException(String.format("Error reading from case metadata file %s", metadataFilePath), ex);
+        }
+    }
+    
+    private Element getChildElOrNull(Element parent, String childTag) {
+        NodeList nl = parent.getElementsByTagName(childTag);
+        if (nl != null && nl.getLength() > 0 && nl.item(0) instanceof Element) {
+            return (Element) nl.item(0);
+        } else {
+            return null;
         }
     }
     
@@ -753,14 +779,20 @@ public final class CaseMetadata {
      * Attempts to load a content provider for the provided arguments. Returns
      * null if no content provider for the arguments can be identified.
      *
+     * @param providerName The name of the content provider.
      * @param args The arguments.
      * @return The content provider or null if no content provider can be
      * provisioned for the arguments
      */
-    private ContentProvider loadContentProvider(Map<String, Object> args) {
+    private ContentProvider loadContentProvider(String providerName, Map<String, Object> args) {
         Collection<? extends FileContentProvider> customContentProviders = Lookup.getDefault().lookupAll(FileContentProvider.class);
         if (customContentProviders != null) {
             for (FileContentProvider customProvider : customContentProviders) {
+                // ensure the provider matches the name
+                if (customProvider == null || !StringUtils.equalsIgnoreCase(providerName, customProvider.getName())) {
+                    continue;
+                }
+                
                 ContentProvider contentProvider = customProvider.load(args);
                 if (contentProvider != null) {
                     return contentProvider;
