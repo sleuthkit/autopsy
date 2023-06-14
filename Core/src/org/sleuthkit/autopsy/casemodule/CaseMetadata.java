@@ -117,7 +117,7 @@ public final class CaseMetadata {
     private final static String ORIGINAL_CASE_ELEMENT_NAME = "OriginalCase"; //NON-NLS  
 
     /*
-     * Fields from schema version 5
+     * Fields from schema version 6
      */
     private static final String SCHEMA_VERSION_SIX = "6.0";
     private final static String CONTENT_PROVIDER_ELEMENT_NAME = "ContentProvider";
