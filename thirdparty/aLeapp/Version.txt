@@ -1,0 +1,1 @@
+ALEAPP v3.1.6: Android Logs, Events, and Protobuf Parser

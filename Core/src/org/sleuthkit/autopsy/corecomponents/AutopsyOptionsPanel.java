@@ -506,7 +506,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 confLoaded = true;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Can't read current Jvm max memory setting from file", ex);
-                memField.setEnabled(false);
                 heapDumpFileField.setText(DEFAULT_HEAP_DUMP_FILE_FIELD);
             }
             memField.setText(initialMemValue);
