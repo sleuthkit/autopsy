@@ -11,13 +11,15 @@ Ingest Module Updates:
 
 GUI Updates:
 - Add has attachments flag for email's
+- Add ability to delete a logical file/path from logical file
+  from the DSP before it is run.
+- Add ability to add timestamps when adding localfiles as a data source
 
 Bugs:
-- Fix path with lnk files
+- Fix path for lnk files
 - Fix exporting of CSV files
 
 Misc:
-- Add timestamps when adding localfiles as a data source
 - Update JNA Version
 - Update SQLite library version
 - Add export for Pasco
