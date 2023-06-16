@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -157,6 +158,10 @@ public class ScoreContent implements AutopsyVisitableItem {
             Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
             Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED
     );
+    private static final Set<String> CASE_EVENTS_OF_INTEREST_STRS = CASE_EVENTS_OF_INTEREST.stream()
+            .map(evt -> evt.name())
+            .collect(Collectors.toSet());
+    
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestModuleEvent.CONTENT_CHANGED);
 
@@ -186,7 +191,7 @@ public class ScoreContent implements AutopsyVisitableItem {
                 if (evt.getNewValue() == null && onRemove != null) {
                     onRemove.run();
                 }
-            } else if (CASE_EVENTS_OF_INTEREST.contains(eventType)) {
+            } else if (CASE_EVENTS_OF_INTEREST_STRS.contains(eventType)) {
                 // only refresh if there is a current case.
                 try {
                     Case.getCurrentCaseThrows();
@@ -454,12 +459,13 @@ public class ScoreContent implements AutopsyVisitableItem {
                 AtomicLong retVal = new AtomicLong(0L);
                 AtomicReference<SQLException> exRef = new AtomicReference(null);
                 
-                String query = " COUNT(tsk_aggregate_score.obj_id) AS count FROM tsk_aggregate_score WHERE " 
-                        + getScoreFilter(filter) 
-                        + " AND " + ((datasourceObjId > 0) ? " tsk_aggregate_score.data_source_obj_id = " + datasourceObjId : "") 
-                        + " AND tsk_aggregate_score_obj_id.obj_id IN "
-                        + " (SELECT tsk_files.obj_id AS obj_id FROM tsk_files UNION "
-                        + " SELECT tsk_data_artifacts.artifact_obj_id AS obj_id FROM tsk_data_artifacts) ";
+                String query = " COUNT(tsk_aggregate_score.obj_id) AS count FROM tsk_aggregate_score WHERE\n" 
+                        + getScoreFilter(filter) + "\n"
+                        + ((datasourceObjId > 0) ? "AND tsk_aggregate_score.data_source_obj_id = \n" + datasourceObjId : "") 
+                        + " AND tsk_aggregate_score.obj_id IN\n"
+                        + " (SELECT tsk_files.obj_id AS obj_id FROM tsk_files UNION\n"
+                        + "     SELECT blackboard_artifacts.artifact_obj_id AS obj_id FROM blackboard_artifacts WHERE blackboard_artifacts.artifact_type_id IN\n"
+                        + "         (SELECT artifact_type_id FROM blackboard_artifact_types WHERE category_type = " + Category.DATA_ARTIFACT.getID() + ")) ";
                 sleuthkitCase.getCaseDbAccessManager().select(query, (rs) -> {
                     try {
                         if (rs.next()) {
