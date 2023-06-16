@@ -57,10 +57,11 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.Score.Priority;
+import org.sleuthkit.datamodel.Score.Significance;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  * Provides information to populate the results viewer for data in the views
@@ -114,6 +115,19 @@ public class ScoreDAO extends AbstractDAO {
                 && (paramsDsId == null || evtDsId == null
                 || Objects.equals(paramsDsId, evtDsId));
     }
+    
+    private static String getScoreFilter(ScoreViewFilter filter) throws IllegalArgumentException {
+        switch (filter) {
+            case SUSPICIOUS:
+                return " tsk_aggregate_score.significance = " + Significance.LIKELY_NOTABLE.getId() + 
+                        " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
+            case BAD:
+                return " tsk_aggregate_score.significance = " + Significance.NOTABLE.getId() + 
+                        " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
+            default:
+                throw new IllegalArgumentException(MessageFormat.format("Unsupported filter type to get suspect content: {0}", filter));
+        }
+    }
 
     /**
      * Returns counts for deleted content categories.
@@ -127,7 +141,6 @@ public class ScoreDAO extends AbstractDAO {
      * @throws ExecutionException
      */
     public TreeResultsDTO<ScoreViewSearchParams> getScoreContentCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        TODO;
         Set<ScoreViewFilter> indeterminateFilters = new HashSet<>();
         for (DAOEvent evt : this.treeCounts.getEnqueued()) {
             if (evt instanceof ScoreContentEvent) {
@@ -146,8 +159,13 @@ public class ScoreDAO extends AbstractDAO {
 
         String queryStr = Stream.of(ScoreViewFilter.values())
                 .map((filter) -> {
-                    String clause = getFileScoreWhereStatement(filter, dataSourceId);
-                    return MessageFormat.format("    (SELECT COUNT(*) FROM tsk_files WHERE {0}) AS {1}", clause, filter.name());
+                    return " SELECT COUNT(tsk_aggregate_score.obj_id) AS " + filter.name() + " FROM tsk_aggregate_score WHERE\n" 
+                        + getScoreFilter(filter) + "\n"
+                        + ((dataSourceId == null) ? "AND tsk_aggregate_score.data_source_obj_id = " + dataSourceId + "\n" : "") 
+                        + " AND tsk_aggregate_score.obj_id IN\n"
+                        + " (SELECT tsk_files.obj_id AS obj_id FROM tsk_files UNION\n"
+                        + "     SELECT blackboard_artifacts.artifact_obj_id AS obj_id FROM blackboard_artifacts WHERE blackboard_artifacts.artifact_type_id IN\n"
+                        + "         (SELECT artifact_type_id FROM blackboard_artifact_types WHERE category_type = " + Category.DATA_ARTIFACT.getID() + ")) ";
                 })
                 .collect(Collectors.joining(", \n"));
 
@@ -195,41 +213,41 @@ public class ScoreDAO extends AbstractDAO {
     private SearchResultsDTO fetchScoreResults(String originalWhereStatement, String displayName, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
         TODO;
         // Add offset and/or paging, if specified
-        String modifiedWhereStatement = originalWhereStatement
-                + " ORDER BY obj_id ASC"
-                + (maxResultCount != null && maxResultCount > 0 ? " LIMIT " + maxResultCount : "")
-                + (startItem > 0 ? " OFFSET " + startItem : "");
-
-        List<AbstractFile> files = getCase().findAllFilesWhere(modifiedWhereStatement);
-
-        long totalResultsCount;
-        // get total number of results
-        if ((startItem == 0) // offset is zero AND
-                && ((maxResultCount != null && files.size() < maxResultCount) // number of results is less than max
-                || (maxResultCount == null))) { // OR max number of results was not specified
-            totalResultsCount = files.size();
-        } else {
-            // do a query to get total number of results
-            totalResultsCount = getCase().countFilesWhere(originalWhereStatement);
-        }
-
-        List<RowDTO> fileRows = new ArrayList<>();
-        for (AbstractFile file : files) {
-
-            List<Object> cellValues = FileSystemColumnUtils.getCellValuesForAbstractFile(file);
-
-            fileRows.add(new FileRowDTO(
-                    file,
-                    file.getId(),
-                    file.getName(),
-                    file.getNameExtension(),
-                    MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
-                    file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
-                    file.getType(),
-                    cellValues));
-        }
-
-        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
+//        String modifiedWhereStatement = originalWhereStatement
+//                + " ORDER BY obj_id ASC"
+//                + (maxResultCount != null && maxResultCount > 0 ? " LIMIT " + maxResultCount : "")
+//                + (startItem > 0 ? " OFFSET " + startItem : "");
+//
+//        List<AbstractFile> files = getCase().findAllFilesWhere(modifiedWhereStatement);
+//
+//        long totalResultsCount;
+//        // get total number of results
+//        if ((startItem == 0) // offset is zero AND
+//                && ((maxResultCount != null && files.size() < maxResultCount) // number of results is less than max
+//                || (maxResultCount == null))) { // OR max number of results was not specified
+//            totalResultsCount = files.size();
+//        } else {
+//            // do a query to get total number of results
+//            totalResultsCount = getCase().countFilesWhere(originalWhereStatement);
+//        }
+//
+//        List<RowDTO> fileRows = new ArrayList<>();
+//        for (AbstractFile file : files) {
+//
+//            List<Object> cellValues = FileSystemColumnUtils.getCellValuesForAbstractFile(file);
+//
+//            fileRows.add(new FileRowDTO(
+//                    file,
+//                    file.getId(),
+//                    file.getName(),
+//                    file.getNameExtension(),
+//                    MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
+//                    file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
+//                    file.getType(),
+//                    cellValues));
+//        }
+//
+//        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
     }
 
     /**
@@ -381,50 +399,6 @@ public class ScoreDAO extends AbstractDAO {
         } else {
             return false;
         }
-    }
-
-    /**
-     * Clears relevant cache entries from cache based on digest of autopsy
-     * events.
-     *
-     * @param extFilters The set of affected extension filters.
-     * @param deletedContentFilters The set of affected deleted content filters.
-     * @param mimeType The affected mime type or null.
-     * @param sizeFilter The affected size filter or null.
-     * @param dsId The file object id.
-     * @param dataSourceAdded A data source was added.
-     *
-     * @return The list of affected dao events.
-     */
-    private Set<DAOEvent> getDAOEvents(Set<FileExtSearchFilter> extFilters,
-            Set<DeletedContentFilter> deletedContentFilters,
-            String mimeType,
-            FileSizeFilter sizeFilter,
-            boolean invalidateScore,
-            Long dsId,
-            boolean dataSourceAdded) {
-
-        List<DAOEvent> daoEvents = new ArrayList<>();
-        if (invalidateScore) {
-            daoEvents.add(new ScoreContentEvent(null, dsId));
-        }
-
-        List<TreeEvent> treeEvents = this.treeCounts.enqueueAll(daoEvents).stream()
-                .map(daoEvt -> new TreeEvent(createTreeItem(daoEvt, TreeDisplayCount.INDETERMINATE), false))
-                .collect(Collectors.toList());
-
-        // data source added events are not necessarily fired before ingest completed/cancelled, so don't handle dataSourceAdded events with delay.
-        Set<DAOEvent> forceRefreshEvents = (dataSourceAdded)
-                ? getFileViewRefreshEvents(dsId)
-                : Collections.emptySet();
-
-        List<TreeEvent> forceRefreshTreeEvents = forceRefreshEvents.stream()
-                .map(evt -> new TreeEvent(createTreeItem(evt, TreeDisplayCount.UNSPECIFIED), true))
-                .collect(Collectors.toList());
-
-        return Stream.of(daoEvents, treeEvents, forceRefreshEvents, forceRefreshTreeEvents)
-                .flatMap(lst -> lst.stream())
-                .collect(Collectors.toSet());
     }
 
 
