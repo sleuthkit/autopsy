@@ -143,14 +143,16 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                 // either way, add in reports node
                 nodes.add(new Reports());
             } else {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                 // data source by type view
                 nodes = Arrays.asList(
                         new DataSourcesByType(),
-                        new Views(Case.getCurrentCaseThrows().getSleuthkitCase()),
+                        new Views(skCase),
                         new DataArtifacts(),
                         new AnalysisResults(),
-                        new OsAccounts(Case.getCurrentCaseThrows().getSleuthkitCase()),
+                        new OsAccounts(skCase),
                         new Tags(),
+                        new ScoreContent(skCase),
                         new Reports()
                 );
             }

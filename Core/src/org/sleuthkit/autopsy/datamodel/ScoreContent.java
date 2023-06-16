@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.AbstractNode;
@@ -46,6 +49,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -199,34 +203,57 @@ public class ScoreContent implements AutopsyVisitableItem {
     }
 
     /**
-     * The sql where statement for the files.
+     * The sql where statement for the content.
+     * @param filter The filter type.
+     * @param objIdAlias The alias for the object id of the content. Must be sql safe.
+     * @param dsIdAlias The alias for the data source id.  Must be sql safe.
+     * @param filteringDSObjId The data source object id to filter on if > 0.
+     * @return The sql where statement.
+     * @throws IllegalArgumentException 
+     */
+    private static String getFilter(ScoreContent.ScoreContentFilter filter, String objIdAlias, String dsIdAlias, long filteringDSObjId) throws IllegalArgumentException {
+        String aggregateScoreFilter = getScoreFilter(filter);
+        String query = " " + objIdAlias + " IN (SELECT tsk_aggregate_score.obj_id FROM tsk_aggregate_score WHERE " + aggregateScoreFilter + ") ";
+
+        if (filteringDSObjId > 0) {
+            query += " AND " + dsIdAlias + " = " + filteringDSObjId;
+        }
+        return query;
+    }
+
+    private static String getScoreFilter(ScoreContentFilter filter) throws IllegalArgumentException {
+        switch (filter) {
+            case SUS_ITEM_FILTER:
+                return " tsk_aggregate_score.significance = " + Significance.LIKELY_NOTABLE.getId() + 
+                        " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
+            case BAD_ITEM_FILTER:
+                return " tsk_aggregate_score.significance = " + Significance.NOTABLE.getId() + 
+                        " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
+            default:
+                throw new IllegalArgumentException(MessageFormat.format("Unsupported filter type to get suspect content: {0}", filter));
+        }
+    }
+    
+    /**
+     * Returns a sql where statement for files.
      * @param filter The filter type.
      * @param filteringDSObjId The data source object id to filter on if > 0.
      * @return The sql where statement.
      * @throws IllegalArgumentException 
      */
-    static private String getFileFilter(ScoreContent.ScoreContentFilter filter, long filteringDSObjId) throws IllegalArgumentException {
-        String aggregateScoreFilter = "";
-        switch (filter) {
-            case SUS_ITEM_FILTER:
-                aggregateScoreFilter = " tsk_aggregate_score.significance = " + Significance.LIKELY_NOTABLE.getId() + " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
-
-                break;
-            case BAD_ITEM_FILTER:
-                aggregateScoreFilter = " tsk_aggregate_score.significance = " + Significance.NOTABLE.getId() + " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
-                break;
-
-            default:
-                throw new IllegalArgumentException(MessageFormat.format("Unsupported filter type to get suspect content: {0}", filter));
-
-        }
-
-        String query = " obj_id IN (SELECT tsk_aggregate_score.obj_id FROM tsk_aggregate_score WHERE " + aggregateScoreFilter + ") ";
-
-        if (filteringDSObjId > 0) {
-            query += " AND data_source_obj_id = " + filteringDSObjId;
-        }
-        return query;
+    private static String getFileFilter(ScoreContent.ScoreContentFilter filter, long filteringDsObjId) throws IllegalArgumentException {
+        return getFilter(filter, "obj_id", "data_source_obj_id", filteringDsObjId);
+    }
+    
+    /**
+     * Returns a sql where statement for files.
+     * @param filter The filter type.
+     * @param filteringDSObjId The data source object id to filter on if > 0.
+     * @return The sql where statement.
+     * @throws IllegalArgumentException 
+     */
+    private static String getDataArtifactFilter(ScoreContent.ScoreContentFilter filter, long filteringDsObjId) throws IllegalArgumentException {
+        return getFilter(filter, "artifacts.artifact_obj_id", "artifacts.data_source_obj_id", filteringDsObjId);
     }
 
     /**
@@ -424,7 +451,33 @@ public class ScoreContent implements AutopsyVisitableItem {
              * @return
              */
             private static long calculateItems(SleuthkitCase sleuthkitCase, ScoreContent.ScoreContentFilter filter, long datasourceObjId) throws TskCoreException {
-                return sleuthkitCase.countFilesWhere(getFileFilter(filter, datasourceObjId));
+                AtomicLong retVal = new AtomicLong(0L);
+                AtomicReference<SQLException> exRef = new AtomicReference(null);
+                
+                String query = " COUNT(tsk_aggregate_score.obj_id) AS count FROM tsk_aggregate_score WHERE " 
+                        + getScoreFilter(filter) 
+                        + " AND " + ((datasourceObjId > 0) ? " tsk_aggregate_score.data_source_obj_id = " + datasourceObjId : "") 
+                        + " AND tsk_aggregate_score_obj_id.obj_id IN "
+                        + " (SELECT tsk_files.obj_id AS obj_id FROM tsk_files UNION "
+                        + " SELECT tsk_data_artifacts.artifact_obj_id AS obj_id FROM tsk_data_artifacts) ";
+                sleuthkitCase.getCaseDbAccessManager().select(query, (rs) -> {
+                    try {
+                        if (rs.next()) {
+                            retVal.set(rs.getLong("count"));
+                        }
+                    } catch (SQLException ex) {
+                        exRef.set(ex);
+                    }
+                });
+                
+                SQLException sqlEx = exRef.get();
+                if (sqlEx != null) {
+                    throw new TskCoreException(
+                            MessageFormat.format("A sql exception occurred fetching results with query: SELECT {0}", query),
+                            sqlEx);
+                } else {
+                    return retVal.get();
+                }
             }
 
             @Override
@@ -466,7 +519,7 @@ public class ScoreContent implements AutopsyVisitableItem {
         /**
          * Children showing files for a score filter.
          */
-        static class ScoreContentChildren extends BaseChildFactory<AbstractFile> implements RefreshThrottler.Refresher {
+        static class ScoreContentChildren extends BaseChildFactory<Content> implements RefreshThrottler.Refresher {
 
             private final RefreshThrottler refreshThrottler = new RefreshThrottler(this);
 
@@ -515,15 +568,21 @@ public class ScoreContent implements AutopsyVisitableItem {
                 return ScoreContent.isRefreshRequired(evt);
             }
 
-            private List<AbstractFile> runFsQuery() {
-                List<AbstractFile> ret = new ArrayList<>();
+            private List<Content> runFsQuery() {
+                List<Content> ret = new ArrayList<>();
 
-                String query = null;
+                String fileFilter = null;
+                String dataArtifactFilter = null;
                 try {
-                    query = getFileFilter(filter, datasourceObjId);
-                    ret = skCase.findAllFilesWhere(query);
+                    fileFilter = getFileFilter(filter, datasourceObjId);
+                    dataArtifactFilter = getDataArtifactFilter(filter, datasourceObjId);
+                    ret.addAll(skCase.findAllFilesWhere(fileFilter));
+                    ret.addAll(skCase.getBlackboard().getDataArtifactsWhere(dataArtifactFilter));
                 } catch (TskCoreException | IllegalArgumentException e) {
-                    logger.log(Level.SEVERE, "Error getting files for the deleted content view using: " + StringUtils.defaultString(query, "<null>"), e); //NON-NLS
+                    logger.log(Level.SEVERE, MessageFormat.format(
+                            "Error getting files for the deleted content view using file filter: {0} data artifact filter: {1}",
+                            StringUtils.defaultString(fileFilter, "<null>"),
+                            StringUtils.defaultString(dataArtifactFilter, "<null>")), e); //NON-NLS
                 }
 
                 return ret;
@@ -531,12 +590,12 @@ public class ScoreContent implements AutopsyVisitableItem {
             }
 
             @Override
-            protected List<AbstractFile> makeKeys() {
+            protected List<Content> makeKeys() {
                 return runFsQuery();
             }
 
             @Override
-            protected Node createNodeForKey(AbstractFile key) {
+            protected Node createNodeForKey(Content key) {
                 return key.accept(new ContentVisitor.Default<AbstractNode>() {
                     public FileNode visit(AbstractFile f) {
                         return new FileNode(f, false);
@@ -580,6 +639,13 @@ public class ScoreContent implements AutopsyVisitableItem {
                     public AbstractNode visit(DerivedFile df) {
                         return new FileNode(df, false);
                     }
+
+                    @Override
+                    public AbstractNode visit(BlackboardArtifact ba) {
+                        return new BlackboardArtifactNode(ba);
+                    }
+                    
+                    
                     
                     @Override
                     protected AbstractNode defaultVisit(Content di) {
