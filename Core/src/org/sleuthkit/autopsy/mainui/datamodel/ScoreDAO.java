@@ -416,14 +416,14 @@ public class ScoreDAO extends AbstractDAO {
     /**
      * Handles fetching and paging of data for deleted content.
      */
-    public static class ScoreFileFetcher extends DAOFetcher<ScoreViewSearchParams> {
+    public static class ScoreContentFetcher extends DAOFetcher<ScoreViewSearchParams> {
 
         /**
          * Main constructor.
          *
          * @param params Parameters to handle fetching of data.
          */
-        public ScoreFileFetcher(ScoreViewSearchParams params) {
+        public ScoreContentFetcher(ScoreViewSearchParams params) {
             super(params);
         }
 

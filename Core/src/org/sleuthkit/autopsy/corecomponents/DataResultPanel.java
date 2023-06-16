@@ -106,7 +106,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsDAO.ReportsFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ScoreViewSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.ScoreDAO.ScoreFileFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.ScoreDAO.ScoreContentFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.events.CacheClearEvent;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;
@@ -1373,7 +1373,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
      void displayScoreContent(ScoreViewSearchParams scoreSearchParams) {
         try {
-            this.searchResultManager = new SearchManager(new ScoreFileFetcher(scoreSearchParams), getPageSize());
+            this.searchResultManager = new SearchManager(new ScoreContentFetcher(scoreSearchParams), getPageSize());
             SearchResultsDTO results = searchResultManager.getResults();
             displaySearchResults(results, true);
         } catch (ExecutionException ex) {
