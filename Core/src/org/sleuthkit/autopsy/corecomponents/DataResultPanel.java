@@ -106,7 +106,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsDAO.ReportsFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.ScoreViewSearchParams;
-import org.sleuthkit.autopsy.mainui.datamodel.ViewsDAO.ScoreFileFetcher;
+import org.sleuthkit.autopsy.mainui.datamodel.ScoreDAO.ScoreFileFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.events.CacheClearEvent;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
 import org.sleuthkit.autopsy.mainui.nodes.SearchManager;

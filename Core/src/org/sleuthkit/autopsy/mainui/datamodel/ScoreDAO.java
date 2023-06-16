@@ -338,11 +338,7 @@ public class ScoreDAO extends AbstractDAO {
             return invalidateScoreParamsAndReturnEvents(dsId);
 
         } else if ((af = DAOEventUtils.getFileFromFileEvent(evt)) != null) {
-            if (hideKnownFilesInViewsTree() && TskData.FileKnown.KNOWN.equals(af.getKnown())) {
-                return Collections.emptySet();
-            } else {
-                return invalidateScoreParamsAndReturnEvents(af.getDataSourceObjectId());
-            }
+            return invalidateScoreParamsAndReturnEvents(af.getDataSourceObjectId());
         }
 
         ModuleDataEvent dataEvt;

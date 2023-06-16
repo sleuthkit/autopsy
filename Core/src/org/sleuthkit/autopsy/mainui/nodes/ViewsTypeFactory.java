@@ -675,7 +675,7 @@ public class ViewsTypeFactory {
 
         @Override
         protected TreeResultsDTO<? extends ScoreViewSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getViewsDAO().getScoreContentCounts(dataSourceId);
+            return MainDAO.getInstance().getScoreDAO().getScoreContentCounts(dataSourceId);
         }
 
         @Override
