@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Highlights hits for a given document. Knows about pages and such for the
  * content viewer.
  */
-class HighlightedText implements IndexedText {
+class HighlightedText implements ExtractedText {
 
     private static final Logger logger = Logger.getLogger(HighlightedText.class.getName());
 
@@ -475,7 +475,7 @@ class HighlightedText implements IndexedText {
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + solrObjectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
-            return Bundle.IndexedText_errorMessage_errorGettingText();
+            return Bundle.ExtractedText_errorMessage_errorGettingText();
         }
     }
 
@@ -519,7 +519,7 @@ class HighlightedText implements IndexedText {
      */
     static String attemptManualHighlighting(SolrDocumentList solrDocumentList, String highlightField, Collection<String> keywords) {
         if (solrDocumentList.isEmpty()) {
-            return Bundle.IndexedText_errorMessage_errorGettingText();
+            return Bundle.ExtractedText_errorMessage_errorGettingText();
         }
 
         // It doesn't make sense for there to be more than a single document in

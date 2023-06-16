@@ -1,7 +1,7 @@
 ALeappAnalyzerIngestModule.aLeapp.cancelled=aLeapp run was canceled
 ALeappAnalyzerIngestModule.completed=aLeapp Processing Completed
+ALeappAnalyzerIngestModule.error.aleapp.file.processor.init=Failure to initialize aLeappProcessFile
 ALeappAnalyzerIngestModule.error.creating.output.dir=Error creating aLeapp module output directory.
-ALeappAnalyzerIngestModule.error.ileapp.file.processor.init=Failure to initialize aLeappProcessFile
 ALeappAnalyzerIngestModule.error.running.aLeapp=Error running aLeapp, see log file.
 ALeappAnalyzerIngestModule.executable.not.found=aLeapp Executable Not Found.
 ALeappAnalyzerIngestModule.has.run=aLeapp
