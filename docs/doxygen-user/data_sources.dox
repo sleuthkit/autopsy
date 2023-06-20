@@ -116,7 +116,7 @@ To add logical files:
 -# Press the "Add" button and navigate to a folder or file to add.  Choosing a folder will cause all of its contents (including sub-folders) to be added.
 -# Continue to press "Add" until all files and folders have been selected.
 -# If you want any of the files to be added with time stamps from the file system then check the box associated with the timestamp you would like associaed with the file.
--# If a file or directory was mistakenly add then highlight it and press the "Delete" button to remove the item from the list of files/folders
+-# If a file or directory was mistakenly added then highlight it and press the "Delete" button to remove the item from the list of files/folders
 
 All of the files that you added in the panel will be grouped together into a single data source, called "LogicalFileSet" in the main UI. 
 
