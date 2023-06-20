@@ -27,7 +27,7 @@
         <!-- commmon -->
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-lang3" rev="3.12.0"/>
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-csv" rev="1.9.0"/>
-        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-text" rev="1.9"/>
+        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-text" rev="1.10.0"/>
     
         <!-- keep old commons-lang because some deps may need it at runtime. 
         Note there is no namespace collision with ver 3 -->
@@ -40,7 +40,7 @@
 
         <dependency conf="autopsy_core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.4"/>
 
-        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.13.2"/>
+        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.15.2"/>
         
         <!-- better image resizing -->
         <dependency conf="autopsy_core->default" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />
@@ -94,9 +94,9 @@
         <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
         
         <override org="com.google.code.gson" module="gson" rev="2.9.0"/>
-        <override org="com.google.guava" module="guava" rev="31.1-jre"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-databind" rev="2.13.2"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.13.2"/>
+        <override org="com.google.guava" module="guava" rev="32.0.1.jre"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-databind" rev="2.15.2"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.15.2"/>
         
         <!-- changes to bouncy castle version may also be reflected in thirdparty/IcePDF 6.2.2 -->
         <override org="org.bouncycastle" module="bcprov-jdk15on" rev="1.70"/>

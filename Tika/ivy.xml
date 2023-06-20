@@ -7,14 +7,14 @@
         <dependency conf="tika->default" org="org.apache.tika" name="tika-parsers" rev="1.28.1"/>
         <dependency conf="tika->default" org="org.apache.poi" name="ooxml-schemas" rev="1.4"/>
         
-        <override org="org.jsoup" module="jsoup" rev="1.14.3"/>
+        <override org="org.jsoup" module="jsoup" rev="1.16.1"/>
         <override org="org.apache.poi" module="poi-ooxml-schemas" rev="4.1.2"/>
         <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
         <override org="com.google.code.gson" module="gson" rev="2.9.0"/>
-        <override org="com.google.guava" module="guava" rev="31.1-jre"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.13.2"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-databind" rev="2.13.2"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-annotations" rev="2.13.2"/>
+        <override org="com.google.guava" module="guava" rev="32.0.1.jre"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.15.2"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-databind" rev="2.15.2"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-annotations" rev="2.15.2"/>
         
         <!-- changes to bouncy castle version may also be reflected in thirdparty/IcePDF 6.2.2 -->
         <override org="org.bouncycastle" module="bcmail-jdk15on" rev="1.70"/>
