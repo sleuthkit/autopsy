@@ -220,6 +220,17 @@ public final class LeappFileProcessor {
         loadConfigFile();
 
     }
+    
+    /**
+     * Generates a key trimmed and case-insensitive that can be used for a
+     * case-insensitive lookup in a map.
+     *
+     * @param origKey The original key.
+     * @return The normalized key.
+     */
+    private static String normalizeKey(String origKey) {
+        return StringUtils.defaultString(origKey).trim().toLowerCase();
+    }
 
     @NbBundle.Messages({
         "LeappFileProcessor.error.running.Leapp=Error running Leapp, see log file.",
@@ -280,7 +291,7 @@ public final class LeappFileProcessor {
                     .filter(f -> f.toLowerCase().endsWith(".tsv")).collect(Collectors.toList());
 
             for (String tsvFile : allTsvFiles) {
-                if (tsvFiles.containsKey(FilenameUtils.getName(tsvFile.toLowerCase()))) {
+                if (tsvFiles.containsKey(normalizeKey(FilenameUtils.getName(tsvFile)))) {
                     foundTsvFiles.add(tsvFile);
                 }
             }
@@ -329,9 +340,10 @@ public final class LeappFileProcessor {
             progress.progress(Bundle.LeappFileProcessor_tsvProcessed(fileName), i);
 
             File LeappFile = new File(LeappFileName);
-            if (tsvFileAttributes.containsKey(fileName)) {
-                List<TsvColumn> attrList = tsvFileAttributes.get(fileName);
-                BlackboardArtifact.Type artifactType = tsvFileArtifacts.get(fileName);
+            String fileKey = fileName.toLowerCase().trim();
+            if (tsvFileAttributes.containsKey(normalizeKey(fileKey))) {
+                List<TsvColumn> attrList = tsvFileAttributes.get(normalizeKey(fileKey));
+                BlackboardArtifact.Type artifactType = tsvFileArtifacts.get(normalizeKey(fileKey));
 
                 try {
                     processFile(LeappFile, attrList, fileName, artifactType, dataSource);
@@ -901,18 +913,15 @@ public final class LeappFileProcessor {
     private Collection<BlackboardAttribute> processReadLine(List<String> lineValues, Map<String, Integer> columnIndexes,
             List<TsvColumn> attrList, String fileName, int lineNum) throws IngestModuleException {
 
+        // if no attributes, return an empty row
         if (MapUtils.isEmpty(columnIndexes) || CollectionUtils.isEmpty(lineValues)
                 || (lineValues.size() == 1 && StringUtils.isEmpty(lineValues.get(0)))) {
-            return Collections.emptyList();
-        } else if (lineValues.size() != columnIndexes.size()) {
-            logger.log(Level.WARNING, String.format(
-                    "Row at line number %d in file %s has %d columns when %d were expected based on the header row.",
-                    lineNum, fileName, lineValues.size(), columnIndexes.size()));
             return Collections.emptyList();
         }
 
         List<BlackboardAttribute> attrsToRet = new ArrayList<>();
         for (TsvColumn colAttr : attrList) {
+            // if no matching attribute type, keep going
             if (colAttr.getAttributeType() == null) {
                 // this handles columns that are currently ignored.
                 continue;
@@ -926,22 +935,30 @@ public final class LeappFileProcessor {
 
             String value = (columnIdx >= lineValues.size() || columnIdx < 0) ? null : lineValues.get(columnIdx);
             if (value == null) {
-                logger.log(Level.WARNING, String.format("No value found for column %s at line %d in file %s.  Omitting row.", colAttr.getColumnName(), lineNum, fileName));
-                return Collections.emptyList();
+                // if column is required, return empty for this row if no value
+                if (colAttr.isRequired()) {
+                    logger.log(Level.WARNING, String.format("No value found for required column %s at line %d in file %s.  Omitting row.", colAttr.getColumnName(), lineNum, fileName));
+                    return Collections.emptyList();
+                } else {
+                    // otherwise, continue to next column
+                    logger.log(Level.WARNING, String.format("No value found for column %s at line %d in file %s.  Omitting column.", colAttr.getColumnName(), lineNum, fileName));
+                    continue;
+                }
             }
 
             String formattedValue = formatValueBasedOnAttrType(colAttr, value);
 
             BlackboardAttribute attr = getAttribute(colAttr.getAttributeType(), formattedValue, fileName);
-            if (attr == null) {
+            if (attr != null) {
+                attrsToRet.add(attr);
+            } else if (colAttr.isRequired()) {
                 logger.log(Level.WARNING, String.format("Blackboard attribute could not be parsed column %s at line %d in file %s.  Omitting row.", colAttr.getColumnName(), lineNum, fileName));
                 return Collections.emptyList();
             }
-            attrsToRet.add(attr);
         }
 
-        if (tsvFileArtifactComments.containsKey(fileName)) {
-            attrsToRet.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, tsvFileArtifactComments.get(fileName)));
+        if (tsvFileArtifactComments.containsKey(normalizeKey(fileName))) {
+            attrsToRet.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT, moduleName, tsvFileArtifactComments.get(normalizeKey(fileName))));
         }
 
         return attrsToRet;
@@ -1121,7 +1138,7 @@ public final class LeappFileProcessor {
 
         for (int i = 0; i < nlist.getLength(); i++) {
             NamedNodeMap nnm = nlist.item(i).getAttributes();
-            tsvFiles.put(nnm.getNamedItem("filename").getNodeValue().toLowerCase(), nnm.getNamedItem("description").getNodeValue());
+            tsvFiles.put(normalizeKey(nnm.getNamedItem("filename").getNodeValue()), nnm.getNamedItem("description").getNodeValue());
 
         }
 
@@ -1147,11 +1164,11 @@ public final class LeappFileProcessor {
                 logger.log(Level.SEVERE, String.format("No known artifact mapping found for [artifact: %s, %s]",
                         artifactName, getXmlFileIdentifier(parentName)));
             } else {
-                tsvFileArtifacts.put(parentName, foundArtifactType);
+                tsvFileArtifacts.put(normalizeKey(parentName), foundArtifactType);
             }
 
             if (!comment.toLowerCase().matches("null")) {
-                tsvFileArtifactComments.put(parentName, comment);
+                tsvFileArtifactComments.put(normalizeKey(parentName), comment);
             }
         }
 
@@ -1213,14 +1230,14 @@ public final class LeappFileProcessor {
                         columnName.trim().toLowerCase(),
                         "yes".compareToIgnoreCase(required) == 0);
 
-                if (tsvFileAttributes.containsKey(parentName)) {
-                    List<TsvColumn> attrList = tsvFileAttributes.get(parentName);
+                if (tsvFileAttributes.containsKey(normalizeKey(parentName))) {
+                    List<TsvColumn> attrList = tsvFileAttributes.get(normalizeKey(parentName));
                     attrList.add(thisCol);
                     tsvFileAttributes.replace(parentName, attrList);
                 } else {
                     List<TsvColumn> attrList = new ArrayList<>();
                     attrList.add(thisCol);
-                    tsvFileAttributes.put(parentName, attrList);
+                    tsvFileAttributes.put(normalizeKey(parentName), attrList);
                 }
             }
 

@@ -31,9 +31,9 @@
         <dependency conf="autopsy->default" org="junit" name="junit" rev="4.13.2"/>
 
         <!-- Jetty -->
-		<dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="11.0.8"/>
-        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="11.0.8"/>
-        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="11.0.8"/>
+		<dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="11.0.15"/>
+        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="11.0.15"/>
+        <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="11.0.15"/>
         <dependency conf="servlet->default" org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016"/>
 
         <!-- logging -->

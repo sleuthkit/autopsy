@@ -114,7 +114,7 @@ class OutputResults {
     /**
      * Used by yaml serialization to properly represent objects.
      */
-    private static final Representer MAP_REPRESENTER = new Representer() {
+    private static final Representer MAP_REPRESENTER = new Representer(new DumperOptions()) {
         @Override
         protected MappingNode representJavaBean(Set<Property> properties, Object javaBean) {
             // don't show class name in yaml
