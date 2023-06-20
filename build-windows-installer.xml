@@ -178,7 +178,7 @@
     <target name="update-config" description="Updates configuration file with correct JVM args.">
         <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
         <!-- Sets Java 17 JVM parameters -->
-        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-XX:+UseStringDeduplication -J-Dprism.order=sw -J--add-opens=java.base/java.net=ALL-UNNAMED -J--add-opens=java.desktop/javax.swing=ALL-UNNAMED -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=java.desktop/sun.awt=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED -J--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED&quot;" />
+        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-XX:+UseStringDeduplication -J-Dprism.order=sw -J--add-opens=java.base/java.lang=ALL-UNNAMED -J--add-opens=java.base/java.net=ALL-UNNAMED -J--add-opens=java.desktop/javax.swing=ALL-UNNAMED -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=java.desktop/sun.awt=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED -J--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED&quot;" />
         <propertyfile file="${inst.property.file}">
             <entry key="default_options" value="@JVM_OPTIONS" />
             <!-- Update configuration file to include runtime -->
