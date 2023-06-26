@@ -24,27 +24,34 @@ import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import static org.sleuthkit.autopsy.datamodel.AbstractContentNode.NO_DESCR;
 import org.sleuthkit.autopsy.guiutils.RefreshThrottler;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
@@ -52,6 +59,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -115,6 +123,7 @@ public class ScoreContent implements AutopsyVisitableItem {
 
     /**
      * Constructor assuming no data source filtering.
+     *
      * @param skCase The sleuthkit case.
      */
     public ScoreContent(SleuthkitCase skCase) {
@@ -123,6 +132,7 @@ public class ScoreContent implements AutopsyVisitableItem {
 
     /**
      * Constructor.
+     *
      * @param skCase The sleuthkit case.
      * @param dsObjId The data source object id to filter on if > 0.
      */
@@ -161,12 +171,14 @@ public class ScoreContent implements AutopsyVisitableItem {
     private static final Set<String> CASE_EVENTS_OF_INTEREST_STRS = CASE_EVENTS_OF_INTEREST.stream()
             .map(evt -> evt.name())
             .collect(Collectors.toSet());
-    
+
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     private static final Set<IngestManager.IngestModuleEvent> INGEST_MODULE_EVENTS_OF_INTEREST = EnumSet.of(IngestModuleEvent.CONTENT_CHANGED);
 
     /**
-     * Returns a property change listener listening for possible updates to aggregate score updates for files.
+     * Returns a property change listener listening for possible updates to
+     * aggregate score updates for files.
+     *
      * @param onRefresh Action on refresh.
      * @param onRemove Action to remove listener (i.e. case close).
      * @return The property change listener.
@@ -209,12 +221,14 @@ public class ScoreContent implements AutopsyVisitableItem {
 
     /**
      * The sql where statement for the content.
+     *
      * @param filter The filter type.
-     * @param objIdAlias The alias for the object id of the content. Must be sql safe.
-     * @param dsIdAlias The alias for the data source id.  Must be sql safe.
+     * @param objIdAlias The alias for the object id of the content. Must be sql
+     * safe.
+     * @param dsIdAlias The alias for the data source id. Must be sql safe.
      * @param filteringDSObjId The data source object id to filter on if > 0.
      * @return The sql where statement.
-     * @throws IllegalArgumentException 
+     * @throws IllegalArgumentException
      */
     private static String getFilter(ScoreContent.ScoreContentFilter filter, String objIdAlias, String dsIdAlias, long filteringDSObjId) throws IllegalArgumentException {
         String aggregateScoreFilter = getScoreFilter(filter);
@@ -229,33 +243,35 @@ public class ScoreContent implements AutopsyVisitableItem {
     private static String getScoreFilter(ScoreContentFilter filter) throws IllegalArgumentException {
         switch (filter) {
             case SUS_ITEM_FILTER:
-                return " tsk_aggregate_score.significance = " + Significance.LIKELY_NOTABLE.getId() + 
-                        " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
+                return " tsk_aggregate_score.significance = " + Significance.LIKELY_NOTABLE.getId()
+                        + " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
             case BAD_ITEM_FILTER:
-                return " tsk_aggregate_score.significance = " + Significance.NOTABLE.getId() + 
-                        " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
+                return " tsk_aggregate_score.significance = " + Significance.NOTABLE.getId()
+                        + " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
             default:
                 throw new IllegalArgumentException(MessageFormat.format("Unsupported filter type to get suspect content: {0}", filter));
         }
     }
-    
+
     /**
      * Returns a sql where statement for files.
+     *
      * @param filter The filter type.
      * @param filteringDSObjId The data source object id to filter on if > 0.
      * @return The sql where statement.
-     * @throws IllegalArgumentException 
+     * @throws IllegalArgumentException
      */
     private static String getFileFilter(ScoreContent.ScoreContentFilter filter, long filteringDsObjId) throws IllegalArgumentException {
         return getFilter(filter, "obj_id", "data_source_obj_id", filteringDsObjId);
     }
-    
+
     /**
      * Returns a sql where statement for files.
+     *
      * @param filter The filter type.
      * @param filteringDSObjId The data source object id to filter on if > 0.
      * @return The sql where statement.
-     * @throws IllegalArgumentException 
+     * @throws IllegalArgumentException
      */
     private static String getDataArtifactFilter(ScoreContent.ScoreContentFilter filter, long filteringDsObjId) throws IllegalArgumentException {
         return getFilter(filter, "artifacts.artifact_obj_id", "artifacts.data_source_obj_id", filteringDsObjId);
@@ -458,10 +474,10 @@ public class ScoreContent implements AutopsyVisitableItem {
             private static long calculateItems(SleuthkitCase sleuthkitCase, ScoreContent.ScoreContentFilter filter, long datasourceObjId) throws TskCoreException {
                 AtomicLong retVal = new AtomicLong(0L);
                 AtomicReference<SQLException> exRef = new AtomicReference(null);
-                
-                String query = " COUNT(tsk_aggregate_score.obj_id) AS count FROM tsk_aggregate_score WHERE\n" 
+
+                String query = " COUNT(tsk_aggregate_score.obj_id) AS count FROM tsk_aggregate_score WHERE\n"
                         + getScoreFilter(filter) + "\n"
-                        + ((datasourceObjId > 0) ? "AND tsk_aggregate_score.data_source_obj_id = \n" + datasourceObjId : "") 
+                        + ((datasourceObjId > 0) ? "AND tsk_aggregate_score.data_source_obj_id = \n" + datasourceObjId : "")
                         + " AND tsk_aggregate_score.obj_id IN\n"
                         + " (SELECT tsk_files.obj_id AS obj_id FROM tsk_files UNION\n"
                         + "     SELECT blackboard_artifacts.artifact_obj_id AS obj_id FROM blackboard_artifacts WHERE blackboard_artifacts.artifact_type_id IN\n"
@@ -475,7 +491,7 @@ public class ScoreContent implements AutopsyVisitableItem {
                         exRef.set(ex);
                     }
                 });
-                
+
                 SQLException sqlEx = exRef.get();
                 if (sqlEx != null) {
                     throw new TskCoreException(
@@ -604,64 +620,192 @@ public class ScoreContent implements AutopsyVisitableItem {
             protected Node createNodeForKey(Content key) {
                 return key.accept(new ContentVisitor.Default<AbstractNode>() {
                     public FileNode visit(AbstractFile f) {
-                        return new FileNode(f, false);
+                        return new ScoreFileNode(f, false);
                     }
 
                     public FileNode visit(FsContent f) {
-                        return new FileNode(f, false);
+                        return new ScoreFileNode(f, false);
                     }
 
                     @Override
                     public FileNode visit(LayoutFile f) {
-                        return new FileNode(f, false);
+                        return new ScoreFileNode(f, false);
                     }
 
                     @Override
                     public FileNode visit(File f) {
-                        return new FileNode(f, false);
+                        return new ScoreFileNode(f, false);
                     }
 
                     @Override
                     public FileNode visit(Directory f) {
-                        return new FileNode(f, false);
+                        return new ScoreFileNode(f, false);
                     }
 
                     @Override
                     public FileNode visit(VirtualDirectory f) {
-                        return new FileNode(f, false);
+                        return new ScoreFileNode(f, false);
                     }
 
                     @Override
                     public AbstractNode visit(SlackFile sf) {
-                        return new FileNode(sf, false);
+                        return new ScoreFileNode(sf, false);
                     }
 
                     @Override
                     public AbstractNode visit(LocalFile lf) {
-                        return new FileNode(lf, false);
+                        return new ScoreFileNode(lf, false);
                     }
 
                     @Override
                     public AbstractNode visit(DerivedFile df) {
-                        return new FileNode(df, false);
+                        return new ScoreFileNode(df, false);
                     }
 
                     @Override
                     public AbstractNode visit(BlackboardArtifact ba) {
-                        return new BlackboardArtifactNode(ba);
+                        return new ScoreArtifactNode(ba);
                     }
-                    
-                    
-                    
+
                     @Override
                     protected AbstractNode defaultVisit(Content di) {
                         if (di instanceof AbstractFile) {
                             return visit((AbstractFile) di);
                         } else {
-                            throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());    
+                            throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
                         }
                     }
                 });
+            }
+        }
+    }
+
+    private static final String SOURCE_PROP = "Source";
+    private static final String TYPE_PROP = "Type";
+    private static final String PATH_PROP = "Path";
+    private static final String DATE_PROP = "Created Date";
+
+    private static Sheet createScoreSheet(String type, String path, Long time) {
+        Sheet sheet = new Sheet();
+        Sheet.Set sheetSet = Sheet.createPropertiesSet();
+        sheet.put(sheetSet);
+
+        List<NodeProperty<?>> properties = new ArrayList<>();
+        properties.add(new NodeProperty<>(
+                SOURCE_PROP,
+                SOURCE_PROP,
+                NO_DESCR,
+                StringUtils.defaultString(path)));
+
+        properties.add(new NodeProperty<>(
+                TYPE_PROP,
+                TYPE_PROP,
+                NO_DESCR,
+                type));
+
+        if (StringUtils.isNotBlank(path)) {
+            properties.add(new NodeProperty<>(
+                    PATH_PROP,
+                    PATH_PROP,
+                    NO_DESCR,
+                    path));
+        }
+
+        if (time != null && time > 0) {
+            properties.add(new NodeProperty<>(
+                    DATE_PROP,
+                    DATE_PROP,
+                    NO_DESCR,
+                    TimeZoneUtils.getFormattedTime(time)));
+        }
+
+        properties.forEach((property) -> {
+            sheetSet.put(property);
+        });
+
+        return sheet;
+    }
+
+    public static class ScoreArtifactNode extends BlackboardArtifactNode {
+
+        private static final Logger logger = Logger.getLogger(ScoreArtifactNode.class.getName());
+
+        private static final List<BlackboardAttribute.Type> TIME_ATTRS = Arrays.asList(
+                BlackboardAttribute.Type.TSK_DATETIME,
+                BlackboardAttribute.Type.TSK_DATETIME_ACCESSED,
+                BlackboardAttribute.Type.TSK_DATETIME_RCVD,
+                BlackboardAttribute.Type.TSK_DATETIME_SENT,
+                BlackboardAttribute.Type.TSK_DATETIME_CREATED,
+                BlackboardAttribute.Type.TSK_DATETIME_MODIFIED,
+                BlackboardAttribute.Type.TSK_DATETIME_START,
+                BlackboardAttribute.Type.TSK_DATETIME_END,
+                BlackboardAttribute.Type.TSK_DATETIME_DELETED,
+                BlackboardAttribute.Type.TSK_DATETIME_PASSWORD_RESET,
+                BlackboardAttribute.Type.TSK_DATETIME_PASSWORD_FAIL
+        );
+
+        private static final Map<Integer, Integer> TIME_ATTR_IMPORTANCE = IntStream.range(0, TIME_ATTRS.size())
+                .mapToObj(idx -> Pair.of(TIME_ATTRS.get(idx).getTypeID(), idx))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (v1, v2) -> v1));
+
+        public ScoreArtifactNode(BlackboardArtifact artifact) {
+            super(artifact);
+        }
+
+        private Long getTime(BlackboardArtifact artifact) {
+            try {
+                BlackboardAttribute timeAttr = artifact.getAttributes().stream()
+                        .filter((attr) -> TIME_ATTR_IMPORTANCE.keySet().contains(attr.getAttributeType().getTypeID()))
+                        .sorted(Comparator.comparing(attr -> TIME_ATTR_IMPORTANCE.get(attr.getAttributeType().getTypeID())))
+                        .findFirst()
+                        .orElse(null);
+
+                if (timeAttr != null) {
+                    return timeAttr.getValueLong();
+                } else {
+                    return (artifact.getParent() instanceof AbstractFile) ? ((AbstractFile) artifact.getParent()).getCtime() : null;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "An exception occurred while fetching time for artifact", ex);
+                return null;
+            }
+        }
+
+        @Override
+        protected synchronized Sheet createSheet() {
+            try {
+                return createScoreSheet(
+                        this.content.getType().getDisplayName(),
+                        this.content.getUniquePath(),
+                        getTime(this.content)
+                );
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching sheet data for score artifact.", ex);
+                return new Sheet();
+            }
+        }
+    }
+
+    @Messages("ScoreContent_ScoreFileNode_type=File")
+    public static class ScoreFileNode extends FileNode {
+
+        private static final Logger logger = Logger.getLogger(ScoreFileNode.class.getName());
+
+        public ScoreFileNode(AbstractFile af, boolean directoryBrowseMode) {
+            super(af, directoryBrowseMode);
+        }
+
+        @Override
+        protected synchronized Sheet createSheet() {
+            try {
+                return createScoreSheet(
+                        Bundle.ScoreContent_ScoreFileNode_type(),
+                        this.content.getUniquePath(),
+                        this.content.getCtime()
+                );
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching sheet data for score file.", ex);
+                return new Sheet();
             }
         }
     }
