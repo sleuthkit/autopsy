@@ -24,7 +24,8 @@ class Autopsy4 < Formula
   depends_on "testdisk"
 
   depends_on "libheif"
-
+  
+  depends_on "openjdk@17"
   depends_on "gst-libav"
   depends_on "gst-plugins-bad"
   depends_on "gst-plugins-base"
@@ -48,29 +49,9 @@ class Autopsy4 < Formula
   # TODO could create separate for build and run
   on_linux do
     depends_on "sqlite"
-
-    on_intel do
-      resource "liberica_jvm" do
-        url "https://download.bell-sw.com/java/8u345+1/bellsoft-jdk8u345+1-linux-amd64-full.tar.gz"
-        sha256 "70899945312ee630190b8c4f9dc1124af91fec14987e890074bda40126ec186e"
-      end
-    end
   end
   on_macos do
     uses_from_macos "sqlite"
-
-    on_arm do 
-      resource "liberica_jvm" do
-        url "https://download.bell-sw.com/java/8u345+1/bellsoft-jdk8u345+1-macos-aarch64-full.tar.gz"
-        sha256 "d5d6fe21ece5d6c29bdf96ba1dada4ba1f71569eb5233be3434c2aa7a4aeb3e7"
-      end
-    end
-    on_intel do
-      resource "liberica_jvm" do
-        url "https://download.bell-sw.com/java/8u345+1/bellsoft-jdk8u345+1-macos-amd64-full.tar.gz"
-        sha256 "426fd1f299a31d3895b5d38fb24040d599faa36886528ec10863b2cd470bb4b6"
-      end
-    end
   end
 
   conflicts_with "ffind", because: "both install a `ffind` executable"
@@ -82,9 +63,7 @@ class Autopsy4 < Formula
     install_dir = File.join(prefix, "install")
 
     # ----- SETUP JVM -----
-    java_home_path = File.join(install_dir, "liberica_jvm")
-    system "mkdir", "-p", java_home_path
-    resource("liberica_jvm").stage(java_home_path)
+    java_home_path = "#{Formula["gstreamer"].prefix}/opt/openjdk@17"
     ENV["JAVA_HOME"] = java_home_path
     ENV["PATH"] = "#{java_home_path}/bin:#{ENV["PATH"]}"
     ENV["ANT_FOUND"] = Formula["ant"].opt_bin/"ant"
@@ -105,11 +84,6 @@ class Autopsy4 < Formula
     system "cp", "-a", "#{autopsy_tmp_path}/.", autopsy_install_path
     
     unix_setup_script = File.join(autopsy_install_path, "unix_setup.sh")
-
-    # TODO remove for the future
-    system "rm", unix_setup_script
-    system "curl", "-o", unix_setup_script, "https://raw.githubusercontent.com/gdicristofaro/autopsy/8425_linuxMacBuild/unix_setup.sh"
-
     system "chmod", "a+x", unix_setup_script
 
     ENV["TSK_JAVA_LIB_PATH"] = File.join(prefix, "share", "java")
