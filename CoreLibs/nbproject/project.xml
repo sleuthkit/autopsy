@@ -246,6 +246,44 @@
                 <package>javax.annotation</package>
                 <package>javax.annotation.concurrent</package>
                 <package>javax.annotation.meta</package>
+                <package>javafx.animation</package>
+                <package>javafx.application</package>
+                <package>javafx.base</package>
+                <package>javafx.beans</package>
+                <package>javafx.beans.binding</package>
+                <package>javafx.beans.property</package>
+                <package>javafx.beans.property.adapter</package>
+                <package>javafx.beans.value</package>
+                <package>javafx.collections</package>
+                <package>javafx.collections.transformation</package>
+                <package>javafx.concurrent</package>
+                <package>javafx.css</package>
+                <package>javafx.css.converter</package>
+                <package>javafx.embed.swing </package>
+                <package>javafx.event</package>
+                <package>javafx.fxml </package>
+                <package>javafx.geometry</package>
+                <package>javafx.graphics</package>
+                <package>javafx.print</package>
+                <package>javafx.scene</package>
+                <package>javafx.scene.canvas</package>
+                <package>javafx.scene.chart</package>
+                <package>javafx.scene.control</package>
+                <package>javafx.scene.control.cell</package>
+                <package>javafx.scene.control.skin</package>
+                <package>javafx.scene.effect</package>
+                <package>javafx.scene.image</package>
+                <package>javafx.scene.input</package>
+                <package>javafx.scene.layout</package>
+                <package>javafx.scene.paint</package>
+                <package>javafx.scene.robot</package>
+                <package>javafx.scene.shape</package>
+                <package>javafx.scene.text</package>
+                <package>javafx.scene.transform</package>
+                <package>javafx.scene.web </package>
+                <package>javafx.stage</package>
+                <package>javafx.util</package>
+                <package>javafx.util.converter</package>
                 <package>javax.jms</package>
                 <package>javax.mail</package>
                 <package>javax.mail.event</package>
@@ -471,7 +509,7 @@
                 <package>org.slf4j.helpers</package>
                 <package>org.slf4j.spi</package>
             </public-packages>
-         <class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/animal-sniffer-annotations-1.21.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/animal-sniffer-annotations-1.21.jar</binary-origin>
             </class-path-extension>
@@ -720,8 +758,8 @@
                 <binary-origin>release/modules/ext/gst1-java-core-1.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-31.1-jre.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-31.1-jre.jar</binary-origin>
+                <runtime-relative-path>ext/guava-31.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-31.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/httpclient-4.5.13.jar</runtime-relative-path>
@@ -812,6 +850,62 @@
                 <binary-origin>release/modules/ext/jackson-dataformat-csv-2.13.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/javafx-base-17.0.7-win.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-base-17.0.7-win.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-base-17.0.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-base-17.0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-controls-17.0.7-win.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-controls-17.0.7-win.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-controls-17.0.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-controls-17.0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-fxml-17.0.7-win.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-fxml-17.0.7-win.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-fxml-17.0.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-fxml-17.0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-graphics-17.0.7-win.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-graphics-17.0.7-win.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-graphics-17.0.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-graphics-17.0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-media-17.0.7-win.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-media-17.0.7-win.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-media-17.0.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-media-17.0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-swing-17.0.7-win.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-swing-17.0.7-win.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-swing-17.0.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-swing-17.0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-web-17.0.7-win.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-web-17.0.7-win.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-web-17.0.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-web-17.0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/javax.annotation-api-1.3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javax.annotation-api-1.3.2.jar</binary-origin>
             </class-path-extension>
@@ -852,8 +946,8 @@
                 <binary-origin>release/modules/ext/LGoodDatePicker-11.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</binary-origin>
+                <runtime-relative-path>ext/listenablefuture-9999.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/listenablefuture-9999.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/log4j-api-2.17.2.jar</runtime-relative-path>

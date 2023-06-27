@@ -1,11 +1,52 @@
-<ivy-module version="2.0">
+<!DOCTYPE ivy-module [
+    <!ENTITY javafx.version "17.0.7">
+]>
+<ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
     <info organisation="org.sleuthkit.autopsy" module="corelibs"/>
     <configurations >
         <!-- module dependencies -->
         <conf name="autopsy_core"/>
         
     </configurations>
-    <dependencies>              
+    <dependencies>
+        <!-- <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-fxml" rev="&javafx.version;"/>
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-graphics" rev="&javafx.version;"/>
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-controls" rev="&javafx.version;"/>
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-base" rev="&javafx.version;"/>
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-swing" rev="&javafx.version;"/>
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-web" rev="&javafx.version;"/>
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-media" rev="&javafx.version;"/> -->
+
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-fxml" rev="&javafx.version;">
+            <artifact name="javafx-fxml" type="jar" />
+            <artifact name="javafx-fxml" type="jar" e:classifier="win"/>
+        </dependency> 
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-graphics" rev="&javafx.version;">
+            <artifact name="javafx-graphics" type="jar" />
+            <artifact name="javafx-graphics" type="jar" e:classifier="win"/>
+        </dependency>
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-controls" rev="&javafx.version;">
+            <artifact name="javafx-controls" type="jar" />
+            <artifact name="javafx-controls" type="jar" e:classifier="win"/>
+        </dependency> 
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-base" rev="&javafx.version;">
+            <artifact name="javafx-base" type="jar" />
+            <artifact name="javafx-base" type="jar" e:classifier="win"/>
+        </dependency> 
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-swing" rev="&javafx.version;"  >
+            <artifact name="javafx-swing" type="jar" />
+            <artifact name="javafx-swing" type="jar" e:classifier="win"/>
+        </dependency> 
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-web" rev="&javafx.version;" >
+            <artifact name="javafx-web" type="jar" />
+            <artifact name="javafx-web" type="jar" e:classifier="win"/>
+        </dependency> 
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-media" rev="&javafx.version;">
+            <artifact name="javafx-media" type="jar" />
+            <artifact name="javafx-media" type="jar" e:classifier="win"/>
+        </dependency>
+
+
         <dependency conf="autopsy_core->default" org="org.apache.ant" name="ant-launcher" rev="1.10.12"/>
         <dependency conf="autopsy_core->default" org="org.apache.ant" name="ant" rev="1.10.12"/>
 
