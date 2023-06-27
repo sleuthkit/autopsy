@@ -20,30 +20,44 @@
         <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-fxml" rev="&javafx.version;">
             <artifact name="javafx-fxml" type="jar" />
             <artifact name="javafx-fxml" type="jar" e:classifier="win"/>
+            <artifact name="javafx-fxml" type="jar" e:classifier="mac"/>
+            <artifact name="javafx-fxml" type="jar" e:classifier="linux"/>
         </dependency> 
         <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-graphics" rev="&javafx.version;">
             <artifact name="javafx-graphics" type="jar" />
             <artifact name="javafx-graphics" type="jar" e:classifier="win"/>
+            <artifact name="javafx-graphics" type="jar" e:classifier="mac"/>
+            <artifact name="javafx-graphics" type="jar" e:classifier="linux"/>
         </dependency>
         <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-controls" rev="&javafx.version;">
             <artifact name="javafx-controls" type="jar" />
             <artifact name="javafx-controls" type="jar" e:classifier="win"/>
+            <artifact name="javafx-controls" type="jar" e:classifier="mac"/>
+            <artifact name="javafx-controls" type="jar" e:classifier="linux"/>
         </dependency> 
         <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-base" rev="&javafx.version;">
             <artifact name="javafx-base" type="jar" />
             <artifact name="javafx-base" type="jar" e:classifier="win"/>
+            <artifact name="javafx-base" type="jar" e:classifier="mac"/>
+            <artifact name="javafx-base" type="jar" e:classifier="linux"/>
         </dependency> 
         <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-swing" rev="&javafx.version;"  >
             <artifact name="javafx-swing" type="jar" />
             <artifact name="javafx-swing" type="jar" e:classifier="win"/>
+            <artifact name="javafx-swing" type="jar" e:classifier="mac"/>
+            <artifact name="javafx-swing" type="jar" e:classifier="linux"/>
         </dependency> 
         <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-web" rev="&javafx.version;" >
             <artifact name="javafx-web" type="jar" />
             <artifact name="javafx-web" type="jar" e:classifier="win"/>
+            <artifact name="javafx-web" type="jar" e:classifier="mac"/>
+            <artifact name="javafx-web" type="jar" e:classifier="linux"/>
         </dependency> 
         <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-media" rev="&javafx.version;">
             <artifact name="javafx-media" type="jar" />
             <artifact name="javafx-media" type="jar" e:classifier="win"/>
+            <artifact name="javafx-media" type="jar" e:classifier="mac"/>
+            <artifact name="javafx-media" type="jar" e:classifier="linux"/>
         </dependency>
 
 

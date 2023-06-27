@@ -932,12 +932,28 @@
                 <binary-origin>release/modules/ext/jackson-dataformat-csv-2.13.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/javafx-base-17.0.7-linux.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-base-17.0.7-linux.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-base-17.0.7-mac.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-base-17.0.7-mac.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/javafx-base-17.0.7-win.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javafx-base-17.0.7-win.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javafx-base-17.0.7.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javafx-base-17.0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-controls-17.0.7-linux.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-controls-17.0.7-linux.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-controls-17.0.7-mac.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-controls-17.0.7-mac.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javafx-controls-17.0.7-win.jar</runtime-relative-path>
@@ -948,12 +964,28 @@
                 <binary-origin>release/modules/ext/javafx-controls-17.0.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/javafx-fxml-17.0.7-linux.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-fxml-17.0.7-linux.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-fxml-17.0.7-mac.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-fxml-17.0.7-mac.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/javafx-fxml-17.0.7-win.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javafx-fxml-17.0.7-win.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javafx-fxml-17.0.7.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javafx-fxml-17.0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-graphics-17.0.7-linux.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-graphics-17.0.7-linux.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-graphics-17.0.7-mac.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-graphics-17.0.7-mac.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javafx-graphics-17.0.7-win.jar</runtime-relative-path>
@@ -964,6 +996,14 @@
                 <binary-origin>release/modules/ext/javafx-graphics-17.0.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/javafx-media-17.0.7-linux.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-media-17.0.7-linux.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-media-17.0.7-mac.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-media-17.0.7-mac.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/javafx-media-17.0.7-win.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javafx-media-17.0.7-win.jar</binary-origin>
             </class-path-extension>
@@ -972,12 +1012,28 @@
                 <binary-origin>release/modules/ext/javafx-media-17.0.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/javafx-swing-17.0.7-linux.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-swing-17.0.7-linux.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-swing-17.0.7-mac.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-swing-17.0.7-mac.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/javafx-swing-17.0.7-win.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javafx-swing-17.0.7-win.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javafx-swing-17.0.7.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javafx-swing-17.0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-web-17.0.7-linux.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-web-17.0.7-linux.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/javafx-web-17.0.7-mac.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javafx-web-17.0.7-mac.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javafx-web-17.0.7-win.jar</runtime-relative-path>
