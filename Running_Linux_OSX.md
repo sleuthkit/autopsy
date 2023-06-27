@@ -13,7 +13,7 @@ When installing on Debian-based Linux or macOS systems, there are three general 
 
 # Installing Autopsy
 - Download the Autopsy zip file from [repository releases](https://github.com/sleuthkit/autopsy/releases).  The file will be marked as "autopsy-&lt;release&gt;.zip" (i.e. "autopsy-4.19.2.zip").
-- Run [`install_application.sh`](./linux_macos_install_scripts/install_application.sh) with the following parameters: `install_application.sh [-z zip_path] [-i install_directory] [-j java_home]`.  An example would be `install_application.sh -z ~/Downloads/autopsy-4.19.2.zip -i ~/autopsy -j /usr/lib/jvm/bellsoft-java17-full-amd64`.  The path to the Java 17 home is the last output from the [prequisites installation scripts](#installing-prerequisites), but typically, the path will be `/usr/lib/jvm/bellsoft-java17-full-amd64` on Debian-based Linux or the output of running `/usr/libexec/java_home -v 17` on macOS.
+- Run [`install_application.sh`](./linux_macos_install_scripts/install_application.sh) with the following parameters: `install_application.sh [-z zip_path] [-i install_directory] [-j java_home]`.  An example would be `install_application.sh -z ~/Downloads/autopsy-4.19.2.zip -i ~/autopsy -j /usr/lib/jvm/java-1.17.0-openjdk-amd64`.  The path to the Java 17 home is the last output from the [prequisites installation scripts](#installing-prerequisites), but typically, the path will be in the result of running  `update-java-alternatives -l | grep java-1.17` on Debian-based Linux or the output of running `/usr/libexec/java_home -v 17` on macOS.
 
 # Setup macOS JNA paths
 If you are on macOS, run [linux_macos_install_scripts/add_macos_jna.sh](./linux_macos_install_scripts/add_macos_jna.sh) to properly setup the jna path to get things like gstreamer working.  An example would be `add_macos_jna.sh -i ~/autopsy`.
@@ -26,9 +26,9 @@ If you are on macOS, run [linux_macos_install_scripts/add_macos_jna.sh](./linux_
   the wrong version of Java is being used to run Autopsy.
   Check the version of Java reported in the `messages.log` file in the log directory.  The log directory can be found by opening Autopsy, and, with no cases open, go to 'Help' > 'Open Log Folder'. `messages.log` should contain lines that looks like:
   ```
-  Java; VM; Vendor        = 17.0.7; OpenJDK 64-Bit Server VM 17.0.7+7-LTS; BellSoft
-  Runtime                 = OpenJDK Runtime Environment 17.0.7+7-LTS
-  Java Home               = /usr/lib/jvm/bellsoft-java17-full-amd64
+  Java; VM; Vendor        = 17.0.7; OpenJDK 64-Bit Server VM 17.0.7+7-Ubuntu-0ubuntu122.04.2; Private Build
+  Runtime                 = OpenJDK Runtime Environment 17.0.7+7-Ubuntu-0ubuntu122.04.2
+  Java Home               = /usr/lib/jvm/java-17-openjdk-amd64
   ```
 
   If your `messages.log` file indicates that Java 17 is not being used:
