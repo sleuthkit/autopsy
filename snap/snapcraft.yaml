@@ -12,15 +12,6 @@ architectures: [amd64, arm64]
 compression: lzo
 icon: snap/gui/autopsy.png
 
-# Java package repo to use with snapcraft
-package-repositories:
-- type: apt
-  formats: [deb]
-  components: [main]
-  suites: [stable]
-  key-id: 99A5C88E3C5B1FA8B05A19D332E9750179FCEA62
-  url: https://apt.bell-sw.com/
-
 plugs:
   system-files-autopsy:
     interface: system-files
@@ -29,7 +20,7 @@ plugs:
 apps:
   autopsy:
     environment:
-      jdkhome: $SNAP/usr/lib/jvm/bellsoft-java8-full-amd64
+      jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs
       jreflags: $jreflags "-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu"
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
@@ -85,17 +76,20 @@ parts:
   sleuthkit:
     plugin: autotools
     source: https://github.com/sleuthkit/sleuthkit.git
-    build-environment: [JAVA_HOME: /usr/lib/jvm/bellsoft-java8-full-amd64]
+    source-branch: develop
+    #source-tag: sleuthkit-4.12.0
+    build-environment: [JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64]
     build-packages:
     - build-essential
     - autoconf
     - libtool
     - automake
     - zip
+    - openjdk-17-jdk 
+    - openjdk-17-jre
     - ant
     - ant-contrib
     - ant-optional
-    - bellsoft-java8-full
     - libpq-dev
     - testdisk
     - libafflib-dev
@@ -110,14 +104,14 @@ parts:
     - libewf-dev
     - libvhdi-dev
     - libvmdk-dev
-    source-tag: sleuthkit-4.12.0
   autopsy:
     after: [sleuthkit]
     build-packages:
     - zip
     - unzip
+    - openjdk-17-jdk 
+    - openjdk-17-jre
     - ant
-    - bellsoft-java8-full
     - doxygen
     stage-packages:
     - libde265-dev
@@ -137,12 +131,16 @@ parts:
     - gstreamer1.0-gtk3
     - gstreamer1.0-qt5
     - gstreamer1.0-pulseaudio
-    - bellsoft-java8-full
+    - openjdk-17-jdk 
+    - openjdk-17-jre
     - perl
     plugin: nil
-    source: https://github.com/sleuthkit/autopsy.git
+    # source: https://github.com/sleuthkit/autopsy.git
+    source: https://github.com/gdicristofaro/autopsy.git
+    # source-branch: develop
+    source-branch: javafx-changes
     build-environment:
-    - JAVA_HOME: /usr/lib/jvm/bellsoft-java8-full-amd64
+    - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
     override-build: |-
       # ----- BUILD ZIP -----
@@ -173,4 +171,4 @@ parts:
 
       # include this line to print all set variables
       # sed -i '129 i set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"' "$AUTOPSY_LOCATION/platform/lib/nbexec"
-    source-branch: develop
+    
