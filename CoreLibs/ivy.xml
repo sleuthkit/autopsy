@@ -9,14 +9,6 @@
         
     </configurations>
     <dependencies>
-        <!-- <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-fxml" rev="&javafx.version;"/>
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-graphics" rev="&javafx.version;"/>
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-controls" rev="&javafx.version;"/>
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-base" rev="&javafx.version;"/>
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-swing" rev="&javafx.version;"/>
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-web" rev="&javafx.version;"/>
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-media" rev="&javafx.version;"/> -->
-
         <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-fxml" rev="&javafx.version;">
             <artifact name="javafx-fxml" type="jar" />
             <artifact name="javafx-fxml" type="jar" e:classifier="win"/>
