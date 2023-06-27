@@ -199,6 +199,83 @@
                 <package>com.google.type</package>
                 <package>com.microsoft.schemas.vml</package>
                 <package>com.microsoft.schemas.vml.impl</package>
+                <package>com.sun.javafx</package>
+                <package>com.sun.javafx.animation</package>
+                <package>com.sun.javafx.application</package>
+                <package>com.sun.javafx.beans</package>
+                <package>com.sun.javafx.beans.event</package>
+                <package>com.sun.javafx.binding</package>
+                <package>com.sun.javafx.charts</package>
+                <package>com.sun.javafx.collections</package>
+                <package>com.sun.javafx.css</package>
+                <package>com.sun.javafx.css.parser</package>
+                <package>com.sun.javafx.cursor</package>
+                <package>com.sun.javafx.effect</package>
+                <package>com.sun.javafx.embed</package>
+                <package>com.sun.javafx.embed.swing</package>
+                <package>com.sun.javafx.embed.swing.newimpl</package>
+                <package>com.sun.javafx.event</package>
+                <package>com.sun.javafx.font</package>
+                <package>com.sun.javafx.font.coretext</package>
+                <package>com.sun.javafx.font.directwrite</package>
+                <package>com.sun.javafx.font.freetype</package>
+                <package>com.sun.javafx.fxml</package>
+                <package>com.sun.javafx.fxml.builder</package>
+                <package>com.sun.javafx.fxml.builder.web</package>
+                <package>com.sun.javafx.fxml.expression</package>
+                <package>com.sun.javafx.geom</package>
+                <package>com.sun.javafx.geom.transform</package>
+                <package>com.sun.javafx.geometry</package>
+                <package>com.sun.javafx.iio</package>
+                <package>com.sun.javafx.iio.bmp</package>
+                <package>com.sun.javafx.iio.common</package>
+                <package>com.sun.javafx.iio.gif</package>
+                <package>com.sun.javafx.iio.ios</package>
+                <package>com.sun.javafx.iio.jpeg</package>
+                <package>com.sun.javafx.iio.png</package>
+                <package>com.sun.javafx.image</package>
+                <package>com.sun.javafx.image.impl</package>
+                <package>com.sun.javafx.logging</package>
+                <package>com.sun.javafx.logging.jfr</package>
+                <package>com.sun.javafx.media</package>
+                <package>com.sun.javafx.menu</package>
+                <package>com.sun.javafx.perf</package>
+                <package>com.sun.javafx.print</package>
+                <package>com.sun.javafx.property</package>
+                <package>com.sun.javafx.property.adapter</package>
+                <package>com.sun.javafx.reflect</package>
+                <package>com.sun.javafx.runtime</package>
+                <package>com.sun.javafx.runtime.async</package>
+                <package>com.sun.javafx.runtime.eula</package>
+                <package>com.sun.javafx.scene</package>
+                <package>com.sun.javafx.scene.canvas</package>
+                <package>com.sun.javafx.scene.control</package>
+                <package>com.sun.javafx.scene.control.behavior</package>
+                <package>com.sun.javafx.scene.control.inputmap</package>
+                <package>com.sun.javafx.scene.control.skin</package>
+                <package>com.sun.javafx.scene.control.skin.resources</package>
+                <package>com.sun.javafx.scene.input</package>
+                <package>com.sun.javafx.scene.layout</package>
+                <package>com.sun.javafx.scene.layout.region</package>
+                <package>com.sun.javafx.scene.media</package>
+                <package>com.sun.javafx.scene.paint</package>
+                <package>com.sun.javafx.scene.shape</package>
+                <package>com.sun.javafx.scene.text</package>
+                <package>com.sun.javafx.scene.transform</package>
+                <package>com.sun.javafx.scene.traversal</package>
+                <package>com.sun.javafx.scene.web</package>
+                <package>com.sun.javafx.scene.web.behavior</package>
+                <package>com.sun.javafx.sg.prism</package>
+                <package>com.sun.javafx.sg.prism.web</package>
+                <package>com.sun.javafx.stage</package>
+                <package>com.sun.javafx.text</package>
+                <package>com.sun.javafx.tk</package>
+                <package>com.sun.javafx.tk.quantum</package>
+                <package>com.sun.javafx.util</package>
+                <package>com.sun.javafx.webkit</package>
+                <package>com.sun.javafx.webkit.prism</package>
+                <package>com.sun.javafx.webkit.prism.theme</package>
+                <package>com.sun.javafx.webkit.theme</package>
                 <package>com.sun.jna</package>
                 <package>com.sun.jna.platform</package>
                 <package>com.sun.jna.platform.dnd</package>
@@ -208,6 +285,7 @@
                 <package>com.sun.jna.platform.wince</package>
                 <package>com.sun.jna.ptr</package>
                 <package>com.sun.jna.win32</package>
+                <package>com.sun.scenario.animation</package>
                 <package>com.twelvemonkeys.image</package>
                 <package>com.twelvemonkeys.imageio</package>
                 <package>com.twelvemonkeys.imageio.color</package>
@@ -246,9 +324,8 @@
                 <package>javax.annotation</package>
                 <package>javax.annotation.concurrent</package>
                 <package>javax.annotation.meta</package>
-                <package>javafx.animation</package>
+<package>javafx.animation</package>
                 <package>javafx.application</package>
-                <package>javafx.base</package>
                 <package>javafx.beans</package>
                 <package>javafx.beans.binding</package>
                 <package>javafx.beans.property</package>
@@ -259,9 +336,9 @@
                 <package>javafx.concurrent</package>
                 <package>javafx.css</package>
                 <package>javafx.css.converter</package>
-                <package>javafx.embed.swing </package>
+                <package>javafx.embed.swing</package>
                 <package>javafx.event</package>
-                <package>javafx.fxml </package>
+                <package>javafx.fxml</package>
                 <package>javafx.geometry</package>
                 <package>javafx.graphics</package>
                 <package>javafx.print</package>
@@ -275,12 +352,13 @@
                 <package>javafx.scene.image</package>
                 <package>javafx.scene.input</package>
                 <package>javafx.scene.layout</package>
+                <package>javafx.scene.media</package>
                 <package>javafx.scene.paint</package>
                 <package>javafx.scene.robot</package>
                 <package>javafx.scene.shape</package>
                 <package>javafx.scene.text</package>
                 <package>javafx.scene.transform</package>
-                <package>javafx.scene.web </package>
+                <package>javafx.scene.web</package>
                 <package>javafx.stage</package>
                 <package>javafx.util</package>
                 <package>javafx.util.converter</package>
@@ -622,6 +700,10 @@
                 <binary-origin>release/modules/ext/conscrypt-openjdk-uber-2.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/controlsfx-11.1.2-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-11.1.2-sources.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/controlsfx-11.1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/controlsfx-11.1.2.jar</binary-origin>
             </class-path-extension>
@@ -758,8 +840,8 @@
                 <binary-origin>release/modules/ext/gst1-java-core-1.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-31.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-31.1.jar</binary-origin>
+                <runtime-relative-path>ext/guava-31.1-jre.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-31.1-jre.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/httpclient-4.5.13.jar</runtime-relative-path>
@@ -946,8 +1028,8 @@
                 <binary-origin>release/modules/ext/LGoodDatePicker-11.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/listenablefuture-9999.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/listenablefuture-9999.0.jar</binary-origin>
+                <runtime-relative-path>ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/log4j-api-2.17.2.jar</runtime-relative-path>
@@ -968,6 +1050,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/opencensus-proto-0.2.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/opencensus-proto-0.2.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/opencv-2413.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencv-2413.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
