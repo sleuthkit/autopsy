@@ -42,11 +42,11 @@ EMBEDDED SOFTWARE
 This section lists the software components and libraries that are used by 
 Autopsy.   These tools are bundled with the Windows installer, unless specified otherwise.
 
-JRE (Java Runtime Environment) 1.8
-- Web page: http://www.oracle.com/technetwork/java/index.html
-- License: http://www.oracle.com/technetwork/java/javase/terms/license/index.html
+JRE (Java Runtime Environment) 17
+- Web page: https://bell-sw.com/pages/downloads/
+- License: https://bell-sw.com/liberica_eula/
 
-Netbeans 11.3 RCP platform and .jar files bundled with the platform
+Netbeans 15 RCP platform and .jar files bundled with the platform
 - Web page: https://netbeans.apache.org/
 - License: https://www.apache.org/licenses/LICENSE-2.0
 

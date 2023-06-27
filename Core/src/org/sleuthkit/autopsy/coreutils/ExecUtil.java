@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-import com.sun.javafx.PlatformUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +27,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import org.apache.commons.lang3.SystemUtils;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
@@ -371,7 +371,7 @@ public final class ExecUtil {
             return;
         }
 
-        if (PlatformUtil.isWindows()) {
+        if (SystemUtils.IS_OS_WINDOWS) {
             try {
                 Win32Process parentProcess = new Win32Process(process);
                 List<Win32Process> children = parentProcess.getChildren();

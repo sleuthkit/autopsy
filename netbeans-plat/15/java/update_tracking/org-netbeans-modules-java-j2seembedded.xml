@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.java.j2seembedded">
+    <module_version install_time="1668523601629" last="true" origin="Ant" specification_version="1.26">
+        <file crc="723814174" name="config/Modules/org-netbeans-modules-java-j2seembedded.xml"/>
+        <file crc="1814481281" name="modules/ext/org-netbeans-modules-java-j2seembedded-probe.jar"/>
+        <file crc="3766484378" name="modules/org-netbeans-modules-java-j2seembedded.jar"/>
+    </module_version>
+</module>

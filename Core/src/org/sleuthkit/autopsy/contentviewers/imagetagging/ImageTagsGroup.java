@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.contentviewers.imagetagging;
 
-import com.sun.javafx.event.EventDispatchChainImpl;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javafx.event.Event;
+import javafx.event.EventDispatchChain;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -41,7 +41,8 @@ import javafx.scene.input.MouseEvent;
  */
 public final class ImageTagsGroup extends Group {
 
-    private final EventDispatchChainImpl NO_OP_CHAIN = new EventDispatchChainImpl();
+    // TODO: See JIRA-6693
+//    private final EventDispatchChain NO_OP_CHAIN = new EventDispatchChainImpl();
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     private volatile ImageTag currentFocus;
@@ -50,10 +51,10 @@ public final class ImageTagsGroup extends Group {
 
         //Reset focus of current selection if the back drop has focus.
         backDrop.setOnMousePressed((mouseEvent) -> {
-            if (currentFocus != null) {
-                currentFocus.getEventDispatcher().dispatchEvent(
-                        new Event(ImageTagControls.NOT_FOCUSED), NO_OP_CHAIN);
-            }
+//            if (currentFocus != null) {
+//                currentFocus.getEventDispatcher().dispatchEvent(
+//                        new Event(ImageTagControls.NOT_FOCUSED), NO_OP_CHAIN);
+//            }
 
             this.pcs.firePropertyChange(new PropertyChangeEvent(this,
                     ImageTagControls.NOT_FOCUSED.getName(), currentFocus, null));
@@ -130,7 +131,7 @@ public final class ImageTagsGroup extends Group {
      * @param n 
      */
     private void resetFocus(ImageTag n) {
-        n.getEventDispatcher().dispatchEvent(new Event(ImageTagControls.NOT_FOCUSED), NO_OP_CHAIN);
+//        n.getEventDispatcher().dispatchEvent(new Event(ImageTagControls.NOT_FOCUSED), NO_OP_CHAIN);
         this.pcs.firePropertyChange(new PropertyChangeEvent(this, ImageTagControls.NOT_FOCUSED.getName(), n, null));
     }
 
@@ -146,7 +147,7 @@ public final class ImageTagsGroup extends Group {
             resetFocus(currentFocus);
         }
 
-        n.getEventDispatcher().dispatchEvent(new Event(ImageTagControls.FOCUSED), NO_OP_CHAIN);
+//        n.getEventDispatcher().dispatchEvent(new Event(ImageTagControls.FOCUSED), NO_OP_CHAIN);
         this.pcs.firePropertyChange(new PropertyChangeEvent(this, ImageTagControls.FOCUSED.getName(), currentFocus, n));
 
         currentFocus = n;

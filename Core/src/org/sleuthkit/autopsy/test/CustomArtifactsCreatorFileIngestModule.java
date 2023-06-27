@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.test;
 
 import java.util.logging.Level;
+import org.apache.commons.codec.DecoderException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModuleAdapter;
@@ -74,7 +75,7 @@ final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapt
         }
         try {
             CustomArtifactType.createAndPostInstance(file, context.getJobId());
-        } catch (TskCoreException | Blackboard.BlackboardException ex) {
+        } catch (TskCoreException | Blackboard.BlackboardException | DecoderException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process file (obj_id = %d)", file.getId()), ex);
             return ProcessResult.ERROR;
         }

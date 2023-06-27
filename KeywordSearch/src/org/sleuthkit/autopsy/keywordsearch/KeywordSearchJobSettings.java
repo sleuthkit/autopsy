@@ -30,7 +30,7 @@ public final class KeywordSearchJobSettings implements IngestModuleIngestJobSett
 
     private static final long serialVersionUID = 1L;
 
-    private HashSet<String> namesOfEnabledKeywordLists;
+    private final HashSet<String> namesOfEnabledKeywordLists;
     private HashSet<String> namesOfDisabledKeywordLists; // Added in version 1.1
 
     /**
@@ -41,6 +41,8 @@ public final class KeywordSearchJobSettings implements IngestModuleIngestJobSett
     private Boolean limitedOCREnabled;
 
     private boolean ocrOnly;
+    
+    private boolean indexToSolr;
 
     /**
      * Constructs ingest job settings for the keywords search module.
@@ -55,6 +57,7 @@ public final class KeywordSearchJobSettings implements IngestModuleIngestJobSett
         this.ocrEnabled = null;
         this.limitedOCREnabled = null;
         this.ocrOnly = false;
+        this.indexToSolr = true;
     }
 
     /**
@@ -69,12 +72,13 @@ public final class KeywordSearchJobSettings implements IngestModuleIngestJobSett
      * @param ocrOnly                     True if keyword search ingest should
      *                                    be solely limited to OCR.
      */
-    KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists, List<String> namesOfDisabledKeywordLists, boolean ocrEnabled, boolean limitedOCREnabled, boolean ocrOnly) {
+    KeywordSearchJobSettings(List<String> namesOfEnabledKeywordLists, List<String> namesOfDisabledKeywordLists, boolean ocrEnabled, boolean limitedOCREnabled, boolean ocrOnly, boolean indexToSolr) {
         this.namesOfEnabledKeywordLists = new HashSet<>(namesOfEnabledKeywordLists);
         this.namesOfDisabledKeywordLists = new HashSet<>(namesOfDisabledKeywordLists);
         this.ocrEnabled = ocrEnabled;
         this.limitedOCREnabled = limitedOCREnabled;
         this.ocrOnly = ocrOnly;
+        this.indexToSolr = indexToSolr;
     }
 
     /**
@@ -195,6 +199,14 @@ public final class KeywordSearchJobSettings implements IngestModuleIngestJobSett
         if (null == this.namesOfDisabledKeywordLists) {
             this.namesOfDisabledKeywordLists = new HashSet<>();
         }
+    }
+    
+    boolean isIndexToSolrEnabled() {
+        return indexToSolr;
+    }
+    
+    void setIndexToSolrEnabled(boolean enabled){
+        indexToSolr = enabled;
     }
 
 }

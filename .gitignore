@@ -73,7 +73,9 @@ genfiles.properties
 !/Testing/nbproject/project.xml
 !/Testing/nbproject/project.properties
 *~
-/netbeans-plat
+/netbeans-plat/*
+# include netbeans platform 15 because it doesn't seem to download consistently or is being updated
+!/netbeans-plat/15
 /docs/doxygen-user/user-docs
 /docs/doxygen-dev/build-docs
 /jdiff-javadocs/*

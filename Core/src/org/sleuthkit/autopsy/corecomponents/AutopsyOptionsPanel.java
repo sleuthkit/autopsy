@@ -506,7 +506,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 confLoaded = true;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Can't read current Jvm max memory setting from file", ex);
-                memField.setEnabled(false);
                 heapDumpFileField.setText(DEFAULT_HEAP_DUMP_FILE_FIELD);
             }
             memField.setText(initialMemValue);
@@ -1016,7 +1015,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                             .addGroup(runtimePanelLayout.createSequentialGroup()
                                 .addGap(23, 23, 23)
                                 .addComponent(memFieldValidationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 478, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(12, Short.MAX_VALUE))
+                                .addContainerGap(117, Short.MAX_VALUE))
                             .addGroup(runtimePanelLayout.createSequentialGroup()
                                 .addGap(18, 18, 18)
                                 .addComponent(solrJVMHeapWarning, javax.swing.GroupLayout.PREFERRED_SIZE, 331, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1149,7 +1148,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                                 .addComponent(tempCustomField, javax.swing.GroupLayout.PREFERRED_SIZE, 459, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(tempDirectoryBrowseButton)))))
-                .addContainerGap(164, Short.MAX_VALUE))
+                .addContainerGap(269, Short.MAX_VALUE))
         );
         tempDirectoryPanelLayout.setVerticalGroup(
             tempDirectoryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1179,8 +1178,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         tempDirectoryPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.tempDirectoryPanel.AccessibleContext.accessibleName")); // NOI18N
 
         rdpPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.rdpPanel.border.title"))); // NOI18N
-        rdpPanel.setMinimumSize(new java.awt.Dimension(33, 100));
-        rdpPanel.setPreferredSize(new java.awt.Dimension(100, 150));
+        rdpPanel.setMaximumSize(new java.awt.Dimension(300, 175));
+        rdpPanel.setMinimumSize(new java.awt.Dimension(300, 175));
+        rdpPanel.setPreferredSize(new java.awt.Dimension(300, 175));
         rdpPanel.setLayout(new java.awt.GridBagLayout());
 
         sizingScrollPane.setBorder(null);
@@ -1188,7 +1188,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         sizingTextPane.setEditable(false);
         sizingTextPane.setBorder(null);
         sizingTextPane.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.sizingTextPane.text")); // NOI18N
+        sizingTextPane.setAutoscrolls(false);
+        sizingTextPane.setMinimumSize(new java.awt.Dimension(453, 220));
         sizingTextPane.setOpaque(false);
+        sizingTextPane.setPreferredSize(new java.awt.Dimension(453, 220));
+        sizingTextPane.setSelectionStart(0);
         sizingScrollPane.setViewportView(sizingTextPane);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -1220,11 +1224,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 860, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 955, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 699, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

@@ -19,3 +19,7 @@ Doxyfile                text
 /KeywordSearch/solr/bin/init.d/solr  eol=lf
 /KeywordSearch/solr/bin/post  eol=lf
 /KeywordSearch/solr/bin/solr  eol=lf
+
+# ensure properties files and xml files in the platform don't get changed during the build
+/netbeans-plat/15/**/*.properties eol=lf
+/netbeans-plat/15/**/*.xml eol=lf

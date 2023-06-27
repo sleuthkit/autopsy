@@ -187,10 +187,12 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         currentSessionSettingsPanel = new javax.swing.JPanel();
         hideRejectedResultsCheckbox = new javax.swing.JCheckBox();
 
-        setPreferredSize(new java.awt.Dimension(727, 495));
+        setMinimumSize(new java.awt.Dimension(727, 520));
+        setPreferredSize(new java.awt.Dimension(727, 520));
 
         viewPreferencesScrollPane.setBorder(null);
-        viewPreferencesScrollPane.setPreferredSize(new java.awt.Dimension(727, 493));
+        viewPreferencesScrollPane.setMinimumSize(new java.awt.Dimension(727, 500));
+        viewPreferencesScrollPane.setPreferredSize(new java.awt.Dimension(727, 500));
 
         viewPreferencesPanel.setPreferredSize(new java.awt.Dimension(727, 492));
 
@@ -502,7 +504,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(viewPreferencesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(viewPreferencesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

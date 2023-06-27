@@ -11,12 +11,9 @@ correct C libraries.
 STEPS:
 1) Get Java Setup
 
-1a) Download and install JDK version 1.8.  For the current version of JavaFX 
-that we use, you'll need 1.8.0_66 or greater. You can now use 32-bit or 64-bit, 
-but special work is needed to get The Sleuth Kit to compile as 64-bit.
+1a) Download and install 64-bit JDK version 17 with JavaFX.
 
-Autopsy has been used and tested with the following OpenJDK build
-(https://github.com/ojdkbuild/ojdkbuild/releases/tag/java-1.8.0-openjdk-1.8.0.222-1.b10).
+Autopsy has been used and tested with liberica java which can be downloaded from here: https://bell-sw.com/pages/downloads/.
 
 
 1b) Ensure that JDK_HOME is set to the root JDK directory.

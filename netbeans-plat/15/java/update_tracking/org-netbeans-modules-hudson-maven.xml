@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.hudson.maven">
+    <module_version install_time="1668523667069" last="true" origin="Ant" specification_version="1.46">
+        <file crc="2158437288" name="config/Modules/org-netbeans-modules-hudson-maven.xml"/>
+        <file crc="4256219494" name="modules/org-netbeans-modules-hudson-maven.jar"/>
+    </module_version>
+</module>

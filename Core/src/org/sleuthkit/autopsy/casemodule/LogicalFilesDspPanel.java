@@ -114,11 +114,11 @@ final class LogicalFilesDspPanel extends JPanel {
         dspSubtypePanel.setLayout(dspSubtypePanelLayout);
         dspSubtypePanelLayout.setHorizontalGroup(
             dspSubtypePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 466, Short.MAX_VALUE)
+            .addGap(0, 524, Short.MAX_VALUE)
         );
         dspSubtypePanelLayout.setVerticalGroup(
             dspSubtypePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 160, Short.MAX_VALUE)
+            .addGap(0, 334, Short.MAX_VALUE)
         );
 
         dspSubtypeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {Bundle.LogicalFilesDspPanel_subTypeComboBox_localFilesOption_text(), Bundle.LogicalFilesDspPanel_subTypeComboBox_l01FileOption_text()}));
@@ -135,20 +135,17 @@ final class LogicalFilesDspPanel extends JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(dspSubtypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(dspSubtypePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 466, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap()
+                .addComponent(dspSubtypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(dspSubtypePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 524, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(dspSubtypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(dspSubtypePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
+                .addComponent(dspSubtypePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 334, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -231,4 +228,32 @@ final class LogicalFilesDspPanel extends JPanel {
             return "";
         }
     }
+    
+    /**
+     * Get whether the createTimestampcheckbox was selected or not
+     * 
+     * @return if box was checked or not
+     */
+    Boolean getCreateTimestamp() {
+        return localFilesPanel.getCreateTimestamps();
+    }
+    
+    /**
+     * Get whether the modifiedTimestampcheckbox was selected or not
+     * 
+     * @return if box was checked or not
+     */
+    Boolean getModifiedTimestamp() {
+        return localFilesPanel.getModifiedTimestamps();
+    }
+    
+    /**
+     * Get whether the accessTimestampcheckbox was selected or not
+     * 
+     * @return if box was checked or not
+     */
+    Boolean getAccessTimestamp() {
+        return localFilesPanel.getAccessTimestamps();
+    }
+
 }
