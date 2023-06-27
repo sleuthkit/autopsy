@@ -134,8 +134,8 @@
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-${TSK_VERSION}.jar" 
               tofile="${ext.dir}/sleuthkit-${TSK_VERSION}.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.36.0.3.jar"
-              tofile="${ext.dir}/sqlite-jdbc-3.36.0.3.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.42.0.0.jar"
+              tofile="${ext.dir}/sqlite-jdbc-3.42.0.0.jar"/>
 		<copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-42.3.5.jar" 
               tofile="${ext.dir}/postgresql-42.3.5.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.5.jar"
@@ -310,41 +310,19 @@
     (i.e. https://stackoverflow.com/questions/219585/including-all-the-jars-in-a-directory-within-the-java-classpath).  
     This solution involves taking the initial ‘module.run.classpath’ property and simplifying it to the directories containing jars 
     (i.e. instead of “/dir/lib1.jar:/dir/lib2.jar:/dir/lib3.jar” it becomes “/dir/*” ).  
-    More information on ‘module.run.classpath’ can be found in “netbeans-plat\11.3\harness\README” and it appears that
-    “netbeans-plat\11.3\harness\build.xml:build-init target is in charge of setting the ‘module.run.classpath’ variable.
+    More information on ‘module.run.classpath’ can be found in “netbeans-plat\15\harness\README” and it appears that
+    “netbeans-plat\15\harness\build.xml:build-init target is in charge of setting the ‘module.run.classpath’ variable.
     More information in Jira: 6970.
     -->
     <target name="unit-test-path-simplification" depends="projectized-common.test-init">
+        <property name="unit-test-path-simplification.dir.path" value="${thirdparty.dir}/ClasspathSimplification/target"/>
+        <property name="unit-test-path-simplification.jar.path" value="${unit-test-path-simplification.dir.path}/ClasspathSimplification-1.0-jar-with-dependencies.jar"/>
+        <taskdef name="classpathsimplify" classname="org.sleuthkit.autopsy.classpathsimplification.ClasspathSimplification" classpath="${unit-test-path-simplification.jar.path}"/>
+        
+        
         <sequential>
-            <script language="javascript">
-                <![CDATA[ 
-                    var moduleRunClasspath = project.getProperty("module.run.classpath");
-
-                    var directories = [];
-                    // searches for jar file parent directories with path separators of \ or /
-                    var individualPathRegex = /^\s*(.+?[\\\/])[^\\\/]+?\.jar\s*$/i;
-                    // split on ':' but not 'C:\'
-                    var classPathRegex = /((C:\\)?.+?)(:|$)/gi;
-                    var match;
-                    while((match = classPathRegex.exec(moduleRunClasspath)) !== null) {
-                        var thisPath = match[1];
-                        var pathMatch = thisPath.match(individualPathRegex);
-                        // find unique matches
-                        if (pathMatch && directories.indexOf(pathMatch[1]) < 0) {
-                            directories.push(pathMatch[1]);
-                        }
-                    }
-
-                    // suffix with *
-                    for (var i = 0; i < directories.length; i++) {
-                        directories[i] = directories[i] + "*";
-                    }
-
-                    // set project property
-                    project.setNewProperty("test.unit.abbreviatedModuleRunClassPath", directories.join(":"));
-                ]]>
-            </script>
-
+            <classpathsimplify classpath="${module.run.classpath}" outputprop="test.unit.abbreviatedModuleRunClassPath" />
+            
             <!--grab properties from common.xml:test-init so that "test.unit.run.cp" can be properly formed-->
             <property name="build.test.unit.dir" location="${build.dir}/test/unit"/>
             <property name="build.test.unit.classes.dir" location="${build.test.unit.dir}/classes"/>

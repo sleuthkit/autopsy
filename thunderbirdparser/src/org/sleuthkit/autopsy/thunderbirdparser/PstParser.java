@@ -300,7 +300,7 @@ class PstParser  implements AutoCloseable{
         email.setRecipients(toAddress);
         email.setCc(ccAddress);
         email.setBcc(bccAddress);
-        email.setSender(getSender(msg.getSenderName(), msg.getSentRepresentingSMTPAddress()));
+        email.setSender(getSender(msg.getSenderName(), (msg.getSentRepresentingSMTPAddress().isEmpty()) ? msg.getSenderEmailAddress() : msg.getSentRepresentingSMTPAddress()));
         email.setSentDate(msg.getMessageDeliveryTime());
         email.setTextBody(msg.getBody());
         if (false == msg.getTransportMessageHeaders().isEmpty()) {
@@ -318,7 +318,7 @@ class PstParser  implements AutoCloseable{
         email.setSubject(msg.getSubject());
         email.setId(msg.getDescriptorNodeId());
         email.setMessageID(msg.getInternetMessageId());
-
+        
         String inReplyToID = msg.getInReplyToId();
         email.setInReplyToID(inReplyToID);
 
@@ -479,7 +479,7 @@ class PstParser  implements AutoCloseable{
         } else if (addr.isEmpty()) {
             return name;
         } else {
-            return name + ": " + addr;
+            return name + " <" + addr + ">";
         }
     }
 

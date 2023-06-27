@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.j2ee.eclipselink">
+    <module_version install_time="1668523658688" last="true" origin="Ant" specification_version="1.49">
+        <file crc="51242465" name="config/Modules/org-netbeans-modules-j2ee-eclipselink.xml"/>
+        <file crc="2875391673" name="modules/ext/docs/jakarta.persistence-2.2.3-doc.zip"/>
+        <file crc="1983650243" name="modules/ext/eclipselink/jakarta.persistence-2.2.3.jar"/>
+        <file crc="2327946540" name="modules/ext/eclipselink/org.eclipse.persistence.antlr-2.7.10.jar"/>
+        <file crc="3903842509" name="modules/ext/eclipselink/org.eclipse.persistence.asm-9.2.0.jar"/>
+        <file crc="3972009155" name="modules/ext/eclipselink/org.eclipse.persistence.core-2.7.10.jar"/>
+        <file crc="2438596363" name="modules/ext/eclipselink/org.eclipse.persistence.jpa-2.7.10.jar"/>
+        <file crc="1209195154" name="modules/ext/eclipselink/org.eclipse.persistence.jpa.jpql-2.7.10.jar"/>
+        <file crc="4151773035" name="modules/ext/eclipselink/org.eclipse.persistence.moxy-2.7.10.jar"/>
+        <file crc="3149183019" name="modules/org-netbeans-modules-j2ee-eclipselink.jar"/>
+    </module_version>
+</module>

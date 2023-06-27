@@ -55,6 +55,11 @@ import org.xml.sax.SAXException;
  */
 public class XMLUtil {
     
+    static {
+        // this is to ensure using xalan for the transformer factory: https://stackoverflow.com/a/64364531/2375948
+        System.setProperty("javax.xml.transform.TransformerFactory","com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl");
+    }
+    
     private static DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
         // See JIRA-6958 for details about class loading and jaxb.
         ClassLoader original = Thread.currentThread().getContextClassLoader();

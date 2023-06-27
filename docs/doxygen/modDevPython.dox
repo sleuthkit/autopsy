@@ -33,7 +33,7 @@ To install NetBeans' plug-in:
 -# Setup Jython path from Tools->Python Platforms, click on new, then choose Jython.exe (usually in C:\\Program files\\Jython2.7\\bin)
 
 To install IntelliJ IDEA + Python plug-in:
--# Download java JDK depending on platform. Install to desired location (http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html).
+-# Download java JDK depending on platform. Install to desired location (https://bell-sw.com/pages/downloads/).
 -# Download and install IDEA Community Edition to desired location (https://www.jetbrains.com/idea/download/).
 -# Open IDEA and choose desired UI theme. Continue with default settings.
 -# Choose to either create a new empty project or open an existing one.

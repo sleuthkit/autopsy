@@ -8,22 +8,20 @@
     <import file="nbproject/build-impl.xml"/>
     <import file="${basedir}/TSKVersion.xml"/>
     <!-- IMPORTANT: nbproject/platform.properties has a netbeans-plat-version property that MUST be kept in sync (manually) -->
-    <property name="netbeans-plat-version" value="11.3" />
+    <property name="netbeans-plat-version" value="15" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
     <!-- Supported java versions.-->
+
     <condition property="supported-java-versions">
         <or>
-            <matches string="${java.version}" pattern="1\.8\.0_6[6-9]"/>
-            <matches string="${java.version}" pattern="1\.8\.0_[7-9][0-9]"/>
-            <matches string="${java.version}" pattern="1\.8\.0_[1-9][0-9][0-9]"/>
-            <matches string="${java.version}" pattern="1\.8\.[1-9]_[0-9][0-9]"/>
-            <equals arg1="${ant.java.version}" arg2="1.9"/>
+            <matches string="${java.version}" pattern="[1-9][0-9]\.*\.*"/>
+            <matches string="${ant.java.version}" pattern="[1-9][0-9]"/>
         </or>
     </condition>
     
     <!-- Verify that the java version running is . -->
-    <fail message="Unsupported Java version: ${ant.java.version}. 
-            Make sure that the Java version is 1.8.0_66 or higher."
+    <fail message="Unsupported Java version: ${ant.java.version} with Ant java version ${ant.java.version}. 
+            Make sure that the Java version is 11 or higher."
           unless="supported-java-versions"/>
 
     <!-- Determine platform and include specific file -->
@@ -90,25 +88,13 @@
     <!-- This target is similar to the regular test target that calls test on all nbm's, 
     but this target excludes the Testing nbm which runs the regression tests -->
     <target name="test-no-regression" depends="build" description="Runs tests for all modules in the suite excluding the regression tests of the Testing NBM.">
-        <!--taken from https://stackoverflow.com/a/10859103; remove "Testing" from the modules and provide 'modulesNoTesting' as result. -->
-        <property name="modulesBeforeChange" value="${modules}"/>
-        <script language="javascript">
-            <![CDATA[ 
-                var before = project.getProperty("modulesBeforeChange");
-                var separator = ":";
-                var testingNbm = "Testing";
-                var beforeSplit = before.split(separator);
-                var items = [];
-                for (var i = 0; i < beforeSplit.length; i++) {
-                    if (beforeSplit[i].toUpperCase() !== testingNbm.toUpperCase()) {
-                        items.push(beforeSplit[i]);
-                    }
-                }
-                var itemsJoined = items.join(separator);
-                project.setNewProperty("modulesNoTesting", itemsJoined);
-            ]]>
-        </script>
-
+        <!--taken from https://stackoverflow.com/a/1176101/2375948 ; remove "Testing" from the modules and provide 'modulesNoTesting' as result. -->
+        <propertyregex property="modulesNoTesting"
+               input="${modules}"
+               regexp="Testing[;:]?"
+               replace=""
+               global="true" />
+        
         <sortsuitemodules unsortedmodules="${modulesNoTesting}" sortedmodulesproperty="modules.test.sorted" sorttests="true"/>
         <!-- continue on fail -->
         <property name="continue.after.failing.tests" value="true"/>
@@ -162,7 +148,7 @@
         </copy>
 
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
-        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication -J-Dprism.order=sw"/>
+        <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-XX:+UseStringDeduplication -J-Dprism.order=sw  -J--add-opens=java.base/java.lang=ALL-UNNAMED -J--add-opens=java.base/java.net=ALL-UNNAMED -J--add-opens=java.desktop/javax.swing=ALL-UNNAMED -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=java.desktop/sun.awt=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED -J--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED"/>
         <!-- for Japanese localized version add option:  -Duser.language=ja -->
         
             

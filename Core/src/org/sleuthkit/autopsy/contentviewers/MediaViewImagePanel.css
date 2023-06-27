@@ -19,7 +19,7 @@
 
 .label {
     -fx-wrap-text:true;
-    -fx-text-fill: red;
+    -fx-text-fill: #ff0000;
     -fx-font-size: 2em;
 }
 
@@ -28,6 +28,6 @@
 }
 
 .masker-pane .masker-text {
-    -fx-text-fill: white;
+    -fx-text-fill: #ffffff;
     -fx-font-size: 1.5em;
 }

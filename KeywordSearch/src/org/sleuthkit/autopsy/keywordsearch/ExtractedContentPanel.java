@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2021 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -396,7 +396,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         textSourcePanel.add(jLabel1);
         textSourcePanel.add(fillerSmall12);
 
-        sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<org.sleuthkit.autopsy.keywordsearch.IndexedText>());
+        sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<org.sleuthkit.autopsy.keywordsearch.ExtractedText>());
         sourceComboBox.setMaximumSize(new java.awt.Dimension(150, 32767));
         sourceComboBox.setMinimumSize(new java.awt.Dimension(150, 25));
         sourceComboBox.setPreferredSize(new java.awt.Dimension(150, 25));
@@ -443,7 +443,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
-    private javax.swing.JComboBox<org.sleuthkit.autopsy.keywordsearch.IndexedText> sourceComboBox;
+    private javax.swing.JComboBox<org.sleuthkit.autopsy.keywordsearch.ExtractedText> sourceComboBox;
     private javax.swing.JPanel textSourcePanel;
     private javax.swing.JPanel zoomPanel;
     // End of variables declaration//GEN-END:variables
@@ -457,10 +457,10 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
      * default)
      *
      * @param contentName The name of the content to be displayed
-     * @param sources     A list of IndexedText that have different 'views' of
-     *                    the content.
+     * @param sources     A list of ExtractedText that have different 'views' of
+                    the content.
      */
-    final void setSources(String contentName, List<IndexedText> sources) {
+    final void setSources(String contentName, List<ExtractedText> sources) {
         this.lastKnownAnchor = null;
         this.contentName = contentName;
         setPanelText(null, false);
@@ -480,8 +480,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
      *
      * @return currently selected Source
      */
-    public IndexedText getSelectedSource() {
-        return (IndexedText) sourceComboBox.getSelectedItem();
+    public ExtractedText getSelectedSource() {
+        return (ExtractedText) sourceComboBox.getSelectedItem();
     }
 
     private void setPanelText(String text, boolean detectDirection) {
@@ -556,7 +556,11 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
      * @param total total number of pages to update the display with
      */
     void updateTotalPagesDisplay(int total) {
-        pageTotalLabel.setText(Integer.toString(total));
+        if (total >= 0) {
+            pageTotalLabel.setText(Integer.toString(total));
+        } else {
+            pageTotalLabel.setText("-");
+        }
     }
 
     /**
@@ -632,7 +636,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
      *
      * @param source the selected source
      */
-    void updateControls(IndexedText source) {
+    void updateControls(ExtractedText source) {
         updatePageControls(source);
         updateSearchControls(source);
     }
@@ -642,7 +646,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
      *
      * @param source selected source
      */
-    void updatePageControls(IndexedText source) {
+    void updatePageControls(ExtractedText source) {
         if (source == null) {
             enableNextPageControl(false);
             enablePrevPageControl(false);
@@ -655,13 +659,8 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
         int totalPages = source.getNumberPages();
         updateTotalPagesDisplay(totalPages);
 
-        if (totalPages < 2) {
-            enableNextPageControl(false);
-            enablePrevPageControl(false);
-        } else {
-            enableNextPageControl(source.hasNextPage());
-            enablePrevPageControl(source.hasPreviousPage());
-        }
+        enableNextPageControl(source.hasNextPage());
+        enablePrevPageControl(source.hasPreviousPage());
     }
 
     /**
@@ -669,7 +668,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
      *
      * @param source selected source
      */
-    void updateSearchControls(IndexedText source) {
+    void updateSearchControls(ExtractedText source) {
         //setup search controls
         if (source != null && source.isSearchable()) {
             updateCurrentMatchDisplay(source.currentItem());
@@ -689,7 +688,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
      *
      * @param source
      */
-    private void scrollToCurrentHit(final IndexedText source) {
+    private void scrollToCurrentHit(final ExtractedText source) {
         if (source == null || !source.isSearchable()) {
             return;
         }
@@ -705,7 +704,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
      * be invoked from GUI thread only.
      */
     @NbBundle.Messages("ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>")
-    private void setMarkup(IndexedText source) {
+    private void setMarkup(ExtractedText source) {
         setPanelText(Bundle.ExtractedContentPanel_setMarkup_panelTxt(), false);
         new SetMarkupWorker(contentName, source).execute();
     }
@@ -719,11 +718,11 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
 
         private final String contentName;
 
-        private final IndexedText source;
+        private final ExtractedText source;
 
         private ProgressHandle progress;
 
-        SetMarkupWorker(String contentName, IndexedText source) {
+        SetMarkupWorker(String contentName, ExtractedText source) {
             this.contentName = contentName;
             this.source = source;
         }
@@ -754,7 +753,7 @@ class ExtractedContentPanel extends javax.swing.JPanel implements ResizableTextP
                 }
             } catch (InterruptedException | CancellationException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error getting marked up text", ex); //NON-NLS
-                setPanelText(Bundle.IndexedText_errorMessage_errorGettingText(), true);
+                setPanelText(Bundle.ExtractedText_errorMessage_errorGettingText(), true);
             }
 
             updateControls(source);

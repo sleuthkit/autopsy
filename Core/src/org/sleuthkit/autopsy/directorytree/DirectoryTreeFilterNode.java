@@ -84,12 +84,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                 try {
                     int numVisibleChildren = getVisibleChildCount(file);
 
-                    /*
-                     * Left-to-right marks here are necessary to keep the count
-                     * and parens together for mixed right-to-left and
-                     * left-to-right names.
-                     */
-                    name = name + " \u200E(\u200E" + numVisibleChildren + ")\u200E";  //NON-NLS
+                    name = name + " (" + numVisibleChildren + ")";  //NON-NLS
 
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex); //NON-NLS
@@ -98,7 +93,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                 BlackboardArtifact artifact = ((BlackboardArtifactNode) orig).getArtifact();
                 try {
                     int numAttachments = artifact.getChildrenCount();
-                    name = name + " \u200E(\u200E" + numAttachments + ")\u200E";  //NON-NLS
+                    name = name + " (" + numAttachments + ")";  //NON-NLS
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting chidlren count for atifact: " + artifact, ex); //NON-NLS
                 }

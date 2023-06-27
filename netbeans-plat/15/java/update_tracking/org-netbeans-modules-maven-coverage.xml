@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><module codename="org.netbeans.modules.maven.coverage">
+    <module_version install_time="1668523596925" last="true" origin="Ant" specification_version="1.40">
+        <file crc="460792768" name="config/Modules/org-netbeans-modules-maven-coverage.xml"/>
+        <file crc="620208881" name="modules/org-netbeans-modules-maven-coverage.jar"/>
+    </module_version>
+</module>

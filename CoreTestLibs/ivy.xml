@@ -4,10 +4,10 @@
         <conf name="coretestlibs"/>
     </configurations>
     <dependencies >
-        <dependency conf="coretestlibs->default" org="org.mockito" name="mockito-core" rev="3.5.7"/>
-        <dependency conf="coretestlibs->default" org="net.bytebuddy" name="byte-buddy" rev="1.10.13"/>
-        <dependency conf="coretestlibs->default" org="net.bytebuddy" name="byte-buddy-agent" rev="1.10.13"/>
-        <dependency conf="coretestlibs->default" org="org.objenesis" name="objenesis" rev="3.1"/>
+        <dependency conf="coretestlibs->default" org="org.mockito" name="mockito-core" rev="4.8.1"/>
+        <dependency conf="coretestlibs->default" org="net.bytebuddy" name="byte-buddy" rev="1.12.18"/>
+        <dependency conf="coretestlibs->default" org="net.bytebuddy" name="byte-buddy-agent" rev="1.12.18"/>
+        <dependency conf="coretestlibs->default" org="org.objenesis" name="objenesis" rev="3.3"/>
         <dependency conf="coretestlibs->default" org="junit" name="junit" rev="4.13.2"/>
     </dependencies>
 </ivy-module>
