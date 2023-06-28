@@ -138,7 +138,7 @@ parts:
     # source: https://github.com/sleuthkit/autopsy.git
     source: https://github.com/gdicristofaro/autopsy.git
     # source-branch: develop
-    source-branch: javafx-changes
+    source-branch: 8425-snap
     build-environment:
     - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
