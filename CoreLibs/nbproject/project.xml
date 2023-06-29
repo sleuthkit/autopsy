@@ -199,6 +199,15 @@
                 <package>com.google.type</package>
                 <package>com.microsoft.schemas.vml</package>
                 <package>com.microsoft.schemas.vml.impl</package>
+                <package>com.sun.glass.events</package>
+                <package>com.sun.glass.events.mac</package>
+                <package>com.sun.glass.ui</package>
+                <package>com.sun.glass.ui.delegate</package>
+                <package>com.sun.glass.ui.gtk</package>
+                <package>com.sun.glass.ui.mac</package>
+                <package>com.sun.glass.ui.win</package>
+                <package>com.sun.glass.utils</package>
+                <package>com.sun.java.scene.web</package>
                 <package>com.sun.javafx</package>
                 <package>com.sun.javafx.animation</package>
                 <package>com.sun.javafx.application</package>
@@ -279,13 +288,63 @@
                 <package>com.sun.jna</package>
                 <package>com.sun.jna.platform</package>
                 <package>com.sun.jna.platform.dnd</package>
+                <package>com.sun.jna.platform.linux</package>
                 <package>com.sun.jna.platform.mac</package>
                 <package>com.sun.jna.platform.unix</package>
                 <package>com.sun.jna.platform.win32</package>
                 <package>com.sun.jna.platform.wince</package>
                 <package>com.sun.jna.ptr</package>
                 <package>com.sun.jna.win32</package>
+                <package>com.sun.marlin</package>
+                <package>com.sun.marlin.stats</package>
+                <package>com.sun.media.jfxmedia</package>
+                <package>com.sun.media.jfxmedia.control</package>
+                <package>com.sun.media.jfxmedia.effects</package>
+                <package>com.sun.media.jfxmedia.events</package>
+                <package>com.sun.media.jfxmedia.locator</package>
+                <package>com.sun.media.jfxmedia.logging</package>
+                <package>com.sun.media.jfxmedia.track</package>
+                <package>com.sun.media.jfxmediaimpl</package>
+                <package>com.sun.media.jfxmediaimpl.platform</package>
+                <package>com.sun.media.jfxmediaimpl.platform.gstreamer</package>
+                <package>com.sun.media.jfxmediaimpl.platform.java</package>
+                <package>com.sun.media.jfxmediaimpl.platform.osx</package>
+                <package>com.sun.openpisces</package>
+                <package>com.sun.pisces</package>
+                <package>com.sun.prism</package>
+                <package>com.sun.prism.d3d</package>
+                <package>com.sun.prism.es2</package>
+                <package>com.sun.prism.image</package>
+                <package>com.sun.prism.impl</package>
+                <package>com.sun.prism.impl.packrect</package>
+                <package>com.sun.prism.impl.paint</package>
+                <package>com.sun.prism.impl.ps</package>
+                <package>com.sun.prism.impl.shape</package>
+                <package>com.sun.prism.j2d</package>
+                <package>com.sun.prism.j2d.paint</package>
+                <package>com.sun.prism.j2d.print</package>
+                <package>com.sun.prism.paint</package>
+                <package>com.sun.prism.ps</package>
+                <package>com.sun.prism.shader</package>
+                <package>com.sun.prism.shape</package>
+                <package>com.sun.prism.sw</package>
+                <package>com.sun.scenario</package>
                 <package>com.sun.scenario.animation</package>
+                <package>com.sun.scenario.animation.shared</package>
+                <package>com.sun.scenario.effect</package>
+                <package>com.sun.scenario.effect.impl</package>
+                <package>com.sun.scenario.effect.impl.es2</package>
+                <package>com.sun.scenario.effect.impl.hw</package>
+                <package>com.sun.scenario.effect.impl.hw.d3d</package>
+                <package>com.sun.scenario.effect.impl.prism</package>
+                <package>com.sun.scenario.effect.impl.prism.ps</package>
+                <package>com.sun.scenario.effect.impl.prism.sw</package>
+                <package>com.sun.scenario.effect.impl.state</package>
+                <package>com.sun.scenario.effect.impl.sw</package>
+                <package>com.sun.scenario.effect.impl.sw.java</package>
+                <package>com.sun.scenario.effect.impl.sw.sse</package>
+                <package>com.sun.scenario.effect.light</package>
+                <package>com.sun.util.reentrant</package>
                 <package>com.twelvemonkeys.image</package>
                 <package>com.twelvemonkeys.imageio</package>
                 <package>com.twelvemonkeys.imageio.color</package>
@@ -324,7 +383,7 @@
                 <package>javax.annotation</package>
                 <package>javax.annotation.concurrent</package>
                 <package>javax.annotation.meta</package>
-<package>javafx.animation</package>
+                <package>javafx.animation</package>
                 <package>javafx.application</package>
                 <package>javafx.beans</package>
                 <package>javafx.beans.binding</package>
@@ -551,6 +610,7 @@
                 <package>org.controlsfx.validation</package>
                 <package>org.controlsfx.validation.decoration</package>
                 <package>org.freedesktop.gstreamer</package>
+                <package>org.freedesktop.gstreamer.controller</package>
                 <package>org.freedesktop.gstreamer.device</package>
                 <package>org.freedesktop.gstreamer.elements</package>
                 <package>org.freedesktop.gstreamer.event</package>
@@ -560,6 +620,7 @@
                 <package>org.freedesktop.gstreamer.lowlevel.annotations</package>
                 <package>org.freedesktop.gstreamer.message</package>
                 <package>org.freedesktop.gstreamer.query</package>
+                <package>org.freedesktop.gstreamer.video</package>
                 <package>org.freedesktop.gstreamer.webrtc</package>
                 <package>org.imgscalr</package>
                 <package>org.joda.time</package>
