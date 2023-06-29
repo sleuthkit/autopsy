@@ -103,11 +103,15 @@
         <var name="new-jre-path" value="${inst-path}\jre"/>
         <delete failonerror="false" dir="${new-jre-path}"/>
         <mkdir dir="${new-jre-path}"/>
-        <copy todir="${new-jre-path}" overwrite="true">
-            <fileset dir="${jre-path}">
-                <include name="**/*"/>
-            </fileset>
-        </copy>
+        <exec executable="jlink" dir="${new-jre-path}">
+            <arg value="--add-modules"/>
+            <arg value="ALL-MODULE-PATH"/>
+            <arg value="--output"/>
+            <arg value="autopsy-jre"/>
+            <arg value="--no-man-pages"/>
+            <arg value="--no-header-files"/>
+            <arg value="--compress=2"/>
+        </exec>
     </target>
     
     
