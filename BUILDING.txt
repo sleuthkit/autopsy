@@ -11,9 +11,9 @@ correct C libraries.
 STEPS:
 1) Get Java Setup
 
-1a) Download and install 64-bit JDK version 17 with JavaFX.
+1a) Download and install 64-bit JDK version 17.
 
-Autopsy has been used and tested with liberica java which can be downloaded from here: https://bell-sw.com/pages/downloads/.
+Autopsy has been used and tested with java 17 which can be downloaded from here: https://www.oracle.com/java/technologies/downloads/#java17.
 
 
 1b) Ensure that JDK_HOME is set to the root JDK directory.
