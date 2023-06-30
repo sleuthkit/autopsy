@@ -87,7 +87,19 @@
     
 
     <target name="copyJRE" description="Copy a given JRE to the installation folder">
-        <exec executable="jlink" dir="${inst-path}">
+        <property environment="env"/>
+        <if>
+            <isset property="env.JDK_HOME" />
+            <then>
+                <echo message="JDK found at: ${env.JDK_HOME}."/>
+            </then>
+            <else>
+                <fail message="Environment variable, JDK_HOME, not set.  Cannot build installer."/>
+            </else>
+        </if>
+
+
+        <exec executable="${env.JDK_HOME}/bin/jlink" dir="${inst-path}">
             <arg value="--add-modules"/>
             <arg value="ALL-MODULE-PATH"/>
             <arg value="--output"/>
