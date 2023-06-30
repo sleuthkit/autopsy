@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,10 +22,15 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
+import org.apache.tika.mime.MimeTypes;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -35,6 +40,9 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearch.AdHocSearchChildFactory.AdHocQueryResult;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -45,6 +53,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASS
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A text viewer that displays the indexed text associated with a file or an
@@ -60,15 +69,30 @@ public class ExtractedTextViewer implements TextViewer {
 
     private ExtractedContentPanel panel;
     private volatile Node currentNode = null;
-    private IndexedText currentSource = null;
+    private ExtractedText currentSource = null;
+    private FileTypeDetector fileTypeDetector = null;
+    
+    // cache of last 10 solrHasFullyIndexedContent() requests sent to Solr. 
+    private SolrIsFullyIndexedCache solrCache = null;
 
     /**
      * Constructs a text viewer that displays the indexed text associated with a
      * file or an artifact, possibly marked up with HTML to highlight keyword
-     * hits.
+     * hits. If text for the Content has not been fully indexed by Solr then 
+     * attempt to extract text using one of text extractors. 
      */
     public ExtractedTextViewer() {
-        // This constructor is intentionally empty.
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            logger.log(Level.SEVERE, "Failed to initialize FileTypeDetector", ex); //NON-NLS
+        }
+        
+        solrCache = new SolrIsFullyIndexedCache();
+        // clear the cache when case opens or closes
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
+            solrCache.clearCache();
+        });
     }
 
     /**
@@ -99,7 +123,7 @@ public class ExtractedTextViewer implements TextViewer {
          * Assemble a collection of all of the indexed text "sources" for the
          * node.
          */
-        List<IndexedText> sources = new ArrayList<>();
+        List<ExtractedText> sources = new ArrayList<>();
         Lookup nodeLookup = node.getLookup();
 
         /**
@@ -115,7 +139,7 @@ public class ExtractedTextViewer implements TextViewer {
          * First, get text with highlighted hits if this node is for a search
          * result.
          */
-        IndexedText highlightedHitText = null;
+        ExtractedText highlightedHitText = null;
         if (adHocQueryResult != null) {
             /*
              * The node is an ad hoc search result node.
@@ -153,10 +177,25 @@ public class ExtractedTextViewer implements TextViewer {
          * Next, add the "raw" (not highlighted) text, if any, for any file
          * associated with the node.
          */
-        IndexedText rawContentText = null;
+        ExtractedText rawContentText = null;
         if (file != null) {
-            rawContentText = new RawText(file, file.getId());
-            sources.add(rawContentText);
+
+            // see if Solr has fully indexed this file
+            if (solrHasFullyIndexedContent(file.getId())) {
+                rawContentText = new SolrIndexedText(file, file.getId());
+                sources.add(rawContentText);
+            } else {
+                // Solr does not have fully indexed content. 
+                // see if it's a file type for which we can extract text            
+                if (ableToExtractTextFromFile(file)) {
+                    try {
+                        rawContentText = new FileReaderExtractedText(file);
+                        sources.add(rawContentText);
+                    } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+                        // do nothing
+                    }
+                }
+            }
         }
 
         /*
@@ -164,15 +203,18 @@ public class ExtractedTextViewer implements TextViewer {
          * associated with the node.
          */
         if (report != null) {
-            rawContentText = new RawText(report, report.getId());
-            sources.add(rawContentText);
+            // see if Solr has fully indexed this file
+            if (solrHasFullyIndexedContent(report.getId())) {
+                rawContentText = new SolrIndexedText(report, report.getId());
+                sources.add(rawContentText);
+            }
         }
 
         /*
          * Finally, add the "raw" (not highlighted) text, if any, for any
          * artifact associated with the node.
          */
-        IndexedText rawArtifactText = null;
+        ExtractedText rawArtifactText = null;
         try {
             rawArtifactText = getRawArtifactText(artifact);
             if (rawArtifactText != null) {
@@ -192,7 +234,7 @@ public class ExtractedTextViewer implements TextViewer {
         }
 
         // Push the text sources into the panel.
-        for (IndexedText source : sources) {
+        for (ExtractedText source : sources) {
             int currentPage = source.getCurrentPage();
             if (currentPage == 0 && source.hasNextPage()) {
                 source.nextPage();
@@ -208,8 +250,8 @@ public class ExtractedTextViewer implements TextViewer {
 
     }
 
-    static private IndexedText getRawArtifactText(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
-        IndexedText rawArtifactText = null;
+    private ExtractedText getRawArtifactText(BlackboardArtifact artifact) throws TskCoreException, NoCurrentCaseException {
+        ExtractedText rawArtifactText = null;
         if (null != artifact) {
             /*
              * For keyword hit artifacts, add the text of the artifact that hit,
@@ -222,18 +264,21 @@ public class ExtractedTextViewer implements TextViewer {
                 if (attribute != null) {
                     long artifactId = attribute.getValueLong();
                     BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(artifactId);
-                    rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
-
+                    if (solrHasFullyIndexedContent(associatedArtifact.getArtifactID())) {
+                        rawArtifactText = new SolrIndexedText(associatedArtifact, associatedArtifact.getArtifactID());
+                    }
                 }
 
             } else {
-                rawArtifactText = new RawText(artifact, artifact.getArtifactID());
+                if (solrHasFullyIndexedContent(artifact.getArtifactID())) {
+                    rawArtifactText = new SolrIndexedText(artifact, artifact.getArtifactID());
+                }
             }
         }
         return rawArtifactText;
     }
 
-    static private IndexedText getAccountsText(Content content, Lookup nodeLookup) throws TskCoreException {
+    static private ExtractedText getAccountsText(Content content, Lookup nodeLookup) throws TskCoreException {
         /*
          * get all the credit card artifacts
          */
@@ -247,7 +292,7 @@ public class ExtractedTextViewer implements TextViewer {
     }
 
     private void scrollToCurrentHit() {
-        final IndexedText source = panel.getSelectedSource();
+        final ExtractedText source = panel.getSelectedSource();
         if (source == null || !source.isSearchable()) {
             return;
         }
@@ -340,8 +385,18 @@ public class ExtractedTextViewer implements TextViewer {
          * data source instead of a file.
          */
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file != null && solrHasContent(file.getId())) {
-            return true;
+        if (file != null) {
+            
+            // see if Solr has fully indexed this file
+            if (solrHasFullyIndexedContent(file.getId())) {
+                return true;
+            }
+
+            // Solr does not have fully indexed content. 
+            // see if it's a file type for which we can extract text            
+            if (ableToExtractTextFromFile(file)) {
+                return true;
+            }
         }
 
         /*
@@ -351,7 +406,7 @@ public class ExtractedTextViewer implements TextViewer {
          * indexed text for the artifact.
          */
         if (artifact != null) {
-            return solrHasContent(artifact.getArtifactID());
+            return solrHasFullyIndexedContent(artifact.getArtifactID());
         }
 
         /*
@@ -361,7 +416,7 @@ public class ExtractedTextViewer implements TextViewer {
          */
         Report report = node.getLookup().lookup(Report.class);
         if (report != null) {
-            return solrHasContent(report.getId());
+            return solrHasFullyIndexedContent(report.getId());
         }
 
         /*
@@ -381,34 +436,100 @@ public class ExtractedTextViewer implements TextViewer {
      * panel hasn't been created yet)
      *
      * @param contentName The name of the content to be displayed
-     * @param sources     A list of IndexedText that have different 'views' of
-     *                    the content.
+     * @param sources     A list of ExtractedText that have different 'views' of
+                    the content.
      */
-    private void setPanel(String contentName, List<IndexedText> sources) {
+    private void setPanel(String contentName, List<ExtractedText> sources) {
         if (panel != null) {
             panel.setSources(contentName, sources);
         }
     }
 
     /**
-     * Check if Solr has extracted content for a given node
+     * Check if Solr has indexed ALL of the content for a given node. Note that
+     * in some situations Solr only indexes parts of a file. This happens when
+     * an in-line KWS finds a KW hit in the file - only the chunks with the KW
+     * hit (+/- 1 chunk) get indexed by Solr. That is not enough for the
+     * purposes of this text viewer as we need to display all of the text in the
+     * file.
      *
      * @param objectId
      *
      * @return true if Solr has content, else false
      */
-    private boolean solrHasContent(Long objectId) {
+    private boolean solrHasFullyIndexedContent(Long objectId) {
+        
+        // check if we have cached this decision
+        if (solrCache.containsKey(objectId)) {
+            return solrCache.getCombination(objectId);
+        }
+        
         final Server solrServer = KeywordSearch.getServer();
         if (solrServer.coreIsOpen() == false) {
+            solrCache.putCombination(objectId, false);
             return false;
         }
 
+        // verify that all of the chunks in the file have been indexed.
         try {
-            return solrServer.queryIsIndexed(objectId);
+            boolean isFullyIndexed = solrServer.queryIsFullyIndexed(objectId);
+            solrCache.putCombination(objectId, isFullyIndexed);
+            return isFullyIndexed;
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
             logger.log(Level.SEVERE, "Error querying Solr server", ex); //NON-NLS
+            solrCache.putCombination(objectId, false);
             return false;
         }
+    }
+
+    /**
+     * Check if we can extract text for this file type using one of our text extractors. 
+     * NOTE: the logic in this method should be similar and based on the 
+     * logic of how KeywordSearchIngestModule decides which files to index.
+     *
+     * @param file Abstract File
+     *
+     * @return true if text can be extracted from file, else false
+     */
+    private boolean ableToExtractTextFromFile(AbstractFile file) {
+
+        TskData.TSK_DB_FILES_TYPE_ENUM fileType = file.getType();
+        
+        if (fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
+            return false;
+        }
+
+        if ((fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))
+                || (fileType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED))) {
+            return false;
+        }
+        
+        final long size = file.getSize();
+        if (file.isDir() || size == 0) {
+            return false;
+        }
+        
+        String mimeType = fileTypeDetector.getMIMEType(file).trim().toLowerCase();
+        
+        if (KeywordSearchIngestModule.ARCHIVE_MIME_TYPES.contains(mimeType)) {
+            return false;
+        }
+        
+        if (MimeTypes.OCTET_STREAM.equals(mimeType)) {
+            return false;
+        }
+        
+        // Often times there is an exception when trying to initiale a reader,
+        // thus making that specific file "unsupported". The only way to identify 
+        // this situation is to initialize the reader.
+        try {
+            FileReaderExtractedText tmp = new FileReaderExtractedText(file);
+        } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -418,7 +539,7 @@ public class ExtractedTextViewer implements TextViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            IndexedText source = panel.getSelectedSource();
+            ExtractedText source = panel.getSelectedSource();
             if (source == null) {
                 // reset
                 panel.updateControls(null);
@@ -461,7 +582,7 @@ public class ExtractedTextViewer implements TextViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            IndexedText source = panel.getSelectedSource();
+            ExtractedText source = panel.getSelectedSource();
             final boolean hasPreviousItem = source.hasPreviousItem();
             final boolean hasPreviousPage = source.hasPreviousPage();
             int indexVal;
@@ -596,6 +717,41 @@ public class ExtractedTextViewer implements TextViewer {
         @Override
         public void actionPerformed(ActionEvent e) {
             previousPage();
+        }
+    }
+    
+    /**
+     * This class maintains a cache of last 10 solrHasFullyIndexedContent() 
+     * requests sent to Solr. 
+     */
+    private class SolrIsFullyIndexedCache {
+
+        private static final int CACHE_SIZE = 10;
+        private final LinkedHashMap<Long, Boolean> cache;
+
+        private SolrIsFullyIndexedCache() {
+            this.cache = new LinkedHashMap<Long, Boolean>(CACHE_SIZE, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<Long, Boolean> eldest) {
+                    return size() > CACHE_SIZE;
+                }
+            };
+        }
+
+        public void putCombination(long key, boolean value) {
+            cache.put(key, value);
+        }
+
+        public Boolean getCombination(long key) {
+            return cache.get(key);
+        }
+
+        public void clearCache() {
+            cache.clear();
+        }
+        
+        public boolean containsKey(long key) {
+            return cache.containsKey(key);
         }
     }
 }

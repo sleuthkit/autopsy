@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.tika.mime.MimeTypes;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -96,7 +95,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      * generally text extractors should ignore archives and let unpacking
      * modules take care of them
      */
-    private static final List<String> ARCHIVE_MIME_TYPES
+    static final List<String> ARCHIVE_MIME_TYPES
             = ImmutableList.of(
                     //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
                     "application/x-7z-compressed", //NON-NLS
@@ -319,9 +318,15 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                         break;
                     }
                 }
-                if (!hasKeywordsForSearch) {
-                    services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
-                            NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
+                
+                if (!settings.isIndexToSolrEnabled()) {
+                    services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.SolrIndexingDisabled"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.indexingDisabled")));
+                } else {
+                    if (!hasKeywordsForSearch) {
+                        services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+                                NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
+                    }
                 }
             }
         }
@@ -683,7 +688,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     @NbBundle.Messages({
         "KeywordSearchIngestModule.metadataTitle=METADATA"
     })
-    private CharSource getMetaDataCharSource(Map<String, String> metadata) {
+    static CharSource getMetaDataCharSource(Map<String, String> metadata) {
         return CharSource.wrap(new StringBuilder(
                 String.format("\n\n------------------------------%s------------------------------\n\n",
                         Bundle.KeywordSearchIngestModule_metadataTitle()))

@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * and HighlightedText are very similar and could probably use some refactoring
  * to reduce code duplication.
  */
-class AccountsText implements IndexedText {
+class AccountsText implements ExtractedText {
 
     private static final Logger logger = Logger.getLogger(AccountsText.class.getName());
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
@@ -312,7 +312,7 @@ class AccountsText implements IndexedText {
             return "<html><pre>" + highlightedText + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + this.solrObjectId + ", chunkID " + this.currentPage, ex); //NON-NLS
-            return Bundle.IndexedText_errorMessage_errorGettingText();
+            return Bundle.ExtractedText_errorMessage_errorGettingText();
         }
     }
 
