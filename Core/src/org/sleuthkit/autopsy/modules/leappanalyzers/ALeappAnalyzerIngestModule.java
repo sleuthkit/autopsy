@@ -289,7 +289,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     private ProcessBuilder buildaLeappCommand(Path moduleOutputPath, String sourceFilePath, String aLeappFileSystemType) {
 
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
-                "\"" + aLeappExecutable + "\"", //NON-NLS
+                aLeappExecutable.getAbsolutePath(), //NON-NLS
                 "-t", aLeappFileSystemType, //NON-NLS
                 "-i", sourceFilePath, //NON-NLS
                 "-o", moduleOutputPath.toString(),
@@ -303,7 +303,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     private ProcessBuilder buildaLeappListCommand(Path moduleOutputPath) {
 
         ProcessBuilder processBuilder = buildProcessWithRunAsInvoker(
-                "\"" + aLeappExecutable + "\"", //NON-NLS
+                aLeappExecutable.getAbsolutePath(), //NON-NLS
                 "-p"
         );
         processBuilder.redirectError(moduleOutputPath.resolve("aLeapp_paths_error.txt").toFile());  //NON-NLS
