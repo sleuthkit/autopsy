@@ -721,6 +721,38 @@ public class RootFactory {
                     new TagNameFactory(dataSourceObjId));
         }
     }
+    
+
+    /**
+     * Root node for displaying "Score" for file types.
+     */
+    @Messages({"RootFactory_ScoresRootNode_displayName=Score"})
+    public static class ScoresRootNode extends StaticTreeNode {
+
+        private static final String NAME_PREFIX = "VIEWS";
+
+        /**
+         * Returns the name prefix of this node.
+         *
+         * @return The name prefix.
+         */
+        public static final String getNamePrefix() {
+            return NAME_PREFIX;
+        }
+
+        /**
+         * Main constructor.
+         *
+         * @param dataSourceObjId The data source object id or null for no
+         *                        filter.
+         */
+        public ScoresRootNode(Long dataSourceObjId) {
+            super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
+                    Bundle.RootFactory_ScoresRootNode_displayName(),
+                    "org/sleuthkit/autopsy/images/red-circle-exclamation.png",
+                    new ScoreTypeFactory.ScoreChildren(dataSourceObjId));
+        }
+    }
 
     /**
      * Root node for reports in the tree.

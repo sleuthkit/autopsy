@@ -37,8 +37,6 @@ import org.sleuthkit.autopsy.mainui.datamodel.FileTypeMimeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.FileTypeSizeSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
-import org.sleuthkit.autopsy.mainui.datamodel.ScoreViewFilter;
-import org.sleuthkit.autopsy.mainui.datamodel.ScoreViewSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
@@ -56,7 +54,6 @@ public class ViewsTypeFactory {
 
     private static final String FILE_TYPES_ICON = "org/sleuthkit/autopsy/images/file_types.png";
     private static final String SIZE_ICON = "org/sleuthkit/autopsy/images/file-size-16.png";
-    private static final String SCORE_ICON = "org/sleuthkit/autopsy/images/red-circle-exclamation.png";
 
     /**
      * Node for file extensions parent in the tree.
@@ -123,22 +120,6 @@ public class ViewsTypeFactory {
     }
 
     /**
-     * Parent of file size nodes in the tree.
-     */
-    @Messages({"ViewsTypeFactory_ScoreParentNode_displayName=Score"})
-    private static class ScoreParentNode extends StaticTreeNode {
-
-        ScoreParentNode(Long dataSourceId) {
-            super(
-                    "FILE_VIEW_SCORE_PARENT",
-                    Bundle.ViewsTypeFactory_ScoreParentNode_displayName(),
-                    SCORE_ICON,
-                    new ScoreContentFactory(dataSourceId)
-            );
-        }
-    }
-
-    /**
      * 'File Types' children in the tree.
      */
     public static class FileTypesChildren extends Children.Array {
@@ -177,8 +158,7 @@ public class ViewsTypeFactory {
             super(ImmutableList.of(
                     new FileTypesParentNode(dataSourceId),
                     new DeletedParentNode(dataSourceId),
-                    new SizeParentNode(dataSourceId),
-                    new ScoreParentNode(dataSourceId)
+                    new SizeParentNode(dataSourceId)
             ));
         }
     }
@@ -651,108 +631,4 @@ public class ViewsTypeFactory {
 
         }
     }
-
-    /**
-     * The factory for creating deleted content tree nodes.
-     */
-    public static class ScoreContentFactory extends TreeChildFactory<ScoreViewSearchParams> {
-
-        private final Long dataSourceId;
-
-        /**
-         * Main constructor.
-         *
-         * @param dataSourceId The data source to filter files to or null.
-         */
-        public ScoreContentFactory(Long dataSourceId) {
-            this.dataSourceId = dataSourceId;
-        }
-
-        @Override
-        protected TreeNode<ScoreViewSearchParams> createNewNode(TreeResultsDTO.TreeItemDTO<? extends ScoreViewSearchParams> rowData) {
-            return new ScoreContentTypeNode(rowData);
-        }
-
-        @Override
-        protected TreeResultsDTO<? extends ScoreViewSearchParams> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getViewsDAO().getScoreContentCounts(dataSourceId);
-        }
-
-        @Override
-        protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
-            for (DAOEvent evt : aggEvt.getEvents()) {
-                if (evt instanceof TreeEvent) {
-                    TreeResultsDTO.TreeItemDTO<DeletedContentSearchParams> treeItem = super.getTypedTreeItem((TreeEvent) evt, DeletedContentSearchParams.class);
-                    // if search params has null filter, trigger full refresh
-                    if (treeItem != null && treeItem.getSearchParams().getFilter() == null) {
-                        super.update();
-                        return;
-                    }
-                }
-            }
-
-            super.handleDAOAggregateEvent(aggEvt);
-        }
-
-        @Override
-        protected TreeResultsDTO.TreeItemDTO<? extends ScoreViewSearchParams> getOrCreateRelevantChild(TreeEvent treeEvt) {
-            TreeResultsDTO.TreeItemDTO<ScoreViewSearchParams> originalTreeItem = super.getTypedTreeItem(treeEvt, ScoreViewSearchParams.class);
-
-            if (originalTreeItem != null
-                    // only create child if size filter is present (if null, update should be triggered separately)
-                    && originalTreeItem.getSearchParams().getFilter() != null
-                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
-
-                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
-                ScoreViewSearchParams searchParam = originalTreeItem.getSearchParams();
-                return new TreeResultsDTO.TreeItemDTO<>(
-                        ScoreViewSearchParams.getTypeId(),
-                        new ScoreViewSearchParams(searchParam.getFilter(), this.dataSourceId),
-                        searchParam.getFilter(),
-                        searchParam.getFilter().getDisplayName(),
-                        originalTreeItem.getDisplayCount());
-            }
-            return null;
-        }
-
-        @Override
-        public int compare(TreeItemDTO<? extends ScoreViewSearchParams> o1, TreeItemDTO<? extends ScoreViewSearchParams> o2) {
-            return Integer.compare(o1.getSearchParams().getFilter().getId(), o2.getSearchParams().getFilter().getId());
-        }
-
-        /**
-         * Shows a deleted content tree node.
-         */
-        static class ScoreContentTypeNode extends TreeNode<ScoreViewSearchParams> {
-
-            private static final String BAD_SCORE_ICON = SCORE_ICON;
-            private static final String SUS_SCORE_ICON = "org/sleuthkit/autopsy/images/yellow-circle-yield.png";
-
-            private static String getIcon(ScoreViewFilter filter) {
-                switch (filter) {
-                    case SUSPICIOUS:
-                        return SUS_SCORE_ICON;
-                    case BAD:
-                    default:
-                        return BAD_SCORE_ICON;
-                }
-            }
-
-            /**
-             * Main constructor.
-             *
-             * @param itemData The data for the node.
-             */
-            ScoreContentTypeNode(TreeResultsDTO.TreeItemDTO<? extends ScoreViewSearchParams> itemData) {
-                super("SCORE_CONTENT_" + itemData.getSearchParams().getFilter().name(), getIcon(itemData.getSearchParams().getFilter()), itemData);
-            }
-
-            @Override
-            public void respondSelection(DataResultTopComponent dataResultPanel) {
-                dataResultPanel.displayScoreContent(this.getItemData().getSearchParams());
-            }
-
-        }
-    }
-
 }
