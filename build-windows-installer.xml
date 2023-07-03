@@ -27,19 +27,6 @@
                 <echo message="32-bit JRE not found. No 32-bit installer will be built. Set the JRE_HOME_32 environment variable to generate a 32-bit installer."/>
             </else>
         </if> -->
-        
-        <condition property="jre.home.64">
-            <isset property="env.JRE_HOME_64"/>
-        </condition>
-        <if>
-            <isset property="jre.home.64" />
-            <then>
-                <echo message="64-bit JRE found, 64-bit installer will be built."/>
-            </then>
-            <else>
-                <echo message="64-bit JRE not found. No 64-bit installer will be built. Set the JRE_HOME_64 environment variable to generate a 64-bit installer."/>
-            </else>
-        </if>
 
         <property name="lib-rel-path" value="${app.name}\modules\lib" />
         <!-- where libs are in build folder; forward slashes because not used directly by advanced installer -->
@@ -100,14 +87,27 @@
     
 
     <target name="copyJRE" description="Copy a given JRE to the installation folder">
-        <var name="new-jre-path" value="${inst-path}\jre"/>
-        <delete failonerror="false" dir="${new-jre-path}"/>
-        <mkdir dir="${new-jre-path}"/>
-        <copy todir="${new-jre-path}" overwrite="true">
-            <fileset dir="${jre-path}">
-                <include name="**/*"/>
-            </fileset>
-        </copy>
+        <property environment="env"/>
+        <if>
+            <isset property="env.JDK_HOME" />
+            <then>
+                <echo message="JDK found at: ${env.JDK_HOME}."/>
+            </then>
+            <else>
+                <fail message="Environment variable, JDK_HOME, not set.  Cannot build installer."/>
+            </else>
+        </if>
+
+
+        <exec executable="${env.JDK_HOME}/bin/jlink" dir="${inst-path}">
+            <arg value="--add-modules"/>
+            <arg value="ALL-MODULE-PATH"/>
+            <arg value="--output"/>
+            <arg value="jre"/>
+            <arg value="--no-man-pages"/>
+            <arg value="--no-header-files"/>
+            <arg value="--compress=2"/>
+        </exec>
     </target>
     
     
@@ -140,7 +140,7 @@
     
     
 
-    <target name="build64" if="jre.home.64" description="Builds the 64 bit installer IF JRE_HOME_64 is set.">
+    <target name="build64" description="Builds the 64 bit installer IF JRE_HOME_64 is set.">
         <property environment="env"/>
         <var name="aip-path" value="${aip-path-64}"/>
         

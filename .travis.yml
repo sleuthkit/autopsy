@@ -15,27 +15,50 @@ addons:
   apt:
     update: true
     packages:
+      - openjdk-17-jdk
+      - openjdk-17-jre
+      - build-essential
+      - autoconf
+      - libtool
+      - automake
+      - git
+      - zip
+      - wget
+      - ant
+      - libde265-dev
+      - libheif-dev
+      - libpq-dev
       - testdisk
       - libafflib-dev
       - libewf-dev
-      - libpq-dev
-      - autopoint
-      - libsqlite3-dev
-      - ant
-      - ant-optional
-      - libcppunit-dev
-      - wget
+      - libvhdi-dev
+      - libvmdk-dev
+      - libgstreamer1.0-0
+      - gstreamer1.0-plugins-base
+      - gstreamer1.0-plugins-good
+      - gstreamer1.0-plugins-bad
+      - gstreamer1.0-plugins-ugly
+      - gstreamer1.0-libav
+      - gstreamer1.0-tools
+      - gstreamer1.0-x
+      - gstreamer1.0-alsa
+      - gstreamer1.0-gl
+      - gstreamer1.0-gtk3
+      - gstreamer1.0-qt5
+      - gstreamer1.0-pulseaudio
   homebrew:
     update: true
     packages:
-      - ant
-      - wget
-      - libpq
-      - libewf
-      - gettext
-      - cppunit
+      - openjdk@17
+      - ant 
+      - automake
+      - libtool
       - afflib
+      - libewf
+      - postgresql@15
       - testdisk
+      - libheif 
+      - gstreamer 
 
 python:
   - 2.7
@@ -49,19 +72,11 @@ install:
 
 before_script:
   - if [ $TRAVIS_OS_NAME = linux ]; then 
-        wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add -;
-        echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list; 
-        sudo apt-get update;
-        sudo apt-get install bellsoft-java17-full;
         export PATH=/usr/bin:$PATH;
-        export JAVA_HOME=/usr/lib/jvm/bellsoft-java17-full-amd64; 
+        export JAVA_HOME=/usr/lib/jvm/java-1.17.0-openjdk-amd64; 
     fi
   - if [ $TRAVIS_OS_NAME = osx ]; then 
-        brew uninstall java --force --ignore-dependencies; 
-        brew cask uninstall java --force; 
-        brew tap bell-sw/liberica; 
-        brew install --cask liberica-jdk17-full; 
-        export JAVA_HOME=/Library/Java/JavaVirtualMachines/liberica-jdk-17-full.jdk/Contents/Home;
+        export JAVA_HOME=$(/usr/libexec/java_home -v 17);
     fi
   - java -version
 
