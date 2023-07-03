@@ -1,4 +1,4 @@
-@REM set JAVA_HOME=C:\Program Files\BellSoft\LibericaJDK-17-Full
+@REM set JAVA_HOME=C:\Program Files\Java\jdk-17
 @REM set SOLR_SERVER_DIR=C:\Bitnami\solr-8.2.0-2/apache-solr/server
 set SOLR_PORT=8983
 set STOP_PORT=8079
