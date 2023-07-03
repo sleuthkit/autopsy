@@ -1,19 +1,20 @@
 #!/bin/bash
-echo "Installing liberica java 17..."
-brew tap bell-sw/liberica && \
-brew install --cask liberica-jdk17-full
-if [[ $? -ne 0 ]] 
-then 
-    echo "Unable to install liberica java" >> /dev/stderr
-    exit 1
-fi
-
-echo "Installing remaining dependencies..."
-brew install ant automake libtool afflib libewf postgresql@15 testdisk libheif gstreamer
+echo "Installing dependencies..."
+brew install openjdk@17 ant automake libtool afflib libewf postgresql@15 testdisk libheif gstreamer 
     
 if [[ $? -ne 0 ]] 
 then 
     echo "Unable to install necessary dependencies" >> /dev/stderr
+    exit 1
+fi
+
+sudo ln -sfn $HOMEBREW_PREFIX/opt/openjdk@17/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk && \
+echo "export PATH=\"$HOMEBREW_PREFIX/opt/openjdk@17/bin:$PATH\"" >> ~/.zshrc && \
+source ~/.zshrc
+
+if [[ $? -ne 0 ]] 
+then 
+    echo "Unable to properly set up java env" >> /dev/stderr
     exit 1
 fi
 
