@@ -294,6 +294,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                 "-i", sourceFilePath, //NON-NLS
                 "-o", moduleOutputPath.toString()
         );
+        processBuilder.directory(moduleOutputPath.toFile());
         processBuilder.redirectError(moduleOutputPath.resolve("iLeapp_err.txt").toFile());  //NON-NLS
         processBuilder.redirectOutput(moduleOutputPath.resolve("iLeapp_out.txt").toFile());  //NON-NLS
         return processBuilder;
@@ -312,6 +313,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                 iLeappExecutable.getAbsolutePath(), //NON-NLS
                 "-p"
         );
+        // leapp process also outputs a file to the working directory in addition to stdout.
+        processBuilder.directory(moduleOutputPath.toFile());
         processBuilder.redirectError(moduleOutputPath.resolve("iLeapp_paths_error.txt").toFile());  //NON-NLS
         processBuilder.redirectOutput(moduleOutputPath.resolve("iLeapp_paths.txt").toFile());  //NON-NLS
         return processBuilder;
