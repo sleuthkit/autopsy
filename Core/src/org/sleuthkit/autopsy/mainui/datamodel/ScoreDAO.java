@@ -34,11 +34,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -115,15 +118,15 @@ public class ScoreDAO extends AbstractDAO {
                 && (paramsDsId == null || evtDsId == null
                 || Objects.equals(paramsDsId, evtDsId));
     }
-    
+
     private static String getScoreFilter(ScoreViewFilter filter) throws IllegalArgumentException {
         switch (filter) {
             case SUSPICIOUS:
-                return " tsk_aggregate_score.significance = " + Significance.LIKELY_NOTABLE.getId() + 
-                        " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
+                return " tsk_aggregate_score.significance = " + Significance.LIKELY_NOTABLE.getId()
+                        + " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
             case BAD:
-                return " tsk_aggregate_score.significance = " + Significance.NOTABLE.getId() + 
-                        " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
+                return " tsk_aggregate_score.significance = " + Significance.NOTABLE.getId()
+                        + " AND (tsk_aggregate_score.priority = " + Priority.NORMAL.getId() + " OR tsk_aggregate_score.priority = " + Priority.OVERRIDE.getId() + " )";
             default:
                 throw new IllegalArgumentException(MessageFormat.format("Unsupported filter type to get suspect content: {0}", filter));
         }
@@ -159,13 +162,13 @@ public class ScoreDAO extends AbstractDAO {
 
         String queryStr = Stream.of(ScoreViewFilter.values())
                 .map((filter) -> {
-                    return " SELECT COUNT(tsk_aggregate_score.obj_id) AS " + filter.name() + " FROM tsk_aggregate_score WHERE\n" 
-                        + getScoreFilter(filter) + "\n"
-                        + ((dataSourceId == null) ? "AND tsk_aggregate_score.data_source_obj_id = " + dataSourceId + "\n" : "") 
-                        + " AND tsk_aggregate_score.obj_id IN\n"
-                        + " (SELECT tsk_files.obj_id AS obj_id FROM tsk_files UNION\n"
-                        + "     SELECT blackboard_artifacts.artifact_obj_id AS obj_id FROM blackboard_artifacts WHERE blackboard_artifacts.artifact_type_id IN\n"
-                        + "         (SELECT artifact_type_id FROM blackboard_artifact_types WHERE category_type = " + Category.DATA_ARTIFACT.getID() + ")) ";
+                    return " SELECT COUNT(tsk_aggregate_score.obj_id) AS " + filter.name() + " FROM tsk_aggregate_score WHERE\n"
+                            + getScoreFilter(filter) + "\n"
+                            + ((dataSourceId == null) ? "AND tsk_aggregate_score.data_source_obj_id = " + dataSourceId + "\n" : "")
+                            + " AND tsk_aggregate_score.obj_id IN\n"
+                            + " (SELECT tsk_files.obj_id AS obj_id FROM tsk_files UNION\n"
+                            + "     SELECT blackboard_artifacts.artifact_obj_id AS obj_id FROM blackboard_artifacts WHERE blackboard_artifacts.artifact_type_id IN\n"
+                            + "         (SELECT artifact_type_id FROM blackboard_artifact_types WHERE category_type = " + Category.DATA_ARTIFACT.getID() + ")) ";
                 })
                 .collect(Collectors.joining(", \n"));
 
@@ -206,30 +209,81 @@ public class ScoreDAO extends AbstractDAO {
     }
 
     private SearchResultsDTO fetchScoreSearchResultsDTOs(ScoreViewFilter filter, Long dataSourceId, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
-        String whereStatement = getFileScoreWhereStatement(filter, dataSourceId);
-        return fetchScoreResults(whereStatement, filter.getDisplayName(), startItem, maxResultCount);
-    }
+        String scoreWhereClause = filter.getScores().stream()
+                .map(s -> MessageFormat.format(
+                " (aggr_score.significance = {0} AND aggr_score.priority = {1}) ",
+                s.getSignificance().getId(),
+                s.getPriority().getId()))
+                .collect(Collectors.joining(" OR "));
 
-    private SearchResultsDTO fetchScoreResults(String originalWhereStatement, String displayName, long startItem, Long maxResultCount) throws NoCurrentCaseException, TskCoreException {
-        TODO;
-        // Add offset and/or paging, if specified
-//        String modifiedWhereStatement = originalWhereStatement
-//                + " ORDER BY obj_id ASC"
-//                + (maxResultCount != null && maxResultCount > 0 ? " LIMIT " + maxResultCount : "")
-//                + (startItem > 0 ? " OFFSET " + startItem : "");
+        String baseQuery
+                = "FROM tsk_aggregate_score aggr_score\n"
+                + "INNER JOIN (\n"
+                + "	SELECT obj_id, data_source_obj_id, 'f' AS type FROM tsk_files\n"
+                + "	UNION SELECT artifact_obj_id AS obj_id, data_source_obj_id, 'a' AS type FROM blackboard_artifacts\n"
+                + ") art_files ON aggr_score.obj_id = art_files.obj_id\n"
+                + "WHERE (" + scoreWhereClause + ")\n"
+                + ((dataSourceId != null && dataSourceId > 0) ? "AND art_files.data_source_obj_id = " + dataSourceId + "\n" : "")
+                + "ORDER BY art_files.obj_id";
+
+        String countQuery = " COUNT(art_files.obj_id) AS count\n" + baseQuery;
+
+        AtomicLong count = new AtomicLong(0);
+        AtomicReference<SQLException> countException = new AtomicReference<>(null);
+        getCase().getCaseDbAccessManager()
+                .select(countQuery, (rs) -> {
+                    try {
+                        if (rs.next()) {
+                            count.set(rs.getLong("count"));
+                        }
+                    } catch (SQLException ex) {
+                        countException.set(ex);
+                    }
+                }
+                );
+
+        SQLException sqlEx = countException.get();
+        if (sqlEx != null) {
+            throw new TskCoreException(
+                    MessageFormat.format("A sql exception occurred fetching results with query: SELECT {0}", countQuery),
+                    sqlEx);
+        }
+
+        String objIdQuery = " art_files.obj_id, art_files.type\n" + baseQuery
+                + "\n"
+                + "ORDER BY obj_id ASC"
+                + (maxResultCount != null && maxResultCount > 0 ? " LIMIT " + maxResultCount : "")
+                + (startItem > 0 ? " OFFSET " + startItem : "");;
+
+        List<Long> fileIds = new ArrayList<>();
+        List<Long> artifactIds = new ArrayList<>();
+        AtomicReference<SQLException> objIdException = new AtomicReference<>(null);
+        getCase().getCaseDbAccessManager()
+                .select(objIdQuery, (rs) -> {
+                    try {
+                        while (rs.next()) {
+                            String type = rs.getString("type");
+                            if ("f".equalsIgnoreCase(type)) {
+                                fileIds.add(rs.getLong("obj_id"));
+                            } else {
+                                artifactIds.add(rs.getLong("obj_id"));
+                            }
+                        }
+                    } catch (SQLException ex) {
+                        objIdException.set(ex);
+                    }
+                }
+                );
+
+        sqlEx = objIdException.get();
+        if (sqlEx != null) {
+            throw new TskCoreException(
+                    MessageFormat.format("A sql exception occurred fetching results with query: SELECT {0}", objIdQuery),
+                    sqlEx);
+        }
+
 //
 //        List<AbstractFile> files = getCase().findAllFilesWhere(modifiedWhereStatement);
-//
-//        long totalResultsCount;
-//        // get total number of results
-//        if ((startItem == 0) // offset is zero AND
-//                && ((maxResultCount != null && files.size() < maxResultCount) // number of results is less than max
-//                || (maxResultCount == null))) { // OR max number of results was not specified
-//            totalResultsCount = files.size();
-//        } else {
-//            // do a query to get total number of results
-//            totalResultsCount = getCase().countFilesWhere(originalWhereStatement);
-//        }
 //
 //        List<RowDTO> fileRows = new ArrayList<>();
 //        for (AbstractFile file : files) {
@@ -248,45 +302,6 @@ public class ScoreDAO extends AbstractDAO {
 //        }
 //
 //        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
-    }
-
-    /**
-     * Returns a sql 'and' clause to filter by data source id if one is present.
-     *
-     * @param dataSourceId The data source id or null.
-     *
-     * @return Returns clause if data source id is present or blank string if
-     * not.
-     */
-    private static String getDataSourceAndClause(Long dataSourceId) {
-        return (dataSourceId != null && dataSourceId > 0
-                ? " AND data_source_obj_id = " + dataSourceId
-                : " ");
-    }
-
-    /**
-     * Creates a clause to be proceeded with 'where' or 'and' that will show
-     * files specified by the filter and the specified data source.
-     *
-     * @param filter The scores filter.
-     * @param dataSourceId The id of the data source or null if no data source
-     * filtering.
-     *
-     * @return The clause to be proceeded with 'where' or 'and'.
-     */
-    private String getFileScoreWhereStatement(ScoreViewFilter filter, Long dataSourceId) {
-        String scoreWhereClause = filter.getScores().stream()
-                .map(s -> MessageFormat.format(
-                " (tsk_aggregate_score.significance = {0} AND tsk_aggregate_score.priority = {1}) ",
-                s.getSignificance().getId(),
-                s.getPriority().getId()))
-                .collect(Collectors.joining(" OR "));
-        String query = MessageFormat.format(
-                " obj_id IN (SELECT tsk_aggregate_score.obj_id FROM tsk_aggregate_score WHERE {0}) {1}",
-                scoreWhereClause,
-                getDataSourceAndClause(dataSourceId));
-
-        return query;
     }
 
     private TreeItemDTO<?> createTreeItem(DAOEvent daoEvent, TreeDisplayCount count) {
@@ -397,7 +412,6 @@ public class ScoreDAO extends AbstractDAO {
         }
     }
 
-
     /**
      * Returns events for when a full refresh is required because module content
      * events will not necessarily provide events for files (i.e. data source
@@ -411,6 +425,7 @@ public class ScoreDAO extends AbstractDAO {
         return ImmutableSet.of(
                 new ScoreContentEvent(null, dataSourceId)
         );
+
     }
 
     /**
