@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -66,16 +67,30 @@ import org.sleuthkit.datamodel.Score.Priority;
 import org.sleuthkit.datamodel.Score.Significance;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  * Provides information to populate the results viewer for data in the views
  * section.
  */
+@Messages({
+    "ScoreDAO_columns_sourceLbl=Source",
+    "ScoreDAO_columns_typeLbl=Type",
+    "ScoreDAO_columns_pathLbl=Path",
+    "ScoreDAO_columns_createdDateLbl=Created Date",
+    "ScoreDAO_columns_noDescription=No Description",
+    "ScoreDAO_types_filelbl=File"
+})
 public class ScoreDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(ScoreDAO.class.getName());
+
+    private static final List<ColumnKey> RESULT_SCORE_COLUMNS = Arrays.asList(
+            getFileColumnKey(Bundle.ScoreDAO_columns_sourceLbl()),
+            getFileColumnKey(Bundle.ScoreDAO_columns_typeLbl()),
+            getFileColumnKey(Bundle.ScoreDAO_columns_pathLbl()),
+            getFileColumnKey(Bundle.ScoreDAO_columns_createdDateLbl())
+    );
 
     private static ScoreDAO instance = null;
 
@@ -90,6 +105,10 @@ public class ScoreDAO extends AbstractDAO {
     private final Cache<SearchParams<Object>, SearchResultsDTO> searchParamsCache
             = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).expireAfterAccess(CACHE_DURATION, CACHE_DURATION_UNITS).build();
     private final TreeCounts<DAOEvent> treeCounts = new TreeCounts<>();
+
+    private static ColumnKey getFileColumnKey(String name) {
+        return new ColumnKey(name, name, Bundle.ScoreDAO_columns_noDescription());
+    }
 
     private SleuthkitCase getCase() throws NoCurrentCaseException {
         return Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -293,13 +312,10 @@ public class ScoreDAO extends AbstractDAO {
             String joinedFileIds = fileIds.stream()
                     .map(l -> Long.toString(l))
                     .collect(Collectors.joining(", "));
-            
+
             List<AbstractFile> files = getCase().findAllFilesWhere("obj_id IN (" + joinedFileIds + ")");
 
             for (AbstractFile file : files) {
-
-                List<Object> cellValues = FileSystemColumnUtils.getCellValuesForAbstractFile(file);
-
                 dataRows.add(new FileRowDTO(
                         file,
                         file.getId(),
@@ -308,27 +324,33 @@ public class ScoreDAO extends AbstractDAO {
                         MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
                         file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
                         file.getType(),
-                        cellValues));
+                        Arrays.asList(
+                                file.getName(), // source
+                                Bundle.ScoreDAO_types_filelbl(),
+                                file.getParentPath(),
+                                file.getCrtime()
+                        )));
             }
         }
-        
+
         if (!artifactIds.isEmpty()) {
             String joinedArtifactIds = artifactIds.stream()
                     .map(l -> Long.toString(l))
                     .collect(Collectors.joining(", "));
-            
+
             List<DataArtifact> dataArtifacts = getCase().getBlackboard().getDataArtifactsWhere("obj_id IN (" + joinedArtifactIds + ")");
             TableData artTableData = MainDAO.getInstance().getDataArtifactsDAO().createTableData(null, dataArtifacts);
             dataRows.addAll(artTableData.rows);
         }
+
         //
         return new BaseSearchResultsDTO(
-                SCORE_TYPE_ID, 
-                SCORE_DISPLAY_NAME, 
-                SCORE_COLUMNS, 
-                dataRows, 
-                signature, 
-                startItem, 
+                SCORE_TYPE_ID,
+                SCORE_DISPLAY_NAME,
+                RESULT_SCORE_COLUMNS,
+                dataRows,
+                signature,
+                startItem,
                 totalCountRef.get());
     }
 
