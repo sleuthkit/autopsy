@@ -195,7 +195,7 @@ public class RootFactory {
                     new AnalysisResultsRootNode(null),
                     new OsAccountsRootNode(null),
                     new TagsRootNode(null),
-                    
+                    new ScoreParentNode(null),
                     new ReportsRootNode()
             ));
         }

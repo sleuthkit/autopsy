@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultTableSearchResultsDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.BlackboardArtifactTagsRowDTO;
@@ -49,6 +50,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.RowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ContentRowDTO.VolumeRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardByFileRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.ReportsRowDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.ScoreResultRowDTO;
 import org.sleuthkit.autopsy.mainui.nodes.FileNode.LayoutFileNode;
 import org.sleuthkit.autopsy.mainui.nodes.FileNode.SlackFileNode;
 import org.sleuthkit.autopsy.mainui.nodes.SpecialDirectoryNode.LocalDirectoryNode;
@@ -89,7 +91,14 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
     protected Node createNodeForKey(ChildKey key) {
         String typeId = key.getRow().getTypeId();
         try {
-            if (DataArtifactRowDTO.getTypeIdForClass().equals(typeId)) {
+            if (ScoreResultRowDTO.getTypeIdForClass().equals(typeId) && key.getRow() instanceof ScoreResultRowDTO scoreRow) {
+                if (scoreRow.getArtifactDTO() != null) {
+                    String iconPath = IconsUtil.getIconFilePath(scoreRow.getArtifactTypeId());
+                    return new DataArtifactNode(key.getSearchResults(), scoreRow.getArtifactDTO(), iconPath, nodeThreadPool);
+                } else if (scoreRow.getFileDTO() != null) {
+                    return new FileNode(key.getSearchResults(), scoreRow.getFileDTO(), true, nodeThreadPool);
+                }
+            } else if (DataArtifactRowDTO.getTypeIdForClass().equals(typeId)) {
                 return new DataArtifactNode((DataArtifactTableSearchResultsDTO) key.getSearchResults(), (DataArtifactRowDTO) key.getRow(), nodeThreadPool);
             } else if (FileRowDTO.getTypeIdForClass().equals(typeId)) {
                 return new FileNode(key.getSearchResults(), (FileRowDTO) key.getRow(), true, nodeThreadPool);
