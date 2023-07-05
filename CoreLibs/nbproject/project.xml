@@ -324,7 +324,7 @@
                 <package>javax.annotation</package>
                 <package>javax.annotation.concurrent</package>
                 <package>javax.annotation.meta</package>
-<package>javafx.animation</package>
+                <package>javafx.animation</package>
                 <package>javafx.application</package>
                 <package>javafx.beans</package>
                 <package>javafx.beans.binding</package>
@@ -1110,10 +1110,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/opencv-2413.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/opencv-2413.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/perfmark-api-0.23.0.jar</runtime-relative-path>
