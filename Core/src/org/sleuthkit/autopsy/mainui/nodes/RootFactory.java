@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.HostPersonEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
+import org.sleuthkit.autopsy.mainui.nodes.ScoreTypeFactory.ScoreParentNode;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode.StaticTreeNode;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
@@ -194,6 +195,7 @@ public class RootFactory {
                     new AnalysisResultsRootNode(null),
                     new OsAccountsRootNode(null),
                     new TagsRootNode(null),
+                    
                     new ReportsRootNode()
             ));
         }
@@ -505,6 +507,7 @@ public class RootFactory {
                     new DataArtifactsRootNode(dataSourceObjId),
                     new AnalysisResultsRootNode(dataSourceObjId),
                     new OsAccountsRootNode(dataSourceObjId),
+                    new ScoreParentNode(dataSourceObjId),
                     new TagsRootNode(dataSourceObjId)
             ));
         }
@@ -722,38 +725,6 @@ public class RootFactory {
         }
     }
     
-
-    /**
-     * Root node for displaying "Score" for file types.
-     */
-    @Messages({"RootFactory_ScoresRootNode_displayName=Score"})
-    public static class ScoresRootNode extends StaticTreeNode {
-
-        private static final String NAME_PREFIX = "VIEWS";
-
-        /**
-         * Returns the name prefix of this node.
-         *
-         * @return The name prefix.
-         */
-        public static final String getNamePrefix() {
-            return NAME_PREFIX;
-        }
-
-        /**
-         * Main constructor.
-         *
-         * @param dataSourceObjId The data source object id or null for no
-         *                        filter.
-         */
-        public ScoresRootNode(Long dataSourceObjId) {
-            super(NAME_PREFIX + "_" + getLongString(dataSourceObjId),
-                    Bundle.RootFactory_ScoresRootNode_displayName(),
-                    "org/sleuthkit/autopsy/images/red-circle-exclamation.png",
-                    new ScoreTypeFactory.ScoreChildren(dataSourceObjId));
-        }
-    }
-
     /**
      * Root node for reports in the tree.
      */

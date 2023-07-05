@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_SIZE;
+import org.sleuthkit.autopsy.mainui.datamodel.BlackboardArtifactDAO.TableData;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeDisplayCount;
 import org.sleuthkit.autopsy.mainui.datamodel.TreeResultsDTO.TreeItemDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEventUtils;
@@ -232,13 +233,13 @@ public class ScoreDAO extends AbstractDAO {
 
         String countQuery = " COUNT(art_files.obj_id) AS count\n" + baseQuery;
 
-        AtomicLong count = new AtomicLong(0);
+        AtomicLong totalCountRef = new AtomicLong(0);
         AtomicReference<SQLException> countException = new AtomicReference<>(null);
         getCase().getCaseDbAccessManager()
                 .select(countQuery, (rs) -> {
                     try {
                         if (rs.next()) {
-                            count.set(rs.getLong("count"));
+                            totalCountRef.set(rs.getLong("count"));
                         }
                     } catch (SQLException ex) {
                         countException.set(ex);
@@ -295,20 +296,20 @@ public class ScoreDAO extends AbstractDAO {
             
             List<AbstractFile> files = getCase().findAllFilesWhere("obj_id IN (" + joinedFileIds + ")");
 
-//            for (AbstractFile file : files) {
-//
-//                List<Object> cellValues = FileSystemColumnUtils.getCellValuesForAbstractFile(file);
-//
-//                dataRows.add(new FileRowDTO(
-//                        file,
-//                        file.getId(),
-//                        file.getName(),
-//                        file.getNameExtension(),
-//                        MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
-//                        file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
-//                        file.getType(),
-//                        cellValues));
-//            }
+            for (AbstractFile file : files) {
+
+                List<Object> cellValues = FileSystemColumnUtils.getCellValuesForAbstractFile(file);
+
+                dataRows.add(new FileRowDTO(
+                        file,
+                        file.getId(),
+                        file.getName(),
+                        file.getNameExtension(),
+                        MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
+                        file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
+                        file.getType(),
+                        cellValues));
+            }
         }
         
         if (!artifactIds.isEmpty()) {
@@ -317,14 +318,18 @@ public class ScoreDAO extends AbstractDAO {
                     .collect(Collectors.joining(", "));
             
             List<DataArtifact> dataArtifacts = getCase().getBlackboard().getDataArtifactsWhere("obj_id IN (" + joinedArtifactIds + ")");
-//            for (DataArtifact dataArt: dataArtifacts) {
-//                MainDAO.getInstance().getDataArtifactsDAO().create
-//                dataRows.add(new DataArtifactRowDTO(dataArt, srcContent, linkedFile, isTimelineSupported, cellValues, id));
-//            }
-            
+            TableData artTableData = MainDAO.getInstance().getDataArtifactsDAO().createTableData(null, dataArtifacts);
+            dataRows.addAll(artTableData.rows);
         }
         //
-        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
+        return new BaseSearchResultsDTO(
+                SCORE_TYPE_ID, 
+                SCORE_DISPLAY_NAME, 
+                SCORE_COLUMNS, 
+                dataRows, 
+                signature, 
+                startItem, 
+                totalCountRef.get());
     }
 
     private TreeItemDTO<?> createTreeItem(DAOEvent daoEvent, TreeDisplayCount count) {

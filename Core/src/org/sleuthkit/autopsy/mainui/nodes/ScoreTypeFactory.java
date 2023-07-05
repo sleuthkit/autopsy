@@ -54,10 +54,10 @@ public class ScoreTypeFactory {
     }
 
     /**
-     * Parent of file size nodes in the tree.
+     * Parent of score nodes in the tree.
      */
     @Messages({"ScoreTypeFactory_ScoreParentNode_displayName=Score"})
-    static class ScoreParentNode extends StaticTreeNode {
+    public static class ScoreParentNode extends StaticTreeNode {
 
         ScoreParentNode(Long dataSourceId) {
             super(
