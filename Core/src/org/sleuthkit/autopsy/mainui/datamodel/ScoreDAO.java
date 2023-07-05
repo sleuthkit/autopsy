@@ -223,6 +223,8 @@ public class ScoreDAO extends AbstractDAO {
                 + "INNER JOIN (\n"
                 + "	SELECT obj_id, data_source_obj_id, 'f' AS type FROM tsk_files\n"
                 + "	UNION SELECT artifact_obj_id AS obj_id, data_source_obj_id, 'a' AS type FROM blackboard_artifacts\n"
+                + "          WHERE blackboard_artifacts.artifact_type_id IN "
+                + "               (SELECT artifact_type_id FROM blackboard_artifact_types WHERE category_type = " + Category.DATA_ARTIFACT.getID() + ")\n"
                 + ") art_files ON aggr_score.obj_id = art_files.obj_id\n"
                 + "WHERE (" + scoreWhereClause + ")\n"
                 + ((dataSourceId != null && dataSourceId > 0) ? "AND art_files.data_source_obj_id = " + dataSourceId + "\n" : "")
@@ -284,7 +286,7 @@ public class ScoreDAO extends AbstractDAO {
                     sqlEx);
         }
 
-        List<RowDTO> fileRows = new ArrayList<>();
+        List<RowDTO> dataRows = new ArrayList<>();
 
         if (!fileIds.isEmpty()) {
             String joinedFileIds = fileIds.stream()
@@ -293,20 +295,20 @@ public class ScoreDAO extends AbstractDAO {
             
             List<AbstractFile> files = getCase().findAllFilesWhere("obj_id IN (" + joinedFileIds + ")");
 
-            for (AbstractFile file : files) {
-
-                List<Object> cellValues = FileSystemColumnUtils.getCellValuesForAbstractFile(file);
-
-                fileRows.add(new FileRowDTO(
-                        file,
-                        file.getId(),
-                        file.getName(),
-                        file.getNameExtension(),
-                        MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
-                        file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
-                        file.getType(),
-                        cellValues));
-            }
+//            for (AbstractFile file : files) {
+//
+//                List<Object> cellValues = FileSystemColumnUtils.getCellValuesForAbstractFile(file);
+//
+//                dataRows.add(new FileRowDTO(
+//                        file,
+//                        file.getId(),
+//                        file.getName(),
+//                        file.getNameExtension(),
+//                        MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
+//                        file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
+//                        file.getType(),
+//                        cellValues));
+//            }
         }
         
         if (!artifactIds.isEmpty()) {
@@ -315,11 +317,14 @@ public class ScoreDAO extends AbstractDAO {
                     .collect(Collectors.joining(", "));
             
             List<DataArtifact> dataArtifacts = getCase().getBlackboard().getDataArtifactsWhere("obj_id IN (" + joinedArtifactIds + ")");
-            
+//            for (DataArtifact dataArt: dataArtifacts) {
+//                MainDAO.getInstance().getDataArtifactsDAO().create
+//                dataRows.add(new DataArtifactRowDTO(dataArt, srcContent, linkedFile, isTimelineSupported, cellValues, id));
+//            }
             
         }
         //
-        //        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
+        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
     }
 
     private TreeItemDTO<?> createTreeItem(DAOEvent daoEvent, TreeDisplayCount count) {
