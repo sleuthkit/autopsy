@@ -71,8 +71,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score;
-import org.sleuthkit.datamodel.Score.Priority;
-import org.sleuthkit.datamodel.Score.Significance;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
@@ -215,13 +213,13 @@ public class ScoreDAO extends AbstractDAO {
                     String filterSql = Stream.of(filterSqlPair.getRight(), dsClause)
                             .filter(StringUtils::isNotBlank)
                             .collect(Collectors.joining("\nAND "));
-                    
+
                     if (StringUtils.isNotBlank(filterSql)) {
                         filterSql = "\n WHERE " + filterSql;
                     }
-                    
-                    return "(SELECT COUNT(aggr_score.obj_id) " 
-                            + BASE_AGGR_SCORE_QUERY 
+
+                    return "(SELECT COUNT(aggr_score.obj_id) "
+                            + BASE_AGGR_SCORE_QUERY
                             + filterSql
                             + ") AS "
                             + filterSqlPair.getLeft();
@@ -365,23 +363,28 @@ public class ScoreDAO extends AbstractDAO {
             List<AbstractFile> files = getCase().findAllFilesWhere("obj_id IN (" + joinedFileIds + ")");
 
             for (AbstractFile file : files) {
-                dataRows.add(new FileRowDTO(
-                        file,
-                        file.getId(),
+                List<Object> cellValues = Arrays.asList(
                         file.getName(),
-                        file.getNameExtension(),
-                        MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
-                        file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
-                        file.getType(),
-                        // the modified column types: source name, type, path, created time
-                        Arrays.asList(
+                        Bundle.ScoreDAO_types_filelbl(),
+                        file.getUniquePath(),
+                        file.getCtime() <= 0
+                        ? null
+                        : TimeZoneUtils.getFormattedTime(file.getCtime())
+                );
+
+                dataRows.add(new ScoreResultRowDTO(
+                        new FileRowDTO(
+                                file,
+                                file.getId(),
                                 file.getName(),
-                                Bundle.ScoreDAO_types_filelbl(),
-                                file.getUniquePath(),
-                                file.getCtime() <= 0
-                                ? null
-                                : TimeZoneUtils.getFormattedTime(file.getCtime())
-                        )));
+                                file.getNameExtension(),
+                                MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
+                                file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
+                                file.getType(),
+                                cellValues),
+                        // the modified column types: source name, type, path, created time
+                        cellValues,
+                        file.getId()));
             }
         }
 
@@ -396,23 +399,30 @@ public class ScoreDAO extends AbstractDAO {
             // all rows should be data artifact rows, and can be appended accordingly
             for (RowDTO rowDTO : artTableData.rows) {
                 if (rowDTO instanceof DataArtifactRowDTO dataArtRow) {
-                    dataRows.add(new DataArtifactRowDTO(
-                            dataArtRow.getArtifact(),
-                            dataArtRow.getSrcContent(),
-                            dataArtRow.getLinkedFile(),
-                            dataArtRow.isTimelineSupported(),
-                            Arrays.asList(
-                                    dataArtRow.getSrcContent().getName(),
-                                    dataArtRow.getArtifact().getType().getDisplayName(),
-                                    dataArtRow.getArtifact().getUniquePath(),
-                                    getTimeStamp(dataArtRow.getArtifact())
-                            ),
+                    BlackboardArtifact.Type artifactType = dataArtRow.getArtifact().getType();
+                    List<Object> cellValues = Arrays.asList(
+                            dataArtRow.getSrcContent().getName(),
+                            artifactType.getDisplayName(),
+                            dataArtRow.getArtifact().getUniquePath(),
+                            getTimeStamp(dataArtRow.getArtifact())
+                    );
+
+                    dataRows.add(new ScoreResultRowDTO(
+                            new DataArtifactRowDTO(
+                                    dataArtRow.getArtifact(),
+                                    dataArtRow.getSrcContent(),
+                                    dataArtRow.getLinkedFile(),
+                                    dataArtRow.isTimelineSupported(),
+                                    cellValues,
+                                    dataArtRow.getId()),
+                            artifactType,
+                            cellValues,
                             dataArtRow.getId()));
                 }
+
             }
         }
 
-        //
         return new BaseSearchResultsDTO(
                 SCORE_TYPE_ID,
                 Bundle.ScoreDAO_mainNode_displayName(),

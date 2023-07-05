@@ -92,8 +92,8 @@ public class SearchResultChildFactory extends ChildFactory<ChildKey> {
         String typeId = key.getRow().getTypeId();
         try {
             if (ScoreResultRowDTO.getTypeIdForClass().equals(typeId) && key.getRow() instanceof ScoreResultRowDTO scoreRow) {
-                if (scoreRow.getArtifactDTO() != null) {
-                    String iconPath = IconsUtil.getIconFilePath(scoreRow.getArtifactTypeId());
+                if (scoreRow.getArtifactDTO() != null && scoreRow.getArtifactType() != null) {
+                    String iconPath = IconsUtil.getIconFilePath(scoreRow.getArtifactType().getTypeID());
                     return new DataArtifactNode(key.getSearchResults(), scoreRow.getArtifactDTO(), iconPath, nodeThreadPool);
                 } else if (scoreRow.getFileDTO() != null) {
                     return new FileNode(key.getSearchResults(), scoreRow.getFileDTO(), true, nodeThreadPool);
