@@ -60,11 +60,13 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score.Priority;
 import org.sleuthkit.datamodel.Score.Significance;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
 /**
  * Provides information to populate the results viewer for data in the views
@@ -282,26 +284,42 @@ public class ScoreDAO extends AbstractDAO {
                     sqlEx);
         }
 
-//
-//        List<AbstractFile> files = getCase().findAllFilesWhere(modifiedWhereStatement);
-//
-//        List<RowDTO> fileRows = new ArrayList<>();
-//        for (AbstractFile file : files) {
-//
-//            List<Object> cellValues = FileSystemColumnUtils.getCellValuesForAbstractFile(file);
-//
-//            fileRows.add(new FileRowDTO(
-//                    file,
-//                    file.getId(),
-//                    file.getName(),
-//                    file.getNameExtension(),
-//                    MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
-//                    file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
-//                    file.getType(),
-//                    cellValues));
-//        }
-//
-//        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
+        List<RowDTO> fileRows = new ArrayList<>();
+
+        if (!fileIds.isEmpty()) {
+            String joinedFileIds = fileIds.stream()
+                    .map(l -> Long.toString(l))
+                    .collect(Collectors.joining(", "));
+            
+            List<AbstractFile> files = getCase().findAllFilesWhere("obj_id IN (" + joinedFileIds + ")");
+
+            for (AbstractFile file : files) {
+
+                List<Object> cellValues = FileSystemColumnUtils.getCellValuesForAbstractFile(file);
+
+                fileRows.add(new FileRowDTO(
+                        file,
+                        file.getId(),
+                        file.getName(),
+                        file.getNameExtension(),
+                        MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
+                        file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
+                        file.getType(),
+                        cellValues));
+            }
+        }
+        
+        if (!artifactIds.isEmpty()) {
+            String joinedArtifactIds = artifactIds.stream()
+                    .map(l -> Long.toString(l))
+                    .collect(Collectors.joining(", "));
+            
+            List<DataArtifact> dataArtifacts = getCase().getBlackboard().getDataArtifactsWhere("obj_id IN (" + joinedArtifactIds + ")");
+            
+            
+        }
+        //
+        //        return new BaseSearchResultsDTO(FILE_VIEW_EXT_TYPE_ID, displayName, FileSystemColumnUtils.getColumnKeysForAbstractfile(), fileRows, AbstractFile.class.getName(), startItem, totalResultsCount);
     }
 
     private TreeItemDTO<?> createTreeItem(DAOEvent daoEvent, TreeDisplayCount count) {
