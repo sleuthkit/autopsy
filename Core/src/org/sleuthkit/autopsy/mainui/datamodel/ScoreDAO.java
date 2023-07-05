@@ -22,15 +22,17 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableSet;
-import com.sun.xml.bind.v2.TODO;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -39,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -47,7 +50,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
-import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION;
 import static org.sleuthkit.autopsy.mainui.datamodel.AbstractDAO.CACHE_DURATION_UNITS;
@@ -61,7 +64,9 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.TreeCounts;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
 import org.sleuthkit.autopsy.mainui.nodes.DAOFetcher;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Score.Priority;
 import org.sleuthkit.datamodel.Score.Significance;
@@ -79,11 +84,30 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
     "ScoreDAO_columns_pathLbl=Path",
     "ScoreDAO_columns_createdDateLbl=Created Date",
     "ScoreDAO_columns_noDescription=No Description",
-    "ScoreDAO_types_filelbl=File"
+    "ScoreDAO_types_filelbl=File",
+    "ScoreDAO_mainNode_displayName=Score"
 })
 public class ScoreDAO extends AbstractDAO {
 
     private static final Logger logger = Logger.getLogger(ScoreDAO.class.getName());
+
+    private static final List<BlackboardAttribute.Type> TIME_ATTRS = Arrays.asList(
+            BlackboardAttribute.Type.TSK_DATETIME,
+            BlackboardAttribute.Type.TSK_DATETIME_ACCESSED,
+            BlackboardAttribute.Type.TSK_DATETIME_RCVD,
+            BlackboardAttribute.Type.TSK_DATETIME_SENT,
+            BlackboardAttribute.Type.TSK_DATETIME_CREATED,
+            BlackboardAttribute.Type.TSK_DATETIME_MODIFIED,
+            BlackboardAttribute.Type.TSK_DATETIME_START,
+            BlackboardAttribute.Type.TSK_DATETIME_END,
+            BlackboardAttribute.Type.TSK_DATETIME_DELETED,
+            BlackboardAttribute.Type.TSK_DATETIME_PASSWORD_RESET,
+            BlackboardAttribute.Type.TSK_DATETIME_PASSWORD_FAIL
+    );
+
+    private static final Map<Integer, Integer> TIME_ATTR_IMPORTANCE = IntStream.range(0, TIME_ATTRS.size())
+            .mapToObj(idx -> Pair.of(TIME_ATTRS.get(idx).getTypeID(), idx))
+            .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (v1, v2) -> v1));
 
     private static final List<ColumnKey> RESULT_SCORE_COLUMNS = Arrays.asList(
             getFileColumnKey(Bundle.ScoreDAO_columns_sourceLbl()),
@@ -91,6 +115,8 @@ public class ScoreDAO extends AbstractDAO {
             getFileColumnKey(Bundle.ScoreDAO_columns_pathLbl()),
             getFileColumnKey(Bundle.ScoreDAO_columns_createdDateLbl())
     );
+    
+    private static final String SCORE_TYPE_ID = ScoreDAO.class.getName() + "_SIGNATURE_ID";
 
     private static ScoreDAO instance = null;
 
@@ -324,11 +350,14 @@ public class ScoreDAO extends AbstractDAO {
                         MediaTypeUtils.getExtensionMediaType(file.getNameExtension()),
                         file.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.ALLOC),
                         file.getType(),
+                        // the modified column types: source name, type, path, created time
                         Arrays.asList(
-                                file.getName(), // source
+                                file.getName(),
                                 Bundle.ScoreDAO_types_filelbl(),
-                                file.getParentPath(),
-                                file.getCrtime()
+                                file.getUniquePath(),
+                                file.getCtime() <= 0
+                                ? null
+                                : TimeZoneUtils.getFormattedTime(file.getCtime())
                         )));
             }
         }
@@ -340,18 +369,63 @@ public class ScoreDAO extends AbstractDAO {
 
             List<DataArtifact> dataArtifacts = getCase().getBlackboard().getDataArtifactsWhere("obj_id IN (" + joinedArtifactIds + ")");
             TableData artTableData = MainDAO.getInstance().getDataArtifactsDAO().createTableData(null, dataArtifacts);
-            dataRows.addAll(artTableData.rows);
+
+            // all rows should be data artifact rows, and can be appended accordingly
+            for (RowDTO rowDTO : artTableData.rows) {
+                if (rowDTO instanceof DataArtifactRowDTO dataArtRow) {
+                    dataRows.add(new DataArtifactRowDTO(
+                            dataArtRow.getArtifact(),
+                            dataArtRow.getSrcContent(),
+                            dataArtRow.getLinkedFile(),
+                            dataArtRow.isTimelineSupported(),
+                            Arrays.asList(
+                                    dataArtRow.getSrcContent().getName(),
+                                    dataArtRow.getArtifact().getType().getDisplayName(),
+                                    dataArtRow.getArtifact().getUniquePath(),
+                                    getTimeStamp(dataArtRow.getArtifact())
+                            ),
+                            dataArtRow.getId()));
+                }
+            }
         }
 
         //
         return new BaseSearchResultsDTO(
                 SCORE_TYPE_ID,
-                SCORE_DISPLAY_NAME,
+                Bundle.ScoreDAO_mainNode_displayName(),
                 RESULT_SCORE_COLUMNS,
                 dataRows,
-                signature,
+                SCORE_TYPE_ID,
                 startItem,
                 totalCountRef.get());
+    }
+    
+    private String getTimeStamp(BlackboardArtifact artifact) {
+        Long time = getTime(artifact);
+        if (time == null || time <= 0) {
+            return null;
+        } else {
+            return TimeZoneUtils.getFormattedTime(time);
+        }
+    }
+
+    private Long getTime(BlackboardArtifact artifact) {
+        try {
+            BlackboardAttribute timeAttr = artifact.getAttributes().stream()
+                    .filter((attr) -> TIME_ATTR_IMPORTANCE.keySet().contains(attr.getAttributeType().getTypeID()))
+                    .sorted(Comparator.comparing(attr -> TIME_ATTR_IMPORTANCE.get(attr.getAttributeType().getTypeID())))
+                    .findFirst()
+                    .orElse(null);
+
+            if (timeAttr != null) {
+                return timeAttr.getValueLong();
+            } else {
+                return (artifact.getParent() instanceof AbstractFile) ? ((AbstractFile) artifact.getParent()).getCtime() : null;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "An exception occurred while fetching time for artifact", ex);
+            return null;
+        }
     }
 
     private TreeItemDTO<?> createTreeItem(DAOEvent daoEvent, TreeDisplayCount count) {
