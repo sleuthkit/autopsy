@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import org.openide.nodes.Children;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.mainui.datamodel.DeletedContentSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
 import org.sleuthkit.autopsy.mainui.datamodel.ScoreViewFilter;
 import org.sleuthkit.autopsy.mainui.datamodel.ScoreViewSearchParams;
@@ -99,7 +98,7 @@ public class ScoreTypeFactory {
         protected void handleDAOAggregateEvent(DAOAggregateEvent aggEvt) {
             for (DAOEvent evt : aggEvt.getEvents()) {
                 if (evt instanceof TreeEvent) {
-                    TreeResultsDTO.TreeItemDTO<DeletedContentSearchParams> treeItem = super.getTypedTreeItem((TreeEvent) evt, DeletedContentSearchParams.class);
+                    TreeResultsDTO.TreeItemDTO<ScoreViewSearchParams> treeItem = super.getTypedTreeItem((TreeEvent) evt, ScoreViewSearchParams.class);
                     // if search params has null filter, trigger full refresh
                     if (treeItem != null && treeItem.getSearchParams().getFilter() == null) {
                         super.update();

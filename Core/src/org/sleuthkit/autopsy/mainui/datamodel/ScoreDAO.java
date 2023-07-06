@@ -550,9 +550,24 @@ public class ScoreDAO extends AbstractDAO {
                     }
                 });
 
-        return CollectionUtils.isEmpty(dataSourceIds)
+        Set<DAOEvent> dataEvents = CollectionUtils.isEmpty(dataSourceIds)
                 ? Collections.singleton(new ScoreContentEvent(null, null))
                 : dataSourceIds.stream().map(dsId -> new ScoreContentEvent(null, dsId)).collect(Collectors.toSet());
+
+        Set<DAOEvent> treeEvents = CollectionUtils.isEmpty(dataSourceIds)
+                ? Collections.singleton(new TreeEvent(createScoreContentTreeItem(
+                        null,
+                        null,
+                        TreeDisplayCount.UNSPECIFIED),
+                        true))
+                : dataSourceIds.stream().map(dsId -> new TreeEvent(
+                createScoreContentTreeItem(
+                        null,
+                        dsId,
+                        TreeDisplayCount.UNSPECIFIED), true))
+                        .collect(Collectors.toSet());
+        
+        return Stream.of(dataEvents, treeEvents).flatMap(s -> s.stream()).collect(Collectors.toSet());
     }
 
     private boolean searchParamsMatchEvent(
