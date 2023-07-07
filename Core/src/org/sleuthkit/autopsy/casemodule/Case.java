@@ -143,7 +143,7 @@ import org.sleuthkit.autopsy.timeline.events.TimelineEventAddedEvent;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentStream.ContentProvider;
+import org.sleuthkit.datamodel.ContentStreamProvider;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FileSystem;
@@ -186,7 +186,6 @@ public class Case {
     private static volatile Frame mainFrame;
     private static volatile Case currentCase;
     private final CaseMetadata metadata;
-    private final ContentProvider contentProvider;
     private volatile ExecutorService caseActionExecutor;
     private CoordinationService.Lock caseLock;
     private SleuthkitCase caseDb;
@@ -2070,10 +2069,9 @@ public class Case {
      */
     private Case(CaseMetadata caseMetaData) {
         metadata = caseMetaData;
-        this.contentProvider = caseMetaData.getContentProvider();
         sleuthkitEventListener = new SleuthkitEventListener();
     }
-
+   
     /**
      * Performs a case action that involves creating or opening a case. If the
      * case is a multi-user case, the action is done after acquiring a
@@ -2737,15 +2735,20 @@ public class Case {
         progressIndicator.progress(Bundle.Case_progressMessage_openingCaseDatabase());
         try {
             String databaseName = metadata.getCaseDatabaseName();
+            
+            ContentStreamProvider contentProvider = loadContentProvider(
+                    metadata.getContentProviderName(), 
+                    metadata.getContentProviderArgs());
+            
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 // only prefix with metadata directory if databaseName is a relative path
                 String fullDatabasePath = (new File(databaseName).isAbsolute())
                         ? databaseName
                         : Paths.get(metadata.getCaseDirectory(), databaseName).toString();
                         
-                caseDb = SleuthkitCase.openCase(fullDatabasePath, this.contentProvider);
+                caseDb = SleuthkitCase.openCase(fullDatabasePath, contentProvider);
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
-                caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory(), this.contentProvider);
+                caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory(), contentProvider);
             } else {
                 throw new CaseActionException(Bundle.Case_open_exception_multiUserCaseNotEnabled());
             }
@@ -2758,6 +2761,36 @@ public class Case {
             throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotOpenCaseDatabase(ex.getLocalizedMessage()), ex);
         }
     }
+    
+     
+    /**
+     * Attempts to load a content provider for the provided arguments. Returns
+     * null if no content provider for the arguments can be identified.
+     *
+     * @param providerName The name of the content provider.
+     * @param args The arguments.
+     * @return The content provider or null if no content provider can be
+     * provisioned for the arguments
+     */
+    private static ContentStreamProvider loadContentProvider(String providerName, Map<String, Object> args) {
+        Collection<? extends AutopsyContentProvider> customContentProviders = Lookup.getDefault().lookupAll(AutopsyContentProvider.class);
+        if (customContentProviders != null) {
+            for (AutopsyContentProvider customProvider : customContentProviders) {
+                // ensure the provider matches the name
+                if (customProvider == null || !StringUtils.equalsIgnoreCase(providerName, customProvider.getName())) {
+                    continue;
+                }
+                
+                ContentStreamProvider contentProvider = customProvider.load(args);
+                if (contentProvider != null) {
+                    return contentProvider;
+                }
+            }
+        }
+        
+        return null;
+    }
+
 
     /**
      * Opens the case-level services: the files manager, tags manager and

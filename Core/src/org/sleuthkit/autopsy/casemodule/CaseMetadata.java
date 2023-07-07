@@ -55,7 +55,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.datamodel.ContentStream.ContentProvider;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -143,7 +142,6 @@ public final class CaseMetadata {
     private String createdDate;
     private String createdByVersion;
     private CaseMetadata originalMetadata = null; // For portable cases
-    private ContentProvider contentProvider;
     private String contentProviderName;
     private Map<String, Object> contentProviderArgs;
 
@@ -201,7 +199,7 @@ public final class CaseMetadata {
         createdByVersion = Version.getVersion();
         createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
         this.originalMetadata = originalMetadata;
-        this.contentProvider = originalMetadata == null ? null : originalMetadata.contentProvider;
+        this.contentProviderName = originalMetadata == null ? null : originalMetadata.contentProviderName;
         this.contentProviderArgs = originalMetadata == null ? null : originalMetadata.contentProviderArgs;
     }
 
@@ -241,11 +239,19 @@ public final class CaseMetadata {
     }
 
     /**
-     * @return The custom provider for content byte data or null if no custom
-     * provider.
+     * @return The custom provider name for content byte data or null if no
+     * custom provider.
      */
-    public ContentProvider getContentProvider() {
-        return contentProvider;
+    public String getContentProviderName() {
+        return this.contentProviderName;
+    }
+
+    /**
+     * @return The arguments for the custom provider for content byte data or
+     * null if no custom provider.
+     */
+    public Map<String, Object> getContentProviderArgs() {
+        return contentProviderArgs;
     }
 
     /**
@@ -604,11 +610,9 @@ public final class CaseMetadata {
                 this.contentProviderArgs = (contentProviderArgs instanceof Map) ? 
                     (Map<String, Object>) contentProviderArgs : 
                     Collections.singletonMap(CONTENT_PROVIDER_ARG_DEFAULT_KEY, contentProviderArgs);
-                this.contentProvider = loadContentProvider(contentProviderName, this.contentProviderArgs);
             } else {
                 this.contentProviderArgs = null;
                 this.contentProviderName = null;
-                this.contentProvider = null;
             }
              
             /*
@@ -773,34 +777,6 @@ public final class CaseMetadata {
         } else {
             el.setTextContent(arg.toString());
         }
-    }
-    
-    /**
-     * Attempts to load a content provider for the provided arguments. Returns
-     * null if no content provider for the arguments can be identified.
-     *
-     * @param providerName The name of the content provider.
-     * @param args The arguments.
-     * @return The content provider or null if no content provider can be
-     * provisioned for the arguments
-     */
-    private ContentProvider loadContentProvider(String providerName, Map<String, Object> args) {
-        Collection<? extends FileContentProvider> customContentProviders = Lookup.getDefault().lookupAll(FileContentProvider.class);
-        if (customContentProviders != null) {
-            for (FileContentProvider customProvider : customContentProviders) {
-                // ensure the provider matches the name
-                if (customProvider == null || !StringUtils.equalsIgnoreCase(providerName, customProvider.getName())) {
-                    continue;
-                }
-                
-                ContentProvider contentProvider = customProvider.load(args);
-                if (contentProvider != null) {
-                    return contentProvider;
-                }
-            }
-        }
-        
-        return null;
     }
 
     /**
