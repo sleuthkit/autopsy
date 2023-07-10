@@ -120,7 +120,6 @@ public final class CaseMetadata {
      */
     private static final String SCHEMA_VERSION_SIX = "6.0";
     private final static String CONTENT_PROVIDER_ELEMENT_NAME = "ContentProvider";
-    private final static String CONTENT_PROVIDER_ARGS_ELEMENT_NAME = "Args";
     private final static String CONTENT_PROVIDER_NAME_ELEMENT_NAME = "Name";
     private final static String CONTENT_PROVIDER_ARG_DEFAULT_KEY = "DEFAULT";
     
@@ -143,7 +142,6 @@ public final class CaseMetadata {
     private String createdByVersion;
     private CaseMetadata originalMetadata = null; // For portable cases
     private String contentProviderName;
-    private Map<String, Object> contentProviderArgs;
 
     /**
      * Gets the file extension used for case metadata files.
@@ -200,7 +198,6 @@ public final class CaseMetadata {
         createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
         this.originalMetadata = originalMetadata;
         this.contentProviderName = originalMetadata == null ? null : originalMetadata.contentProviderName;
-        this.contentProviderArgs = originalMetadata == null ? null : originalMetadata.contentProviderArgs;
     }
 
     /**
@@ -244,14 +241,6 @@ public final class CaseMetadata {
      */
     public String getContentProviderName() {
         return this.contentProviderName;
-    }
-
-    /**
-     * @return The arguments for the custom provider for content byte data or
-     * null if no custom provider.
-     */
-    public Map<String, Object> getContentProviderArgs() {
-        return contentProviderArgs;
     }
 
     /**
@@ -499,7 +488,6 @@ public final class CaseMetadata {
         Element caseElement = doc.createElement(CASE_ELEMENT_NAME);
         rootElement.appendChild(caseElement);
 
-        // serialize content provider args if they exist
         Element contentProviderEl = doc.createElement(CONTENT_PROVIDER_ELEMENT_NAME);
         rootElement.appendChild(contentProviderEl);
         
@@ -508,11 +496,6 @@ public final class CaseMetadata {
             contentProviderNameEl.setTextContent(this.contentProviderName);   
         }
         contentProviderEl.appendChild(contentProviderNameEl);
-        
-        Element contentProviderArgsEl = doc.createElement(CONTENT_PROVIDER_ARGS_ELEMENT_NAME);
-        contentProviderEl.appendChild(contentProviderArgsEl);
-        
-        serializeContentProviderArgs(doc, this.contentProviderArgs, contentProviderArgsEl);
             
         /*
          * Create the children of the case element.
@@ -600,18 +583,11 @@ public final class CaseMetadata {
                 this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_CREATED_BY_ELEMENT_NAME, true);
             }
             
-            // load content provider args
             Element contentProviderEl = getChildElOrNull(rootElement, CONTENT_PROVIDER_ELEMENT_NAME);
             if (contentProviderEl != null) {
                 Element contentProviderNameEl = getChildElOrNull(contentProviderEl, CONTENT_PROVIDER_NAME_ELEMENT_NAME);
                 this.contentProviderName = contentProviderNameEl != null ? contentProviderNameEl.getTextContent() : null;
-                Element contentProviderArgsEl =  getChildElOrNull(contentProviderEl, CONTENT_PROVIDER_ARGS_ELEMENT_NAME);
-                Object contentProviderArgs = loadContentProviderArgs(contentProviderArgsEl);
-                this.contentProviderArgs = (contentProviderArgs instanceof Map) ? 
-                    (Map<String, Object>) contentProviderArgs : 
-                    Collections.singletonMap(CONTENT_PROVIDER_ARG_DEFAULT_KEY, contentProviderArgs);
             } else {
-                this.contentProviderArgs = null;
                 this.contentProviderName = null;
             }
              
@@ -695,90 +671,6 @@ public final class CaseMetadata {
         }
     }
     
-    /**
-     * Loads custom content provider arguments from an xml element.
-     * @param element The xml element.
-     * @return The custom content provider arguments.
-     */
-    private Object loadContentProviderArgs(Element element) {
-        if (element == null) {
-            return null;
-        }
-        
-        NodeList nodeList = element.getChildNodes();
-        List<Element> elements = new ArrayList<>();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            if (nodeList.item(i) instanceof Element) {
-                elements.add((Element) nodeList.item(i));
-            }
-        }
-        
-        if (elements.size() > 0) {
-            String nodeTag = element.getTagName();
-            boolean childrenHaveSameTag = true;
-            List<Pair<String, Object>> children = new ArrayList<>();
-            for (int i = 0; i < nodeList.getLength(); i++) {
-                Node child = nodeList.item(i);
-                if (child instanceof Element) {
-                    Element childElement = (Element) child;
-                    String childTagName = childElement.getTagName();
-                    Object childArg = loadContentProviderArgs(childElement);
-                    children.add(Pair.of(childTagName, childArg));
-                    
-                    if (childrenHaveSameTag && !childTagName.equalsIgnoreCase(nodeTag)) {
-                        childrenHaveSameTag = false;
-                    }
-                }
-            }
-            
-            if (childrenHaveSameTag) {
-                return children.stream().map(Pair::getValue).collect(Collectors.toList());
-            } else {
-                Map<String, Object> toRet = new HashMap<>();
-                for (Pair<String, Object> child: children) {
-                    toRet.put(child.getKey(), child.getValue());
-                }
-                return toRet;
-            }
-        } else {
-            return element.getTextContent();
-        }
-    }
-    
-    /**
-     * Serializes custom content provider arguments to an xml element.
-     * @param doc The root xml document.
-     * @param arg The argument to serialize.
-     * @param el The xml element for the argument.
-     */
-    private void serializeContentProviderArgs(Document doc, Object arg, Element el) {
-        if (arg == null) {
-            return;
-        } else if (arg instanceof List) {
-            String parentTagName = el.getTagName();
-            List<? extends Object> argList = (List<? extends Object>) arg;
-            for (Object childArg: argList) {
-                Element childEl = doc.createElement(parentTagName);
-                el.appendChild(childEl);
-                serializeContentProviderArgs(doc, childArg, childEl);
-            }
-        } else if (arg instanceof Map) {
-            Map<? extends Object, ? extends Object> argMap = (Map<? extends Object, ? extends Object>) arg;
-            for (Entry<? extends Object, ? extends Object> childEntry: argMap.entrySet()) {
-                String childTag = childEntry.getKey() == null ? null : childEntry.getKey().toString();
-                if (StringUtils.isBlank(childTag)) {
-                    continue;
-                }
-                
-                Element childEl = doc.createElement(childTag);
-                el.appendChild(childEl);
-                serializeContentProviderArgs(doc, childEntry.getValue(), childEl);
-            }
-        } else {
-            el.setTextContent(arg.toString());
-        }
-    }
-
     /**
      * Gets the text content of an XML element.
      *

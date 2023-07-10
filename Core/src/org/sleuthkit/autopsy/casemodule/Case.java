@@ -2736,9 +2736,7 @@ public class Case {
         try {
             String databaseName = metadata.getCaseDatabaseName();
             
-            ContentStreamProvider contentProvider = loadContentProvider(
-                    metadata.getContentProviderName(), 
-                    metadata.getContentProviderArgs());
+            ContentStreamProvider contentProvider = loadContentProvider(metadata.getContentProviderName());
             
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 // only prefix with metadata directory if databaseName is a relative path
@@ -2772,7 +2770,7 @@ public class Case {
      * @return The content provider or null if no content provider can be
      * provisioned for the arguments
      */
-    private static ContentStreamProvider loadContentProvider(String providerName, Map<String, Object> args) {
+    private static ContentStreamProvider loadContentProvider(String providerName) {
         Collection<? extends AutopsyContentProvider> customContentProviders = Lookup.getDefault().lookupAll(AutopsyContentProvider.class);
         if (customContentProviders != null) {
             for (AutopsyContentProvider customProvider : customContentProviders) {
@@ -2781,7 +2779,7 @@ public class Case {
                     continue;
                 }
                 
-                ContentStreamProvider contentProvider = customProvider.load(args);
+                ContentStreamProvider contentProvider = customProvider.load();
                 if (contentProvider != null) {
                     return contentProvider;
                 }

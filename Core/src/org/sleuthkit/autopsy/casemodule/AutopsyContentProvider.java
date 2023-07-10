@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.util.Map;
 import org.sleuthkit.datamodel.ContentStreamProvider;
 
 /**
@@ -35,7 +34,7 @@ public interface AutopsyContentProvider {
      * file.
      * @return The created content provider or null if arguments are invalid.
      */
-    ContentStreamProvider load(Map<String, Object> args);
+    ContentStreamProvider load();
 
     /**
      * Returns the uniquely identifying name of this FileContentProvider. This
