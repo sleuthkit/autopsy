@@ -34,7 +34,7 @@ open_jdk_64_home is the 64 bit jdk and is the assumed default
 source_base_path is the directory containing all necessary repos (i.e. autopsy, sleuthkit, etc.)
 open_jdk_32_home and postgres_32_home are only necessary if building binaries
 '''
-open_jdk_64_home = "C:\\Program Files\\BellSoft\\LibericaJDK-17-Full"
+open_jdk_64_home = "C:\\Program Files\\Java\\jdk-17"
 postgres_home = "C:\\Program Files\\PostgreSQL\\9.5"
 ant_home = "C:\\Program Files\\NetBeans-17\\netbeans\\extide\\ant"
 open_jdk_home = open_jdk_64_home

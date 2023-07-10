@@ -11,7 +11,9 @@ fi
 
 echo "Installing all apt dependencies..."
 sudo apt update && \
-    sudo apt -y install build-essential autoconf libtool automake git zip wget ant \
+    sudo apt -y install \
+        openjdk-17-jdk openjdk-17-jre \
+        build-essential autoconf libtool automake git zip wget ant \
         libde265-dev libheif-dev \
         libpq-dev \
         testdisk libafflib-dev libewf-dev libvhdi-dev libvmdk-dev \
@@ -24,18 +26,6 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-echo "Installing bellsoft Java 17..."
-pushd /usr/src/ &&
-    wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | sudo apt-key add - &&
-    echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list &&
-    sudo apt update &&
-    sudo apt -y install bellsoft-java17-full &&
-    popd
-if [[ $? -ne 0 ]]; then
-    echo "Failed to install bellsoft java 17" >>/dev/stderr
-    exit 1
-fi
-
 echo "Autopsy prerequisites installed."
-echo "Java path at /usr/lib/jvm/bellsoft-java17-full-amd64: "
-ls /usr/lib/jvm/bellsoft-java17-full-amd64
+echo "Java 17 instllation: "
+update-java-alternatives -l | grep java-1.17
