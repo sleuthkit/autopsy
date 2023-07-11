@@ -1,3 +1,31 @@
+---------------- VERSION 4.21.0  --------------
+General
+- Update Java to version 17
+
+Recent Activity Updates:
+- Check For Malicious Chrome Extensions
+
+Ingest Module Updates:
+- Inline Keyword Search
+- Update aLeapp/iLeapp executables.
+
+GUI Updates:
+- Add "has attachments" flag for email's
+- Add ability to delete a logical file/path from logical file
+  from the DSP before it is run.
+- Add ability to add timestamps when adding localfiles as a data source
+- Add Score to tree view
+
+Bugs:
+- Fix path for lnk files
+- Fix exporting of CSV files
+
+Misc:
+- Update JNA Version
+- Update SQLite library version
+- Add export for Pasco
+- Cyber Triage intergration
+
 ---------------- VERSION 4.20.0  --------------
 Recent Activity Updates:
 - Added Favicons, Profiles and Extensions to Chromium Browsers
