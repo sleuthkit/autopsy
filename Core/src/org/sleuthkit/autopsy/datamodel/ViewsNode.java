@@ -46,8 +46,7 @@ public class ViewsNode extends DisplayableItemNode {
                     // add it back in if we can filter the results to a more managable size. 
                     // new RecentFiles(sleuthkitCase),
                     new DeletedContent(sleuthkitCase, dsObjId),
-                    new FileSize(sleuthkitCase, dsObjId),
-                    new ScoreContent(sleuthkitCase, dsObjId))
+                    new FileSize(sleuthkitCase, dsObjId))
                 ),
                 Lookups.singleton(NAME)
             );
