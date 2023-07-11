@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.events.DAOAggregateEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.DAOEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.HostPersonEvent;
 import org.sleuthkit.autopsy.mainui.datamodel.events.TreeEvent;
+import org.sleuthkit.autopsy.mainui.nodes.ScoreTypeFactory.ScoreParentNode;
 import org.sleuthkit.autopsy.mainui.nodes.TreeNode.StaticTreeNode;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Host;
@@ -194,6 +195,7 @@ public class RootFactory {
                     new AnalysisResultsRootNode(null),
                     new OsAccountsRootNode(null),
                     new TagsRootNode(null),
+                    new ScoreParentNode(null),
                     new ReportsRootNode()
             ));
         }
@@ -505,6 +507,7 @@ public class RootFactory {
                     new DataArtifactsRootNode(dataSourceObjId),
                     new AnalysisResultsRootNode(dataSourceObjId),
                     new OsAccountsRootNode(dataSourceObjId),
+                    new ScoreParentNode(dataSourceObjId),
                     new TagsRootNode(dataSourceObjId)
             ));
         }
@@ -721,7 +724,7 @@ public class RootFactory {
                     new TagNameFactory(dataSourceObjId));
         }
     }
-
+    
     /**
      * Root node for reports in the tree.
      */

@@ -173,6 +173,7 @@ public class MainDAO extends AbstractDAO {
     private final EmailsDAO emailsDAO = EmailsDAO.getInstance();
     private final HostPersonDAO hostPersonDAO = HostPersonDAO.getInstance();
     private final ReportsDAO reportsDAO = ReportsDAO.getInstance();
+    private final ScoreDAO scoreDAO = ScoreDAO.getInstance();
 
     // NOTE: whenever adding a new sub-dao, it should be added to this list for event updates.
     private final List<AbstractDAO> allDAOs = ImmutableList.of(dataArtifactDAO,
@@ -185,7 +186,8 @@ public class MainDAO extends AbstractDAO {
             creditCardDAO,
             emailsDAO,
             hostPersonDAO,
-            reportsDAO);
+            reportsDAO,
+            scoreDAO);
 
     /**
      * Registers listeners with autopsy event publishers and starts internal
@@ -265,6 +267,10 @@ public class MainDAO extends AbstractDAO {
         return reportsDAO;
     }
 
+    public ScoreDAO getScoreDAO() {
+        return scoreDAO;
+    }
+
     public PropertyChangeManager getResultEventsManager() {
         return this.resultEventsManager;
     }
@@ -316,10 +322,9 @@ public class MainDAO extends AbstractDAO {
     /**
      * Processes and handles an autopsy event.
      *
-     * @param evt                   The event.
+     * @param evt The event.
      * @param immediateResultAction If true, result events are immediately
-     *                              fired. Otherwise, the result events are
-     *                              batched.
+     * fired. Otherwise, the result events are batched.
      */
     private void handleEvent(PropertyChangeEvent evt, boolean immediateResultAction) {
         Collection<DAOEvent> daoEvts = processEvent(evt);

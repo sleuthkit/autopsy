@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactRowDTO;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.autopsy.mainui.datamodel.DataArtifactTableSearchResultsDTO.CommAccoutTableSearchResultsDTO;
+import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 import org.sleuthkit.datamodel.DataArtifact;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -57,10 +58,10 @@ public class DataArtifactNode extends ArtifactNode<DataArtifact, DataArtifactRow
         this(tableData, artifactRow, getIconFilePath(tableData), backgroundTasksPool);
     }
 
-    public DataArtifactNode(DataArtifactTableSearchResultsDTO tableData, DataArtifactRowDTO artifactRow, String iconPath, ExecutorService backgroundTasksPool) {
+    public DataArtifactNode(SearchResultsDTO tableData, DataArtifactRowDTO artifactRow, String iconPath, ExecutorService backgroundTasksPool) {
         super(tableData, artifactRow, tableData.getColumns(), createLookup(artifactRow), iconPath, backgroundTasksPool);
     }
-
+        
     @Override
     public Optional<List<Tag>> getAllTagsFromDatabase() {
         try {

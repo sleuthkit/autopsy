@@ -150,15 +150,16 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
         return IGNORED_TYPES;
     }
 
-    TableData createTableData(BlackboardArtifact.Type artType, List<BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
+    TableData createTableData(BlackboardArtifact.Type artType, List<? extends BlackboardArtifact> arts) throws TskCoreException, NoCurrentCaseException {
         // A linked hashmap is being used for artifactAttributes to ensure that artifact order 
         // as well as attribute orders within those artifacts are preserved.  This is to maintain
         // a consistent ordering of attribute columns as received from BlackboardArtifact.getAttributes
         Map<Long, Map<BlackboardAttribute.Type, Object>> artifactAttributes = new LinkedHashMap<>();
         for (BlackboardArtifact art : arts) {
+            BlackboardArtifact.Type thisArtType = artType != null ? artType : art.getType();
             Map<BlackboardAttribute.Type, Object> attrs = art.getAttributes().stream()
-                    .filter(attr -> isRenderedAttr(artType, attr.getAttributeType()))
-                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(artType, attr), (attr1, attr2) -> attr1, LinkedHashMap::new));
+                    .filter(attr -> isRenderedAttr(thisArtType, attr.getAttributeType()))
+                    .collect(Collectors.toMap(attr -> attr.getAttributeType(), attr -> getAttrValue(thisArtType, attr), (attr1, attr2) -> attr1, LinkedHashMap::new));
 
             artifactAttributes.put(art.getId(), attrs);
         }
@@ -205,7 +206,8 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
             cellValues.add(dataSourceName);
 
             AbstractFile linkedFile = null;
-            if (artType.getCategory().equals(BlackboardArtifact.Category.DATA_ARTIFACT)) {
+            BlackboardArtifact.Type thisArtType = artType != null ? artType : artifact.getType();
+            if (thisArtType.getCategory().equals(BlackboardArtifact.Category.DATA_ARTIFACT)) {
                 // Note that we need to get the attribute from the original artifact since it is not displayed.
                 if (artifact.getAttribute(BlackboardAttribute.Type.TSK_PATH_ID) != null) {
                     long linkedId = artifact.getAttribute(BlackboardAttribute.Type.TSK_PATH_ID).getValueLong();
@@ -469,7 +471,7 @@ abstract class BlackboardArtifactDAO extends AbstractDAO {
         return pagedArtsStream.collect(Collectors.toList());
     }
 
-    class TableData {
+    static class TableData {
 
         final List<ColumnKey> columnKeys;
         final List<RowDTO> rows;
