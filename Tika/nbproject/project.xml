@@ -400,8 +400,8 @@
                 <binary-origin>release/modules/ext/cdm-4.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/checker-qual-3.12.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/checker-qual-3.12.0.jar</binary-origin>
+                <runtime-relative-path>ext/checker-qual-3.33.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/checker-qual-3.33.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-codec-1.15.jar</runtime-relative-path>
@@ -476,8 +476,8 @@
                 <binary-origin>release/modules/ext/ehcache-core-2.6.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/error_prone_annotations-2.11.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/error_prone_annotations-2.11.0.jar</binary-origin>
+                <runtime-relative-path>ext/error_prone_annotations-2.18.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/error_prone_annotations-2.18.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/failureaccess-1.0.1.jar</runtime-relative-path>
@@ -500,8 +500,8 @@
                 <binary-origin>release/modules/ext/gson-2.9.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-31.1-jre.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-31.1-jre.jar</binary-origin>
+                <runtime-relative-path>ext/guava-32.0.1-jre.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-32.0.1-jre.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/HikariCP-java7-2.4.13.jar</runtime-relative-path>
@@ -532,8 +532,8 @@
                 <binary-origin>release/modules/ext/istack-commons-runtime-3.0.12.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/j2objc-annotations-1.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/j2objc-annotations-1.3.jar</binary-origin>
+                <runtime-relative-path>ext/j2objc-annotations-2.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/j2objc-annotations-2.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jackcess-4.0.1.jar</runtime-relative-path>
@@ -544,16 +544,16 @@
                 <binary-origin>release/modules/ext/jackcess-encrypt-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackson-annotations-2.13.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackson-annotations-2.13.2.jar</binary-origin>
+                <runtime-relative-path>ext/jackson-annotations-2.15.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-annotations-2.15.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackson-core-2.13.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackson-core-2.13.2.jar</binary-origin>
+                <runtime-relative-path>ext/jackson-core-2.15.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-core-2.15.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackson-databind-2.13.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackson-databind-2.13.2.jar</binary-origin>
+                <runtime-relative-path>ext/jackson-databind-2.15.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-databind-2.15.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jai-imageio-core-1.4.0.jar</runtime-relative-path>
