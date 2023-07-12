@@ -1,21 +1,21 @@
 name: autopsy
-# core22 brings along linting for share object library paths as well as improvements to get java gstreamer working
 base: core22
 version: 4.20.0
 summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
-description: Autopsy is a graphical interface to The Sleuth Kit and other open source
-  digital forensics tools.
+description: Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools.
+source-code: https://github.com/sleuthkit/autopsy/
+website: https://www.autopsy.com/
+license: Apache-2.0
 grade: stable # must be 'stable' to release into candidate/stable channels
-# TODO look into turning back to strict for easier store inclusion but more limited usage
-confinement: classic # use 'strict' once you have the right plugs and slots
-architectures: [amd64, arm64]
+confinement: strict # or classic # use 'strict' once you have the right plugs and slots
+architectures: [amd64]
 compression: lzo
 icon: snap/gui/autopsy.png
 
 plugs:
   system-files-autopsy:
     interface: system-files
-    read: [/dev]
+    read: [/]
 
 apps:
   autopsy:
@@ -23,7 +23,7 @@ apps:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs
       jreflags: $jreflags "-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu"
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
+      #LD_LIBRARY_PATH: ${SNAP}/usr/local/lib:${SNAP}/usr/lib/x86_64-linux-gnu/gstreamer-1.0:${SNAP}/usr/lib/x86_64-linux-gnu:${SNAP}/lib/x86_64-linux-gnu:${SNAP}/usr/lib/x86_64-linux-gnu/glib-2.0:${LD_LIBRARY_PATH}
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
       # gstreamer scans for plugins (i.e. app integration plugins).  this tells gstreamer where to look for the scanner and libraries
@@ -79,6 +79,8 @@ parts:
     source-branch: develop
     #source-tag: sleuthkit-4.12.0
     build-environment: [JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64]
+    # build-attributes:
+    # - enable-patchelf
     build-packages:
     - build-essential
     - autoconf
@@ -97,7 +99,6 @@ parts:
     - libvhdi-dev
     - libvmdk-dev
     stage-packages:
-    - build-essential
     - libpq-dev
     - testdisk
     - libafflib-dev
@@ -106,6 +107,8 @@ parts:
     - libvmdk-dev
   autopsy:
     after: [sleuthkit]
+    # build-attributes:
+    # - enable-patchelf
     build-packages:
     - zip
     - unzip
@@ -118,6 +121,13 @@ parts:
     - libheif-dev
     - libpq-dev
     - testdisk
+    - freeglut3
+    - libpsm-infinipath1
+    - libpsm-infinipath1-dev
+    - libglu1-mesa
+    - libgstreamer1.0-dev
+    - libgstreamer-plugins-base1.0-dev
+    - libgstreamer-plugins-bad1.0-dev
     - libgstreamer1.0-0
     - gstreamer1.0-plugins-base
     - gstreamer1.0-plugins-good
@@ -131,8 +141,8 @@ parts:
     - gstreamer1.0-gtk3
     - gstreamer1.0-qt5
     - gstreamer1.0-pulseaudio
-    - openjdk-17-jdk 
     - openjdk-17-jre
+    - openjdk-17-jdk
     - perl
     plugin: nil
     # source: https://github.com/sleuthkit/autopsy.git
@@ -142,7 +152,7 @@ parts:
     build-environment:
     - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
-    override-build: |-
+    override-build: |
       # ----- BUILD ZIP -----
       AUTOPSY_SRC_PATH=$(pwd)
       NETBEANS_PLAT_VER=$(grep "netbeans-plat-version=" "$AUTOPSY_SRC_PATH/nbproject/platform.properties" | cut -d'=' -f2)
@@ -171,4 +181,3 @@ parts:
 
       # include this line to print all set variables
       # sed -i '129 i set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"' "$AUTOPSY_LOCATION/platform/lib/nbexec"
-    
