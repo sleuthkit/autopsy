@@ -318,9 +318,15 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                         break;
                     }
                 }
-                if (!hasKeywordsForSearch) {
-                    services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
-                            NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
+                
+                if (!settings.isIndexToSolrEnabled()) {
+                    services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.SolrIndexingDisabled"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.indexingDisabled")));
+                } else {
+                    if (!hasKeywordsForSearch) {
+                        services.postMessage(IngestMessage.createWarningMessage(KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.noKwInLstMsg"),
+                                NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.init.onlyIdxKwSkipMsg")));
+                    }
                 }
             }
         }

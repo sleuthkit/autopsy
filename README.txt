@@ -43,8 +43,8 @@ This section lists the software components and libraries that are used by
 Autopsy.   These tools are bundled with the Windows installer, unless specified otherwise.
 
 JRE (Java Runtime Environment) 17
-- Web page: https://bell-sw.com/pages/downloads/
-- License: https://bell-sw.com/liberica_eula/
+- Web page: https://www.oracle.com/java/technologies/downloads/#java17
+- License: https://www.oracle.com/a/tech/docs/jdk17-lium.pdf
 
 Netbeans 15 RCP platform and .jar files bundled with the platform
 - Web page: https://netbeans.apache.org/
