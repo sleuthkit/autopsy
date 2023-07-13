@@ -29,8 +29,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -42,10 +50,14 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -104,12 +116,20 @@ public final class CaseMetadata {
     private final static String ORIGINAL_CASE_ELEMENT_NAME = "OriginalCase"; //NON-NLS  
 
     /*
+     * Fields from schema version 6
+     */
+    private static final String SCHEMA_VERSION_SIX = "6.0";
+    private final static String CONTENT_PROVIDER_ELEMENT_NAME = "ContentProvider";
+    private final static String CONTENT_PROVIDER_NAME_ELEMENT_NAME = "Name";
+    private final static String CONTENT_PROVIDER_ARG_DEFAULT_KEY = "DEFAULT";
+    
+    /*
      * Unread fields, regenerated on save.
      */
     private final static String MODIFIED_DATE_ELEMENT_NAME = "ModifiedDate"; //NON-NLS
     private final static String AUTOPSY_SAVED_BY_ELEMENT_NAME = "SavedByAutopsyVersion"; //NON-NLS
 
-    private final static String CURRENT_SCHEMA_VERSION = SCHEMA_VERSION_FIVE;
+    private final static String CURRENT_SCHEMA_VERSION = SCHEMA_VERSION_SIX;
 
     private final Path metadataFilePath;
     private Case.CaseType caseType;
@@ -121,6 +141,7 @@ public final class CaseMetadata {
     private String createdDate;
     private String createdByVersion;
     private CaseMetadata originalMetadata = null; // For portable cases
+    private String contentProviderName;
 
     /**
      * Gets the file extension used for case metadata files.
@@ -176,6 +197,7 @@ public final class CaseMetadata {
         createdByVersion = Version.getVersion();
         createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
         this.originalMetadata = originalMetadata;
+        this.contentProviderName = originalMetadata == null ? null : originalMetadata.contentProviderName;
     }
 
     /**
@@ -211,6 +233,14 @@ public final class CaseMetadata {
             }
         }
         return null;
+    }
+
+    /**
+     * @return The custom provider name for content byte data or null if no
+     * custom provider.
+     */
+    public String getContentProviderName() {
+        return this.contentProviderName;
     }
 
     /**
@@ -458,6 +488,15 @@ public final class CaseMetadata {
         Element caseElement = doc.createElement(CASE_ELEMENT_NAME);
         rootElement.appendChild(caseElement);
 
+        Element contentProviderEl = doc.createElement(CONTENT_PROVIDER_ELEMENT_NAME);
+        rootElement.appendChild(contentProviderEl);
+        
+        Element contentProviderNameEl = doc.createElement(CONTENT_PROVIDER_NAME_ELEMENT_NAME);
+        if (this.contentProviderName != null) {
+            contentProviderNameEl.setTextContent(this.contentProviderName);   
+        }
+        contentProviderEl.appendChild(contentProviderNameEl);
+            
         /*
          * Create the children of the case element.
          */
@@ -543,7 +582,15 @@ public final class CaseMetadata {
             } else {
                 this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_CREATED_BY_ELEMENT_NAME, true);
             }
-
+            
+            Element contentProviderEl = getChildElOrNull(rootElement, CONTENT_PROVIDER_ELEMENT_NAME);
+            if (contentProviderEl != null) {
+                Element contentProviderNameEl = getChildElOrNull(contentProviderEl, CONTENT_PROVIDER_NAME_ELEMENT_NAME);
+                this.contentProviderName = contentProviderNameEl != null ? contentProviderNameEl.getTextContent() : null;
+            } else {
+                this.contentProviderName = null;
+            }
+             
             /*
              * Get the content of the children of the case element.
              */
@@ -614,7 +661,16 @@ public final class CaseMetadata {
             throw new CaseMetadataException(String.format("Error reading from case metadata file %s", metadataFilePath), ex);
         }
     }
-
+    
+    private Element getChildElOrNull(Element parent, String childTag) {
+        NodeList nl = parent.getElementsByTagName(childTag);
+        if (nl != null && nl.getLength() > 0 && nl.item(0) instanceof Element) {
+            return (Element) nl.item(0);
+        } else {
+            return null;
+        }
+    }
+    
     /**
      * Gets the text content of an XML element.
      *

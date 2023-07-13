@@ -348,9 +348,8 @@ public class DefaultTableArtifactContentViewer extends AbstractArtifactDetailsPa
                         case JSON:
                             // Get the attribute's JSON value and convert to indented multiline display string
                             String jsonVal = attr.getValueString();
-                            JsonObject json = JsonParser.parseString(jsonVal).getAsJsonObject();
-
-                            value = toJsonDisplayString(json, "");
+                            JsonElement jsonEl = JsonParser.parseString(jsonVal);
+                            value = toJsonDisplayString(jsonEl, "");
                             break;
 
                         case STRING:
@@ -411,19 +410,43 @@ public class DefaultTableArtifactContentViewer extends AbstractArtifactDetailsPa
          * @return A multi-line display string.
          */
         private String toJsonDisplayString(JsonElement element, String startIndent) {
+            if (element == null || element.isJsonNull()) {
+                return "";
+            } else if (element.isJsonPrimitive()) {
+                return element.getAsString();
+            } else if (element.isJsonObject()) {
+                StringBuilder sb = new StringBuilder("");
+                JsonObject obj = element.getAsJsonObject();
 
-            StringBuilder sb = new StringBuilder("");
-            JsonObject obj = element.getAsJsonObject();
+                for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                    appendJsonElementToString(entry.getKey(), entry.getValue(), startIndent, sb);
+                }
 
-            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-                appendJsonElementToString(entry.getKey(), entry.getValue(), startIndent, sb);
+                String returnString = sb.toString();
+                if (startIndent.length() == 0 && returnString.startsWith(NEW_LINE)) {
+                    returnString = returnString.substring(NEW_LINE.length());
+                }
+                return returnString;                
+            } else if (element.isJsonArray()) {
+                StringBuilder sb = new StringBuilder("");
+                JsonArray jsonArray = element.getAsJsonArray();
+                if (jsonArray.size() > 0) {
+                    int count = 1;
+                    for (JsonElement arrayMember : jsonArray) {
+                        sb.append(NEW_LINE).append(String.format("%s%d", startIndent, count));
+                        sb.append(toJsonDisplayString(arrayMember, startIndent.concat(INDENT_RIGHT)));
+                        count++;
+                    }
+                }
+
+                String returnString = sb.toString();
+                if (startIndent.length() == 0 && returnString.startsWith(NEW_LINE)) {
+                    returnString = returnString.substring(NEW_LINE.length());
+                }
+                return returnString;   
+            } else {
+                return "";
             }
-
-            String returnString = sb.toString();
-            if (startIndent.length() == 0 && returnString.startsWith(NEW_LINE)) {
-                returnString = returnString.substring(NEW_LINE.length());
-            }
-            return returnString;
         }
 
         /**
