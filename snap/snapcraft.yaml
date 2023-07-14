@@ -1,6 +1,6 @@
 name: autopsy
 # core22 brings along linting for share object library paths as well as improvements to get java gstreamer working
-base: core22
+base: core20
 version: 4.20.0
 summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
 description: Autopsy is a graphical interface to The Sleuth Kit and other open source
@@ -8,7 +8,7 @@ description: Autopsy is a graphical interface to The Sleuth Kit and other open s
 grade: stable # must be 'stable' to release into candidate/stable channels
 # TODO look into turning back to strict for easier store inclusion but more limited usage
 confinement: classic # use 'strict' once you have the right plugs and slots
-architectures: [amd64, arm64]
+architectures: [amd64]
 compression: lzo
 icon: snap/gui/autopsy.png
 
@@ -142,7 +142,7 @@ parts:
     build-environment:
     - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
-    override-build: |-
+    override-build: |
       # ----- BUILD ZIP -----
       AUTOPSY_SRC_PATH=$(pwd)
       NETBEANS_PLAT_VER=$(grep "netbeans-plat-version=" "$AUTOPSY_SRC_PATH/nbproject/platform.properties" | cut -d'=' -f2)
