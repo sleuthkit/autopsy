@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Data source grouping node - an optional grouping node in the data tree view
@@ -74,13 +75,15 @@ class DataSourceGroupingNode extends DisplayableItemNode {
 
         long dsObjId = dataSource.getId();
         try {
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             return new RootContentChildren(Arrays.asList(
                     new DataSources(dsObjId),
-                    new Views(Case.getCurrentCaseThrows().getSleuthkitCase(), dsObjId),
+                    new Views(skCase, dsObjId),
                     new DataArtifacts(dsObjId),
                     new AnalysisResults(dsObjId),
-                    new OsAccounts(Case.getCurrentCaseThrows().getSleuthkitCase(), dsObjId),
-                    new Tags(dsObjId)
+                    new OsAccounts(skCase, dsObjId),
+                    new Tags(dsObjId),
+                    new ScoreContent(skCase, dsObjId)
             ));
 
         } catch (NoCurrentCaseException ex) {
