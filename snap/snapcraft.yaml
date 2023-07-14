@@ -17,9 +17,16 @@ plugs:
     interface: system-files
     read: [/]
 
+layout:
+  /tmp:
+    bind: $SNAP_DATA/tmp
+  /home/autopsy_user:
+    bind: $SNAP_DATA/appdata
+  
 apps:
   autopsy:
     environment:
+      HOME: $SNAP/home/autopsy_user
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs
       jreflags: $jreflags "-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu"
@@ -32,6 +39,7 @@ apps:
       SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
       SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
     command: autopsy/bin/autopsy
+    extensions: [ gnome ]
     common-id: org.sleuthkit.autopsy
     plugs:
       # taken from https://snapcraft.io/docs/supported-interfaces
