@@ -25,6 +25,7 @@ Misc:
 - Update SQLite library version
 - Add export for Pasco
 - Cyber Triage intergration
+- Updated 3rd party libraries that have known CVE's
 
 ---------------- VERSION 4.20.0  --------------
 Recent Activity Updates:
