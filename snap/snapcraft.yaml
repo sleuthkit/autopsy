@@ -18,7 +18,7 @@ plugs:
     read: [/]
 
 layout:
-  /tmp:
+  /$HOME/tmp:
     bind: $SNAP_DATA/tmp
   /$HOME/.autopsy:
     bind: $SNAP_DATA/appdata
@@ -29,7 +29,7 @@ apps:
     environment:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs
-      jreflags: $jreflags "-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu"
+      jreflags: $jreflags "-djava.io.tmpdir=$HOME/tmp -Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu"
       #LD_LIBRARY_PATH: ${SNAP}/usr/local/lib:${SNAP}/usr/lib/x86_64-linux-gnu/gstreamer-1.0:${SNAP}/usr/lib/x86_64-linux-gnu:${SNAP}/lib/x86_64-linux-gnu:${SNAP}/usr/lib/x86_64-linux-gnu/glib-2.0:${LD_LIBRARY_PATH}
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
