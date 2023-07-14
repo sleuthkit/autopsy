@@ -17,13 +17,14 @@ plugs:
     interface: system-files
     read: [/]
 
-layout:
-  /$HOME/tmp:
-    bind: $SNAP_DATA/tmp
-  /$HOME/.autopsy:
-    bind: $SNAP_DATA/appdata
-  /$HOME/.cache/autopsy:
-    bind: $SNAP_DATA/cache
+# layout:
+#   /$SNAP_USER_DATA/tmp:
+#     bind: $SNAP_DATA/tmp
+#   /$SNAP_USER_DATA/.autopsy:
+#     bind: $SNAP_DATA/appdata
+#   /$SNAP_USER_DATA/.cache/autopsy:
+#     bind: $SNAP_DATA/cache
+
 apps:
   autopsy:
     environment:
