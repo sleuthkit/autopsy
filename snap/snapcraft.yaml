@@ -17,6 +17,7 @@ plugs:
     interface: system-files
     read: [/]
 
+# does not appear necessary as writing to home directory gets written to $SNAP_USER_DATA: https://snapcraft.io/docs/environment-variables
 # layout:
 #   /$SNAP_USER_DATA/tmp:
 #     bind: $SNAP_DATA/tmp
@@ -30,7 +31,7 @@ apps:
     environment:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs
-      jreflags: $jreflags "-Djava.io.tmpdir=$HOME/tmp -Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu"
+      jreflags: $jreflags "-Djava.io.tmpdir=$HOME/tmp" "-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu"
       #LD_LIBRARY_PATH: ${SNAP}/usr/local/lib:${SNAP}/usr/lib/x86_64-linux-gnu/gstreamer-1.0:${SNAP}/usr/lib/x86_64-linux-gnu:${SNAP}/lib/x86_64-linux-gnu:${SNAP}/usr/lib/x86_64-linux-gnu/glib-2.0:${LD_LIBRARY_PATH}
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
@@ -40,6 +41,7 @@ apps:
       SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
       SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
     command: autopsy/bin/autopsy
+    # More info here: https://snapcraft.io/docs/gnome-extension
     extensions: [ gnome ]
     common-id: org.sleuthkit.autopsy
     plugs:
