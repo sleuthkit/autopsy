@@ -15,7 +15,7 @@ icon: snap/gui/autopsy.png
 plugs:
   system-files-autopsy:
     interface: system-files
-    read: [/]
+    read: [/dev]
 
 # does not appear necessary as writing to home directory gets written to $SNAP_USER_DATA: https://snapcraft.io/docs/environment-variables
 # layout:
@@ -31,7 +31,7 @@ apps:
     environment:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs
-      jreflags: $jreflags "-Djava.io.tmpdir=$HOME/tmp" "-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu"
+      jreflags: $jreflags "-Djava.io.tmpdir=$HOME/tmp" "-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib"
       #LD_LIBRARY_PATH: ${SNAP}/usr/local/lib:${SNAP}/usr/lib/x86_64-linux-gnu/gstreamer-1.0:${SNAP}/usr/lib/x86_64-linux-gnu:${SNAP}/lib/x86_64-linux-gnu:${SNAP}/usr/lib/x86_64-linux-gnu/glib-2.0:${LD_LIBRARY_PATH}
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
@@ -40,6 +40,8 @@ apps:
       GST_PLUGIN_SCANNER: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
       SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
       SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
+    command-chain: 
+      - autopsy/bin/tmpsetup.sh
     command: autopsy/bin/autopsy
     # More info here: https://snapcraft.io/docs/gnome-extension
     extensions: [ gnome ]
@@ -189,6 +191,10 @@ parts:
 
       # snaps run applications with different permissions.  This ensures applications can run.
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
+
+      echo '#!/bin/bash' > $AUTOPSY_LOCATION/bin/tmpsetup.sh
+      echo "mkdir -p $SNAP_USER_DATA/tmp" >> $AUTOPSY_LOCATION/bin/tmpsetup.sh
+      chmod 755 $AUTOPSY_LOCATION/bin/tmpsetup.sh
 
       # include this line to print all set variables
       # sed -i '129 i set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"' "$AUTOPSY_LOCATION/platform/lib/nbexec"
