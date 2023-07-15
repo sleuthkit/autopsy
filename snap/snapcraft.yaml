@@ -42,7 +42,7 @@ apps:
       SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
     command-chain: 
       - autopsy/bin/tmpsetup.sh
-    command: autopsy/bin/autopsy
+    command: bin/desktop-launch $SNAP/autopsy/bin/autopsy
     # More info here: https://snapcraft.io/docs/gnome-extension
     extensions: [ gnome ]
     common-id: org.sleuthkit.autopsy
@@ -86,6 +86,29 @@ apps:
     - x11
 
 parts:
+  # desktop helpers to get launch working correctly
+  # coming from https://forum.snapcraft.io/t/desktop-applications/13034,
+  # https://github.com/jibel/freeplane-snap/blob/master/snapcraft.yaml
+  desktop-glib:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: glib-only
+    plugin: make
+    build-packages:
+      - libglib2.0-dev
+    stage-packages:
+      - adwaita-icon-theme
+      - dmz-cursor-theme
+      - gnome-themes-standard
+      - libgdk-pixbuf2.0-0
+      - libglib2.0-bin
+      - libgtk2.0-0
+      - libxkbcommon0
+      - light-themes
+      - locales-all
+      - shared-mime-info
+      - ttf-ubuntu-font-family
+      - xdg-user-dirs
+
   sleuthkit:
     plugin: autotools
     source: https://github.com/sleuthkit/sleuthkit.git
@@ -119,7 +142,7 @@ parts:
     - libvhdi-dev
     - libvmdk-dev
   autopsy:
-    after: [sleuthkit]
+    after: [sleuthkit, desktop-glib]
     # build-attributes:
     # - enable-patchelf
     build-packages:
@@ -193,7 +216,7 @@ parts:
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
 
       echo '#!/bin/bash' > $AUTOPSY_LOCATION/bin/tmpsetup.sh
-      echo "mkdir -p $HOME/tmp" >> $AUTOPSY_LOCATION/bin/tmpsetup.sh
+      echo 'mkdir -p $HOME/tmp' >> $AUTOPSY_LOCATION/bin/tmpsetup.sh
       chmod 755 $AUTOPSY_LOCATION/bin/tmpsetup.sh
 
       # include this line to print all set variables
