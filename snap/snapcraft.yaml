@@ -7,7 +7,7 @@ source-code: https://github.com/sleuthkit/autopsy/
 website: https://www.autopsy.com/
 license: Apache-2.0
 grade: stable # must be 'stable' to release into candidate/stable channels
-confinement: strict # or classic # use 'strict' once you have the right plugs and slots
+confinement: devmode # or classic # use 'strict' once you have the right plugs and slots
 architectures: [amd64]
 compression: lzo
 icon: snap/gui/autopsy.png
@@ -42,7 +42,7 @@ apps:
       SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
     command-chain: 
       - autopsy/bin/tmpsetup.sh
-    command: bin/desktop-launch $SNAP/autopsy/bin/autopsy
+    command: autopsy/bin/autopsy
     # More info here: https://snapcraft.io/docs/gnome-extension
     extensions: [ gnome ]
     common-id: org.sleuthkit.autopsy
@@ -86,29 +86,6 @@ apps:
     - x11
 
 parts:
-  # desktop helpers to get launch working correctly
-  # coming from https://forum.snapcraft.io/t/desktop-applications/13034,
-  # https://github.com/jibel/freeplane-snap/blob/master/snapcraft.yaml
-  desktop-glib:
-    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
-    source-subdir: glib-only
-    plugin: make
-    build-packages:
-      - libglib2.0-dev
-    stage-packages:
-      - adwaita-icon-theme
-      - dmz-cursor-theme
-      - gnome-themes-standard
-      - libgdk-pixbuf2.0-0
-      - libglib2.0-bin
-      - libgtk2.0-0
-      - libxkbcommon0
-      - light-themes
-      - locales-all
-      - shared-mime-info
-      - ttf-ubuntu-font-family
-      - xdg-user-dirs
-
   sleuthkit:
     plugin: autotools
     source: https://github.com/sleuthkit/sleuthkit.git
@@ -142,7 +119,7 @@ parts:
     - libvhdi-dev
     - libvmdk-dev
   autopsy:
-    after: [sleuthkit, desktop-glib]
+    after: [sleuthkit]
     # build-attributes:
     # - enable-patchelf
     build-packages:
