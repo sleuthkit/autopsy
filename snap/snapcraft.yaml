@@ -193,7 +193,7 @@ parts:
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
 
       echo '#!/bin/bash' > $AUTOPSY_LOCATION/bin/tmpsetup.sh
-      echo "mkdir -p $SNAP_USER_DATA/tmp" >> $AUTOPSY_LOCATION/bin/tmpsetup.sh
+      echo "mkdir -p $HOME/tmp" >> $AUTOPSY_LOCATION/bin/tmpsetup.sh
       chmod 755 $AUTOPSY_LOCATION/bin/tmpsetup.sh
 
       # include this line to print all set variables
