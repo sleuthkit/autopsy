@@ -7,7 +7,7 @@ source-code: https://github.com/sleuthkit/autopsy/
 website: https://www.autopsy.com/
 license: Apache-2.0
 grade: stable # must be 'stable' to release into candidate/stable channels
-confinement: strict # or classic # use 'strict' once you have the right plugs and slots
+confinement: devmode # or classic # use 'strict' once you have the right plugs and slots
 architectures: [amd64]
 compression: lzo
 icon: snap/gui/autopsy.png
@@ -17,14 +17,23 @@ plugs:
     interface: system-files
     read: [/dev]
 
+
+layout:
+  # java appears to find the real home and write some stuff there
+  $SNAP_REAL_HOME/.icesoft:
+    bind: $SNAP_DATA/.icesoft
+  $SNAP_REAL_HOME/.java:
+    bind: $SNAP_DATA/.java
+  $SNAP_REAL_HOME/.openjfx:
+    bind: $SNAP_DATA/.openjfx
 # does not appear necessary as writing to home directory gets written to $SNAP_USER_DATA: https://snapcraft.io/docs/environment-variables
-# layout:
 #   /$SNAP_USER_DATA/tmp:
 #     bind: $SNAP_DATA/tmp
 #   /$SNAP_USER_DATA/.autopsy:
 #     bind: $SNAP_DATA/appdata
 #   /$SNAP_USER_DATA/.cache/autopsy:
 #     bind: $SNAP_DATA/cache
+
 
 apps:
   autopsy:
@@ -47,6 +56,7 @@ apps:
     common-id: org.sleuthkit.autopsy
     plugs:
       # taken from https://snapcraft.io/docs/supported-interfaces
+      # can be debugged with snappy debug: https://snapcraft.io/docs/debug-snaps#heading--snappy-debug
     - audio-playback
     - avahi-observe
     - block-devices
@@ -62,14 +72,22 @@ apps:
     - home
     - kernel-crypto-api
     - log-observe
+    # may be necessary for solr
+    - modem-manager
+    - mount-control
     - mount-observe
     - network
+    # may be necessary for solr
+    - network-bind
+    - network-control
     - network-manager
     - network-observe
     - network-setup-observe
     - network-status
     - opengl
     - optical-drive
+    # may be necessary for solr
+    - ppp
     - pulseaudio
     - raw-input
     - raw-usb
