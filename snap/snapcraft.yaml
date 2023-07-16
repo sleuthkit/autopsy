@@ -7,7 +7,7 @@ source-code: https://github.com/sleuthkit/autopsy/
 website: https://www.autopsy.com/
 license: Apache-2.0
 grade: stable # must be 'stable' to release into candidate/stable channels
-confinement: devmode # or classic # use 'strict' once you have the right plugs and slots
+confinement: strict # or classic # use 'strict' once you have the right plugs and slots
 architectures: [amd64]
 compression: lzo
 icon: snap/gui/autopsy.png
