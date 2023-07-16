@@ -12,10 +12,10 @@ architectures: [amd64]
 compression: lzo
 icon: snap/gui/autopsy.png
 
-plugs:
-  system-files-autopsy:
-    interface: system-files
-    read: [/dev]
+# plugs:
+#   system-files-autopsy:
+#     interface: system-files
+#     read: [/dev]
 
 # does not appear necessary as writing to home directory gets written to $SNAP_USER_DATA: https://snapcraft.io/docs/environment-variables
 # layout:
@@ -31,7 +31,7 @@ apps:
     environment:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs
-      jreflags: $jreflags "-Djava.io.tmpdir=$HOME/tmp" "-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib"
+      jreflags: $jreflags '-Djava.io.tmpdir=$HOME/tmp' '-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
       #LD_LIBRARY_PATH: ${SNAP}/usr/local/lib:${SNAP}/usr/lib/x86_64-linux-gnu/gstreamer-1.0:${SNAP}/usr/lib/x86_64-linux-gnu:${SNAP}/lib/x86_64-linux-gnu:${SNAP}/usr/lib/x86_64-linux-gnu/glib-2.0:${LD_LIBRARY_PATH}
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
@@ -55,7 +55,7 @@ apps:
     - daemon-notify
     - desktop
     - desktop-launch
-    - desktop-legacy
+    # - desktop-legacy
     - dm-crypt
     - firewall-control
     - fuse-support
@@ -76,11 +76,11 @@ apps:
     - raw-usb
     - removable-media
     - sd-control
-    - system-files-autopsy
+    # - system-files-autopsy
     - system-observe
     - system-trace
     - udisks2
-    - unity7
+    # - unity7
     - unity8
     - wayland
     - x11
