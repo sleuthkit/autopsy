@@ -39,8 +39,9 @@ apps:
   autopsy:
     environment:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
-      # provide means for java gstreamer to find gstreamer libs
-      jreflags: $jreflags '-Djava.io.tmpdir=$HOME/tmp' '-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
+      # provide means for java gstreamer to find gstreamer libs with jna.library.path
+      # set user home to new home value to avoid issues writing cache files to hom
+      jreflags: $jreflags '-Duser.home=$HOME' '-Djava.io.tmpdir=$HOME/tmp' '-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
       # to load libtsk.so
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
       # make sure path is set up to ensure things like photorec are found
