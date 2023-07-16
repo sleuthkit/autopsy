@@ -32,8 +32,8 @@ apps:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs
       jreflags: $jreflags '-Djava.io.tmpdir=$HOME/tmp' '-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
+      # to load libtsk.so
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
-      #LD_LIBRARY_PATH: ${SNAP}/usr/local/lib:${SNAP}/usr/lib/x86_64-linux-gnu/gstreamer-1.0:${SNAP}/usr/lib/x86_64-linux-gnu:${SNAP}/lib/x86_64-linux-gnu:${SNAP}/usr/lib/x86_64-linux-gnu/glib-2.0:${LD_LIBRARY_PATH}
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
       # gstreamer scans for plugins (i.e. app integration plugins).  this tells gstreamer where to look for the scanner and libraries
@@ -41,8 +41,6 @@ apps:
       GST_PLUGIN_SCANNER: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
       SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
       SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
-    # command-chain: 
-    #   - autopsy/bin/tmpsetup.sh
     command: autopsy/bin/autopsywrapper.sh
     # More info here: https://snapcraft.io/docs/gnome-extension
     extensions: [ gnome ]
@@ -93,6 +91,7 @@ parts:
     source-branch: develop
     #source-tag: sleuthkit-4.12.0
     build-environment: [JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64]
+    # may be necessary for classic snaps: https://snapcraft.io/docs/linters-classic#heading--issues-auto
     # build-attributes:
     # - enable-patchelf
     build-packages:
@@ -121,6 +120,7 @@ parts:
     - libvmdk-dev
   autopsy:
     after: [sleuthkit]
+    # may be necessary for classic snaps: https://snapcraft.io/docs/linters-classic#heading--issues-auto
     # build-attributes:
     # - enable-patchelf
     build-packages:
@@ -193,11 +193,12 @@ parts:
       # snaps run applications with different permissions.  This ensures applications can run.
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
 
+      # wrapper to setup temp dir if not exists; also could be easily modified for debugging purposes with snap try: https://snapcraft.io/docs/snap-try
       cat <<EOF > $AUTOPSY_LOCATION/bin/autopsywrapper.sh
       #!/bin/bash
       mkdir -p \$HOME/tmp
       echo Starting Autopsy...
-      \$SNAP/autopsy/bin/autopsy 2>&1 | tee \$HOME/logging.txt
+      \$SNAP/autopsy/bin/autopsy
       EOF
 
       chmod 755 $AUTOPSY_LOCATION/bin/autopsywrapper.sh
