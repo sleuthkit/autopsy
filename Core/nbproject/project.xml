@@ -447,8 +447,8 @@
                 <binary-origin>release/modules/ext/c3p0-0.9.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/checker-qual-3.12.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/checker-qual-3.12.0.jar</binary-origin>
+                <runtime-relative-path>ext/checker-qual-3.33.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/checker-qual-3.33.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-dbcp2-2.9.0.jar</runtime-relative-path>
@@ -491,16 +491,16 @@
                 <binary-origin>release/modules/ext/decodetect-core-0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/error_prone_annotations-2.11.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/error_prone_annotations-2.11.0.jar</binary-origin>
+                <runtime-relative-path>ext/error_prone_annotations-2.18.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/error_prone_annotations-2.18.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/failureaccess-1.0.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/failureaccess-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-31.1-jre.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-31.1-jre.jar</binary-origin>
+                <runtime-relative-path>ext/guava-32.0.1-jre.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-32.0.1-jre.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/icepdf-core-6.2.2.jar</runtime-relative-path>
@@ -515,8 +515,8 @@
                 <binary-origin>release/modules/ext/istack-commons-runtime-3.0.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/j2objc-annotations-1.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/j2objc-annotations-1.3.jar</binary-origin>
+                <runtime-relative-path>ext/j2objc-annotations-2.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/j2objc-annotations-2.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jackcess-4.0.1.jar</runtime-relative-path>
@@ -575,8 +575,8 @@
                 <binary-origin>release/modules/ext/jgraphx-4.2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jsoup-1.14.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jsoup-1.14.3.jar</binary-origin>
+                <runtime-relative-path>ext/jsoup-1.16.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jsoup-1.16.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
@@ -615,8 +615,8 @@
                 <binary-origin>release/modules/ext/mchange-commons-java-0.2.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/metadata-extractor-2.17.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/metadata-extractor-2.17.0.jar</binary-origin>
+                <runtime-relative-path>ext/metadata-extractor-2.18.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/metadata-extractor-2.18.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/netty-buffer-4.1.73.Final.jar</runtime-relative-path>
@@ -699,8 +699,12 @@
                 <binary-origin>release/modules/ext/sleuthkit-caseuco-4.12.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/snakeyaml-1.30.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/snakeyaml-1.30.jar</binary-origin>
+                <runtime-relative-path>ext/slf4j-api-1.7.36.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-api-1.7.36.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/snakeyaml-2.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/snakeyaml-2.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/SparseBitSet-1.1.jar</runtime-relative-path>
