@@ -76,6 +76,7 @@ import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.datasourcesummary.ui.DataSourceSummaryAction;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
+import org.sleuthkit.autopsy.casemodule.events.AnalysisResultDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
@@ -507,7 +508,9 @@ public class Case {
         /**
          * One or more TagSets have been removed.
          */
-        TAG_SETS_DELETED;
+        TAG_SETS_DELETED,
+        
+        ANALYSIS_RESULT_DELETED;
 
     };
 
@@ -628,17 +631,17 @@ public class Case {
         }
 
         @Subscribe
-        public void publisHostsRemovedFromPersonEvent(TskEvent.HostsRemovedFromPersonTskEvent event) {
+        public void publishHostsRemovedFromPersonEvent(TskEvent.HostsRemovedFromPersonTskEvent event) {
             eventPublisher.publish(new HostsRemovedFromPersonEvent(event.getPerson(), event.getHostIds()));
         }
         
         @Subscribe
-        public void publicTagNamesAdded(TskEvent.TagNamesAddedTskEvent event) {
+        public void publishTagNamesAdded(TskEvent.TagNamesAddedTskEvent event) {
             eventPublisher.publish(new TagNamesAddedEvent(event.getTagNames()));
         }
 
         @Subscribe
-        public void publicTagNamesUpdated(TskEvent.TagNamesUpdatedTskEvent event) {
+        public void publishTagNamesUpdated(TskEvent.TagNamesUpdatedTskEvent event) {
             eventPublisher.publish(new TagNamesUpdatedEvent(event.getTagNames()));
         }
 
@@ -648,13 +651,50 @@ public class Case {
         }
 
         @Subscribe
-        public void publicTagSetsAdded(TskEvent.TagSetsAddedTskEvent event) {
+        public void publishTagSetsAdded(TskEvent.TagSetsAddedTskEvent event) {
             eventPublisher.publish(new TagSetsAddedEvent(event.getTagSets()));
         }
 
         @Subscribe
-        public void publicTagSetsDeleted(TskEvent.TagSetsDeletedTskEvent event) {
+        public void publishTagSetsDeleted(TskEvent.TagSetsDeletedTskEvent event) {
             eventPublisher.publish(new TagSetsDeletedEvent(event.getTagSetIds()));
+        }
+        
+        @Subscribe
+        public void publishAnalysisResultDeleted(TskEvent.AnalysisResultsDeletedTskEvent event) {
+            eventPublisher.publish(new AnalysisResultDeletedEvent(event.getAnalysisResultObjectIds()));
+        }
+        
+        @Subscribe
+        public void publishBlackboardArtifactTagDeleted(TskEvent.BlackboardArtifactTagsDeletedTskEvent event) {
+            List<BlackboardArtifactTag> tags = event.getTags();
+            for(BlackboardArtifactTag tag: tags) {
+                eventPublisher.publish(new BlackBoardArtifactTagDeletedEvent(tag));
+            }
+        }
+        
+        @Subscribe
+        public void publishBlackboardTagAdded(TskEvent.BlackboardArtifactTagsAddedTskEvent event) {
+            List<BlackboardArtifactTag> tags = event.getTags();
+            for(BlackboardArtifactTag tag: tags) {
+                eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(tag));
+            }
+        }
+        
+        @Subscribe
+        public void publishContentTagAdded(TskEvent.ContentTagsAddedTskEvent event) {
+            List<ContentTag> tags = event.getTags();
+            for(ContentTag tag: tags) {
+                eventPublisher.publish(new ContentTagAddedEvent(tag));
+            }
+        }
+        
+        @Subscribe
+        public void publishContentTagDeleted(TskEvent.ContentTagsDeletedTskEvent event) {
+            List<ContentTag> tags = event.getTags();
+            for(ContentTag tag: tags) {
+                eventPublisher.publish(new ContentTagDeletedEvent(tag));
+            }
         }
     }
 
@@ -1806,41 +1846,6 @@ public class Case {
     }
 
     /**
-     * Notifies case event subscribers that a content tag has been added.
-     *
-     * This should not be called from the event dispatch thread (EDT)
-     *
-     * @param newTag new ContentTag added
-     */
-    public void notifyContentTagAdded(ContentTag newTag) {
-        notifyContentTagAdded(newTag, null);
-    }
-
-    /**
-     * Notifies case event subscribers that a content tag has been added.
-     *
-     * This should not be called from the event dispatch thread (EDT)
-     *
-     * @param newTag         The added ContentTag.
-     * @param deletedTagList List of ContentTags that were removed as a result
-     *                       of the addition of newTag.
-     */
-    public void notifyContentTagAdded(ContentTag newTag, List<ContentTag> deletedTagList) {
-        eventPublisher.publish(new ContentTagAddedEvent(newTag, deletedTagList));
-    }
-
-    /**
-     * Notifies case event subscribers that a content tag has been deleted.
-     *
-     * This should not be called from the event dispatch thread (EDT)
-     *
-     * @param deletedTag ContentTag deleted
-     */
-    public void notifyContentTagDeleted(ContentTag deletedTag) {
-        eventPublisher.publish(new ContentTagDeletedEvent(deletedTag));
-    }
-
-    /**
      * Notifies case event subscribers that a tag definition has changed.
      *
      * This should not be called from the event dispatch thread (EDT)
@@ -1868,41 +1873,6 @@ public class Case {
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to send notifcation regarding comment change due to no current case being open", ex);
         }
-    }
-
-    /**
-     * Notifies case event subscribers that an artifact tag has been added.
-     *
-     * This should not be called from the event dispatch thread (EDT)
-     *
-     * @param newTag new BlackboardArtifactTag added
-     */
-    public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag) {
-        notifyBlackBoardArtifactTagAdded(newTag, null);
-    }
-
-    /**
-     * Notifies case event subscribers that an artifact tag has been added.
-     *
-     * This should not be called from the event dispatch thread (EDT)
-     *
-     * @param newTag         The added ContentTag.
-     * @param removedTagList List of ContentTags that were removed as a result
-     *                       of the addition of newTag.
-     */
-    public void notifyBlackBoardArtifactTagAdded(BlackboardArtifactTag newTag, List<BlackboardArtifactTag> removedTagList) {
-        eventPublisher.publish(new BlackBoardArtifactTagAddedEvent(newTag, removedTagList));
-    }
-
-    /**
-     * Notifies case event subscribers that an artifact tag has been deleted.
-     *
-     * This should not be called from the event dispatch thread (EDT)
-     *
-     * @param deletedTag BlackboardArtifactTag deleted
-     */
-    public void notifyBlackBoardArtifactTagDeleted(BlackboardArtifactTag deletedTag) {
-        eventPublisher.publish(new BlackBoardArtifactTagDeletedEvent(deletedTag));
     }
 
     /**

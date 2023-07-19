@@ -36,12 +36,12 @@ import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -234,34 +234,42 @@ class LuceneQuery implements KeywordSearchQuery {
      */
     @Override
     public BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
-        return createKeywordHitArtifact(content, originalKeyword, foundKeyword, hit, snippet, listName, ingestJobId);
+                return createKeywordHitArtifact(content, originalKeyword, foundKeyword, hit, snippet, listName, ingestJobId);
     }    
-    
+
     public static BlackboardArtifact createKeywordHitArtifact(Content content,  Keyword originalKW, Keyword foundKeyword, KeywordHit hit, String snippet, String listName, Long ingestJobId) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
+        String configuration;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm().toLowerCase()));
-        if (StringUtils.isNotBlank(listName)) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
-        }
 
         if (originalKW != null) {
+            configuration = originalKW.getOriginalTerm();
             BlackboardAttribute.ATTRIBUTE_TYPE selType = originalKW.getArtifactAttributeType();
             if (selType != null) {
                 attributes.add(new BlackboardAttribute(selType, MODULE_NAME, foundKeyword.getSearchTerm()));
             }
 
             if (originalKW.searchTermIsWholeWord()) {
-                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.LITERAL.ordinal()));
+                configuration += " (" + TskData.KeywordSearchQueryType.LITERAL.name() + ")";
+                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.LITERAL.getType()));
             } else {
-                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
+                configuration += " (" + TskData.KeywordSearchQueryType.SUBSTRING.name() + ")";
+                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, TskData.KeywordSearchQueryType.SUBSTRING.getType()));
             }
+        } else {
+            configuration = foundKeyword.getOriginalTerm();
         }
 
+        if (StringUtils.isNotBlank(listName)) {
+            configuration += " - " + listName;
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
+        }
+        
         hit.getArtifactID().ifPresent(artifactID
                 -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
@@ -269,7 +277,7 @@ class LuceneQuery implements KeywordSearchQuery {
         try {
             return content.newAnalysisResult(
                     BlackboardArtifact.Type.TSK_KEYWORD_HIT, Score.SCORE_LIKELY_NOTABLE, 
-                    null, listName, null, 
+                    null, configuration, null, 
                     attributes)
                     .getAnalysisResult();
         } catch (TskCoreException e) {

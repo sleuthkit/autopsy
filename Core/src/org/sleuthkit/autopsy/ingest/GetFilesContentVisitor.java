@@ -30,6 +30,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LocalDirectory;
+import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.Pool;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskException;
@@ -47,7 +48,12 @@ abstract class GetFilesContentVisitor implements ContentVisitor<Collection<Abstr
     public Collection<AbstractFile> visit(VirtualDirectory ld) {
         return getAllFromChildren(ld);
     }
-    
+
+    @Override
+    public Collection<AbstractFile> visit(LocalFilesDataSource lfds) {
+        return getAllFromChildren(lfds);
+    }
+
     @Override
     public Collection<AbstractFile> visit(LocalDirectory ld) {
         return getAllFromChildren(ld);
@@ -72,7 +78,7 @@ abstract class GetFilesContentVisitor implements ContentVisitor<Collection<Abstr
     public Collection<AbstractFile> visit(VolumeSystem vs) {
         return getAllFromChildren(vs);
     }
-    
+
     @Override
     public Collection<AbstractFile> visit(Pool pool) {
         return getAllFromChildren(pool);
@@ -96,7 +102,7 @@ abstract class GetFilesContentVisitor implements ContentVisitor<Collection<Abstr
 
         try {
             for (Content child : parent.getChildren()) {
-                if (child instanceof AbstractContent){
+                if (child instanceof AbstractContent) {
                     all.addAll(child.accept(this));
                 }
             }

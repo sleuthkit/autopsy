@@ -392,6 +392,17 @@
                 <package>org.apache.commons.codec.language.bm</package>
                 <package>org.apache.commons.codec.net</package>
                 <package>org.apache.commons.collections</package>
+                <package>org.apache.commons.collections.bag</package>
+                <package>org.apache.commons.collections.bidimap</package>
+                <package>org.apache.commons.collections.buffer</package>
+                <package>org.apache.commons.collections.collection</package>
+                <package>org.apache.commons.collections.comparators</package>
+                <package>org.apache.commons.collections.functors</package>
+                <package>org.apache.commons.collections.iterators</package>
+                <package>org.apache.commons.collections.keyvalue</package>
+                <package>org.apache.commons.collections.list</package>
+                <package>org.apache.commons.collections.map</package>
+                <package>org.apache.commons.collections.set</package>
                 <package>org.apache.commons.collections4</package>
                 <package>org.apache.commons.collections4.bag</package>
                 <package>org.apache.commons.collections4.bidimap</package>
@@ -453,21 +464,16 @@
                 <package>org.apache.log.output.net</package>
                 <package>org.apache.log.util</package>
                 <package>org.apache.commons.text</package>
+                <package>org.apache.commons.validator</package>
                 <package>org.apache.commons.validator.routines</package>
                 <package>org.apache.commons.validator.routines.checkdigit</package>
+                <package>org.apache.commons.validator.util</package>
                 <package>org.apache.log4j</package>
                 <package>org.apache.log4j.chainsaw</package>
                 <package>org.apache.log4j.config</package>
                 <package>org.apache.log4j.helpers</package>
                 <package>org.apache.log4j.jdbc</package>
-                <package>org.apache.log4j.jmx</package>
-                <package>org.apache.log4j.lf5</package>
-                <package>org.apache.log4j.lf5.util</package>
-                <package>org.apache.log4j.lf5.viewer</package>
-                <package>org.apache.log4j.lf5.viewer.categoryexplorer</package>
-                <package>org.apache.log4j.lf5.viewer.configure</package>
                 <package>org.apache.log4j.net</package>
-                <package>org.apache.log4j.nt</package>
                 <package>org.apache.log4j.or</package>
                 <package>org.apache.log4j.or.jms</package>
                 <package>org.apache.log4j.or.sax</package>
@@ -574,13 +580,14 @@
                 <package>org.opencv.core</package>
                 <package>org.opencv.features2d</package>
                 <package>org.opencv.gpu</package>
-                <package>org.opencv.highgui</package>
                 <package>org.opencv.imgproc</package>
                 <package>org.opencv.ml</package>
                 <package>org.opencv.objdetect</package>
                 <package>org.opencv.photo</package>
                 <package>org.opencv.utils</package>
                 <package>org.opencv.video</package>
+                <package>org.opencv.videoio</package>
+                <package>org.opencv.imgcodecs</package>
                 <package>org.sleuthkit.autopsy.corelibs</package>
                 <package>org.slf4j</package>
                 <package>org.slf4j.event</package>
@@ -1108,8 +1115,8 @@
                 <binary-origin>release/modules/ext/opencensus-proto-0.2.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/opencv-2413.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opencv-2413.jar</binary-origin>
+                <runtime-relative-path>ext/opencv-3416.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencv-3416.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/perfmark-api-0.23.0.jar</runtime-relative-path>
