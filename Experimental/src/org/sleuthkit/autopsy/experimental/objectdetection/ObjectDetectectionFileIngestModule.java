@@ -29,7 +29,7 @@ import org.opencv.core.CvException;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfRect;
-import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.highgui.Highgui;
 import org.opencv.objdetect.CascadeClassifier;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -136,7 +136,7 @@ public class ObjectDetectectionFileIngestModule extends FileIngestModuleAdapter 
 
             Mat originalImage;
             try {
-                originalImage = Imgcodecs.imdecode(new MatOfByte(imageInMemory), Imgcodecs.IMREAD_GRAYSCALE);
+                originalImage = Highgui.imdecode(new MatOfByte(imageInMemory), Highgui.IMREAD_GRAYSCALE);
             } catch (CvException ex) {
                 //The image was something which could not be decoded by OpenCv, our isImageThumbnailSupported(file) check above failed us
                 logger.log(Level.WARNING, "Unable to decode image from byte array to perform object detection on " + file.getParentPath() + file.getName() + " with object id of " + file.getId(), ex); //NON-NLS

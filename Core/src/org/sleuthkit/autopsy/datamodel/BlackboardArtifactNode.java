@@ -1391,6 +1391,11 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         return getClass().getName();
     }
 
+    @Override
+    public <T> T accept(ContentNodeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
+
     @Messages({
         "BlackboardArtifactNode_analysisSheet_sourceType_name=Source Type",
         "BlackboardArtifactNode_analysisSheet_soureName_name=Source Name",

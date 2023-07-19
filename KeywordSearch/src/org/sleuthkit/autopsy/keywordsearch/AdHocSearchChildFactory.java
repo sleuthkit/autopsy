@@ -193,15 +193,11 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
             try {
                 content = tskCase.getContentById(hit.getContentID());
                 if (content == null) {
-                    // it is possible that the previously indexed KW hit is in the content 
-                    // that has since been deleted (e.g. deleted analysis result)
-                    logger.log(Level.WARNING, "There was an error getting content by id."); //NON-NLS
+                    logger.log(Level.SEVERE, "There was a error getting content by id."); //NON-NLS
                     return false;
                 }
             } catch (TskCoreException ex) {
-                // it is possible that the previously indexed KW hit is in the content 
-                // that has since been deleted (e.g. deleted analysis result)
-                logger.log(Level.WARNING, "There was an error getting content by id.", ex); //NON-NLS
+                logger.log(Level.SEVERE, "There was a error getting content by id.", ex); //NON-NLS
                 return false;
             }
 
@@ -219,9 +215,7 @@ class AdHocSearchChildFactory extends ChildFactory<KeyValue> {
                     artifact = tskCase.getBlackboardArtifact(hit.getArtifactID().get());
                     hitName = artifact.getDisplayName() + " Artifact"; //NON-NLS
                 } catch (TskCoreException ex) {
-                    // it is possible that the previously indexed KW hit is in the content 
-                    // that has since been deleted (e.g. deleted analysis result)
-                    logger.log(Level.WARNING, "Error getting blckboard artifact by id", ex);
+                    logger.log(Level.SEVERE, "Error getting blckboard artifact by id", ex);
                     return false;
                 }
             } else {

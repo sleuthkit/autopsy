@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.progress;
 
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
+
 /**
  * A "silent" or "null" progress indicator.
  */

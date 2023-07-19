@@ -23,7 +23,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +33,6 @@ import java.util.prefs.PreferenceChangeEvent;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.Content;
 
@@ -59,14 +57,6 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * the child factory.
      */
     private static Map<String, EventBus> nodeNameToEventBusMap = new ConcurrentHashMap<>();
-    
-    static {
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), evt -> {
-            if (evt.getNewValue() == null) {
-                nodeNameToEventBusMap.clear();
-            }
-        });
-    }
 
     @Messages({
         "# {0} - node name", "BaseChildFactory.NoSuchEventBusException.message=No event bus for node: {0}"

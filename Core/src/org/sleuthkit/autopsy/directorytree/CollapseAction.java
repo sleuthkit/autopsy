@@ -29,11 +29,9 @@ import org.openide.nodes.Node;
  *
  * @author jantonius
  */
-public class CollapseAction extends AbstractAction {
+class CollapseAction extends AbstractAction {
 
-    private static final long serialVersionUID = 1L;
-
-    public CollapseAction(String title) {
+    CollapseAction(String title) {
         super(title);
     }
 

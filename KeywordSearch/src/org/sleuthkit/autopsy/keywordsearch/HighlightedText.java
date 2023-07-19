@@ -47,7 +47,6 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Highlights hits for a given document. Knows about pages and such for the
@@ -98,7 +97,7 @@ class HighlightedText implements ExtractedText {
 
     private QueryResults hits = null; //original hits that may get passed in
     private BlackboardArtifact artifact;
-    private TskData.KeywordSearchQueryType qt;
+    private KeywordSearch.QueryType qt;
     private boolean isLiteral;
 
     /**
@@ -175,7 +174,7 @@ class HighlightedText implements ExtractedText {
         //get the QueryType (if available)
         final BlackboardAttribute queryTypeAttribute = artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE);
         qt = (queryTypeAttribute != null)
-                ? TskData.KeywordSearchQueryType.values()[queryTypeAttribute.getValueInt()] : null;
+                ? KeywordSearch.QueryType.values()[queryTypeAttribute.getValueInt()] : null;
 
         Keyword keywordQuery = null;
         switch (qt) {

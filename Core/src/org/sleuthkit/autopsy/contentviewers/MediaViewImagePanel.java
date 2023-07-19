@@ -121,8 +121,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private static final Image openInExternalViewerButtonImage = new Image(MediaViewImagePanel.class.getResource("/org/sleuthkit/autopsy/images/external.png").toExternalForm()); //NOI18N
     private final boolean jfxIsInited = org.sleuthkit.autopsy.core.Installer.isJavaFxInited();
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    
-    private static final int TAG_POPUP_WIDTH = 200;
 
     /*
      * Threading policy: JFX UI components, must be accessed in JFX thread only.
@@ -210,13 +208,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         "MediaViewImagePanel.createTagOption=Create",
         "MediaViewImagePanel.deleteTagOption=Delete",
         "MediaViewImagePanel.hideTagOption=Hide",
-        "MediaViewImagePanel.exportTagOption=Export",
-        "MediaViewImagePanel.showTagOption=Show",
-        "MediaViewImagePanel_createMenu_tooltip_text=<html>Create an image area specific tag by right clicking<br>and dragging to select the area in the image to be tagged.</html>",
-        "MediaViewImagePanel_deleteMenu_tooltip_text=Delete the selected image area tag.",
-        "MediaViewImagePanel_exportMenu_tooltip_text=Export the image including the tagged areas.",
-        "MediaViewImagePanel_hideMenu_tooltip_text=Hide or show the tagged image areas.",
-            
+        "MediaViewImagePanel.exportTagOption=Export"
     })
     MediaViewImagePanel() {
         initComponents();
@@ -230,7 +222,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         imageTaggingOptions = new JPopupMenu();
         createTagMenuItem = new JMenuItem(Bundle.MediaViewImagePanel_createTagOption());
         createTagMenuItem.addActionListener((event) -> createTag());
-        createTagMenuItem.setToolTipText(Bundle.MediaViewImagePanel_createMenu_tooltip_text());
         imageTaggingOptions.add(createTagMenuItem);
 
         imageTaggingOptions.add(new JSeparator());
@@ -238,23 +229,20 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         deleteTagMenuItem = new JMenuItem(Bundle.MediaViewImagePanel_deleteTagOption());
         deleteTagMenuItem.addActionListener((event) -> deleteTag());
         imageTaggingOptions.add(deleteTagMenuItem);
-        deleteTagMenuItem.setToolTipText(Bundle.MediaViewImagePanel_deleteMenu_tooltip_text());
 
         imageTaggingOptions.add(new JSeparator());
 
         hideTagsMenuItem = new JMenuItem(Bundle.MediaViewImagePanel_hideTagOption());
         hideTagsMenuItem.addActionListener((event) -> showOrHideTags());
         imageTaggingOptions.add(hideTagsMenuItem);
-        hideTagsMenuItem.setToolTipText(Bundle.MediaViewImagePanel_hideMenu_tooltip_text());
 
         imageTaggingOptions.add(new JSeparator());
 
         exportTagsMenuItem = new JMenuItem(Bundle.MediaViewImagePanel_exportTagOption());
         exportTagsMenuItem.addActionListener((event) -> exportTags());
         imageTaggingOptions.add(exportTagsMenuItem);
-        exportTagsMenuItem.setToolTipText(Bundle.MediaViewImagePanel_exportMenu_tooltip_text());
 
-        imageTaggingOptions.setPopupSize(TAG_POPUP_WIDTH, 150);
+        imageTaggingOptions.setPopupSize(300, 150);
 
         //Disable image tagging for non-windows users or upon failure to load OpenCV.
         if (!PlatformUtil.isWindowsOS() || !OpenCvLoader.openCvIsLoaded()) {
@@ -469,14 +457,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         if (!isInited()) {
             return;
         }
-        
+
+        final double panelWidth = fxPanel.getWidth();
+        final double panelHeight = fxPanel.getHeight();
         Platform.runLater(() -> {
-            
-            if (imageTagCreator != null) {
-                imageTagCreator.disconnect();
-                masterGroup.getChildren().remove(imageTagCreator);
-            }
-            
             /*
              * Set up a new task to get the contents of the image file in
              * displayable form and cancel any previous task in progress.
@@ -486,8 +470,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             }
             readImageFileTask = ImageUtils.newReadImageTask(file);
             readImageFileTask.setOnSucceeded(succeeded -> {
-                final double panelWidth = fxPanel.getWidth();
-        final double panelHeight = fxPanel.getHeight();
                 onReadImageTaskSucceeded(file, panelWidth, panelHeight);
             });
             readImageFileTask.setOnFailed(failed -> {
@@ -554,9 +536,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         if (!tagsGroup.getChildren().isEmpty()) {
                             pcs.firePropertyChange(new PropertyChangeEvent(this,
                                     "state", null, State.NONEMPTY));
-                        } else {
-                            pcs.firePropertyChange(new PropertyChangeEvent(this,
-                                    "state", null, State.EMPTY));
                         }
                     } catch (TskCoreException | NoCurrentCaseException ex) {
                         logger.log(Level.WARNING, "Could not retrieve image tags for file in case db", ex); //NON-NLS
@@ -811,10 +790,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         toolbar.add(jPanel1);
 
         org.openide.awt.Mnemonics.setLocalizedText(tagsMenu, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.tagsMenu.text_1")); // NOI18N
-        tagsMenu.setToolTipText(org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.tagsMenu.toolTipText")); // NOI18N
-        tagsMenu.setActionCommand(org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.tagsMenu.actionCommand")); // NOI18N
         tagsMenu.setFocusable(false);
         tagsMenu.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        tagsMenu.setMaximumSize(new java.awt.Dimension(75, 21));
+        tagsMenu.setMinimumSize(new java.awt.Dimension(75, 21));
+        tagsMenu.setPreferredSize(new java.awt.Dimension(75, 21));
         tagsMenu.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         tagsMenu.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
@@ -1103,7 +1083,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                                         FilenameUtils.getBaseName(file.getName()) + "-with_tags.png"); //NON-NLS
                                 ImageIO.write(taggedImage, "png", output.toFile());
 
-                                JOptionPane.showMessageDialog(MediaViewImagePanel.this, Bundle.MediaViewImagePanel_successfulExport());
+                                JOptionPane.showMessageDialog(null, Bundle.MediaViewImagePanel_successfulExport());
                             } catch (Exception ex) { //Runtime exceptions may spill out of ImageTagsUtil from JavaFX.
                                 //This ensures we (devs and users) have something when it doesn't work.
                                 logger.log(Level.WARNING, "Unable to export tagged image to disk", ex); //NON-NLS
@@ -1119,7 +1099,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private void tagsMenuMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tagsMenuMousePressed
         if (imageTaggingOptions.isEnabled()) {
-            imageTaggingOptions.show(tagsMenu, -TAG_POPUP_WIDTH + tagsMenu.getWidth(), tagsMenu.getHeight() + 3);
+            imageTaggingOptions.show(tagsMenu, -300 + tagsMenu.getWidth(), tagsMenu.getHeight() + 3);
         }
     }//GEN-LAST:event_tagsMenuMousePressed
 
@@ -1127,8 +1107,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * Display states for the show/hide tags button.
      */
     private enum DisplayOptions {
-        HIDE_TAGS(Bundle.MediaViewImagePanel_hideTagOption()),
-        SHOW_TAGS(Bundle.MediaViewImagePanel_showTagOption());
+        HIDE_TAGS("Hide"),
+        SHOW_TAGS("Show");
 
         private final String name;
 

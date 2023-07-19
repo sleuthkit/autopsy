@@ -399,7 +399,6 @@ final class InlineSearcher {
                             } else {
                                 artifact = RegexQuery.createKeywordHitArtifact(content, originalKeyword, hitKeyword, hit, hit.getSnippet(), hitKeyword.getListName(), sourceId);
                             }
-
                             // createKeywordHitArtifact has the potential to return null
                             // when a CCN account is created.
                             if (artifact != null) {

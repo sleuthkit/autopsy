@@ -168,7 +168,6 @@
             </module-dependencies>
             <public-packages>
                 <package>org.sleuthkit.autopsy.experimental.autoingest</package>
-                <package>org.sleuthkit.autopsy.experimental.cleanup</package>
                 <package>org.sleuthkit.autopsy.experimental.configuration</package>
             </public-packages>
             <class-path-extension>

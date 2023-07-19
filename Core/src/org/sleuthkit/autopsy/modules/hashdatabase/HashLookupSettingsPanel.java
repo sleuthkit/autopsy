@@ -982,7 +982,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
      * @return true if running on windows, false otherwise
      */
     private boolean isWindows() {
-        return PlatformUtil.getOSName().toLowerCase().startsWith("windows");
+        return PlatformUtil.getOSName().toLowerCase().startsWith("Windows");
     }
 
     @NbBundle.Messages({"HashLookupSettingsPanel.indexNsrl.text=This hash set appears to be the NSRL, it will be removed from the list.\n",
