@@ -198,6 +198,18 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 
+    /**
+     * Accepts a ContentNodeVisitor.
+     *
+     * @param <T>     The type parameter of the Visitor.
+     * @param visitor The Visitor.
+     *
+     * @return An object determied by the type parameter of the Visitor.
+     */
+    @Override
+    public <T> T accept(ContentNodeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 
     /**
      * Accepts a DisplayableItemNodeVisitor.

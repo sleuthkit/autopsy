@@ -25,7 +25,7 @@ import java.util.TimeZone;
 import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.outline.Outline;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.datamodel.utils.IconsUtil;
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.datamodel.Account;
 
 /**
@@ -48,7 +48,7 @@ public final class Utils {
      * @return The path of the icon for the given Account Type.
      */
     static public final String getIconFilePath(Account.Type type) {
-        return IconsUtil.getIconFilePath(type);
+        return Accounts.getIconFilePath(type);
     }
     
     static public  void setColumnWidths(Outline outline) {

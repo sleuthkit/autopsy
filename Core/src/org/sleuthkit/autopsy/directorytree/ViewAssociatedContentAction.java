@@ -19,13 +19,10 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
-import java.util.logging.Level;
 import javax.swing.AbstractAction;
-import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.datamodel.CreateSleuthkitNodeVisitor;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -33,7 +30,6 @@ import org.sleuthkit.datamodel.Content;
  */
 class ViewAssociatedContentAction extends AbstractAction {
 
-    private static final Logger logger = Logger.getLogger(ViewAssociatedContentAction.class.getName());
     private final Content content;
 
     public ViewAssociatedContentAction(String title, BlackboardArtifactNode node) {
@@ -43,11 +39,6 @@ class ViewAssociatedContentAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Node node = RootContentChildren.createNode(this.content);
-        if (node == null) {
-            logger.log(Level.WARNING, "No node created for object: " + this.content);
-        } else {
-            DataContentTopComponent.getDefault().setNode(node);
-        }
+        DataContentTopComponent.getDefault().setNode(content.accept(new CreateSleuthkitNodeVisitor()));
     }
 }

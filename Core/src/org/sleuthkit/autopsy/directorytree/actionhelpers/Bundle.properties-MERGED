@@ -1,9 +1,6 @@
 ExtractActionHelper.extractFiles.cantCreateFolderErr.msg=Could not create selected folder.
 ExtractActionHelper.confDlg.destFileExist.msg=Destination file {0} already exists, overwrite?
 ExtractActionHelper.confDlg.destFileExist.title=File Exists
-# {0} - fileName
-ExtractActionHelper.extractOverwrite.msg=A file already exists at {0}.  Do you want to overwrite the existing file?
-ExtractActionHelper.extractOverwrite.title=Export to csv file
 ExtractActionHelper.msgDlg.cantOverwriteFile.msg=Could not overwrite existing file {0}
 ExtractActionHelper.noOpenCase.errMsg=No open case available.
 ExtractActionHelper.notifyDlg.noFileToExtr.msg=No file(s) to extract.

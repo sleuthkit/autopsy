@@ -30,11 +30,11 @@ import org.sleuthkit.autopsy.coreutils.Version;
 public class CentralRepositoryNotificationDialog {
 
     /**
-     * This dialog should display if the mode is RELEASE and the application is
-     * running with a GUI. 
+     * This dialog should display iff the mode is RELEASE and the
+     * application is running with a GUI.
      */
     static boolean shouldDisplay() {
-        return Version.getBuildType() == Version.Type.RELEASE
+        return Version.getBuildType() == Version.Type.RELEASE 
                 && RuntimeProperties.runningWithGUI();
     }
 

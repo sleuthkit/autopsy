@@ -49,7 +49,6 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobNodeData.InvalidDataException;
-import org.sleuthkit.autopsy.experimental.cleanup.AutoIngestCleanup.DeleteOptions;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -59,65 +58,68 @@ import org.sleuthkit.datamodel.TskCoreException;
  * directed to the dedicated auto ingest dashboard log instead of to the general
  * application log.
  */
-public final class DeleteCaseTask implements Runnable {
+final class DeleteCaseTask implements Runnable {
 
-    private static final int MANIFEST_FILE_LOCKING_TIMEOUT_MINS = 1;
+    private static final int MANIFEST_FILE_LOCKING_TIMEOUT_MINS = 5;
     private static final int MANIFEST_DELETE_TRIES = 3;
     private static final Logger logger = AutoIngestDashboardLogger.getLogger();
     private final CaseNodeData caseNodeData;
     private final DeleteOptions deleteOption;
     private final ProgressIndicator progress;
-    private final boolean bestEffortDeletion;
-    private final boolean deleteDataSourceDirectories;
-    private final List<ManifestFileLock> manifestFileLocks = new ArrayList<>();
+    private final List<ManifestFileLock> manifestFileLocks;
     private CoordinationService coordinationService;
     private CaseMetadata caseMetadata;
 
     /**
-     * Constructs a task that deletes part or all of a given case.Note that all
-     * logging is directed to the dedicated auto ingest dashboard log instead of
-     * to the general application log.
-     *
-     * @param caseNodeData The case directory coordination service node data for
-     * the case.
-     * @param deleteOption The deletion option for the task.
-     * @param progress A progress indicator.
-     * @param bestEffortDeletion A flag whether manifest/input deletion is "best
-     * effort". If the flag is set to true, then we will delete all manifest
-     * files for which we are able to get exclusive lock, and leave behind all
-     * manifest files and data sources for which we were unable to get exclusive
-     * lock. If the flag is set to false, then the algorithm will abort and exit
-     * unless it is able to get exclusive lock on all of the manifest files.
-     * @param deleteDataSourceDirectories A flag whether to delete the directory
-     * containing each data source. If the flag is false, only the data source
-     * file will be deleted. If the flag is true, The entire directory
-     * containing the data source will be deleted.
+     * Options to support implementing different case deletion use cases.
      */
-    public DeleteCaseTask(CaseNodeData caseNodeData, DeleteOptions deleteOption, ProgressIndicator progress, 
-            boolean bestEffortDeletion, boolean deleteDataSourceDirectories) {
-        this.caseNodeData = caseNodeData;
-        this.deleteOption = deleteOption;
-        this.progress = progress;
-        this.bestEffortDeletion = bestEffortDeletion;
-        this.deleteDataSourceDirectories = deleteDataSourceDirectories;
+    enum DeleteOptions {
+        /**
+         * Delete the auto ingest job manifests and corresponding data sources,
+         * while leaving the manifest file coordination service nodes and the
+         * rest of the case intact. The use case is freeing auto ingest input
+         * directory space while retaining the option to restore the data
+         * sources, effectively restoring the case.
+         */
+        DELETE_INPUT,
+        /**
+         * Delete the manifest file coordination service nodes and the output
+         * for a case, while leaving the auto ingest job manifests and
+         * corresponding data sources intact. The use case is auto ingest
+         * reprocessing of a case with a clean slate without having to restore
+         * the manifests and data sources.
+         */
+        DELETE_OUTPUT,
+        /**
+         * Delete everything.
+         */
+        DELETE_INPUT_AND_OUTPUT,
+        /**
+         * Delete only the case components that the application created. This is
+         * DELETE_OUTPUT with the additional feature that manifest file
+         * coordination service nodes are marked as deleted, rather than
+         * actually deleted. This eliminates the requirement that manifests and
+         * data sources have to be deleted before deleting the case to avoid an
+         * unwanted, automatic reprocessing of the case.
+         */
+        DELETE_CASE
     }
-    
+
     /**
-     * Constructs a task that deletes part or all of a given case.Note that all
+     * Constructs a task that deletes part or all of a given case. Note that all
      * logging is directed to the dedicated auto ingest dashboard log instead of
      * to the general application log.
      *
      * @param caseNodeData The case directory coordination service node data for
-     * the case.
+     *                     the case.
      * @param deleteOption The deletion option for the task.
-     * @param progress A progress indicator.
+     * @param progress     A progress indicator.
      */
-    public DeleteCaseTask(CaseNodeData caseNodeData, DeleteOptions deleteOption, ProgressIndicator progress) {
+    DeleteCaseTask(CaseNodeData caseNodeData, DeleteOptions deleteOption, ProgressIndicator progress) {
         this.caseNodeData = caseNodeData;
         this.deleteOption = deleteOption;
         this.progress = progress;
-        this.bestEffortDeletion = false; //abort and exit unless we get exclusive lock on all of the manifest files.
-        this.deleteDataSourceDirectories = false; // only data source files will be deleted
+        manifestFileLocks = new ArrayList<>();
     }
 
     @Override
@@ -175,7 +177,7 @@ public final class DeleteCaseTask implements Runnable {
     })
     private void deleteCase() throws CoordinationServiceException, IOException, InterruptedException {
         progress.progress(Bundle.DeleteCaseTask_progress_connectingToCoordSvc());
-        //logger.log(Level.INFO, String.format("Connecting to the coordination service for deletion of %s", caseNodeData.getDisplayName()));
+        logger.log(Level.INFO, String.format("Connecting to the coordination service for deletion of %s", caseNodeData.getDisplayName()));
         coordinationService = CoordinationService.getInstance();
         checkForCancellation();
 
@@ -210,7 +212,7 @@ public final class DeleteCaseTask implements Runnable {
              * case while it is being deleted.
              */
             progress.progress(Bundle.DeleteCaseTask_progress_acquiringCaseDirLock());
-            //logger.log(Level.INFO, String.format("Acquiring an exclusive case directory lock for %s", caseNodeData.getDisplayName()));
+            logger.log(Level.INFO, String.format("Acquiring an exclusive case directory lock for %s", caseNodeData.getDisplayName()));
             String caseDirLockName = CoordinationServiceUtils.getCaseDirectoryNodePath(caseNodeData.getDirectory());
             try (CoordinationService.Lock caseDirLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseDirLockName)) {
                 if (caseDirLock == null) {
@@ -373,7 +375,7 @@ public final class DeleteCaseTask implements Runnable {
         logger.log(Level.INFO, String.format("Found %d manifest file path(s) for %s", manifestFilePaths.size(), caseNodeData.getDisplayName()));
         if (!manifestFilePaths.isEmpty()) {
             progress.progress(Bundle.DeleteCaseTask_progress_acquiringManifestLocks());
-            //logger.log(Level.INFO, String.format("Acquiring exclusive manifest file locks for %s", caseNodeData.getDisplayName()));
+            logger.log(Level.INFO, String.format("Acquiring exclusive manifest file locks for %s", caseNodeData.getDisplayName()));
             /*
              * When acquiring the locks, it is reasonable to block briefly,
              * since the auto ingest node (AIN) input directory scanning tasks
@@ -388,17 +390,15 @@ public final class DeleteCaseTask implements Runnable {
                 for (Path manifestPath : manifestFilePaths) {
                     checkForCancellation();
                     progress.progress(Bundle.DeleteCaseTask_progress_lockingManifest(manifestPath.toString()));
-                    //logger.log(Level.INFO, String.format("Exclusively locking the manifest %s for %s", manifestPath, caseNodeData.getDisplayName()));
+                    logger.log(Level.INFO, String.format("Exclusively locking the manifest %s for %s", manifestPath, caseNodeData.getDisplayName()));
                     CoordinationService.Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString(), MANIFEST_FILE_LOCKING_TIMEOUT_MINS, TimeUnit.MINUTES);
                     if (null != manifestLock) {
                         manifestFileLocks.add(new ManifestFileLock(manifestPath, manifestLock));
                     } else {
-                        logger.log(Level.WARNING, String.format("Failed to exclusively lock the manifest %s because it was already held by another host", manifestPath, caseNodeData.getDisplayName()));
-                        if (!bestEffortDeletion) {
-                            allLocksAcquired = false;
-                            releaseManifestFileLocks();
-                            break;
-                        }
+                        logger.log(Level.INFO, String.format("Failed to exclusively lock the manifest %s because it was already held by another host", manifestPath, caseNodeData.getDisplayName()));
+                        allLocksAcquired = false;
+                        releaseManifestFileLocks();
+                        break;
                     }
                 }
             } catch (CoordinationServiceException | InterruptedException ex) {
@@ -422,7 +422,7 @@ public final class DeleteCaseTask implements Runnable {
         final File caseDirectory = caseNodeData.getDirectory().toFile();
         if (caseDirectory.exists()) {
             progress.progress(Bundle.DeleteCaseTask_progress_openingCaseMetadataFile());
-            //logger.log(Level.INFO, String.format("Opening case metadata file for %s", caseNodeData.getDisplayName()));
+            logger.log(Level.INFO, String.format("Opening case metadata file for %s", caseNodeData.getDisplayName()));
             Path caseMetadataPath = CaseMetadata.getCaseMetadataFilePath(caseNodeData.getDirectory());
             if (caseMetadataPath != null) {
                 try {
@@ -470,7 +470,7 @@ public final class DeleteCaseTask implements Runnable {
         SleuthkitCase caseDb = null;
         try {
             progress.progress(Bundle.DeleteCaseTask_progress_openingCaseDatabase());
-            //logger.log(Level.INFO, String.format("Opening the case database for %s", caseNodeData.getDisplayName()));
+            logger.log(Level.INFO, String.format("Opening the case database for %s", caseNodeData.getDisplayName()));
             caseDb = SleuthkitCase.openCase(caseMetadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseMetadata.getCaseDirectory());
             List<DataSource> dataSources = caseDb.getDataSources();
             checkForCancellation();
@@ -492,13 +492,6 @@ public final class DeleteCaseTask implements Runnable {
                             lock.setInputDeleted();
                         } else {
                             allInputDeleted = false;
-                        }
-                        
-                        if (deleteDataSourceDirectories) {
-                            File parentDir = manifestFile.getParentFile();
-                            if (parentDir.exists() && !FileUtil.deleteFileDir(parentDir)) {
-                                logger.log(Level.WARNING, String.format("Failed to delete data source directory %s for %s", parentDir.toString(), caseNodeData.getDisplayName()));
-                            }
                         }
                     } else {
                         logger.log(Level.WARNING, String.format("Failed to parse manifest file %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
@@ -570,7 +563,7 @@ public final class DeleteCaseTask implements Runnable {
          */
         Path manifestFilePath = manifestFile.toPath();
         progress.progress(Bundle.DeleteCaseTask_progress_deletingManifest(manifestFilePath));
-        //logger.log(Level.INFO, String.format("Deleting manifest file %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
+        logger.log(Level.INFO, String.format("Deleting manifest file %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
         int tries = 0;
         boolean deleted = false;
         while (!deleted && tries < MANIFEST_DELETE_TRIES) {
@@ -704,7 +697,7 @@ public final class DeleteCaseTask implements Runnable {
     private void deleteCaseResourcesNode() throws InterruptedException {
         if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT || deleteOption == DeleteOptions.DELETE_CASE) {
             progress.progress(Bundle.DeleteCaseTask_progress_deletingResourcesLockNode());
-            //logger.log(Level.INFO, String.format("Deleting case resources log znode for %s", caseNodeData.getDisplayName()));
+            logger.log(Level.INFO, String.format("Deleting case resources log znode for %s", caseNodeData.getDisplayName()));
             String resourcesNodePath = CoordinationServiceUtils.getCaseResourcesNodePath(caseNodeData.getDirectory());
             try {
                 coordinationService.deleteNode(CategoryNode.CASES, resourcesNodePath);
@@ -726,7 +719,7 @@ public final class DeleteCaseTask implements Runnable {
     private void deleteCaseAutoIngestLogNode() throws InterruptedException {
         if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT || deleteOption == DeleteOptions.DELETE_CASE) {
             progress.progress(Bundle.DeleteCaseTask_progress_deletingJobLogLockNode());
-            //logger.log(Level.INFO, String.format("Deleting case auto ingest job log znode for %s", caseNodeData.getDisplayName()));
+            logger.log(Level.INFO, String.format("Deleting case auto ingest job log znode for %s", caseNodeData.getDisplayName()));
             String logFilePath = CoordinationServiceUtils.getCaseAutoIngestLogNodePath(caseNodeData.getDirectory());
             try {
                 coordinationService.deleteNode(CategoryNode.CASES, logFilePath);
@@ -760,7 +753,7 @@ public final class DeleteCaseTask implements Runnable {
                 && caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.CASE_DIR)
                 && caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.MANIFEST_FILE_NODES))) {
             progress.progress(Bundle.DeleteCaseTask_progress_deletingCaseDirCoordSvcNode());
-            //logger.log(Level.INFO, String.format("Deleting case directory znode for %s", caseNodeData.getDisplayName()));
+            logger.log(Level.INFO, String.format("Deleting case directory znode for %s", caseNodeData.getDisplayName()));
             String caseDirNodePath = CoordinationServiceUtils.getCaseDirectoryNodePath(caseNodeData.getDirectory());
             try {
                 coordinationService.deleteNode(CategoryNode.CASES, caseDirNodePath);
@@ -780,7 +773,7 @@ public final class DeleteCaseTask implements Runnable {
     private void deleteCaseNameNode() throws InterruptedException {
         if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT || deleteOption == DeleteOptions.DELETE_CASE) {
             progress.progress(Bundle.DeleteCaseTask_progress_deletingCaseNameCoordSvcNode());
-            //logger.log(Level.INFO, String.format("Deleting case name znode for %s", caseNodeData.getDisplayName()));
+            logger.log(Level.INFO, String.format("Deleting case name znode for %s", caseNodeData.getDisplayName()));
             try {
                 String caseNameLockNodeName = CoordinationServiceUtils.getCaseNameNodePath(caseNodeData.getDirectory());
                 coordinationService.deleteNode(CategoryNode.CASES, caseNameLockNodeName);
@@ -834,11 +827,11 @@ public final class DeleteCaseTask implements Runnable {
                 String manifestFilePath = manifestFileLock.getManifestFilePath().toString();
                 try {
                     progress.progress(Bundle.DeleteCaseTask_progress_releasingManifestLock(manifestFilePath));
-                    //logger.log(Level.INFO, String.format("Releasing the lock on the manifest file %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
+                    logger.log(Level.INFO, String.format("Releasing the lock on the manifest file %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
                     manifestFileLock.release();
                     if (manifestFileLock.isInputDeleted()) {
                         progress.progress(Bundle.DeleteCaseTask_progress_deletingManifestFileNode(manifestFilePath));
-                        //logger.log(Level.INFO, String.format("Deleting the manifest file znode for %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
+                        logger.log(Level.INFO, String.format("Deleting the manifest file znode for %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
                         coordinationService.deleteNode(CoordinationService.CategoryNode.MANIFESTS, manifestFilePath);
                     } else {
                         allINodesDeleted = false;

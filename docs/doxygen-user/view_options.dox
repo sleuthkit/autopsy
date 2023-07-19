@@ -76,4 +76,16 @@ The second option ("Group by Person/Host") separates the results for each data s
 
 \image html views_grouped_tree.png
 
+\section view_options_session Current Session Settings
+
+The settings for the current session will be in effect until you close the application.
+
+\subsection view_options_rejected Hide rejected results
+
+Accounts can be approved or rejected by the user, as shown in the screenshot below. 
+
+\image html view_options_reject_account.png
+
+Rejected accounts will not be included in the report, and by default will be hidden in the UI. If you accidentally reject an account and need to change its status, or simply want to view the the rejected accounts, you can uncheck the "hide rejected results" option.
+
 */

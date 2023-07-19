@@ -28,7 +28,6 @@ import javax.swing.SortOrder;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbPreferences;
-import org.sleuthkit.autopsy.mainui.datamodel.SearchResultsDTO;
 
 final class ResultViewerPersistence {
 
@@ -47,10 +46,6 @@ final class ResultViewerPersistence {
     static String getColumnPositionKey(TableFilterNode node, String propName) {
         return getColumnKeyBase(node, propName) + ".column";
     }
-    
-    static String getColumnPositionKey(SearchResultsDTO searchResult, String propName) {
-        return getColumnKeyBase(searchResult, propName) + ".column";
-    }
 
     /**
      * Gets a key for the given node and a property of its child nodes to store
@@ -63,10 +58,6 @@ final class ResultViewerPersistence {
      */
     static String getColumnSortOrderKey(TableFilterNode node, String propName) {
         return getColumnKeyBase(node, propName) + ".sortOrder";
-    }
-    
-    static String getColumnSortOrderKey(SearchResultsDTO searchResult, String propName) {
-        return getColumnKeyBase(searchResult, propName) + ".sortOrder";
     }
 
     /**
@@ -81,10 +72,6 @@ final class ResultViewerPersistence {
     static String getColumnSortRankKey(TableFilterNode node, String propName) {
         return getColumnKeyBase(node, propName) + ".sortRank";
     }
-    
-    static String getColumnSortRankKey(SearchResultsDTO searchResult, String propName) {
-        return getColumnKeyBase(searchResult, propName) + ".sortRank";
-    }
 
     /**
      * Gets a key for the given node and a property of its child nodes to store
@@ -98,17 +85,9 @@ final class ResultViewerPersistence {
     static String getColumnHiddenKey(TableFilterNode node, String propName) {
         return getColumnKeyBase(node, propName) + ".hidden";
     }
-    
-    static String getColumnHiddenKey(SearchResultsDTO searchResult, String propName) {
-        return getColumnKeyBase(searchResult, propName) + ".hidden";
-    }
 
     private static String getColumnKeyBase(TableFilterNode node, String propName) {
         return stripNonAlphanumeric(node.getColumnOrderKey()) + "." + stripNonAlphanumeric(propName);
-    }
-    
-    private static String getColumnKeyBase(SearchResultsDTO searchResult, String propName) {
-        return stripNonAlphanumeric(searchResult.getSignature()) + "." + stripNonAlphanumeric(propName);
     }
 
     private static String stripNonAlphanumeric(String str) {

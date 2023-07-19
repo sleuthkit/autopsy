@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2021 Basis Technology Corp.
+ * Copyright 2012-2020 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.Cursor;
 import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
@@ -32,6 +31,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -41,7 +41,6 @@ import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -73,30 +72,25 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.corecomponents.ViewPreferencesPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.datamodel.AnalysisResults;
+import org.sleuthkit.autopsy.datamodel.ArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.datamodel.EmptyNode;
-import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted;
+import org.sleuthkit.autopsy.datamodel.EmptyNode;
+import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
+import org.sleuthkit.autopsy.datamodel.InterestingHits;
+import org.sleuthkit.autopsy.datamodel.KeywordHits;
+import org.sleuthkit.autopsy.datamodel.AutopsyTreeChildFactory;
+import org.sleuthkit.autopsy.datamodel.DataArtifacts;
+import org.sleuthkit.autopsy.datamodel.OsAccounts;
+import org.sleuthkit.autopsy.datamodel.PersonNode;
+import org.sleuthkit.autopsy.datamodel.Tags;
+import org.sleuthkit.autopsy.datamodel.ViewsNode;
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
-import org.sleuthkit.autopsy.mainui.datamodel.MainDAO;
-import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.KeywordSetNode;
-import org.sleuthkit.autopsy.mainui.nodes.AnalysisResultTypeFactory.TreeConfigTypeNode;
-import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
-import org.sleuthkit.autopsy.mainui.nodes.DataArtifactTypeFactory.CreditCardByBinParentNode;
-import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.OsAccountNodeSelectionInfo;
-import org.sleuthkit.autopsy.mainui.nodes.RootFactory;
-import org.sleuthkit.autopsy.mainui.nodes.RootFactory.AnalysisResultsRootNode;
-import org.sleuthkit.autopsy.mainui.nodes.RootFactory.DataArtifactsRootNode;
-import org.sleuthkit.autopsy.mainui.nodes.RootFactory.OsAccountsRootNode;
-import org.sleuthkit.autopsy.mainui.nodes.RootFactory.PersonNode;
-import org.sleuthkit.autopsy.mainui.nodes.RootFactory.ViewsRootNode;
-import org.sleuthkit.autopsy.mainui.nodes.TreeNode;
-import org.sleuthkit.autopsy.mainui.nodes.ViewsTypeFactory.MimeParentNode;
 import org.sleuthkit.datamodel.Account;
-import org.sleuthkit.datamodel.AnalysisResult;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.Category;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -125,17 +119,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
+    private AutopsyTreeChildFactory autopsyTreeChildFactory;
     private Children autopsyTreeChildren;
+    private Accounts accounts;
     private boolean showRejectedResults;
     private static final long DEFAULT_DATASOURCE_GROUPING_THRESHOLD = 5; // Threshold for prompting the user about grouping by data source
     private static final String GROUPING_THRESHOLD_NAME = "GroupDataSourceThreshold";
     private static final String SETTINGS_FILE = "CasePreferences.properties"; //NON-NLS
 
     // nodes to be opened if present at top level
-    private static final Set<String> NODES_TO_EXPAND_PREFIXES = Stream.of(
-            AnalysisResultsRootNode.getNamePrefix(), 
-            DataArtifactsRootNode.getNamePrefix(), 
-            ViewsRootNode.getNamePrefix())
+    private static final Set<String> NODES_TO_EXPAND = Stream.of(AnalysisResults.getName(), DataArtifacts.getName(), ViewsNode.NAME)
             .collect(Collectors.toSet());
 
     /**
@@ -204,15 +197,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     .forEach(tree::expandNode);
         } else {
             Stream.of(rootChildrenNodes)
-                    .filter(n -> {
-                        // find any where node name is present in prefixes
-                        return n != null
-                                && n.getName() != null
-                                && NODES_TO_EXPAND_PREFIXES.stream()
-                                        .filter(prefix -> n.getName().startsWith(prefix))
-                                        .findAny()
-                                        .isPresent();
-                    })
+                    .filter(n -> n != null && NODES_TO_EXPAND.contains(n.getName()))
                     .forEach(tree::expandNode);
         }
     }
@@ -298,6 +283,18 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return showRejectedResults;
     }
 
+    /**
+     * Setter to determine if rejected results should be shown or not.
+     *
+     * @param showRejectedResults True if showing rejected results; otherwise
+     *                            false.
+     */
+    public void setShowRejectedResults(boolean showRejectedResults) {
+        this.showRejectedResults = showRejectedResults;
+        if (accounts != null) {
+            accounts.setShowRejected(showRejectedResults);
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -471,7 +468,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @return getDefault() - the default instance
      */
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public static synchronized DirectoryTreeTopComponent findInstance() {
         WindowManager winManager = WindowManager.getDefault();
         TopComponent win = winManager.findTopComponent(PREFERRED_ID);
@@ -587,7 +583,36 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }.execute();
             }
 
-            setRootContextChildren();
+            // if there's at least one image, load the image and open the top componen
+            autopsyTreeChildFactory = new AutopsyTreeChildFactory();
+            autopsyTreeChildren = Children.create(autopsyTreeChildFactory, true);
+            Node root = new AbstractNode(autopsyTreeChildren) {
+                //JIRA-2807: What is the point of these overrides?
+                /**
+                 * to override the right click action in the white blank space
+                 * area on the directory tree window
+                 */
+                @Override
+                public Action[] getActions(boolean popup) {
+                    return new Action[]{};
+                }
+
+                // Overide the AbstractNode use of DefaultHandle to return
+                // a handle which can be serialized without a parent
+                @Override
+                public Node.Handle getHandle() {
+                    return new Node.Handle() {
+                        @Override
+                        public Node getNode() throws IOException {
+                            return em.getRootContext();
+                        }
+                    };
+                }
+            };
+
+            root = new DirectoryTreeFilterNode(root, true);
+
+            em.setRootContext(root);
             em.getRootContext().setName(currentCase.getName());
             em.getRootContext().setDisplayName(currentCase.getName());
             getTree().setRootVisible(false); // hide the root
@@ -644,39 +669,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }.execute();
         }
-    }
-
-    /**
-     * Set root context to the root children.
-     */
-    private void setRootContextChildren() {
-        // if there's at least one image, load the image and open the top componen
-        autopsyTreeChildren = RootFactory.getRootChildren();
-        Node root = new AbstractNode(autopsyTreeChildren) {
-            //JIRA-2807: What is the point of these overrides?
-            /**
-             * to override the right click action in the white blank space
-             * area on the directory tree window
-             */
-            @Override
-            public Action[] getActions(boolean popup) {
-                return new Action[]{};
-            }
-            
-            // Overide the AbstractNode use of DefaultHandle to return
-            // a handle which can be serialized without a parent
-            @Override
-            public Node.Handle getHandle() {
-                return new Node.Handle() {
-                    @Override
-                    public Node getNode() throws IOException {
-                        return em.getRootContext();
-                    }
-                };
-            }
-        };
-        
-        em.setRootContext(root);
     }
 
     /**
@@ -874,14 +866,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             try {
                 Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                 if (treeNode != null) {
-                    Node originNode = treeNode;
-
+                    Node originNode = ((DirectoryTreeFilterNode) treeNode).getOriginal();
                     //set node, wrap in filter node first to filter out children
                     Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-                    if (originNode instanceof SelectionResponder) {
-                        ((SelectionResponder) originNode).respondSelection(dataResult);
-                    } else if (originNode instanceof MimeParentNode && 
-                            originNode.getChildren().getNodesCount(true) <= 0) {
+                    // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
+                    if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                         //Special case for when File Type Identification has not yet been run and
                         //there are no mime types to populate Files by Mime Type Tree
                         EmptyNode emptyNode = new EmptyNode(Bundle.DirectoryTreeTopComponent_emptyMimeNode_text());
@@ -901,13 +890,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         }
                     } else if (originNode.getLookup().lookup(String.class) != null) {
                         displayName = originNode.getLookup().lookup(String.class);
-                    } else {
-                        if (originNode.getDisplayName() != null) {
-                            // Remove node count from name if present
-                            displayName = originNode.getDisplayName().replaceAll("\\(([0-9]+|\\.\\.\\.)\\)$", "");
-                        } else {
-                            displayName = originNode.getName();
-                        }
                     }
                     dataResult.setPath(displayName);
                 }
@@ -1039,8 +1021,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
 
         // refresh all children of the root.
-        setRootContextChildren();
-        
+        autopsyTreeChildFactory.refreshChildren();
+
         // Select the first node and reset the selection history
         // This should happen on the EDT once the tree has been rebuilt.
         // hence the SwingWorker that does this in the done() method
@@ -1158,13 +1140,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private Optional<Node> getCategoryNodeChild(Children children, Category category) {
         switch (category) {
             case DATA_ARTIFACT:
-                return Stream.of(children.getNodes(true))
-                        .filter(n -> n.getName() != null && n.getName().startsWith(DataArtifactsRootNode.getNamePrefix()))
-                        .findFirst();
+                return Optional.ofNullable(children.findChild(DataArtifacts.getName()));
             case ANALYSIS_RESULT:
-                return Stream.of(children.getNodes(true))
-                        .filter(n -> n.getName() != null && n.getName().startsWith(AnalysisResultsRootNode.getNamePrefix()))
-                        .findFirst();
+                return Optional.ofNullable(children.findChild(AnalysisResults.getName()));
             default:
                 LOGGER.log(Level.WARNING, "Unbale to find category of type: " + category.name());
                 return Optional.empty();
@@ -1274,7 +1252,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         }
 
-        if (node.getName() != null && node.getName().startsWith(OsAccountsRootNode.getNamePrefix())) {
+        if (OsAccounts.getListName().equals(node.getName())) {
             return Optional.of(node);
         }
 
@@ -1312,21 +1290,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         Node osAccountListNode = osAccountListNodeOpt.get();
 
-        if (osAccountListNode instanceof TreeNode) {
-            TreeNode<?> treeNode = (TreeNode<?>) osAccountListNode;
-            treeNode.setNodeSelectionInfo(new OsAccountNodeSelectionInfo(osAccount.getId()));
-        }
-
+        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) osAccountListNode).getOriginal();
+        undecoratedParentNode.setChildNodeSelectionInfo((osAcctNd) -> {
+            OsAccount osAcctOfNd = osAcctNd.getLookup().lookup(OsAccount.class);
+            return osAcctOfNd != null && osAcctOfNd.getId() == osAccount.getId();
+        });
         getTree().expandNode(osAccountListNode);
-        if (this.getSelectedNode().equals(osAccountListNode)) {
-            this.setDirectoryListingActive();
-            this.respondSelection(em.getSelectedNodes(), new Node[]{osAccountListNode});
-        } else {
-            try {
-                em.setExploredContextAndSelection(osAccountListNode, new Node[]{osAccountListNode});
-            } catch (PropertyVetoException ex) {
-                LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
-            }
+        try {
+            em.setExploredContextAndSelection(osAccountListNode, new Node[]{osAccountListNode});
+        } catch (PropertyVetoException ex) {
+            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
         }
     }
 
@@ -1381,8 +1354,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Children typesChildren = categoryChildrenOpt.get();
 
         Node treeNode = null;
-        if (art instanceof AnalysisResult) {
-            treeNode = getAnalysisResultNode(typesChildren, (AnalysisResult) art);    
+        if (typeID == BlackboardArtifact.Type.TSK_HASHSET_HIT.getTypeID()) {
+            treeNode = getHashsetNode(typesChildren, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID()) {
+            treeNode = getKeywordHitNode(typesChildren, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_FILE_HIT, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ARTIFACT_HIT, art);
+        } else if (typeID == BlackboardArtifact.Type.TSK_INTERESTING_ITEM.getTypeID()) {
+            treeNode = getInterestingItemNode(typesChildren, BlackboardArtifact.Type.TSK_INTERESTING_ITEM, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_EMAIL_MSG.getTypeID()) {
             treeNode = getEmailNode(typesChildren, art);
         } else if (typeID == BlackboardArtifact.Type.TSK_ACCOUNT.getTypeID()) {
@@ -1395,10 +1376,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             return;
         }
 
-        if(treeNode instanceof TreeNode) {
-            ((TreeNode)treeNode).setNodeSelectionInfo(new BlackboardArtifactNodeSelectionInfo(art));
-        }
-
+        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
+        undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
         getTree().expandNode(treeNode);
         if (this.getSelectedNode().equals(treeNode)) {
             this.setDirectoryListingActive();
@@ -1412,33 +1391,35 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
         // Another thread is needed because we have to wait for dataResult to populate
     }
-    
+
     /**
-     * Returns the parent tree node of the analysis result if one exists.
-     * @param analysisResultTypeChildren The analysis result type node children.
-     * @param analysisResult The analysis result to find.
-     * @return The parent tree node or null.
+     * Returns the hashset hit artifact's parent node or null if cannot be
+     * found.
+     *
+     * @param typesChildren The children object of the same category as hashset
+     *                      hits.
+     * @param art           The artifact.
+     *
+     * @return The hashset hit artifact's parent node or null if cannot be
+     *         found.
      */
-    private Node getAnalysisResultNode(Children analysisResultTypeChildren, final AnalysisResult analysisResult) {
-        if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.getTypeID() == analysisResult.getArtifactTypeID()) {
-            return getKeywordHitNode(analysisResultTypeChildren, analysisResult);
-        } 
-        
-        Node analysisResultTypeNode = analysisResultTypeChildren.findChild(analysisResult.getArtifactTypeName());
-        if (analysisResultTypeNode == null) {
+    private Node getHashsetNode(Children typesChildren, final BlackboardArtifact art) {
+        Node hashsetRootNode = typesChildren.findChild(art.getArtifactTypeName());
+        Children hashsetRootChilds = hashsetRootNode.getChildren();
+        try {
+            String setName = null;
+            List<BlackboardAttribute> attributes = art.getAttributes();
+            for (BlackboardAttribute att : attributes) {
+                int typeId = att.getAttributeType().getTypeID();
+                if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                    setName = att.getValueString();
+                }
+            }
+            return hashsetRootChilds.findChild(setName);
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;
         }
-        
-        Node[] childConfigNodes = analysisResultTypeNode.getChildren() == null ? null : analysisResultTypeNode.getChildren().getNodes(true);
-        if (childConfigNodes == null || childConfigNodes.length == 0) {
-            return analysisResultTypeNode;
-        }
-        
-        String expectedName = TreeConfigTypeNode.getNodeName(analysisResult.getArtifactTypeName(), analysisResult.getConfiguration());
-        return Stream.of(childConfigNodes)
-                .filter(childNode -> expectedName.equals(childNode.getName()))
-                .findFirst()
-                .orElse(null);
     }
 
     /**
@@ -1447,69 +1428,109 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @param typesChildren The children object of the same category as keyword
      *                      hits.
-     * @param kwh           The artifact.
+     * @param art           The artifact.
      *
      * @return The keyword hit artifact's parent node or null if cannot be
      *         found.
      */
-    private Node getKeywordHitNode(Children typesChildren, AnalysisResult kwh) {
-        Node keywordRootNode = typesChildren.findChild(kwh.getArtifactTypeName());
-        if (keywordRootNode == null
-                || keywordRootNode.getChildren() == null
-                || keywordRootNode.getChildren().getNodesCount(true) == 0) {
-
-            return null;
-        }
-
-        Node configNode = keywordRootNode.getChildren().findChild(KeywordSetNode.getNodeName(kwh.getConfiguration()));
-        if (configNode == null) {
-            return null;
-        }
-
-        Node toRet = configNode;
+    private Node getKeywordHitNode(Children typesChildren, BlackboardArtifact art) {
+        Node keywordRootNode = typesChildren.findChild(art.getArtifactTypeName());
+        Children keywordRootChilds = keywordRootNode.getChildren();
         try {
+            String listName = null;
             String keywordName = null;
             String regex = null;
-            List<BlackboardAttribute> attributes = kwh.getAttributes();
+            List<BlackboardAttribute> attributes = art.getAttributes();
             for (BlackboardAttribute att : attributes) {
                 int typeId = att.getAttributeType().getTypeID();
-                if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
+                if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                    listName = att.getValueString();
+                } else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                     keywordName = att.getValueString();
                 } else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
                     regex = att.getValueString();
                 }
             }
-            
+            if (listName == null) {
+                if (regex == null) {  //using same labels used for creation 
+                    listName = NbBundle.getMessage(KeywordHits.class, "KeywordHits.simpleLiteralSearch.text");
+                } else {
+                    listName = NbBundle.getMessage(KeywordHits.class, "KeywordHits.singleRegexSearch.text");
+                }
+            }
+            Node listNode = keywordRootChilds.findChild(listName);
+            if (listNode == null) {
+                return null;
+            }
+            Children listChildren = listNode.getChildren();
+            if (listChildren == null) {
+                return null;
+            }
             if (regex != null) {  //For support of regex nodes such as URLs, IPs, Phone Numbers, and Email Addrs as they are down another level
-                Node regexNode = toRet.getChildren() == null || toRet.getChildren().getNodesCount(true) == 0 
-                        ? null 
-                        : toRet.getChildren().findChild(regex);
-                
+                Node regexNode = listChildren.findChild(listName);
+                regexNode = (regexNode == null) ? listChildren.findChild(listName + "_" + regex) : regexNode;
                 if (regexNode == null) {
+                    return null;
+                }
+                listChildren = regexNode.getChildren();
+                if (listChildren == null) {
+                    return null;
+                }
+            }
 
-                    return null;
-                }
-                
-                toRet = regexNode;
-            }
-            
-            if (keywordName != null) {
-                Node keywordNameNode = toRet.getChildren() == null || toRet.getChildren().getNodesCount(true) == 0 
-                        ? null 
-                        : toRet.getChildren().findChild(keywordName);
-                
-                if (keywordNameNode == null) {
-                    return null;
-                }
-                
-                toRet = keywordNameNode;
-            }
+            return listChildren.findChild(keywordName);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;
         }
-        
-        return toRet;
+    }
+
+    /**
+     * Returns the interesting item artifact's parent node or null if cannot be
+     * found.
+     *
+     * @param typesChildren The children object of the same category as
+     *                      interesting item.
+     * @param artifactType  The type of the artifact (interesting hit or
+     *                      artifact).
+     * @param art           The artifact.
+     *
+     * @return The interesting item artifact's parent node or null if cannot be
+     *         found.
+     */
+    private Node getInterestingItemNode(Children typesChildren, BlackboardArtifact.Type artifactType, BlackboardArtifact art) {
+        Node interestingItemsRootNode = typesChildren.findChild(artifactType.getDisplayName());
+        Children setNodeChildren = (interestingItemsRootNode == null) ? null : interestingItemsRootNode.getChildren();
+
+        // set node children for type could not be found, so return null.
+        if (setNodeChildren == null) {
+            return null;
+        }
+
+        String setName = null;
+        try {
+            setName = art.getAttributes().stream()
+                    .filter(attr -> attr.getAttributeType().getTypeID() == BlackboardAttribute.Type.TSK_SET_NAME.getTypeID())
+                    .map(attr -> attr.getValueString())
+                    .findFirst()
+                    .orElse(null);
+
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
+            return null;
+        }
+
+        // if no set name, no set node will be identified.
+        if (setName == null) {
+            return null;
+        }
+
+        // make sure data is fully loaded
+        final String finalSetName = setName;
+        return Stream.of(setNodeChildren.getNodes(true))
+                .filter(setNode -> finalSetName.equals(setNode.getLookup().lookup(String.class)))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -1522,36 +1543,23 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     private Node getEmailNode(Children typesChildren, BlackboardArtifact art) {
         Node emailMsgRootNode = typesChildren.findChild(art.getArtifactTypeName());
-        String path = null;
+        Children emailMsgRootChilds = emailMsgRootNode.getChildren();
+        Map<String, String> parsedPath = null;
         try {
             List<BlackboardAttribute> attributes = art.getAttributes();
-            for (BlackboardAttribute attr : attributes) {
-                int typeId = attr.getAttributeType().getTypeID();
+            for (BlackboardAttribute att : attributes) {
+                int typeId = att.getAttributeType().getTypeID();
                 if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()) {
-                    path = attr.getValueString();
+                    parsedPath = EmailExtracted.parsePath(att.getValueString());
                     break;
                 }
             }
-            
-            Node parentNode = null;
-            Node[] childNodes = emailMsgRootNode.getChildren().getNodes(true);
-            while (childNodes != null) {
-                boolean recursing = false;
-                for (Node child : childNodes) {
-                    if (MainDAO.getInstance().getEmailsDAO().getNextSubFolder(child.getName(), path).isChildInParent()) {
-                        recursing = true;
-                        parentNode = child;
-                        childNodes = child.getChildren().getNodes(true);
-                        break;
-                    }
-                }
-                
-                if (!recursing) {
-                    break;
-                }
+            if (parsedPath == null) {
+                return null;
             }
-            
-            return parentNode;
+            Node defaultNode = emailMsgRootChilds.findChild(parsedPath.get(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text")));
+            Children defaultChildren = defaultNode.getChildren();
+            return defaultChildren.findChild(parsedPath.get(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text")));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             return null;
@@ -1568,17 +1576,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * @return The account artifact's parent node or null if cannot be found.
      */
     private Node getAccountNode(Children typesChildren, BlackboardArtifact art) {
+        Node accountRootNode = typesChildren.findChild(art.getDisplayName());
+        Children accountRootChilds = accountRootNode.getChildren();
+        List<BlackboardAttribute> attributes;
+        String accountType = null;
+        String ccNumberName = null;
         try {
-            Node accountRootNode = typesChildren.findChild(art.getArtifactTypeName());
-            if (accountRootNode == null || accountRootNode.getChildren() == null) {
-                return null;
-            }
-        
-            Children accountRootChilds = accountRootNode.getChildren();
-            List<BlackboardAttribute> attributes = art.getAttributes();
-            String accountType = null;
-            String ccNumberName = null;
-
+            attributes = art.getAttributes();
             for (BlackboardAttribute att : attributes) {
                 int typeId = att.getAttributeType().getTypeID();
                 if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID()) {
@@ -1614,22 +1618,22 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *         found.
      */
     private Node getCreditCardAccountNode(Children accountRootChildren, String ccNumberName) {
-        if (ccNumberName == null) {
-            return null;
-        }
-                
         Node accountNode = accountRootChildren.findChild(Account.Type.CREDIT_CARD.getDisplayName());
-        if (accountNode == null || accountNode.getChildren() == null) {
+        if (accountNode == null) {
             return null;
         }
         Children accountChildren = accountNode.getChildren();
-        Node binNode = accountChildren.findChild(CreditCardByBinParentNode.getNameId());
-        if (binNode == null || binNode.getChildren() == null) {
+        if (accountChildren == null) {
             return null;
         }
-        
+        Node binNode = accountChildren.findChild(NbBundle.getMessage(Accounts.class, "Accounts.ByBINNode.name"));
+        if (binNode == null) {
+            return null;
+        }
         Children binChildren = binNode.getChildren();
-
+        if (ccNumberName == null) {
+            return null;
+        }
         //right padded with 0s to 8 digits when single number
         //when a range of numbers, the first 6 digits are rightpadded with 0s to 8 digits then a dash then 3 digits, the 6,7,8, digits of the end number right padded with 9s
         String binName = StringUtils.rightPad(ccNumberName, 8, "0");
@@ -1664,114 +1668,5 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public void addOnFinishedListener(PropertyChangeListener l) {
         DirectoryTreeTopComponent.this.addPropertyChangeListener(l);
     }
-    
-    /**
-     * Gets the open child action for the given node name. Will return
-     * null if the nodeName matches the currently selected tree node.
-     * 
-     * @param nodeName The child node to open.
-     * 
-     * @return The openChild action or null if not valid.
-     */
-    public static AbstractAction getOpenChildAction(String nodeName) {
-        DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
-        ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
-        return getOpenChildAction(nodeName, treeViewExplorerMgr);
-    }
-    
-    /**
-     * Gets the open child action for the given node name. Will return
-     * null if the nodeName matches the currently selected tree node.
-     * 
-     * @param nodeName The child node to open.
-     * @param explorerManager The explorer manager for the tree.
-     * 
-     * @return The openChild action or null if not valid.
-     */
-    static AbstractAction getOpenChildAction(String nodeName, ExplorerManager explorerManager) {
-        // get the current selection from the directory tree explorer manager,
-        // which is a DirectoryTreeFilterNode. One of that node's children
-        // is a DirectoryTreeFilterNode that wraps the dataModelNode. We need
-        // to set that wrapped node as the selection and root context of the 
-        // directory tree explorer manager (sourceEm)
-        if (explorerManager == null || explorerManager.getSelectedNodes().length == 0 || nodeName == null) {
-            return null;
-        }
-        final Node currentSelectionInDirectoryTree = explorerManager.getSelectedNodes()[0];
-        
-        // We have several node types that are used in both the tree and the result viewer.
-        // For tree nodes, we don't want to do the open child action.
-        // When double-clicking on a tree node, the nodeName to open will be the same
-        // as the currently seleted node, so don't return an action if this is the case.
-        if (nodeName.equals(currentSelectionInDirectoryTree.getName())) {
-            return null;
-        }
 
-        return new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (currentSelectionInDirectoryTree != null) {
-                    // Find the filter version of the passed in dataModelNode. 
-                    final org.openide.nodes.Children children = currentSelectionInDirectoryTree.getChildren();
-                    // This call could break if the DirectoryTree is re-implemented with lazy ChildFactory objects.
-                    Node newSelection = children.findChild(nodeName);
-
-                    /*
-                     * We got null here when we were viewing a ZIP file in
-                     * the Views -> Archives area and double clicking on it
-                     * got to this code. It tried to find the child in the
-                     * tree and didn't find it. An exception was then thrown
-                     * from setting the selected node to be null.
-                     */
-                    if (newSelection != null) {
-                        try {
-                            explorerManager.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
-                        } catch (PropertyVetoException ex) {
-                            Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                            logger.log(Level.WARNING, "Error: can't open the selected directory.", ex); //NON-NLS
-                        }
-                    }
-                }
-            }
-        };
-    }
-    
-    /**
-     * Gets the open parent action for the currently selected node.
-     * 
-     * @return The openChild action.
-     */
-    public static AbstractAction getOpenParentAction() {
-        DirectoryTreeTopComponent treeViewTopComponent = DirectoryTreeTopComponent.findInstance();
-        ExplorerManager treeViewExplorerMgr = treeViewTopComponent.getExplorerManager();
-        return getOpenParentAction(treeViewExplorerMgr);
-    }
-
-    /**
-     * Gets the open parent action for the currently selected node.
-     * 
-     * @param explorerManager The explorer manager for the tree.
-     * 
-     * @return The open parent action or null if given an invalid ExplorerManager.
-     */
-    static AbstractAction getOpenParentAction(ExplorerManager explorerManager) {
-        if (explorerManager == null) {
-            return null;
-        }
-        Node[] selectedFilterNodes = explorerManager.getSelectedNodes();
-        Node selectedFilterNode = selectedFilterNodes[0];
-        final Node parentNode = selectedFilterNode.getParentNode();
-
-        return new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    explorerManager.setSelectedNodes(new Node[]{parentNode});
-                } catch (PropertyVetoException ex) {
-                    Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                    logger.log(Level.WARNING, "Error: can't open the parent directory.", ex); //NON-NLS
-                }
-            }
-        };
-    }
 }

@@ -20,12 +20,15 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 /**
- * Abstract subclass for ContentChildren implementation that handles creating
- * Nodes from Content objects.
+ * Abstract subclass for ContentChildren implementation
+ * that handles creating Nodes from Content objects.
  */
 abstract class AbstractContentChildren<T extends Content> extends BaseChildFactory<T> {
+
+    private final CreateSleuthkitNodeVisitor createSleuthkitNodeVisitor = new CreateSleuthkitNodeVisitor();
 
     AbstractContentChildren(String nodeName) {
         super(nodeName, new DataSourcesKnownAndSlackFilter<>());
@@ -33,6 +36,10 @@ abstract class AbstractContentChildren<T extends Content> extends BaseChildFacto
 
     @Override
     protected Node createNodeForKey(T key) {
-        return RootContentChildren.createNode(key);
+        if (key instanceof SleuthkitVisitableItem) {
+            return ((SleuthkitVisitableItem) key).accept(createSleuthkitNodeVisitor);
+        } else {
+            return null;
+        }
     }
 }

@@ -64,7 +64,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 /**
  * Extracts all the unallocated space as a single file
  */
-public final class ExtractUnallocAction extends AbstractAction {
+final class ExtractUnallocAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
     private static final long serialVersionUID = 1L;
@@ -84,7 +84,7 @@ public final class ExtractUnallocAction extends AbstractAction {
      * @param title  The title
      * @param volume The volume set for extraction.
      */
-    public ExtractUnallocAction(String title, Volume volume) {
+    ExtractUnallocAction(String title, Volume volume) {
         this(title, null, volume);
         
     }
@@ -97,11 +97,11 @@ public final class ExtractUnallocAction extends AbstractAction {
      *
      * @throws NoCurrentCaseException If no case is open.
      */
-    public ExtractUnallocAction(String title, Image image) {
+    ExtractUnallocAction(String title, Image image) {
         this(title, image, null);
     }
 
-    public ExtractUnallocAction(String title, Image image, Volume volume) {
+    ExtractUnallocAction(String title, Image image, Volume volume) {
         super(title);
 
         this.volume = volume;

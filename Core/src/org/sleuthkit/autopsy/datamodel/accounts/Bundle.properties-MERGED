@@ -1,0 +1,28 @@
+Accounts.BINNode.accountsProperty.displayName=Accounts
+Accounts.BINNode.bankCityProperty.displayName=Bank City
+Accounts.BINNode.bankCountryProperty.displayName=Bank Country
+Accounts.BINNode.bankPhoneProperty.displayName=Bank Phone #
+Accounts.BINNode.bankProperty.displayName=Bank
+Accounts.BINNode.bankURLProperty.displayName=Bank URL
+Accounts.BINNode.binProperty.displayName=Bank Identifier Number
+Accounts.BINNode.brandProperty.displayName=Brand
+Accounts.BINNode.cardTypeProperty.displayName=Payment Card Type
+Accounts.BINNode.noDescription=no description
+Accounts.BINNode.schemeProperty.displayName=Credit Card Scheme
+# {0} - number of children
+Accounts.ByBINNode.displayName=By BIN ({0})
+Accounts.ByBINNode.name=By BIN
+# {0} - number of children
+Accounts.ByFileNode.displayName=By File ({0})
+Accounts.FileWithCCNNode.accountsProperty.displayName=Accounts
+Accounts.FileWithCCNNode.nameProperty.displayName=File
+Accounts.FileWithCCNNode.noDescription=no description
+Accounts.FileWithCCNNode.statusProperty.displayName=Status
+# {0} - raw file name
+# {1} - solr chunk id
+Accounts.FileWithCCNNode.unallocatedSpaceFile.displayName={0}_chunk_{1}
+Accounts.RootNode.displayName=Communication Accounts
+AccountsRootNode.name=Accounts
+ApproveAccountsAction.name=Approve Accounts
+RejectAccountsAction.name=Reject Accounts
+ToggleShowRejected.name=Show Rejected Results

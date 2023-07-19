@@ -178,12 +178,7 @@ public class Installer extends ModuleInstall {
             return; // Nothing to do
         }
 
-        
-        // Some projects built on top of Autopsy platform set this environment 
-        // variable to make sure there are no UI popups. This is necessary because 
-        // Installer classes run before we have been able to determine
-        // whether we are running headless or not. See JIRA-8422.
-        if (System.getenv("AUTOPSY_HEADLESS") == null && CentralRepositoryNotificationDialog.shouldDisplay()) {
+        if (CentralRepositoryNotificationDialog.shouldDisplay()) {
             CentralRepositoryNotificationDialog.display();
         }
 

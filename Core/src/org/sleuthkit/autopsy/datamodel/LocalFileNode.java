@@ -100,11 +100,16 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
                 logger.log(Level.WARNING, "Unable to add unzip with password action to context menus", ex);
             }
         }
-
+        
         actionsList.add(null);
         actionsList.addAll(Arrays.asList(super.getActions(true)));
-
+        
         return actionsList.toArray(new Action[actionsList.size()]);
+    }
+
+    @Override
+    public <T> T accept(ContentNodeVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     @Override
