@@ -22,9 +22,9 @@
 
         <dependency conf="core->default" org="org.apache.commons" name="commons-dbcp2" rev="2.9.0"/>
 
-        <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.14.3"/>
+        <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.16.1"/>
 
-        <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.17.0"/>
+        <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.18.0"/>
         <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
 
         <dependency conf="core->default" org="com.googlecode.libphonenumber" name="libphonenumber" rev="8.12.45" />
@@ -33,7 +33,7 @@
         <dependency conf="core->default" org="org.jfree" name="jfreechart" rev="1.5.3"/>
 
         <!-- for yaml reading/writing -->
-        <dependency conf="core->default" org="org.yaml" name="snakeyaml" rev="1.30"/>
+        <dependency conf="core->default" org="org.yaml" name="snakeyaml" rev="2.0"/>
 
         <!-- map support for geolocation -->
         <dependency conf="core->default" org="org.jxmapviewer" name="jxmapviewer2" rev="2.6"/>
@@ -77,8 +77,8 @@
         
         <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>
         <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
-        <override org="com.google.guava" module="guava" rev="31.1-jre"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.13.2"/>
+        <override org="com.google.guava" module="guava" rev="32.0.1-jre"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.15.2"/>
 
         <!-- changes to bouncy castle version may also be reflected in thirdparty/IcePDF 6.2.2 -->
         <override org="org.bouncycastle" module="bcprov-ext-jdk15on" rev="1.70"/>
