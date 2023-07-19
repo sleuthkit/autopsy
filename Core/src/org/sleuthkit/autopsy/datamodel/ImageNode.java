@@ -173,11 +173,6 @@ public class ImageNode extends AbstractContentNode<Image> {
     }
 
     @Override
-    public <T> T accept(ContentNodeVisitor<T> visitor) {
-        return visitor.visit(this);
-    }
-
-    @Override
     public boolean isLeafTypeNode() {
         return false;
     }

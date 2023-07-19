@@ -1,0 +1,38 @@
+ActionFactory_getViewResultArtifactActions_result_text=View Source Result
+ActionFactory_getViewResultArtifactActions_timeline_text=View Source Result in Timeline...
+ActionFactory_getViewSrcContentAction_type_DataArtifact=Data Artifact
+ActionFactory_getViewSrcContentAction_type_File=File
+ActionFactory_getViewSrcContentAction_type_OSAccount=OS Account
+ActionFactory_getViewSrcContentAction_type_unknown=Item
+ActionFactory_openFileSearchByAttr_text=Open File Search by Attributes
+ActionsFactory_Collapse_All_Name=Collapse All
+# {0} - type
+ActionsFactory_getAssociatedFileActions_viewAssociatedFileAction=View {0} in Directory
+# {0} - type
+ActionsFactory_getAssociatedFileActions_viewAssociatedFileInTimelineAction=View {0} in Timeline...
+ActionsFactory_getAssociatedTypeStr_associated=Associated File
+ActionsFactory_getAssociatedTypeStr_webCache=Cached File
+ActionsFactory_getAssociatedTypeStr_webDownload=Downloaded File
+ActionsFactory_getSrcContentViewerActions_openInExtViewer=Open in External Viewer  Ctrl+E
+ActionsFactory_getSrcContentViewerActions_viewInNewWin=View Item in New Window
+ActionsFactory_getTimelineArtifactAction_displayName=View Selected Item in Timeline... 
+# {0} - contentType
+ActionsFactory_getTimelineSrcContentAction_actionDisplayName=View Source {0} in Timeline... 
+ActionsFactory_viewFileInDir_text=View File in Directory
+# {0} - contentType
+ArtifactFactory_getViewSrcContentAction_displayName=View Source {0} in Directory
+# {0} - contentType
+ArtifactFactory_getViewSrcContentAction_displayName2=View Source {0}
+DeleteAnalysisResultAction_label=Delete Analysis Result
+DeleteAnalysisResultsAction.label=Delete Analysis Results
+# {0} - result type
+DeleteAnalysisResultsAction.progress.allResults=Deleting Analysis Results type {0}
+# {0} - result type
+# {1} - configuration
+DeleteAnalysisResultsAction.progress.allResultsWithConfiguration=Deleting Analysis Results type {0} and configuration {1}
+DeleteAnalysisResultsAction.title=Deleting Analysis Results
+# {0} - result type
+DeleteAnalysisResultsAction.warning.allResults=Are you sure you want to delete all Analysis Results of type {0}?
+# {0} - result type
+# {1} - configuration
+DeleteAnalysisResultsAction.warning.allResultsWithConfiguration=Are you sure you want to delete all Analysis Results of type {0} and configuration {1}?

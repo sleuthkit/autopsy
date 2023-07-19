@@ -38,6 +38,9 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
+    private static final int PAGE_SIZE_INTERVAL = 100;
+    private static final int PAGE_SIZE_MAX = 50000;
+    
     private final boolean immediateUpdates;
 
     /**
@@ -104,9 +107,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             radioGroupByDataType.setEnabled(false);
             radioGroupByPersonHost.setEnabled(false);
         }
-
-        // Current Session Settings
-        hideRejectedResultsCheckbox.setSelected(DirectoryTreeTopComponent.getDefault().getShowRejectedResults() == false);
     }
 
     @Override
@@ -126,8 +126,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setResultsTablePageSize((int) maxResultsSpinner.getValue());
 
         storeGroupItemsInTreeByDataSource();
-
-        DirectoryTreeTopComponent.getDefault().setShowRejectedResults(hideRejectedResultsCheckbox.isSelected() == false);
     }
 
     /**
@@ -184,8 +182,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         currentCaseSettingsPanel = new javax.swing.JPanel();
         radioGroupByPersonHost = new javax.swing.JRadioButton();
         radioGroupByDataType = new javax.swing.JRadioButton();
-        currentSessionSettingsPanel = new javax.swing.JPanel();
-        hideRejectedResultsCheckbox = new javax.swing.JCheckBox();
 
         setMinimumSize(new java.awt.Dimension(727, 520));
         setPreferredSize(new java.awt.Dimension(727, 520));
@@ -306,7 +302,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         org.openide.awt.Mnemonics.setLocalizedText(maxResultsLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maxResultsLabel.text")); // NOI18N
         maxResultsLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maxResultsLabel.toolTipText")); // NOI18N
 
-        maxResultsSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50000, 10000));
+        maxResultsSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, PAGE_SIZE_MAX, PAGE_SIZE_INTERVAL));
         maxResultsSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 maxResultsSpinnerStateChanged(evt);
@@ -354,7 +350,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                             .addComponent(displayTimeLabel)
                             .addComponent(selectFileLabel)
                             .addComponent(translateTextLabel))))
-                .addContainerGap(94, Short.MAX_VALUE))
+                .addContainerGap(107, Short.MAX_VALUE))
         );
         globalSettingsPanelLayout.setVerticalGroup(
             globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -446,31 +442,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                 .addGap(0, 6, Short.MAX_VALUE))
         );
 
-        currentSessionSettingsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.currentSessionSettingsPanel.border.title"))); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(hideRejectedResultsCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.hideRejectedResultsCheckbox.text")); // NOI18N
-        hideRejectedResultsCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                hideRejectedResultsCheckboxActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout currentSessionSettingsPanelLayout = new javax.swing.GroupLayout(currentSessionSettingsPanel);
-        currentSessionSettingsPanel.setLayout(currentSessionSettingsPanelLayout);
-        currentSessionSettingsPanelLayout.setHorizontalGroup(
-            currentSessionSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(currentSessionSettingsPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(hideRejectedResultsCheckbox)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        currentSessionSettingsPanelLayout.setVerticalGroup(
-            currentSessionSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(currentSessionSettingsPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(hideRejectedResultsCheckbox))
-        );
-
         javax.swing.GroupLayout viewPreferencesPanelLayout = new javax.swing.GroupLayout(viewPreferencesPanel);
         viewPreferencesPanel.setLayout(viewPreferencesPanelLayout);
         viewPreferencesPanelLayout.setHorizontalGroup(
@@ -478,7 +449,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, viewPreferencesPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(viewPreferencesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(currentSessionSettingsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(currentCaseSettingsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(globalSettingsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -489,9 +459,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                 .addComponent(globalSettingsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(currentCaseSettingsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(currentSessionSettingsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         viewPreferencesScrollPane.setViewportView(viewPreferencesPanel);
@@ -507,14 +475,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             .addComponent(viewPreferencesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void hideRejectedResultsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_hideRejectedResultsCheckboxActionPerformed
-        if (immediateUpdates) {
-            DirectoryTreeTopComponent.getDefault().setShowRejectedResults(hideRejectedResultsCheckbox.isSelected() == false);
-        } else {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
-    }//GEN-LAST:event_hideRejectedResultsCheckboxActionPerformed
 
     private void maxResultsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_maxResultsSpinnerStateChanged
         if (immediateUpdates) {
@@ -650,7 +610,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup curCaseRadioGroup;
     private javax.swing.JPanel currentCaseSettingsPanel;
-    private javax.swing.JPanel currentSessionSettingsPanel;
     private javax.swing.JCheckBox dataSourcesHideKnownCheckbox;
     private javax.swing.JCheckBox dataSourcesHideSlackCheckbox;
     private javax.swing.JLabel displayTimeLabel;
@@ -659,7 +618,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel hideKnownFilesLabel;
     private javax.swing.JCheckBox hideOtherUsersTagsCheckbox;
     private javax.swing.JLabel hideOtherUsersTagsLabel;
-    private javax.swing.JCheckBox hideRejectedResultsCheckbox;
     private javax.swing.JLabel hideSlackFilesLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JRadioButton keepCurrentViewerRadioButton;

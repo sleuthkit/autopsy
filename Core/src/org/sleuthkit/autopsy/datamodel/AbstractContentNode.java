@@ -36,8 +36,11 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.mainui.datamodel.FileSystemContentSearchParam;
+import org.sleuthkit.autopsy.corecomponents.SelectionResponder;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Score;
@@ -53,7 +56,7 @@ import org.sleuthkit.datamodel.TskException;
  *
  * @param <T> type of wrapped Content
  */
-public abstract class AbstractContentNode<T extends Content> extends ContentNode {
+public abstract class AbstractContentNode<T extends Content> extends ContentNode implements SelectionResponder {
 
     /**
      * Underlying Sleuth Kit Content object
@@ -114,6 +117,11 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
         this.content = content;
         //super.setName(ContentUtils.getSystemName(content));
         super.setName("content_" + Long.toString(content.getId())); //NON-NLS
+    }
+    
+    @Override
+    public void respondSelection(DataResultTopComponent dataResultPanel) {
+         dataResultPanel.displayFileSystemContent(new FileSystemContentSearchParam(content.getId()));
     }
 
     /**

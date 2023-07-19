@@ -764,7 +764,7 @@ public final class UserPreferences {
      * @return Saved value or default (10,000).
      */
     public static int getResultsTablePageSize() {
-        return viewPreferences.getInt(RESULTS_TABLE_PAGE_SIZE, 10_000);
+        return viewPreferences.getInt(RESULTS_TABLE_PAGE_SIZE, 1000);
     }
 
     /**

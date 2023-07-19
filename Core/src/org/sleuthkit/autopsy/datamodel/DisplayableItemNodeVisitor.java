@@ -25,15 +25,7 @@ import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCaseNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonpropertiessearch.InstanceDataSourceNode;
-import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
-import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
-import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
-import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
-import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
-import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.allcasessearch.CorrelationAttributeInstanceNode;
-import org.sleuthkit.autopsy.datamodel.ScoreContent.ScoreContentsNode;
-import org.sleuthkit.autopsy.datamodel.ScoreContent.ScoreContentsChildren.ScoreContentNode;
 
 /**
  * Visitor pattern that goes over all nodes in the directory tree. This includes
@@ -44,8 +36,6 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Data Sources Area
      */
-    T visit(DataSourceFilesNode in);
-
     T visit(LayoutFileNode lfn);
 
     T visit(LocalFileNode dfn);
@@ -70,57 +60,7 @@ public interface DisplayableItemNodeVisitor<T> {
     /*
      * Views Area
      */
-    T visit(ViewsNode vn);
-
-    T visit(DataSourceGroupingNode dataSourceGroupingNode);
-
-    T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileExtensionNode fsfn);
-
-    T visit(DeletedContentNode dcn);
-
-    T visit(DeletedContentsNode dcn);
-
-    T visit(ScoreContentNode scn);
-    
-    T visit(ScoreContentsNode scn);
-    
-    T visit(FileSizeRootNode fsrn);
-
-    T visit(FileSizeNode fsn);
-
-    T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode sfn);
-
-    T visit(RecentFilesNode rfn);
-
-    T visit(RecentFilesFilterNode rffn);
-
     T visit(BlackboardArtifactNode ban);
-
-    T visit(Artifacts.TypeNode atn);
-
-    T visit(Artifacts.BaseArtifactNode ecn);
-
-    T visit(KeywordHits.RootNode khrn);
-
-    T visit(KeywordHits.ListNode khsn);
-
-    T visit(KeywordHits.TermNode khmln);
-
-    T visit(KeywordHits.RegExpInstanceNode khmln);
-
-    T visit(HashsetHits.RootNode hhrn);
-
-    T visit(HashsetHits.HashsetNameNode hhsn);
-
-    T visit(EmailExtracted.RootNode eern);
-
-    T visit(EmailExtracted.AccountNode eean);
-
-    T visit(EmailExtracted.FolderNode eefn);
-
-    T visit(InterestingHits.RootNode ihrn);
-
-    T visit(InterestingHits.SetNameNode ihsn);
 
     T visit(CommonAttributeValueNode cavn);
 
@@ -143,48 +83,10 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(Tags.RootNode node);
 
-    T visit(Tags.TagNameNode node);
-
-    T visit(Tags.ContentTagTypeNode node);
-
-    T visit(ContentTagNode node);
-
-    T visit(Tags.BlackboardArtifactTagTypeNode node);
-
-    T visit(BlackboardArtifactTagNode node);
 
     /*
      * Reports
      */
-    T visit(Reports.ReportsListNode reportsNode);
-
-    T visit(Reports.ReportNode reportNode);
-
-    /*
-     * Accounts
-     */
-    T visit(Accounts.AccountsRootNode accountRootNode);
-
-    T visit(Accounts.CreditCardNumberAccountTypeNode accountTypeNode);
-
-    T visit(Accounts.ByBINNode byArtifactNode);
-
-    T visit(Accounts.ByFileNode byFileNode);
-
-    T visit(Accounts.FileWithCCNNode byFileNode);
-
-    T visit(Accounts.BINNode binNode);
-
-    T visit(Accounts.DefaultAccountTypeNode node);
-
-    T visit(FileTypes.FileTypesNode fileTypes);
-
-    T visit(FileTypesByMimeType.ByMimeTypeNode ftByMimeTypeNode);
-
-    T visit(FileTypesByMimeType.MediaTypeNode ftByMimeTypeMediaType);
-
-    T visit(FileTypesByMimeType.MediaSubTypeNode ftByMimeTypeMediaSubType);
-
     T visit(EmptyNode.MessageNode emptyNode);
 
     /*
@@ -192,22 +94,13 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(AttachmentNode node);
 
-    T visit(OsAccounts.OsAccountNode node);
-
-    T visit(OsAccounts.OsAccountListNode node);
-
-    T visit(PersonNode node);
-
-    T visit(HostNode node);
-
-    T visit(DataSourcesNode node);
-
     /*
      * Unsupported node
      */
     T visit(UnsupportedContentNode ucn);
 
     T visit(LocalFilesDataSourceNode lfdsn);
+    
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -302,158 +195,8 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(Artifacts.TypeNode atn) {
-            return defaultVisit(atn);
-        }
-
-        @Override
-        public T visit(Artifacts.BaseArtifactNode ecn) {
-            return defaultVisit(ecn);
-        }
-
-        @Override
-        public T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileExtensionNode fsfn) {
-            return defaultVisit(fsfn);
-        }
-
-        @Override
-        public T visit(FileTypesByMimeType.ByMimeTypeNode ftByMimeTypeNode) {
-            return defaultVisit(ftByMimeTypeNode);
-        }
-
-        @Override
-        public T visit(FileTypesByMimeType.MediaTypeNode ftByMimeTypeMediaTypeNode) {
-            return defaultVisit(ftByMimeTypeMediaTypeNode);
-        }
-
-        @Override
-        public T visit(FileTypesByMimeType.MediaSubTypeNode ftByMimeTypeMediaTypeNode) {
-            return defaultVisit(ftByMimeTypeMediaTypeNode);
-        }
-
-        @Override
         public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
             return defaultVisit(ftByMimeTypeEmptyNode);
-        }
-
-        @Override
-        public T visit(DeletedContentNode dcn) {
-            return defaultVisit(dcn);
-        }
-
-        @Override
-        public T visit(ScoreContentNode scn) {
-            return defaultVisit(scn);
-        }
-
-        @Override
-        public T visit(ScoreContentsNode scn) {
-            return defaultVisit(scn);
-        }
-        
-        @Override
-        public T visit(DeletedContentsNode dcn) {
-            return defaultVisit(dcn);
-        }
-
-        @Override
-        public T visit(FileSizeRootNode fsrn) {
-            return defaultVisit(fsrn);
-        }
-
-        @Override
-        public T visit(FileSizeNode fsn) {
-            return defaultVisit(fsn);
-        }
-
-        @Override
-        public T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode sfn) {
-            return defaultVisit(sfn);
-        }
-
-        @Override
-        public T visit(RecentFilesNode rfn) {
-            return defaultVisit(rfn);
-        }
-
-        @Override
-        public T visit(RecentFilesFilterNode rffn) {
-            return defaultVisit(rffn);
-        }
-
-        @Override
-        public T visit(KeywordHits.RootNode khrn) {
-            return defaultVisit(khrn);
-        }
-
-        @Override
-        public T visit(KeywordHits.ListNode khsn) {
-            return defaultVisit(khsn);
-        }
-
-        @Override
-        public T visit(KeywordHits.RegExpInstanceNode khsn) {
-            return defaultVisit(khsn);
-        }
-
-        @Override
-        public T visit(KeywordHits.TermNode khmln) {
-            return defaultVisit(khmln);
-        }
-
-        @Override
-        public T visit(ViewsNode vn) {
-            return defaultVisit(vn);
-        }
-
-        @Override
-        public T visit(DataSourceGroupingNode dataSourceGroupingNode) {
-            return defaultVisit(dataSourceGroupingNode);
-        }
-
-        @Override
-        public T visit(FileTypesNode ft) {
-            return defaultVisit(ft);
-        }
-
-        @Override
-        public T visit(DataSourceFilesNode in) {
-            return defaultVisit(in);
-        }
-
-        @Override
-        public T visit(HashsetHits.RootNode hhrn) {
-            return defaultVisit(hhrn);
-        }
-
-        @Override
-        public T visit(HashsetHits.HashsetNameNode hhsn) {
-            return defaultVisit(hhsn);
-        }
-
-        @Override
-        public T visit(InterestingHits.RootNode ihrn) {
-            return defaultVisit(ihrn);
-        }
-
-        @Override
-        public T visit(InterestingHits.SetNameNode ihsn) {
-            return defaultVisit(ihsn);
-        }
-
-        @Override
-        public T visit(EmailExtracted.RootNode eern) {
-            return defaultVisit(eern);
-        }
-
-        @Override
-        public T visit(EmailExtracted.AccountNode eean) {
-            return defaultVisit(eean);
-        }
-
-        @Override
-        public T visit(EmailExtracted.FolderNode eefn) {
-            return defaultVisit(eefn);
         }
 
         @Override
@@ -482,102 +225,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(Tags.TagNameNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Tags.ContentTagTypeNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(ContentTagNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Tags.BlackboardArtifactTagTypeNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(BlackboardArtifactTagNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Reports.ReportsListNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Reports.ReportNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.CreditCardNumberAccountTypeNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.AccountsRootNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.ByBINNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.ByFileNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.FileWithCCNNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.BINNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(Accounts.DefaultAccountTypeNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
         public T visit(AttachmentNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(OsAccounts.OsAccountNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(OsAccounts.OsAccountListNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(HostNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(DataSourcesNode node) {
-            return defaultVisit(node);
-        }
-
-        @Override
-        public T visit(PersonNode node) {
             return defaultVisit(node);
         }
 

@@ -36,7 +36,7 @@ public class AnalysisResultItem extends BlackboardArtifactItem<AnalysisResult> {
      * @param sourceContent The source content of the AnalysisResult.
      */
     @Beta
-    AnalysisResultItem(AnalysisResult analysisResult, Content sourceContent) {
+    public AnalysisResultItem(AnalysisResult analysisResult, Content sourceContent) {
         super(analysisResult, sourceContent);
     }
 

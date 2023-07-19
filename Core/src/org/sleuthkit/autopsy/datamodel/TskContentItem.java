@@ -42,7 +42,7 @@ public class TskContentItem<T extends Content> {
      *
      */
     @Beta
-    TskContentItem(T content) {
+    public TskContentItem(T content) {
         this.content = content;
     }
 
