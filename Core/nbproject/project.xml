@@ -67,6 +67,14 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.netbeans.modules.keyring</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>1.41</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.netbeans.modules.options.api</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -165,14 +173,6 @@
                         <specification-version>9.29</specification-version>
                     </run-dependency>
                 </dependency>
-                <!-- <dependency>
-                    <code-name-base>org.openide.filesystems.compat8</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <specification-version>9.26</specification-version>
-                    </run-dependency>
-                </dependency> -->
                 <dependency>
                     <code-name-base>org.openide.filesystems.nb</code-name-base>
                     <build-prerequisite/>
@@ -449,6 +449,10 @@
                 <binary-origin>release/modules/ext/checker-qual-3.33.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-codec-1.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.11.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-dbcp2-2.9.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-dbcp2-2.9.0.jar</binary-origin>
             </class-path-extension>
@@ -499,6 +503,22 @@
             <class-path-extension>
                 <runtime-relative-path>ext/guava-32.0.1-jre.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/guava-32.0.1-jre.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpclient-4.5.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpclient-4.5.14.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpclient-win-4.5.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpclient-win-4.5.14.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpcore-4.4.16.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpcore-4.4.16.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpmime-4.5.14.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpmime-4.5.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/icepdf-core-6.2.2.jar</runtime-relative-path>
@@ -561,6 +581,10 @@
                 <binary-origin>release/modules/ext/jaxb-runtime-2.3.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jdom-2.0.5-contrib.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jdom-2.0.5-contrib.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
             </class-path-extension>
@@ -595,6 +619,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/libphonenumber-8.12.45.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/libphonenumber-8.12.45.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/license4j-runtime-library-4.7.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/license4j-runtime-library-4.7.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/listenablefuture-1.0.jar</runtime-relative-path>

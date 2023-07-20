@@ -1,0 +1,55 @@
+
+# Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+# Click nbfs://nbhost/SystemFileSystem/Templates/Other/properties.properties to edit this template
+
+
+CTLicenseDialog.licenseNumberLabel.text=License Number:
+CTLicenseDialog.licenseNumberTextField.text=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+CTLicenseDialog.cancelButton.text=Cancel
+CTLicenseDialog.okButton.text=Ok
+CTLicenseDialog.warningLabel.text=
+CTLicenseDialog_verifyInput_licenseNumberError=<html>Please verify license number format of 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'</html>
+CTMalwareScannerOptionsPanel.hashLookupsRemainingLabel.text=
+CTMalwareScannerOptionsPanel.licenseInfoMessageLabel.text=
+CTMalwareScannerOptionsPanel.countersResetLabel.text=
+CTMalwareScannerOptionsPanel.licenseInfoPanel.border.title=License Info
+CTMalwareScannerOptionsPanel.maxFileUploadsLabel.text=
+CTMalwareScannerOptionsPanel.maxHashLookupsLabel.text=
+CTMalwareScannerOptionsPanel.malwareScansMessageLabel.text=
+CTMalwareScannerOptionsPanel.malwareScansPanel.border.title=Malware Scans
+CTMalwareScannerOptionsPanel.licenseInfoAddButton.text=Add License
+CTMalwareScannerOptionsPanel.licenseInfoIdLabel.text=
+CTMalwareScannerOptionsPanel.licenseInfoExpiresLabel.text=
+CTMalwareScannerOptionsPanel.fileUploadsRemainingLabel.text=
+CTMalwareScannerOptionsPanel.licenseInfoUserLabel.text=
+CTMalwareScannerOptionsPanel_licenseAddDialog_desc=License Number:
+CTMalwareScannerOptionsPanel_licenseAddDialog_title=Add a License...
+CTMalwareScannerOptionsPanel_licenseAddDialogEnteredErr_desc=The license number has already been entered
+CTMalwareScannerOptionsPanel_licenseAddDialogEnteredErr_title=License Number Already Entered
+CTMalwareScannerOptionsPanel_licenseAddDialogPatternErr_desc=Please verify that license number is of format 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'
+CTMalwareScannerOptionsPanel_licenseAddDialogPatternErr_title=Invalid License Number
+CTMalwareScannerOptionsPanel_LicenseFetcher_apiErr_title=Server Error
+CTMalwareScannerOptionsPanel_LicenseFetcher_localErr_desc=A general error occurred while fetching license information.  Please try again later.
+CTMalwareScannerOptionsPanel_LicenseFetcher_localErr_title=General Error
+# {0} - expiresDate
+CTMalwareScannerOptionsPanel_licenseInfo_expires=Expires: {0}
+# {0} - idNumber
+CTMalwareScannerOptionsPanel_licenseInfo_id=ID: {0}
+# {0} - userName
+# {1} - email
+CTMalwareScannerOptionsPanel_licenseInfo_userInfo=<html>User: {0}<br/>Email: {1}</html>
+# {0} - countersResetDate
+CTMalwareScannerOptionsPanel_malwareScans_countersReset=Counters reset: {0}
+# {0} - fileUploadsRemaining
+CTMalwareScannerOptionsPanel_malwareScans_fileUploadsRemaining=File uploads remaining: {0}
+# {0} - hashLookupsRemaining
+CTMalwareScannerOptionsPanel_malwareScans_hashLookupsRemaining=Hash lookups remaining: {0}
+# {0} - maxDailyFileLookups
+CTMalwareScannerOptionsPanel_malwareScans_maxDailyFileLookups=Max file uploads: {0}/day
+# {0} - maxDailyLookups
+CTMalwareScannerOptionsPanel_malwareScans_maxDailyHashLookups=Max Hash lookups: {0}/day
+CTMalwareScannerOptionsPanel_MalwareScansFetcher_apiErr_title=Server Error
+CTMalwareScannerOptionsPanel_MalwareScansFetcher_localErr_desc=A general error occurred while fetching malware scans information.  Please try again later.
+CTMalwareScannerOptionsPanel_MalwareScansFetcher_localErr_title=General Error
+CTOPtionsPanel_loadLicenseInfo_loading=Loading...
+CTOPtionsPanel_loadMalwareScansInfo_loading=Loading...
