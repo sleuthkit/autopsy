@@ -20,9 +20,7 @@ import java.time.ZonedDateTime;
 /**
  * POJO for an auth token response.
  */
-public class AuthTokenResponse {
-    private final String token;
-    private final String apiKey;
+public class AuthTokenResponse extends AuthenticatedRequestData {
     private final Long hashLookupCount;
     private final Long hashLookupLimit;
     private final Long fileUploadLimit;
@@ -49,14 +47,6 @@ public class AuthTokenResponse {
         this.fileUploadCount = fileUploadCount;
         this.fileUploadUrl = fileUploadUrl;
         this.expiration = expiration;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public String getApiKey() {
-        return apiKey;
     }
 
     public Long getHashLookupCount() {

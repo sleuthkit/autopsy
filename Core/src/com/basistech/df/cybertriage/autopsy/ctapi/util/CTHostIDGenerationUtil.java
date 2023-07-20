@@ -29,7 +29,7 @@ public class CTHostIDGenerationUtil {
 
     private static final Logger LOGGER = Logger.getLogger(CTHostIDGenerationUtil.class.getName());
     private static final String USER_NAME = System.getProperty("user.name");
-    private static String HOST_NAME = "";
+    private static String cachedId = "";
 
     /**
      * Host ID Algorithm: Get MAC address from License4J. Get MD5 hash of it and
@@ -41,17 +41,24 @@ public class CTHostIDGenerationUtil {
      * @return
      */
     public static String generateLicenseHostID() {
-        if (StringUtils.isBlank(HOST_NAME)) {
-
+        if (StringUtils.isBlank(cachedId)) {
             try {
-                HOST_NAME = StringUtils.defaultString(InetAddress.getLocalHost().getCanonicalHostName());
+                String hostName = StringUtils.defaultString(InetAddress.getLocalHost().getCanonicalHostName());
+                String macAddressMd5 = StringUtils.isNotBlank(HardwareID.getHardwareIDFromEthernetAddress())
+                        ? Md5HashUtil.getMD5MessageDigest(HardwareID.getHardwareIDFromEthernetAddress()).substring(0, 16)
+                        : Md5HashUtil.getMD5MessageDigest(hostName).substring(0, 16);
+
+                String usernameMd5 = StringUtils.isNotBlank(USER_NAME)
+                        ? Md5HashUtil.getMD5MessageDigest(USER_NAME).substring(0, 16)
+                        : Md5HashUtil.getMD5MessageDigest(hostName).substring(0, 16);
+
+                cachedId = macAddressMd5 + "_" + usernameMd5;
+
             } catch (UnknownHostException ex) {
-                LOGGER.log(Level.WARNING, "UNable to determine host name.", ex);
+                LOGGER.log(Level.WARNING, "Unable to determine host name.", ex);
             }
         }
-        String macAddressMd5 = StringUtils.isNotBlank(HardwareID.getHardwareIDFromEthernetAddress()) ? Md5HashUtil.getMD5MessageDigest(HardwareID.getHardwareIDFromEthernetAddress()).substring(0, 16) : Md5HashUtil.getMD5MessageDigest(HOST_NAME).substring(0, 16);
-        String usernameMd5 = StringUtils.isNotBlank(USER_NAME) ? Md5HashUtil.getMD5MessageDigest(USER_NAME).substring(0, 16) : Md5HashUtil.getMD5MessageDigest(HOST_NAME).substring(0, 16);
-        String md5 = macAddressMd5 + "_" + usernameMd5;
-        return md5;
+
+        return cachedId;
     }
 }

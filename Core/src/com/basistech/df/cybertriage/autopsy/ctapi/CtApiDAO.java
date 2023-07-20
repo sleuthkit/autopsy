@@ -15,50 +15,52 @@ package com.basistech.df.cybertriage.autopsy.ctapi;
 
 import com.basistech.df.cybertriage.autopsy.ctapi.json.AuthTokenRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.AuthTokenResponse;
+import com.basistech.df.cybertriage.autopsy.ctapi.json.AuthenticatedRequestData;
+import com.basistech.df.cybertriage.autopsy.ctapi.json.FileReputationRequest;
+import com.basistech.df.cybertriage.autopsy.ctapi.json.FileReputationResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.FileReputationResult;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.LicenseRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.LicenseResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.util.CTHostIDGenerationUtil;
-import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collections;
 import java.util.List;
+import org.apache.commons.collections.CollectionUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  *
  * Data access layer for handling the CT api.
  */
-public class CtApiDAO {
+public class CTApiDAO {
 
     private static final String LICENSE_REQUEST_PATH = "/_ah/api/license/v1/activate";
     private static final String AUTH_TOKEN_REQUEST_PATH = "/_ah/api/auth/v2/generate_token";
+    private static final String CTCLOUD_SERVER_HASH_PATH = "/_ah/api/reputation/v1/query/file/hash/md5?query_types=CORRELATION,MALWARE";
 
-    private static final CtApiDAO instance = new CtApiDAO();
-    private final ObjectMapper mapper = ObjectMapperUtil.getInstance().getDefaultObjectMapper();
+    private static final CTApiDAO instance = new CTApiDAO();
+    
 
-    private CtApiDAO() {
+    private CTApiDAO() {
     }
 
-    public static CtApiDAO getInstance() {
+    public static CTApiDAO getInstance() {
         return instance;
     }
-    
+
     private static String getAppVersion() {
         return Version.getName() + " " + Version.getVersion();
     }
+    
+    private final CTCloudHttpClient httpClient = CTCloudHttpClient.getInstance();
 
-    private <T> T doPost(String urlPath, Object requestBody, Class<T> responseTypeRef) throws CTCloudException {
-        return null;
-        // TODO
-    }
 
     public LicenseResponse getLicenseInfo(String licenseString) throws CTCloudException {
         LicenseRequest licenseRequest = new LicenseRequest()
                 .setBoostLicenseCode(licenseString)
                 .setHostId(CTHostIDGenerationUtil.generateLicenseHostID())
                 .setProduct(getAppVersion());
-        
-        return doPost(LICENSE_REQUEST_PATH, licenseRequest, LicenseResponse.class);
+
+        return httpClient.doPost(LICENSE_REQUEST_PATH, licenseRequest, LicenseResponse.class);
 
     }
 
@@ -67,14 +69,25 @@ public class CtApiDAO {
                 .setAutopsyVersion(getAppVersion())
                 .setRequestFileUpload(true)
                 .setBoostLicenseId(boostLicenseId);
-        
-        return doPost(AUTH_TOKEN_REQUEST_PATH, authTokenRequest, AuthTokenResponse.class);
+
+        return httpClient.doPost(AUTH_TOKEN_REQUEST_PATH, authTokenRequest, AuthTokenResponse.class);
     }
 
-    public List<FileReputationResult> getReputationResults(String authToken, List<String> md5Hashes) throws CTCloudException {
-        // TODO
-//        return cloudServiceApi.lookupFileResults(md5Hashes, HashTypes.md5);
-        return null;
+    public List<FileReputationResult> getReputationResults(AuthenticatedRequestData authenticatedRequestData, List<String> md5Hashes) throws CTCloudException {
+        if (CollectionUtils.isEmpty(md5Hashes)) {
+            return Collections.emptyList();
+        }
+
+        FileReputationRequest fileRepReq = new FileReputationRequest()
+                .setApiKey(authenticatedRequestData.getApiKey())
+                .setHostId(CTHostIDGenerationUtil.generateLicenseHostID())
+                .setToken(authenticatedRequestData.getToken())
+                .setHashes(md5Hashes);
+
+        FileReputationResponse resp = httpClient.doPost(CTCLOUD_SERVER_HASH_PATH, fileRepReq, FileReputationResponse.class);
+        return resp == null || resp.getItems() == null
+                ? Collections.emptyList()
+                : resp.getItems();
     }
 
     public enum ResultType {
