@@ -29,16 +29,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -51,13 +43,10 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -121,7 +110,6 @@ public final class CaseMetadata {
     private static final String SCHEMA_VERSION_SIX = "6.0";
     private final static String CONTENT_PROVIDER_ELEMENT_NAME = "ContentProvider";
     private final static String CONTENT_PROVIDER_NAME_ELEMENT_NAME = "Name";
-    private final static String CONTENT_PROVIDER_ARG_DEFAULT_KEY = "DEFAULT";
     
     /*
      * Unread fields, regenerated on save.
@@ -136,7 +124,7 @@ public final class CaseMetadata {
     private String caseName;
     private CaseDetails caseDetails;
     private String caseDatabaseName;
-    private String caseDatabasePath; // Legacy
+    private String caseDatabasePath;
     private String textIndexName; // Legacy
     private String createdDate;
     private String createdByVersion;
@@ -640,6 +628,7 @@ public final class CaseMetadata {
                     this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, false);
                     break;
                 default:
+                    this.caseDatabasePath = getElementTextContent(caseElement, CASE_DB_ABSOLUTE_PATH_ELEMENT_NAME, false);
                     this.caseDatabaseName = getElementTextContent(caseElement, CASE_DB_NAME_RELATIVE_ELEMENT_NAME, true);
                     this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, false);
                     break;
@@ -653,7 +642,7 @@ public final class CaseMetadata {
              */
             Path possibleAbsoluteCaseDbPath = Paths.get(this.caseDatabaseName);
             Path caseDirectoryPath = Paths.get(getCaseDirectory());
-            if (possibleAbsoluteCaseDbPath.getNameCount() > 1) {
+            if (possibleAbsoluteCaseDbPath.toFile().isAbsolute()) {
                 this.caseDatabasePath = this.caseDatabaseName;
                 this.caseDatabaseName = caseDirectoryPath.relativize(possibleAbsoluteCaseDbPath).toString();
             } else {
@@ -722,12 +711,12 @@ public final class CaseMetadata {
      * @return The full path to the case database file for a single-user case.
      *
      * @throws UnsupportedOperationException If called for a multi-user case.
-     * @deprecated Do not use.
      */
-    @Deprecated
     public String getCaseDatabasePath() throws UnsupportedOperationException {
         if (Case.CaseType.SINGLE_USER_CASE == caseType) {
-            return Paths.get(getCaseDirectory(), caseDatabaseName).toString();
+            return StringUtils.isBlank(this.caseDatabasePath)
+                    ? this.metadataFilePath.resolve(this.caseDatabaseName).toString()
+                    : this.caseDatabasePath;
         } else {
             throw new UnsupportedOperationException();
         }

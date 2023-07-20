@@ -2739,12 +2739,7 @@ public class Case {
             ContentStreamProvider contentProvider = loadContentProvider(metadata.getContentProviderName());
             
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
-                // only prefix with metadata directory if databaseName is a relative path
-                String fullDatabasePath = (new File(databaseName).isAbsolute())
-                        ? databaseName
-                        : Paths.get(metadata.getCaseDirectory(), databaseName).toString();
-                        
-                caseDb = SleuthkitCase.openCase(fullDatabasePath, contentProvider);
+                caseDb = SleuthkitCase.openCase(metadata.getCaseDatabasePath(), contentProvider);
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
                 caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory(), contentProvider);
             } else {
