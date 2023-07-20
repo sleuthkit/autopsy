@@ -246,10 +246,9 @@ public final class CaseMetadata {
      * @return The case directory.
      */
     public String getCaseDirectory() {
-        File caseDatabaseNameFile = new File(caseDatabaseName);
-        return (caseDatabaseNameFile.isAbsolute())
-                ? caseDatabaseNameFile.getParent()
-                : metadataFilePath.getParent().toString();
+        return StringUtils.isBlank(this.caseDatabasePath)
+                ? metadataFilePath.getParent().toString()
+                : Paths.get(this.caseDatabasePath).getParent().toString();
     }
 
     /**
@@ -645,8 +644,6 @@ public final class CaseMetadata {
             if (possibleAbsoluteCaseDbPath.toFile().isAbsolute()) {
                 this.caseDatabasePath = this.caseDatabaseName;
                 this.caseDatabaseName = caseDirectoryPath.relativize(possibleAbsoluteCaseDbPath).toString();
-            } else {
-                this.caseDatabasePath = caseDirectoryPath.resolve(caseDatabaseName).toAbsolutePath().toString();
             }
 
         } catch (ParserConfigurationException | SAXException | IOException ex) {
