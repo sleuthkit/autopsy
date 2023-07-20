@@ -2729,6 +2729,7 @@ public class Case {
         "Case.progressMessage.openingCaseDatabase=Opening case database...",
         "# {0} - exception message", "Case.exceptionMessage.couldNotOpenCaseDatabase=Failed to open case database:\n{0}.",
         "# {0} - exception message", "Case.exceptionMessage.unsupportedSchemaVersionMessage=Unsupported case database schema version:\n{0}.",
+        "Case.exceptionMessage.contentProviderCouldNotBeFound=Content provider was specified for the case but could not be loaded.",
         "Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. See Tools, Options, Multi-User."
     })
     private void openCaseDataBase(ProgressIndicator progressIndicator) throws CaseActionException {
@@ -2737,6 +2738,9 @@ public class Case {
             String databaseName = metadata.getCaseDatabaseName();
             
             ContentStreamProvider contentProvider = loadContentProvider(metadata.getContentProviderName());
+            if (StringUtils.isNotBlank(metadata.getContentProviderName()) && contentProvider == null) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_contentProviderCouldNotBeFound());
+            }
             
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 caseDb = SleuthkitCase.openCase(metadata.getCaseDatabasePath(), contentProvider);

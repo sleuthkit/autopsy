@@ -712,7 +712,7 @@ public final class CaseMetadata {
     public String getCaseDatabasePath() throws UnsupportedOperationException {
         if (Case.CaseType.SINGLE_USER_CASE == caseType) {
             return StringUtils.isBlank(this.caseDatabasePath)
-                    ? this.metadataFilePath.resolve(this.caseDatabaseName).toString()
+                    ? this.metadataFilePath.getParent().resolve(this.caseDatabaseName).toString()
                     : this.caseDatabasePath;
         } else {
             throw new UnsupportedOperationException();
