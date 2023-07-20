@@ -258,7 +258,10 @@ public final class CaseMetadata {
      * @return The case directory.
      */
     public String getCaseDirectory() {
-        return metadataFilePath.getParent().toString();
+        File caseDatabaseNameFile = new File(caseDatabaseName);
+        return (caseDatabaseNameFile.isAbsolute())
+                ? caseDatabaseNameFile.getParent()
+                : metadataFilePath.getParent().toString();
     }
 
     /**
