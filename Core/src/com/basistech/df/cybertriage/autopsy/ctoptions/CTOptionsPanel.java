@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  * Options panel for CyberTriage.
  */
 public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
+
     private static final int MAX_SUBPANEL_WIDTH = 500;
 
     private static final Logger logger = Logger.getLogger(CTOptionsPanel.class.getName());
@@ -47,6 +48,16 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
         Collection<? extends CTOptionsSubPanel> coll = Lookup.getDefault().lookupAll(CTOptionsSubPanel.class);
         Stream<? extends CTOptionsSubPanel> panelStream = coll != null ? coll.stream() : Stream.empty();
         this.subPanels = panelStream
+                .map(panel -> {
+                    try {
+                        // lookup is returning singleton instances which means this panel gets messed up when accessed
+                        // from multiple places because the panel's children are being added to a different CTOptionsPanel
+                        return (CTOptionsSubPanel) panel.getClass().getConstructor().newInstance();
+                    } catch (Exception ex) {
+                        return null;
+                    }
+                })
+                .filter(item -> item != null)
                 .sorted(Comparator.comparing(p -> p.getClass().getSimpleName().toUpperCase()))
                 .collect(Collectors.toList());
         addSubOptionsPanels(this.subPanels);
@@ -64,7 +75,7 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
                     }
                 }
             });
-            
+
             GridBagConstraints gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.gridx = 0;
             gridBagConstraints.gridy = i;
@@ -76,29 +87,28 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
 
             contentPane.add(subPanel, gridBagConstraints);
         }
-        
-            GridBagConstraints verticalConstraints = new GridBagConstraints();
-            verticalConstraints.gridx = 0;
-            verticalConstraints.gridy = subPanels.size();
-            verticalConstraints.weighty = 1;
-            verticalConstraints.weightx = 0;
-            
-            JPanel verticalSpacer = new JPanel();
-            
-            verticalSpacer.setMinimumSize(new Dimension(MAX_SUBPANEL_WIDTH, 0));
-            verticalSpacer.setPreferredSize(new Dimension(MAX_SUBPANEL_WIDTH, 0));
-            verticalSpacer.setMaximumSize(new Dimension(MAX_SUBPANEL_WIDTH, Short.MAX_VALUE));
-            contentPane.add(verticalSpacer, verticalConstraints);
-            
-            
-            GridBagConstraints horizontalConstraints = new GridBagConstraints();
-            horizontalConstraints.gridx = 1;
-            horizontalConstraints.gridy = 0;
-            horizontalConstraints.weighty = 0;
-            horizontalConstraints.weightx = 1;
-            
-            JPanel horizontalSpacer = new JPanel();
-            contentPane.add(horizontalSpacer, horizontalConstraints);
+
+        GridBagConstraints verticalConstraints = new GridBagConstraints();
+        verticalConstraints.gridx = 0;
+        verticalConstraints.gridy = subPanels.size();
+        verticalConstraints.weighty = 1;
+        verticalConstraints.weightx = 0;
+
+        JPanel verticalSpacer = new JPanel();
+
+        verticalSpacer.setMinimumSize(new Dimension(MAX_SUBPANEL_WIDTH, 0));
+        verticalSpacer.setPreferredSize(new Dimension(MAX_SUBPANEL_WIDTH, 0));
+        verticalSpacer.setMaximumSize(new Dimension(MAX_SUBPANEL_WIDTH, Short.MAX_VALUE));
+        contentPane.add(verticalSpacer, verticalConstraints);
+
+        GridBagConstraints horizontalConstraints = new GridBagConstraints();
+        horizontalConstraints.gridx = 1;
+        horizontalConstraints.gridy = 0;
+        horizontalConstraints.weighty = 0;
+        horizontalConstraints.weightx = 1;
+
+        JPanel horizontalSpacer = new JPanel();
+        contentPane.add(horizontalSpacer, horizontalConstraints);
     }
 
     /**
