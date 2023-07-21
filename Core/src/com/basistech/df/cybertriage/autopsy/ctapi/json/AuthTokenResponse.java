@@ -24,13 +24,16 @@ import java.time.Instant;
  * POJO for an auth token response.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AuthTokenResponse extends AuthenticatedRequestData {
+public class AuthTokenResponse {
+
     private final Long hashLookupCount;
     private final Long hashLookupLimit;
     private final Long fileUploadLimit;
     private final Long fileUploadCount;
     private final String fileUploadUrl;
     private final Instant expiration;
+    private final String token;
+    private final String apiKey;
 
     @JsonCreator
     public AuthTokenResponse(
@@ -41,7 +44,7 @@ public class AuthTokenResponse extends AuthenticatedRequestData {
             @JsonProperty("fileUploadLimit") Long fileUploadLimit,
             @JsonProperty("fileUploadCount") Long fileUploadCount,
             @JsonProperty("fileUploadUrl") String fileUploadUrl,
-            @JsonDeserialize(using=InstantEpochSecsDeserializer.class)
+            @JsonDeserialize(using = InstantEpochSecsDeserializer.class)
             @JsonProperty("expiration") Instant expiration
     ) {
         this.token = token;
@@ -77,4 +80,13 @@ public class AuthTokenResponse extends AuthenticatedRequestData {
     public Instant getExpiration() {
         return expiration;
     }
+
+    public String getToken() {
+        return token;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
 }

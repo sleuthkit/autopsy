@@ -30,7 +30,10 @@ import java.security.UnrecoverableKeyException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.logging.Level;
 import javax.net.ssl.KeyManager;
@@ -39,6 +42,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -121,17 +126,33 @@ public class CTCloudHttpClient {
                 null
         );
     }
-
+    
     public <O> O doPost(String urlPath, Object jsonBody, Class<O> classType) throws CTCloudException {
+        return doPost(urlPath, Collections.emptyMap(), jsonBody, classType);
+    }
+
+    public <O> O doPost(String urlPath, Map<String, String> urlReqParams, Object jsonBody, Class<O> classType) throws CTCloudException {
         String url = Constants.CT_CLOUD_SERVER + urlPath;
         try {
 
             LOGGER.log(Level.INFO, "initiating http connection to ctcloud server");
             try (CloseableHttpClient httpclient = createConnection(getProxySettings(), sslContext)) {
                 URIBuilder builder = new URIBuilder(url);
+                
+                if (!MapUtils.isEmpty(urlReqParams)) {
+                    for (Entry<String, String> e : urlReqParams.entrySet()) {
+                        String key = e.getKey();
+                        String value = e.getValue();
+                        if (StringUtils.isNotBlank(key) || StringUtils.isNotBlank(value)) {
+                            builder.addParameter(key, value);
+                        }
+                    }
+                }
+
                 URI postURI = builder.build();
                 HttpPost postRequest = new HttpPost(postURI);
 
+                
                 configureRequestTimeout(postRequest);
                 postRequest.setHeader("Content-type", "application/json");
 

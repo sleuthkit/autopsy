@@ -13,17 +13,24 @@
  ************************************************************************** */
 package com.basistech.df.cybertriage.autopsy.ctapi.json;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /**
  * Data required for an authenticated request.
  */
-public abstract class AuthenticatedRequestData {
+public class AuthenticatedRequestData {
 
-    @JsonProperty("token")
-    protected String token;
-    @JsonProperty("api_key")
-    protected String apiKey;
+    private final String token;
+    private final String apiKey;
+    private final String hostId;
+    
+    public AuthenticatedRequestData(DecryptedLicenseResponse decrypted, AuthTokenResponse authResp) {
+        this(authResp.getToken(), authResp.getApiKey(), decrypted.getLicenseHostId());
+    }
+
+    public AuthenticatedRequestData(String token, String apiKey, String hostId) {
+        this.token = token;
+        this.apiKey = apiKey;
+        this.hostId = hostId;
+    }
 
     public String getToken() {
         return token;
@@ -31,6 +38,10 @@ public abstract class AuthenticatedRequestData {
 
     public String getApiKey() {
         return apiKey;
+    }
+
+    public String getHostId() {
+        return hostId;
     }
 
 }

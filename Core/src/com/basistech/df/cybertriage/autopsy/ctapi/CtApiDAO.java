@@ -24,7 +24,9 @@ import com.basistech.df.cybertriage.autopsy.ctapi.json.LicenseRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.LicenseResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.util.CTHostIDGenerationUtil;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.collections.CollectionUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
 
@@ -38,9 +40,8 @@ public class CTApiDAO {
     private static final String AUTH_TOKEN_REQUEST_PATH = "/_ah/api/auth/v2/generate_token";
     private static final String CTCLOUD_SERVER_HASH_PATH = "/_ah/api/reputation/v1/query/file/hash/md5?query_types=CORRELATION,MALWARE";
     private static final String AUTOPSY_PRODUCT = "AUTOPSY";
-    
+
     private static final CTApiDAO instance = new CTApiDAO();
-    
 
     private CTApiDAO() {
     }
@@ -52,9 +53,8 @@ public class CTApiDAO {
     private static String getAppVersion() {
         return Version.getVersion();
     }
-    
-    private final CTCloudHttpClient httpClient = CTCloudHttpClient.getInstance();
 
+    private final CTCloudHttpClient httpClient = CTCloudHttpClient.getInstance();
 
     public LicenseResponse getLicenseInfo(String licenseString) throws CTCloudException {
         LicenseRequest licenseRequest = new LicenseRequest()
@@ -76,18 +76,31 @@ public class CTApiDAO {
         return httpClient.doPost(AUTH_TOKEN_REQUEST_PATH, authTokenRequest, AuthTokenResponse.class);
     }
 
+    private static Map<String, String> getAuthParams(AuthenticatedRequestData authenticatedRequestData) {
+        return new HashMap<String, String>() {
+            {
+                put("api_key", authenticatedRequestData.getApiKey());
+                put("token", authenticatedRequestData.getToken());
+                put("host_id", authenticatedRequestData.getHostId());
+            }
+        };
+    }
+
     public List<CTCloudBean> getReputationResults(AuthenticatedRequestData authenticatedRequestData, List<String> md5Hashes) throws CTCloudException {
         if (CollectionUtils.isEmpty(md5Hashes)) {
             return Collections.emptyList();
         }
 
         FileReputationRequest fileRepReq = new FileReputationRequest()
-                .setApiKey(authenticatedRequestData.getApiKey())
-                .setHostId(CTHostIDGenerationUtil.generateLicenseHostID())
-                .setToken(authenticatedRequestData.getToken())
                 .setHashes(md5Hashes);
 
-        CTCloudBeanResponse resp = httpClient.doPost(CTCLOUD_SERVER_HASH_PATH, fileRepReq, CTCloudBeanResponse.class);
+        CTCloudBeanResponse resp = httpClient.doPost(
+                CTCLOUD_SERVER_HASH_PATH,
+                getAuthParams(authenticatedRequestData),
+                fileRepReq,
+                CTCloudBeanResponse.class
+        );
+
         return resp == null || resp.getItems() == null
                 ? Collections.emptyList()
                 : resp.getItems();

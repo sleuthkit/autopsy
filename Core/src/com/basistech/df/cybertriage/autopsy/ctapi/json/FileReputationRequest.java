@@ -19,13 +19,10 @@ import java.util.List;
 /**
  * Request for file reputation results.
  */
-public class FileReputationRequest extends AuthenticatedRequestData {
+public class FileReputationRequest {
 
     @JsonProperty("hashes")
     private List<String> hashes;
-
-    @JsonProperty("host_id")
-    private String hostId;
 
     public List<String> getHashes() {
         return hashes;
@@ -35,24 +32,4 @@ public class FileReputationRequest extends AuthenticatedRequestData {
         this.hashes = hashes;
         return this;
     }
-
-    public FileReputationRequest setToken(String token) {
-        this.token = token;
-        return this;
-    }
-
-    public FileReputationRequest setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-        return this;
-    }
-
-    public String getHostId() {
-        return hostId;
-    }
-
-    public FileReputationRequest setHostId(String hostId) {
-        this.hostId = hostId;
-        return this;
-    }
-
 }
