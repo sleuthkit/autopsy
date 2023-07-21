@@ -87,9 +87,9 @@ public class LicenseDecryptorUtil {
         }
 
         DecryptedLicenseResponse decryptedLicense = objectMapper.readValue(decryptedJsonResponse, DecryptedLicenseResponse.class);
-        if (!"CYBERTRIAGE".equalsIgnoreCase(decryptedLicense.getProduct())) {
+        if (!"AUTOPSY".equalsIgnoreCase(decryptedLicense.getProduct())) {
             // license file is expected to contain product of "CYBERTRIAGE"
-            throw new InvalidLicenseException("Not a valid Cyber Triage license");
+            throw new InvalidLicenseException("Not a valid Autopsy license");
         }
 
         return decryptedLicense;

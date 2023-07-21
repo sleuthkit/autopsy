@@ -49,6 +49,7 @@ public class CTLicensePersistence {
         if (licenseResponse != null) {
             File licenseFile = getCTLicenseFile();
             try {
+                licenseFile.getParentFile().mkdirs();
                 objectMapper.writeValue(licenseFile, licenseResponse);
                 return true;
             } catch (IOException ex) {
@@ -62,7 +63,7 @@ public class CTLicensePersistence {
     public synchronized Optional<LicenseResponse> loadLicenseResponse() {
         Optional<LicenseResponse> toRet = Optional.empty();
         File licenseFile = getCTLicenseFile();
-        if (licenseFile.isFile()) {
+        if (licenseFile.exists() && licenseFile.isFile()) {
             try {
                 toRet = Optional.ofNullable(objectMapper.readValue(licenseFile, LicenseResponse.class));
             } catch (IOException ex) {

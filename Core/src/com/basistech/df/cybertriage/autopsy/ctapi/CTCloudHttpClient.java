@@ -22,14 +22,23 @@ import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -80,14 +89,8 @@ public class CTCloudHttpClient {
     private String hostName = null;
 
     private CTCloudHttpClient() {
-        SSLContext tmpSslContext;
-        try {
-            tmpSslContext = SSLContext.getInstance("TLSv1.2");
-        } catch (NoSuchAlgorithmException ex) {
-            LOGGER.log(Level.WARNING, "Unable to setup ssl context instance", ex);
-            tmpSslContext = null;
-        }
-        this.sslContext = tmpSslContext;
+        // leave as null for now unless we want to customize this at a later date
+        this.sslContext = null;
     }
 
     private ProxySettingArgs getProxySettings() {
@@ -100,12 +103,14 @@ public class CTCloudHttpClient {
         }
 
         int proxyPort = 0;
-        try {
-            proxyPort = Integer.parseInt(ProxySettings.getHttpsPort());
-        } catch (NumberFormatException ex) {
-            LOGGER.log(Level.WARNING, "An exception occurred while converting port number to integer", ex);
+        if (StringUtils.isNotBlank(ProxySettings.getHttpPort())) {
+            try {
+                proxyPort = Integer.parseInt(ProxySettings.getHttpsPort());
+            } catch (NumberFormatException ex) {
+                LOGGER.log(Level.WARNING, "Unable to convert port to integer");
+            }
         }
-        
+
         return new ProxySettingArgs(
                 ProxySettings.getProxyType() != ProxySettings.DIRECT_CONNECTION,
                 hostName,

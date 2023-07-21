@@ -64,6 +64,10 @@
                 <package>com.fasterxml.jackson.databind.util</package>
                 <package>com.fasterxml.jackson.dataformat.csv</package>
                 <package>com.fasterxml.jackson.datatype.jsr310</package>
+                <package>com.fasterxml.jackson.datatype.jsr310.deser</package>
+                <package>com.fasterxml.jackson.datatype.jsr310.deser.key</package>
+                <package>com.fasterxml.jackson.datatype.jsr310.ser</package>
+                <package>com.fasterxml.jackson.datatype.jsr310.ser.key</package>
                 <package>com.fasterxml.jackson.datatype.jsr310.util</package>
                 <package>com.github.lgooddatepicker.components</package>
                 <package>com.github.lgooddatepicker.optionalusertools</package>

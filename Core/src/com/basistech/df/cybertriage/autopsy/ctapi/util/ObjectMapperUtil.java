@@ -13,8 +13,19 @@
  ************************************************************************** */
 package com.basistech.df.cybertriage.autopsy.ctapi.util;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.IOException;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 /**
  * Creates default ObjectMapper
@@ -33,9 +44,41 @@ public class ObjectMapperUtil {
 
     public ObjectMapper getDefaultObjectMapper() {
         ObjectMapper defaultMapper = new ObjectMapper();
-        defaultMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+//        defaultMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         defaultMapper.registerModule(new JavaTimeModule());
         return defaultMapper;
     }
 
+    public static class MDYDateDeserializer extends JsonDeserializer<ZonedDateTime> {
+        private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        @Override
+        public ZonedDateTime deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JacksonException {
+            JsonNode node = jp.getCodec().readTree(jp);
+            String nodeText = node.asText();
+            try {
+                return ZonedDateTime.parse(nodeText, FORMATTER);
+            } catch (DateTimeParseException ex) {
+                return null;
+            }
+        }
+
+    }
+
+    public static class InstantEpochMillisDeserializer extends JsonDeserializer<Instant> {
+
+        @Override
+        public Instant deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JacksonException {
+            JsonNode node = jp.getCodec().readTree(jp);
+            if (!node.isNumber()) {
+                return null;
+            } else {
+                try {
+                    long millis = node.asLong();
+                    return Instant.ofEpochMilli(millis);
+                } catch (DateTimeException ex) {
+                    return null;
+                }
+            }
+        }
+    }
 }

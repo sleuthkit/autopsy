@@ -13,12 +13,7 @@
  ************************************************************************** */
 package com.basistech.df.cybertriage.autopsy.ctapi;
 
-import com.google.common.collect.ImmutableList;
 import java.net.URI;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 // TODO take out anything sensitive or not used
 final public class Constants {
@@ -31,9 +26,12 @@ final public class Constants {
     public static final String SSLTEST_URL = "https://www2.cybertriage.com/ssl_test.html";
 
 
-    public static final String CT_CLOUD_SERVER = "https://rep1.cybertriage.com";
+    
 
     public static final String CT_CLOUD_DEV_SERVER = "https://cyber-triage-dev.appspot.com";
+    
+    // TODO put back
+    public static final String CT_CLOUD_SERVER = CT_CLOUD_DEV_SERVER; //"https://rep1.cybertriage.com";
     
     /**
      * Link to watch demo video

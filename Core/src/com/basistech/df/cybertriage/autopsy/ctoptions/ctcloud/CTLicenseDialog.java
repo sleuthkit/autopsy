@@ -24,8 +24,9 @@ import org.openide.util.NbBundle.Messages;
  */
 public class CTLicenseDialog extends javax.swing.JDialog {
 
-    private static final Pattern LICENSE_PATTERN = Pattern.compile("^\\s*[0-9a-zA-Z]{8}\\-[0-9a-zA-Z]{4}\\-[0-9a-zA-Z]{4}\\-[0-9a-zA-Z]{4}\\-[0-9a-zA-Z]{12}\\s*$");
+    //private static final Pattern LICENSE_PATTERN = Pattern.compile("^\\s*[0-9a-zA-Z]{8}\\-[0-9a-zA-Z]{4}\\-[0-9a-zA-Z]{4}\\-[0-9a-zA-Z]{4}\\-[0-9a-zA-Z]{12}\\s*$");
 
+    private static final Pattern LICENSE_PATTERN = Pattern.compile("\\s*[a-zA-Z0-9\\-]+?\\s*");
     private String licenseString = null;
 
     /**

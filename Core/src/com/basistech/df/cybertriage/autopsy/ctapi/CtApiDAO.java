@@ -36,7 +36,8 @@ public class CTApiDAO {
     private static final String LICENSE_REQUEST_PATH = "/_ah/api/license/v1/activate";
     private static final String AUTH_TOKEN_REQUEST_PATH = "/_ah/api/auth/v2/generate_token";
     private static final String CTCLOUD_SERVER_HASH_PATH = "/_ah/api/reputation/v1/query/file/hash/md5?query_types=CORRELATION,MALWARE";
-
+    private static final String AUTOPSY_PRODUCT = "AUTOPSY";
+    
     private static final CTApiDAO instance = new CTApiDAO();
     
 
@@ -48,7 +49,7 @@ public class CTApiDAO {
     }
 
     private static String getAppVersion() {
-        return Version.getName() + " " + Version.getVersion();
+        return Version.getVersion();
     }
     
     private final CTCloudHttpClient httpClient = CTCloudHttpClient.getInstance();
@@ -58,7 +59,7 @@ public class CTApiDAO {
         LicenseRequest licenseRequest = new LicenseRequest()
                 .setBoostLicenseCode(licenseString)
                 .setHostId(CTHostIDGenerationUtil.generateLicenseHostID())
-                .setProduct(getAppVersion());
+                .setProduct(AUTOPSY_PRODUCT);
 
         return httpClient.doPost(LICENSE_REQUEST_PATH, licenseRequest, LicenseResponse.class);
 
@@ -88,9 +89,5 @@ public class CTApiDAO {
         return resp == null || resp.getItems() == null
                 ? Collections.emptyList()
                 : resp.getItems();
-    }
-
-    public enum ResultType {
-        OK, SERVER_ERROR, NOT_AUTHORIZED
     }
 }

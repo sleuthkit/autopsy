@@ -13,8 +13,12 @@
  ************************************************************************** */
 package com.basistech.df.cybertriage.autopsy.ctapi.json;
 
+import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.InstantEpochMillisDeserializer;
+import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.MDYDateDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 /**
@@ -27,7 +31,7 @@ public class DecryptedLicenseResponse {
     private final ZonedDateTime expirationDate;
     private final Long hashLookups;
     private final Long fileUploads;
-    private final ZonedDateTime activationTime;
+    private final Instant activationTime;
     private final String product;
     private final String limitType;
 
@@ -35,12 +39,17 @@ public class DecryptedLicenseResponse {
     public DecryptedLicenseResponse(
             @JsonProperty("boostLicenseId") String boostLicenseId,
             @JsonProperty("licenseHostId") String licenseHostId,
+            @JsonDeserialize(using=MDYDateDeserializer.class)
             @JsonProperty("expirationDate") ZonedDateTime expirationDate,
             @JsonProperty("hashLookups") Long hashLookups,
             @JsonProperty("fileUploads") Long fileUploads,
-            @JsonProperty("activationTime") ZonedDateTime activationTime,
+            @JsonDeserialize(using=InstantEpochMillisDeserializer.class)
+            @JsonProperty("activationTime") Instant activationTime,
             @JsonProperty("product") String product,
-            @JsonProperty("limitType") String limitType
+            @JsonProperty("limitType") String limitType,
+                    
+                @JsonProperty("l4jLicenseId") String l4jlicenseId,
+                @JsonProperty("ctLicenseId") String ctLicenseId
     ) {
         this.boostLicenseId = boostLicenseId;
         this.licenseHostId = licenseHostId;
@@ -68,7 +77,7 @@ public class DecryptedLicenseResponse {
         return fileUploads;
     }
 
-    public ZonedDateTime getActivationTime() {
+    public Instant getActivationTime() {
         return activationTime;
     }
 
