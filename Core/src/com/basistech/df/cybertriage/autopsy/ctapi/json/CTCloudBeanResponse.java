@@ -16,46 +16,25 @@ package com.basistech.df.cybertriage.autopsy.ctapi.json;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
 /**
- * Response POJO for request for license.
+ * Container for file reputation result list response.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class LicenseResponse {
-    private final Boolean success;
-    private final Boolean hostChanged;
-    private final Long hostChangesRemaining;
-    private final BoostLicenseResponse boostLicense;
+public class CTCloudBeanResponse {
+
+    private final List<CTCloudBean> items;
 
     @JsonCreator
-    public LicenseResponse(
-            @JsonProperty("success") Boolean success, 
-            @JsonProperty("hostChanged") Boolean hostChanged, 
-            @JsonProperty("hostChangesRemaining") Long hostChangesRemaining, 
-            @JsonProperty("boostLicense") BoostLicenseResponse boostLicense
+    public CTCloudBeanResponse(
+            @JsonProperty("items") List<CTCloudBean> items
     ) {
-        this.success = success;
-        this.hostChanged = hostChanged;
-        this.hostChangesRemaining = hostChangesRemaining;
-        this.boostLicense = boostLicense;
+        this.items = items;
     }
 
-    public Boolean isSuccess() {
-        return success;
+    public List<CTCloudBean> getItems() {
+        return items;
     }
 
-    public Boolean isHostChanged() {
-        return hostChanged;
-    }
-
-    public Long getHostChangesRemaining() {
-        return hostChangesRemaining;
-    }
-
-    public BoostLicenseResponse getBoostLicense() {
-        return boostLicense;
-    }
-
-    
-    
 }

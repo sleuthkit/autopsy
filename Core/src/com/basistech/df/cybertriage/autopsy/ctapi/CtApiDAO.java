@@ -16,9 +16,10 @@ package com.basistech.df.cybertriage.autopsy.ctapi;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.AuthTokenRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.AuthTokenResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.AuthenticatedRequestData;
+import com.basistech.df.cybertriage.autopsy.ctapi.json.CTCloudBean;
+import com.basistech.df.cybertriage.autopsy.ctapi.json.CTCloudBeanResponse;
+import com.basistech.df.cybertriage.autopsy.ctapi.json.DecryptedLicenseResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.FileReputationRequest;
-import com.basistech.df.cybertriage.autopsy.ctapi.json.FileReputationResponse;
-import com.basistech.df.cybertriage.autopsy.ctapi.json.FileReputationResult;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.LicenseRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.LicenseResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.util.CTHostIDGenerationUtil;
@@ -65,16 +66,17 @@ public class CTApiDAO {
 
     }
 
-    public AuthTokenResponse getAuthToken(String boostLicenseId) throws CTCloudException {
+    public AuthTokenResponse getAuthToken(DecryptedLicenseResponse decrypted) throws CTCloudException {
         AuthTokenRequest authTokenRequest = new AuthTokenRequest()
                 .setAutopsyVersion(getAppVersion())
-                .setRequestFileUpload(true)
-                .setBoostLicenseId(boostLicenseId);
+                .setRequestFileUpload(false)
+                .setBoostLicenseId(decrypted.getBoostLicenseId())
+                .setHostId(decrypted.getLicenseHostId());
 
         return httpClient.doPost(AUTH_TOKEN_REQUEST_PATH, authTokenRequest, AuthTokenResponse.class);
     }
 
-    public List<FileReputationResult> getReputationResults(AuthenticatedRequestData authenticatedRequestData, List<String> md5Hashes) throws CTCloudException {
+    public List<CTCloudBean> getReputationResults(AuthenticatedRequestData authenticatedRequestData, List<String> md5Hashes) throws CTCloudException {
         if (CollectionUtils.isEmpty(md5Hashes)) {
             return Collections.emptyList();
         }
@@ -85,7 +87,7 @@ public class CTApiDAO {
                 .setToken(authenticatedRequestData.getToken())
                 .setHashes(md5Hashes);
 
-        FileReputationResponse resp = httpClient.doPost(CTCLOUD_SERVER_HASH_PATH, fileRepReq, FileReputationResponse.class);
+        CTCloudBeanResponse resp = httpClient.doPost(CTCLOUD_SERVER_HASH_PATH, fileRepReq, CTCloudBeanResponse.class);
         return resp == null || resp.getItems() == null
                 ? Collections.emptyList()
                 : resp.getItems();

@@ -13,41 +13,29 @@
  ************************************************************************** */
 package com.basistech.df.cybertriage.autopsy.ctapi.json;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Metadata entry.
+ *
+ * @author rishwanth
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class MetadataLabel {
+class CTCloudCostBean {
 
-    private final String key;
-    private final String value;
-    private final String extendedInfo;
-    
-    @JsonCreator
-    public MetadataLabel(
-            @JsonProperty("key") String key, 
-            @JsonProperty("value") String value, 
-            @JsonProperty("info") String extendedInfo
-    ) {
-        this.key = key;
-        this.value = value;
-        this.extendedInfo = extendedInfo;
+    private final String provider;
+
+    private final Integer units;
+
+    public CTCloudCostBean(@JsonProperty("provider") String provider, @JsonProperty("units") Integer units) {
+        this.provider = provider;
+        this.units = units;
     }
 
-    public String getKey() {
-        return key;
+    public String getProvider() {
+        return provider;
     }
 
-    public String getValue() {
-        return value;
+    public Integer getUnits() {
+        return units;
     }
-    
-    public String getExtendedInfo() {
-        return extendedInfo;
-    }
-    
+
 }

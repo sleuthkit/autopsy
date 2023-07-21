@@ -14,8 +14,9 @@
 package com.basistech.df.cybertriage.autopsy.ctapi.json;
 
 import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.InstantEpochMillisDeserializer;
-import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.MDYDateDeserializer;
+import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.ZonedDateTimeDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.time.Instant;
@@ -24,6 +25,7 @@ import java.time.ZonedDateTime;
 /**
  * POJO for after encrypted boost license has been decrypted.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DecryptedLicenseResponse {
 
     private final String boostLicenseId;
@@ -39,17 +41,16 @@ public class DecryptedLicenseResponse {
     public DecryptedLicenseResponse(
             @JsonProperty("boostLicenseId") String boostLicenseId,
             @JsonProperty("licenseHostId") String licenseHostId,
-            @JsonDeserialize(using=MDYDateDeserializer.class)
+            @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
             @JsonProperty("expirationDate") ZonedDateTime expirationDate,
             @JsonProperty("hashLookups") Long hashLookups,
             @JsonProperty("fileUploads") Long fileUploads,
-            @JsonDeserialize(using=InstantEpochMillisDeserializer.class)
+            @JsonDeserialize(using = InstantEpochMillisDeserializer.class)
             @JsonProperty("activationTime") Instant activationTime,
             @JsonProperty("product") String product,
-            @JsonProperty("limitType") String limitType,
-                    
-                @JsonProperty("l4jLicenseId") String l4jlicenseId,
-                @JsonProperty("ctLicenseId") String ctLicenseId
+            @JsonProperty("limitType") String limitType
+    //                @JsonProperty("l4jLicenseId") String l4jlicenseId,
+    //                @JsonProperty("ctLicenseId") String ctLicenseId
     ) {
         this.boostLicenseId = boostLicenseId;
         this.licenseHostId = licenseHostId;

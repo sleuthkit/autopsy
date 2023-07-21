@@ -29,6 +29,9 @@ public class AuthTokenRequest {
     @JsonProperty("requestFileUpload")
     private boolean requestFileUpload;
 
+    @JsonProperty("host_id")
+    private String hostId;
+
     public String getAutopsyVersion() {
         return autopsyVersion;
     }
@@ -53,6 +56,15 @@ public class AuthTokenRequest {
 
     public AuthTokenRequest setRequestFileUpload(boolean requestFileUpload) {
         this.requestFileUpload = requestFileUpload;
+        return this;
+    }
+
+    public String getHostId() {
+        return hostId;
+    }
+
+    public AuthTokenRequest setHostId(String hostId) {
+        this.hostId = hostId;
         return this;
     }
 

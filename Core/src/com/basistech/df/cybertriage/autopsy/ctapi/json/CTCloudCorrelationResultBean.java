@@ -13,49 +13,41 @@
  ************************************************************************** */
 package com.basistech.df.cybertriage.autopsy.ctapi.json;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.annotation.Nonnull;
 
-/**
- * POJO for a boost license response object that is a part of the license
- * response.
- */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BoostLicenseResponse {
+public class CTCloudCorrelationResultBean {
 
-    private final String version;
-    private final String iv;
-    private final String encryptedKey;
-    private final String encryptedJson;
+    @JsonProperty("correlation")
+    private CorrelationResultBean correlationResult;
 
-    @JsonCreator
-    public BoostLicenseResponse(
-            @JsonProperty("version") String version,
-            @JsonProperty("iv") String iv,
-            @JsonProperty("encryptedKey") String encryptedKey,
-            @JsonProperty("encryptedJson") String encryptedJson) {
+    @Nonnull
+    @JsonProperty("signature")
+    private String signature;
 
-        this.version = version;
-        this.iv = iv;
-        this.encryptedKey = encryptedKey;
-        this.encryptedJson = encryptedJson;
+    public CorrelationResultBean getCorrelationResult() {
+        return correlationResult;
     }
 
-    public String getVersion() {
-        return version;
+    public void setCorrelationResult(CorrelationResultBean correlationResult) {
+        this.correlationResult = correlationResult;
     }
 
-    public String getIv() {
-        return iv;
+    public String getSignature() {
+        return signature;
     }
 
-    public String getEncryptedKey() {
-        return encryptedKey;
+    public void setSignature(String signature) {
+        this.signature = signature;
     }
 
-    public String getEncryptedJson() {
-        return encryptedJson;
+    @Override
+    public String toString() {
+        return "CTCloudCorrelationResultBean{"
+                + "correlationResult=" + correlationResult
+                + ", signature=" + signature
+                + '}';
     }
-
 }

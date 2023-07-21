@@ -13,20 +13,24 @@
  ************************************************************************** */
 package com.basistech.df.cybertriage.autopsy.ctapi.json;
 
+import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.InstantEpochSecsDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.ZonedDateTime;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.time.Instant;
 
 /**
  * POJO for an auth token response.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AuthTokenResponse extends AuthenticatedRequestData {
     private final Long hashLookupCount;
     private final Long hashLookupLimit;
     private final Long fileUploadLimit;
     private final Long fileUploadCount;
     private final String fileUploadUrl;
-    private final ZonedDateTime expiration;
+    private final Instant expiration;
 
     @JsonCreator
     public AuthTokenResponse(
@@ -37,7 +41,8 @@ public class AuthTokenResponse extends AuthenticatedRequestData {
             @JsonProperty("fileUploadLimit") Long fileUploadLimit,
             @JsonProperty("fileUploadCount") Long fileUploadCount,
             @JsonProperty("fileUploadUrl") String fileUploadUrl,
-            @JsonProperty("expiration") ZonedDateTime expiration
+            @JsonDeserialize(using=InstantEpochSecsDeserializer.class)
+            @JsonProperty("expiration") Instant expiration
     ) {
         this.token = token;
         this.apiKey = apiKey;
@@ -69,7 +74,7 @@ public class AuthTokenResponse extends AuthenticatedRequestData {
         return fileUploadUrl;
     }
 
-    public ZonedDateTime getExpiration() {
+    public Instant getExpiration() {
         return expiration;
     }
 }
