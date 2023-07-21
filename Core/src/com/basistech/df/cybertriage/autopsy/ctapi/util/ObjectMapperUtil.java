@@ -25,12 +25,15 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
+import java.util.Locale;
 import java.util.function.Function;
 
 /**
@@ -55,14 +58,23 @@ public class ObjectMapperUtil {
         return defaultMapper;
     }
 
-    
-    public static class ZonedDateTimeDeserializer extends JsonDeserializer<ZonedDateTime> {
+    public static class UTCBaseZonedDateTimeDeserializer extends JsonDeserializer<ZonedDateTime> {
+
+        private final DateTimeFormatter formatter;
+
+        public UTCBaseZonedDateTimeDeserializer(DateTimeFormatter formatter) {
+            this.formatter = formatter;
+        }
 
         @Override
         public ZonedDateTime deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JacksonException {
             String date = jp.getText();
+            if (date == null) {
+                return null;
+            }
+
             try {
-                LocalDateTime ldt = LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                LocalDateTime ldt = LocalDateTime.parse(date, formatter);
                 return ZonedDateTime.of(ldt, ZoneOffset.UTC);
             } catch (DateTimeParseException ex) {
                 return null;
@@ -70,22 +82,40 @@ public class ObjectMapperUtil {
         }
     }
 
-//    public static class MDYDateDeserializer extends JsonDeserializer<Date> {
-//
-//        private static final SimpleDateFormat FORMATTER = new SimpleDateFormat("MMM dd, yyyy");
-//
-//        @Override
-//        public Date deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JacksonException {
-//            JsonNode node = jp.getCodec().readTree(jp);
-//            String nodeText = node.asText();
-//            try {
-//                return FORMATTER.parse(nodeText);
-//            } catch (ParseException ex) {
-//                return null;
-//            }
-//        }
-//
-//    }
+    public static class ZonedDateTimeDeserializer extends UTCBaseZonedDateTimeDeserializer {
+
+        public ZonedDateTimeDeserializer() {
+            super(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        }
+    }
+
+    public static class MDYDateDeserializer extends JsonDeserializer<ZonedDateTime> {
+
+        private final DateTimeFormatter formatter;
+
+        public MDYDateDeserializer() {
+            this.formatter = new DateTimeFormatterBuilder()
+                    .parseCaseInsensitive()
+                    .appendPattern("MMM d, [uuuu][uu]")
+                    .toFormatter(Locale.ENGLISH);
+        }
+
+        @Override
+        public ZonedDateTime deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JacksonException {
+            String date = jp.getText();
+            if (date == null) {
+                return null;
+            }
+
+            try {
+                LocalDate ld = LocalDate.parse(date, formatter);
+                LocalDateTime ldt = ld.atStartOfDay();
+                return ZonedDateTime.of(ldt, ZoneOffset.UTC);
+            } catch (DateTimeParseException ex) {
+                return null;
+            }
+        }
+    }
 
     public static class EpochTimeDeserializer<T> extends JsonDeserializer<T> {
 

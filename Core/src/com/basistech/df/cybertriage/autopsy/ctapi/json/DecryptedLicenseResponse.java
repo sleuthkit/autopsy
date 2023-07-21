@@ -14,7 +14,7 @@
 package com.basistech.df.cybertriage.autopsy.ctapi.json;
 
 import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.InstantEpochMillisDeserializer;
-import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.ZonedDateTimeDeserializer;
+import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.MDYDateDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -41,7 +41,7 @@ public class DecryptedLicenseResponse {
     public DecryptedLicenseResponse(
             @JsonProperty("boostLicenseId") String boostLicenseId,
             @JsonProperty("licenseHostId") String licenseHostId,
-            @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
+            @JsonDeserialize(using = MDYDateDeserializer.class)
             @JsonProperty("expirationDate") ZonedDateTime expirationDate,
             @JsonProperty("hashLookups") Long hashLookups,
             @JsonProperty("fileUploads") Long fileUploads,
