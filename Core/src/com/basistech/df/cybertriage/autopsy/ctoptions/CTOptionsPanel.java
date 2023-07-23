@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  */
 public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
 
-    private static final int MAX_SUBPANEL_WIDTH = 500;
+    private static final int MAX_SUBPANEL_WIDTH = 650;
 
     private static final Logger logger = Logger.getLogger(CTOptionsPanel.class.getName());
 
@@ -65,10 +65,21 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
                 .filter(item -> item != null)
                 .sorted(Comparator.comparing(p -> p.getClass().getSimpleName().toUpperCase()))
                 .collect(Collectors.toList());
-        addSubOptionsPanels(this.subPanels);
+        addSubOptionsPanels(new LicenseDisclaimerPanel(), this.subPanels);
     }
 
-    private void addSubOptionsPanels(List<CTOptionsSubPanel> subPanels) {
+    private void addSubOptionsPanels(JPanel disclaimerPanel, List<CTOptionsSubPanel> subPanels) {
+            GridBagConstraints disclaimerConstraints = new GridBagConstraints();
+            disclaimerConstraints.gridx = 0;
+            disclaimerConstraints.gridy = 0;
+            disclaimerConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+            disclaimerConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+            disclaimerConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+            disclaimerConstraints.weighty = 0;
+            disclaimerConstraints.weightx = 0;
+
+            contentPane.add(disclaimerPanel, disclaimerConstraints);
+        
         for (int i = 0; i < subPanels.size(); i++) {
             CTOptionsSubPanel subPanel = subPanels.get(i);
 
@@ -83,10 +94,10 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
 
             GridBagConstraints gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.gridx = 0;
-            gridBagConstraints.gridy = i;
+            gridBagConstraints.gridy = i + 1;
             gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
             gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-            gridBagConstraints.insets = new java.awt.Insets(i == 0 ? 5 : 0, 5, 5, 5);
+            gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
             gridBagConstraints.weighty = 0;
             gridBagConstraints.weightx = 0;
 
@@ -95,7 +106,7 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
 
         GridBagConstraints verticalConstraints = new GridBagConstraints();
         verticalConstraints.gridx = 0;
-        verticalConstraints.gridy = subPanels.size();
+        verticalConstraints.gridy = subPanels.size() + 1;
         verticalConstraints.weighty = 1;
         verticalConstraints.weightx = 0;
 
