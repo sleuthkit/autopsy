@@ -56,11 +56,7 @@ public class CTLicensePersistence {
             File licenseFile = getCTLicenseFile();
             try {
                 licenseFile.getParentFile().mkdirs();
-                if (licenseResponse != null) {
-                    objectMapper.writeValue(licenseFile, licenseResponse);
-                } else if (licenseFile.exists()) {
-                    Files.delete(licenseFile.toPath());
-                }
+                objectMapper.writeValue(licenseFile, licenseResponse);
                 return true;
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "There was an error writing CyberTriage license to file: " + licenseFile.getAbsolutePath(), ex);
