@@ -18,6 +18,7 @@
  */
 package com.basistech.df.cybertriage.autopsy.ctapi.json;
 
+import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.InstantEpochMillisDeserializer;
 import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil.InstantEpochSecsDeserializer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -39,6 +40,7 @@ public class AuthTokenResponse {
     private final Instant expiration;
     private final String token;
     private final String apiKey;
+    private final Instant resetDate;
 
     @JsonCreator
     public AuthTokenResponse(
@@ -50,7 +52,9 @@ public class AuthTokenResponse {
             @JsonProperty("fileUploadCount") Long fileUploadCount,
             @JsonProperty("fileUploadUrl") String fileUploadUrl,
             @JsonDeserialize(using = InstantEpochSecsDeserializer.class)
-            @JsonProperty("expiration") Instant expiration
+            @JsonProperty("expiration") Instant expiration,
+            @JsonDeserialize(using = InstantEpochMillisDeserializer.class)
+            @JsonProperty("resetDate") Instant resetDate
     ) {
         this.token = token;
         this.apiKey = apiKey;
@@ -60,6 +64,7 @@ public class AuthTokenResponse {
         this.fileUploadCount = fileUploadCount;
         this.fileUploadUrl = fileUploadUrl;
         this.expiration = expiration;
+        this.resetDate = resetDate;
     }
 
     public Long getHashLookupCount() {
@@ -94,4 +99,7 @@ public class AuthTokenResponse {
         return apiKey;
     }
 
+    public Instant getResetDate() {
+        return resetDate;
+    }
 }

@@ -37,14 +37,4 @@ public class LicenseInfo {
     public DecryptedLicenseResponse getDecryptedLicense() {
         return decryptedLicense;
     }
-    
-    // TODO
-    public String getUser() {
-        return "TBD";
-    }
-    
-    // TODO
-    public String getEmail() {
-        return "TBD";
-    }
 }
