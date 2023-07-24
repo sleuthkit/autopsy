@@ -10,12 +10,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.web.WebView;
-import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.io.IOUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -44,6 +42,25 @@ public class EULADialog extends javax.swing.JDialog {
         return acceptPressed;
     }
 
+    private void loadEULA() throws IOException {
+        InputStream eulaInputStream = EULADialog.class.getResourceAsStream(EULA_RESOURCE);
+        final String htmlString = IOUtils.toString(eulaInputStream, StandardCharsets.UTF_8);
+        final JFXPanel fxPanel = new JFXPanel();
+        this.viewablePanel.add(fxPanel, BorderLayout.CENTER);
+        Platform.runLater(() -> {
+            WebView webView = new WebView();
+            webView.setMaxSize(Short.MAX_VALUE, Short.MAX_VALUE);
+            webView.setPrefSize(Short.MAX_VALUE, Short.MAX_VALUE);
+            webView.setMinSize(100, 100);
+            webView.getEngine().loadContent(htmlString, "text/html");
+            VBox root = new VBox(webView);
+            Scene scene = new Scene(root, Color.RED);
+            fxPanel.setScene(scene);
+
+            SwingUtilities.invokeLater(() -> EULADialog.this.acceptButton.setEnabled(true));
+        });
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -54,16 +71,50 @@ public class EULADialog extends javax.swing.JDialog {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
+        viewablePanel = new javax.swing.JPanel();
+        javax.swing.JPanel paddingPanel = new javax.swing.JPanel();
         acceptButton = new javax.swing.JButton();
         javax.swing.JButton cancelButton = new javax.swing.JButton();
-        javax.swing.JPanel paddingPanel = new javax.swing.JPanel();
-        viewablePanel = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(EULADialog.class, "EULADialog.title")); // NOI18N
-        setPreferredSize(new java.awt.Dimension(500, 500));
+        setMaximumSize(new java.awt.Dimension(32767, 32767));
+        setPreferredSize(new java.awt.Dimension(550, 550));
         setSize(new java.awt.Dimension(550, 550));
         getContentPane().setLayout(new java.awt.GridBagLayout());
+
+        viewablePanel.setMaximumSize(new java.awt.Dimension(32767, 32767));
+        viewablePanel.setPreferredSize(null);
+        viewablePanel.setLayout(new java.awt.BorderLayout());
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        getContentPane().add(viewablePanel, gridBagConstraints);
+
+        paddingPanel.setMaximumSize(new java.awt.Dimension(32767, 0));
+
+        javax.swing.GroupLayout paddingPanelLayout = new javax.swing.GroupLayout(paddingPanel);
+        paddingPanel.setLayout(paddingPanelLayout);
+        paddingPanelLayout.setHorizontalGroup(
+            paddingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        paddingPanelLayout.setVerticalGroup(
+            paddingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        getContentPane().add(paddingPanel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(acceptButton, org.openide.util.NbBundle.getMessage(EULADialog.class, "EULADialog.acceptButton.text")); // NOI18N
         acceptButton.setEnabled(false);
@@ -90,35 +141,6 @@ public class EULADialog extends javax.swing.JDialog {
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
         getContentPane().add(cancelButton, gridBagConstraints);
 
-        javax.swing.GroupLayout paddingPanelLayout = new javax.swing.GroupLayout(paddingPanel);
-        paddingPanel.setLayout(paddingPanelLayout);
-        paddingPanelLayout.setHorizontalGroup(
-            paddingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        paddingPanelLayout.setVerticalGroup(
-            paddingPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.weightx = 1.0;
-        getContentPane().add(paddingPanel, gridBagConstraints);
-
-        viewablePanel.setLayout(new java.awt.BorderLayout());
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
-        getContentPane().add(viewablePanel, gridBagConstraints);
-
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -135,20 +157,4 @@ public class EULADialog extends javax.swing.JDialog {
     private javax.swing.JButton acceptButton;
     private javax.swing.JPanel viewablePanel;
     // End of variables declaration//GEN-END:variables
-
-    private void loadEULA() throws IOException {
-        InputStream eulaInputStream = EULADialog.class.getResourceAsStream(EULA_RESOURCE);
-        final String htmlString = IOUtils.toString(eulaInputStream, StandardCharsets.UTF_8);
-        final JFXPanel fxPanel = new JFXPanel();
-        this.viewablePanel.add(fxPanel, BorderLayout.CENTER);
-        Platform.runLater(() -> {
-            WebView webView = new WebView();
-            webView.getEngine().loadContent(htmlString, "text/html");
-            VBox root = new VBox(webView);
-            Scene scene = new Scene(root, Color.RED);
-            fxPanel.setScene(scene);
-
-            SwingUtilities.invokeLater(() -> EULADialog.this.acceptButton.setEnabled(true));
-        });
-    }
 }

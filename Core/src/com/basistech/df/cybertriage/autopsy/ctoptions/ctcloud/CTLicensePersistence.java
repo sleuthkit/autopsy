@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -55,7 +56,11 @@ public class CTLicensePersistence {
             File licenseFile = getCTLicenseFile();
             try {
                 licenseFile.getParentFile().mkdirs();
-                objectMapper.writeValue(licenseFile, licenseResponse);
+                if (licenseResponse != null) {
+                    objectMapper.writeValue(licenseFile, licenseResponse);
+                } else if (licenseFile.exists()) {
+                    Files.delete(licenseFile.toPath());
+                }
                 return true;
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "There was an error writing CyberTriage license to file: " + licenseFile.getAbsolutePath(), ex);

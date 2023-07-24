@@ -371,8 +371,8 @@ public final class IngestJobSettings {
         }
 
 
-        List<String> defaultEnabledAndLoaded = new ArrayList<>();
-        List<String> defaultDisabledAndLoaded = new ArrayList<>();
+        Set<String> defaultEnabledAndLoaded = new HashSet<>();
+        Set<String> defaultDisabledAndLoaded = new HashSet<>();
         for (String loadedModule: loadedModuleNames) {
             if (DEFAULT_DISABLED_MODULES.contains(loadedModule)) {
                 defaultDisabledAndLoaded.add(loadedModule);
@@ -388,6 +388,18 @@ public final class IngestJobSettings {
         HashSet<String> enabledModuleNames = getModulesNames(this.executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(defaultEnabledAndLoaded));
         HashSet<String> disabledModuleNames = getModulesNames(this.executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, makeCsvList(defaultDisabledAndLoaded)); //NON-NLS
 
+        // double check to ensure all loaded modules are present in one of the lists in case more modules (in case settings didn't have a module)
+        for (String loadedModule : loadedModuleNames) {
+            // if neither enabled modules or disabled modules contains the loaded module, add it to the default location
+            if (!enabledModuleNames.contains(loadedModule) && !disabledModuleNames.contains(loadedModule)) {
+                if (DEFAULT_DISABLED_MODULES.contains(loadedModule)) {
+                    disabledModuleNames.add(loadedModule);
+                } else {
+                    enabledModuleNames.add(loadedModule);
+                }
+            }
+        }
+        
         /**
          * Check for missing modules and create warnings if any are found.
          */
