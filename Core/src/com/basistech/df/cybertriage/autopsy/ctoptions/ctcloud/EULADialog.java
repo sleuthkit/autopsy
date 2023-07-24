@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import javafx.application.Platform;
+import javafx.concurrent.Worker.State;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.layout.VBox;
@@ -52,12 +53,15 @@ public class EULADialog extends javax.swing.JDialog {
             webView.setMaxSize(Short.MAX_VALUE, Short.MAX_VALUE);
             webView.setPrefSize(Short.MAX_VALUE, Short.MAX_VALUE);
             webView.setMinSize(100, 100);
+            webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
+                if (newState == State.SUCCEEDED) {
+                    SwingUtilities.invokeLater(() -> EULADialog.this.acceptButton.setEnabled(true));        
+                }
+            });
             webView.getEngine().loadContent(htmlString, "text/html");
             VBox root = new VBox(webView);
             Scene scene = new Scene(root, Color.RED);
             fxPanel.setScene(scene);
-
-            SwingUtilities.invokeLater(() -> EULADialog.this.acceptButton.setEnabled(true));
         });
     }
 
@@ -83,8 +87,6 @@ public class EULADialog extends javax.swing.JDialog {
         setSize(new java.awt.Dimension(550, 550));
         getContentPane().setLayout(new java.awt.GridBagLayout());
 
-        viewablePanel.setMaximumSize(new java.awt.Dimension(32767, 32767));
-        viewablePanel.setPreferredSize(null);
         viewablePanel.setLayout(new java.awt.BorderLayout());
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
