@@ -21,17 +21,13 @@ package com.basistech.df.cybertriage.autopsy.ctapi;
 import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.InetAddress;
 import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.UnrecoverableKeyException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,13 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.logging.Level;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -64,7 +54,9 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -175,10 +167,14 @@ public class CTCloudHttpClient {
                     if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
                         LOGGER.log(Level.INFO, "Response Received. - Status OK");
                         // Parse Response
-                        HttpEntity entity = response.getEntity();
-                        String entityStr = EntityUtils.toString(entity);
-                        O respObj = mapper.readValue(entityStr, classType);
-                        return respObj;
+                        if (classType != null) {
+                            HttpEntity entity = response.getEntity();
+                            String entityStr = EntityUtils.toString(entity);
+                            O respObj = mapper.readValue(entityStr, classType);
+                            return respObj;
+                        } else {
+                            return null;
+                        }
                     } else {
                         LOGGER.log(Level.WARNING, "Response Received. - Status Error {}", response.getStatusLine());
                         handleNonOKResponse(response, "");
@@ -197,6 +193,40 @@ public class CTCloudHttpClient {
         }
 
         return null;
+    }
+    
+    public void doFileUploadPost(String urlPath, String fileName, InputStream fileIs) throws CTCloudException {
+         
+        try (CloseableHttpClient httpclient = createConnection(getProxySettings(), sslContext)) {
+            HttpPost post = new HttpPost(urlPath);
+            configureRequestTimeout(post);
+            
+            post.addHeader("Connection", "keep-alive");
+            
+            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+            builder.addBinaryBody(
+                    "file",
+                    fileIs,
+                    ContentType.APPLICATION_OCTET_STREAM,
+                    fileName
+            );
+            
+            HttpEntity multipart = builder.build();
+            post.setEntity(multipart);
+            
+            try (CloseableHttpResponse response = httpclient.execute(post)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NO_CONTENT) {
+                    LOGGER.log(Level.INFO, "Response Received. - Status OK");
+                } else {
+                    LOGGER.log(Level.WARNING, MessageFormat.format("Response Received. - Status Error {0}", response.getStatusLine()));
+                    handleNonOKResponse(response, fileName);
+                }
+            }
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, "IO Exception raised when connecting to Reversing Labs for file content upload ", ex);
+            throw new CTCloudException(CTCloudException.ErrorCode.NETWORK_ERROR, ex);
+        }
     }
 
     /**
