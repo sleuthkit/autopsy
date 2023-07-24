@@ -22,7 +22,6 @@ CTMalwareScannerOptionsPanel.licenseInfoIdLabel.text=
 CTMalwareScannerOptionsPanel.licenseInfoExpiresLabel.text=
 CTMalwareScannerOptionsPanel.fileUploadsRemainingLabel.text=
 CTMalwareScannerOptionsPanel.licenseInfoUserLabel.text=
-
 CTMalwareScannerOptionsPanel_licenseAddDialog_desc=License Number:
 CTMalwareScannerOptionsPanel_licenseAddDialog_title=Add a License...
 CTMalwareScannerOptionsPanel_licenseAddDialogEnteredErr_desc=The license number has already been entered
@@ -54,3 +53,6 @@ CTMalwareScannerOptionsPanel_MalwareScansFetcher_localErr_desc=A general error o
 CTMalwareScannerOptionsPanel_MalwareScansFetcher_localErr_title=General Error
 CTOPtionsPanel_loadLicenseInfo_loading=Loading...
 CTOPtionsPanel_loadMalwareScansInfo_loading=Loading...
+EULADialog.cancelButton.text=Cancel
+EULADialog.acceptButton.text=Accept
+EULADialog.title=Cyber Triage End User License Agreement
