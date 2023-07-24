@@ -92,19 +92,15 @@ public class CTLicensePersistence {
         });
     }
 
-        public synchronized boolean saveMalwareSettings(MalwareIngestSettings malwareIngestSettings) {
+    public synchronized boolean saveMalwareSettings(MalwareIngestSettings malwareIngestSettings) {
         if (malwareIngestSettings != null) {
             File settingsFile = getMalwareIngestFile();
             try {
                 settingsFile.getParentFile().mkdirs();
-                if (licenseResponse != null) {
-                    objectMapper.writeValue(licenseFile, licenseResponse);
-                } else if (licenseFile.exists()) {
-                    Files.delete(licenseFile.toPath());
-                }
+                objectMapper.writeValue(settingsFile, malwareIngestSettings);
                 return true;
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "There was an error writing CyberTriage license to file: " + licenseFile.getAbsolutePath(), ex);
+                logger.log(Level.WARNING, "There was an error writing malware ingest settings to file: " + settingsFile.getAbsolutePath(), ex);
             }
         }
 
@@ -112,19 +108,23 @@ public class CTLicensePersistence {
     }
 
     public synchronized MalwareIngestSettings loadMalwareIngestSettings() {
-        Optional<LicenseResponse> toRet = Optional.empty();
-        File licenseFile = getCTLicenseFile();
-        if (licenseFile.exists() && licenseFile.isFile()) {
+        MalwareIngestSettings settings = null;
+        File settingsFile = getMalwareIngestFile();
+        if (settingsFile.exists() && settingsFile.isFile()) {
             try {
-                toRet = Optional.ofNullable(objectMapper.readValue(licenseFile, LicenseResponse.class));
+                settings = objectMapper.readValue(settingsFile, MalwareIngestSettings.class);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "There was an error reading CyberTriage license to file: " + licenseFile.getAbsolutePath(), ex);
+                logger.log(Level.WARNING, "There was an error reading malware ingest settings from file: " + settingsFile.getAbsolutePath(), ex);
             }
         }
+        
+        if (settings == null) {
+            settings = new MalwareIngestSettings();
+        }
 
-        return toRet;
+        return settings;
     }
-    
+
     private File getCTLicenseFile() {
         return Paths.get(PlatformUtil.getModuleConfigDirectory(), CT_SETTINGS_DIR, CT_LICENSE_FILENAME).toFile();
     }
