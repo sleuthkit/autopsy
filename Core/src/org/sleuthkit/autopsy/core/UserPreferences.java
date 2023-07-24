@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -384,6 +385,30 @@ public final class UserPreferences {
 
     public static String getTimeZoneForDisplays() {
         return viewPreferences.get(TIME_ZONE_FOR_DISPLAYS, TimeZone.GMT_ZONE.getID());
+    }
+    
+    /**
+     * Returns the inferred preferred time zone deriving in order:
+     * 1) Starts with user preference if set
+     * 2) Gets system time zone if can be determined
+     * 3) Otherwise uses GMT
+     * 
+     * @return Returns preferred time zone id.
+     */
+    public static String getInferredUserTimeZone() {
+        String timeZonePref = viewPreferences.get(TIME_ZONE_FOR_DISPLAYS, null);
+        if (StringUtils.isBlank(timeZonePref)) {
+            ZoneId systemZoneId = ZoneId.systemDefault();
+            if (systemZoneId != null) {
+                timeZonePref = systemZoneId.getId();
+            }
+        }
+        
+        if (StringUtils.isBlank(timeZonePref)) {
+            timeZonePref = TimeZone.GMT_ZONE.getID();
+        }
+        
+        return timeZonePref;
     }
 
     public static void setTimeZoneForDisplays(String timeZone) {

@@ -32,6 +32,9 @@ public class LicenseRequest {
     
     @JsonProperty("product")
     private String product;
+    
+    @JsonProperty("time_zone_id")
+    private String timeZoneId;
 
     public String getHostId() {
         return hostId;
@@ -59,6 +62,16 @@ public class LicenseRequest {
         this.product = product;
         return this;
     }
+
+    public String getTimeZoneId() {
+        return timeZoneId;
+    }
+
+    public LicenseRequest setTimeZoneId(String timeZoneId) {
+        this.timeZoneId = timeZoneId;
+        return this;
+    }
+    
     
     
 }

@@ -20,7 +20,6 @@ package com.basistech.df.cybertriage.autopsy.ctapi;
 
 import java.net.URI;
 
-// TODO take out anything sensitive or not used
 final public class Constants {
 
     public static final String CYBER_TRIAGE = "CyberTriage";

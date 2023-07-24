@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.collections.CollectionUtils;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
@@ -69,7 +70,8 @@ public class CTApiDAO {
         LicenseRequest licenseRequest = new LicenseRequest()
                 .setBoostLicenseCode(licenseString)
                 .setHostId(CTHostIDGenerationUtil.generateLicenseHostID())
-                .setProduct(AUTOPSY_PRODUCT);
+                .setProduct(AUTOPSY_PRODUCT)
+                .setTimeZoneId(UserPreferences.getInferredUserTimeZone());
 
         return httpClient.doPost(LICENSE_REQUEST_PATH, licenseRequest, LicenseResponse.class);
 

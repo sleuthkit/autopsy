@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LicenseResponse {
+
     private final Boolean success;
     private final Boolean hostChanged;
     private final Long hostChangesRemaining;
@@ -34,9 +35,9 @@ public class LicenseResponse {
 
     @JsonCreator
     public LicenseResponse(
-            @JsonProperty("success") Boolean success, 
-            @JsonProperty("hostChanged") Boolean hostChanged, 
-            @JsonProperty("hostChangesRemaining") Long hostChangesRemaining, 
+            @JsonProperty("success") Boolean success,
+            @JsonProperty("hostChanged") Boolean hostChanged,
+            @JsonProperty("hostChangesRemaining") Long hostChangesRemaining,
             @JsonProperty("boostLicense") BoostLicenseResponse boostLicense
     ) {
         this.success = success;
@@ -60,7 +61,4 @@ public class LicenseResponse {
     public BoostLicenseResponse getBoostLicense() {
         return boostLicense;
     }
-
-    
-    
 }
