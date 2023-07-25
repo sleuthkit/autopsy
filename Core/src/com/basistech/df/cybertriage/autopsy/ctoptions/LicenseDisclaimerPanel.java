@@ -22,16 +22,18 @@ import java.awt.Desktop;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Disclaimer for license and place to purchase CT license.
  */
 public class LicenseDisclaimerPanel extends javax.swing.JPanel {
+
     private static final Logger LOGGER = Logger.getLogger(LicenseDisclaimerPanel.class.getName());
-            
+
     private static final String CHECKOUT_PAGE_URL = "https://cybertriage.com/autopsy-checkout";
-    
+
     /**
      * Creates new form LicenseDisclaimerPanel
      */
@@ -116,9 +118,10 @@ public class LicenseDisclaimerPanel extends javax.swing.JPanel {
             try {
                 Desktop.getDesktop().browse(new URI(CHECKOUT_PAGE_URL));
             } catch (IOException | URISyntaxException e) {
-                /* TODO: error handling */ }
+                LOGGER.log(Level.SEVERE, "Error opening link to: " + CHECKOUT_PAGE_URL, e);
+            }
         } else {
-            /* TODO: error handling */ 
+            LOGGER.log(Level.WARNING, "Desktop API is not supported.  Link cannot be opened.");
         }
     }//GEN-LAST:event_linkMouseClicked
 
