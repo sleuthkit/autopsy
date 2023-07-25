@@ -70,6 +70,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.SystemDefaultCredentialsProvider;
 import org.apache.http.impl.client.WinHttpClients;
+import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Actually makes the http requests to CT cloud.
@@ -78,6 +79,7 @@ public class CTCloudHttpClient {
 
     private static final CTCloudHttpClient instance = new CTCloudHttpClient();
     private static final Logger LOGGER = Logger.getLogger(CTCloudHttpClient.class.getName());
+    private static final String HOST_URL = Version.getBuildType() == Version.Type.RELEASE ? Constants.CT_CLOUD_SERVER : Constants.CT_CLOUD_DEV_SERVER;
 
     private static final List<String> DEFAULT_SCHEME_PRIORITY
             = new ArrayList<>(Arrays.asList(
@@ -137,7 +139,7 @@ public class CTCloudHttpClient {
     }
 
     public <O> O doPost(String urlPath, Map<String, String> urlReqParams, Object jsonBody, Class<O> classType) throws CTCloudException {
-        String url = Constants.CT_CLOUD_SERVER + urlPath;
+        String url = HOST_URL + urlPath;
         try {
 
             LOGGER.log(Level.INFO, "initiating http connection to ctcloud server");

@@ -34,8 +34,7 @@ final public class Constants {
 
     public static final String CT_CLOUD_DEV_SERVER = "https://cyber-triage-dev.appspot.com";
     
-    // TODO put back
-    public static final String CT_CLOUD_SERVER = CT_CLOUD_DEV_SERVER; //"https://rep1.cybertriage.com";
+    public static final String CT_CLOUD_SERVER = "https://rep1.cybertriage.com";
     
     /**
      * Link to watch demo video
