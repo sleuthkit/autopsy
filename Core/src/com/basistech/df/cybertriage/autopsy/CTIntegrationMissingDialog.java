@@ -33,9 +33,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class CTIntegrationMissingDialog extends javax.swing.JDialog {
 
     private static final String DOCS_PAGE_URL = "http://docs.cybertriage.com";
-    
+
     private static final Logger LOGGER = Logger.getLogger(CTIntegrationMissingDialog.class.getName());
-    
+
     /**
      * Creates new form CTIntegrationMissingDialog
      */
@@ -63,15 +63,11 @@ public class CTIntegrationMissingDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(CTIntegrationMissingDialog.class, "CTIntegrationMissingDialog.title")); // NOI18N
         setAlwaysOnTop(true);
-        setMaximumSize(new java.awt.Dimension(500, 190));
-        setMinimumSize(new java.awt.Dimension(500, 190));
-        setPreferredSize(new java.awt.Dimension(500, 190));
         setResizable(false);
-        setSize(new java.awt.Dimension(500, 190));
         getContentPane().setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(CTIntegrationMissingDialog.class, "CTIntegrationMissingDialog.descriptionLabel.text")); // NOI18N
-        descriptionLabel.setMinimumSize(new java.awt.Dimension(123, 116));
+        descriptionLabel.setMinimumSize(new java.awt.Dimension(483, 116));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
@@ -83,6 +79,7 @@ public class CTIntegrationMissingDialog extends javax.swing.JDialog {
         getContentPane().add(descriptionLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(docsLabel, org.openide.util.NbBundle.getMessage(CTIntegrationMissingDialog.class, "CTIntegrationMissingDialog.docsLabel.text")); // NOI18N
+        docsLabel.setMinimumSize(new java.awt.Dimension(312, 16));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -102,6 +99,7 @@ public class CTIntegrationMissingDialog extends javax.swing.JDialog {
         gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
         getContentPane().add(link, gridBagConstraints);
 
@@ -156,7 +154,8 @@ public class CTIntegrationMissingDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_okButtonActionPerformed
 
     public void showDialog(JComponent parentComp) {
-        setLocationRelativeTo(parentComp);
+        setLocationRelativeTo(parentComp == null ? getParent() : parentComp);
+        pack();
         setVisible(true);
     }
 

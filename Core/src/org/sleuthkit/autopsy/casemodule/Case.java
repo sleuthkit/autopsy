@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import com.basistech.df.cybertriage.autopsy.CTIntegrationMissingDialog;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import com.google.common.annotations.Beta;
 import com.google.common.eventbus.Subscribe;
@@ -177,6 +178,7 @@ public class Case {
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
     private static final String NO_NODE_ERROR_MSG_FRAGMENT = "KeeperErrorCode = NoNode";
+    private static final String CT_PROVIDER_PREFIX = "CTCustomContentProvider_";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
@@ -2739,6 +2741,9 @@ public class Case {
             
             ContentStreamProvider contentProvider = loadContentProvider(metadata.getContentProviderName());
             if (StringUtils.isNotBlank(metadata.getContentProviderName()) && contentProvider == null) {
+                if (metadata.getContentProviderName().trim().toUpperCase().startsWith(CT_PROVIDER_PREFIX.toUpperCase())) {
+                    new CTIntegrationMissingDialog(WindowManager.getDefault().getMainWindow(), true).showDialog(null);
+                }
                 throw new CaseActionException(Bundle.Case_exceptionMessage_contentProviderCouldNotBeFound());
             }
             
