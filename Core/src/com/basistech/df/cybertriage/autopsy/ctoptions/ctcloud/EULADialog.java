@@ -34,8 +34,7 @@ import org.apache.commons.io.IOUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- *
- * @author gregd
+ * Dialog for displaying the Cyber Triage EULA before the license is saved.
  */
 public class EULADialog extends javax.swing.JDialog {
 

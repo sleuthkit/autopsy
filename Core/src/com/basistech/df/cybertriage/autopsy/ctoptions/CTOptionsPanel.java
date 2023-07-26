@@ -35,7 +35,7 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
 /**
- * Options panel for CyberTriage.
+ * Options panel for Cyber Triage.
  */
 public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
 
@@ -46,7 +46,8 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
     private final List<CTOptionsSubPanel> subPanels;
 
     /**
-     * Creates new form CTOptions
+     * Creates new form CTOptions loading any CTOptionsSubPanel instances to be
+     * displayed.
      */
     public CTOptionsPanel() {
         initComponents();
