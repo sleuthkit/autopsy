@@ -323,6 +323,7 @@
                 </test-type>
             </test-dependencies>
             <public-packages>
+                <package>com.basistech.df.cybertriage.autopsy.ctoptions.subpanel</package>
                 <package>net.sf.sevenzipjbinding</package>
                 <package>net.sf.sevenzipjbinding.impl</package>
                 <package>net.sf.sevenzipjbinding.simple</package>
