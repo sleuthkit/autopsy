@@ -1,2 +1,0 @@
-argparse==1.4.0
-ruamel.yaml==0.17.21
