@@ -24,11 +24,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
- *
- * @author rishwanth
+ * An exception thrown due to an error that occurs while making a CT Cloud REST
+ * API request.
  */
-
-
 public class CTCloudException extends Exception{
     private final ErrorCode errorCode;
     

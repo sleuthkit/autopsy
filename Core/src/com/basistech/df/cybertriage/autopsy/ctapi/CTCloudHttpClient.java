@@ -73,7 +73,7 @@ import org.apache.http.impl.client.WinHttpClients;
 import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
- * Actually makes the http requests to CT cloud.
+ * Makes the http requests to CT cloud.
  */
 public class CTCloudHttpClient {
 
@@ -263,12 +263,10 @@ public class CTCloudHttpClient {
     }
 
     /**
-     * Creates and returns a CloseableHttpClient SYSTEM and MANUAL looks up from
-     * runtime proxy config settings. These are updated accordingly from the
-     * Proxy Config UI. This allows us to keep the CreateConnection call fairly
-     * simple and not have to deal with the System Proxy settings and such.
-     *
-     * @return
+     * Creates a connection to CT Cloud with the given arguments.
+     * @param proxySettings The network proxy settings.
+     * @param sslContext The ssl context or null.
+     * @return The connection to CT Cloud.
      */
     private static CloseableHttpClient createConnection(ProxySettingArgs proxySettings, SSLContext sslContext) {
         HttpClientBuilder builder = getHttpClientBuilder(proxySettings);

@@ -18,8 +18,6 @@
  */
 package com.basistech.df.cybertriage.autopsy.ctapi;
 
-
-
 import java.net.*;
 import java.util.*;
 import java.util.logging.Level;
