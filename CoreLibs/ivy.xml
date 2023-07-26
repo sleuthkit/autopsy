@@ -1,5 +1,6 @@
 <!DOCTYPE ivy-module [
     <!ENTITY javafx.version "17.0.7">
+    <!ENTITY jackson.version "2.15.2">
 ]>
 <ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
     <info organisation="org.sleuthkit.autopsy" module="corelibs"/>
@@ -87,7 +88,8 @@
 
         <dependency conf="autopsy_core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.4"/>
 
-        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="2.15.2"/>
+        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="&jackson.version;"/>
+        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.datatype" name="jackson-datatype-jsr310" rev="&jackson.version;"/>
         
         <!-- better image resizing -->
         <dependency conf="autopsy_core->default" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />
@@ -142,8 +144,8 @@
         
         <override org="com.google.code.gson" module="gson" rev="2.9.0"/>
         <override org="com.google.guava" module="guava" rev="32.0.1-jre"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-databind" rev="2.15.2"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.15.2"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-databind" rev="&jackson.version;"/>
+        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="&jackson.version;"/>
         
         <!-- changes to bouncy castle version may also be reflected in thirdparty/IcePDF 6.2.2 -->
         <override org="org.bouncycastle" module="bcprov-jdk15on" rev="1.70"/>
