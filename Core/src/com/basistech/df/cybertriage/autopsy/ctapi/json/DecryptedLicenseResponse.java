@@ -41,6 +41,7 @@ public class DecryptedLicenseResponse {
     private final String limitType;
     private final String timezone;
     private final String customerEmail;
+    private final String customerName;
 
     @JsonCreator
     public DecryptedLicenseResponse(
@@ -55,7 +56,8 @@ public class DecryptedLicenseResponse {
             @JsonProperty("product") String product,
             @JsonProperty("limitType") String limitType,
             @JsonProperty("timezone") String timezone,
-            @JsonProperty("customerEmail") String customerEmail
+            @JsonProperty("customerEmail") String customerEmail,
+            @JsonProperty("customerName") String customerName
     ) {
         this.boostLicenseId = boostLicenseId;
         this.licenseHostId = licenseHostId;
@@ -67,6 +69,7 @@ public class DecryptedLicenseResponse {
         this.limitType = limitType;
         this.timezone = timezone;
         this.customerEmail = customerEmail;
+        this.customerName = customerName;
     }
 
     public String getBoostLicenseId() {
@@ -107,5 +110,9 @@ public class DecryptedLicenseResponse {
 
     public String getCustomerEmail() {
         return customerEmail;
+    }
+
+    public String getCustomerName() {
+        return customerName;
     }
 }
