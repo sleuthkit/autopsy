@@ -200,6 +200,7 @@ public class CTCloudHttpClient {
     public void doFileUploadPost(String urlPath, String fileName, InputStream fileIs) throws CTCloudException {
          
         try (CloseableHttpClient httpclient = createConnection(getProxySettings(), sslContext)) {
+            LOGGER.log(Level.INFO, "initiating http post request to ctcloud server " + urlPath);
             HttpPost post = new HttpPost(urlPath);
             configureRequestTimeout(post);
             
