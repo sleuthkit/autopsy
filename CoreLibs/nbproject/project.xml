@@ -63,6 +63,12 @@
                 <package>com.fasterxml.jackson.databind.type</package>
                 <package>com.fasterxml.jackson.databind.util</package>
                 <package>com.fasterxml.jackson.dataformat.csv</package>
+                <package>com.fasterxml.jackson.datatype.jsr310</package>
+                <package>com.fasterxml.jackson.datatype.jsr310.deser</package>
+                <package>com.fasterxml.jackson.datatype.jsr310.deser.key</package>
+                <package>com.fasterxml.jackson.datatype.jsr310.ser</package>
+                <package>com.fasterxml.jackson.datatype.jsr310.ser.key</package>
+                <package>com.fasterxml.jackson.datatype.jsr310.util</package>
                 <package>com.github.lgooddatepicker.components</package>
                 <package>com.github.lgooddatepicker.optionalusertools</package>
                 <package>com.github.lgooddatepicker.zinternaltools</package>
@@ -197,8 +203,6 @@
                 <package>com.google.rpc.context</package>
                 <package>com.google.thirdparty.publicsuffix</package>
                 <package>com.google.type</package>
-                <package>com.microsoft.schemas.vml</package>
-                <package>com.microsoft.schemas.vml.impl</package>
                 <package>com.sun.javafx</package>
                 <package>com.sun.javafx.animation</package>
                 <package>com.sun.javafx.application</package>
@@ -321,9 +325,6 @@
                 <package>com.twelvemonkeys.util.regex</package>
                 <package>com.twelvemonkeys.util.service</package>
                 <package>com.twelvemonkeys.xml</package>
-                <package>javax.annotation</package>
-                <package>javax.annotation.concurrent</package>
-                <package>javax.annotation.meta</package>
                 <package>javafx.animation</package>
                 <package>javafx.application</package>
                 <package>javafx.beans</package>
@@ -340,7 +341,6 @@
                 <package>javafx.event</package>
                 <package>javafx.fxml</package>
                 <package>javafx.geometry</package>
-                <package>javafx.graphics</package>
                 <package>javafx.print</package>
                 <package>javafx.scene</package>
                 <package>javafx.scene.canvas</package>
@@ -362,19 +362,9 @@
                 <package>javafx.stage</package>
                 <package>javafx.util</package>
                 <package>javafx.util.converter</package>
-                <package>javax.jms</package>
-                <package>javax.mail</package>
-                <package>javax.mail.event</package>
-                <package>javax.mail.internet</package>
-                <package>javax.mail.search</package>
-                <package>javax.mail.util</package>
-                <package>javax.servlet</package>
-                <package>javax.servlet.http</package>
-                <package>javax.xml.parsers</package>
-                <package>javax.xml.transform</package>
-                <package>javax.xml.transform.dom</package>
-                <package>javax.xml.transform.sax</package>
-                <package>javax.xml.transform.stream</package>
+                <package>javax.annotation</package>
+                <package>javax.annotation.concurrent</package>
+                <package>javax.annotation.meta</package>
                 <package>jfxtras.animation</package>
                 <package>jfxtras.css</package>
                 <package>jfxtras.css.converters</package>
@@ -442,16 +432,6 @@
                 <package>org.apache.commons.lang3.tuple</package>
                 <package>org.apache.commons.logging</package>
                 <package>org.apache.commons.logging.impl</package>
-                <package>org.apache.log</package>
-                <package>org.apache.log.filter</package>
-                <package>org.apache.log.format</package>
-                <package>org.apache.log.output</package>
-                <package>org.apache.log.output.db</package>
-                <package>org.apache.log.output.io</package>
-                <package>org.apache.log.output.io.rotate</package>
-                <package>org.apache.log.output.jms</package>
-                <package>org.apache.log.output.net</package>
-                <package>org.apache.log.util</package>
                 <package>org.apache.commons.text</package>
                 <package>org.apache.commons.validator.routines</package>
                 <package>org.apache.commons.validator.routines.checkdigit</package>
@@ -460,14 +440,7 @@
                 <package>org.apache.log4j.config</package>
                 <package>org.apache.log4j.helpers</package>
                 <package>org.apache.log4j.jdbc</package>
-                <package>org.apache.log4j.jmx</package>
-                <package>org.apache.log4j.lf5</package>
-                <package>org.apache.log4j.lf5.util</package>
-                <package>org.apache.log4j.lf5.viewer</package>
-                <package>org.apache.log4j.lf5.viewer.categoryexplorer</package>
-                <package>org.apache.log4j.lf5.viewer.configure</package>
                 <package>org.apache.log4j.net</package>
-                <package>org.apache.log4j.nt</package>
                 <package>org.apache.log4j.or</package>
                 <package>org.apache.log4j.or.jms</package>
                 <package>org.apache.log4j.or.sax</package>
@@ -930,6 +903,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jackson-dataformat-csv-2.15.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jackson-dataformat-csv-2.15.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackson-datatype-jsr310-2.15.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-datatype-jsr310-2.15.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/javafx-base-17.0.7-linux.jar</runtime-relative-path>
