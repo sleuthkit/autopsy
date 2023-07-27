@@ -96,7 +96,7 @@ public class CTApiDAO {
     }
     
     public void uploadMeta(AuthenticatedRequestData authenticatedRequestData, MetadataUploadRequest metaRequest) throws CTCloudException {
-        httpClient.doPost(AUTH_TOKEN_REQUEST_PATH, getAuthParams(authenticatedRequestData), metaRequest, null);
+        httpClient.doPost(CTCLOUD_UPLOAD_FILE_METADATA_PATH, getAuthParams(authenticatedRequestData), metaRequest, null);
     }
 
     private static Map<String, String> getAuthParams(AuthenticatedRequestData authenticatedRequestData) {

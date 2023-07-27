@@ -38,10 +38,10 @@ public class MetadataUploadRequest {
     private String filePath;
 
     @JsonProperty("fileSize")
-    private long fileSizeBytes;
+    private Long fileSizeBytes;
 
     @JsonProperty("createdDate")
-    private long createdDate;
+    private Long createdDate;
 
     public String getFileUploadUrl() {
         return fileUploadUrl;
@@ -88,20 +88,20 @@ public class MetadataUploadRequest {
         return this;
     }
 
-    public long getFileSizeBytes() {
+    public Long getFileSizeBytes() {
         return fileSizeBytes;
     }
 
-    public MetadataUploadRequest setFileSizeBytes(long fileSizeBytes) {
+    public MetadataUploadRequest setFileSizeBytes(Long fileSizeBytes) {
         this.fileSizeBytes = fileSizeBytes;
         return this;
     }
 
-    public long getCreatedDate() {
+    public Long getCreatedDate() {
         return createdDate;
     }
 
-    public MetadataUploadRequest setCreatedDate(long createdDate) {
+    public MetadataUploadRequest setCreatedDate(Long createdDate) {
         this.createdDate = createdDate;
         return this;
     }
