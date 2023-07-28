@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import com.basistech.df.cybertriage.autopsy.malwarescan.MalwareScanIngestModuleFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -33,7 +34,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
@@ -53,6 +57,11 @@ public final class IngestJobSettings {
     private static final String DISABLED_MODULES_PROPERTY = "Disabled_Ingest_Modules"; //NON-NLS
     private static final String LAST_FILE_INGEST_FILTER_PROPERTY = "Last_File_Ingest_Filter"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_NAME = "IngestSettings"; //NON-NLS
+    
+    private static final Set<String> DEFAULT_DISABLED_MODULES = Stream.of(
+            "Plaso",
+            MalwareScanIngestModuleFactory.getDisplayName()
+    ).collect(Collectors.toSet());
     
     private static final String MODULE_SETTINGS_FOLDER = Paths.get(
             Paths.get(PlatformUtil.getUserConfigDirectory()).relativize(Paths.get(PlatformUtil.getModuleConfigDirectory())).toString(),
@@ -361,37 +370,36 @@ public final class IngestJobSettings {
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());
         }
 
-        /**
-         * Hard coding Plaso to be disabled by default. loadedModuleNames is
-         * passed below as the default list of enabled modules so briefly remove
-         * Plaso from loaded modules to get the list of enabled and disabled
-         * modules names. Then put Plaso back into loadedModulesNames to let the
-         * rest of the code continue as before.
-         */
-        final String plasoModuleName = "Plaso";
-        boolean plasoLoaded = loadedModuleNames.contains(plasoModuleName);
-        if (plasoLoaded) {
-            loadedModuleNames.remove(plasoModuleName);
+
+        Set<String> defaultEnabledAndLoaded = new HashSet<>();
+        Set<String> defaultDisabledAndLoaded = new HashSet<>();
+        for (String loadedModule: loadedModuleNames) {
+            if (DEFAULT_DISABLED_MODULES.contains(loadedModule)) {
+                defaultDisabledAndLoaded.add(loadedModule);
+            } else {
+                defaultEnabledAndLoaded.add(loadedModule);
+            }
         }
 
         /**
          * Get the enabled/disabled ingest modules settings for this context. By
          * default, all loaded modules except Plaso are enabled.
          */
-        HashSet<String> enabledModuleNames = getModulesNames(this.executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(loadedModuleNames));
-        HashSet<String> disabledModuleNames = getModulesNames(this.executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, plasoModuleName); //NON-NLS
+        HashSet<String> enabledModuleNames = getModulesNames(this.executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(defaultEnabledAndLoaded));
+        HashSet<String> disabledModuleNames = getModulesNames(this.executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, makeCsvList(defaultDisabledAndLoaded)); //NON-NLS
 
-        // If plaso was loaded, but appears in neither the enabled nor the 
-        // disabled list, add it to the disabled list.
-        if (!enabledModuleNames.contains(plasoModuleName) && !disabledModuleNames.contains(plasoModuleName)) {
-            disabledModuleNames.add(plasoModuleName);
+        // double check to ensure all loaded modules are present in one of the lists in case more modules (in case settings didn't have a module)
+        for (String loadedModule : loadedModuleNames) {
+            // if neither enabled modules or disabled modules contains the loaded module, add it to the default location
+            if (!enabledModuleNames.contains(loadedModule) && !disabledModuleNames.contains(loadedModule)) {
+                if (DEFAULT_DISABLED_MODULES.contains(loadedModule)) {
+                    disabledModuleNames.add(loadedModule);
+                } else {
+                    enabledModuleNames.add(loadedModule);
+                }
+            }
         }
-
-        //Put plaso back into loadedModuleNames
-        if (plasoLoaded) {
-            loadedModuleNames.add(plasoModuleName);
-        }
-
+        
         /**
          * Check for missing modules and create warnings if any are found.
          */

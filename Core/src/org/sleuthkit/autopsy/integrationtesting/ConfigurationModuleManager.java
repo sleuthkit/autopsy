@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.integrationtesting;
 
+import com.basistech.df.cybertriage.autopsy.malwarescan.MalwareScanIngestModuleFactory;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -46,7 +47,10 @@ public class ConfigurationModuleManager {
     private static final Logger logger = Logger.getLogger(ConfigurationModuleManager.class.getName());
 
     private static final IngestJobSettings.IngestType DEFAULT_INGEST_FILTER_TYPE = IngestJobSettings.IngestType.ALL_MODULES;
-    private static final Set<String> DEFAULT_EXCLUDED_MODULES = Stream.of("Plaso").collect(Collectors.toSet());
+    private static final Set<String> DEFAULT_EXCLUDED_MODULES = Stream.of(
+            "Plaso",
+            MalwareScanIngestModuleFactory.getDisplayName()
+    ).collect(Collectors.toSet());
     private static final ConfigDeserializer configDeserializer = new ConfigDeserializer();
 
     /**
