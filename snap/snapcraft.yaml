@@ -72,6 +72,7 @@ apps:
     - fuse-support
     - hardware-observe
     - home
+    - hugepages-control
     - kernel-crypto-api
     - log-observe
     # may be necessary for solr
