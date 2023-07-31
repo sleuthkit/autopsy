@@ -180,8 +180,8 @@ parts:
     - openjdk-17-jre
     - openjdk-17-jdk
     - perl
-    # possibly needed by solr
-    - lsof
+    # needed by solr to determine locally running ports
+    - iproute2
     plugin: nil
     # source: https://github.com/sleuthkit/autopsy.git
     source: https://github.com/gdicristofaro/autopsy.git
@@ -216,6 +216,11 @@ parts:
 
       # snaps run applications with different permissions.  This ensures applications can run.
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
+
+      # some fixes so solr can startup in containment (use ss instead of lsof and don't use large pages)
+      sed -i 's/lsof -t -PniTCP:\$SOLR_PORT -sTCP:LISTEN/ss -ln | grep $SOLR_PORT/g'  $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
+      sed -i 's/lsof -v 2>&1 | grep -q revision/ss --version/g' /home/autopsy/autopsy_snap/squashfs-root/autopsy/autopsy/solr/bin/autopsy-solr
+      sed -i '/^.*'-XX:\+UseLargePages'.*$/d'  $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
 
       # wrapper to setup temp dir if not exists; also could be easily modified for debugging purposes with snap try: https://snapcraft.io/docs/snap-try
       cat <<EOF > $AUTOPSY_LOCATION/bin/autopsywrapper.sh
