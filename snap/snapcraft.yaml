@@ -51,7 +51,8 @@ apps:
       GST_PLUGIN_SCANNER: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
       SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
       SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
-      SOLR_DATA_HOME: $HOME/solr
+      # TODO may need to set differently
+      # SOLR_DATA_HOME: $HOME/solr
     command: autopsy/bin/autopsywrapper.sh
     # More info here: https://snapcraft.io/docs/gnome-extension
     extensions: [ gnome ]
@@ -59,52 +60,53 @@ apps:
     plugs:
       # taken from https://snapcraft.io/docs/supported-interfaces
       # can be debugged with snappy debug: https://snapcraft.io/docs/debug-snaps#heading--snappy-debug
+    #- alsa
     - audio-playback
-    - avahi-observe
+    #- avahi-observe
     - block-devices
-    - cifs-mount
-    - daemon-notify
+    #- cifs-mount
+    #- daemon-notify
     - desktop
     - desktop-launch
-    # - desktop-legacy
+    - desktop-legacy
     - dm-crypt
-    - firewall-control
+    #- firewall-control
     - fuse-support
     - hardware-observe
     - home
     - hugepages-control
     - kernel-crypto-api
-    - log-observe
+    #- log-observe
     # may be necessary for solr
-    - microstack-support
-    - modem-manager
+    #- microstack-support
+    #- modem-manager
     - mount-control
     - mount-observe
     - network
     - network-bind
-    - network-control
-    - network-manager
-    - network-manager-observe
+    #- network-control
+    #- network-manager
+    #- network-manager-observe
     - network-observe
     - network-setup-observe
     - network-status
     - opengl
     - optical-drive
     # may be necessary for solr
-    - ppp
-    - pulseaudio
-    - raw-input
-    - raw-usb
+    #- ppp
+    #- pulseaudio
+    #- raw-input
+    #- raw-usb
     - removable-media
-    - sd-control
+    #- sd-control
     - system-files-autopsy
     - system-observe
-    - system-trace
-    - udisks2
+    #- system-trace
+    #- udisks2
     # - unity7
-    - unity8
-    - wayland
-    - x11
+    # - unity8
+    #- wayland
+    #- x11
 
 parts:
   sleuthkit:
@@ -181,7 +183,8 @@ parts:
     - openjdk-17-jdk
     - perl
     # needed by solr to determine locally running ports
-    - iproute2
+    - lsof
+    #- iproute2
     plugin: nil
     # source: https://github.com/sleuthkit/autopsy.git
     source: https://github.com/gdicristofaro/autopsy.git
@@ -218,9 +221,9 @@ parts:
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
 
       # some fixes so solr can startup in containment (use ss instead of lsof and don't use large pages)
-      sed -i 's/lsof -t -PniTCP:\$SOLR_PORT -sTCP:LISTEN/ss -ln | grep $SOLR_PORT/g'  $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
-      sed -i 's/lsof -v 2>&1 | grep -q revision/ss --version/g' $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
-      sed -i '/^.*'-XX:\+UseLargePages'.*$/d'  $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
+      # sed -i 's/lsof -t -PniTCP:\$SOLR_PORT -sTCP:LISTEN/ss -ln | grep $SOLR_PORT/g'  $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
+      # sed -i 's/lsof -v 2>&1 | grep -q revision/ss --version/g' $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
+      # sed -i '/^.*'-XX:\+UseLargePages'.*$/d'  $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
 
       # wrapper to setup temp dir if not exists; also could be easily modified for debugging purposes with snap try: https://snapcraft.io/docs/snap-try
       cat <<EOF > $AUTOPSY_LOCATION/bin/autopsywrapper.sh
