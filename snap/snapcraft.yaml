@@ -16,6 +16,9 @@ plugs:
   system-files-autopsy:
     interface: system-files
     read: [/dev]
+  system-files-hugepages:
+    interface: system-files
+    read: [/sys/kernel/mm/hugepages]
 
 
 # does not appear necessary as writing to home directory gets written to $SNAP_USER_DATA: https://snapcraft.io/docs/environment-variables
@@ -40,7 +43,7 @@ apps:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       SOLR_JAVA_HOME: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs with jna.library.path
-      # set user home to new home value to avoid issues writing cache files to hom
+      # set user home to new home value to avoid issues writing cache files to home
       jreflags: $jreflags '-Duser.home=$HOME' '-Djava.io.tmpdir=$HOME/tmp' '-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
       # to load libtsk.so
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
@@ -100,6 +103,7 @@ apps:
     - removable-media
     #- sd-control
     - system-files-autopsy
+    - system-files-hugepages
     - system-observe
     #- system-trace
     #- udisks2
