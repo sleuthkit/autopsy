@@ -56,7 +56,7 @@ public class CTIntegrationMissingDialog extends javax.swing.JDialog {
 
         javax.swing.JLabel descriptionLabel = new javax.swing.JLabel();
         javax.swing.JLabel docsLabel = new javax.swing.JLabel();
-        javax.swing.JLabel link = new javax.swing.JLabel();
+        link = new javax.swing.JLabel();
         javax.swing.JPanel paddingPanel = new javax.swing.JPanel();
         javax.swing.JButton okButton = new javax.swing.JButton();
 
@@ -87,7 +87,7 @@ public class CTIntegrationMissingDialog extends javax.swing.JDialog {
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 0);
         getContentPane().add(docsLabel, gridBagConstraints);
 
-        org.openide.awt.Mnemonics.setLocalizedText(link, org.openide.util.NbBundle.getMessage(CTIntegrationMissingDialog.class, "CTIntegrationMissingDialog.link.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(link, "<html><span style=\"color: blue; text-decoration: underline\">" + DOCS_PAGE_URL + "</span></html>");
         link.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         link.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -160,5 +160,6 @@ public class CTIntegrationMissingDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel link;
     // End of variables declaration//GEN-END:variables
 }

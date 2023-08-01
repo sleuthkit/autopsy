@@ -178,7 +178,7 @@ public class Case {
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
     private static final String NO_NODE_ERROR_MSG_FRAGMENT = "KeeperErrorCode = NoNode";
-    private static final String CT_PROVIDER_PREFIX = "CTCustomContentProvider_";
+    private static final String CT_PROVIDER_PREFIX = "CTStandardContentProvider_";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
