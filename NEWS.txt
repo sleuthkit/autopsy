@@ -1,19 +1,22 @@
 ---------------- VERSION 4.21.0  --------------
-General
+Library Updates
 - Update Java to version 17
-
-Recent Activity Updates:
-- Check For Malicious Chrome Extensions
+- Update aLeapp/iLeapp executables.
+- Update JNA Version
+- Update SQLite library version
+- Updated 3rd party libraries that have known CVE's
 
 Ingest Module Updates:
-- Inline Keyword Search
-- Update aLeapp/iLeapp executables.
+- Recent Activity checks for malicious Chrome extensions
+- Keyword Search module now can search without needing to index text into Solr. 
+- New Cyber Triage Malware Scanner module that uses Reversing Labs (requires license)
+
+Add Data Source Updates:
+- Timestamps for logical files can be added. 
+- List of logical files/folders can be edited before they are added. 
 
 GUI Updates:
-- Add "has attachments" flag for email's
-- Add ability to delete a logical file/path from logical file
-  DSP panel before it is run.
-- Add ability to add timestamps when adding localfiles as a data source
+- Add "has attachments" flag for emails
 - Add Score to tree view
 
 Bugs:
@@ -21,11 +24,8 @@ Bugs:
 - Fix exporting of CSV files
 
 Misc:
-- Update JNA Version
-- Update SQLite library version
 - Add export for Pasco
-- Cyber Triage intergration
-- Updated 3rd party libraries that have known CVE's
+- Added File Repository concept
 
 ---------------- VERSION 4.20.0  --------------
 Recent Activity Updates:
