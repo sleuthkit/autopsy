@@ -91,7 +91,6 @@ apps:
     - home
     - hugepages-control
     - kernel-crypto-api
-    - mount-control
     - mount-observe
     - network
     - network-bind
@@ -239,3 +238,6 @@ parts:
       for snap in "core22" "gnome-42-2204"; do
         cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$CRAFT_PRIME/{}" \;
       done
+
+      # taken from https://github.com/ubuntu/libreoffice/blob/7.3/snapcraft.yaml
+      rm -rf $SNAPCRAFT_PRIME/usr/lib/*/lib{gtk,gdk,cairo,pango,wayland}*
