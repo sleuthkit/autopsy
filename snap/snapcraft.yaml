@@ -1,4 +1,28 @@
+# OVERVIEW:
+# Snap packages are an application and everything needed for that application bundled into a package: https://snapcraft.io/docs/snapcraft
+# Snapd can be installed on the following systems: https://snapcraft.io/docs/installing-snapd
+# Snap packages can be released to the store: https://snapcraft.io/docs/releasing-to-the-snap-store
+# Classic confinement apps and Strict confinement apps using super-priveleged interfaces (https://snapcraft.io/docs/super-privileged-interfaces) will require special approval.
+#
+# DEVELOPMENT / DEBUG:
+# snappy debug can be used to identify apparmor/confinement violations: https://snapcraft.io/docs/debug-snaps#heading--snappy-debug
+# building snaps with lxd/multipass requires hardware assisted virtualization: https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-2A98801C-68E8-47AF-99ED-00C63E4857F6.html, https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-F920A3C7-3B42-4E78-8EA7-961E49AF479D.html
+# build provider information can be found here: https://snapcraft.io/docs/build-providers, https://snapcraft.io/docs/build-options
+# A command like the following will run snapcraft in the background to build a snap package and write output to log `nohup snapcraft --use-lxd --debug > ./output.log 2>&1 < /dev/null &``.  This must be run from the directory above `snap`
+# Information on debugging snaps can be found here (in particular `snap try` can mount a filesystem as a snap ): https://snapcraft.io/docs/debug-snaps, https://snapcraft.io/docs/snap-try
+#
+# INSTALLATION:
+# Some options for installation can be found here: https://snapcraft.io/docs/install-modes
+# Snap uses assertions to digitally sign snaps (https://snapcraft.io/docs/assertions).  Otherwise, snaps need to be installed with the `--dangerous` flag
+# it would be best to install autopsy with `sudo snap install --dangerous autopsy` and then connect all super-priveleged interfaces or `sudo snap install --dangerous --devmode autopsy``
+
+
+
+# yaml reference here: https://snapcraft.io/docs/snapcraft-yaml-reference
+# sample yaml files here: https://github.com/videolan/vlc/blob/master/extras/package/snap/snapcraft.yaml, https://github.com/canonical/firefox-snap/blob/stable/snapcraft.yaml
 name: autopsy
+# more on base snaps here: https://snapcraft.io/docs/base-snaps
+# core is based on corresponding ubuntu version.  ubuntu version information can be found here: https://wiki.ubuntu.com/Releases
 base: core22
 version: 4.20.0
 summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
@@ -7,8 +31,11 @@ source-code: https://github.com/sleuthkit/autopsy/
 website: https://www.autopsy.com/
 license: Apache-2.0
 grade: stable # must be 'stable' to release into candidate/stable channels
-confinement: strict # or classic # use 'strict' once you have the right plugs and slots
+# Options include 'strict' and 'classic'.  'Strict' is greatly preferred to 'classic'.  More information here: https://snapcraft.io/docs/snap-confinement
+# classic confinement does not chroot so elf records need to be patched to point to relative paths: https://snapcraft.io/blog/the-new-classic-confinement-in-snaps-even-the-classics-need-a-change, https://snapcraft.io/docs/linters-classic#heading--issues-auto, https://docs.oracle.com/cd/E19683-01/816-1386/chapter3-33/index.html, https://nehckl0.medium.com/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
+confinement: strict
 architectures: [amd64]
+# information on lzo here: https://snapcraft.io/blog/why-lzo-was-chosen-as-the-new-compression-method
 compression: lzo
 icon: snap/gui/autopsy.png
 
@@ -20,25 +47,9 @@ plugs:
     interface: system-files
     read: [/sys/kernel/mm/hugepages]
 
-
-# does not appear necessary as writing to home directory gets written to $SNAP_USER_DATA: https://snapcraft.io/docs/environment-variables
-#layout:
-  # $SNAP_REAL_HOME/.icesoft:
-  #   bind: $SNAP_DATA/.icesoft
-  # $SNAP_REAL_HOME/.java:
-  #   bind: $SNAP_DATA/.java
-  # $SNAP_REAL_HOME/.openjfx:
-  #   bind: $SNAP_DATA/.openjfx
-#   /$SNAP_USER_DATA/tmp:
-#     bind: $SNAP_DATA/tmp
-#   /$SNAP_USER_DATA/.autopsy:
-#     bind: $SNAP_DATA/appdata
-#   /$SNAP_USER_DATA/.cache/autopsy:
-#     bind: $SNAP_DATA/cache
-
-
 apps:
   autopsy:
+    # more on env vars here: https://snapcraft.io/docs/environment-variables
     environment:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       SOLR_JAVA_HOME: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
@@ -50,78 +61,51 @@ apps:
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
       # gstreamer scans for plugins (i.e. app integration plugins).  this tells gstreamer where to look for the scanner and libraries
+      # more information here: https://forum.snapcraft.io/t/trouble-with-ros-and-gstreamer/5518/6
       GST_PLUGIN_SYSTEM_PATH: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer-1.0
       GST_PLUGIN_SCANNER: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
       SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
       SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
-      # TODO may need to set differently
-      # SOLR_DATA_HOME: $HOME/solr
     command: autopsy/bin/autopsywrapper.sh
-    # More info here: https://snapcraft.io/docs/gnome-extension
+    # More gnome info here: https://snapcraft.io/docs/gnome-extension
     extensions: [ gnome ]
     common-id: org.sleuthkit.autopsy
     plugs:
       # taken from https://snapcraft.io/docs/supported-interfaces
-      # can be debugged with snappy debug: https://snapcraft.io/docs/debug-snaps#heading--snappy-debug
-    #- alsa
     - audio-playback
-    #- avahi-observe
     - block-devices
-    #- cifs-mount
-    #- daemon-notify
     - desktop
     - desktop-launch
     - desktop-legacy
     - dm-crypt
-    #- firewall-control
     - fuse-support
     - hardware-observe
     - home
     - hugepages-control
     - kernel-crypto-api
-    #- log-observe
-    # may be necessary for solr
-    #- microstack-support
-    #- modem-manager
     - mount-control
     - mount-observe
     - network
     - network-bind
-    #- network-control
-    #- network-manager
-    #- network-manager-observe
     - network-observe
     - network-setup-observe
     - network-status
     - opengl
     - optical-drive
-    # may be necessary for solr
-    #- ppp
-    #- pulseaudio
-    #- raw-input
-    #- raw-usb
     - removable-media
-    #- sd-control
     - system-files-autopsy
     - system-files-hugepages
     - system-observe
-    #- system-trace
-    #- udisks2
-    # - unity7
-    # - unity8
-    #- wayland
-    #- x11
 
 parts:
   sleuthkit:
+    # more information on plugins here: https://snapcraft.io/docs/supported-plugins
     plugin: autotools
     source: https://github.com/sleuthkit/sleuthkit.git
     source-branch: develop
     #source-tag: sleuthkit-4.12.0
     build-environment: [JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64]
-    # may be necessary for classic snaps: https://snapcraft.io/docs/linters-classic#heading--issues-auto
-    # build-attributes:
-    # - enable-patchelf
+    # information on packages here: https://snapcraft.io/docs/package-repositories
     build-packages:
     - build-essential
     - autoconf
@@ -148,9 +132,7 @@ parts:
     - libvmdk-dev
   autopsy:
     after: [sleuthkit]
-    # may be necessary for classic snaps: https://snapcraft.io/docs/linters-classic#heading--issues-auto
-    # build-attributes:
-    # - enable-patchelf
+    # information on packages here: https://snapcraft.io/docs/package-repositories
     build-packages:
     - zip
     - unzip
@@ -188,7 +170,6 @@ parts:
     - perl
     # needed by solr to determine locally running ports
     - lsof
-    #- iproute2
     plugin: nil
     # source: https://github.com/sleuthkit/autopsy.git
     source: https://github.com/gdicristofaro/autopsy.git
@@ -197,6 +178,7 @@ parts:
     build-environment:
     - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
+    # information on parts environment variables here: https://snapcraft.io/docs/parts-environment-variables
     override-build: |
       # ----- BUILD ZIP -----
       AUTOPSY_SRC_PATH=$(pwd)
@@ -223,11 +205,6 @@ parts:
 
       # snaps run applications with different permissions.  This ensures applications can run.
       chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
-
-      # some fixes so solr can startup in containment (use ss instead of lsof and don't use large pages)
-      # sed -i 's/lsof -t -PniTCP:\$SOLR_PORT -sTCP:LISTEN/ss -ln | grep $SOLR_PORT/g'  $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
-      # sed -i 's/lsof -v 2>&1 | grep -q revision/ss --version/g' $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
-      # sed -i '/^.*'-XX:\+UseLargePages'.*$/d'  $AUTOPSY_LOCATION/autopsy/solr/bin/autopsy-solr
 
       # wrapper to setup temp dir if not exists; also could be easily modified for debugging purposes with snap try: https://snapcraft.io/docs/snap-try
       cat <<EOF > $AUTOPSY_LOCATION/bin/autopsywrapper.sh
