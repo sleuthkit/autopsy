@@ -46,6 +46,9 @@ plugs:
   system-files-hugepages:
     interface: system-files
     read: [/sys/kernel/mm/hugepages]
+  browser-sandbox:
+    interface: browser-support
+    allow-sandbox: true
 
 apps:
   autopsy:
@@ -66,6 +69,9 @@ apps:
       GST_PLUGIN_SCANNER: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
       SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
       SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
+      # taken from thunderbird snap: https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
+      DISABLE_WAYLAND: 1
+      GTK_USE_PORTAL: 1
     command: autopsy/bin/autopsywrapper.sh
     # More gnome info here: https://snapcraft.io/docs/gnome-extension
     extensions: [ gnome ]
@@ -74,11 +80,13 @@ apps:
       # taken from https://snapcraft.io/docs/supported-interfaces
     - audio-playback
     - block-devices
+    - browser-sandbox
     - desktop
     - desktop-launch
     - desktop-legacy
     - dm-crypt
     - fuse-support
+    - gsettings
     - hardware-observe
     - home
     - hugepages-control
@@ -218,3 +226,16 @@ parts:
 
       # include this line to print all set variables
       # sed -i '129 i set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"' "$AUTOPSY_LOCATION/platform/lib/nbexec"
+  # taken from https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
+  # Find files provided by the base and platform snap and ensure they aren't
+  # duplicated in this snap
+  cleanup:
+    after: [autopsy]
+    plugin: nil
+    # NOTE: this will likely change as gnome extension has new revisions
+    build-snaps: [core22, gnome-42-2204]
+    override-prime: |
+      set -eux
+      for snap in "core22" "gnome-42-2204"; do
+        cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$CRAFT_PRIME/{}" \;
+      done
