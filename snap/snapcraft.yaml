@@ -298,9 +298,16 @@ parts:
     after: [autopsy]
     plugin: nil
     # NOTE: this will likely change as gnome extension has new revisions
-    build-snaps: [core22, gnome-42-2204]
+    build-snaps: [core22]
     override-prime: |
       set -eux
-      for snap in "core22" "gnome-42-2204"; do
+      for snap in "core22"; do
         cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
       done
+    # TODO remove if effective
+    #build-snaps: [core22, gnome-42-2204]
+    # override-prime: |
+    #   set -eux
+    #   for snap in "core22" "gnome-42-2204"; do
+    #     cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
+    #   done
