@@ -44,7 +44,10 @@ import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Comparator;
+import org.apache.commons.io.FileUtils;
 
 /**
  * Finds and loads Autopsy modules written using the Jython variant of the
@@ -53,7 +56,8 @@ import java.util.Comparator;
 public final class JythonModuleLoader {
 
     private static final Logger logger = Logger.getLogger(JythonModuleLoader.class.getName());
-
+    private static final String INTERNAL_PYTHON_MODULES_FOLDER = "InternalPythonModules";
+    
     /**
      * Get ingest module factories implemented using Jython.
      *
@@ -84,9 +88,42 @@ public final class JythonModuleLoader {
         return getInterfaceImplementations(new DataSourceProcessorDefFilter(), DataSourceProcessor.class);
     }
 
+    /**
+     * @return Folder in user config directory where internal python modules
+     *         will be copied and compiled.
+     */
+    private static File getUserDirInternalPython() {
+        return new File(PlatformUtil.getUserDirectory(), INTERNAL_PYTHON_MODULES_FOLDER);
+    }
+    
+    /**
+     * If user directory internal python modules does not exist, create it and
+     * copy contents internal python modules in installation directory to that
+     * location. This avoids creating files in the installation directory when
+     * compiling the python files.
+     */
+    private static synchronized void copyInternalInstallToUserDir() {
+        File userDirInternalPython = getUserDirInternalPython();
+        if (!userDirInternalPython.exists()) {
+            userDirInternalPython.mkdirs();
+            
+            File installInternalPython = InstalledFileLocator.getDefault().locate(INTERNAL_PYTHON_MODULES_FOLDER, "org.sleuthkit.autopsy.core", false);
+            if (installInternalPython.exists()) {
+                try {
+                    FileUtils.copyDirectory(installInternalPython, userDirInternalPython);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, MessageFormat.format("There was an error copying internal python modules from {0} to {1}.", 
+                            installInternalPython, userDirInternalPython), ex);
+                }
+            }
+        }
+    }
+    
     @Messages({"JythonModuleLoader.pythonInterpreterError.title=Python Modules",
                 "JythonModuleLoader.pythonInterpreterError.msg=Failed to load python modules, See log for more details"})
     private static <T> List<T> getInterfaceImplementations(LineFilter filter, Class<T> interfaceClass) {
+        copyInternalInstallToUserDir();
+        
         List<T> objects = new ArrayList<>();
         Set<File> pythonModuleDirs = new HashSet<>();
         PythonInterpreter interpreter = null;
@@ -100,11 +137,12 @@ public final class JythonModuleLoader {
             }
             return objects;
         }
+
         // add python modules from 'autospy/build/cluster/InternalPythonModules' folder
-        // which are copied from 'autopsy/*/release/InternalPythonModules' folders.
-        for (File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", "org.sleuthkit.autopsy.core", false)) { //NON-NLS
-            Collections.addAll(pythonModuleDirs, f.listFiles());
-        }
+        // which are copied from 'autopsy/*/release/InternalPythonModules' folders, 
+        // and then copied to 'testuserdir/InternalPythonModules'
+        Collections.addAll(pythonModuleDirs, getUserDirInternalPython().listFiles());
+        
         // add python modules from 'testuserdir/python_modules' folder
         Collections.addAll(pythonModuleDirs, new File(PlatformUtil.getUserPythonModulesPath()).listFiles());
 
