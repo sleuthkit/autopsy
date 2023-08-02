@@ -280,13 +280,15 @@ parts:
       cat <<EOF > $AUTOPSY_LOCATION/bin/autopsywrapper.sh
       #!/bin/bash
       mkdir -p \$HOME/tmp
-      # include this line to print all set variables
-      # set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"
       echo Starting Autopsy...
       \$SNAP/autopsy/bin/autopsy
       EOF
 
       chmod 755 $AUTOPSY_LOCATION/bin/autopsywrapper.sh
+
+      # include this line to print all set variables
+      # set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"
+      # sed -i '129 i ' "$AUTOPSY_LOCATION/platform/lib/nbexec"
 
 
   # taken from https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
