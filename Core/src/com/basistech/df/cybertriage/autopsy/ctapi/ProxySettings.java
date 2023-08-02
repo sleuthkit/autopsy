@@ -32,7 +32,7 @@ import org.openide.util.lookup.ServiceProvider;
  * Taken from https://raw.githubusercontent.com/apache/netbeans/master/platform/o.n.core/src/org/netbeans/core/ProxySettings.java
  * @author Jiri Rechtacek
  */
-public class ProxySettings {
+class ProxySettings {
     
     public static final String PROXY_HTTP_HOST = "proxyHttpHost";   // NOI18N
     public static final String PROXY_HTTP_PORT = "proxyHttpPort";   // NOI18N

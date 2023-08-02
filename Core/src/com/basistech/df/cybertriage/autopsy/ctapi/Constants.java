@@ -23,7 +23,7 @@ import java.net.URI;
 /**
  * Constants regarding connections to cyber triage cloud.
  */
-final public class Constants {
+final class Constants {
 
     public static final String CYBER_TRIAGE = "CyberTriage";
 

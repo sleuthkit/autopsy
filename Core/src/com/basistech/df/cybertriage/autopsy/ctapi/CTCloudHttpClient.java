@@ -67,7 +67,7 @@ import org.sleuthkit.autopsy.coreutils.Version;
 /**
  * Makes the http requests to CT cloud.
  */
-public class CTCloudHttpClient {
+class CTCloudHttpClient {
 
     private static final CTCloudHttpClient instance = new CTCloudHttpClient();
     private static final Logger LOGGER = Logger.getLogger(CTCloudHttpClient.class.getName());
