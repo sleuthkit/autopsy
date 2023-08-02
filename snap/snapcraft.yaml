@@ -16,8 +16,6 @@
 # Snap uses assertions to digitally sign snaps (https://snapcraft.io/docs/assertions).  Otherwise, snaps need to be installed with the `--dangerous` flag
 # it would be best to install autopsy with `sudo snap install --dangerous autopsy` and then connect all super-priveleged interfaces or `sudo snap install --dangerous --devmode autopsy``
 
-
-
 # yaml reference here: https://snapcraft.io/docs/snapcraft-yaml-reference
 # sample yaml files here: https://github.com/videolan/vlc/blob/master/extras/package/snap/snapcraft.yaml, https://github.com/canonical/firefox-snap/blob/stable/snapcraft.yaml
 name: autopsy
@@ -50,6 +48,12 @@ plugs:
     interface: browser-support
     allow-sandbox: true
 
+slots:
+  dbus-daemon:
+    interface: dbus
+    bus: session
+    name: org.sleuthkit.autopsy
+
 apps:
   autopsy:
     # more on env vars here: https://snapcraft.io/docs/environment-variables
@@ -74,35 +78,37 @@ apps:
       GTK_USE_PORTAL: 1
     command: autopsy/bin/autopsywrapper.sh
     # More gnome info here: https://snapcraft.io/docs/gnome-extension
-    extensions: [ gnome ]
+    extensions: [gnome]
     common-id: org.sleuthkit.autopsy
     plugs:
       # taken from https://snapcraft.io/docs/supported-interfaces
-    - audio-playback
-    - block-devices
-    - browser-sandbox
-    - desktop
-    - desktop-launch
-    - desktop-legacy
-    - dm-crypt
-    - fuse-support
-    - gsettings
-    - hardware-observe
-    - home
-    - hugepages-control
-    - kernel-crypto-api
-    - mount-observe
-    - network
-    - network-bind
-    - network-observe
-    - network-setup-observe
-    - network-status
-    - opengl
-    - optical-drive
-    - removable-media
-    - system-files-autopsy
-    - system-files-hugepages
-    - system-observe
+      - audio-playback
+      - block-devices
+      - browser-sandbox
+      - desktop
+      - desktop-launch
+      - desktop-legacy
+      - dm-crypt
+      - fuse-support
+      - gsettings
+      - hardware-observe
+      - home
+      - hugepages-control
+      - kernel-crypto-api
+      - mount-observe
+      - network
+      - network-bind
+      - network-observe
+      - network-setup-observe
+      - network-status
+      - opengl
+      - optical-drive
+      - removable-media
+      - system-files-autopsy
+      - system-files-hugepages
+      - system-observe
+    slots:
+      - dbus-daemon
 
 parts:
   sleuthkit:
@@ -114,77 +120,91 @@ parts:
     build-environment: [JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64]
     # information on packages here: https://snapcraft.io/docs/package-repositories
     build-packages:
-    - build-essential
-    - autoconf
-    - libtool
-    - automake
-    - zip
-    - openjdk-17-jdk 
-    - openjdk-17-jre
-    - ant
-    - ant-contrib
-    - ant-optional
-    - libpq-dev
-    - testdisk
-    - libafflib-dev
-    - libewf-dev
-    - libvhdi-dev
-    - libvmdk-dev
+      - build-essential
+      - autoconf
+      - libtool
+      - automake
+      - zip
+      - openjdk-17-jdk
+      - openjdk-17-jre
+      - ant
+      - ant-contrib
+      - ant-optional
+      - libpq-dev
+      - testdisk
+      - libafflib-dev
+      - libewf-dev
+      - libvhdi-dev
+      - libvmdk-dev
     stage-packages:
-    - libpq-dev
-    - testdisk
-    - libafflib-dev
-    - libewf-dev
-    - libvhdi-dev
-    - libvmdk-dev
+      - libpq-dev
+      - testdisk
+      - libafflib-dev
+      - libewf-dev
+      - libvhdi-dev
+      - libvmdk-dev
+    # taken from https://github.com/ubuntu/libreoffice/blob/7.3/snapcraft.yaml, https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
+    prime:
+      - -usr/lib/*/libgio*
+      - -usr/lib/*/libglib*
+      - -usr/lib/*/libgm*
+      - usr/lib/*/lib*
+      - -usr/lib/*/libgtk*
+      - -usr/lib/*/libgdk*
+      - -usr/lib/*/libcairo*
+      - -usr/lib/*/libpango*
+      - -usr/lib/*/libwayland*
+      - usr/lib/*/mesa/lib*
+      - usr/share/java/
+      - usr/sbin/*
   autopsy:
     after: [sleuthkit]
     # information on packages here: https://snapcraft.io/docs/package-repositories
     build-packages:
-    - zip
-    - unzip
-    - openjdk-17-jdk 
-    - openjdk-17-jre
-    - ant
-    - doxygen
+      - zip
+      - unzip
+      - openjdk-17-jdk
+      - openjdk-17-jre
+      - ant
+      - doxygen
     stage-packages:
-    - libde265-dev
-    - libheif-dev
-    - libpq-dev
-    - testdisk
-    - freeglut3
-    - libpsm-infinipath1
-    - libpsm-infinipath1-dev
-    - libglu1-mesa
-    - libgstreamer1.0-dev
-    - libgstreamer-plugins-base1.0-dev
-    - libgstreamer-plugins-bad1.0-dev
-    - libgstreamer1.0-0
-    - gstreamer1.0-plugins-base
-    - gstreamer1.0-plugins-good
-    - gstreamer1.0-plugins-bad
-    - gstreamer1.0-plugins-ugly
-    - gstreamer1.0-libav
-    - gstreamer1.0-tools
-    - gstreamer1.0-x
-    - gstreamer1.0-alsa
-    - gstreamer1.0-gl
-    - gstreamer1.0-gtk3
-    - gstreamer1.0-qt5
-    - gstreamer1.0-pulseaudio
-    - openjdk-17-jre
-    - openjdk-17-jdk
-    - perl
-    # needed by solr to determine locally running ports
-    - lsof
+      - libde265-dev
+      - libheif-dev
+      - libpq-dev
+      - testdisk
+      - freeglut3
+      - libpsm-infinipath1
+      - libpsm-infinipath1-dev
+      - libglu1-mesa
+      - libgstreamer1.0-dev
+      - libgstreamer-plugins-base1.0-dev
+      - libgstreamer-plugins-bad1.0-dev
+      - libgstreamer1.0-0
+      - gstreamer1.0-plugins-base
+      - gstreamer1.0-plugins-good
+      - gstreamer1.0-plugins-bad
+      - gstreamer1.0-plugins-ugly
+      - gstreamer1.0-libav
+      - gstreamer1.0-tools
+      - gstreamer1.0-x
+      - gstreamer1.0-alsa
+      - gstreamer1.0-gl
+      - gstreamer1.0-gtk3
+      - gstreamer1.0-qt5
+      - gstreamer1.0-pulseaudio
+      - openjdk-17-jre
+      - openjdk-17-jdk
+      - perl
+      # needed by solr to determine locally running ports
+      - lsof
     plugin: nil
     # source: https://github.com/sleuthkit/autopsy.git
     source: https://github.com/gdicristofaro/autopsy.git
     # source-branch: develop
     source-branch: 8425-snap
     build-environment:
-    - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-    - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
+      - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
     # information on parts environment variables here: https://snapcraft.io/docs/parts-environment-variables
     override-build: |
       # ----- BUILD ZIP -----
@@ -225,6 +245,21 @@ parts:
 
       # include this line to print all set variables
       # sed -i '129 i set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"' "$AUTOPSY_LOCATION/platform/lib/nbexec"
+    # taken from https://github.com/ubuntu/libreoffice/blob/7.3/snapcraft.yaml, https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
+    prime:
+      - -usr/lib/*/libgio*
+      - -usr/lib/*/libglib*
+      - -usr/lib/*/libgm*
+      - usr/lib/*/lib*
+      - -usr/lib/*/libgtk*
+      - -usr/lib/*/libgdk*
+      - -usr/lib/*/libcairo*
+      - -usr/lib/*/libpango*
+      - -usr/lib/*/libwayland*
+      - usr/lib/*/mesa/lib*
+      - usr/share/java/
+      - usr/sbin/*
+
   # taken from https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
   # Find files provided by the base and platform snap and ensure they aren't
   # duplicated in this snap
@@ -236,7 +271,7 @@ parts:
     override-prime: |
       set -eux
       for snap in "core22" "gnome-42-2204"; do
-        cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$CRAFT_PRIME/{}" \;
+        cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
       done
 
       # taken from https://github.com/ubuntu/libreoffice/blob/7.3/snapcraft.yaml
