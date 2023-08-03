@@ -28,6 +28,12 @@ import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.UnrecoverableKeyException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +43,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.logging.Level;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -62,6 +73,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.SystemDefaultCredentialsProvider;
 import org.apache.http.impl.client.WinHttpClients;
+import org.apache.http.ssl.SSLInitializationException;
 import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
@@ -69,7 +81,8 @@ import org.sleuthkit.autopsy.coreutils.Version;
  */
 class CTCloudHttpClient {
 
-    private static final CTCloudHttpClient instance = new CTCloudHttpClient();
+    private static final String KS_PASSWORD = "changeit"; // system default java password
+
     private static final Logger LOGGER = Logger.getLogger(CTCloudHttpClient.class.getName());
     private static final String HOST_URL = Version.getBuildType() == Version.Type.RELEASE ? Constants.CT_CLOUD_SERVER : Constants.CT_CLOUD_DEV_SERVER;
 
@@ -84,6 +97,8 @@ class CTCloudHttpClient {
 
     private static final int CONNECTION_TIMEOUT_MS = 58 * 1000; // milli sec
 
+    private static final CTCloudHttpClient instance = new CTCloudHttpClient();
+
     public static CTCloudHttpClient getInstance() {
         return instance;
     }
@@ -94,7 +109,7 @@ class CTCloudHttpClient {
 
     private CTCloudHttpClient() {
         // leave as null for now unless we want to customize this at a later date
-        this.sslContext = null;
+        this.sslContext = createSSLContext();
     }
 
     private ProxySettingArgs getProxySettings() {
@@ -125,7 +140,7 @@ class CTCloudHttpClient {
                 null
         );
     }
-    
+
     public <O> O doPost(String urlPath, Object jsonBody, Class<O> classType) throws CTCloudException {
         return doPost(urlPath, Collections.emptyMap(), jsonBody, classType);
     }
@@ -137,7 +152,7 @@ class CTCloudHttpClient {
             LOGGER.log(Level.INFO, "initiating http connection to ctcloud server");
             try (CloseableHttpClient httpclient = createConnection(getProxySettings(), sslContext)) {
                 URIBuilder builder = new URIBuilder(url);
-                
+
                 if (!MapUtils.isEmpty(urlReqParams)) {
                     for (Entry<String, String> e : urlReqParams.entrySet()) {
                         String key = e.getKey();
@@ -151,7 +166,6 @@ class CTCloudHttpClient {
                 URI postURI = builder.build();
                 HttpPost postRequest = new HttpPost(postURI);
 
-                
                 configureRequestTimeout(postRequest);
                 postRequest.setHeader("Content-type", "application/json");
 
@@ -189,6 +203,9 @@ class CTCloudHttpClient {
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, "IO Exception raised when connecting to  CT Cloud using " + url, ex);
             throw new CTCloudException(CTCloudException.ErrorCode.NETWORK_ERROR, ex);
+        } catch (SSLInitializationException ex) {
+            LOGGER.log(Level.WARNING, "No such algorithm exception raised when creating SSL connection for  CT Cloud using " + url, ex);
+            throw new CTCloudException(CTCloudException.ErrorCode.NETWORK_ERROR, ex);
         } catch (URISyntaxException ex) {
             LOGGER.log(Level.WARNING, "Wrong URL syntax for CT Cloud " + url, ex);
             throw new CTCloudException(CTCloudException.ErrorCode.UNKNOWN, ex);
@@ -196,16 +213,16 @@ class CTCloudHttpClient {
 
         return null;
     }
-    
+
     public void doFileUploadPost(String urlPath, String fileName, InputStream fileIs) throws CTCloudException {
-         
+
         try (CloseableHttpClient httpclient = createConnection(getProxySettings(), sslContext)) {
             LOGGER.log(Level.INFO, "initiating http post request to ctcloud server " + urlPath);
             HttpPost post = new HttpPost(urlPath);
             configureRequestTimeout(post);
-            
+
             post.addHeader("Connection", "keep-alive");
-            
+
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             builder.addBinaryBody(
                     "file",
@@ -213,10 +230,10 @@ class CTCloudHttpClient {
                     ContentType.APPLICATION_OCTET_STREAM,
                     fileName
             );
-            
+
             HttpEntity multipart = builder.build();
             post.setEntity(multipart);
-            
+
             try (CloseableHttpResponse response = httpclient.execute(post)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NO_CONTENT) {
@@ -226,6 +243,9 @@ class CTCloudHttpClient {
                     handleNonOKResponse(response, fileName);
                 }
             }
+        } catch (SSLInitializationException ex) {
+            LOGGER.log(Level.WARNING, "SSL exception raised when connecting to Reversing Labs for file content upload ", ex);
+            throw new CTCloudException(CTCloudException.ErrorCode.NETWORK_ERROR, ex);
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, "IO Exception raised when connecting to Reversing Labs for file content upload ", ex);
             throw new CTCloudException(CTCloudException.ErrorCode.NETWORK_ERROR, ex);
@@ -295,17 +315,69 @@ class CTCloudHttpClient {
 
     /**
      * Creates a connection to CT Cloud with the given arguments.
+     *
      * @param proxySettings The network proxy settings.
      * @param sslContext The ssl context or null.
      * @return The connection to CT Cloud.
      */
-    private static CloseableHttpClient createConnection(ProxySettingArgs proxySettings, SSLContext sslContext) {
+    private static CloseableHttpClient createConnection(ProxySettingArgs proxySettings, SSLContext sslContext) throws SSLInitializationException {
         HttpClientBuilder builder = getHttpClientBuilder(proxySettings);
-
         if (sslContext != null) {
             builder.setSSLContext(sslContext);
         }
+
         return builder.build();
+    }
+
+    /**
+     * Create an SSLContext object using our in-memory keystore.
+     *
+     * @return
+     */
+    private static SSLContext createSSLContext() {
+        LOGGER.log(Level.INFO, "Creating custom SSL context");
+        try {
+
+            // I'm not sure how much of this is really necessary to set up, but it works
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+            KeyManager[] keyManagers = getKeyManagers();
+            TrustManager[] trustManagers = getTrustManagers();
+            sslContext.init(keyManagers, trustManagers, new SecureRandom());
+            return sslContext;
+        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
+            LOGGER.log(Level.SEVERE, "Error creating SSL context", ex);
+            return null;
+        }
+    }
+
+    // based in part on this: https://stackoverflow.com/questions/1793979/registering-multiple-keystores-in-jvm/16229909
+    private static KeyManager[] getKeyManagers() {
+        LOGGER.log(Level.INFO, "Using default algorithm to create trust store: " + KeyManagerFactory.getDefaultAlgorithm());
+        try {
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(null, null);
+            return kmf.getKeyManagers();
+        } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting KeyManagers", ex);
+            return new KeyManager[0];
+        }
+
+    }
+
+    // based in part on this: https://stackoverflow.com/questions/1793979/registering-multiple-keystores-in-jvm/16229909
+    private static TrustManager[] getTrustManagers() {
+        try {
+            LOGGER.log(Level.INFO, "Using default algorithm to create trust store: " + TrustManagerFactory.getDefaultAlgorithm());
+            TrustManagerFactory tmf
+                    = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init((KeyStore) null);
+            X509TrustManager tm = (X509TrustManager) tmf.getTrustManagers()[0];
+
+            return new TrustManager[]{tm};
+        } catch (KeyStoreException | NoSuchAlgorithmException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting TrustManager", ex);
+            return new TrustManager[0];
+        }
     }
 
     private static HttpClientBuilder getHttpClientBuilder(ProxySettingArgs proxySettings) {
