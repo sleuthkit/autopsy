@@ -49,7 +49,6 @@ plugs:
     interface: browser-support
     allow-sandbox: true
 
-
 slots:
   # TODO may not be necessary
   # taken from thunderbird snap: https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
@@ -68,7 +67,7 @@ apps:
       # set user home to new home value to avoid issues writing cache files to home
       jreflags: $jreflags '-Duser.home=$HOME' '-Djava.io.tmpdir=$HOME/tmp' '-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
       # to load libtsk.so
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
       # gstreamer scans for plugins (i.e. app integration plugins).  this tells gstreamer where to look for the scanner and libraries
@@ -192,55 +191,54 @@ parts:
       # needed by solr to determine locally running ports
       - lsof
       # TODO may be needed by openjfx
-      - libopenjfx-java
       # taken from https://github.com/jgneff/openjfx/blob/edge/snap/snapcraft.yaml
-      # - libatk1.0-0
-      # - libatk-bridge2.0-0
-      # - libatspi2.0-0
-      # - libcairo2
-      # - libcairo-gobject2
-      # - libdatrie1
-      # - libepoxy0
-      # - libfontconfig1
-      # - libfreetype6
-      # - libgdk-pixbuf2.0-0
-      # - libgl1
-      # - libglvnd0
-      # - libglx0
-      # - libgraphite2-3
-      # - libgtk2.0-0
-      # - libgtk-3-0
-      # - libharfbuzz0b
-      # - libpango-1.0-0
-      # - libpangocairo-1.0-0
-      # - libpangoft2-1.0-0
-      # - libpixman-1-0
-      # - libpng16-16
-      # - libthai0
-      # - libwayland-client0
-      # - libwayland-cursor0
-      # - libwayland-egl1
-      # - libx11-6
-      # - libxau6
-      # - libxcb1
-      # - libxcb-render0
-      # - libxcb-shm0
-      # - libxcomposite1
-      # - libxcursor1
-      # - libxdamage1
-      # - libxdmcp6
-      # - libxext6
-      # - libxfixes3
-      # - libxi6
-      # - libxinerama1
-      # - libxkbcommon0
-      # - libxrandr2
-      # - libxrender1
-      # - libxtst6
-      # # Gtk-Message: 16:12:52.145: Failed to load module "canberra-gtk-module"
-      # - libcanberra-gtk3-module
-      # # Gtk-Message: 10:57:54.572: Failed to load module "pk-gtk-module"
-      # - packagekit-gtk3-module
+      - libatk1.0-0
+      - libatk-bridge2.0-0
+      - libatspi2.0-0
+      - libcairo2
+      - libcairo-gobject2
+      - libdatrie1
+      - libepoxy0
+      - libfontconfig1
+      - libfreetype6
+      - libgdk-pixbuf2.0-0
+      - libgl1
+      - libglvnd0
+      - libglx0
+      - libgraphite2-3
+      - libgtk2.0-0
+      - libgtk-3-0
+      - libharfbuzz0b
+      - libpango-1.0-0
+      - libpangocairo-1.0-0
+      - libpangoft2-1.0-0
+      - libpixman-1-0
+      - libpng16-16
+      - libthai0
+      - libwayland-client0
+      - libwayland-cursor0
+      - libwayland-egl1
+      - libx11-6
+      - libxau6
+      - libxcb1
+      - libxcb-render0
+      - libxcb-shm0
+      - libxcomposite1
+      - libxcursor1
+      - libxdamage1
+      - libxdmcp6
+      - libxext6
+      - libxfixes3
+      - libxi6
+      - libxinerama1
+      - libxkbcommon0
+      - libxrandr2
+      - libxrender1
+      - libxtst6
+      # Gtk-Message: 16:12:52.145: Failed to load module "canberra-gtk-module"
+      - libcanberra-gtk3-module
+      # Gtk-Message: 10:57:54.572: Failed to load module "pk-gtk-module"
+      - packagekit-gtk3-module
     plugin: nil
     # source: https://github.com/sleuthkit/autopsy.git
     source: https://github.com/gdicristofaro/autopsy.git
@@ -281,22 +279,28 @@ parts:
       cat <<EOF > $AUTOPSY_LOCATION/bin/autopsywrapper.sh
       #!/bin/bash
       mkdir -p \$HOME/tmp
-      echo libs in gnome-platform:
-      find \$SNAP_DESKTOP_RUNTIME -name *.so
       echo Starting Autopsy...
       \$SNAP/autopsy/bin/autopsy
       EOF
 
       chmod 755 $AUTOPSY_LOCATION/bin/autopsywrapper.sh
 
+      # handles issue finding libgtk-2.0.so
+      LIB_GTK_LINK=$SNAPCRAFT_PART_INSTALL/usr/lib/x86_64-linux-gnu/libgtk-x11-2.0.so
+      if ! [[ -L $LIB_GTK_LINK ]] ; then
+        LIB_GTK_LINK_PARENT="$(dirname "$LIB_GTK_LINK")"
+        pushd $LIB_GTK_LINK_PARENT
+        LIB_GTK_TARGET=../../../gnome-platform/usr/lib/x86_64-linux-gnu/libgtk-x11-2.0.so.0
+        ln -s $LIB_GTK_TARGET $LIB_GTK_LINK
+        popd
+      fi
       # include this line to print all set variables
       # set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"
       # sed -i '129 i ' "$AUTOPSY_LOCATION/platform/lib/nbexec"
 
-
   # taken from https://github.com/ubuntu/gnome-recipes/blob/stable/snapcraft.yaml
   cleanup:
-    after: [ autopsy ]
+    after: [autopsy]
     plugin: nil
     build-snaps: [core22, gtk-common-themes, gnome-42-2204]
     override-prime: |
