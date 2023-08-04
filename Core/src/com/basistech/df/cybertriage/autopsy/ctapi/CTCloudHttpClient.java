@@ -74,14 +74,14 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.SystemDefaultCredentialsProvider;
 import org.apache.http.impl.client.WinHttpClients;
 import org.apache.http.ssl.SSLInitializationException;
+import org.netbeans.core.ProxySettings;
+import org.openide.util.NetworkSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Makes the http requests to CT cloud.
  */
 class CTCloudHttpClient {
-
-    private static final String KS_PASSWORD = "changeit"; // system default java password
 
     private static final Logger LOGGER = Logger.getLogger(CTCloudHttpClient.class.getName());
     private static final String HOST_URL = Version.getBuildType() == Version.Type.RELEASE ? Constants.CT_CLOUD_SERVER : Constants.CT_CLOUD_DEV_SERVER;
@@ -112,7 +112,7 @@ class CTCloudHttpClient {
         this.sslContext = createSSLContext();
     }
 
-    private ProxySettingArgs getProxySettings() {
+    private ProxySettingArgs getProxySettings(URI uri) {
         if (StringUtils.isBlank(hostName)) {
             try {
                 hostName = InetAddress.getLocalHost().getCanonicalHostName();
@@ -121,24 +121,49 @@ class CTCloudHttpClient {
             }
         }
 
+        String proxyPortStr = uri != null ? NetworkSettings.getProxyPort(uri) : ProxySettings.getHttpPort();
         int proxyPort = 0;
-        if (StringUtils.isNotBlank(ProxySettings.getHttpPort())) {
+        if (StringUtils.isNotBlank(proxyPortStr)) {
             try {
-                proxyPort = Integer.parseInt(ProxySettings.getHttpsPort());
+                proxyPort = Integer.parseInt(proxyPortStr);
             } catch (NumberFormatException ex) {
                 LOGGER.log(Level.WARNING, "Unable to convert port to integer");
             }
         }
 
-        return new ProxySettingArgs(
+        String proxyHost = uri != null ? NetworkSettings.getProxyHost(uri) : ProxySettings.getHttpHost();
+
+        ProxySettingArgs proxySettings = new ProxySettingArgs(
                 ProxySettings.getProxyType() != ProxySettings.DIRECT_CONNECTION,
                 hostName,
-                ProxySettings.getHttpsHost(),
+                proxyHost,
                 proxyPort,
                 ProxySettings.getAuthenticationUsername(),
                 ProxySettings.getAuthenticationPassword(),
                 null
         );
+
+        // TODO comment out later
+        LOGGER.log(Level.INFO, MessageFormat.format("Proxy settings to be used with {0} are {1}.", uri, proxySettings));
+
+        return proxySettings;
+    }
+
+    private static URI getUri(String host, String path, Map<String, String> urlReqParams) throws URISyntaxException {
+        String url = host + path;
+        URIBuilder builder = new URIBuilder(url);
+
+        if (!MapUtils.isEmpty(urlReqParams)) {
+            for (Entry<String, String> e : urlReqParams.entrySet()) {
+                String key = e.getKey();
+                String value = e.getValue();
+                if (StringUtils.isNotBlank(key) || StringUtils.isNotBlank(value)) {
+                    builder.addParameter(key, value);
+                }
+            }
+        }
+
+        return builder.build();
     }
 
     public <O> O doPost(String urlPath, Object jsonBody, Class<O> classType) throws CTCloudException {
@@ -146,24 +171,13 @@ class CTCloudHttpClient {
     }
 
     public <O> O doPost(String urlPath, Map<String, String> urlReqParams, Object jsonBody, Class<O> classType) throws CTCloudException {
-        String url = HOST_URL + urlPath;
+        
+        URI postURI = null;
         try {
-
+            postURI = getUri(HOST_URL, urlPath, urlReqParams);
             LOGGER.log(Level.INFO, "initiating http connection to ctcloud server");
-            try (CloseableHttpClient httpclient = createConnection(getProxySettings(), sslContext)) {
-                URIBuilder builder = new URIBuilder(url);
+            try (CloseableHttpClient httpclient = createConnection(getProxySettings(postURI), sslContext)) {
 
-                if (!MapUtils.isEmpty(urlReqParams)) {
-                    for (Entry<String, String> e : urlReqParams.entrySet()) {
-                        String key = e.getKey();
-                        String value = e.getValue();
-                        if (StringUtils.isNotBlank(key) || StringUtils.isNotBlank(value)) {
-                            builder.addParameter(key, value);
-                        }
-                    }
-                }
-
-                URI postURI = builder.build();
                 HttpPost postRequest = new HttpPost(postURI);
 
                 configureRequestTimeout(postRequest);
@@ -201,24 +215,31 @@ class CTCloudHttpClient {
                 }
             }
         } catch (IOException ex) {
-            LOGGER.log(Level.WARNING, "IO Exception raised when connecting to  CT Cloud using " + url, ex);
+            LOGGER.log(Level.WARNING, "IO Exception raised when connecting to  CT Cloud using " + postURI, ex);
             throw new CTCloudException(CTCloudException.ErrorCode.NETWORK_ERROR, ex);
         } catch (SSLInitializationException ex) {
-            LOGGER.log(Level.WARNING, "No such algorithm exception raised when creating SSL connection for  CT Cloud using " + url, ex);
+            LOGGER.log(Level.WARNING, "No such algorithm exception raised when creating SSL connection for  CT Cloud using " + postURI, ex);
             throw new CTCloudException(CTCloudException.ErrorCode.NETWORK_ERROR, ex);
         } catch (URISyntaxException ex) {
-            LOGGER.log(Level.WARNING, "Wrong URL syntax for CT Cloud " + url, ex);
+            LOGGER.log(Level.WARNING, "Wrong URL syntax for CT Cloud " + postURI, ex);
             throw new CTCloudException(CTCloudException.ErrorCode.UNKNOWN, ex);
         }
 
         return null;
     }
 
-    public void doFileUploadPost(String urlPath, String fileName, InputStream fileIs) throws CTCloudException {
+    public void doFileUploadPost(String fullUrlPath, String fileName, InputStream fileIs) throws CTCloudException {
+        URI postUri;
+        try {
+            postUri = new URI(fullUrlPath);
+        } catch (URISyntaxException ex) {
+            LOGGER.log(Level.WARNING, "Wrong URL syntax for CT Cloud " + fullUrlPath, ex);
+            throw new CTCloudException(CTCloudException.ErrorCode.UNKNOWN, ex);
+        }
 
-        try (CloseableHttpClient httpclient = createConnection(getProxySettings(), sslContext)) {
-            LOGGER.log(Level.INFO, "initiating http post request to ctcloud server " + urlPath);
-            HttpPost post = new HttpPost(urlPath);
+        try (CloseableHttpClient httpclient = createConnection(getProxySettings(postUri), sslContext)) {
+            LOGGER.log(Level.INFO, "initiating http post request to ctcloud server " + fullUrlPath);
+            HttpPost post = new HttpPost(postUri);
             configureRequestTimeout(post);
 
             post.addHeader("Connection", "keep-alive");
@@ -508,5 +529,11 @@ class CTCloudHttpClient {
         public String getAuthScheme() {
             return authScheme;
         }
+
+        @Override
+        public String toString() {
+            return "ProxySettingArgs{" + "systemOrManualProxy=" + systemOrManualProxy + ", hostName=" + hostName + ", proxyHostname=" + proxyHostname + ", proxyPort=" + proxyPort + ", proxyUserId=" + proxyUserId + ", proxyPassword set=" + (proxyPassword != null && proxyPassword.length > 0) + ", authScheme=" + authScheme + '}';
+        }
+
     }
 }
