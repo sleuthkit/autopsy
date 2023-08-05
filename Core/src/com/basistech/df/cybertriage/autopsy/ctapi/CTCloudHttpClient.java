@@ -22,12 +22,11 @@ import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Authenticator;
-import java.net.InetAddress;
-import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -35,14 +34,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -50,14 +48,10 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.NTCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -71,29 +65,27 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.SystemDefaultCredentialsProvider;
 import org.apache.http.impl.client.WinHttpClients;
+import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 import org.apache.http.ssl.SSLInitializationException;
 import org.netbeans.core.ProxySettings;
-import org.openide.util.NetworkSettings;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Makes the http requests to CT cloud.
+ *
+ * NOTE: regarding proxy settings, the host and port are handled by the
+ * NbProxySelector. Any proxy authentication is handled by NbAuthenticator which
+ * is installed at startup (i.e. NbAuthenticator.install). See
+ * GeneralOptionsModel.testHttpConnection to see how the general options panel
+ * tests the connection.
  */
 class CTCloudHttpClient {
 
     private static final Logger LOGGER = Logger.getLogger(CTCloudHttpClient.class.getName());
     private static final String HOST_URL = Version.getBuildType() == Version.Type.RELEASE ? Constants.CT_CLOUD_SERVER : Constants.CT_CLOUD_DEV_SERVER;
-
-    private static final List<String> DEFAULT_SCHEME_PRIORITY
-            = new ArrayList<>(Arrays.asList(
-                    AuthSchemes.SPNEGO,
-                    AuthSchemes.KERBEROS,
-                    AuthSchemes.NTLM,
-                    AuthSchemes.CREDSSP,
-                    AuthSchemes.DIGEST,
-                    AuthSchemes.BASIC));
+    private static final String NB_PROXY_SELECTOR_NAME = "org.netbeans.core.NbProxySelector";
 
     private static final int CONNECTION_TIMEOUT_MS = 58 * 1000; // milli sec
 
@@ -105,48 +97,12 @@ class CTCloudHttpClient {
 
     private final ObjectMapper mapper = ObjectMapperUtil.getInstance().getDefaultObjectMapper();
     private final SSLContext sslContext;
-    private String hostName = null;
+    private final ProxySelector proxySelector;
 
     private CTCloudHttpClient() {
         // leave as null for now unless we want to customize this at a later date
         this.sslContext = createSSLContext();
-    }
-
-    private ProxySettingArgs getProxySettings(URI uri) {
-        if (StringUtils.isBlank(hostName)) {
-            try {
-                hostName = InetAddress.getLocalHost().getCanonicalHostName();
-            } catch (UnknownHostException ex) {
-                LOGGER.log(Level.WARNING, "An error occurred while fetching the hostname", ex);
-            }
-        }
-
-        String proxyPortStr = uri != null ? NetworkSettings.getProxyPort(uri) : ProxySettings.getHttpPort();
-        int proxyPort = 0;
-        if (StringUtils.isNotBlank(proxyPortStr)) {
-            try {
-                proxyPort = Integer.parseInt(proxyPortStr);
-            } catch (NumberFormatException ex) {
-                LOGGER.log(Level.WARNING, "Unable to convert port to integer");
-            }
-        }
-
-        String proxyHost = uri != null ? NetworkSettings.getProxyHost(uri) : ProxySettings.getHttpHost();
-
-        ProxySettingArgs proxySettings = new ProxySettingArgs(
-                ProxySettings.getProxyType() != ProxySettings.DIRECT_CONNECTION,
-                hostName,
-                proxyHost,
-                proxyPort,
-                ProxySettings.getAuthenticationUsername(),
-                ProxySettings.getAuthenticationPassword(),
-                null
-        );
-
-        // TODO comment out later
-        LOGGER.log(Level.INFO, MessageFormat.format("Proxy settings to be used with {0} are {1}.", uri, proxySettings));
-
-        return proxySettings;
+        this.proxySelector = getProxySelector();
     }
 
     private static URI getUri(String host, String path, Map<String, String> urlReqParams) throws URISyntaxException {
@@ -171,12 +127,12 @@ class CTCloudHttpClient {
     }
 
     public <O> O doPost(String urlPath, Map<String, String> urlReqParams, Object jsonBody, Class<O> classType) throws CTCloudException {
-        
+
         URI postURI = null;
         try {
             postURI = getUri(HOST_URL, urlPath, urlReqParams);
             LOGGER.log(Level.INFO, "initiating http connection to ctcloud server");
-            try (CloseableHttpClient httpclient = createConnection(getProxySettings(postURI), sslContext)) {
+            try (CloseableHttpClient httpclient = createConnection(proxySelector, sslContext)) {
 
                 HttpPost postRequest = new HttpPost(postURI);
 
@@ -237,7 +193,7 @@ class CTCloudHttpClient {
             throw new CTCloudException(CTCloudException.ErrorCode.UNKNOWN, ex);
         }
 
-        try (CloseableHttpClient httpclient = createConnection(getProxySettings(postUri), sslContext)) {
+        try (CloseableHttpClient httpclient = createConnection(proxySelector, sslContext)) {
             LOGGER.log(Level.INFO, "initiating http post request to ctcloud server " + fullUrlPath);
             HttpPost post = new HttpPost(postUri);
             configureRequestTimeout(post);
@@ -335,19 +291,30 @@ class CTCloudHttpClient {
     }
 
     /**
-     * Creates a connection to CT Cloud with the given arguments.
+     * Get ProxySelector present (favoring NbProxySelector if present).
      *
-     * @param proxySettings The network proxy settings.
-     * @param sslContext The ssl context or null.
-     * @return The connection to CT Cloud.
+     * @return The found ProxySelector or null.
      */
-    private static CloseableHttpClient createConnection(ProxySettingArgs proxySettings, SSLContext sslContext) throws SSLInitializationException {
-        HttpClientBuilder builder = getHttpClientBuilder(proxySettings);
-        if (sslContext != null) {
-            builder.setSSLContext(sslContext);
-        }
-
-        return builder.build();
+    private static ProxySelector getProxySelector() {
+        Collection<? extends ProxySelector> selectors = Lookup.getDefault().lookupAll(ProxySelector.class);
+        return (selectors != null ? selectors.stream() : Stream.empty())
+                .filter(s -> s != null)
+                .map(s -> (ProxySelector) s)
+                .sorted((a, b) -> {
+                    String aName = a.getClass().getCanonicalName();
+                    String bName = b.getClass().getCanonicalName();
+                    boolean aIsNb = aName.equalsIgnoreCase(NB_PROXY_SELECTOR_NAME);
+                    boolean bIsNb = bName.equalsIgnoreCase(NB_PROXY_SELECTOR_NAME);
+                    if (aIsNb == bIsNb) {
+                        return StringUtils.compareIgnoreCase(aName, bName);
+                    } else {
+                        return aIsNb ? -1 : 1;
+                    }
+                })
+                .findFirst()
+                // TODO take this out to remove proxy selector logging
+                .map(s -> new LoggingProxySelector(s))
+                .orElse(null);
     }
 
     /**
@@ -371,6 +338,7 @@ class CTCloudHttpClient {
         }
     }
 
+    // jvm default key manager
     // based in part on this: https://stackoverflow.com/questions/1793979/registering-multiple-keystores-in-jvm/16229909
     private static KeyManager[] getKeyManagers() {
         LOGGER.log(Level.INFO, "Using default algorithm to create trust store: " + KeyManagerFactory.getDefaultAlgorithm());
@@ -385,6 +353,7 @@ class CTCloudHttpClient {
 
     }
 
+    // jvm default trust store
     // based in part on this: https://stackoverflow.com/questions/1793979/registering-multiple-keystores-in-jvm/16229909
     private static TrustManager[] getTrustManagers() {
         try {
@@ -401,138 +370,60 @@ class CTCloudHttpClient {
         }
     }
 
-    private static HttpClientBuilder getHttpClientBuilder(ProxySettingArgs proxySettings) {
-
-        if (proxySettings.isSystemOrManualProxy()) {
-
-            Authenticator.setDefault(new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    LOGGER.info("Requesting Password Authentication...");
-                    return super.getPasswordAuthentication();
-                }
-            });
-
-            HttpClientBuilder builder = null;
-            HttpHost proxyHost = null;
-            CredentialsProvider proxyCredsProvider = null;
-            RequestConfig config = null;
-
-            if (Objects.nonNull(proxySettings.getProxyHostname()) && proxySettings.getProxyPort() > 0) {
-                proxyHost = new HttpHost(proxySettings.getProxyHostname(), proxySettings.getProxyPort());
-
-                proxyCredsProvider = getProxyCredentialsProvider(proxySettings);
-                if (StringUtils.isNotBlank(proxySettings.getAuthScheme())) {
-                    if (!DEFAULT_SCHEME_PRIORITY.get(0).equalsIgnoreCase(proxySettings.getAuthScheme())) {
-                        DEFAULT_SCHEME_PRIORITY.removeIf(s -> s.equalsIgnoreCase(proxySettings.getAuthScheme()));
-                        DEFAULT_SCHEME_PRIORITY.add(0, proxySettings.getAuthScheme());
-                    }
-                }
-                config = RequestConfig.custom().setProxyPreferredAuthSchemes(DEFAULT_SCHEME_PRIORITY).build();
-            }
-
-            if (Objects.isNull(proxyCredsProvider) && WinHttpClients.isWinAuthAvailable()) {
-                builder = WinHttpClients.custom();
-                builder.useSystemProperties();
-                LOGGER.log(Level.WARNING, "Using Win HTTP Client");
-            } else {
-                builder = HttpClients.custom();
-                builder.setDefaultRequestConfig(config);
-                if (Objects.nonNull(proxyCredsProvider)) { // make sure non null proxycreds before setting it 
-                    builder.setDefaultCredentialsProvider(proxyCredsProvider);
-                }
-                LOGGER.log(Level.WARNING, "Using default http client");
-            }
-            if (Objects.nonNull(proxyHost)) {
-                builder.setProxy(proxyHost);
-                LOGGER.log(Level.WARNING, MessageFormat.format("Using proxy {0}", proxyHost));
-            }
-
-            return builder;
-        } else {
-            return HttpClients.custom();
-        }
-    }
-
     /**
-     * Returns a CredentialsProvider for proxy, if one is configured.
+     * Creates a connection to CT Cloud with the given arguments.
      *
-     * @return CredentialsProvider, if a proxy is configured with credentials,
-     * null otherwise
+     * @param proxySelector The proxy selector.
+     * @param sslContext The ssl context or null.
+     * @return The connection to CT Cloud.
      */
-    private static CredentialsProvider getProxyCredentialsProvider(ProxySettingArgs proxySettings) {
-        CredentialsProvider proxyCredsProvider = null;
-        if (proxySettings.isSystemOrManualProxy()) {
-            if (StringUtils.isNotBlank(proxySettings.getProxyUserId())) {
-                if (null != proxySettings.getProxyPassword() && proxySettings.getProxyPassword().length > 0) { // Password will be blank for KERBEROS / NEGOTIATE schemes.
-                    proxyCredsProvider = new SystemDefaultCredentialsProvider();
-                    String userId = proxySettings.getProxyUserId();
-                    String domain = null;
-                    if (userId.contains("\\")) {
-                        domain = userId.split("\\\\")[0];
-                        userId = userId.split("\\\\")[1];
-                    }
-                    String workStation = proxySettings.getHostName();
-                    proxyCredsProvider.setCredentials(new AuthScope(proxySettings.getProxyHostname(), proxySettings.getProxyPort()),
-                            new NTCredentials(userId, new String(proxySettings.getProxyPassword()), workStation, domain));
-                }
-            }
+    private static CloseableHttpClient createConnection(ProxySelector proxySelector, SSLContext sslContext) throws SSLInitializationException {
+        HttpClientBuilder builder;
+
+        if (ProxySettings.getProxyType() != ProxySettings.DIRECT_CONNECTION
+                && StringUtils.isBlank(ProxySettings.getAuthenticationUsername()) 
+                && ArrayUtils.isEmpty(ProxySettings.getAuthenticationPassword())
+                && WinHttpClients.isWinAuthAvailable()) {
+
+            builder = WinHttpClients.custom();
+            builder.useSystemProperties();
+            LOGGER.log(Level.WARNING, "Using Win HTTP Client");
+        } else {
+            builder = HttpClients.custom();
+            // builder.setDefaultRequestConfig(config);
+            LOGGER.log(Level.WARNING, "Using default http client");
         }
 
-        return proxyCredsProvider;
+        if (sslContext != null) {
+            builder.setSSLContext(sslContext);
+        }
+
+        if (proxySelector != null) {
+            builder.setRoutePlanner(new SystemDefaultRoutePlanner(proxySelector));
+        }
+
+        return builder.build();
     }
 
-    private static class ProxySettingArgs {
+    private static class LoggingProxySelector extends ProxySelector {
 
-        private final boolean systemOrManualProxy;
-        private final String hostName;
-        private final String proxyHostname;
-        private final int proxyPort;
-        private final String proxyUserId;
-        private final char[] proxyPassword;
-        private final String authScheme;
+        private final ProxySelector delegate;
 
-        ProxySettingArgs(boolean systemOrManualProxy, String hostName, String proxyHostname, int proxyPort, String proxyUserId, char[] proxyPassword, String authScheme) {
-            this.systemOrManualProxy = systemOrManualProxy;
-            this.hostName = hostName;
-            this.proxyHostname = proxyHostname;
-            this.proxyPort = proxyPort;
-            this.proxyUserId = proxyUserId;
-            this.proxyPassword = proxyPassword;
-            this.authScheme = authScheme;
-        }
-
-        boolean isSystemOrManualProxy() {
-            return systemOrManualProxy;
-        }
-
-        String getHostName() {
-            return hostName;
-        }
-
-        String getProxyHostname() {
-            return proxyHostname;
-        }
-
-        int getProxyPort() {
-            return proxyPort;
-        }
-
-        String getProxyUserId() {
-            return proxyUserId;
-        }
-
-        char[] getProxyPassword() {
-            return proxyPassword;
-        }
-
-        public String getAuthScheme() {
-            return authScheme;
+        public LoggingProxySelector(ProxySelector delegate) {
+            this.delegate = delegate;
         }
 
         @Override
-        public String toString() {
-            return "ProxySettingArgs{" + "systemOrManualProxy=" + systemOrManualProxy + ", hostName=" + hostName + ", proxyHostname=" + proxyHostname + ", proxyPort=" + proxyPort + ", proxyUserId=" + proxyUserId + ", proxyPassword set=" + (proxyPassword != null && proxyPassword.length > 0) + ", authScheme=" + authScheme + '}';
+        public List<Proxy> select(URI uri) {
+            List<Proxy> selectedProxies = delegate.select(uri);
+            LOGGER.log(Level.FINE, MessageFormat.format("Proxy selected for {0} are {1}", uri, selectedProxies));
+            return selectedProxies;
+        }
+
+        @Override
+        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+            LOGGER.log(Level.WARNING, MessageFormat.format("Connection failed connecting to {0} socket address {1}", uri, sa), ioe);
+            delegate.connectFailed(uri, sa, ioe);
         }
 
     }
