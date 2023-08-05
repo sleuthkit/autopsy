@@ -416,7 +416,7 @@ class CTCloudHttpClient {
         @Override
         public List<Proxy> select(URI uri) {
             List<Proxy> selectedProxies = delegate.select(uri);
-            LOGGER.log(Level.FINE, MessageFormat.format("Proxy selected for {0} are {1}", uri, selectedProxies));
+            LOGGER.log(Level.INFO, MessageFormat.format("Proxy selected for {0} are {1}", uri, selectedProxies));
             return selectedProxies;
         }
 
