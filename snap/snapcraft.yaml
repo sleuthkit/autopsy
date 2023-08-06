@@ -44,13 +44,12 @@ plugs:
   system-files-hugepages:
     interface: system-files
     read: [/sys/kernel/mm/hugepages]
-  # TODO may not be necessary but may provide ability for online/offline help
+  # may provide ability for online/offline help
   browser-sandbox:
     interface: browser-support
     allow-sandbox: true
 
 slots:
-  # TODO may not be necessary
   # taken from thunderbird snap: https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
   dbus-daemon:
     interface: dbus
@@ -68,9 +67,8 @@ apps:
       # set user home to new home value to avoid issues writing cache files to home
       # can also specify '-Djdk.gtk.verbose=true' for gtk verbose logging: https://stackoverflow.com/a/22457177
       jreflags: $jreflags '-Djdk.gtk.version=3' '-Duser.home=$SNAP_USER_COMMON' '-Djava.io.tmpdir=$SNAP_USER_COMMON/tmp' '-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
-      # to load libtsk.so
-      # TODO remove later if successful: LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
+      # to load libtsk.so and gstreamer
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
       # gstreamer scans for plugins (i.e. app integration plugins).  this tells gstreamer where to look for the scanner and libraries
@@ -244,9 +242,7 @@ parts:
       - packagekit-gtk3-module
     plugin: nil
     source: https://github.com/sleuthkit/autopsy.git
-    # TODO remove: source: https://github.com/gdicristofaro/autopsy.git
     source-branch: develop
-    # TODO remove: source-branch: 8425-snap
     build-environment:
       - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
