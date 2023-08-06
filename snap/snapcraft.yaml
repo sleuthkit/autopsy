@@ -9,7 +9,7 @@
 # building snaps with lxd/multipass requires hardware assisted virtualization: https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-2A98801C-68E8-47AF-99ED-00C63E4857F6.html, https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-F920A3C7-3B42-4E78-8EA7-961E49AF479D.html
 # build provider information can be found here: https://snapcraft.io/docs/build-providers, https://snapcraft.io/docs/build-options
 # A command like the following will run snapcraft in the background to build a snap package and write output to log `nohup snapcraft --use-lxd --debug > ./output.log 2>&1 < /dev/null &``.  This must be run from the directory above `snap`
-# Information on debugging snaps can be found here (in particular `snap try` can mount a filesystem as a snap ): https://snapcraft.io/docs/debug-snaps, https://snapcraft.io/docs/snap-try
+# Information on debugging snaps can be found here (in particular `snap try` can mount a filesystem as a snap, `snap run --shell autopsy.autopsy` can show shell with env vars like snap ): https://snapcraft.io/docs/debug-snaps, https://snapcraft.io/docs/snap-try
 #
 # INSTALLATION:
 # Some options for installation can be found here: https://snapcraft.io/docs/install-modes
@@ -62,20 +62,23 @@ apps:
     # more on env vars here: https://snapcraft.io/docs/environment-variables
     environment:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
+      HOME: "$SNAP_USER_COMMON"
       SOLR_JAVA_HOME: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs with jna.library.path
       # set user home to new home value to avoid issues writing cache files to home
-      jreflags: $jreflags '-Duser.home=$HOME' '-Djava.io.tmpdir=$HOME/tmp' '-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
+      # can also specify '-Djdk.gtk.verbose=true' for gtk verbose logging: https://stackoverflow.com/a/22457177
+      jreflags: $jreflags '-Djdk.gtk.version=3' '-Duser.home=$SNAP_USER_COMMON' '-Djava.io.tmpdir=$SNAP_USER_COMMON/tmp' '-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
       # to load libtsk.so
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+      # TODO remove later if successful: LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
       # gstreamer scans for plugins (i.e. app integration plugins).  this tells gstreamer where to look for the scanner and libraries
       # more information here: https://forum.snapcraft.io/t/trouble-with-ros-and-gstreamer/5518/6
       GST_PLUGIN_SYSTEM_PATH: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer-1.0
       GST_PLUGIN_SCANNER: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
-      SOLR_LOGS_DIR: $HOME/.autopsy/dev/solr/logs
-      SOLR_PID_DIR: $HOME/.autopsy/dev/solr/logs
+      SOLR_LOGS_DIR: $SNAP_USER_COMMON/.autopsy/dev/solr/logs
+      SOLR_PID_DIR: $SNAP_USER_COMMON/.autopsy/dev/solr/logs
       # taken from thunderbird snap: https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
       DISABLE_WAYLAND: 1
       GTK_USE_PORTAL: 1
@@ -191,7 +194,7 @@ parts:
       # needed by solr to determine locally running ports
       - lsof
       # TODO may be needed by openjfx
-      # taken from https://github.com/jgneff/openjfx/blob/edge/snap/snapcraft.yaml
+      # taken from openjfx snap: https://github.com/jgneff/openjfx/blob/edge/snap/snapcraft.yaml
       - libatk1.0-0
       - libatk-bridge2.0-0
       - libatspi2.0-0
@@ -240,10 +243,10 @@ parts:
       # Gtk-Message: 10:57:54.572: Failed to load module "pk-gtk-module"
       - packagekit-gtk3-module
     plugin: nil
-    # source: https://github.com/sleuthkit/autopsy.git
-    source: https://github.com/gdicristofaro/autopsy.git
-    # source-branch: develop
-    source-branch: 8425-snap
+    source: https://github.com/sleuthkit/autopsy.git
+    # TODO remove: source: https://github.com/gdicristofaro/autopsy.git
+    source-branch: develop
+    # TODO remove: source-branch: 8425-snap
     build-environment:
       - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
@@ -278,25 +281,13 @@ parts:
       # wrapper to setup temp dir if not exists; also could be easily modified for debugging purposes with snap try: https://snapcraft.io/docs/snap-try
       cat <<EOF > $AUTOPSY_LOCATION/bin/autopsywrapper.sh
       #!/bin/bash
-      mkdir -p \$HOME/tmp
+      mkdir -p \$SNAP_USER_COMMON/tmp
       echo Starting Autopsy...
       \$SNAP/autopsy/bin/autopsy
       EOF
 
       chmod 755 $AUTOPSY_LOCATION/bin/autopsywrapper.sh
 
-      # handles issue finding libgtk-2.0.so
-      LIB_GTK_LINK=$SNAPCRAFT_PART_INSTALL/usr/lib/x86_64-linux-gnu/libgtk-x11-2.0.so
-      if ! [[ -L $LIB_GTK_LINK ]] ; then
-        LIB_GTK_LINK_PARENT="$(dirname "$LIB_GTK_LINK")"
-        pushd $LIB_GTK_LINK_PARENT
-        LIB_GTK_TARGET=../../../gnome-platform/usr/lib/x86_64-linux-gnu/libgtk-x11-2.0.so.0
-        ln -s $LIB_GTK_TARGET $LIB_GTK_LINK
-        popd
-      fi
-      # include this line to print all set variables
-      # set -o posix ; echo $(set) >&2 ; ls -l "${jdkhome}/bin/java"
-      # sed -i '129 i ' "$AUTOPSY_LOCATION/platform/lib/nbexec"
 
   # taken from https://github.com/ubuntu/gnome-recipes/blob/stable/snapcraft.yaml
   cleanup:
