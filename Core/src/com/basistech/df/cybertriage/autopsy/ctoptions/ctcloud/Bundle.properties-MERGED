@@ -22,6 +22,10 @@ CTMalwareScannerOptionsPanel.licenseInfoIdLabel.text=
 CTMalwareScannerOptionsPanel.licenseInfoExpiresLabel.text=
 CTMalwareScannerOptionsPanel.fileUploadsRemainingLabel.text=
 CTMalwareScannerOptionsPanel.licenseInfoUserLabel.text=
+CTMalwareScannerOptionsPanel_getResetSuffix_daily=/day
+CTMalwareScannerOptionsPanel_getResetSuffix_hourly=/hour
+CTMalwareScannerOptionsPanel_getResetSuffix_monthly=/month
+CTMalwareScannerOptionsPanel_getResetSuffix_weekly=/week
 CTMalwareScannerOptionsPanel_licenseAddDialog_desc=License Number:
 CTMalwareScannerOptionsPanel_licenseAddDialog_title=Add a License...
 CTMalwareScannerOptionsPanel_licenseAddDialogEnteredErr_desc=The license number has already been entered
@@ -45,9 +49,11 @@ CTMalwareScannerOptionsPanel_malwareScans_fileUploadsRemaining=File uploads rema
 # {0} - hashLookupsRemaining
 CTMalwareScannerOptionsPanel_malwareScans_hashLookupsRemaining=Hash lookups remaining: {0}
 # {0} - maxDailyFileLookups
-CTMalwareScannerOptionsPanel_malwareScans_maxDailyFileLookups=Max file uploads: {0}/day
+# {1} - resetSuffix
+CTMalwareScannerOptionsPanel_malwareScans_maxDailyFileLookups=Max file uploads: {0}{1}
 # {0} - maxDailyLookups
-CTMalwareScannerOptionsPanel_malwareScans_maxDailyHashLookups=Max Hash lookups: {0}/day
+# {1} - resetSuffix
+CTMalwareScannerOptionsPanel_malwareScans_maxDailyHashLookups=Max Hash lookups: {0}{1}
 CTMalwareScannerOptionsPanel_MalwareScansFetcher_apiErr_title=Server Error
 CTMalwareScannerOptionsPanel_MalwareScansFetcher_localErr_desc=A general error occurred while fetching malware scans information.  Please try again later.
 CTMalwareScannerOptionsPanel_MalwareScansFetcher_localErr_title=General Error
