@@ -66,15 +66,15 @@ apps:
       # provide means for java gstreamer to find gstreamer libs with jna.library.path
       # set user home to new home value to avoid issues writing cache files to home
       # can also specify '-Djdk.gtk.verbose=true' for gtk verbose logging: https://stackoverflow.com/a/22457177
-      jreflags: $jreflags '-Djdk.gtk.version=3' '-Duser.home=$SNAP_USER_COMMON' '-Djava.io.tmpdir=$SNAP_USER_COMMON/tmp' '-Djna.library.path=$SNAP/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
+      jreflags: $jreflags '-Djdk.gtk.version=3' '-Duser.home=$SNAP_USER_COMMON' '-Djava.io.tmpdir=$SNAP_USER_COMMON/tmp' '-Djna.library.path=$SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
       # to load libtsk.so and gstreamer
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
       # gstreamer scans for plugins (i.e. app integration plugins).  this tells gstreamer where to look for the scanner and libraries
       # more information here: https://forum.snapcraft.io/t/trouble-with-ros-and-gstreamer/5518/6
-      GST_PLUGIN_SYSTEM_PATH: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer-1.0
-      GST_PLUGIN_SCANNER: $SNAP/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
+      GST_PLUGIN_SYSTEM_PATH: $SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu/gstreamer-1.0:$GST_PLUGIN_SYSTEM_PATH
+      GST_PLUGIN_SCANNER: $SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
       SOLR_LOGS_DIR: $SNAP_USER_COMMON/.autopsy/dev/solr/logs
       SOLR_PID_DIR: $SNAP_USER_COMMON/.autopsy/dev/solr/logs
       # taken from thunderbird snap: https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
@@ -186,6 +186,7 @@ parts:
       - gstreamer1.0-gtk3
       - gstreamer1.0-qt5
       - gstreamer1.0-pulseaudio
+      # java req
       - openjdk-17-jre
       - openjdk-17-jdk
       - perl
