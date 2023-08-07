@@ -164,83 +164,14 @@ parts:
       # pg reqs
       - libpq-dev
       - testdisk
-      # TODO these may not be necessary
-      - freeglut3
-      - libpsm-infinipath1
-      - libpsm-infinipath1-dev
-      - libglu1-mesa
-      # libgstreamer reqs
-      - libgstreamer1.0-dev
-      - libgstreamer-plugins-base1.0-dev
-      - libgstreamer-plugins-bad1.0-dev
-      - libgstreamer1.0-0
-      - gstreamer1.0-plugins-base
-      - gstreamer1.0-plugins-good
+      # libgstreamer additional plugin reqs that aren't in gnome package extension: https://snapcraft.io/docs/gnome-extension, https://github.com/ubuntu/gnome-sdk/blob/gnome-42-2204/snapcraft.yaml
       - gstreamer1.0-plugins-bad
       - gstreamer1.0-plugins-ugly
       - gstreamer1.0-libav
-      - gstreamer1.0-tools
-      - gstreamer1.0-x
-      - gstreamer1.0-alsa
-      - gstreamer1.0-gl
-      - gstreamer1.0-gtk3
-      - gstreamer1.0-qt5
-      - gstreamer1.0-pulseaudio
       # java req
       - openjdk-17-jre
-      - openjdk-17-jdk
-      - perl
       # needed by solr to determine locally running ports
       - lsof
-      # TODO may be needed by openjfx
-      # taken from openjfx snap: https://github.com/jgneff/openjfx/blob/edge/snap/snapcraft.yaml
-      - libatk1.0-0
-      - libatk-bridge2.0-0
-      - libatspi2.0-0
-      - libcairo2
-      - libcairo-gobject2
-      - libdatrie1
-      - libepoxy0
-      - libfontconfig1
-      - libfreetype6
-      - libgdk-pixbuf2.0-0
-      - libgl1
-      - libglvnd0
-      - libglx0
-      - libgraphite2-3
-      - libgtk2.0-0
-      - libgtk-3-0
-      - libharfbuzz0b
-      - libpango-1.0-0
-      - libpangocairo-1.0-0
-      - libpangoft2-1.0-0
-      - libpixman-1-0
-      - libpng16-16
-      - libthai0
-      - libwayland-client0
-      - libwayland-cursor0
-      - libwayland-egl1
-      - libx11-6
-      - libxau6
-      - libxcb1
-      - libxcb-render0
-      - libxcb-shm0
-      - libxcomposite1
-      - libxcursor1
-      - libxdamage1
-      - libxdmcp6
-      - libxext6
-      - libxfixes3
-      - libxi6
-      - libxinerama1
-      - libxkbcommon0
-      - libxrandr2
-      - libxrender1
-      - libxtst6
-      # Gtk-Message: 16:12:52.145: Failed to load module "canberra-gtk-module"
-      - libcanberra-gtk3-module
-      # Gtk-Message: 10:57:54.572: Failed to load module "pk-gtk-module"
-      - packagekit-gtk3-module
     plugin: nil
     source: https://github.com/sleuthkit/autopsy.git
     source-branch: develop
@@ -286,7 +217,7 @@ parts:
       chmod 755 $AUTOPSY_LOCATION/bin/autopsywrapper.sh
 
 
-  # taken from https://github.com/ubuntu/gnome-recipes/blob/stable/snapcraft.yaml
+  # taken from https://github.com/ubuntu/gnome-recipes/blob/stable/snapcraft.yaml to clean out files present in core/extensions as well.
   cleanup:
     after: [autopsy]
     plugin: nil
