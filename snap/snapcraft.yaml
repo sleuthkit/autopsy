@@ -211,7 +211,7 @@ parts:
       #!/bin/bash
       mkdir -p \$SNAP_USER_COMMON/tmp
       echo Starting Autopsy...
-      \$SNAP/autopsy/bin/autopsy
+      \$SNAP/autopsy/bin/autopsy "\$@"
       EOF
 
       chmod 755 $AUTOPSY_LOCATION/bin/autopsywrapper.sh
