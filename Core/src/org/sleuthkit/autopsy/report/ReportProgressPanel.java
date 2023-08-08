@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.report;
 import org.openide.util.NbBundle;
 import java.awt.Color;
 import java.awt.Cursor;
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.awt.EventQueue;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;

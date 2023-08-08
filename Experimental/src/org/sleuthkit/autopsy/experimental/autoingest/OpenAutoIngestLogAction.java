@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.file.Path;

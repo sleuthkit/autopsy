@@ -18,7 +18,7 @@
  */
 package com.basistech.df.cybertriage.autopsy.ctoptions;
 
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
