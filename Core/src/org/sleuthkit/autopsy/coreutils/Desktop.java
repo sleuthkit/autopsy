@@ -49,12 +49,19 @@ public class Desktop {
         return xdgSupported;
     }
 
+    /**
+     * @return True if this class's external calls can be used on this operating
+     * system.
+     */
     public static boolean isDesktopSupported() {
         return java.awt.Desktop.isDesktopSupported() || isXdgSupported();
     }
 
     private static Desktop instance = null;
 
+    /**
+     * @return A singleton instance of this class.
+     */
     public static Desktop getDesktop() {
         if (instance == null) {
             instance = new Desktop(java.awt.Desktop.getDesktop());
@@ -65,14 +72,28 @@ public class Desktop {
 
     private final java.awt.Desktop awtDesktop;
 
+    /**
+     * Private constructor for this wrapper.
+     * @param awtDesktop The delegate java.awt.Desktop.
+     */
     private Desktop(java.awt.Desktop awtDesktop) {
         this.awtDesktop = awtDesktop;
     }
 
+    /**
+     * Opens a given path using `xdg-open` on linux.
+     * @param path The path.
+     * @throws IOException 
+     */
     private void xdgOpen(String path) throws IOException {
         Runtime.getRuntime().exec(new String[]{"xdg-open", path});
     }
 
+    /**
+     * Triggers the OS to navigate to the given uri.
+     * @param uri The uri.
+     * @throws IOException 
+     */
     public void browse(URI uri) throws IOException {
         if (!awtDesktop.isSupported(java.awt.Desktop.Action.BROWSE) && isXdgSupported()) {
             xdgOpen(uri.toString());
@@ -81,6 +102,11 @@ public class Desktop {
         }
     }
 
+    /**
+     * Triggers the OS to open the given file.
+     * @param file The file.
+     * @throws IOException 
+     */
     public void open(File file) throws IOException {
         if (!awtDesktop.isSupported(java.awt.Desktop.Action.OPEN) && isXdgSupported()) {
             xdgOpen(file.getAbsolutePath());
@@ -89,6 +115,11 @@ public class Desktop {
         }
     }
 
+    /**
+     * Triggers the OS to edit the given file.
+     * @param file The file.
+     * @throws IOException 
+     */
     public void edit(File file) throws IOException {
         if (!awtDesktop.isSupported(java.awt.Desktop.Action.EDIT) && isXdgSupported()) {
             xdgOpen(file.getAbsolutePath());
