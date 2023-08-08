@@ -56,6 +56,7 @@ public final class OfflineHelpAction implements ActionListener {
 
     private static final String DOCS_FOLDER = "docs";
     private static final String HELP_HTML_FILE = "index.html";
+    private static final String HELP_REL_PATH = Paths.get("..", DOCS_FOLDER, HELP_HTML_FILE).toString();
 
     private static final Logger logger
             = org.sleuthkit.autopsy.coreutils.Logger.getLogger(AboutWindowPanel.class.getName());
@@ -75,7 +76,7 @@ public final class OfflineHelpAction implements ActionListener {
 
         File systemHelpFile = getOfflineHelpFile();
         if (systemHelpFile == null) {
-            logger.log(Level.SEVERE, "Unable to load Offline Documentation file");
+            logger.log(Level.SEVERE, "Unable to load Offline Documentation file at relative path: " + HELP_REL_PATH);
             return;
         }
 
@@ -101,10 +102,12 @@ public final class OfflineHelpAction implements ActionListener {
         }
 
     }
+    
+
 
     private File getOfflineHelpFile() {
-        return InstalledFileLocator.getDefault().getDefault().locate(
-                Paths.get(DOCS_FOLDER, HELP_HTML_FILE).toString(),
+        return InstalledFileLocator.getDefault().locate(
+                HELP_REL_PATH,
                 OfflineHelpAction.class.getPackage().getName(),
                 false);
     }
