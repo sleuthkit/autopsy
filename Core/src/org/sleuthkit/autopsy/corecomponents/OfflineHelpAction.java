@@ -21,9 +21,10 @@ package org.sleuthkit.autopsy.corecomponents;
 import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
+import java.nio.file.Paths;
 import org.netbeans.core.actions.HTMLViewAction;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -33,6 +34,7 @@ import org.openide.awt.HtmlBrowser;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import java.util.logging.Level;
+import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -52,6 +54,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @Messages("CTL_OfflineHelpAction=Offline Autopsy Documentation")
 public final class OfflineHelpAction implements ActionListener {
 
+    private static final String DOCS_FOLDER = "docs";
+    private static final String HELP_HTML_FILE = "index.html";
+
     private static final Logger logger
             = org.sleuthkit.autopsy.coreutils.Logger.getLogger(AboutWindowPanel.class.getName());
 
@@ -67,41 +72,40 @@ public final class OfflineHelpAction implements ActionListener {
      * Tested and working: Chrome, Firefox, IE Not tested: Opera, Safari
      */
     private void viewOfflineHelp() {
-        String fileForHelp = "";
-        String indexForHelp = "";
-        String currentDirectory = "";
-        URI uri = null;
-        
-        try {
-            // Match the form:  file:///C:/some/directory/AutopsyXYZ/docs/index.html
-            fileForHelp = NbBundle.getMessage(OfflineHelpAction.class, "FILE_FOR_LOCAL_HELP");
-            indexForHelp = NbBundle.getMessage(OfflineHelpAction.class, "INDEX_FOR_LOCAL_HELP");
-            currentDirectory = System.getProperty("user.dir").replace("\\", "/").replace(" ", "%20"); //NON-NLS
-            uri = new URI(fileForHelp + currentDirectory + indexForHelp);
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Unable to load Offline Documentation: "
-                    + fileForHelp + currentDirectory + indexForHelp, ex); //NON-NLS
+
+        File systemHelpFile = getOfflineHelpFile();
+        if (systemHelpFile == null) {
+            logger.log(Level.SEVERE, "Unable to load Offline Documentation file");
+            return;
         }
-        if (uri != null) {
-            // Display URL in the System browser
-            if (Desktop.isDesktopSupported()) {
-                Desktop desktop = Desktop.getDesktop();
-                try {
-                    desktop.browse(uri);
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Unable to launch the system browser: "
-                            + fileForHelp + currentDirectory + indexForHelp, ex); //NON-NLS
-                }
-            } else {
-                org.openide.awt.StatusDisplayer.getDefault().setStatusText(
-                        NbBundle.getMessage(HTMLViewAction.class, "CTL_OpeningBrowser")); //NON-NLS
-                try {
-                    HtmlBrowser.URLDisplayer.getDefault().showURL(uri.toURL());
-                } catch (MalformedURLException ex) {
-                    logger.log(Level.SEVERE, "Unable to launch the built-in browser: "
-                            + fileForHelp + currentDirectory + indexForHelp, ex); //NON-NLS
-                }
+
+        // Display URL in the System browser
+        if (Desktop.isDesktopSupported()) {
+            Desktop desktop = Desktop.getDesktop();
+            try {
+                desktop.open(systemHelpFile);
+                return;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Unable to launch the system browser: "
+                        + systemHelpFile, ex); //NON-NLS
             }
         }
+
+        org.openide.awt.StatusDisplayer.getDefault().setStatusText(
+                NbBundle.getMessage(HTMLViewAction.class, "CTL_OpeningBrowser")); //NON-NLS
+        try {
+            HtmlBrowser.URLDisplayer.getDefault().showURL(systemHelpFile.toURI().toURL());
+        } catch (MalformedURLException ex) {
+            logger.log(Level.SEVERE, "Unable to launch the built-in browser: "
+                    + systemHelpFile, ex); //NON-NLS
+        }
+
+    }
+
+    private File getOfflineHelpFile() {
+        return InstalledFileLocator.getDefault().getDefault().locate(
+                Paths.get(DOCS_FOLDER, HELP_HTML_FILE).toString(),
+                OfflineHelpAction.class.getPackage().getName(),
+                false);
     }
 }

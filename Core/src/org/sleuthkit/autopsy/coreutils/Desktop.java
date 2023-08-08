@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.apache.commons.lang3.SystemUtils;
 
@@ -31,6 +32,7 @@ import org.apache.commons.lang3.SystemUtils;
 public class Desktop {
 
     private static final Logger LOGGER = Logger.getLogger(Desktop.class.getName());
+    private static final long XDG_TIMEOUT_SECS = 30;
 
     private static Boolean xdgSupported = null;
 
@@ -74,6 +76,7 @@ public class Desktop {
 
     /**
      * Private constructor for this wrapper.
+     *
      * @param awtDesktop The delegate java.awt.Desktop.
      */
     private Desktop(java.awt.Desktop awtDesktop) {
@@ -82,17 +85,28 @@ public class Desktop {
 
     /**
      * Opens a given path using `xdg-open` on linux.
+     *
      * @param path The path.
-     * @throws IOException 
+     * @throws IOException
      */
     private void xdgOpen(String path) throws IOException {
-        Runtime.getRuntime().exec(new String[]{"xdg-open", path});
+        Process process = Runtime.getRuntime().exec(new String[]{"xdg-open", path});
+        try {
+            process.waitFor(XDG_TIMEOUT_SECS, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            throw new IOException("xdg-open timed out", ex);
+        }
+        int exitCode = process.exitValue();
+        if (exitCode != 0) {
+            throw new IOException("Received non-zero exit code from xdg-open: " + exitCode);
+        }
     }
 
     /**
      * Triggers the OS to navigate to the given uri.
+     *
      * @param uri The uri.
-     * @throws IOException 
+     * @throws IOException
      */
     public void browse(URI uri) throws IOException {
         if (!awtDesktop.isSupported(java.awt.Desktop.Action.BROWSE) && isXdgSupported()) {
@@ -104,8 +118,9 @@ public class Desktop {
 
     /**
      * Triggers the OS to open the given file.
+     *
      * @param file The file.
-     * @throws IOException 
+     * @throws IOException
      */
     public void open(File file) throws IOException {
         if (!awtDesktop.isSupported(java.awt.Desktop.Action.OPEN) && isXdgSupported()) {
@@ -117,8 +132,9 @@ public class Desktop {
 
     /**
      * Triggers the OS to edit the given file.
+     *
      * @param file The file.
-     * @throws IOException 
+     * @throws IOException
      */
     public void edit(File file) throws IOException {
         if (!awtDesktop.isSupported(java.awt.Desktop.Action.EDIT) && isXdgSupported()) {
