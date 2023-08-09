@@ -58,6 +58,7 @@ The following topics are available here:
  - \subpage ileapp_page
  - \subpage aleapp_page
  - \subpage yara_page
+ - \subpage ct_malware_scanner
 
 - Reviewing the Results
  - \subpage uilayout_page
