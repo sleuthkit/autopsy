@@ -76,8 +76,7 @@ public class CTCloudException extends Exception{
 
     public String getErrorDetails() {
         if(getErrorCode() == CTCloudException.ErrorCode.UNKNOWN && Objects.nonNull(getCause())){
-            return String.format("Malware scan error %s occurred. Please try \"Re Scan\" from the dashboard to attempt Malware scaning again. "
-                    + "\nPlease contact Basis support at %s for help if the problem presists.",
+            return String.format("An API error %s occurred. Please try again, and contact Basis support at %s for help if the problem persists.",
                     StringUtils.isNotBlank(getCause().getLocalizedMessage()) ? "("+getCause().getLocalizedMessage()+")": "(Unknown)",
                     Constants.SUPPORT_AT_CYBERTRIAGE_DOT_COM );
         }else {
