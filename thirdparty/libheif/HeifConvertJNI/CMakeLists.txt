@@ -25,7 +25,7 @@ if (JNI_FOUND)
     message (STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
 endif()
 
-add_compile_options(/std:c++latest)
+# add_compile_options(/std:c++latest)
 
 set (heif_convert_sources
   encoder.cc
