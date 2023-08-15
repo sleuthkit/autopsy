@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 public class CTIntegrationMissingDialog extends javax.swing.JDialog {
 
-    private static final String DOCS_PAGE_URL = "http://docs.cybertriage.com";
+    private static final String DOCS_PAGE_URL = "https://docs.cybertriage.com/en/latest/chapters/integrations/autopsy.html";
 
     private static final Logger LOGGER = Logger.getLogger(CTIntegrationMissingDialog.class.getName());
 
