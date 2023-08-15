@@ -24,7 +24,7 @@ Bugs:
 - Fix exporting of CSV files. Issue https://github.com/sleuthkit/autopsy/issues/6717
 
 Misc:
-- Added File Repository concept
+- Added File Repository concept for data source files that are in a central location
 - Added Spanish language support, contributor https://github.com/AburtoArielPM
 
 ---------------- VERSION 4.20.0  --------------
