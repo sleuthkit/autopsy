@@ -16,6 +16,7 @@ Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it mus
 Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or host.
 Case.exceptionMessage.cannotLocateMainWindow=Cannot locate main application window
 Case.exceptionMessage.cannotOpenMultiUserCaseNoSettings=Multi-user settings are missing (see Tools, Options, Multi-user tab), cannot open a multi-user case.
+Case.exceptionMessage.contentProviderCouldNotBeFound=Content provider was specified for the case but could not be loaded.
 # {0} - exception message
 Case.exceptionMessage.couldNotCreatCollaborationMonitor=Failed to create collaboration monitor:\n{0}.
 # {0} - exception message
