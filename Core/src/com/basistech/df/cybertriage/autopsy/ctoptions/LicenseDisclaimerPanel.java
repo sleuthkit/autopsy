@@ -32,7 +32,12 @@ public class LicenseDisclaimerPanel extends javax.swing.JPanel {
 
     private static final Logger LOGGER = Logger.getLogger(LicenseDisclaimerPanel.class.getName());
 
-    private static final String CHECKOUT_PAGE_URL = "https://cybertriage.com/autopsy-checkout";
+    private static final String TRIAL_URL = "https://cybertriage.com/autopsy-trial";
+    private static final String PURCHASE_URL = "https://cybertriage.com/autopsy-checkout";
+
+    private static String getHtmlLink(String url) {
+        return "<html><span style=\"color: blue; text-decoration: underline\">" + url + "</span></html>";
+    }
 
     /**
      * Creates new form LicenseDisclaimerPanel
@@ -52,14 +57,18 @@ public class LicenseDisclaimerPanel extends javax.swing.JPanel {
         java.awt.GridBagConstraints gridBagConstraints;
 
         javax.swing.JLabel disclaimer = new javax.swing.JLabel();
-        javax.swing.JLabel purchaseFromLabel = new javax.swing.JLabel();
-        javax.swing.JLabel link = new javax.swing.JLabel();
         javax.swing.JPanel spacer = new javax.swing.JPanel();
+        javax.swing.JPanel trialPanel = new javax.swing.JPanel();
+        javax.swing.JLabel trialLabel = new javax.swing.JLabel();
+        javax.swing.JLabel trialLink = new javax.swing.JLabel();
+        javax.swing.JPanel purchasePanel = new javax.swing.JPanel();
+        javax.swing.JLabel purchaseFromLabel = new javax.swing.JLabel();
+        javax.swing.JLabel purchaseLink = new javax.swing.JLabel();
 
-        setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(LicenseDisclaimerPanel.class, "LicenseDisclaimerPanel.border.title"))); // NOI18N
-        setMaximumSize(new java.awt.Dimension(2147483647, 90));
-        setMinimumSize(new java.awt.Dimension(562, 90));
-        setPreferredSize(new java.awt.Dimension(400, 90));
+        setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(LicenseDisclaimerPanel.class, "LicenseDisclaimerPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI", 0, 12), new java.awt.Color(255, 0, 0))); // NOI18N
+        setMaximumSize(new java.awt.Dimension(2147483647, 108));
+        setMinimumSize(new java.awt.Dimension(562, 108));
+        setPreferredSize(new java.awt.Dimension(400, 108));
         setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(disclaimer, org.openide.util.NbBundle.getMessage(LicenseDisclaimerPanel.class, "LicenseDisclaimerPanel.disclaimer.text")); // NOI18N
@@ -67,33 +76,11 @@ public class LicenseDisclaimerPanel extends javax.swing.JPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
         add(disclaimer, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(purchaseFromLabel, org.openide.util.NbBundle.getMessage(LicenseDisclaimerPanel.class, "LicenseDisclaimerPanel.purchaseFromLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 3);
-        add(purchaseFromLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(link, org.openide.util.NbBundle.getMessage(LicenseDisclaimerPanel.class, "LicenseDisclaimerPanel.link.text")); // NOI18N
-        link.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        link.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                linkMouseClicked(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
-        add(link, gridBagConstraints);
 
         javax.swing.GroupLayout spacerLayout = new javax.swing.GroupLayout(spacer);
         spacer.setLayout(spacerLayout);
@@ -108,24 +95,94 @@ public class LicenseDisclaimerPanel extends javax.swing.JPanel {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.weighty = 1.0;
         add(spacer, gridBagConstraints);
+
+        trialPanel.setLayout(new java.awt.GridBagLayout());
+
+        org.openide.awt.Mnemonics.setLocalizedText(trialLabel, org.openide.util.NbBundle.getMessage(LicenseDisclaimerPanel.class, "LicenseDisclaimerPanel.trialLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        trialPanel.add(trialLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(trialLink, getHtmlLink(TRIAL_URL));
+        trialLink.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        trialLink.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                trialLinkMouseClicked(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 3, 0, 0);
+        trialPanel.add(trialLink, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(trialPanel, gridBagConstraints);
+
+        purchasePanel.setLayout(new java.awt.GridBagLayout());
+
+        org.openide.awt.Mnemonics.setLocalizedText(purchaseFromLabel, org.openide.util.NbBundle.getMessage(LicenseDisclaimerPanel.class, "LicenseDisclaimerPanel.purchaseFromLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        purchasePanel.add(purchaseFromLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(purchaseLink, getHtmlLink(PURCHASE_URL));
+        purchaseLink.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        purchaseLink.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                purchaseLinkMouseClicked(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 3, 0, 0);
+        purchasePanel.add(purchaseLink, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(purchasePanel, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void linkMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_linkMouseClicked
+    private void purchaseLinkMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_purchaseLinkMouseClicked
+        gotoLink(PURCHASE_URL);
+    }//GEN-LAST:event_purchaseLinkMouseClicked
+
+    private void trialLinkMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_trialLinkMouseClicked
+        gotoLink(TRIAL_URL);
+    }//GEN-LAST:event_trialLinkMouseClicked
+
+    private void gotoLink(String url) {
         if (Desktop.isDesktopSupported()) {
             try {
-                Desktop.getDesktop().browse(new URI(CHECKOUT_PAGE_URL));
+                Desktop.getDesktop().browse(new URI(url));
             } catch (IOException | URISyntaxException e) {
-                LOGGER.log(Level.SEVERE, "Error opening link to: " + CHECKOUT_PAGE_URL, e);
+                LOGGER.log(Level.SEVERE, "Error opening link to: " + url, e);
             }
         } else {
             LOGGER.log(Level.WARNING, "Desktop API is not supported.  Link cannot be opened.");
         }
-    }//GEN-LAST:event_linkMouseClicked
-
-
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
 }

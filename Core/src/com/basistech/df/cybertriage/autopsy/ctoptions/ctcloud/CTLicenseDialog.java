@@ -27,7 +27,7 @@ import org.openide.util.NbBundle.Messages;
 /**
  * License dialog
  */
-public class CTLicenseDialog extends javax.swing.JDialog {
+class CTLicenseDialog extends javax.swing.JDialog {
 
     private static final Pattern LICENSE_PATTERN = Pattern.compile("^\\s*[a-zA-Z0-9\\-]+?\\s*$");
     private String licenseString = null;

@@ -26,7 +26,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -40,6 +39,7 @@ public class CTLicensePersistence {
 
     private static final String CT_SETTINGS_DIR = "CyberTriage";
     private static final String CT_LICENSE_FILENAME = "CyberTriageLicense.json";
+    private static final String MALWARE_INGEST_SETTINGS_FILENAME = "MalwareIngestSettings.json";
 
     private static final Logger logger = Logger.getLogger(CTLicensePersistence.class.getName());
 
@@ -91,7 +91,44 @@ public class CTLicensePersistence {
         });
     }
 
+    public synchronized boolean saveMalwareSettings(MalwareIngestSettings malwareIngestSettings) {
+        if (malwareIngestSettings != null) {
+            File settingsFile = getMalwareIngestFile();
+            try {
+                settingsFile.getParentFile().mkdirs();
+                objectMapper.writeValue(settingsFile, malwareIngestSettings);
+                return true;
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "There was an error writing malware ingest settings to file: " + settingsFile.getAbsolutePath(), ex);
+            }
+        }
+
+        return false;
+    }
+
+    public synchronized MalwareIngestSettings loadMalwareIngestSettings() {
+        MalwareIngestSettings settings = null;
+        File settingsFile = getMalwareIngestFile();
+        if (settingsFile.exists() && settingsFile.isFile()) {
+            try {
+                settings = objectMapper.readValue(settingsFile, MalwareIngestSettings.class);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "There was an error reading malware ingest settings from file: " + settingsFile.getAbsolutePath(), ex);
+            }
+        }
+        
+        if (settings == null) {
+            settings = new MalwareIngestSettings();
+        }
+
+        return settings;
+    }
+
     private File getCTLicenseFile() {
         return Paths.get(PlatformUtil.getModuleConfigDirectory(), CT_SETTINGS_DIR, CT_LICENSE_FILENAME).toFile();
+    }
+
+    private File getMalwareIngestFile() {
+        return Paths.get(PlatformUtil.getModuleConfigDirectory(), CT_SETTINGS_DIR, MALWARE_INGEST_SETTINGS_FILENAME).toFile();
     }
 }
