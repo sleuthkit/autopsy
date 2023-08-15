@@ -64,12 +64,11 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
                     }
                 })
                 .filter(item -> item != null)
-                .sorted(Comparator.comparing(p -> p.getClass().getSimpleName().toUpperCase()))
                 .collect(Collectors.toList());
-        addSubOptionsPanels(new LicenseDisclaimerPanel(), this.subPanels);
+        addSubOptionsPanels(this.subPanels);
     }
 
-    private void addSubOptionsPanels(JPanel disclaimerPanel, List<CTOptionsSubPanel> subPanels) {
+    private void addSubOptionsPanels(List<CTOptionsSubPanel> subPanels) {
             GridBagConstraints disclaimerConstraints = new GridBagConstraints();
             disclaimerConstraints.gridx = 0;
             disclaimerConstraints.gridy = 0;
@@ -79,7 +78,7 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
             disclaimerConstraints.weighty = 0;
             disclaimerConstraints.weightx = 0;
 
-            contentPane.add(disclaimerPanel, disclaimerConstraints);
+//            contentPane.add(disclaimerPanel, disclaimerConstraints);
         
         for (int i = 0; i < subPanels.size(); i++) {
             CTOptionsSubPanel subPanel = subPanels.get(i);

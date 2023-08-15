@@ -84,7 +84,8 @@ import org.sleuthkit.autopsy.coreutils.Version;
 class CTCloudHttpClient {
 
     private static final Logger LOGGER = Logger.getLogger(CTCloudHttpClient.class.getName());
-    private static final String HOST_URL = Version.getBuildType() == Version.Type.RELEASE ? Constants.CT_CLOUD_SERVER : Constants.CT_CLOUD_DEV_SERVER;
+//    private static final String HOST_URL = Version.getBuildType() == Version.Type.RELEASE ? Constants.CT_CLOUD_SERVER : Constants.CT_CLOUD_DEV_SERVER;
+    private static final String HOST_URL = Version.getBuildType() == Version.Type.RELEASE ? Constants.CT_CLOUD_DEV_SERVER : Constants.CT_CLOUD_SERVER;
     private static final String NB_PROXY_SELECTOR_NAME = "org.netbeans.core.NbProxySelector";
 
     private static final int CONNECTION_TIMEOUT_MS = 58 * 1000; // milli sec
