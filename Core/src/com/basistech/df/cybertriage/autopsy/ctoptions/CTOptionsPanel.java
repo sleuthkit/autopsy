@@ -24,7 +24,6 @@ import java.awt.GridBagConstraints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -78,8 +77,6 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
             disclaimerConstraints.weighty = 0;
             disclaimerConstraints.weightx = 0;
 
-//            contentPane.add(disclaimerPanel, disclaimerConstraints);
-        
         for (int i = 0; i < subPanels.size(); i++) {
             CTOptionsSubPanel subPanel = subPanels.get(i);
 
