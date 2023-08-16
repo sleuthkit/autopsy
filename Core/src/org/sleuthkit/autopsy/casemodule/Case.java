@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import com.basistech.df.cybertriage.autopsy.CTIntegrationMissingDialog;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import com.google.common.annotations.Beta;
 import com.google.common.eventbus.Subscribe;
@@ -177,6 +178,7 @@ public class Case {
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
     private static final String NO_NODE_ERROR_MSG_FRAGMENT = "KeeperErrorCode = NoNode";
+    private static final String CT_PROVIDER_PREFIX = "CTStandardContentProvider_";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
@@ -2729,6 +2731,7 @@ public class Case {
         "Case.progressMessage.openingCaseDatabase=Opening case database...",
         "# {0} - exception message", "Case.exceptionMessage.couldNotOpenCaseDatabase=Failed to open case database:\n{0}.",
         "# {0} - exception message", "Case.exceptionMessage.unsupportedSchemaVersionMessage=Unsupported case database schema version:\n{0}.",
+        "Case.exceptionMessage.contentProviderCouldNotBeFound=Content provider was specified for the case but could not be loaded.",
         "Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. See Tools, Options, Multi-User."
     })
     private void openCaseDataBase(ProgressIndicator progressIndicator) throws CaseActionException {
@@ -2737,14 +2740,15 @@ public class Case {
             String databaseName = metadata.getCaseDatabaseName();
             
             ContentStreamProvider contentProvider = loadContentProvider(metadata.getContentProviderName());
+            if (StringUtils.isNotBlank(metadata.getContentProviderName()) && contentProvider == null) {
+                if (metadata.getContentProviderName().trim().toUpperCase().startsWith(CT_PROVIDER_PREFIX.toUpperCase())) {
+                    new CTIntegrationMissingDialog(WindowManager.getDefault().getMainWindow(), true).showDialog(null);
+                }
+                throw new CaseActionException(Bundle.Case_exceptionMessage_contentProviderCouldNotBeFound());
+            }
             
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
-                // only prefix with metadata directory if databaseName is a relative path
-                String fullDatabasePath = (new File(databaseName).isAbsolute())
-                        ? databaseName
-                        : Paths.get(metadata.getCaseDirectory(), databaseName).toString();
-                        
-                caseDb = SleuthkitCase.openCase(fullDatabasePath, contentProvider);
+                caseDb = SleuthkitCase.openCase(metadata.getCaseDatabasePath(), contentProvider);
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
                 caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory(), contentProvider);
             } else {
