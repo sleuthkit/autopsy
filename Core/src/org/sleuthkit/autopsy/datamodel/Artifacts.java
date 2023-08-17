@@ -73,6 +73,7 @@ public class Artifacts {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST
             = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     
+    // this is currently a custom TSK artifact type, created in MalwareScanIngestModule
     private static BlackboardArtifact.Type MALWARE_ARTIFACT_TYPE = null;
     private static final String MALWARE_HITS = "TSK_MALWARE";
 
