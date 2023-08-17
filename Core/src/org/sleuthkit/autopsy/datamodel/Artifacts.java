@@ -72,6 +72,9 @@ public class Artifacts {
 
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST
             = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
+    
+    private static BlackboardArtifact.Type MALWARE_ARTIFACT_TYPE = null;
+    private static final String MALWARE_HITS = "TSK_MALWARE";
 
     /**
      * Base class for a parent node of artifacts.
@@ -242,6 +245,16 @@ public class Artifacts {
          */
         @SuppressWarnings("deprecation")
         private static TypeNodeKey getTypeKey(BlackboardArtifact.Type type, SleuthkitCase skCase, long dsObjId) {
+
+            // ELTODO
+            if (MALWARE_ARTIFACT_TYPE == null) {
+                try {
+                    MALWARE_ARTIFACT_TYPE = skCase.getArtifactType(MALWARE_HITS);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Unable to get TSK_MALWARE artifact type from database : ", ex); //NON-NLS
+                }
+            }
+
             int typeId = type.getTypeID();
             if (TSK_EMAIL_MSG.getTypeID() == typeId) {
                 EmailExtracted.RootNode emailNode = new EmailExtracted(skCase, dsObjId).new RootNode();
@@ -267,7 +280,9 @@ public class Artifacts {
             } else if (TSK_HASHSET_HIT.getTypeID() == typeId) {
                 HashsetHits.RootNode hashsetHits = new HashsetHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeKey(hashsetHits, TSK_HASHSET_HIT);
-
+            } else if (MALWARE_ARTIFACT_TYPE != null && MALWARE_ARTIFACT_TYPE.getTypeID() == typeId) {
+                MalwareHits.RootNode malwareHits = new MalwareHits(skCase, dsObjId).new RootNode();
+                return new TypeNodeKey(malwareHits, MALWARE_ARTIFACT_TYPE);
             } else {
                 return new TypeNodeKey(type, dsObjId);
             }
