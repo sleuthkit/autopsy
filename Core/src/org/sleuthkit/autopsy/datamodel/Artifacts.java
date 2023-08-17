@@ -246,7 +246,7 @@ public class Artifacts {
         @SuppressWarnings("deprecation")
         private static TypeNodeKey getTypeKey(BlackboardArtifact.Type type, SleuthkitCase skCase, long dsObjId) {
 
-            // ELTODO
+            // Get the custom TSK_MALWARE artifact type from case database
             if (MALWARE_ARTIFACT_TYPE == null) {
                 try {
                     MALWARE_ARTIFACT_TYPE = skCase.getArtifactType(MALWARE_HITS);
