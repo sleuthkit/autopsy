@@ -65,3 +65,4 @@ CTMalwareScannerOptionsPanel.fileUploadPanel.border.title=File Upload
 CTMalwareScannerOptionsPanel.licenseInfoMessageLabel.text=
 CTMalwareScannerOptionsPanel.disclaimer.text=<html>The Cyber Triage Malware Scanner module uses 40+ malware scanning engines to identify if Windows executables are malicious. It requires a paid subscription to use.</html>
 CTMalwareScannerOptionsPanel.purchaseFromLabel.text=For licensing information, visit
+
