@@ -60,6 +60,8 @@ public interface AutopsyItemVisitor<T> {
     T visit(KeywordHits kh);
 
     T visit(HashsetHits hh);
+    
+    T visit(MalwareHits mh);
 
     T visit(EmailExtracted ee);
 
@@ -169,6 +171,11 @@ public interface AutopsyItemVisitor<T> {
             return defaultVisit(hh);
         }
 
+        @Override
+        public T visit(MalwareHits mh) {
+            return defaultVisit(mh);
+        }
+        
         @Override
         public T visit(InterestingHits ih) {
             return defaultVisit(ih);
