@@ -55,11 +55,13 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -184,7 +186,7 @@ class CTCloudHttpClient {
         return null;
     }
 
-    public void doFileUploadPost(String fullUrlPath, String fileName, InputStream fileIs) throws CTCloudException {
+    public void doFileUploadPut(String fullUrlPath, String fileName, InputStream fileIs) throws CTCloudException {
         URI postUri;
         try {
             postUri = new URI(fullUrlPath);
@@ -195,23 +197,26 @@ class CTCloudHttpClient {
 
         try (CloseableHttpClient httpclient = createConnection(proxySelector, sslContext)) {
             LOGGER.log(Level.INFO, "initiating http post request to ctcloud server " + fullUrlPath);
-            HttpPost post = new HttpPost(postUri);
-            configureRequestTimeout(post);
+            HttpPut put = new HttpPut(postUri);
+            configureRequestTimeout(put);
 
-            post.addHeader("Connection", "keep-alive");
+            put.addHeader("Connection", "keep-alive");
+            put.addHeader("Content-Type", "application/octet-stream");
 
-            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-            builder.addBinaryBody(
-                    "file",
-                    fileIs,
-                    ContentType.APPLICATION_OCTET_STREAM,
-                    fileName
-            );
+//            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+//            builder.addBinaryBody(
+//                    "file",
+//                    fileBytes,
+//                    ContentType.APPLICATION_OCTET_STREAM,
+//                    file.getFileName()
+//            );
+//
+//            HttpEntity multipart = builder.build();
+//            post.setEntity(multipart);
 
-            HttpEntity multipart = builder.build();
-            post.setEntity(multipart);
+            put.setEntity(new InputStreamEntity(fileIs));
 
-            try (CloseableHttpResponse response = httpclient.execute(post)) {
+            try (CloseableHttpResponse response = httpclient.execute(put)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NO_CONTENT) {
                     LOGGER.log(Level.INFO, "Response Received. - Status OK");

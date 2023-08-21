@@ -78,13 +78,14 @@ public class CTApiDAO {
     }
 
     public AuthTokenResponse getAuthToken(DecryptedLicenseResponse decrypted) throws CTCloudException {
-        return getAuthToken(decrypted, false);
+        return getAuthToken(decrypted, null);
     }
 
-    public AuthTokenResponse getAuthToken(DecryptedLicenseResponse decrypted, boolean fileUpload) throws CTCloudException {
+    public AuthTokenResponse getAuthToken(DecryptedLicenseResponse decrypted, Long fileUploadSize) throws CTCloudException {
         AuthTokenRequest authTokenRequest = new AuthTokenRequest()
                 .setAutopsyVersion(getAppVersion())
-                .setRequestFileUpload(fileUpload)
+                .setRequestFileUpload(fileUploadSize != null && fileUploadSize > 0)
+                .setFileUploadSize(fileUploadSize != null && fileUploadSize > 0 ? fileUploadSize : null)
                 .setBoostLicenseId(decrypted.getBoostLicenseId())
                 .setHostId(decrypted.getLicenseHostId());
 
@@ -92,7 +93,7 @@ public class CTApiDAO {
     }
 
     public void uploadFile(String url, String fileName, InputStream fileIs) throws CTCloudException {
-        httpClient.doFileUploadPost(url, fileName, fileIs);
+        httpClient.doFileUploadPut(url, fileName, fileIs);
     }
     
     public void uploadMeta(AuthenticatedRequestData authenticatedRequestData, MetadataUploadRequest metaRequest) throws CTCloudException {
