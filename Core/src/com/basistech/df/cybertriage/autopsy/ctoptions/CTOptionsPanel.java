@@ -24,6 +24,7 @@ import java.awt.GridBagConstraints;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -63,6 +64,7 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
                     }
                 })
                 .filter(item -> item != null)
+                .sorted(Comparator.comparing(p -> p.getClass().getSimpleName().toUpperCase()).reversed())
                 .collect(Collectors.toList());
         addSubOptionsPanels(this.subPanels);
     }
