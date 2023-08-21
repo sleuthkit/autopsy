@@ -25,6 +25,7 @@ import com.basistech.df.cybertriage.autopsy.ctapi.json.CTCloudBean;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.CTCloudBeanResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.DecryptedLicenseResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.FileReputationRequest;
+import com.basistech.df.cybertriage.autopsy.ctapi.json.FileUploadRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.LicenseRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.LicenseResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.MetadataUploadRequest;
@@ -92,8 +93,8 @@ public class CTApiDAO {
         return httpClient.doPost(AUTH_TOKEN_REQUEST_PATH, authTokenRequest, AuthTokenResponse.class);
     }
 
-    public void uploadFile(String url, String fileName, InputStream fileIs) throws CTCloudException {
-        httpClient.doFileUploadPut(url, fileName, fileIs);
+    public void uploadFile(FileUploadRequest fileUploadRequest) throws CTCloudException {
+        httpClient.doFileUploadPut(fileUploadRequest);
     }
     
     public void uploadMeta(AuthenticatedRequestData authenticatedRequestData, MetadataUploadRequest metaRequest) throws CTCloudException {
