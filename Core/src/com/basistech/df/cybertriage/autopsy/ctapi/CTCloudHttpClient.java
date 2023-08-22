@@ -18,6 +18,8 @@
  */
 package com.basistech.df.cybertriage.autopsy.ctapi;
 
+import com.basistech.df.cybertriage.autopsy.ctapi.CTCloudException.ErrorCode;
+import com.basistech.df.cybertriage.autopsy.ctapi.json.FileUploadRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.util.ObjectMapperUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -55,13 +57,14 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -184,10 +187,23 @@ class CTCloudHttpClient {
         return null;
     }
 
-    public void doFileUploadPost(String fullUrlPath, String fileName, InputStream fileIs) throws CTCloudException {
-        URI postUri;
+    public void doFileUploadPut(FileUploadRequest fileUploadRequest) throws CTCloudException {
+        if (fileUploadRequest == null) {
+            throw new CTCloudException(ErrorCode.BAD_REQUEST, new IllegalArgumentException("fileUploadRequest cannot be null"));
+        }
+                
+        String fullUrlPath = fileUploadRequest.getFullUrlPath();
+        String fileName = fileUploadRequest.getFileName();
+        InputStream fileInputStream = fileUploadRequest.getFileInputStream();
+        Long contentLength = fileUploadRequest.getContentLength();
+
+        if (StringUtils.isBlank(fullUrlPath) || fileInputStream == null || contentLength == null || contentLength <= 0) {
+            throw new CTCloudException(ErrorCode.BAD_REQUEST, new IllegalArgumentException("fullUrlPath, fileInputStream, contentLength must not be empty, null or less than 0"));
+        }
+        
+        URI putUri;
         try {
-            postUri = new URI(fullUrlPath);
+            putUri = new URI(fullUrlPath);
         } catch (URISyntaxException ex) {
             LOGGER.log(Level.WARNING, "Wrong URL syntax for CT Cloud " + fullUrlPath, ex);
             throw new CTCloudException(CTCloudException.ErrorCode.UNKNOWN, ex);
@@ -195,23 +211,13 @@ class CTCloudHttpClient {
 
         try (CloseableHttpClient httpclient = createConnection(proxySelector, sslContext)) {
             LOGGER.log(Level.INFO, "initiating http post request to ctcloud server " + fullUrlPath);
-            HttpPost post = new HttpPost(postUri);
-            configureRequestTimeout(post);
+            HttpPut put = new HttpPut(putUri);
+            configureRequestTimeout(put);
 
-            post.addHeader("Connection", "keep-alive");
+            put.addHeader("Connection", "keep-alive");
+            put.setEntity(new InputStreamEntity(fileInputStream, contentLength, ContentType.APPLICATION_OCTET_STREAM));
 
-            MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-            builder.addBinaryBody(
-                    "file",
-                    fileIs,
-                    ContentType.APPLICATION_OCTET_STREAM,
-                    fileName
-            );
-
-            HttpEntity multipart = builder.build();
-            post.setEntity(multipart);
-
-            try (CloseableHttpResponse response = httpclient.execute(post)) {
+            try (CloseableHttpResponse response = httpclient.execute(put)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_NO_CONTENT) {
                     LOGGER.log(Level.INFO, "Response Received. - Status OK");
@@ -381,7 +387,7 @@ class CTCloudHttpClient {
         HttpClientBuilder builder;
 
         if (ProxySettings.getProxyType() != ProxySettings.DIRECT_CONNECTION
-                && StringUtils.isBlank(ProxySettings.getAuthenticationUsername()) 
+                && StringUtils.isBlank(ProxySettings.getAuthenticationUsername())
                 && ArrayUtils.isEmpty(ProxySettings.getAuthenticationPassword())
                 && WinHttpClients.isWinAuthAvailable()) {
 
