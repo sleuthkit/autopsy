@@ -22,7 +22,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
- * Handles persisting CT Settings.
+ * Handles persisting CT Settings. This code must be kept in-sync with code in
+ * CT Autopsy Importer NBM.
  */
 public class CTSettingsPersistence {
 

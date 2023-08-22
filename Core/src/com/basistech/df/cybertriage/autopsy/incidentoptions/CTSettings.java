@@ -23,7 +23,8 @@ import java.util.logging.Logger;
 import org.openide.modules.Places;
 
 /**
- * CT settings that don't include license information.
+ * CT settings that don't include license information. This code must be kept in-sync with code in
+ * CT Autopsy Importer NBM.
  */
 public class CTSettings {
 
