@@ -91,39 +91,6 @@ public class CTLicensePersistence {
         });
     }
 
-    public synchronized boolean saveMalwareSettings(MalwareIngestSettings malwareIngestSettings) {
-        if (malwareIngestSettings != null) {
-            File settingsFile = getMalwareIngestFile();
-            try {
-                settingsFile.getParentFile().mkdirs();
-                objectMapper.writeValue(settingsFile, malwareIngestSettings);
-                return true;
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "There was an error writing malware ingest settings to file: " + settingsFile.getAbsolutePath(), ex);
-            }
-        }
-
-        return false;
-    }
-
-    public synchronized MalwareIngestSettings loadMalwareIngestSettings() {
-        MalwareIngestSettings settings = null;
-        File settingsFile = getMalwareIngestFile();
-        if (settingsFile.exists() && settingsFile.isFile()) {
-            try {
-                settings = objectMapper.readValue(settingsFile, MalwareIngestSettings.class);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "There was an error reading malware ingest settings from file: " + settingsFile.getAbsolutePath(), ex);
-            }
-        }
-        
-        if (settings == null) {
-            settings = new MalwareIngestSettings();
-        }
-
-        return settings;
-    }
-
     private File getCTLicenseFile() {
         return Paths.get(PlatformUtil.getModuleConfigDirectory(), CT_SETTINGS_DIR, CT_LICENSE_FILENAME).toFile();
     }
