@@ -161,6 +161,7 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
         instructionsTextLabel.getAccessibleContext().setAccessibleName("For instructions on obtaining the module refer to:");
 
         org.openide.awt.Mnemonics.setLocalizedText(instructionsLinkLabel, getHtmlLink(CT_IMPORTER_DOC_LINK));
+        instructionsLinkLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         instructionsLinkLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 instructionsLinkLabelMouseClicked(evt);
