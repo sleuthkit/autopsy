@@ -195,7 +195,7 @@ public class Case {
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
     // matches something like '\\.\PHYSICALDRIVE0'
-    private static final String PLACEHOLDER_DS_PATH_REGEX = "^\\s*\\\\\\\\\\.\\\\(PHYSICALDRIVE)\\d*\\s*$";
+    private static final String PLACEHOLDER_DS_PATH_REGEX = "^\\s*\\\\\\\\\\.\\\\(PHYSICALDRIVE\\d*)\\s*$";
 
     private volatile boolean hasDataSource = false;
     private volatile boolean hasData = false;
@@ -1305,7 +1305,7 @@ public class Case {
         for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
             long obj_id = entry.getKey();
             String path = entry.getValue();
-            boolean fileExists = (new File(path).isFile() || DriveUtils.driveExists(path));
+            boolean fileExists = (new File(path).exists()|| DriveUtils.driveExists(path));
             if (!fileExists) {
                 // CT-7336: ignore relocating datasources if file provider is present and placeholder path is used.
                 if (newCurrentCase.getMetadata() != null
