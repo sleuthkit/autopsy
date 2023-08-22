@@ -194,6 +194,8 @@ public class Case {
     private final SleuthkitEventListener sleuthkitEventListener;
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
+    // matches something like '\\.\PHYSICALDRIVE0'
+    private static final String PLACEHOLDER_DS_PATH_REGEX = "^\\s*\\\\\\\\\\.\\\\PHYSICALDRIVE\\d*\\s*$";
 
     private volatile boolean hasDataSource = false;
     private volatile boolean hasData = false;
@@ -1303,9 +1305,18 @@ public class Case {
         for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
             long obj_id = entry.getKey();
             String path = entry.getValue();
-            boolean fileExists = (new File(path).isFile() || DriveUtils.driveExists(path));
+            boolean fileExists = (new File(path).exists()|| DriveUtils.driveExists(path));
             if (!fileExists) {
+                // CT-7336: ignore relocating datasources if file provider is present and placeholder path is used.
+                if (newCurrentCase.getMetadata() != null
+                        && !StringUtils.isBlank(newCurrentCase.getMetadata().getContentProviderName())
+                        && (path == null || path.matches(PLACEHOLDER_DS_PATH_REGEX))) {
+                    continue;
+                }
+                
                 try {
+                    DataSource ds = newCurrentCase.getSleuthkitCase().getDataSource(obj_id);
+                    String hostName = StringUtils.defaultString(ds.getHost() == null ? "" : ds.getHost().getName());
                     // Using invokeAndWait means that the dialog will
                     // open on the EDT but this thread will wait for an 
                     // answer. Using invokeLater would cause this loop to
@@ -1315,7 +1326,7 @@ public class Case {
                         public void run() {
                             int response = JOptionPane.showConfirmDialog(
                                     mainFrame,
-                                    NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", path),
+                                    NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", hostName, path),
                                     NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.title"),
                                     JOptionPane.YES_NO_OPTION);
                             if (response == JOptionPane.YES_OPTION) {
@@ -1327,7 +1338,7 @@ public class Case {
                         }
 
                     });
-                } catch (InterruptedException | InvocationTargetException ex) {
+                } catch (InterruptedException | InvocationTargetException | TskCoreException | TskDataException ex) {
                     logger.log(Level.SEVERE, "Failed to show missing image confirmation dialog", ex); //NON-NLS 
                 }
             }
