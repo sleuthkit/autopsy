@@ -111,6 +111,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(HashsetHits.RootNode hhrn);
 
     T visit(HashsetHits.HashsetNameNode hhsn);
+    
+    T visit(MalwareHits.RootNode mhrn);  
 
     T visit(EmailExtracted.RootNode eern);
 
@@ -430,6 +432,11 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(HashsetHits.HashsetNameNode hhsn) {
             return defaultVisit(hhsn);
         }
+
+        @Override
+        public T visit(MalwareHits.RootNode mhrn) {
+            return defaultVisit(mhrn);
+        }     
 
         @Override
         public T visit(InterestingHits.RootNode ihrn) {

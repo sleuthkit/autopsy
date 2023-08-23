@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import com.basistech.df.cybertriage.autopsy.CTIntegrationMissingDialog;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import com.google.common.annotations.Beta;
 import com.google.common.eventbus.Subscribe;
@@ -178,6 +179,7 @@ public class Case {
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
     private static final String NO_NODE_ERROR_MSG_FRAGMENT = "KeeperErrorCode = NoNode";
+    private static final String CT_PROVIDER_PREFIX = "CTStandardContentProvider_";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
@@ -193,6 +195,8 @@ public class Case {
     private final SleuthkitEventListener sleuthkitEventListener;
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
+    // matches something like '\\.\PHYSICALDRIVE0'
+    private static final String PLACEHOLDER_DS_PATH_REGEX = "^\\s*\\\\\\\\\\.\\\\PHYSICALDRIVE\\d*\\s*$";
 
     private volatile boolean hasDataSource = false;
     private volatile boolean hasData = false;
@@ -1304,9 +1308,18 @@ public class Case {
         for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
             long obj_id = entry.getKey();
             String path = entry.getValue();
-            boolean fileExists = (new File(path).isFile() || DriveUtils.driveExists(path));
+            boolean fileExists = (new File(path).exists()|| DriveUtils.driveExists(path));
             if (!fileExists) {
+                // CT-7336: ignore relocating datasources if file provider is present and placeholder path is used.
+                if (newCurrentCase.getMetadata() != null
+                        && !StringUtils.isBlank(newCurrentCase.getMetadata().getContentProviderName())
+                        && (path == null || path.matches(PLACEHOLDER_DS_PATH_REGEX))) {
+                    continue;
+                }
+                
                 try {
+                    DataSource ds = newCurrentCase.getSleuthkitCase().getDataSource(obj_id);
+                    String hostName = StringUtils.defaultString(ds.getHost() == null ? "" : ds.getHost().getName());
                     // Using invokeAndWait means that the dialog will
                     // open on the EDT but this thread will wait for an 
                     // answer. Using invokeLater would cause this loop to
@@ -1316,7 +1329,7 @@ public class Case {
                         public void run() {
                             int response = JOptionPane.showConfirmDialog(
                                     mainFrame,
-                                    NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", path),
+                                    NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", hostName, path),
                                     NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.title"),
                                     JOptionPane.YES_NO_OPTION);
                             if (response == JOptionPane.YES_OPTION) {
@@ -1328,7 +1341,7 @@ public class Case {
                         }
 
                     });
-                } catch (InterruptedException | InvocationTargetException ex) {
+                } catch (InterruptedException | InvocationTargetException | TskCoreException | TskDataException ex) {
                     logger.log(Level.SEVERE, "Failed to show missing image confirmation dialog", ex); //NON-NLS 
                 }
             }
@@ -2732,6 +2745,7 @@ public class Case {
         "Case.progressMessage.openingCaseDatabase=Opening case database...",
         "# {0} - exception message", "Case.exceptionMessage.couldNotOpenCaseDatabase=Failed to open case database:\n{0}.",
         "# {0} - exception message", "Case.exceptionMessage.unsupportedSchemaVersionMessage=Unsupported case database schema version:\n{0}.",
+        "Case.exceptionMessage.contentProviderCouldNotBeFound=Content provider was specified for the case but could not be loaded.",
         "Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. See Tools, Options, Multi-User."
     })
     private void openCaseDataBase(ProgressIndicator progressIndicator) throws CaseActionException {
@@ -2740,14 +2754,15 @@ public class Case {
             String databaseName = metadata.getCaseDatabaseName();
             
             ContentStreamProvider contentProvider = loadContentProvider(metadata.getContentProviderName());
+            if (StringUtils.isNotBlank(metadata.getContentProviderName()) && contentProvider == null) {
+                if (metadata.getContentProviderName().trim().toUpperCase().startsWith(CT_PROVIDER_PREFIX.toUpperCase())) {
+                    new CTIntegrationMissingDialog(WindowManager.getDefault().getMainWindow(), true).showDialog(null);
+                }
+                throw new CaseActionException(Bundle.Case_exceptionMessage_contentProviderCouldNotBeFound());
+            }
             
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
-                // only prefix with metadata directory if databaseName is a relative path
-                String fullDatabasePath = (new File(databaseName).isAbsolute())
-                        ? databaseName
-                        : Paths.get(metadata.getCaseDirectory(), databaseName).toString();
-                        
-                caseDb = SleuthkitCase.openCase(fullDatabasePath, contentProvider);
+                caseDb = SleuthkitCase.openCase(metadata.getCaseDatabasePath(), contentProvider);
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
                 caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory(), contentProvider);
             } else {

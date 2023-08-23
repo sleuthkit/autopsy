@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2021 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,6 +72,10 @@ public class Artifacts {
 
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST
             = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
+    
+    // this is currently a custom TSK artifact type, created in MalwareScanIngestModule
+    private static BlackboardArtifact.Type MALWARE_ARTIFACT_TYPE = null;
+    private static final String MALWARE_HITS = "TSK_MALWARE";
 
     /**
      * Base class for a parent node of artifacts.
@@ -242,6 +246,16 @@ public class Artifacts {
          */
         @SuppressWarnings("deprecation")
         private static TypeNodeKey getTypeKey(BlackboardArtifact.Type type, SleuthkitCase skCase, long dsObjId) {
+
+            // Get the custom TSK_MALWARE artifact type from case database
+            if (MALWARE_ARTIFACT_TYPE == null) {
+                try {
+                    MALWARE_ARTIFACT_TYPE = skCase.getArtifactType(MALWARE_HITS);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Unable to get TSK_MALWARE artifact type from database : ", ex); //NON-NLS
+                }
+            }
+
             int typeId = type.getTypeID();
             if (TSK_EMAIL_MSG.getTypeID() == typeId) {
                 EmailExtracted.RootNode emailNode = new EmailExtracted(skCase, dsObjId).new RootNode();
@@ -267,7 +281,9 @@ public class Artifacts {
             } else if (TSK_HASHSET_HIT.getTypeID() == typeId) {
                 HashsetHits.RootNode hashsetHits = new HashsetHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeKey(hashsetHits, TSK_HASHSET_HIT);
-
+            } else if (MALWARE_ARTIFACT_TYPE != null && MALWARE_ARTIFACT_TYPE.getTypeID() == typeId) {
+                MalwareHits.RootNode malwareHits = new MalwareHits(skCase, dsObjId).new RootNode();
+                return new TypeNodeKey(malwareHits, MALWARE_ARTIFACT_TYPE);
             } else {
                 return new TypeNodeKey(type, dsObjId);
             }

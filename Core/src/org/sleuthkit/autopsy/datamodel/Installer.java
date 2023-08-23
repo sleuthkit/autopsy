@@ -70,8 +70,9 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.CONFIG, "Sleuth Kit Version: {0}", skVersion); //NON-NLS
             }
 
-        } catch (Exception e) {
+        } catch (Exception | UnsatisfiedLinkError e) {
             logger.log(Level.SEVERE, "Error calling Sleuth Kit library (test call failed)", e); //NON-NLS
+            logger.log(Level.SEVERE, "Is Autopsy or Cyber Triage already running?)", e); //NON-NLS
 
             // Normal error box log handler won't be loaded yet, so show error here.
             final Component parentComponent = null; // Use default window frame.
