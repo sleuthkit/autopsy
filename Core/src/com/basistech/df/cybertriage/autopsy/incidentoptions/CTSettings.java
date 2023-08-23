@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.Places;
 
 /**
@@ -38,7 +39,11 @@ public class CTSettings {
             LOGGER.log(Level.INFO, "Application Data (test mode) Path: " + Places.getUserDirectory().getAbsolutePath());
             return Places.getUserDirectory().getAbsolutePath();
         } else {
-            Path localAppPath = Paths.get(System.getenv("LOCALAPPDATA"), "cybertriage");
+            
+            Path localAppPath = StringUtils.isBlank(System.getenv("LOCALAPPDATA"))
+                    ? Places.getUserDirectory().toPath().toAbsolutePath()
+                    : Paths.get(System.getenv("LOCALAPPDATA"), "cybertriage");
+            
             try {
                 Files.createDirectories(localAppPath);
                 LOGGER.log(Level.INFO, "Application Data Path: " + localAppPath.toString());
