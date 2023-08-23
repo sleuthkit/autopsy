@@ -9,7 +9,7 @@ Library Updates
 Ingest Module Updates:
 - Recent Activity checks for malicious Chrome extensions from list provided by https://github.com/randomaccess3/detections
 - Keyword Search module now can search without needing to index text into Solr. 
-- New Cyber Triage Malware Scanner module that uses Reversing Labs (requires license)
+- New Cyber Triage Malware Scanner module that uses Reversing Labs (requires license). https://www.cybertriage.com/autopsy-malware-module/
 
 Add Data Source Updates:
 - Timestamps for logical files can be added. Issue https://github.com/sleuthkit/autopsy/issues/5852, https://github.com/sleuthkit/autopsy/issues/1788
@@ -24,7 +24,7 @@ Bugs:
 - Fix exporting of CSV files. Issue https://github.com/sleuthkit/autopsy/issues/6717
 
 Misc:
-- Added File Repository concept for data source files that are in a central location
+- Added File Repository concept for data source files that are in a central location. Required for Cyber Triage import feature.
 - Added Spanish language support, contributor https://github.com/AburtoArielPM
 
 ---------------- VERSION 4.20.0  --------------
