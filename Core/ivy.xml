@@ -1,3 +1,6 @@
+<!DOCTYPE ivy-module [
+    <!ENTITY httpcomponents.version "4.5.14">
+]>
 <ivy-module version="2.0">
     <info organisation="org.sleuthkit.autopsy" module="core"/>
     <configurations >
@@ -72,6 +75,15 @@
         <!-- annotations like guarded by -->
         <dependency conf="core->default" org="com.github.spotbugs" name="spotbugs-annotations" rev="4.6.0"/>
 
+        <dependency conf="core->default" org="com.license4j" name="license4j-runtime-library" rev="4.7.1"/>
+
+        <dependency conf="core->default" org="org.apache.httpcomponents" name="httpclient" rev="&httpcomponents.version;"/>
+        <dependency conf="core->default" org="org.apache.httpcomponents" name="httpmime" rev="&httpcomponents.version;"/>
+        <dependency conf="core->default" org="org.apache.httpcomponents" name="httpclient-win" rev="&httpcomponents.version;">
+            <exclude name="jna" />
+            <exclude name="jna-platform" />
+        </dependency>
+
         <override org="org.apache.zookeeper" module="zookeeper" rev="3.8.0"/>
         <override org="org.apache.zookeeper" module="zookeeper-jute" rev="3.8.0"/>
         
@@ -84,5 +96,6 @@
         <override org="org.bouncycastle" module="bcprov-ext-jdk15on" rev="1.70"/>
         <override org="org.bouncycastle" module="bcprov-jdk15on" rev="1.70"/>
         <override org="org.bouncycastle" module="bcpkix-jdk15on" rev="1.70"/>
+        <override org="junit" module="junit" rev="4.13.2"/>
     </dependencies>
 </ivy-module>

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.modules.pictureanalyzer.impls;
 
+import com.sun.javafx.PlatformUtil;
+
 /**
  *
  * Interop with libheif native dependencies.
@@ -32,11 +34,13 @@ public class HeifJNI {
      */
     public static HeifJNI getInstance() throws UnsatisfiedLinkError {
         if (instance == null) {
-            System.loadLibrary("vcruntime140_1");
-            System.loadLibrary("libx265");
-            System.loadLibrary("libde265");
-            System.loadLibrary("heif");
-            System.loadLibrary("jpeg62");
+            if (PlatformUtil.isWindows()) {
+                System.loadLibrary("vcruntime140_1");
+                System.loadLibrary("libx265");
+                System.loadLibrary("libde265");
+                System.loadLibrary("heif");
+                System.loadLibrary("jpeg62");
+            }
             System.loadLibrary("heifconvert");
             instance = new HeifJNI();
         }
