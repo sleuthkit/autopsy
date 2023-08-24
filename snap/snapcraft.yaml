@@ -1,0 +1,241 @@
+# OVERVIEW:
+# Snap packages are an application and everything needed for that application bundled into a package: https://snapcraft.io/docs/snapcraft
+# Snapd can be installed on the following systems: https://snapcraft.io/docs/installing-snapd
+# Snap packages can be released to the store: https://snapcraft.io/docs/releasing-to-the-snap-store
+# Classic confinement apps and Strict confinement apps using super-priveleged interfaces (https://snapcraft.io/docs/super-privileged-interfaces) will require special approval.
+#
+# DEVELOPMENT / DEBUG:
+# snappy debug can be used to identify apparmor/confinement violations: https://snapcraft.io/docs/debug-snaps#heading--snappy-debug
+# building snaps with lxd/multipass requires hardware assisted virtualization: https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-2A98801C-68E8-47AF-99ED-00C63E4857F6.html, https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-F920A3C7-3B42-4E78-8EA7-961E49AF479D.html
+# build provider information can be found here: https://snapcraft.io/docs/build-providers, https://snapcraft.io/docs/build-options
+# A command like the following will run snapcraft in the background to build a snap package and write output to log `nohup snapcraft --use-lxd --debug > ./output.log 2>&1 < /dev/null &``.  This must be run from the directory above `snap`
+# Information on debugging snaps can be found here (in particular `snap try` can mount a filesystem as a snap, `snap run --shell autopsy.autopsy` can show shell with env vars like snap ): https://snapcraft.io/docs/debug-snaps, https://snapcraft.io/docs/snap-try
+#
+# INSTALLATION:
+# Some options for installation can be found here: https://snapcraft.io/docs/install-modes
+# Snap uses assertions to digitally sign snaps (https://snapcraft.io/docs/assertions).  Otherwise, snaps need to be installed with the `--dangerous` flag
+# it would be best to install autopsy with `sudo snap install --dangerous autopsy` and then connect all super-priveleged interfaces or `sudo snap install --dangerous --devmode autopsy``
+
+# yaml reference here: https://snapcraft.io/docs/snapcraft-yaml-reference
+# sample yaml files here: https://github.com/videolan/vlc/blob/master/extras/package/snap/snapcraft.yaml, https://github.com/canonical/firefox-snap/blob/stable/snapcraft.yaml
+name: autopsy
+# more on base snaps here: https://snapcraft.io/docs/base-snaps
+# core is based on corresponding ubuntu version.  ubuntu version information can be found here: https://wiki.ubuntu.com/Releases
+base: core22
+version: 4.20.0
+summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
+description: Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools.
+source-code: https://github.com/sleuthkit/autopsy/
+website: https://www.autopsy.com/
+license: Apache-2.0
+grade: stable # must be 'stable' to release into candidate/stable channels
+# Options include 'strict' and 'classic'.  'Strict' is greatly preferred to 'classic'.  More information here: https://snapcraft.io/docs/snap-confinement
+# classic confinement does not chroot so elf records need to be patched to point to relative paths: https://snapcraft.io/blog/the-new-classic-confinement-in-snaps-even-the-classics-need-a-change, https://snapcraft.io/docs/linters-classic#heading--issues-auto, https://docs.oracle.com/cd/E19683-01/816-1386/chapter3-33/index.html, https://nehckl0.medium.com/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
+confinement: strict
+architectures: [amd64]
+# information on lzo here: https://snapcraft.io/blog/why-lzo-was-chosen-as-the-new-compression-method
+compression: lzo
+icon: snap/gui/autopsy.png
+
+plugs:
+  system-files-autopsy:
+    interface: system-files
+    read: [/dev]
+  system-files-hugepages:
+    interface: system-files
+    read: [/sys/kernel/mm/hugepages]
+  # may provide ability for online/offline help
+  browser-sandbox:
+    interface: browser-support
+    allow-sandbox: true
+
+slots:
+  # taken from thunderbird snap: https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
+  dbus-daemon:
+    interface: dbus
+    bus: session
+    name: org.sleuthkit.autopsy
+
+apps:
+  autopsy:
+    # more on env vars here: https://snapcraft.io/docs/environment-variables
+    environment:
+      jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
+      HOME: "$SNAP_USER_COMMON"
+      SOLR_JAVA_HOME: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
+      # provide means for java gstreamer to find gstreamer libs with jna.library.path
+      # set user home to new home value to avoid issues writing cache files to home
+      # can also specify '-Djdk.gtk.verbose=true' for gtk verbose logging: https://stackoverflow.com/a/22457177
+      jreflags: $jreflags '-Djdk.gtk.version=3' '-Duser.home=$SNAP_USER_COMMON' '-Djava.io.tmpdir=$SNAP_USER_COMMON/tmp' '-Djna.library.path=$SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
+      # to load libtsk.so
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
+      # make sure path is set up to ensure things like photorec are found
+      PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
+      # gstreamer scans for plugins (i.e. app integration plugins).  this tells gstreamer where to look for the scanner and libraries
+      # more information here: https://forum.snapcraft.io/t/trouble-with-ros-and-gstreamer/5518/6
+      GST_PLUGIN_SYSTEM_PATH: $SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu/gstreamer-1.0:$SNAP/usr/lib/x86_64-linux-gnu/gstreamer-1.0:$GST_PLUGIN_SYSTEM_PATH
+      GST_PLUGIN_SCANNER: $SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
+      SOLR_LOGS_DIR: $SNAP_USER_COMMON/.autopsy/dev/solr/logs
+      SOLR_PID_DIR: $SNAP_USER_COMMON/.autopsy/dev/solr/logs
+      # taken from thunderbird snap: https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
+      DISABLE_WAYLAND: 1
+      GTK_USE_PORTAL: 1
+    command: autopsy/bin/autopsywrapper.sh
+    # More gnome info here: https://snapcraft.io/docs/gnome-extension
+    extensions: [gnome]
+    common-id: org.sleuthkit.autopsy
+    plugs:
+      # taken from https://snapcraft.io/docs/supported-interfaces
+      - audio-playback
+      - block-devices
+      - browser-sandbox
+      - desktop
+      - desktop-launch
+      - desktop-legacy
+      - dm-crypt
+      - fuse-support
+      - gsettings
+      - hardware-observe
+      - home
+      - hugepages-control
+      - kernel-crypto-api
+      - mount-observe
+      - network
+      - network-bind
+      - network-observe
+      - network-setup-observe
+      - network-status
+      - opengl
+      - optical-drive
+      - removable-media
+      - system-files-autopsy
+      - system-files-hugepages
+      - system-observe
+    slots:
+      - dbus-daemon
+
+parts:
+  sleuthkit:
+    # more information on plugins here: https://snapcraft.io/docs/supported-plugins
+    plugin: autotools
+    source: https://github.com/sleuthkit/sleuthkit.git
+    source-branch: develop
+    #source-tag: sleuthkit-4.12.0
+    build-environment: [JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64]
+    # information on packages here: https://snapcraft.io/docs/package-repositories
+    build-packages:
+      - build-essential
+      - autoconf
+      - libtool
+      - automake
+      - zip
+      - openjdk-17-jdk
+      - openjdk-17-jre
+      - ant
+      - ant-contrib
+      - ant-optional
+      - libpq-dev
+      - testdisk
+      - libafflib-dev
+      - libewf-dev
+      - libvhdi-dev
+      - libvmdk-dev
+    stage-packages:
+      - libpq-dev
+      - testdisk
+      - libafflib-dev
+      - libewf-dev
+      - libvhdi-dev
+      - libvmdk-dev
+  autopsy:
+    after: [sleuthkit]
+    # information on packages here: https://snapcraft.io/docs/package-repositories
+    build-packages:
+      - zip
+      - unzip
+      - openjdk-17-jdk
+      - openjdk-17-jre
+      - ant
+      - doxygen
+    stage-packages:
+      # lib heif reqs
+      - libheif-dev
+      - libde265-dev
+      # pg reqs
+      - libpq-dev
+      - testdisk
+      # libgstreamer additional plugin reqs that aren't in gnome package extension: https://snapcraft.io/docs/gnome-extension, https://github.com/ubuntu/gnome-sdk/blob/gnome-42-2204/snapcraft.yaml
+      - gstreamer1.0-plugins-bad
+      - gstreamer1.0-plugins-ugly
+      - gstreamer1.0-libav
+      # java req
+      - openjdk-17-jre
+      # needed by solr to determine locally running ports
+      - lsof
+    plugin: nil
+    source: https://github.com/sleuthkit/autopsy.git
+    source-branch: develop
+    build-environment:
+      - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
+    # information on parts environment variables here: https://snapcraft.io/docs/parts-environment-variables
+    override-build: |
+      # ----- BUILD ZIP -----
+      AUTOPSY_SRC_PATH=$(pwd)
+      NETBEANS_PLAT_VER=$(grep "netbeans-plat-version=" "$AUTOPSY_SRC_PATH/nbproject/platform.properties" | cut -d'=' -f2)
+      AUTOPSY_PLATFORM_PATH="$AUTOPSY_SRC_PATH/netbeans-plat/$NETBEANS_PLAT_VER"
+      AUTOPSY_HARNESS_PATH="$AUTOPSY_PLATFORM_PATH/harness"
+      export TSK_HOME="$HOME/parts/sleuthkit/build"
+      ant -Dnbplatform.active.dir="$AUTOPSY_PLATFORM_PATH" -Dnbplatform.default.harness.dir="$AUTOPSY_HARNESS_PATH" build build-zip
+
+      # ----- SETUP EXTRACT DIRECTORY -----
+      AUTOPSY_LOCATION="$SNAPCRAFT_PART_INSTALL/autopsy"
+      mkdir -p $AUTOPSY_LOCATION
+      AUTOPSY_ZIP=$(find ./dist -maxdepth 1 -name "autopsy-*.*.*.zip")
+      AUTOPSY_ZIP_TMP_LOC=./dist/autopsy_tmp_zip_loc
+      mkdir -p $AUTOPSY_ZIP_TMP_LOC
+      unzip $AUTOPSY_ZIP -d $AUTOPSY_ZIP_TMP_LOC
+      AUTOPSY_EXTRACTED_TMP_LOC=$(find $AUTOPSY_ZIP_TMP_LOC -maxdepth 1 -name "autopsy-*.*.*")
+      cp -r $AUTOPSY_EXTRACTED_TMP_LOC/* $AUTOPSY_LOCATION
+
+      # ----- RUN UNIX SETUP SCRIPT -----
+      UNIX_SETUP_SCRIPT="$AUTOPSY_LOCATION/unix_setup.sh"
+      chmod +x $UNIX_SETUP_SCRIPT
+      $UNIX_SETUP_SCRIPT
+
+      # snaps run applications with different permissions.  This ensures applications can run.
+      chmod 755 "$AUTOPSY_LOCATION/bin/autopsy"
+
+      # wrapper to setup temp dir if not exists; also could be easily modified for debugging purposes with snap try: https://snapcraft.io/docs/snap-try
+      cat <<EOF > $AUTOPSY_LOCATION/bin/autopsywrapper.sh
+      #!/bin/bash
+      mkdir -p \$SNAP_USER_COMMON/tmp
+      echo Starting Autopsy...
+      \$SNAP/autopsy/bin/autopsy "\$@"
+      EOF
+
+      chmod 755 $AUTOPSY_LOCATION/bin/autopsywrapper.sh
+
+
+  # taken from https://github.com/ubuntu/gnome-recipes/blob/stable/snapcraft.yaml to clean out files present in core/extensions as well.
+  cleanup:
+    after: [autopsy]
+    plugin: nil
+    build-snaps: [core22, gtk-common-themes, gnome-42-2204]
+    override-prime: |
+      set -eux
+      for snap in "core22" "gtk-common-themes" "gnome-42-2204"; do
+        cd "/snap/$snap/current" && find . -type f,l -name *.so.* -exec rm -f "$CRAFT_PRIME/{}" \;
+      done
+      # remove cross-installed repeated libraries (in /usr/lib in the SDK, but in /usr/lib/TRIPLET
+      # here, and the opposite)
+      for snap in "core22" "gnome-42-2204"; do
+        cd "/snap/$snap/current/usr/lib"
+        for filename in [ *.so* ]; do
+          rm -f "$CRAFT_PRIME/usr/lib/$CRAFT_ARCH_TRIPLET/$filename"
+        done
+        cd "/snap/$snap/current/usr/lib/$CRAFT_ARCH_TRIPLET"
+        for filename in [ *.so* ]; do
+          rm -f "$CRAFT_PRIME/usr/lib/$filename"
+        done
+      done

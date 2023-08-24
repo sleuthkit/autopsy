@@ -632,23 +632,18 @@ final class PhotoRecCarverFileIngestModule implements FileIngestModule {
      */
     public static File locateExecutable() throws IngestModule.IngestModuleException {
         File exeFile;
-        Path execName;
-        String photorec_linux_directory = "/usr/bin";
         if (PlatformUtil.isWindowsOS()) {
-            execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_SUBDIRECTORY, PHOTOREC_EXECUTABLE);
+            Path execName = Paths.get(PHOTOREC_DIRECTORY, PHOTOREC_SUBDIRECTORY, PHOTOREC_EXECUTABLE);
             exeFile = InstalledFileLocator.getDefault().locate(execName.toString(), PhotoRecCarverFileIngestModule.class.getPackage().getName(), false);
         } else {
-            File usrBin = new File("/usr/bin/photorec");
-            File usrLocalBin = new File("/usr/local/bin/photorec");
-            if (usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()) {
-                photorec_linux_directory = "/usr/bin";
-            } else if (usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()) {
-                photorec_linux_directory = "/usr/local/bin";
-            } else {
-                throw new IngestModule.IngestModuleException("Photorec not found");
+            exeFile = null;
+            for (String dirName: System.getenv("PATH").split(File.pathSeparator)) {
+                File testExe = new File(dirName, PHOTOREC_LINUX_EXECUTABLE);
+                if (testExe.exists()) {
+                    exeFile = testExe;
+                    break;
+                }
             }
-            execName = Paths.get(photorec_linux_directory, PHOTOREC_LINUX_EXECUTABLE);
-            exeFile = new File(execName.toString());
         }
 
         if (null == exeFile) {

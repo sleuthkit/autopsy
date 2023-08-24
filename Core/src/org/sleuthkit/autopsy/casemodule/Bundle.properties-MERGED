@@ -16,6 +16,7 @@ Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it mus
 Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or host.
 Case.exceptionMessage.cannotLocateMainWindow=Cannot locate main application window
 Case.exceptionMessage.cannotOpenMultiUserCaseNoSettings=Multi-user settings are missing (see Tools, Options, Multi-user tab), cannot open a multi-user case.
+Case.exceptionMessage.contentProviderCouldNotBeFound=Content provider was specified for the case but could not be loaded.
 # {0} - exception message
 Case.exceptionMessage.couldNotCreatCollaborationMonitor=Failed to create collaboration monitor:\n{0}.
 # {0} - exception message
@@ -252,8 +253,8 @@ Case.open.msgDlg.updated.msg=Updated case database schema.\nA backup copy of the
 Case.open.msgDlg.updated.title=Case Database Schema Update
 Case.checkImgExist.confDlg.doesntExist.msg=One of the images associated with \n\
 this case are missing. Would you like to search for them now?\n\
-Previously, the image was located at:\n\
-{0}\n\
+Previously, the image with host, {0}, was located at:\n\
+{1}\n\
 Please note that you will still be able to browse directories and generate reports\n\
 if you choose No, but you will not be able to view file content or run the ingest process.
 Case.checkImgExist.confDlg.doesntExist.title=Missing Image

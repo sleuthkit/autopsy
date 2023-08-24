@@ -41,13 +41,8 @@ pushd $SCRIPTPATH
 
 # Verify PhotoRec was installed
 echo -n "Checking for PhotoRec..."
-photorec_filepath=/usr/bin/photorec
-photorec_osx_filepath=/usr/local/bin/photorec
-if [ -f "$photorec_filepath" ]; then
-    echo "found in $(dirname $photorec_filepath)"
-elif [ -f "$photorec_osx_filepath" ]; then
-    echo "found in $(dirname $photorec_osx_filepath)"
-else
+if ! command -v photorec &> /dev/null 
+then
     echo "ERROR: PhotoRec not found, please install the testdisk package."
     exit 1
 fi
@@ -78,14 +73,17 @@ fi
 
 # Verify Sleuth Kit Java was installed
 echo -n "Checking for Sleuth Kit Java bindings..."
-if [ -f "/usr/share/java/sleuthkit-$TSK_VERSION.jar" ]; then
+if [ -n $TSK_JAVA_LIB_PATH ] && [ -f "$TSK_JAVA_LIB_PATH/sleuthkit-$TSK_VERSION.jar" ]; then
+    sleuthkit_jar_filepath=$TSK_JAVA_LIB_PATH/sleuthkit-$TSK_VERSION.jar
+    echo "found in $(dirname $sleuthkit_jar_filepath)"
+elif [ -f "/usr/share/java/sleuthkit-$TSK_VERSION.jar" ]; then
     sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$TSK_VERSION.jar
     echo "found in $(dirname $sleuthkit_jar_filepath)"
 elif [ -f "/usr/local/share/java/sleuthkit-$TSK_VERSION.jar" ]; then
     sleuthkit_jar_filepath=/usr/local/share/java/sleuthkit-$TSK_VERSION.jar
     echo "found in $(dirname $sleuthkit_jar_filepath)"
 else
-    echo "ERROR: sleuthkit-$TSK_VERSION.jar not found in /usr/share/java/ or /usr/local/share/java/."
+    echo "ERROR: sleuthkit-$TSK_VERSION.jar not found in /usr/share/java/, /usr/local/share/java/, or the environment variable: 'TSK_JAVA_LIB_PATH': \"$TSK_JAVA_LIB_PATH\"."
     echo "Please install the Sleuth Kit Java bindings file."
     echo "See https://github.com/sleuthkit/sleuthkit/releases."
     exit 1
@@ -109,14 +107,14 @@ else
 fi
 
 # make sure thirdparty files are executable
-chmod u+x autopsy/markmckinnon/Export*
-chmod u+x autopsy/markmckinnon/parse*
+chmod a+x autopsy/markmckinnon/Export*
+chmod a+x autopsy/markmckinnon/parse*
 
 # allow solr dependencies to execute
-chmod -R u+x autopsy/solr/bin
+chmod -R a+x autopsy/solr/bin
 
 # make sure it is executable
-chmod u+x bin/$APPLICATION_NAME
+chmod a+x bin/$APPLICATION_NAME
 
 popd
 
