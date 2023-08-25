@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.corecomponents.TextPrompt;
  */
 class CTLicenseDialog extends javax.swing.JDialog {
 
-    private static final Pattern LICENSE_PATTERN = Pattern.compile("^\\s*[a-zA-Z0-9\\-]+?\\s*$");
+    private static final Pattern LICENSE_PATTERN = Pattern.compile("^\\s*[a-zA-Z0-9-_]+?\\s*$");
     private String licenseString = null;
 
     /**
@@ -191,7 +191,8 @@ class CTLicenseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        this.licenseString = this.licenseNumberTextField.getText();
+        String inputText = this.licenseNumberTextField.getText();
+        this.licenseString = inputText == null ? null : inputText.trim();
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
