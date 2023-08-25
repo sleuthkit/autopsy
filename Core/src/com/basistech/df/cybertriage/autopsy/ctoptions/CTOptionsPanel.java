@@ -26,12 +26,12 @@ import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JPanel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 
 /**
