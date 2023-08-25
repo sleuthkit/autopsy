@@ -33,7 +33,7 @@ sub main {
 	update_core_project_xml();
     update_unix_setup();
     
-	print "Files updated.  You need to commit and push them\n";
+	print "Files updated and added to git. You need to commit (no -a) and push.\n";
 }
 
 
