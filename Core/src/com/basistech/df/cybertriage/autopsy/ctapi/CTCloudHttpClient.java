@@ -158,16 +158,23 @@ class CTCloudHttpClient {
                         // Parse Response
                         if (classType != null) {
                             HttpEntity entity = response.getEntity();
-                            String entityStr = EntityUtils.toString(entity);
-                            O respObj = mapper.readValue(entityStr, classType);
-                            return respObj;
-                        } else {
-                            return null;
+                            if (entity != null) {
+                                String entityStr = EntityUtils.toString(entity);
+                                if (StringUtils.isNotBlank(entityStr)) {
+                                    O respObj = mapper.readValue(entityStr, classType);
+                                    return respObj;
+                                }
+                            }
                         }
+
+                        return null;
                     } else {
                         LOGGER.log(Level.WARNING, "Response Received. - Status Error {}", response.getStatusLine());
                         handleNonOKResponse(response, "");
                     }
+                    // transform all non-CTCloudException's into a CTCloudException
+                } catch (CTCloudException ex) {
+                    throw ex;
                 } catch (Exception ex) {
                     LOGGER.log(Level.WARNING, "Error when parsing response from CyberTriage Cloud", ex);
                     throw new CTCloudException(CTCloudException.parseUnknownException(ex), ex);
@@ -191,7 +198,7 @@ class CTCloudHttpClient {
         if (fileUploadRequest == null) {
             throw new CTCloudException(ErrorCode.BAD_REQUEST, new IllegalArgumentException("fileUploadRequest cannot be null"));
         }
-                
+
         String fullUrlPath = fileUploadRequest.getFullUrlPath();
         String fileName = fileUploadRequest.getFileName();
         InputStream fileInputStream = fileUploadRequest.getFileInputStream();
@@ -200,7 +207,7 @@ class CTCloudHttpClient {
         if (StringUtils.isBlank(fullUrlPath) || fileInputStream == null || contentLength == null || contentLength <= 0) {
             throw new CTCloudException(ErrorCode.BAD_REQUEST, new IllegalArgumentException("fullUrlPath, fileInputStream, contentLength must not be empty, null or less than 0"));
         }
-        
+
         URI putUri;
         try {
             putUri = new URI(fullUrlPath);
