@@ -32,18 +32,21 @@ public class LicenseResponse {
     private final Boolean hostChanged;
     private final Long hostChangesRemaining;
     private final BoostLicenseResponse boostLicense;
+    private final String errorMsg;
 
     @JsonCreator
     public LicenseResponse(
             @JsonProperty("success") Boolean success,
             @JsonProperty("hostChanged") Boolean hostChanged,
             @JsonProperty("hostChangesRemaining") Long hostChangesRemaining,
-            @JsonProperty("boostLicense") BoostLicenseResponse boostLicense
+            @JsonProperty("boostLicense") BoostLicenseResponse boostLicense,
+            @JsonProperty("errorMsg") String errorMsg
     ) {
         this.success = success;
         this.hostChanged = hostChanged;
         this.hostChangesRemaining = hostChangesRemaining;
         this.boostLicense = boostLicense;
+        this.errorMsg = errorMsg;
     }
 
     public Boolean isSuccess() {
@@ -60,5 +63,9 @@ public class LicenseResponse {
 
     public BoostLicenseResponse getBoostLicense() {
         return boostLicense;
+    }
+
+    public String getErrorMsg() {
+        return errorMsg;
     }
 }
