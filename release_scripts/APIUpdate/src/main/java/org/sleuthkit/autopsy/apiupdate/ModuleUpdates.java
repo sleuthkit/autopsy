@@ -12,7 +12,6 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.logging.Level;
@@ -205,7 +204,7 @@ public class ModuleUpdates {
             return;
         }
 
-        Properties projectProps = new Properties();
+        OrderedProperties projectProps = new OrderedProperties();
         try (FileInputStream propsIs = new FileInputStream(projectPropsFile)) {
             projectProps.load(propsIs);
         }
