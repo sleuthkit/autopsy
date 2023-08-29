@@ -57,8 +57,8 @@ public class CLIProcessor {
             .option("cv")
             .required(true)
             .build();
-    
-        static Option SRC_LOC_OPT = Option.builder()
+
+    static Option SRC_LOC_OPT = Option.builder()
             .argName("path")
             .desc("The path to the root of the autopsy repor")
             .hasArg(true)
@@ -97,8 +97,7 @@ public class CLIProcessor {
     static Options HELP_OPTIONS = getCliOptions(Collections.singletonList(HELP_OPT));
 
     private static CommandLineParser parser = new DefaultParser();
-    
-   
+
     private static HelpFormatter helpFormatter = new HelpFormatter();
 
     static void printHelp(Exception ex) {
@@ -133,14 +132,13 @@ public class CLIProcessor {
         if (!prevVersFile.isDirectory()) {
             throw new ParseException("No directory found at " + prevVersFile.getAbsolutePath());
         }
-        
-                if (!srcPathFile.isDirectory()) {
+
+        if (!srcPathFile.isDirectory()) {
             throw new ParseException("No directory found at " + srcPathFile.getAbsolutePath());
         }
 
         return new CLIArgs(curVers, prevVers, curVersFile, prevVersFile, srcPathFile, false);
     }
-
 
     public static class CLIArgs {
 
@@ -150,6 +148,15 @@ public class CLIProcessor {
         private final File previousVersPath;
         private final boolean isHelp;
         private final File srcPath;
+
+        public CLIArgs(String currentVersion, String previousVersion, File currentVersPath, File previousVersPath, File srcPath, boolean isHelp) {
+            this.currentVersion = currentVersion;
+            this.previousVersion = previousVersion;
+            this.currentVersPath = currentVersPath;
+            this.previousVersPath = previousVersPath;
+            this.srcPath = srcPath;
+            this.isHelp = isHelp;
+        }
 
         public String getCurrentVersion() {
             return currentVersion;
@@ -171,13 +178,8 @@ public class CLIProcessor {
             return isHelp;
         }
 
-        public CLIArgs(String currentVersion, String previousVersion, File currentVersPath, File previousVersPath, File srcPath, boolean isHelp) {
-            this.currentVersion = currentVersion;
-            this.previousVersion = previousVersion;
-            this.currentVersPath = currentVersPath;
-            this.previousVersPath = previousVersPath;
-            this.srcPath = srcPath;
-            this.isHelp = isHelp;
+        public File getSrcPath() {
+            return srcPath;
         }
 
     }

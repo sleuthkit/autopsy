@@ -16,12 +16,13 @@ import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.StreamHandler;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -44,6 +45,9 @@ import org.xml.sax.SAXException;
 public class ModuleUpdates {
 
     private static final Logger LOGGER = Logger.getLogger(ModuleUpdates.class.getName());
+    static {
+        LOGGER.addHandler(new StreamHandler(System.out, new SimpleFormatter()));
+    }
 
     private static final Pattern SPEC_REGEX = Pattern.compile("^\\s*((?<major>\\d*)\\.)?(?<minor>\\d*)(\\.(?<patch>\\d*))?\\s*$");
     private static final String SPEC_KEY = "OpenIDE-Module-Specification-Version";
@@ -60,7 +64,7 @@ public class ModuleUpdates {
     private static final String PROJ_XML_REL_PATH = "nbproject/project.xml";
     private static final String MANIFEST_FILE_NAME = "manifest.mf";
 
-    private static final String PROJ_XML_FMT_STR = "//project/configuration/data/module-dependencies/dependency[code-name-base[contains(text(), '{0}')]]/run-dependency";
+    private static final String PROJ_XML_FMT_STR = "//project/configuration/data/module-dependencies/dependency[code-name-base[contains(text(), ''{0}'')]]/run-dependency";
     private static final String PROJ_XML_RELEASE_VERS_EL = "release-version";
     private static final String PROJ_XML_SPEC_VERS_EL = "specification-version";
     private static final String PROJ_XML_IMPL_VERS_EL = "implementation-version";
@@ -225,17 +229,17 @@ public class ModuleUpdates {
             attributes = ManifestLoader.loadInputStream(manifestIs);
         }
 
-        updateAttr(attributes, IMPL_KEY, thisVersNums.getImplementation(), true);
+        updateAttr(attributes, IMPL_KEY, Integer.toString(thisVersNums.getImplementation()), true);
         updateAttr(attributes, SPEC_KEY, thisVersNums.getSpec().getSemVerStr(), true);
         updateAttr(attributes, RELEASE_KEY, thisVersNums.getRelease().getFullReleaseStr(), true);
     }
 
-    private static void updateAttr(Attributes attributes, String key, Object val, boolean updateOnlyIfPresent) {
+    private static void updateAttr(Attributes attributes, String key, String val, boolean updateOnlyIfPresent) {
         if (updateOnlyIfPresent && attributes.getValue(key) == null) {
             return;
         }
 
-        attributes.put(key, val);
+        attributes.putValue(key, val);
     }
 
     private static void updateProjXml(File moduleDir, Map<String, ModuleVersionNumbers> versNums)
@@ -277,7 +281,7 @@ public class ModuleUpdates {
             Transformer transformer = transformerFactory.newTransformer();
 
             // pretty print XML
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
             DOMSource source = new DOMSource(projectXmlDoc);
             try (FileOutputStream xmlOut = new FileOutputStream(projXmlFile)) {
@@ -298,7 +302,7 @@ public class ModuleUpdates {
 
             String newChildNodeText = childElText.get(childNodeEl);
             if (newChildNodeText != null && StringUtils.isNotBlank(childNodeText)) {
-                childNode.setPrefix(newChildNodeText);
+                childNode.setTextContent(newChildNodeText);
                 changed = true;
             }
         }
@@ -381,20 +385,20 @@ public class ModuleUpdates {
 
     public static class ModuleVersionNumbers {
 
-        private final String jarName;
+        private final String moduleName;
         private final SemVer spec;
         private final int implementation;
         private final ReleaseVal release;
 
-        public ModuleVersionNumbers(String jarName, SemVer spec, int implementation, ReleaseVal release) {
-            this.jarName = jarName;
+        public ModuleVersionNumbers(String moduleName, SemVer spec, int implementation, ReleaseVal release) {
+            this.moduleName = moduleName;
             this.spec = spec;
             this.implementation = implementation;
             this.release = release;
         }
 
-        public String getJarName() {
-            return jarName;
+        public String getModuleName() {
+            return moduleName;
         }
 
         public SemVer getSpec() {

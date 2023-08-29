@@ -3,31 +3,14 @@
  */
 package org.sleuthkit.autopsy.apiupdate;
 
-import japicmp.cmp.JApiCmpArchive;
-import japicmp.cmp.JarArchiveComparator;
-import japicmp.cmp.JarArchiveComparatorOptions;
-import japicmp.model.JApiClass;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.MessageFormat;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import org.apache.commons.cli.ParseException;
 import org.sleuthkit.autopsy.apiupdate.CLIProcessor.CLIArgs;
 import org.sleuthkit.autopsy.apiupdate.ModuleUpdates.ModuleVersionNumbers;
+import org.sleuthkit.autopsy.apiupdate.ModuleUpdates.ReleaseVal;
 
 /**
  *
@@ -49,17 +32,32 @@ public class Main {
             System.exit(-1);
             return;
         }
+        
+        Map<String, ModuleVersionNumbers> versNums = Stream.of(
+                new ModuleVersionNumbers(
+                        "org.sleuthkit.autopsy.core", 
+                        new ModuleUpdates.SemVer(1,2,3),
+                        4,
+                        new ReleaseVal("org.sleuthkit.autopsy.core", 5)),
+                new ModuleVersionNumbers(
+                        "org.sleuthkit.autopsy.corelibs", 
+                        new ModuleUpdates.SemVer(6,7,8),
+                        9,
+                        new ReleaseVal("org.sleuthkit.autopsy.corelibs", 10)))
+                .collect(Collectors.toMap(v -> v.getModuleName(), v -> v, (v1, v2) -> v1));
+        
+        ModuleUpdates.setVersions(cliArgs.getSrcPath(), versNums);
 
-        for (String commonJarFileName : APIDiff.getCommonJars(cliArgs.getPreviousVersPath(), cliArgs.getCurrentVersPath())) {
-            try {
-                ModuleVersionNumbers m = ModuleUpdates.getVersionsFromJar(cliArgs.getPreviousVersPath().toPath().resolve(commonJarFileName).toFile());
-                System.out.println(MessageFormat.format("release: {0}, spec: {1}, implementation: {2}", m.getRelease().getFullReleaseStr(), m.getSpec().getSemVerStr(), m.getImplementation()));
-                
-            } catch (IOException ex) {
-                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-        }
+//        for (String commonJarFileName : APIDiff.getCommonJars(cliArgs.getPreviousVersPath(), cliArgs.getCurrentVersPath())) {
+//            try {
+//                ModuleVersionNumbers m = ModuleUpdates.getVersionsFromJar(cliArgs.getPreviousVersPath().toPath().resolve(commonJarFileName).toFile());
+//                System.out.println(MessageFormat.format("release: {0}, spec: {1}, implementation: {2}", m.getRelease().getFullReleaseStr(), m.getSpec().getSemVerStr(), m.getImplementation()));
+//                
+//            } catch (IOException ex) {
+//                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+//            
+//        }
         
         
         
