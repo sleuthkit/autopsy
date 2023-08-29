@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package org.sleuthkit.autopsy.classpathsimplication.apiupdate;
+package org.sleuthkit.autopsy.apiupdate;
 
 import java.io.File;
 import java.util.Arrays;
@@ -57,12 +57,22 @@ public class CLIProcessor {
             .option("cv")
             .required(true)
             .build();
+    
+        static Option SRC_LOC_OPT = Option.builder()
+            .argName("path")
+            .desc("The path to the root of the autopsy repor")
+            .hasArg(true)
+            .longOpt("src-path")
+            .option("s")
+            .required(true)
+            .build();
 
     static List<Option> ALL_OPTIONS = Arrays.asList(
             PREV_VERS_PATH_OPT,
             CUR_VERS_PATH_OPT,
             PREV_VERS_OPT,
-            CUR_VERS_OPT
+            CUR_VERS_OPT,
+            SRC_LOC_OPT
     );
 
     static Options CLI_OPTIONS = getCliOptions(ALL_OPTIONS);
@@ -103,7 +113,7 @@ public class CLIProcessor {
         CommandLine helpCmd = parser.parse(HELP_OPTIONS, args, true);
         boolean isHelp = helpCmd.hasOption(HELP_OPT);
         if (isHelp) {
-            return new CLIArgs(null, null, null, null, true);
+            return new CLIArgs(null, null, null, null, null, true);
         }
 
         CommandLine cmd = parser.parse(CLI_OPTIONS, args);
@@ -111,8 +121,10 @@ public class CLIProcessor {
         String prevVers = cmd.getOptionValue(PREV_VERS_OPT);
         String curVersPath = cmd.getOptionValue(CUR_VERS_PATH_OPT);
         String prevVersPath = cmd.getOptionValue(PREV_VERS_PATH_OPT);
+        String srcPath = cmd.getOptionValue(SRC_LOC_OPT);
         File curVersFile = new File(curVersPath);
         File prevVersFile = new File(prevVersPath);
+        File srcPathFile = new File(srcPath);
 
         if (!curVersFile.isDirectory()) {
             throw new ParseException("No directory found at " + curVersFile.getAbsolutePath());
@@ -121,8 +133,12 @@ public class CLIProcessor {
         if (!prevVersFile.isDirectory()) {
             throw new ParseException("No directory found at " + prevVersFile.getAbsolutePath());
         }
+        
+                if (!srcPathFile.isDirectory()) {
+            throw new ParseException("No directory found at " + srcPathFile.getAbsolutePath());
+        }
 
-        return new CLIArgs(curVers, prevVers, curVersFile, prevVersFile, false);
+        return new CLIArgs(curVers, prevVers, curVersFile, prevVersFile, srcPathFile, false);
     }
 
 
@@ -133,6 +149,7 @@ public class CLIProcessor {
         private final File currentVersPath;
         private final File previousVersPath;
         private final boolean isHelp;
+        private final File srcPath;
 
         public String getCurrentVersion() {
             return currentVersion;
@@ -154,11 +171,12 @@ public class CLIProcessor {
             return isHelp;
         }
 
-        public CLIArgs(String currentVersion, String previousVersion, File currentVersPath, File previousVersPath, boolean isHelp) {
+        public CLIArgs(String currentVersion, String previousVersion, File currentVersPath, File previousVersPath, File srcPath, boolean isHelp) {
             this.currentVersion = currentVersion;
             this.previousVersion = previousVersion;
             this.currentVersPath = currentVersPath;
             this.previousVersPath = previousVersPath;
+            this.srcPath = srcPath;
             this.isHelp = isHelp;
         }
 
