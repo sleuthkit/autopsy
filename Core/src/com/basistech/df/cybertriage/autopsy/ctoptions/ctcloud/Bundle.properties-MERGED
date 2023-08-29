@@ -4,11 +4,11 @@
 
 CTLicenseDialog.title=Add a License...
 CTLicenseDialog.licenseNumberLabel.text=License Number:
-CTLicenseDialog.licenseNumberTextField.text=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+CTLicenseDialog.licenseNumberTextField.text=
 CTLicenseDialog.cancelButton.text=Cancel
 CTLicenseDialog.okButton.text=Ok
 CTLicenseDialog.warningLabel.text=
-CTLicenseDialog_verifyInput_licenseNumberError=<html>Please verify license number format of 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'</html>
+CTLicenseDialog_verifyInput_licenseNumberError=<html>Please enter a license number</html>
 CTMalwareScannerOptionsPanel.hashLookupsRemainingLabel.text=
 CTMalwareScannerOptionsPanel.countersResetLabel.text=
 CTMalwareScannerOptionsPanel.maxFileUploadsLabel.text=
@@ -31,6 +31,8 @@ CTMalwareScannerOptionsPanel_licenseAddDialogEnteredErr_title=License Number Alr
 CTMalwareScannerOptionsPanel_licenseAddDialogPatternErr_desc=Please verify that license number is of format 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'
 CTMalwareScannerOptionsPanel_licenseAddDialogPatternErr_title=Invalid License Number
 CTMalwareScannerOptionsPanel_LicenseFetcher_apiErr_title=Server Error
+# {0} - licenseCode
+CTMalwareScannerOptionsPanel_LicenseFetcher_defaultErrMsg_desc=Error activating boost license {0}
 CTMalwareScannerOptionsPanel_LicenseFetcher_localErr_desc=A general error occurred while fetching license information.  Please try again later.
 CTMalwareScannerOptionsPanel_LicenseFetcher_localErr_title=General Error
 # {0} - expiresDate
@@ -63,3 +65,4 @@ EULADialog.title=Cyber Triage End User License Agreement
 CTMalwareScannerOptionsPanel.licenseInfoMessageLabel.text=
 CTMalwareScannerOptionsPanel.disclaimer.text=<html>The Cyber Triage Malware Scanner module uses 40+ malware scanning engines to identify if Windows executables are malicious. It requires a paid subscription to use.</html>
 CTMalwareScannerOptionsPanel.purchaseFromLabel.text=For licensing information, visit
+CTLicenseDialog.licenseNumberTextField.toolTipText=AUT-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX

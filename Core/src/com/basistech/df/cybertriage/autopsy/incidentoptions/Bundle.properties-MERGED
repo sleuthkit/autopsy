@@ -12,3 +12,7 @@ CTIncidentImportOptionsPanel.border.title_1=Incident Importer
 CTIncidentImportOptionsPanel.incidentTextLabel.text=The Cyber Triage Incident Import module allows you to open data collected by Cyber Triage in Autopsy.  To use this feature you must install the Cyber Triage Import Module.
 CTincidentImportOptionsPanel.instructionsTextLabel.text=
 CTIncidentImportOptionsPanel.instructionsTextLabel.text=For instructions on obtaining the module refer to: 
+CTIncidentImportOptionsPanel.importModule.text=Cyber Triage Import Module: 
+CTIncidentImportOptionsPanel.importModuleDetected.text=
+CTIncidentImportOptionsPanel_setModuleDetected_detected=Detected
+CTIncidentImportOptionsPanel_setModuleDetected_notDetected=Not Detected
