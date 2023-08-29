@@ -66,6 +66,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -600,6 +601,62 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         return new TreeResultsDTO<>(allConfigurations);
     }
+    
+    /**
+     * Get count of Malware nodes to be used in the tree view.
+     *
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     * @param converter    Means of converting from data source id and set name
+     *                     to an AnalysisResultSetSearchParam
+     *
+     * @return The sets along with counts to display.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    public TreeResultsDTO<AnalysisResultSearchParam> getMalwareCounts(
+            Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        
+        // ELTODO handle indeterminate counts?
+
+        List<TreeItemDTO<AnalysisResultSearchParam>> allSets = new ArrayList<>(); 
+        try {
+            // get artifact types and counts
+            SleuthkitCase skCase = getCase();
+            String query = "COUNT(*) AS count " //NON-NLS
+                    + "FROM blackboard_artifacts,tsk_analysis_results WHERE " //NON-NLS
+                    + "blackboard_artifacts.artifact_type_id=" + MALWARE_ARTIFACT_TYPE.getTypeID() //NON-NLS
+                    + " AND tsk_analysis_results.artifact_obj_id=blackboard_artifacts.artifact_obj_id" //NON-NLS
+                    + " AND (tsk_analysis_results.significance=" + Score.Significance.NOTABLE.getId() //NON-NLS
+                    + " OR tsk_analysis_results.significance=" + Score.Significance.LIKELY_NOTABLE.getId() + " )"; //NON-NLS
+            if (dataSourceId != null && dataSourceId > 0) {
+                query += "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId; //NON-NLS
+            }
+
+            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        TreeDisplayCount displayCount = TreeDisplayCount.getDeterminate(resultSet.getLong("count"));
+
+                        allSets.add(getConfigTreeItem(
+                                MALWARE_ARTIFACT_TYPE.getTypeID(),
+                                dataSourceId,
+                                "" /*arEvt.getConfiguration()*/, // ELTODO get configuration as well
+                                "Malware" /*StringUtils.isBlank(arEvt.getConfiguration()) ? arEvt.getArtifactType().getDisplayName() : arEvt.getConfiguration()*/,
+                                displayCount));
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
+                }
+            });
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while fetching keyword set hits.", ex);
+        }
+
+        return new TreeResultsDTO<>(allSets);
+    }    
 
     /**
      * Get counts for individual sets of the provided type to be used in the

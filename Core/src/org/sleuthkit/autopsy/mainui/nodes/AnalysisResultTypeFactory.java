@@ -49,6 +49,7 @@ import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.autopsy.mainui.nodes.actions.DeleteAnalysisResultSetAction;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -57,7 +58,9 @@ import org.sleuthkit.datamodel.TskData;
 public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory<AnalysisResultSearchParam> {
 
     private final static Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
-
+    private static final String MALWARE_HITS = "TSK_MALWARE"; // this is currently a custom TSK artifact type, created in MalwareScanIngestModule
+    private static BlackboardArtifact.Type MALWARE_ARTIFACT_TYPE = null;
+    
     /**
      * Returns the path to the icon to use for this artifact type.
      *
@@ -89,8 +92,11 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
     @Messages({"AnalysisResultTypeFactory_blankConfigName=(No Configuration)"})
     @Override
     protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
+
         if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
             return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
+        } else if (MALWARE_HITS.equals(rowData.getSearchParams().getArtifactType().getTypeName())) {
+            return new TreeTypeNode(rowData, new MalwareNodeFactory(dataSourceId));
         } else if (rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false)) {
             return new TreeTypeNode(rowData, new TreeConfigFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, Bundle.AnalysisResultTypeFactory_blankConfigName()));
         } else {
@@ -374,7 +380,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
             return Optional.of(group);
         }
     }
-
+    
     /**
      * A factory that shows all sets in keyword hits.
      */
@@ -422,6 +428,58 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
         @Override
         protected TreeNode<KeywordListSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends KeywordListSearchParam> rowData) {
             return new KeywordSetNode(rowData);
+        }
+    }    
+
+    /**
+     * A factory that shows malware hits.
+     */
+    public static class MalwareNodeFactory extends AbstractAnalysisResultTreeFactory<AnalysisResultSearchParam> {
+
+        private final Long dataSourceId;
+        
+        // ELTODO do we need this?
+        private static BlackboardArtifact.Type MALWARE_ARTIFACT_TYPE = null;
+        private static String DISPLAY_NAME = "Malware"; // ELTODO
+
+        public MalwareNodeFactory(Long dataSourceId) {
+            this.dataSourceId = dataSourceId;
+        }
+
+        @Override
+        protected TreeResultsDTO<? extends AnalysisResultSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
+            return MainDAO.getInstance().getAnalysisResultDAO().getMalwareCounts(this.dataSourceId);
+        }
+
+        @Override
+        protected TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> getOrCreateRelevantChild(TreeEvent treeEvt) {
+            TreeResultsDTO.TreeItemDTO<AnalysisResultSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, AnalysisResultSearchParam.class);
+
+            if (originalTreeItem != null
+                    && originalTreeItem.getSearchParams().getArtifactType().equals(BlackboardArtifact.Type.MALWARE_ARTIFACT_TYPE)
+                    && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
+
+                // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
+                AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
+                return new TreeResultsDTO.TreeItemDTO<>(
+                        AnalysisResultSearchParam.getTypeId(),
+                        new AnalysisResultSearchParam(BlackboardArtifact.Type.MALWARE_ARTIFACT_TYPE, searchParam.getConfiguration(), this.dataSourceId),
+                        searchParam.getConfiguration() == null ? 0 : searchParam.getConfiguration(),
+                        DISPLAY_NAME,
+                        originalTreeItem.getDisplayCount());
+            }
+            return null;
+        }
+
+        @Override
+        public int compare(TreeItemDTO<? extends AnalysisResultSearchParam> o1, TreeItemDTO<? extends AnalysisResultSearchParam> o2) {
+            return STRING_COMPARATOR.compare(o1.getSearchParams().getConfiguration(), o2.getSearchParams().getConfiguration());
+        }
+
+        @Override
+        protected TreeNode<AnalysisResultSearchParam> createNewNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> rowData) {
+            // ELTODO return new KeywordSetNode(rowData);
+            return new TreeTypeNode(rowData, new TreeConfigFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, Bundle.AnalysisResultTypeFactory_blankConfigName()));
         }
     }
 
