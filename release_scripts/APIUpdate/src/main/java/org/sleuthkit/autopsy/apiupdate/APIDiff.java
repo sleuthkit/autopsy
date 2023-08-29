@@ -27,7 +27,7 @@ public class APIDiff {
     private static final FileFilter JAR_FILTER
             = (File f) -> f.isFile() && (f.getName().toLowerCase().endsWith(".jar") || f.getName().toLowerCase().endsWith(".nbm"));
 
-    private static List<String> getCommonJars(File prevDir, File currDir) {
+    static List<String> getCommonJars(File prevDir, File currDir) {
         Set<String> prevJars = getJars(prevDir);
         Set<String> currJars = getJars(currDir);
 
@@ -44,7 +44,7 @@ public class APIDiff {
                 .collect(Collectors.toSet());
     }
 
-    private static Set<String> getPublicPackages(File jarFile) throws IOException, IllegalStateException {
+    static Set<String> getPublicPackages(File jarFile) throws IOException, IllegalStateException {
         String publicPackageStr = ManifestLoader.loadFromJar(jarFile).getValue("OpenIDE-Module-Public-Packages");
         if (publicPackageStr == null) {
             throw new IllegalStateException(MessageFormat.format("Manifest for {0} does not have key of 'OpenIDE-Module-Public-Packages'", jarFile.getAbsolutePath()));

@@ -27,6 +27,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.apache.commons.cli.ParseException;
 import org.sleuthkit.autopsy.apiupdate.CLIProcessor.CLIArgs;
+import org.sleuthkit.autopsy.apiupdate.ModuleUpdates.ModuleVersionNumbers;
 
 /**
  *
@@ -35,7 +36,7 @@ import org.sleuthkit.autopsy.apiupdate.CLIProcessor.CLIArgs;
 public class Main {
 
     public static void main(String[] args) {
-        args = "-c C:\\Users\\gregd\\Documents\\Source\\autopsy\\build\\cluster\\modules -p C:\\Users\\gregd\\Desktop\\prevVers -cv 4.21.0 -pv 4.20.0".split(" ");
+        args = "-c C:\\Users\\gregd\\Documents\\Source\\autopsy\\build\\cluster\\modules -p C:\\Users\\gregd\\Desktop\\prevVers -cv 4.21.0 -pv 4.20.0 -s C:\\Users\\gregd\\Documents\\Source\\autopsy".split(" ");
         CLIArgs cliArgs;
         try {
             cliArgs = CLIProcessor.parseCli(args);
@@ -49,6 +50,19 @@ public class Main {
             return;
         }
 
+        for (String commonJarFileName : APIDiff.getCommonJars(cliArgs.getPreviousVersPath(), cliArgs.getCurrentVersPath())) {
+            try {
+                ModuleVersionNumbers m = ModuleUpdates.getVersionsFromJar(cliArgs.getPreviousVersPath().toPath().resolve(commonJarFileName).toFile());
+                System.out.println(MessageFormat.format("release: {0}, spec: {1}, implementation: {2}", m.getRelease().getFullReleaseStr(), m.getSpec().getSemVerStr(), m.getImplementation()));
+                
+            } catch (IOException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }
+        
+        
+        
 //        for (String commonJarFileName : getCommonJars(cliArgs.getPreviousVersPath(), cliArgs.getCurrentVersPath())) {
 ////            getComparison(
 ////                    cliArgs.getPreviousVersion(),
