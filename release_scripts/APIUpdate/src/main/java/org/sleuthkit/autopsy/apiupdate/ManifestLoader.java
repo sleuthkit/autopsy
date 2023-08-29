@@ -19,11 +19,16 @@ import java.util.zip.ZipFile;
  * @author gregd
  */
 public class ManifestLoader {
+
     private static final String JAR_MANIFEST_REL_PATH = "META-INF/MANIFEST.MF";
 
     public static Attributes loadInputStream(InputStream is) throws IOException {
-        Manifest manifest = new Manifest(is);
+        Manifest manifest = loadManifest(is);
         return manifest.getMainAttributes();
+    }
+
+    public static Manifest loadManifest(InputStream is) throws IOException {
+        return new Manifest(is);
     }
 
     public static Attributes loadFromJar(File jarFile) throws IOException {

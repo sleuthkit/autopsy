@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -45,6 +46,7 @@ import org.xml.sax.SAXException;
 public class ModuleUpdates {
 
     private static final Logger LOGGER = Logger.getLogger(ModuleUpdates.class.getName());
+
     static {
         LOGGER.addHandler(new StreamHandler(System.out, new SimpleFormatter()));
     }
@@ -181,8 +183,9 @@ public class ModuleUpdates {
             String moduleName = moduleNameDir.getKey();
             File moduleDir = moduleNameDir.getValue();
             ModuleVersionNumbers thisVersNums = versNums.get(moduleName);
-            
+
             try {
+                LOGGER.log(Level.INFO, "Updating for module name: " + moduleName);
                 updateProjXml(moduleDir, versNums);
 
                 if (thisVersNums != null) {
@@ -224,22 +227,29 @@ public class ModuleUpdates {
             return;
         }
 
-        Attributes attributes;
+        Manifest manifest;
         try (FileInputStream manifestIs = new FileInputStream(manifestFile)) {
-            attributes = ManifestLoader.loadInputStream(manifestIs);
+            manifest = ManifestLoader.loadManifest(manifestIs);
         }
+        Attributes attributes = manifest.getMainAttributes();
 
-        updateAttr(attributes, IMPL_KEY, Integer.toString(thisVersNums.getImplementation()), true);
-        updateAttr(attributes, SPEC_KEY, thisVersNums.getSpec().getSemVerStr(), true);
-        updateAttr(attributes, RELEASE_KEY, thisVersNums.getRelease().getFullReleaseStr(), true);
+        boolean updated = updateAttr(attributes, IMPL_KEY, Integer.toString(thisVersNums.getImplementation()), true);
+        updated = updateAttr(attributes, SPEC_KEY, thisVersNums.getSpec().getSemVerStr(), true) || updated;
+        updated = updateAttr(attributes, RELEASE_KEY, thisVersNums.getRelease().getFullReleaseStr(), true) || updated;
+        if (updated) {
+            try (FileOutputStream manifestOut = new FileOutputStream(manifestFile)) {
+                manifest.write(manifestOut);
+            }
+        }
     }
 
-    private static void updateAttr(Attributes attributes, String key, String val, boolean updateOnlyIfPresent) {
+    private static boolean updateAttr(Attributes attributes, String key, String val, boolean updateOnlyIfPresent) {
         if (updateOnlyIfPresent && attributes.getValue(key) == null) {
-            return;
+            return false;
         }
 
         attributes.putValue(key, val);
+        return true;
     }
 
     private static void updateProjXml(File moduleDir, Map<String, ModuleVersionNumbers> versNums)
@@ -282,7 +292,6 @@ public class ModuleUpdates {
 
             // pretty print XML
             //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
             DOMSource source = new DOMSource(projectXmlDoc);
             try (FileOutputStream xmlOut = new FileOutputStream(projXmlFile)) {
                 StreamResult result = new StreamResult(xmlOut);
