@@ -185,7 +185,7 @@ parts:
       AUTOPSY_PLATFORM_PATH="$AUTOPSY_SRC_PATH/netbeans-plat/$NETBEANS_PLAT_VER"
       AUTOPSY_HARNESS_PATH="$AUTOPSY_PLATFORM_PATH/harness"
       export TSK_HOME="$HOME/parts/sleuthkit/build"
-      ant -Dnbplatform.active.dir="$AUTOPSY_PLATFORM_PATH" -Dnbplatform.default.harness.dir="$AUTOPSY_HARNESS_PATH" build build-zip
+      ant -Dnbplatform.active.dir="$AUTOPSY_PLATFORM_PATH" -Dnbplatform.default.harness.dir="$AUTOPSY_HARNESS_PATH" build-zip
 
       # ----- SETUP EXTRACT DIRECTORY -----
       AUTOPSY_LOCATION="$SNAPCRAFT_PART_INSTALL/autopsy"
