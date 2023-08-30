@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2021 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,6 +64,7 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_INTERESTING_IT
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_TL_EVENT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_MALWARE;
 
 /**
  * Classes for creating nodes for BlackboardArtifacts.
@@ -72,7 +73,7 @@ public class Artifacts {
 
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST
             = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
-
+    
     /**
      * Base class for a parent node of artifacts.
      */
@@ -242,6 +243,7 @@ public class Artifacts {
          */
         @SuppressWarnings("deprecation")
         private static TypeNodeKey getTypeKey(BlackboardArtifact.Type type, SleuthkitCase skCase, long dsObjId) {
+
             int typeId = type.getTypeID();
             if (TSK_EMAIL_MSG.getTypeID() == typeId) {
                 EmailExtracted.RootNode emailNode = new EmailExtracted(skCase, dsObjId).new RootNode();
@@ -267,7 +269,9 @@ public class Artifacts {
             } else if (TSK_HASHSET_HIT.getTypeID() == typeId) {
                 HashsetHits.RootNode hashsetHits = new HashsetHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeKey(hashsetHits, TSK_HASHSET_HIT);
-
+            } else if (TSK_MALWARE.getTypeID() == typeId) {
+                MalwareHits.RootNode malwareHits = new MalwareHits(skCase, dsObjId).new RootNode();
+                return new TypeNodeKey(malwareHits, TSK_MALWARE);
             } else {
                 return new TypeNodeKey(type, dsObjId);
             }

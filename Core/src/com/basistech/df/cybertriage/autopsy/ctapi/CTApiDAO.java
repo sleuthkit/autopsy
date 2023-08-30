@@ -25,9 +25,12 @@ import com.basistech.df.cybertriage.autopsy.ctapi.json.CTCloudBean;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.CTCloudBeanResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.DecryptedLicenseResponse;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.FileReputationRequest;
+import com.basistech.df.cybertriage.autopsy.ctapi.json.FileUploadRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.LicenseRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.json.LicenseResponse;
+import com.basistech.df.cybertriage.autopsy.ctapi.json.MetadataUploadRequest;
 import com.basistech.df.cybertriage.autopsy.ctapi.util.CTHostIDGenerationUtil;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +48,8 @@ public class CTApiDAO {
     private static final String LICENSE_REQUEST_PATH = "/_ah/api/license/v1/activate";
     private static final String AUTH_TOKEN_REQUEST_PATH = "/_ah/api/auth/v2/generate_token";
     private static final String CTCLOUD_SERVER_HASH_PATH = "/_ah/api/reputation/v1/query/file/hash/md5?query_types=CORRELATION,MALWARE";
+    private static final String CTCLOUD_UPLOAD_FILE_METADATA_PATH = "/_ah/api/reputation/v1/upload/meta";
+
     private static final String AUTOPSY_PRODUCT = "AUTOPSY";
 
     private static final CTApiDAO instance = new CTApiDAO();
@@ -74,13 +79,26 @@ public class CTApiDAO {
     }
 
     public AuthTokenResponse getAuthToken(DecryptedLicenseResponse decrypted) throws CTCloudException {
+        return getAuthToken(decrypted, null);
+    }
+
+    public AuthTokenResponse getAuthToken(DecryptedLicenseResponse decrypted, Long fileUploadSize) throws CTCloudException {
         AuthTokenRequest authTokenRequest = new AuthTokenRequest()
                 .setAutopsyVersion(getAppVersion())
-                .setRequestFileUpload(false)
+                .setRequestFileUpload(fileUploadSize != null && fileUploadSize > 0)
+                .setFileUploadSize(fileUploadSize != null && fileUploadSize > 0 ? fileUploadSize : null)
                 .setBoostLicenseId(decrypted.getBoostLicenseId())
                 .setHostId(decrypted.getLicenseHostId());
 
         return httpClient.doPost(AUTH_TOKEN_REQUEST_PATH, authTokenRequest, AuthTokenResponse.class);
+    }
+
+    public void uploadFile(FileUploadRequest fileUploadRequest) throws CTCloudException {
+        httpClient.doFileUploadPut(fileUploadRequest);
+    }
+    
+    public void uploadMeta(AuthenticatedRequestData authenticatedRequestData, MetadataUploadRequest metaRequest) throws CTCloudException {
+        httpClient.doPost(CTCLOUD_UPLOAD_FILE_METADATA_PATH, getAuthParams(authenticatedRequestData), metaRequest, null);
     }
 
     private static Map<String, String> getAuthParams(AuthenticatedRequestData authenticatedRequestData) {

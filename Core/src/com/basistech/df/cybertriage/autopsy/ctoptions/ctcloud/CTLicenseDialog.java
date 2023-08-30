@@ -18,18 +18,20 @@
  */
 package com.basistech.df.cybertriage.autopsy.ctoptions.ctcloud;
 
+import java.awt.Color;
 import java.util.regex.Pattern;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 
 /**
  * License dialog
  */
-public class CTLicenseDialog extends javax.swing.JDialog {
+class CTLicenseDialog extends javax.swing.JDialog {
 
-    private static final Pattern LICENSE_PATTERN = Pattern.compile("^\\s*[a-zA-Z0-9\\-]+?\\s*$");
+    private static final Pattern LICENSE_PATTERN = Pattern.compile("^\\s*[a-zA-Z0-9-_]+?\\s*$");
     private String licenseString = null;
 
     /**
@@ -38,6 +40,7 @@ public class CTLicenseDialog extends javax.swing.JDialog {
     public CTLicenseDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        configureHintText();
         this.licenseNumberTextField.getDocument().putProperty("filterNewlines", Boolean.TRUE);
         this.licenseNumberTextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -56,13 +59,23 @@ public class CTLicenseDialog extends javax.swing.JDialog {
             }
         });
     }
-
+    
+    private void configureHintText() {
+        TextPrompt textPrompt = new TextPrompt(
+                StringUtils.defaultString(this.licenseNumberTextField.getToolTipText()),
+                this.licenseNumberTextField);
+        
+        textPrompt.setForeground(Color.LIGHT_GRAY);
+        float alpha = 0.9f; // Mostly opaque
+        textPrompt.changeAlpha(alpha);
+    }
+    
     String getValue() {
         return licenseString;
     }
 
     @Messages({
-        "CTLicenseDialog_verifyInput_licenseNumberError=<html>Please verify license number format of 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'</html>"
+        "CTLicenseDialog_verifyInput_licenseNumberError=<html>Please enter a license number</html>"
     })
     private void verifyInput() {
         String licenseInput = StringUtils.defaultString(this.licenseNumberTextField.getText());
@@ -165,6 +178,7 @@ public class CTLicenseDialog extends javax.swing.JDialog {
         getContentPane().add(cancelButton, gridBagConstraints);
 
         licenseNumberTextField.setText(org.openide.util.NbBundle.getMessage(CTLicenseDialog.class, "CTLicenseDialog.licenseNumberTextField.text")); // NOI18N
+        licenseNumberTextField.setToolTipText(org.openide.util.NbBundle.getMessage(CTLicenseDialog.class, "CTLicenseDialog.licenseNumberTextField.toolTipText")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
@@ -177,7 +191,8 @@ public class CTLicenseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        this.licenseString = this.licenseNumberTextField.getText();
+        String inputText = this.licenseNumberTextField.getText();
+        this.licenseString = inputText == null ? null : inputText.trim();
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 

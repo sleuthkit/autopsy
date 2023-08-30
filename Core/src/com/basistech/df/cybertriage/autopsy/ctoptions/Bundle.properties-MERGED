@@ -3,7 +3,7 @@
 # Click nbfs://nbhost/SystemFileSystem/Templates/Other/properties.properties to edit this template
 OptionsCategory_Name_CyberTriage=Cyber Triage
 OptionsCategory_Keywords_CyberTriage=Cyber Triage,Cyber,Triage
-LicenseDisclaimerPanel.disclaimer.text=<html>The Cyber Triage Malware Scanner module uses 40+ malware scanning engines to identify if Windows executables are malicious. It requires a non-free license to use.</html>
+LicenseDisclaimerPanel.disclaimer.text=<html>The Cyber Triage Malware Scanner module uses 40+ malware scanning engines to identify if Windows executables are malicious. It requires a paid subscription to use.</html>
 LicenseDisclaimerPanel.purchaseFromLabel.text=You can purchase a license from
-LicenseDisclaimerPanel.link.text=<html><span style="color: blue; text-decoration: underline">https://cybertriage.com/autopsy-checkout</span></html>
 LicenseDisclaimerPanel.border.title=Disclaimer
+LicenseDisclaimerPanel.trialLabel.text=You can try a free 7-day trial from

@@ -38,7 +38,7 @@ public class DecryptedLicenseResponse {
     private final Long fileUploads;
     private final Instant activationTime;
     private final String product;
-    private final String limitType;
+    private final LicenseLimitType limitType;
     private final String timezone;
     private final String customerEmail;
     private final String customerName;
@@ -54,7 +54,7 @@ public class DecryptedLicenseResponse {
             @JsonDeserialize(using = InstantEpochMillisDeserializer.class)
             @JsonProperty("activationTime") Instant activationTime,
             @JsonProperty("product") String product,
-            @JsonProperty("limitType") String limitType,
+            @JsonProperty("limitType") LicenseLimitType limitType,
             @JsonProperty("timezone") String timezone,
             @JsonProperty("customerEmail") String customerEmail,
             @JsonProperty("customerName") String customerName
@@ -96,7 +96,7 @@ public class DecryptedLicenseResponse {
         return product;
     }
 
-    public String getLimitType() {
+    public LicenseLimitType getLimitType() {
         return limitType;
     }
 

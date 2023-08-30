@@ -34,6 +34,9 @@ public class AuthTokenRequest {
     @JsonProperty("requestFileUpload")
     private boolean requestFileUpload;
 
+    @JsonProperty("fileUploadSize")
+    private Long fileUploadSize;
+
     @JsonProperty("host_id")
     private String hostId;
 
@@ -64,6 +67,16 @@ public class AuthTokenRequest {
         return this;
     }
 
+    public Long getFileUploadSize() {
+        return fileUploadSize;
+    }
+
+    public AuthTokenRequest setFileUploadSize(Long fileUploadSize) {
+        this.fileUploadSize = fileUploadSize;
+        return this;
+    }
+
+    
     public String getHostId() {
         return hostId;
     }

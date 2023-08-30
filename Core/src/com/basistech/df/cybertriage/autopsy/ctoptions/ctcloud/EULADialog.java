@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Dialog for displaying the Cyber Triage EULA before the license is saved.
  */
-public class EULADialog extends javax.swing.JDialog {
+class EULADialog extends javax.swing.JDialog {
 
     private static final Logger LOGGER = Logger.getLogger(EULADialog.class.getName());
     private static final String EULA_RESOURCE = "EULA.htm";
