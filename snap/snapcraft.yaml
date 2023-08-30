@@ -119,8 +119,7 @@ parts:
     # more information on plugins here: https://snapcraft.io/docs/supported-plugins
     plugin: autotools
     source: https://github.com/sleuthkit/sleuthkit.git
-    source-branch: develop
-    #source-tag: sleuthkit-4.12.0
+    source-tag: sleuthkit-4.12.1
     build-environment: [JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64]
     # information on packages here: https://snapcraft.io/docs/package-repositories
     build-packages:
@@ -174,7 +173,7 @@ parts:
       - lsof
     plugin: nil
     source: https://github.com/sleuthkit/autopsy.git
-    source-branch: develop
+    source-tag: autopsy-4.21.0
     build-environment:
       - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
