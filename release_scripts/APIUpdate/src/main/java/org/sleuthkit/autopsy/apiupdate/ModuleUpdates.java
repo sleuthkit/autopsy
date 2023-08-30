@@ -6,36 +6,25 @@ package org.sleuthkit.autopsy.apiupdate;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.logging.StreamHandler;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 import org.apache.commons.lang3.StringUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
@@ -51,10 +40,23 @@ public class ModuleUpdates {
     }
 
     private static final Pattern SPEC_REGEX = Pattern.compile("^\\s*((?<major>\\d*)\\.)?(?<minor>\\d*)(\\.(?<patch>\\d*))?\\s*$");
-    private static final String SPEC_KEY = "OpenIDE-Module-Specification-Version";
-    private static final String SPEC_PROPS_KEY = "spec.version.base";
-    private static final String IMPL_KEY = "OpenIDE-Module-Implementation-Version";
-    private static final String RELEASE_KEY = "OpenIDE-Module";
+
+    private static final Pattern PROJECT_PROPS_SPEC_REGEX = Pattern.compile("^\\s*spec\\.version\\.base\\s*=.*$", Pattern.MULTILINE);
+    private static final String PROJECT_PROPS_SPEC_REPLACE_FMT = "spec.version.base={0}";
+
+    private static final String MANIFEST_FIELD_REGEX_FMT = "^\\s*{0}\\s*:.*$";
+
+    private static final String MANIFEST_IMPL_KEY = "OpenIDE-Module-Implementation-Version";
+    private static final Pattern MANIFEST_IMPL_REGEX = Pattern.compile(MessageFormat.format(MANIFEST_FIELD_REGEX_FMT, MANIFEST_IMPL_KEY), Pattern.MULTILINE);
+    private static final String MANIFEST_IMPL_REPLACE_FMT = MANIFEST_IMPL_KEY + ": {0}";
+
+    private static final String MANIFEST_SPEC_KEY = "OpenIDE-Module-Specification-Version";
+    private static final Pattern MANIFEST_SPEC_REGEX = Pattern.compile(MessageFormat.format(MANIFEST_FIELD_REGEX_FMT, MANIFEST_SPEC_KEY), Pattern.MULTILINE);
+    private static final String MANIFEST_SPEC_REPLACE_FMT = MANIFEST_SPEC_KEY + ": {0}";
+
+    private static final String MANIFEST_RELEASE_KEY = "OpenIDE-Module";
+    private static final Pattern MANIFEST_RELEASE_REGEX = Pattern.compile(MessageFormat.format(MANIFEST_FIELD_REGEX_FMT, MANIFEST_RELEASE_KEY), Pattern.MULTILINE);
+    private static final String MANIFEST_RELEASE_REPLACE_FMT = MANIFEST_RELEASE_KEY + ": {0}";
 
     private static final Pattern RELEASE_REGEX = Pattern.compile("^\\s*(?<releaseName>.+?)(/(?<releaseNum>\\d*))?\\s*$");
 
@@ -126,15 +128,15 @@ public class ModuleUpdates {
 
     public static ModuleVersionNumbers getVersionsFromJar(File jarFile) throws IOException {
         Attributes manifest = ManifestLoader.loadFromJar(jarFile);
-        String spec = manifest.getValue(SPEC_KEY);
+        String spec = manifest.getValue(MANIFEST_SPEC_KEY);
         SemVer specSemVer = parseSemVer(spec, DEFAULT_SEMVER,
-                MessageFormat.format("{0} in manifest for {1}", SPEC_KEY, jarFile));
+                MessageFormat.format("{0} in manifest for {1}", MANIFEST_SPEC_KEY, jarFile));
 
-        int implementation = tryParse(manifest.getValue(IMPL_KEY), DEFAULT_VERS_VAL,
-                MessageFormat.format("{0} in manifest for {1}", IMPL_KEY, jarFile));
+        int implementation = tryParse(manifest.getValue(MANIFEST_IMPL_KEY), DEFAULT_VERS_VAL,
+                MessageFormat.format("{0} in manifest for {1}", MANIFEST_IMPL_KEY, jarFile));
 
-        ReleaseVal release = parseReleaseVers(manifest.getValue(RELEASE_KEY),
-                MessageFormat.format("{0} in manifest for {1}", RELEASE_KEY, jarFile));
+        ReleaseVal release = parseReleaseVers(manifest.getValue(MANIFEST_RELEASE_KEY),
+                MessageFormat.format("{0} in manifest for {1}", MANIFEST_RELEASE_KEY, jarFile));
 
         return new ModuleVersionNumbers(jarFile.getName(), specSemVer, implementation, release);
     }
@@ -160,7 +162,7 @@ public class ModuleUpdates {
             if (manifestFile.isFile()) {
                 try (FileInputStream manifestIs = new FileInputStream(manifestFile)) {
                     Attributes manifestAttrs = ManifestLoader.loadInputStream(manifestIs);
-                    ReleaseVal releaseVal = parseReleaseVers(manifestAttrs.getValue(RELEASE_KEY), manifestFile.getAbsolutePath());
+                    ReleaseVal releaseVal = parseReleaseVers(manifestAttrs.getValue(MANIFEST_RELEASE_KEY), manifestFile.getAbsolutePath());
                     moduleDirMapping.put(releaseVal.getModuleName(), dir);
                 }
             }
@@ -197,6 +199,18 @@ public class ModuleUpdates {
         }
     }
 
+    private static String regexUpdate(Pattern pattern, String text, String replacement) {
+        return pattern.matcher(text).replaceAll(replacement);
+    }
+    
+    private static String regexUpdate(Pattern pattern, String text, Function<MatchResult, String> replacement) {
+        return pattern.matcher(text).replaceAll(replacement);
+    }
+    
+    private static String replaceEscape(String orig) {
+        return orig.replaceAll("\\\\", "\\\\").replaceAll("\\$", "\\$");
+    }
+
     private static void updateProjProperties(File moduleDir, ModuleVersionNumbers thisVersNums) throws IOException {
         File projectPropsFile = moduleDir.toPath().resolve(PROJECT_PROPS_REL_PATH).toFile();
         if (!projectPropsFile.isFile()) {
@@ -204,18 +218,15 @@ public class ModuleUpdates {
             return;
         }
 
-        OrderedProperties projectProps = new OrderedProperties();
-        try (FileInputStream propsIs = new FileInputStream(projectPropsFile)) {
-            projectProps.load(propsIs);
-        }
+        String projectPropsText = Files.readString(projectPropsFile.toPath());
+        String newText = regexUpdate(PROJECT_PROPS_SPEC_REGEX,
+                projectPropsText,
+                MessageFormat.format(
+                        PROJECT_PROPS_SPEC_REPLACE_FMT,
+                        replaceEscape(thisVersNums.getSpec().getSemVerStr())));
 
-        String specVal = projectProps.getProperty(SPEC_PROPS_KEY);
-        if (StringUtils.isNotBlank(specVal)) {
-            projectProps.setProperty(SPEC_PROPS_KEY, thisVersNums.getSpec().getSemVerStr());
-
-            try (FileOutputStream propsOut = new FileOutputStream(projectPropsFile)) {
-                projectProps.store(propsOut, null);
-            }
+        if (!newText.equals(projectPropsText)) {
+            Files.writeString(projectPropsFile.toPath(), newText);
         }
     }
 
@@ -226,96 +237,79 @@ public class ModuleUpdates {
             return;
         }
 
-        Manifest manifest;
-        try (FileInputStream manifestIs = new FileInputStream(manifestFile)) {
-            manifest = ManifestLoader.loadManifest(manifestIs);
-        }
-        Attributes attributes = manifest.getMainAttributes();
+        String manifestFileText = Files.readString(manifestFile.toPath());
+        String newManifestText = regexUpdate(
+                MANIFEST_IMPL_REGEX,
+                manifestFileText,
+                MessageFormat.format(
+                        MANIFEST_IMPL_REPLACE_FMT,
+                        replaceEscape(Integer.toString(thisVersNums.getImplementation()))));
 
-        boolean updated = updateAttr(attributes, IMPL_KEY, Integer.toString(thisVersNums.getImplementation()), true);
-        updated = updateAttr(attributes, SPEC_KEY, thisVersNums.getSpec().getSemVerStr(), true) || updated;
-        updated = updateAttr(attributes, RELEASE_KEY, thisVersNums.getRelease().getFullReleaseStr(), true) || updated;
-        if (updated) {
-            try (FileOutputStream manifestOut = new FileOutputStream(manifestFile)) {
-                manifest.write(manifestOut);
-            }
-        }
-    }
+        newManifestText = regexUpdate(
+                MANIFEST_SPEC_REGEX,
+                manifestFileText,
+                MessageFormat.format(
+                        MANIFEST_SPEC_REPLACE_FMT,
+                        replaceEscape(thisVersNums.getSpec().getSemVerStr())));
 
-    private static boolean updateAttr(Attributes attributes, String key, String val, boolean updateOnlyIfPresent) {
-        if (updateOnlyIfPresent && attributes.getValue(key) == null) {
-            return false;
-        }
+        newManifestText = regexUpdate(
+                MANIFEST_RELEASE_REGEX,
+                manifestFileText,
+                MessageFormat.format(
+                        MANIFEST_RELEASE_REPLACE_FMT,
+                        replaceEscape(thisVersNums.getRelease().getFullReleaseStr())));
 
-        attributes.putValue(key, val);
-        return true;
+        if (!newManifestText.equals(manifestFileText)) {
+            Files.writeString(manifestFile.toPath(), newManifestText);
+        }
     }
 
     private static void updateProjXml(File moduleDir, Map<String, ModuleVersionNumbers> versNums)
             throws IOException, ParserConfigurationException, SAXException, XPathExpressionException, TransformerException {
 
-        File projXmlFile = moduleDir.toPath().resolve(PROJ_XML_REL_PATH).toFile();
-        if (!projXmlFile.isFile()) {
-            LOGGER.log(Level.SEVERE, "No project.xml file found at " + projXmlFile.getAbsolutePath());
-            return;
-        }
-
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        Document projectXmlDoc = db.parse(projXmlFile);
-
-        XPath xPath = XPathFactory.newInstance().newXPath();
-
-        boolean updated = false;
-        for (Entry<String, ModuleVersionNumbers> updatedModule : versNums.entrySet()) {
-            String moduleName = updatedModule.getKey();
-            ModuleVersionNumbers newVers = updatedModule.getValue();
-            Node node = (Node) xPath.compile(MessageFormat.format(PROJ_XML_FMT_STR, moduleName))
-                    .evaluate(projectXmlDoc, XPathConstants.NODE);
-
-            if (node != null) {
-                Map<String, String> childElText = new HashMap<>() {
-                    {
-                        put(PROJ_XML_RELEASE_VERS_EL, newVers.getRelease().getReleaseVersion() == null ? "" : newVers.getRelease().getReleaseVersion().toString());
-                        put(PROJ_XML_IMPL_VERS_EL, Integer.toString(newVers.getImplementation()));
-                        put(PROJ_XML_SPEC_VERS_EL, newVers.getSpec().getSemVerStr());
-                    }
-                };
-                updated = updateXmlChildrenIfPresent(node, childElText) || updated;
-            }
-        }
-
-        if (updated) {
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-
-            // pretty print XML
-            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            DOMSource source = new DOMSource(projectXmlDoc);
-            try (FileOutputStream xmlOut = new FileOutputStream(projXmlFile)) {
-                StreamResult result = new StreamResult(xmlOut);
-                transformer.transform(source, result);
-            }
-        }
-
-    }
-
-    private static boolean updateXmlChildrenIfPresent(Node parentNode, Map<String, String> childElText) {
-        NodeList childNodeList = parentNode.getChildNodes();
-        boolean changed = false;
-        for (int i = 0; i < childNodeList.getLength(); i++) {
-            Node childNode = childNodeList.item(i);
-            String childNodeEl = childNode.getNodeName();
-            String childNodeText = childNode.getTextContent();
-
-            String newChildNodeText = childElText.get(childNodeEl);
-            if (newChildNodeText != null && StringUtils.isNotBlank(childNodeText)) {
-                childNode.setTextContent(newChildNodeText);
-                changed = true;
-            }
-        }
-
-        return changed;
+//        File projXmlFile = moduleDir.toPath().resolve(PROJ_XML_REL_PATH).toFile();
+//        if (!projXmlFile.isFile()) {
+//            LOGGER.log(Level.SEVERE, "No project.xml file found at " + projXmlFile.getAbsolutePath());
+//            return;
+//        }
+//
+//        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+//        DocumentBuilder db = dbf.newDocumentBuilder();
+//        Document projectXmlDoc = db.parse(projXmlFile);
+//
+//        XPath xPath = XPathFactory.newInstance().newXPath();
+//
+//        boolean updated = false;
+//        for (Entry<String, ModuleVersionNumbers> updatedModule : versNums.entrySet()) {
+//            String moduleName = updatedModule.getKey();
+//            ModuleVersionNumbers newVers = updatedModule.getValue();
+//            Node node = (Node) xPath.compile(MessageFormat.format(PROJ_XML_FMT_STR, moduleName))
+//                    .evaluate(projectXmlDoc, XPathConstants.NODE);
+//
+//            if (node != null) {
+//                Map<String, String> childElText = new HashMap<>() {
+//                    {
+//                        put(PROJ_XML_RELEASE_VERS_EL, newVers.getRelease().getReleaseVersion() == null ? "" : newVers.getRelease().getReleaseVersion().toString());
+//                        put(PROJ_XML_IMPL_VERS_EL, Integer.toString(newVers.getImplementation()));
+//                        put(PROJ_XML_SPEC_VERS_EL, newVers.getSpec().getSemVerStr());
+//                    }
+//                };
+//                updated = updateXmlChildrenIfPresent(node, childElText) || updated;
+//            }
+//        }
+//
+//        if (updated) {
+//            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+//            Transformer transformer = transformerFactory.newTransformer();
+//
+//            // pretty print XML
+//            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+//            DOMSource source = new DOMSource(projectXmlDoc);
+//            try (FileOutputStream xmlOut = new FileOutputStream(projXmlFile)) {
+//                StreamResult result = new StreamResult(xmlOut);
+//                transformer.transform(source, result);
+//            }
+//        }
     }
 
     //        // Spec
