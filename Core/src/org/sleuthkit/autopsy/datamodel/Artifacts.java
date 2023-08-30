@@ -64,6 +64,7 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_INTERESTING_IT
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_TL_EVENT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_ASSOCIATED_OBJECT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_KEYWORD_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.Type.TSK_MALWARE;
 
 /**
  * Classes for creating nodes for BlackboardArtifacts.
@@ -73,10 +74,6 @@ public class Artifacts {
     private static final Set<IngestManager.IngestJobEvent> INGEST_JOB_EVENTS_OF_INTEREST
             = EnumSet.of(IngestManager.IngestJobEvent.COMPLETED, IngestManager.IngestJobEvent.CANCELLED);
     
-    // this is currently a custom TSK artifact type, created in MalwareScanIngestModule
-    private static BlackboardArtifact.Type MALWARE_ARTIFACT_TYPE = null;
-    private static final String MALWARE_HITS = "TSK_MALWARE";
-
     /**
      * Base class for a parent node of artifacts.
      */
@@ -247,15 +244,6 @@ public class Artifacts {
         @SuppressWarnings("deprecation")
         private static TypeNodeKey getTypeKey(BlackboardArtifact.Type type, SleuthkitCase skCase, long dsObjId) {
 
-            // Get the custom TSK_MALWARE artifact type from case database
-            if (MALWARE_ARTIFACT_TYPE == null) {
-                try {
-                    MALWARE_ARTIFACT_TYPE = skCase.getArtifactType(MALWARE_HITS);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Unable to get TSK_MALWARE artifact type from database : ", ex); //NON-NLS
-                }
-            }
-
             int typeId = type.getTypeID();
             if (TSK_EMAIL_MSG.getTypeID() == typeId) {
                 EmailExtracted.RootNode emailNode = new EmailExtracted(skCase, dsObjId).new RootNode();
@@ -281,9 +269,9 @@ public class Artifacts {
             } else if (TSK_HASHSET_HIT.getTypeID() == typeId) {
                 HashsetHits.RootNode hashsetHits = new HashsetHits(skCase, dsObjId).new RootNode();
                 return new TypeNodeKey(hashsetHits, TSK_HASHSET_HIT);
-            } else if (MALWARE_ARTIFACT_TYPE != null && MALWARE_ARTIFACT_TYPE.getTypeID() == typeId) {
+            } else if (TSK_MALWARE.getTypeID() == typeId) {
                 MalwareHits.RootNode malwareHits = new MalwareHits(skCase, dsObjId).new RootNode();
-                return new TypeNodeKey(malwareHits, MALWARE_ARTIFACT_TYPE);
+                return new TypeNodeKey(malwareHits, TSK_MALWARE);
             } else {
                 return new TypeNodeKey(type, dsObjId);
             }

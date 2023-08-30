@@ -34,6 +34,7 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.text.MessageFormat;
 import java.util.Base64;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -42,6 +43,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.apache.commons.lang3.ObjectUtils;
 
 /**
  * Decrypts the payload of boost license.
@@ -58,12 +60,12 @@ public class LicenseDecryptorUtil {
 
     private LicenseDecryptorUtil() {
     }
-    
+
     public LicenseInfo createLicenseInfo(LicenseResponse licenseResponse) throws JsonProcessingException, InvalidLicenseException {
-        if (licenseResponse == null || licenseResponse.getBoostLicense() == null) {
-            throw new InvalidLicenseException("License or boost license are null");
+        if (licenseResponse == null) {
+            throw new InvalidLicenseException("License is null");
         }
-        
+
         DecryptedLicenseResponse decrypted = parseLicenseJSON(licenseResponse.getBoostLicense());
         return new LicenseInfo(licenseResponse, decrypted);
     }
@@ -78,6 +80,9 @@ public class LicenseDecryptorUtil {
      * com.basistech.df.cybertriage.autopsy.ctapi.util.LicenseDecryptorUtil.InvalidLicenseException
      */
     public DecryptedLicenseResponse parseLicenseJSON(BoostLicenseResponse licenseResponse) throws JsonProcessingException, InvalidLicenseException {
+        if (licenseResponse == null) {
+            throw new InvalidLicenseException("Boost license is null");
+        }
 
         String decryptedJsonResponse;
         try {
@@ -101,6 +106,12 @@ public class LicenseDecryptorUtil {
     }
 
     private String decryptLicenseString(String encryptedJson, String ivBase64, String encryptedKey, String version) throws IOException, GeneralSecurityException, InvalidLicenseException {
+        if (ObjectUtils.anyNull(encryptedJson, ivBase64, encryptedKey, version)) {
+            throw new InvalidLicenseException(MessageFormat.format(
+                    "encryptedJson: {0}, iv: {1}, encryptedKey: {2}, version: {3} must all be non-null",
+                    encryptedJson, ivBase64, encryptedKey, version));
+        }
+
         if (!"1.0".equals(version)) {
             throw new InvalidLicenseException("Unexpected file version: " + version);
         }
