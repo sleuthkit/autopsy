@@ -194,8 +194,6 @@ public class Case {
     private final SleuthkitEventListener sleuthkitEventListener;
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
-    // matches something like '\\.\PHYSICALDRIVE0'
-    private static final String PLACEHOLDER_DS_PATH_REGEX = "^\\s*\\\\\\\\\\.\\\\PHYSICALDRIVE\\d*\\s*$";
 
     private volatile boolean hasDataSource = false;
     private volatile boolean hasData = false;
@@ -1307,13 +1305,6 @@ public class Case {
             String path = entry.getValue();
             boolean fileExists = (new File(path).exists()|| DriveUtils.driveExists(path));
             if (!fileExists) {
-                // CT-7336: ignore relocating datasources if file provider is present and placeholder path is used.
-                if (newCurrentCase.getMetadata() != null
-                        && !StringUtils.isBlank(newCurrentCase.getMetadata().getContentProviderName())
-                        && (path == null || path.matches(PLACEHOLDER_DS_PATH_REGEX))) {
-                    continue;
-                }
-                
                 try {
                     DataSource ds = newCurrentCase.getSleuthkitCase().getDataSource(obj_id);
                     String hostName = StringUtils.defaultString(ds.getHost() == null ? "" : ds.getHost().getName());
