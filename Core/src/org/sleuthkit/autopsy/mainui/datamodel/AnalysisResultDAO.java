@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2021-23 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,7 @@ import java.util.stream.Stream;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -501,6 +502,19 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 logger.log(Level.WARNING, "An error occurred while fetching artifact type counts with query:\nSELECT" + query, ex);
             }
         });
+        
+        // if there are TSK_MALWARE artifacts present then get a separate count 
+        // of those, including only the results we want to display
+        if (typeCounts.containsKey(BlackboardArtifact.Type.TSK_MALWARE)) {
+            boolean hasConfiguration = typeCounts.get(BlackboardArtifact.Type.TSK_MALWARE).getRight();
+            long count = 0;
+            try {
+                count = getMalwareCounts(dataSourceId);
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching malware counts", ex);
+            }
+            typeCounts.put(BlackboardArtifact.Type.TSK_MALWARE, Pair.of(count, hasConfiguration));
+        }
 
         return typeCounts;
     }
@@ -602,6 +616,58 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new TreeResultsDTO<>(allConfigurations);
     }
     
+    
+        
+    long getMalwareCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+        
+        // ELTODO get rid of the list
+        List<Long> typeCounts = new ArrayList<>();
+        // ELTODO handle different configurations?
+        try {
+            // get artifact types and counts
+            SleuthkitCase skCase = getCase();
+            String query = "COUNT(*) AS count " //NON-NLS
+                    + "FROM blackboard_artifacts,tsk_analysis_results WHERE " //NON-NLS
+                    + "blackboard_artifacts.artifact_type_id=" + BlackboardArtifact.Type.TSK_MALWARE.getTypeID() //NON-NLS
+                    + " AND tsk_analysis_results.artifact_obj_id=blackboard_artifacts.artifact_obj_id" //NON-NLS
+                    + " AND (tsk_analysis_results.significance=" + Score.Significance.NOTABLE.getId() //NON-NLS
+                    + " OR tsk_analysis_results.significance=" + Score.Significance.LIKELY_NOTABLE.getId() + " )"; //NON-NLS
+            if (dataSourceId != null && dataSourceId > 0) {
+                query += "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId; //NON-NLS
+            }
+
+            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        String setName = resultSet.getString("set_name");
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
+                }
+            });
+
+            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    while (resultSet.next()) {
+                        long count = resultSet.getLong("count");
+                        typeCounts.add(count);
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching malware counts.", ex);
+                }
+            });
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while malware hits.", ex);
+        }
+
+        // ELTODO
+        if (typeCounts.isEmpty()) {
+            return 0;
+        } else {
+            return typeCounts.get(0);
+        }        
+    }
+    
     /**
      * Get count of Malware nodes to be used in the tree view.
      *
@@ -616,47 +682,28 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
      * @throws IllegalArgumentException
      * @throws ExecutionException
      */
-    public TreeResultsDTO<AnalysisResultSearchParam> getMalwareCounts(
+    public TreeResultsDTO<AnalysisResultSearchParam> getMalwareTreeNodes(
             Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        
+
         // ELTODO handle indeterminate counts?
+        long count = getMalwareCounts(dataSourceId);
 
-        List<TreeItemDTO<AnalysisResultSearchParam>> allSets = new ArrayList<>(); 
-        try {
-            // get artifact types and counts
-            SleuthkitCase skCase = getCase();
-            String query = "COUNT(*) AS count " //NON-NLS
-                    + "FROM blackboard_artifacts,tsk_analysis_results WHERE " //NON-NLS
-                    + "blackboard_artifacts.artifact_type_id=" + MALWARE_ARTIFACT_TYPE.getTypeID() //NON-NLS
-                    + " AND tsk_analysis_results.artifact_obj_id=blackboard_artifacts.artifact_obj_id" //NON-NLS
-                    + " AND (tsk_analysis_results.significance=" + Score.Significance.NOTABLE.getId() //NON-NLS
-                    + " OR tsk_analysis_results.significance=" + Score.Significance.LIKELY_NOTABLE.getId() + " )"; //NON-NLS
-            if (dataSourceId != null && dataSourceId > 0) {
-                query += "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId; //NON-NLS
-            }
+        List<TreeItemDTO<AnalysisResultSearchParam>> allSets = new ArrayList<>();
+        TreeDisplayCount displayCount = TreeDisplayCount.getDeterminate(count);
 
-            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
-                try {
-                    while (resultSet.next()) {
-                        TreeDisplayCount displayCount = TreeDisplayCount.getDeterminate(resultSet.getLong("count"));
-
-                        allSets.add(getConfigTreeItem(
-                                MALWARE_ARTIFACT_TYPE.getTypeID(),
-                                dataSourceId,
-                                "" /*arEvt.getConfiguration()*/, // ELTODO get configuration as well
-                                "Malware" /*StringUtils.isBlank(arEvt.getConfiguration()) ? arEvt.getArtifactType().getDisplayName() : arEvt.getConfiguration()*/,
-                                displayCount));
-                    }
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "An error occurred while fetching set name counts.", ex);
-                }
-            });
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            throw new ExecutionException("An error occurred while fetching keyword set hits.", ex);
-        }
+        allSets.add(getConfigTreeItem(
+                BlackboardArtifact.Type.TSK_MALWARE,
+                dataSourceId,
+                "" /*
+                 * arEvt.getConfiguration()
+                 */, // ELTODO get configuration as well
+                "Malware" /*StringUtils.isBlank(arEvt.getConfiguration()) ?
+                 * arEvt.getArtifactType().getDisplayName() : arEvt.getConfiguration()
+                 */,
+                displayCount));
 
         return new TreeResultsDTO<>(allSets);
-    }    
+    }  
 
     /**
      * Get counts for individual sets of the provided type to be used in the

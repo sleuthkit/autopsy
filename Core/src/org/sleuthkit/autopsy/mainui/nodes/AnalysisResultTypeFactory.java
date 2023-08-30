@@ -96,7 +96,8 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
         if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
             return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
         } else if (MALWARE_HITS.equals(rowData.getSearchParams().getArtifactType().getTypeName())) {
-            return new TreeTypeNode(rowData, new MalwareNodeFactory(dataSourceId));
+            return new AnalysisResultTypeTreeNode(rowData);
+            // ELTODO return new TreeTypeNode(rowData, new MalwareNodeFactory(dataSourceId));
         } else if (rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false)) {
             return new TreeTypeNode(rowData, new TreeConfigFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, Bundle.AnalysisResultTypeFactory_blankConfigName()));
         } else {
@@ -438,17 +439,13 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         private final Long dataSourceId;
         
-        // ELTODO do we need this?
-        private static BlackboardArtifact.Type MALWARE_ARTIFACT_TYPE = null;
-        private static String DISPLAY_NAME = "Malware"; // ELTODO
-
         public MalwareNodeFactory(Long dataSourceId) {
             this.dataSourceId = dataSourceId;
         }
 
         @Override
         protected TreeResultsDTO<? extends AnalysisResultSearchParam> getChildResults() throws IllegalArgumentException, ExecutionException {
-            return MainDAO.getInstance().getAnalysisResultDAO().getMalwareCounts(this.dataSourceId);
+            return MainDAO.getInstance().getAnalysisResultDAO().getMalwareTreeNodes(this.dataSourceId);
         }
 
         @Override
@@ -456,16 +453,16 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
             TreeResultsDTO.TreeItemDTO<AnalysisResultSearchParam> originalTreeItem = super.getTypedTreeItem(treeEvt, AnalysisResultSearchParam.class);
 
             if (originalTreeItem != null
-                    && originalTreeItem.getSearchParams().getArtifactType().equals(BlackboardArtifact.Type.MALWARE_ARTIFACT_TYPE)
+                    && originalTreeItem.getSearchParams().getArtifactType().equals(BlackboardArtifact.Type.TSK_MALWARE)
                     && (this.dataSourceId == null || Objects.equals(this.dataSourceId, originalTreeItem.getSearchParams().getDataSourceId()))) {
 
                 // generate new type so that if it is a subtree event (i.e. keyword hits), the right tree item is created.
                 AnalysisResultSearchParam searchParam = originalTreeItem.getSearchParams();
                 return new TreeResultsDTO.TreeItemDTO<>(
                         AnalysisResultSearchParam.getTypeId(),
-                        new AnalysisResultSearchParam(BlackboardArtifact.Type.MALWARE_ARTIFACT_TYPE, searchParam.getConfiguration(), this.dataSourceId),
+                        new AnalysisResultSearchParam(BlackboardArtifact.Type.TSK_MALWARE, searchParam.getConfiguration(), this.dataSourceId),
                         searchParam.getConfiguration() == null ? 0 : searchParam.getConfiguration(),
-                        DISPLAY_NAME,
+                        BlackboardArtifact.Type.TSK_MALWARE.getDisplayName(),
                         originalTreeItem.getDisplayCount());
             }
             return null;
