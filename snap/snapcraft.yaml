@@ -22,7 +22,7 @@ name: autopsy
 # more on base snaps here: https://snapcraft.io/docs/base-snaps
 # core is based on corresponding ubuntu version.  ubuntu version information can be found here: https://wiki.ubuntu.com/Releases
 base: core22
-version: 4.20.0
+version: 4.21.0
 summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
 description: Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools.
 source-code: https://github.com/sleuthkit/autopsy/
