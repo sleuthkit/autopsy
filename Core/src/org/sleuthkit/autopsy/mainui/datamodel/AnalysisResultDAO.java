@@ -332,122 +332,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         TableData tableData = createTableData(artType, arts);
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
-    }    
-    
-    /*
-    // filters results by configuration attr and needs a search param with the configuration
-    private AnalysisResultTableSearchResultsDTO fetchMalwareResultsForTable(SearchParams<? extends AnalysisResultSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
-
-        SleuthkitCase skCase = getCase();
-        Blackboard blackboard = skCase.getBlackboard();
-
-        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
-        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
-
-        String expectedConfiguration = cacheKey.getParamData().getConfiguration();
-
-        // where clause without paging
-        String originalWhereClause = " artifacts.artifact_type_id = ? AND analysis_results.configuration = ? ";
-        if (dataSourceId != null) {
-            originalWhereClause += " AND artifacts.data_source_obj_id = ? ";
-        }
-
-        // where clause with paging
-        String pagedWhereClause = originalWhereClause
-                + " ORDER BY artifacts.obj_id ASC"
-                + (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0 ? " LIMIT ? " : "")
-                + (cacheKey.getStartItem() > 0 ? " OFFSET ? " : "");
-
-        // base from query without where clause
-        String baseQuery = " FROM blackboard_artifacts artifacts "
-                + "INNER JOIN tsk_analysis_results analysis_results "
-                + "ON artifacts.artifact_obj_id = analysis_results.artifact_obj_id WHERE ";
-
-        // query for total count of matching items
-        int paramIdx = 0;
-        AtomicLong analysisResultCount = new AtomicLong(0);
-        try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(
-                " COUNT(DISTINCT artifacts.artifact_id) AS count " + baseQuery + originalWhereClause)) {
-
-            preparedStatement.setInt(++paramIdx, artType.getTypeID());
-            preparedStatement.setString(++paramIdx, expectedConfiguration);
-
-            if (dataSourceId != null) {
-                preparedStatement.setLong(++paramIdx, dataSourceId);
-            }
-
-            getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
-                try {
-                    if (resultSet.next()) {
-                        analysisResultCount.set(resultSet.getLong("count"));
-                    }
-                } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
-                }
-
-            });
-
-        } catch (SQLException ex) {
-            throw new TskCoreException(MessageFormat.format(
-                    "An error occurred while fetching analysis result type: {0} with configuration: {1}.",
-                    artType.getTypeName(),
-                    expectedConfiguration),
-                    ex);
-        }
-
-        List<Long> artifactIds = new ArrayList<>();
-        // query to get artifact id's to be displayed if total count exceeds the start item position
-        if (analysisResultCount.get() > cacheKey.getStartItem()) {
-            paramIdx = 0;
-            try (CaseDbPreparedStatement preparedStatement = getCase().getCaseDbAccessManager().prepareSelect(
-                    " artifacts.artifact_id AS artifact_id " + baseQuery + pagedWhereClause)) {
-
-                preparedStatement.setInt(++paramIdx, artType.getTypeID());
-                preparedStatement.setString(++paramIdx, expectedConfiguration);
-
-                if (dataSourceId != null) {
-                    preparedStatement.setLong(++paramIdx, dataSourceId);
-                }
-
-                if (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0) {
-                    preparedStatement.setLong(++paramIdx, cacheKey.getMaxResultsCount());
-                }
-
-                if (cacheKey.getStartItem() > 0) {
-                    preparedStatement.setLong(++paramIdx, cacheKey.getStartItem());
-                }
-
-                getCase().getCaseDbAccessManager().select(preparedStatement, (resultSet) -> {
-                    try {
-                        while (resultSet.next()) {
-                            artifactIds.add(resultSet.getLong("artifact_id"));
-                        }
-                    } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "An error occurred while fetching results from result set.", ex);
-                    }
-
-                });
-
-            } catch (SQLException ex) {
-                throw new TskCoreException(MessageFormat.format(
-                        "An error occurred while fetching analysis result type: {0} with configuration: {1}.",
-                        artType.getTypeName(),
-                        expectedConfiguration),
-                        ex);
-            }
-        }
-
-        // if there are artifact ids, get the artifacts with attributes
-        List<BlackboardArtifact> pagedArtifacts = new ArrayList<>();
-        if (artifactIds.size() > 0) {
-            String artifactQueryWhere = " artifacts.artifact_id IN (" + artifactIds.stream().map(l -> Long.toString(l)).collect(Collectors.joining(",")) + ") ";
-            pagedArtifacts.addAll(blackboard.getAnalysisResultsWhere(artifactQueryWhere));
-            blackboard.loadBlackboardAttributes(pagedArtifacts);
-        }
-        
-        TableData tableData = createTableData(artType, pagedArtifacts);
-        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), analysisResultCount.get());
-    }    */
+    }
 
     @Override
     void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
@@ -667,9 +552,9 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             boolean hasConfiguration = typeCounts.get(BlackboardArtifact.Type.TSK_MALWARE).getRight();
             long count = 0;
             try {
-                count = getMalwareCounts(dataSourceId);
+                count = getMalwareCount(dataSourceId);
             } catch (IllegalArgumentException | ExecutionException ex) {
-                logger.log(Level.WARNING, "An error occurred while fetching malware counts", ex);
+                logger.log(Level.WARNING, "An error occurred while fetching malware node count", ex);
             }
             typeCounts.put(BlackboardArtifact.Type.TSK_MALWARE, Pair.of(count, hasConfiguration));
         }
@@ -774,16 +659,21 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         return new TreeResultsDTO<>(allConfigurations);
     }
     
-    
     /**
-     * ELTODO
-     * @param dataSourceId
-     * @return
+     * Get count of Malware nodes to be used in the tree view. NOTE: we only
+     * display/count Malware nodes that have a score of NOTABLE or LIKELY_NOTABLE.
+     *
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     *
+     * @return Number of malware nodes that have a score of NOTABLE or LIKELY_NOTABLE.
+     *
      * @throws IllegalArgumentException
-     * @throws ExecutionException 
+     * @throws ExecutionException
      */
-    long getMalwareCounts(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-        
+    long getMalwareCount(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+
         AtomicLong malwareResultCount = new AtomicLong(0);
         try {
             // get artifact types and counts
@@ -813,44 +703,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         }
 
         return malwareResultCount.get();
-    }
-    
-    /**
-     * Get count of Malware nodes to be used in the tree view.
-     *
-     * @param dataSourceId The data source object id for which the results
-     *                     should be filtered or null if no data source
-     *                     filtering.
-     * @param converter    Means of converting from data source id and set name
-     *                     to an AnalysisResultSetSearchParam
-     *
-     * @return The sets along with counts to display.
-     *
-     * @throws IllegalArgumentException
-     * @throws ExecutionException
-     */
-    public TreeResultsDTO<AnalysisResultSearchParam> getMalwareTreeNodes(
-            Long dataSourceId) throws IllegalArgumentException, ExecutionException {
-
-        // ELTODO handle indeterminate counts?
-        long count = getMalwareCounts(dataSourceId);
-
-        List<TreeItemDTO<AnalysisResultSearchParam>> allSets = new ArrayList<>();
-        TreeDisplayCount displayCount = TreeDisplayCount.getDeterminate(count);
-
-        allSets.add(getConfigTreeItem(
-                BlackboardArtifact.Type.TSK_MALWARE,
-                dataSourceId,
-                "" /*
-                 * arEvt.getConfiguration()
-                 */, // ELTODO get configuration as well
-                "Malware" /*StringUtils.isBlank(arEvt.getConfiguration()) ?
-                 * arEvt.getArtifactType().getDisplayName() : arEvt.getConfiguration()
-                 */,
-                displayCount));
-
-        return new TreeResultsDTO<>(allSets);
-    }  
+    } 
 
     /**
      * Get counts for individual sets of the provided type to be used in the
@@ -1671,7 +1524,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         @Override
         public boolean isRefreshRequired(DAOEvent evt) {
-            return getDAO().isAnalysisResultsConfigInvalidating(this.getParameters(), evt);
+            return getDAO().isAnalysisResultsInvalidating(this.getParameters(), evt);
         }
     }    
 
