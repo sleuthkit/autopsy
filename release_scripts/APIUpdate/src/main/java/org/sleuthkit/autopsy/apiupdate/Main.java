@@ -3,14 +3,11 @@
  */
 package org.sleuthkit.autopsy.apiupdate;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.cli.ParseException;
 import org.sleuthkit.autopsy.apiupdate.CLIProcessor.CLIArgs;
-import org.sleuthkit.autopsy.apiupdate.ModuleUpdates.ModuleVersionNumbers;
-import org.sleuthkit.autopsy.apiupdate.ModuleUpdates.ReleaseVal;
 
 /**
  *
@@ -19,7 +16,7 @@ import org.sleuthkit.autopsy.apiupdate.ModuleUpdates.ReleaseVal;
 public class Main {
 
     public static void main(String[] args) {
-        args = "-c C:\\Users\\gregd\\Documents\\Source\\autopsy\\build\\cluster\\modules -p C:\\Users\\gregd\\Desktop\\prevVers -cv 4.21.0 -pv 4.20.0 -s C:\\Users\\gregd\\Documents\\Source\\autopsy".split(" ");
+        args = "-c C:\\Users\\gregd\\Desktop\\apidiff\\new -p C:\\Users\\gregd\\Desktop\\apidiff\\old -cv 4.21.0 -pv 4.20.0 -s C:\\Users\\gregd\\Documents\\Source\\autopsy".split(" ");
         CLIArgs cliArgs;
         try {
             cliArgs = CLIProcessor.parseCli(args);
@@ -33,31 +30,35 @@ public class Main {
             return;
         }
         
-        Map<String, ModuleVersionNumbers> versNums = Stream.of(
-                new ModuleVersionNumbers(
-                        "org.sleuthkit.autopsy.core", 
-                        new ModuleUpdates.SemVer(1,2,3),
-                        4,
-                        new ReleaseVal("org.sleuthkit.autopsy.core", 5)),
-                new ModuleVersionNumbers(
-                        "org.sleuthkit.autopsy.corelibs", 
-                        new ModuleUpdates.SemVer(6,7,8),
-                        9,
-                        new ReleaseVal("org.sleuthkit.autopsy.corelibs", 10)))
-                .collect(Collectors.toMap(v -> v.getModuleName(), v -> v, (v1, v2) -> v1));
-        
-        ModuleUpdates.setVersions(cliArgs.getSrcPath(), versNums);
+//        Map<String, ModuleVersionNumbers> versNums = Stream.of(
+//                new ModuleVersionNumbers(
+//                        "org.sleuthkit.autopsy.core", 
+//                        new ModuleUpdates.SemVer(1,2,3),
+//                        4,
+//                        new ReleaseVal("org.sleuthkit.autopsy.core", 5)),
+//                new ModuleVersionNumbers(
+//                        "org.sleuthkit.autopsy.corelibs", 
+//                        new ModuleUpdates.SemVer(6,7,8),
+//                        9,
+//                        new ReleaseVal("org.sleuthkit.autopsy.corelibs", 10)))
+//                .collect(Collectors.toMap(v -> v.getModuleName(), v -> v, (v1, v2) -> v1));
+//        
+//        ModuleUpdates.setVersions(cliArgs.getSrcPath(), versNums);
 
-//        for (String commonJarFileName : APIDiff.getCommonJars(cliArgs.getPreviousVersPath(), cliArgs.getCurrentVersPath())) {
-//            try {
+        for (String commonJarFileName : APIDiff.getCommonJars(cliArgs.getPreviousVersPath(), cliArgs.getCurrentVersPath())) {
+            try {
 //                ModuleVersionNumbers m = ModuleUpdates.getVersionsFromJar(cliArgs.getPreviousVersPath().toPath().resolve(commonJarFileName).toFile());
 //                System.out.println(MessageFormat.format("release: {0}, spec: {1}, implementation: {2}", m.getRelease().getFullReleaseStr(), m.getSpec().getSemVerStr(), m.getImplementation()));
-//                
-//            } catch (IOException ex) {
-//                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-//            }
-//            
-//        }
+                APIDiff.getComparison(
+                        cliArgs.getPreviousVersion(), 
+                        cliArgs.getCurrentVersion(), 
+                        cliArgs.getPreviousVersPath().toPath().resolve(commonJarFileName).toFile(),
+                        cliArgs.getCurrentVersPath().toPath().resolve(commonJarFileName).toFile());
+            } catch (IOException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        }
         
         
         
