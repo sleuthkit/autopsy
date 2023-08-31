@@ -306,15 +306,12 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         SleuthkitCase skCase = getCase();
         Blackboard blackboard = skCase.getBlackboard();
         BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
-
-        List<BlackboardArtifact> arts = new ArrayList<>();
-        //String pagedWhereClause = getWhereClause(cacheKey);
-        
+        List<BlackboardArtifact> arts = new ArrayList<>();        
         Long dataSourceId = cacheKey.getParamData().getDataSourceId();
         
         String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() 
-                + " AND (results.significance=" + Score.Significance.NOTABLE.getId() //NON-NLS
-                + " OR results.significance=" + Score.Significance.LIKELY_NOTABLE.getId() + " )"; //NON-NLS
+                + " AND (results.significance=" + Score.Significance.NOTABLE.getId()
+                + " OR results.significance=" + Score.Significance.LIKELY_NOTABLE.getId() + " )";
         if (dataSourceId != null) {
             originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
         }
@@ -676,23 +673,21 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         AtomicLong malwareResultCount = new AtomicLong(0);
         try {
-            // get artifact types and counts
             SleuthkitCase skCase = getCase();
-            String query = "COUNT(*) AS count " //NON-NLS
-                    + "FROM blackboard_artifacts,tsk_analysis_results WHERE " //NON-NLS
-                    + "blackboard_artifacts.artifact_type_id=" + BlackboardArtifact.Type.TSK_MALWARE.getTypeID() //NON-NLS
-                    + " AND tsk_analysis_results.artifact_obj_id=blackboard_artifacts.artifact_obj_id" //NON-NLS
-                    + " AND (tsk_analysis_results.significance=" + Score.Significance.NOTABLE.getId() //NON-NLS
-                    + " OR tsk_analysis_results.significance=" + Score.Significance.LIKELY_NOTABLE.getId() + " )"; //NON-NLS
+            String query = "COUNT(*) AS count " 
+                    + "FROM blackboard_artifacts,tsk_analysis_results WHERE "
+                    + "blackboard_artifacts.artifact_type_id=" + BlackboardArtifact.Type.TSK_MALWARE.getTypeID()
+                    + " AND tsk_analysis_results.artifact_obj_id=blackboard_artifacts.artifact_obj_id" 
+                    + " AND (tsk_analysis_results.significance=" + Score.Significance.NOTABLE.getId() 
+                    + " OR tsk_analysis_results.significance=" + Score.Significance.LIKELY_NOTABLE.getId() + " )";
             if (dataSourceId != null && dataSourceId > 0) {
                 query += "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId; //NON-NLS
             }
 
             skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
                 try {
-                    while (resultSet.next()) {
-                        long count = resultSet.getLong("count");
-                        malwareResultCount.set(count);
+                    if (resultSet.next()) {
+                        malwareResultCount.set(resultSet.getLong("count"));
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.WARNING, "An error occurred while fetching malware counts.", ex);
@@ -1500,7 +1495,7 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
     }
     
     /**
-     * Handles fetching and paging of configuration filtered results.
+     * Handles fetching and paging of malware results.
      */
     public static class MalwareResultConfigFetcher extends DAOFetcher<AnalysisResultSearchParam> {
 

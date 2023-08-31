@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1498,7 +1498,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             displaySearchResults(results, true, setKey.getNodeSelectionInfo());
         } catch (ExecutionException | IllegalArgumentException ex) {
             logger.log(Level.WARNING, MessageFormat.format(
-                    "There was an error fetching data for hash set filter: {0} and data source id: {1}.",
+                    "There was an error fetching malware data for configuration: {0} and data source id: {1}.",
                     setKey.getConfiguration(),
                     setKey.getDataSourceId() == null ? "<null>" : setKey.getDataSourceId()),
                     ex);

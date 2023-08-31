@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2021-23 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,6 @@ import static org.sleuthkit.autopsy.mainui.nodes.TreeNode.getDefaultLookup;
 import org.sleuthkit.autopsy.mainui.nodes.actions.ActionsFactory;
 import org.sleuthkit.autopsy.mainui.nodes.actions.DeleteAnalysisResultSetAction;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -58,8 +57,6 @@ import org.sleuthkit.datamodel.TskData;
 public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory<AnalysisResultSearchParam> {
 
     private final static Comparator<String> STRING_COMPARATOR = Comparator.nullsFirst(Comparator.naturalOrder());
-    private static final String MALWARE_HITS = "TSK_MALWARE"; // this is currently a custom TSK artifact type, created in MalwareScanIngestModule
-    private static BlackboardArtifact.Type MALWARE_ARTIFACT_TYPE = null;
     
     /**
      * Returns the path to the icon to use for this artifact type.
@@ -95,7 +92,7 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
             return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
-        } else if (MALWARE_HITS.equals(rowData.getSearchParams().getArtifactType().getTypeName())) {
+        } else if (BlackboardArtifact.Type.TSK_MALWARE.equals(rowData.getSearchParams().getArtifactType())) {
             return new MalwareResultTypeTreeNode(rowData);
         } else if (rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false)) {
             return new TreeTypeNode(rowData, new TreeConfigFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, Bundle.AnalysisResultTypeFactory_blankConfigName()));
