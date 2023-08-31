@@ -497,6 +497,16 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     }
 
     /**
+     * Displays results of querying the DAO for malware artifacts matching the 
+     * search parameters query.
+     *
+     * @param params The search parameters.
+     */
+    public void displayMalwareHits(AnalysisResultSearchParam params) {
+        dataResultPanel.displayMalwareResultSet(params);
+    }
+
+    /**
      * Displays results of querying the DAO for reports matching the search
      * parameters query.
      *

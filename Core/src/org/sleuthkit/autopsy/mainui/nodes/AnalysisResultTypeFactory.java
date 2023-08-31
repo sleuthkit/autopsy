@@ -96,7 +96,8 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
         if (BlackboardArtifact.Type.TSK_KEYWORD_HIT.equals(rowData.getSearchParams().getArtifactType())) {
             return new TreeTypeNode(rowData, new KeywordSetFactory(dataSourceId));
         } else if (MALWARE_HITS.equals(rowData.getSearchParams().getArtifactType().getTypeName())) {
-            return new AnalysisResultTypeTreeNode(rowData);
+            //return new AnalysisResultTypeTreeNode(rowData);
+            return new MalwareResultTypeTreeNode(rowData);
             // ELTODO return new TreeTypeNode(rowData, new MalwareNodeFactory(dataSourceId));
         } else if (rowData instanceof AnalysisResultTreeItem && ((AnalysisResultTreeItem) rowData).getHasChildren().orElse(false)) {
             return new TreeTypeNode(rowData, new TreeConfigFactory(rowData.getSearchParams().getArtifactType(), dataSourceId, Bundle.AnalysisResultTypeFactory_blankConfigName()));
@@ -146,6 +147,52 @@ public class AnalysisResultTypeFactory extends AbstractAnalysisResultTreeFactory
 
         super.handleDAOAggregateEvent(aggEvt);
     }
+    
+    /**
+     * Display name and count of a Malware analysis result type in the tree.
+     */
+    static class MalwareResultTypeTreeNode extends TreeNode<AnalysisResultSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param itemData The data to display.
+         */
+        MalwareResultTypeTreeNode(TreeResultsDTO.TreeItemDTO<? extends AnalysisResultSearchParam> itemData) {
+            super(itemData.getSearchParams().getArtifactType().getTypeName(),
+                    getIconPath(itemData.getSearchParams().getArtifactType()),
+                    itemData);
+        }
+
+        @Override
+        public void respondSelection(DataResultTopComponent dataResultPanel) {
+            this.getItemData().getSearchParams().setNodeSelectionInfo(getNodeSelectionInfo());
+            dataResultPanel.displayMalwareHits(this.getItemData().getSearchParams());
+        }
+
+        @Override
+        public Optional<BlackboardArtifact.Type> getAnalysisResultType() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getArtifactType());
+        }
+        
+         @Override
+        public Optional<Long> getDataSourceIdForActions() {
+            return Optional.ofNullable(this.getItemData().getSearchParams().getDataSourceId());
+        }
+
+        @Override
+        public Optional<ActionsFactory.ActionGroup> getNodeSpecificActions() {
+            ActionsFactory.ActionGroup group = new ActionsFactory.ActionGroup();
+
+            Optional<BlackboardArtifact.Type> type = getAnalysisResultType();
+            Optional<Long> dsId = getDataSourceIdForActions();
+            if (type.isPresent()) {
+                group.add(new DeleteAnalysisResultSetAction(type.get(), () -> Collections.emptyList(), dsId.isPresent() ? dsId.get() : null));
+            }
+
+            return Optional.of(group);
+        }
+    }    
 
     /**
      * Display name and count of an analysis result type in the tree.
