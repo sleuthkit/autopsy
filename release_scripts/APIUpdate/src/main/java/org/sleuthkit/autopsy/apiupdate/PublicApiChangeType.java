@@ -4,10 +4,30 @@
  */
 package org.sleuthkit.autopsy.apiupdate;
 
+import java.util.Comparator;
+import org.apache.commons.lang3.ObjectUtils;
+
 /**
  *
  * @author gregd
  */
-public enum PublicApiChangeType {
-    NONE, COMPATIBLE_CHANGE, INCOMPATIBLE_CHANGE;
+public enum PublicApiChangeType implements Comparator<PublicApiChangeType> {
+    NONE(0), COMPATIBLE_CHANGE(1), INCOMPATIBLE_CHANGE(2);
+
+    private int level;
+
+    PublicApiChangeType(int level) {
+        this.level = level;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    @Override
+    public int compare(PublicApiChangeType o1, PublicApiChangeType o2) {
+        o1 = ObjectUtils.defaultIfNull(o1, PublicApiChangeType.NONE);
+        o2 = ObjectUtils.defaultIfNull(o2, PublicApiChangeType.NONE);
+        return Integer.compare(o1.getLevel(), o2.getLevel());
+    }
 }

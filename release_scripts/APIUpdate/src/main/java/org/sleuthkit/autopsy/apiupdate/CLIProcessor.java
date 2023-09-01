@@ -5,6 +5,7 @@
 package org.sleuthkit.autopsy.apiupdate;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,7 +38,7 @@ public class CLIProcessor {
             .hasArg(true)
             .longOpt("curr-path")
             .option("c")
-            .required(true)
+            .required(false)
             .build();
 
     static Option PREV_VERS_OPT = Option.builder()
@@ -46,7 +47,7 @@ public class CLIProcessor {
             .hasArg(true)
             .longOpt("prev-version")
             .option("pv")
-            .required(true)
+            .required(false)
             .build();
 
     static Option CUR_VERS_OPT = Option.builder()
@@ -55,7 +56,7 @@ public class CLIProcessor {
             .hasArg(true)
             .longOpt("curr-version")
             .option("cv")
-            .required(true)
+            .required(false)
             .build();
 
     static Option SRC_LOC_OPT = Option.builder()
@@ -67,15 +68,27 @@ public class CLIProcessor {
             .required(true)
             .build();
 
+    static Option UPDATE_OPT = Option.builder()
+            .desc("Update source code versions")
+            .hasArg(false)
+            .longOpt("update")
+            .option("u")
+            .required(false)
+            .build();
+
     static List<Option> ALL_OPTIONS = Arrays.asList(
             PREV_VERS_PATH_OPT,
             CUR_VERS_PATH_OPT,
             PREV_VERS_OPT,
             CUR_VERS_OPT,
-            SRC_LOC_OPT
+            SRC_LOC_OPT,
+            UPDATE_OPT
     );
 
     static Options CLI_OPTIONS = getCliOptions(ALL_OPTIONS);
+    private static final String DEFAULT_CURR_VERSION = "Current Version";
+    private static final String DEFAULT_PREV_VERSION = "Previous Version";
+    private static final String BUILD_REL_PATH = "build/cluster/modules";
 
     private static Options getCliOptions(List<Option> opts) {
         Options toRet = new Options();
@@ -112,15 +125,19 @@ public class CLIProcessor {
         CommandLine helpCmd = parser.parse(HELP_OPTIONS, args, true);
         boolean isHelp = helpCmd.hasOption(HELP_OPT);
         if (isHelp) {
-            return new CLIArgs(null, null, null, null, null, true);
+            return new CLIArgs(null, null, null, null, null, false, true);
         }
 
         CommandLine cmd = parser.parse(CLI_OPTIONS, args);
-        String curVers = cmd.getOptionValue(CUR_VERS_OPT);
-        String prevVers = cmd.getOptionValue(PREV_VERS_OPT);
-        String curVersPath = cmd.getOptionValue(CUR_VERS_PATH_OPT);
+        String curVers = cmd.hasOption(CUR_VERS_OPT) ? cmd.getOptionValue(CUR_VERS_OPT) : DEFAULT_CURR_VERSION;
+        String prevVers = cmd.hasOption(PREV_VERS_OPT) ? cmd.getOptionValue(PREV_VERS_OPT) : DEFAULT_PREV_VERSION;
+        String curVersPath = cmd.hasOption(CUR_VERS_PATH_OPT) 
+                ? cmd.getOptionValue(CUR_VERS_PATH_OPT) 
+                : Paths.get(cmd.getOptionValue(SRC_LOC_OPT), BUILD_REL_PATH).toString();
+        
         String prevVersPath = cmd.getOptionValue(PREV_VERS_PATH_OPT);
         String srcPath = cmd.getOptionValue(SRC_LOC_OPT);
+        boolean makeUpdate = cmd.hasOption(UPDATE_OPT);
         File curVersFile = new File(curVersPath);
         File prevVersFile = new File(prevVersPath);
         File srcPathFile = new File(srcPath);
@@ -137,7 +154,7 @@ public class CLIProcessor {
             throw new ParseException("No directory found at " + srcPathFile.getAbsolutePath());
         }
 
-        return new CLIArgs(curVers, prevVers, curVersFile, prevVersFile, srcPathFile, false);
+        return new CLIArgs(curVers, prevVers, curVersFile, prevVersFile, srcPathFile, makeUpdate, false);
     }
 
     public static class CLIArgs {
@@ -148,14 +165,16 @@ public class CLIProcessor {
         private final File previousVersPath;
         private final boolean isHelp;
         private final File srcPath;
+        private final boolean makeUpdate;
 
-        public CLIArgs(String currentVersion, String previousVersion, File currentVersPath, File previousVersPath, File srcPath, boolean isHelp) {
+        public CLIArgs(String currentVersion, String previousVersion, File currentVersPath, File previousVersPath, File srcPath, boolean makeUpdate, boolean isHelp) {
             this.currentVersion = currentVersion;
             this.previousVersion = previousVersion;
             this.currentVersPath = currentVersPath;
             this.previousVersPath = previousVersPath;
             this.srcPath = srcPath;
             this.isHelp = isHelp;
+            this.makeUpdate = makeUpdate;
         }
 
         public String getCurrentVersion() {
@@ -176,6 +195,10 @@ public class CLIProcessor {
 
         public boolean isIsHelp() {
             return isHelp;
+        }
+
+        public boolean isMakeUpdate() {
+            return makeUpdate;
         }
 
         public File getSrcPath() {

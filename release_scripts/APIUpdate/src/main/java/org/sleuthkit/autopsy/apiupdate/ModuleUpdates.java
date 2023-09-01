@@ -155,7 +155,47 @@ public class ModuleUpdates {
         return new ModuleVersionNumbers(jarFile.getName(), specSemVer, implementation, release);
     }
 
-    private static void updateVersions() {
+    static ModuleVersionNumbers getModuleVersionUpdate(ModuleVersionNumbers prev, PublicApiChangeType apiChangeType) {
+        switch (apiChangeType) {
+            case NONE:
+                return new ModuleVersionNumbers(
+                        prev.getModuleName(), 
+                        prev.getSpec(), 
+                        prev.getImplementation() + 1, 
+                        prev.getRelease()
+                );
+            case COMPATIBLE_CHANGE:
+                return new ModuleVersionNumbers(
+                        prev.getModuleName(), 
+                        new SemVer(
+                                prev.getSpec().getMajor(), 
+                                prev.getSpec().getMinor() + 1, 
+                                prev.getSpec().getPatch()
+                        ),
+                        prev.getImplementation() + 1, 
+                        new ReleaseVal(
+                                prev.getRelease().getModuleName(), 
+                                prev.getRelease().getReleaseVersion()
+                        )
+                );
+            case INCOMPATIBLE_CHANGE:
+                return new ModuleVersionNumbers(
+                        prev.getModuleName(), 
+                        new SemVer(
+                                prev.getSpec().getMajor() + 1, 
+                                prev.getSpec().getMinor(), 
+                                prev.getSpec().getPatch()
+                        ),
+                        prev.getImplementation() + 1, 
+                        new ReleaseVal(
+                                prev.getRelease().getModuleName(), 
+                                prev.getRelease().getReleaseVersion() == null ? null : prev.getRelease().getReleaseVersion() + 1
+                        )
+                );
+            default:
+                throw new IllegalArgumentException("Unknown api change type: " + apiChangeType);
+        }
+        
 //        [specification major/minor/patch, implementation, release]
 //        assumed defaults???
 //        NON_COMPATIBLE:
