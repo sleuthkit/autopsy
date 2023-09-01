@@ -27,7 +27,7 @@ import org.apache.commons.lang3.ObjectUtils;
 public enum PublicApiChangeType implements Comparator<PublicApiChangeType> {
     NONE(0), COMPATIBLE_CHANGE(1), INCOMPATIBLE_CHANGE(2);
 
-    private int level;
+    private final int level;
 
     /**
      * COnstructor.
