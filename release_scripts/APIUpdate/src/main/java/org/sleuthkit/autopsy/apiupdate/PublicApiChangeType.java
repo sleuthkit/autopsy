@@ -22,18 +22,27 @@ import java.util.Comparator;
 import org.apache.commons.lang3.ObjectUtils;
 
 /**
- *
- * @author gregd
+ * A public API change type (no change, compatible change, incompatible change).
  */
 public enum PublicApiChangeType implements Comparator<PublicApiChangeType> {
     NONE(0), COMPATIBLE_CHANGE(1), INCOMPATIBLE_CHANGE(2);
 
     private int level;
 
+    /**
+     * COnstructor.
+     *
+     * @param level The level for the api change (none is min, incompatible is
+     * max).
+     */
     PublicApiChangeType(int level) {
         this.level = level;
     }
 
+    /**
+     *
+     * @return The level for the api change (none is min, incompatible is max).
+     */
     public int getLevel() {
         return level;
     }

@@ -32,8 +32,6 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
-import java.util.logging.StreamHandler;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
@@ -215,7 +213,7 @@ public class ModuleUpdates {
             File manifestFile = dir.toPath().resolve(MANIFEST_FILE_NAME).toFile();
             if (manifestFile.isFile()) {
                 try (FileInputStream manifestIs = new FileInputStream(manifestFile)) {
-                    Attributes manifestAttrs = ManifestLoader.loadInputStream(manifestIs);
+                    Attributes manifestAttrs = ManifestLoader.loadManifestAttributes(manifestIs);
                     ReleaseVal releaseVal = parseReleaseVers(manifestAttrs.getValue(MANIFEST_RELEASE_KEY), manifestFile.getAbsolutePath());
                     moduleDirMapping.put(releaseVal.getModuleName(), dir);
                 }

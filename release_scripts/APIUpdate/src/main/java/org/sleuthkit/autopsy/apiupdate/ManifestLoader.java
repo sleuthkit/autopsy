@@ -29,22 +29,39 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- *
- * @author gregd
+ * Loads manifest.mf files.
  */
 public class ManifestLoader {
 
     private static final String JAR_MANIFEST_REL_PATH = "META-INF/MANIFEST.MF";
 
-    public static Attributes loadInputStream(InputStream is) throws IOException {
+    /**
+     * Loads the manifest attributes from an input stream.
+     * @param is The input stream.
+     * @return The manifest attributes.
+     * @throws IOException 
+     */
+    public static Attributes loadManifestAttributes(InputStream is) throws IOException {
         Manifest manifest = loadManifest(is);
         return manifest.getMainAttributes();
     }
 
+    /**
+     * Loads the manifest from an input stream.
+     * @param is The input stream.
+     * @return The manifest.
+     * @throws IOException 
+     */
     public static Manifest loadManifest(InputStream is) throws IOException {
         return new Manifest(is);
     }
 
+    /**
+     * Loads manifest attributes from a jar file.
+     * @param jarFile The jar file.
+     * @return The manifest attributes.
+     * @throws IOException 
+     */
     public static Attributes loadFromJar(File jarFile) throws IOException {
         ZipFile zipFile = new ZipFile(jarFile);
 
@@ -53,7 +70,7 @@ public class ManifestLoader {
         while (entries.hasMoreElements()) {
             ZipEntry entry = entries.nextElement();
             if (JAR_MANIFEST_REL_PATH.equalsIgnoreCase(entry.getName())) {
-                return loadInputStream(zipFile.getInputStream(entry));
+                return loadManifestAttributes(zipFile.getInputStream(entry));
             }
         }
 

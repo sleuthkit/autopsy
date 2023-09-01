@@ -55,14 +55,22 @@ import javassist.CtMember;
 import javassist.Modifier;
 
 /**
- *
- * @author gregd
+ * Handles diffing the public API between two jar files.
  */
 public class APIDiff {
 
+    // filters to a jar or nbm file
     private static final FileFilter JAR_FILTER
             = (File f) -> f.isFile() && (f.getName().toLowerCase().endsWith(".jar") || f.getName().toLowerCase().endsWith(".nbm"));
 
+    /**
+     * Identifies common jar files between two directories. Only files listed in
+     * the directory are considered. This method does not recurse.
+     *
+     * @param prevDir The previous version directory.
+     * @param currDir The current version directory.
+     * @return The jar file names.
+     */
     static List<String> getCommonJars(File prevDir, File currDir) {
         Set<String> prevJars = getJars(prevDir);
         Set<String> currJars = getJars(currDir);
@@ -74,12 +82,27 @@ public class APIDiff {
         return commonJars.stream().sorted().collect(Collectors.toList());
     }
 
+    /**
+     * Returns all jar files listed in directory (does not recurse).
+     *
+     * @param dir The directory.
+     * @return The jar file names.
+     */
     private static Set<String> getJars(File dir) {
         return Stream.of(dir.listFiles(JAR_FILTER))
                 .map(f -> f.getName())
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Uses manfest.mf specification of "OpenIDE-Module-Public-Packages" to
+     * determine public API packages.
+     *
+     * @param jarFile The jar file.
+     * @return The set of package names.
+     * @throws IOException
+     * @throws IllegalStateException
+     */
     private static Set<String> getPublicPackages(File jarFile) throws IOException, IllegalStateException {
         String publicPackageStr = ManifestLoader.loadFromJar(jarFile).getValue("OpenIDE-Module-Public-Packages");
         if (publicPackageStr == null) {
@@ -92,11 +115,26 @@ public class APIDiff {
         }
     }
 
-    // only fields, methods that are public or protected
+    /**
+     * Filter to identify non-public, non-protected members for exclusion.
+     *
+     * @param member The CtMember (field/method).
+     * @return True if should be excluded (private/package private).
+     */
     static boolean excludeMember(CtMember member) {
         return !Modifier.isPublic(member.getModifiers()) && !Modifier.isProtected(member.getModifiers());
     }
 
+    /**
+     * Compares two jar files.
+     *
+     * @param prevVersion The name of the previous version.
+     * @param curVersion The name of the current version.
+     * @param prevJar The previous version jar file.
+     * @param curJar The current version jar file.
+     * @return A record describing the comparison in public API.
+     * @throws IOException
+     */
     static ComparisonRecord getComparison(String prevVersion, String curVersion, File prevJar, File curJar) throws IOException {
         // scope only to previous or current public packages
         Set<String> prevPublicApiPackages = getPublicPackages(prevJar);
@@ -120,7 +158,7 @@ public class APIDiff {
                 commonApiPackages.add(apiPackage);
             }
         }
-        
+
         JarArchiveComparatorOptions comparatorOptions = new JarArchiveComparatorOptions();
         // only classes in prev or current public api
         comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !allPublicApiPackages.contains(ctClass.getPackageName()));
@@ -139,7 +177,7 @@ public class APIDiff {
         );
 
         PublicApiChangeType changeType = getChangeType(jApiClasses);
-        
+
         Options options = Options.newDefault();
         options.setOldArchives(Arrays.asList(new JApiCmpArchive(prevJar, prevVersion)));
         options.setNewArchives(Arrays.asList(new JApiCmpArchive(curJar, curVersion)));
@@ -150,6 +188,13 @@ public class APIDiff {
         return new ComparisonRecord(prevVersion, curVersion, prevJar, curJar, humanReadableApiChange, changeType, onlyPrevApiPackages, onlyCurApiPackages, commonApiPackages);
     }
 
+    /**
+     * Updates an atomic ref to the public api change type to the maximum change
+     * (where no change is min and incompatible change is max).
+     *
+     * @param apiChangeRef The atomic ref to a public api change type.
+     * @param tp The possibly new change type.
+     */
     private static void updateToMax(AtomicReference<PublicApiChangeType> apiChangeRef, JApiHasChangeStatus tp) {
         PublicApiChangeType apiChangeType;
         switch (tp.getChangeStatus()) {
@@ -164,14 +209,20 @@ public class APIDiff {
             default:
                 apiChangeType = PublicApiChangeType.INCOMPATIBLE_CHANGE;
                 break;
-        };
+        }
 
         final PublicApiChangeType finalApiChangeType = apiChangeType;
         apiChangeRef.updateAndGet((refType) -> Comparators.max(refType, finalApiChangeType));
     }
 
-     static PublicApiChangeType getChangeType(List<JApiClass> jApiClasses) {
-        AtomicReference<PublicApiChangeType> apiChange = new AtomicReference<PublicApiChangeType>(PublicApiChangeType.NONE);
+    /**
+     * Determines the public api change type for the given classes.
+     *
+     * @param jApiClasses The classes.
+     * @return The public API change type.
+     */
+    static PublicApiChangeType getChangeType(List<JApiClass> jApiClasses) {
+        AtomicReference<PublicApiChangeType> apiChange = new AtomicReference<>(PublicApiChangeType.NONE);
 
         Filter.filter(jApiClasses, new Filter.FilterVisitor() {
             @Override
@@ -213,6 +264,10 @@ public class APIDiff {
         return apiChange.get();
     }
 
+    /**
+     * A record describing the public API comparison of a previous and current
+     * version.
+     */
     public static class ComparisonRecord {
 
         private final String prevVersion;
@@ -237,43 +292,70 @@ public class APIDiff {
             this.commonApiPackages = commonApiPackages;
         }
 
+        /**
+         * @return The previous version name.
+         */
         public String getPrevVersion() {
             return prevVersion;
         }
 
+        /**
+         * @return The current version name.
+         */
         public String getCurVersion() {
             return curVersion;
         }
 
+        /**
+         * @return The previous version jar file.
+         */
         public File getPrevJar() {
             return prevJar;
         }
 
+        /**
+         * @return The current version jar file.
+         */
         public File getCurJar() {
             return curJar;
         }
 
+        /**
+         * @return The human readable output describing the api changes.
+         */
         public String getHumanReadableApiChange() {
             return humanReadableApiChange;
         }
 
+        /**
+         * @return The public api change type.
+         */
         public PublicApiChangeType getChangeType() {
             return changeType;
         }
 
+        /**
+         * @return Names of packages only in previous public API.
+         */
         public Set<String> getOnlyPrevApiPackages() {
             return onlyPrevApiPackages;
         }
 
+        /**
+         * @return Names of packages only in current public API.
+         */
         public Set<String> getOnlyCurrApiPackages() {
             return onlyCurrApiPackages;
         }
 
+        /**
+         * @return Names of packages in common between previous and current
+         * public API.
+         */
         public Set<String> getCommonApiPackages() {
             return commonApiPackages;
         }
-        
-        
+
     }
 
 }

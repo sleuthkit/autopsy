@@ -30,19 +30,17 @@ import org.sleuthkit.autopsy.apiupdate.CLIProcessor.CLIArgs;
 import org.sleuthkit.autopsy.apiupdate.ModuleUpdates.ModuleVersionNumbers;
 
 /**
- *
- * @author gregd
+ * Main class.
  */
 public class Main {
 
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
-        args = "-p C:\\Users\\gregd\\Desktop\\apidiff\\old -s C:\\Users\\gregd\\Documents\\Source\\autopsy".split(" ");
         CLIArgs cliArgs;
         try {
             cliArgs = CLIProcessor.parseCli(args);
-            if (cliArgs.isIsHelp()) {
+            if (cliArgs.isHelp()) {
                 CLIProcessor.printHelp(null);
                 System.exit(0);
             }
@@ -53,7 +51,7 @@ public class Main {
         }
 
         Map<String, ModuleVersionNumbers> newVersionNumMapping = new HashMap<>();
-        
+
         for (String commonJarFileName : APIDiff.getCommonJars(cliArgs.getPreviousVersPath(), cliArgs.getCurrentVersPath())) {
             try {
                 ModuleVersionNumbers prevVersionNums = ModuleUpdates.getVersionsFromJar(cliArgs.getPreviousVersPath().toPath().resolve(commonJarFileName).toFile());
@@ -81,28 +79,40 @@ public class Main {
 
     }
 
+    /**
+     * Outputs the difference between previous and current version public API.
+     *
+     * @param commonJarFileName The common jar file name.
+     * @param record The comparison record.
+     * @param prevVersionNums The version numbers in previous version.
+     * @param projectedVersionNums The calculated version numbers for current
+     * version.
+     */
     private static void outputDiff(
             String commonJarFileName,
             ComparisonRecord record,
             ModuleVersionNumbers prevVersionNums,
             ModuleVersionNumbers projectedVersionNums
     ) {
-        LOGGER.log(Level.INFO, MessageFormat.format("\n"
-                + "====================================\n"
-                + "DIFF FOR: {0}\n"
-                + "Public API Change Type: {1}\n"
-                + "Previous Version Numbers:\n"
-                + "  - release: {2}\n"
-                + "  - specification: {3}\n"
-                + "  - implementation: {4}\n"
-                + "Current Version Numbers:\n"
-                + "  - release: {5}\n"
-                + "  - specification: {6}\n"
-                + "  - implementation: {7}\n"
-                + "====================================\n"
-                + "Public API packages only in previous: {8}\n"
-                + "Public API packages only in current: {9}\n"
-                + "{10}\n\n",
+    LOGGER.log(Level.INFO, MessageFormat.format("""
+                                                    
+                                                    ====================================
+                                                    DIFF FOR: {0}
+                                                    Public API Change Type: {1}
+                                                    Previous Version Numbers:
+                                                      - release: {2}
+                                                      - specification: {3}
+                                                      - implementation: {4}
+                                                    Current Version Numbers:
+                                                      - release: {5}
+                                                      - specification: {6}
+                                                      - implementation: {7}
+                                                    ====================================
+                                                    Public API packages only in previous: {8}
+                                                    Public API packages only in current: {9}
+                                                    {10}
+                                                    
+                                                    """,
                 commonJarFileName,
                 record.getChangeType(),
                 prevVersionNums.getRelease().getFullReleaseStr(),

@@ -32,12 +32,11 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 /**
- *
- * @author gregd
+ * Processes CLI options.
  */
 public class CLIProcessor {
 
-    static Option PREV_VERS_PATH_OPT = Option.builder()
+    private static final Option PREV_VERS_PATH_OPT = Option.builder()
             .argName("path")
             .desc("The path to the previous version jar files")
             .hasArg(true)
@@ -46,7 +45,7 @@ public class CLIProcessor {
             .required(true)
             .build();
 
-    static Option CUR_VERS_PATH_OPT = Option.builder()
+    private static final Option CUR_VERS_PATH_OPT = Option.builder()
             .argName("path")
             .desc("The path to the current version jar files")
             .hasArg(true)
@@ -55,7 +54,7 @@ public class CLIProcessor {
             .required(false)
             .build();
 
-    static Option PREV_VERS_OPT = Option.builder()
+    private static final Option PREV_VERS_OPT = Option.builder()
             .argName("version")
             .desc("The previous version number")
             .hasArg(true)
@@ -64,7 +63,7 @@ public class CLIProcessor {
             .required(false)
             .build();
 
-    static Option CUR_VERS_OPT = Option.builder()
+    private static final Option CUR_VERS_OPT = Option.builder()
             .argName("version")
             .desc("The current version number")
             .hasArg(true)
@@ -73,7 +72,7 @@ public class CLIProcessor {
             .required(false)
             .build();
 
-    static Option SRC_LOC_OPT = Option.builder()
+    private static final Option SRC_LOC_OPT = Option.builder()
             .argName("path")
             .desc("The path to the root of the autopsy repor")
             .hasArg(true)
@@ -82,7 +81,7 @@ public class CLIProcessor {
             .required(true)
             .build();
 
-    static Option UPDATE_OPT = Option.builder()
+    private static final Option UPDATE_OPT = Option.builder()
             .desc("Update source code versions")
             .hasArg(false)
             .longOpt("update")
@@ -90,7 +89,7 @@ public class CLIProcessor {
             .required(false)
             .build();
 
-    static List<Option> ALL_OPTIONS = Arrays.asList(
+    private static final List<Option> ALL_OPTIONS = Arrays.asList(
             PREV_VERS_PATH_OPT,
             CUR_VERS_PATH_OPT,
             PREV_VERS_OPT,
@@ -99,11 +98,16 @@ public class CLIProcessor {
             UPDATE_OPT
     );
 
-    static Options CLI_OPTIONS = getCliOptions(ALL_OPTIONS);
+    private static final Options CLI_OPTIONS = getCliOptions(ALL_OPTIONS);
     private static final String DEFAULT_CURR_VERSION = "Current Version";
     private static final String DEFAULT_PREV_VERSION = "Previous Version";
     private static final String BUILD_REL_PATH = "build/cluster/modules";
 
+    /**
+     * Creates an Options object from a list of options.
+     * @param opts The list of options.
+     * @return The options object.
+     */
     private static Options getCliOptions(List<Option> opts) {
         Options toRet = new Options();
         for (Option opt : opts) {
@@ -113,7 +117,7 @@ public class CLIProcessor {
         return toRet;
     }
 
-    static Option HELP_OPT = Option.builder()
+    private static final Option HELP_OPT = Option.builder()
             .desc("Print help message")
             .hasArg(false)
             .longOpt("help")
@@ -121,12 +125,16 @@ public class CLIProcessor {
             .required(false)
             .build();
 
-    static Options HELP_OPTIONS = getCliOptions(Collections.singletonList(HELP_OPT));
+    private static final Options HELP_OPTIONS = getCliOptions(Collections.singletonList(HELP_OPT));
 
-    private static CommandLineParser parser = new DefaultParser();
+    private static final CommandLineParser parser = new DefaultParser();
 
-    private static HelpFormatter helpFormatter = new HelpFormatter();
+    private static final HelpFormatter helpFormatter = new HelpFormatter();
 
+    /**
+     * Prints help message.
+     * @param ex The exception or null if no exception.
+     */
     static void printHelp(Exception ex) {
         if (ex != null && ex.getMessage() != null && !ex.getMessage().isBlank()) {
             System.out.println(ex.getMessage());
@@ -135,6 +143,12 @@ public class CLIProcessor {
         helpFormatter.printHelp("APIUpdate", CLI_OPTIONS);
     }
 
+    /**
+     * Parses the CLI args.
+     * @param args The arguments.
+     * @return The CLIArgs object.
+     * @throws ParseException 
+     */
     static CLIArgs parseCli(String[] args) throws ParseException {
         CommandLine helpCmd = parser.parse(HELP_OPTIONS, args, true);
         boolean isHelp = helpCmd.hasOption(HELP_OPT);
@@ -171,6 +185,9 @@ public class CLIProcessor {
         return new CLIArgs(curVers, prevVers, curVersFile, prevVersFile, srcPathFile, makeUpdate, false);
     }
 
+    /**
+     * The CLI args object.
+     */
     public static class CLIArgs {
 
         private final String currentVersion;
@@ -191,30 +208,52 @@ public class CLIProcessor {
             this.makeUpdate = makeUpdate;
         }
 
+        /**
+         * @return The current version name.
+         */
         public String getCurrentVersion() {
             return currentVersion;
         }
 
+        /**
+         * @return The previous version name.
+         */
         public String getPreviousVersion() {
             return previousVersion;
         }
 
+        /**
+         * @return The path to the directory containing the jars for current version.
+         */
         public File getCurrentVersPath() {
             return currentVersPath;
         }
 
+        
+        /**
+         * @return The path to the directory containing the jars for previous version.
+         */
         public File getPreviousVersPath() {
             return previousVersPath;
         }
 
-        public boolean isIsHelp() {
+        /**
+         * @return True if only print help message.
+         */
+        public boolean isHelp() {
             return isHelp;
         }
 
+        /**
+         * @return True if module versions should be updated.
+         */
         public boolean isMakeUpdate() {
             return makeUpdate;
         }
 
+        /**
+         * @return The path to the source directory root for autopsy.
+         */
         public File getSrcPath() {
             return srcPath;
         }
