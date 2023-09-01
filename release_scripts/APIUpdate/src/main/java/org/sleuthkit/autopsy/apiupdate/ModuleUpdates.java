@@ -54,8 +54,11 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
+ * Responsible for gathering current module versions and updating current module
+ * versions.
  *
- * @author gregd
+ * NOTE: During update, this class gives preference to regex replacements as
+ * opposed to loading and rewriting settings to minimize diffs.
  */
 public class ModuleUpdates {
 
@@ -96,6 +99,15 @@ public class ModuleUpdates {
 
     private static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 
+    /**
+     * Parses a SemVer (i.e. 1.23 or 1.23.01) from a string.
+     *
+     * @param semVerStr The SemVer string.
+     * @param defaultSemVer The default SemVer if one cannot be parsed.
+     * @param resourceForLogging A string identifier of this resource for
+     * logging purposes.
+     * @return The parsed SemVer or default.
+     */
     private static SemVer parseSemVer(String semVerStr, SemVer defaultSemVer, String resourceForLogging) {
         if (StringUtils.isBlank(semVerStr)) {
             LOGGER.log(Level.SEVERE, MessageFormat.format("Unable to parse semver for empty string in {0}", resourceForLogging));
@@ -109,7 +121,7 @@ public class ModuleUpdates {
                 int major = StringUtils.isBlank(majorStr) ? 1 : Integer.parseInt(majorStr);
                 int minor = Integer.parseInt(m.group("minor"));
                 String patchStr = m.group("patch");
-                Integer patch = StringUtils.isBlank(patchStr) ? null : Integer.parseInt(patchStr);
+                Integer patch = StringUtils.isBlank(patchStr) ? null : Integer.valueOf(patchStr);
                 return new SemVer(major, minor, patch);
             } catch (NullPointerException | NumberFormatException ex) {
                 LOGGER.log(Level.SEVERE, MessageFormat.format("Unable to parse semver string {0} for {1}", semVerStr, resourceForLogging), ex);
@@ -121,6 +133,14 @@ public class ModuleUpdates {
         return defaultSemVer;
     }
 
+    /**
+     * Parses the ReleaseVal object from a release string (i.e. "module/num").
+     *
+     * @param releaseStr The release string in format of "module/num".
+     * @param resourceForLogging A string identifier of this resource for
+     * logging purposes.
+     * @return The parsed release val. Release version may be null.
+     */
     private static ReleaseVal parseReleaseVers(String releaseStr, String resourceForLogging) {
         Matcher m = RELEASE_REGEX.matcher(StringUtils.defaultString(releaseStr));
         if (StringUtils.isNotBlank(releaseStr) && m.find()) {
@@ -128,7 +148,7 @@ public class ModuleUpdates {
             Integer releaseNum = null;
             try {
                 String releaseNumStr = m.group("releaseNum");
-                releaseNum = StringUtils.isBlank(releaseNumStr) ? null : Integer.parseInt(releaseNumStr);
+                releaseNum = StringUtils.isBlank(releaseNumStr) ? null : Integer.valueOf(releaseNumStr);
             } catch (NullPointerException | NumberFormatException ex) {
                 LOGGER.log(Level.SEVERE, MessageFormat.format("Unable to parse release version string {0} for {1}", releaseStr, resourceForLogging), ex);
             }
@@ -141,6 +161,16 @@ public class ModuleUpdates {
 
     }
 
+    /**
+     * Attempts to parse an integer value from a string returning the default
+     * value if the string cannot be parsed.
+     *
+     * @param str The string.
+     * @param defaultVal The default value.
+     * @param resourceForLogging A string identifier of this resource for
+     * logging purposes.
+     * @return The parsed value or the default value.
+     */
     private static int tryParse(String str, int defaultVal, String resourceForLogging) {
         try {
             return Integer.parseInt(str);
@@ -150,6 +180,13 @@ public class ModuleUpdates {
         }
     }
 
+    /**
+     * Parses version numbers from a jar file.
+     *
+     * @param jarFile The jar file.
+     * @return The module version numbers.
+     * @throws IOException
+     */
     public static ModuleVersionNumbers getVersionsFromJar(File jarFile) throws IOException {
         Attributes manifest = ManifestLoader.loadFromJar(jarFile);
         String spec = manifest.getValue(MANIFEST_SPEC_KEY);
@@ -165,48 +202,67 @@ public class ModuleUpdates {
         return new ModuleVersionNumbers(jarFile.getName(), specSemVer, implementation, release);
     }
 
-    static ModuleVersionNumbers getModuleVersionUpdate(ModuleVersionNumbers prev, PublicApiChangeType apiChangeType) {
+    /**
+     * Calculates new module version numbers based on previous module version
+     * numbers and the type of API change.
+     *
+     * @param prev The previous version numbers.
+     * @param apiChangeType The public api change type.
+     * @return The calculated version numbers.
+     */
+    public static ModuleVersionNumbers getModuleVersionUpdate(ModuleVersionNumbers prev, PublicApiChangeType apiChangeType) {
         switch (apiChangeType) {
-            case NONE:
+            case NONE -> {
                 return new ModuleVersionNumbers(
-                        prev.getModuleName(), 
-                        prev.getSpec(), 
-                        prev.getImplementation() + 1, 
+                        prev.getModuleName(),
+                        prev.getSpec(),
+                        prev.getImplementation() + 1,
                         prev.getRelease()
                 );
-            case COMPATIBLE_CHANGE:
+            }
+            case COMPATIBLE_CHANGE -> {
                 return new ModuleVersionNumbers(
-                        prev.getModuleName(), 
+                        prev.getModuleName(),
                         new SemVer(
-                                prev.getSpec().getMajor(), 
-                                prev.getSpec().getMinor() + 1, 
+                                prev.getSpec().getMajor(),
+                                prev.getSpec().getMinor() + 1,
                                 prev.getSpec().getPatch()
                         ),
-                        prev.getImplementation() + 1, 
+                        prev.getImplementation() + 1,
                         new ReleaseVal(
-                                prev.getRelease().getModuleName(), 
+                                prev.getRelease().getModuleName(),
                                 prev.getRelease().getReleaseVersion()
                         )
                 );
-            case INCOMPATIBLE_CHANGE:
+            }
+            case INCOMPATIBLE_CHANGE -> {
                 return new ModuleVersionNumbers(
-                        prev.getModuleName(), 
+                        prev.getModuleName(),
                         new SemVer(
-                                prev.getSpec().getMajor() + 1, 
-                                prev.getSpec().getMinor(), 
+                                prev.getSpec().getMajor() + 1,
+                                prev.getSpec().getMinor(),
                                 prev.getSpec().getPatch()
                         ),
-                        prev.getImplementation() + 1, 
+                        prev.getImplementation() + 1,
                         new ReleaseVal(
-                                prev.getRelease().getModuleName(), 
+                                prev.getRelease().getModuleName(),
                                 prev.getRelease().getReleaseVersion() == null ? null : prev.getRelease().getReleaseVersion() + 1
                         )
                 );
-            default:
+            }
+            default ->
                 throw new IllegalArgumentException("Unknown api change type: " + apiChangeType);
         }
     }
 
+    /**
+     * Maps release version name (i.e. `org.sleuthkit.autopsy.core`) to a file
+     * for the directory (i.e. <autopsy repo>/Core).
+     *
+     * @param srcDir The autopsy source root directory.
+     * @return The mapping of release names to directories.
+     * @throws IOException
+     */
     private static Map<String, File> getModuleDirs(File srcDir) throws IOException {
         Map<String, File> moduleDirMapping = new HashMap<>();
         for (File dir : srcDir.listFiles((File f) -> f.isDirectory())) {
@@ -222,6 +278,14 @@ public class ModuleUpdates {
         return moduleDirMapping;
     }
 
+    /**
+     * Updates version numbers in autopsy source. Updates nbm specified versions
+     * as well as dependencies.
+     *
+     * @param srcDir The autopsy source root directory.
+     * @param versNums The mapping of release name (i.e.
+     * `org.sleuthkit.autopsy.core` to the new module version numbers).
+     */
     static void setVersions(File srcDir, Map<String, ModuleVersionNumbers> versNums) {
         // TODO parse from repo/DIR/manifest.mf release version
         Map<String, File> moduleDirs;
@@ -238,15 +302,14 @@ public class ModuleUpdates {
             LOGGER.log(Level.SEVERE, MessageFormat.format("The following modules were not found in {0}: {1}.  Aborting...", srcDir, notFoundModules));
             return;
         }
-        
-        
+
         for (Entry<String, File> moduleNameDir : moduleDirs.entrySet()) {
             String moduleName = moduleNameDir.getKey();
             File moduleDir = moduleNameDir.getValue();
             ModuleVersionNumbers thisVersNums = versNums.get(moduleName);
 
             try {
-                LOGGER.log(Level.INFO, "Updating for module name: " + moduleName);
+                LOGGER.log(Level.INFO, "Updating for module name: {0}", moduleName);
                 updateProjXml(moduleDir, versNums);
 
                 if (thisVersNums != null) {
@@ -263,14 +326,27 @@ public class ModuleUpdates {
         return pattern.matcher(text).replaceAll(replacement);
     }
 
+    /**
+     * Escapes special characters in a regex replace pattern (i.e. '\' and '$').
+     *
+     * @param orig The original string value.
+     * @return The escaped string.
+     */
     private static String replaceEscape(String orig) {
         return orig.replaceAll("\\\\", "\\\\").replaceAll("\\$", "\\$");
     }
 
+    /**
+     * Updates project.properties version numbers.
+     *
+     * @param moduleDir The module directory.
+     * @param thisVersNums The version numbers to set.
+     * @throws IOException
+     */
     private static void updateProjProperties(File moduleDir, ModuleVersionNumbers thisVersNums) throws IOException {
         File projectPropsFile = moduleDir.toPath().resolve(PROJECT_PROPS_REL_PATH).toFile();
         if (!projectPropsFile.isFile()) {
-            LOGGER.log(Level.SEVERE, "No project properties found at " + projectPropsFile.getAbsolutePath());
+            LOGGER.log(Level.SEVERE, "No project properties found at {0}", projectPropsFile.getAbsolutePath());
             return;
         }
 
@@ -286,10 +362,17 @@ public class ModuleUpdates {
         }
     }
 
+    /**
+     * Updates the manifest.mf file in source to the new module version numbers.
+     *
+     * @param moduleDir The module directory.
+     * @param thisVersNums The new module version numbers.
+     * @throws IOException
+     */
     private static void updateManifest(File moduleDir, ModuleVersionNumbers thisVersNums) throws IOException {
         File manifestFile = moduleDir.toPath().resolve(MANIFEST_FILE_NAME).toFile();
         if (!manifestFile.isFile()) {
-            LOGGER.log(Level.SEVERE, "No manifest file found at " + manifestFile.getAbsolutePath());
+            LOGGER.log(Level.SEVERE, "No manifest file found at {0}", manifestFile.getAbsolutePath());
             return;
         }
 
@@ -303,14 +386,14 @@ public class ModuleUpdates {
 
         newManifestText = regexUpdate(
                 MANIFEST_SPEC_REGEX,
-                manifestFileText,
+                newManifestText,
                 MessageFormat.format(
                         MANIFEST_SPEC_REPLACE_FMT,
                         replaceEscape(thisVersNums.getSpec().getSemVerStr())));
 
         newManifestText = regexUpdate(
                 MANIFEST_RELEASE_REGEX,
-                manifestFileText,
+                newManifestText,
                 MessageFormat.format(
                         MANIFEST_RELEASE_REPLACE_FMT,
                         replaceEscape(thisVersNums.getRelease().getFullReleaseStr())));
@@ -320,12 +403,24 @@ public class ModuleUpdates {
         }
     }
 
+    /**
+     * Updates project.xml to new version numbers. This method uses xml
+     * parsing/writing instead of regex replacements to avoid xml errors.
+     *
+     * @param moduleDir The module directory.
+     * @param versNums The new version numbers.
+     * @throws IOException
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws XPathExpressionException
+     * @throws TransformerException
+     */
     private static void updateProjXml(File moduleDir, Map<String, ModuleVersionNumbers> versNums)
             throws IOException, ParserConfigurationException, SAXException, XPathExpressionException, TransformerException {
 
         File projXmlFile = moduleDir.toPath().resolve(PROJ_XML_REL_PATH).toFile();
         if (!projXmlFile.isFile()) {
-            LOGGER.log(Level.SEVERE, "No project.xml file found at " + projXmlFile.getAbsolutePath());
+            LOGGER.log(Level.SEVERE, "No project.xml file found at {0}", projXmlFile.getAbsolutePath());
             return;
         }
 
@@ -368,6 +463,14 @@ public class ModuleUpdates {
         }
     }
 
+    /**
+     * Update xml children if present.
+     *
+     * @param parentNode The parent node.
+     * @param childElText The mapping of child element names to new text
+     * content.
+     * @return True if a change occurred.
+     */
     private static boolean updateXmlChildrenIfPresent(Node parentNode, Map<String, String> childElText) {
         NodeList childNodeList = parentNode.getChildNodes();
         boolean changed = false;
@@ -386,23 +489,10 @@ public class ModuleUpdates {
         return changed;
     }
 
-    //        // Spec
-//            // project.properties
-//                // spec.version.base
-//            // manifest
-//                // OpenIDE-Module-Specification-Version
-//        // Implementation
-//            // manifest
-//                // OpenIDE-Module-Implementation-Version
-//        // Release
-//            // manifest
-//                // OpenIDE-Module (/number)
-//                
-//        // Dependency specification
-//            // project.xml
-//                // project.configuration.data.module-dependencies.dependency.run-dependency:
-//                    // specification-version
-//                    // release-version
+    /**
+     * The release value originally in format like
+     * `org.sleuthkit.autopsy.core/5`.
+     */
     public static class ReleaseVal {
 
         private final String moduleName;
@@ -413,14 +503,23 @@ public class ModuleUpdates {
             this.releaseVersion = releaseVersion;
         }
 
+        /**
+         * @return The module name (i.e. `org.sleuthkit.autopsy.core`).
+         */
         public String getModuleName() {
             return moduleName;
         }
 
+        /**
+         * @return The release version if one specified else null.
+         */
         public Integer getReleaseVersion() {
             return releaseVersion;
         }
 
+        /**
+         * @return The full release string like `org.sleuthkit.autopsy.core/5`.
+         */
         public String getFullReleaseStr() {
             return this.releaseVersion == null
                     ? moduleName
@@ -428,6 +527,9 @@ public class ModuleUpdates {
         }
     }
 
+    /**
+     * SemVer object (i.e. 1.3.5).
+     */
     public static class SemVer {
 
         private final int major;
@@ -440,18 +542,30 @@ public class ModuleUpdates {
             this.patch = patch;
         }
 
+        /**
+         * @return Major version.
+         */
         public int getMajor() {
             return major;
         }
 
+        /**
+         * @return Minor version.
+         */
         public int getMinor() {
             return minor;
         }
 
+        /**
+         * @return Patch version (can be null).
+         */
         public Integer getPatch() {
             return patch;
         }
 
+        /**
+         * @return The SemVer string (i.e. `1.5` or `1.5.3`).
+         */
         public String getSemVerStr() {
             return (patch == null)
                     ? MessageFormat.format("{0,number,#}.{1,number,#}", major, minor)
@@ -459,6 +573,9 @@ public class ModuleUpdates {
         }
     }
 
+    /**
+     * Module version numbers record.
+     */
     public static class ModuleVersionNumbers {
 
         private final String moduleName;
@@ -473,18 +590,30 @@ public class ModuleUpdates {
             this.release = release;
         }
 
+        /**
+         * @return The name of the module (i.e. org-sleuthkit-autopsy-core)
+         */
         public String getModuleName() {
             return moduleName;
         }
 
+        /**
+         * @return The specification SemVer.
+         */
         public SemVer getSpec() {
             return spec;
         }
 
+        /**
+         * @return The implementation number.
+         */
         public int getImplementation() {
             return implementation;
         }
 
+        /**
+         * @return The release name/version.
+         */
         public ReleaseVal getRelease() {
             return release;
         }
