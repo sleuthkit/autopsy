@@ -19,6 +19,7 @@ import static japicmp.util.GenericTemplateHelper.haveGenericTemplateInterfacesCh
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javassist.CtClass;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.apiupdate.ApiChangeDTO.FieldChangeDTO;
 import org.sleuthkit.autopsy.apiupdate.ApiChangeDTO.InterfaceChangeDTO;
@@ -260,22 +261,21 @@ public class ChangeOutputGenerator extends OutputGenerator<ApiChangeDTO> {
     }
 
     private String getClassString(JApiClass clz, boolean oldClass) {
-        if (jApiClass.getChangeStatus() == NEW && oldClass || jApiClass.getChangeStatus() == REMOVED && !oldClass) {
-            return null;
-        }
-
+        // TODO serial version id
+        // TODO annotations
         String accessModifier = str(get(clz.getAccessModifier(), oldClass).orElse(null));
         String abstractModifier = str(get(clz.getAbstractModifier(), oldClass).orElse(null));
         String staticModifier = str(get(clz.getStaticModifier(), oldClass).orElse(null));
         String finalModifier = str(get(clz.getFinalModifier(), oldClass).orElse(null));
         String syntheticModifier = str(get(clz.getSyntheticModifier(), oldClass).orElse(null));
 
+        String type = str(clz.getClassType(), oldClass);
         String name = clz.getFullyQualifiedName();
 
-        String genericModifier = strOpt(get(clz.getGenericTemplates();
+        String genericModifier = strGeneric(clz.getGenericTemplates(), oldClass);
 
-        String implementsModifier = TBD;
-        String extendsModifier = TBD;
+        String implementsModifier = strImplements(clz.getInterfaces(), oldClass);
+        String extendsModifier = str(clz.getSuperclass(), oldClass);
 
         return Stream.of(
                 accessModifier,
@@ -283,20 +283,72 @@ public class ChangeOutputGenerator extends OutputGenerator<ApiChangeDTO> {
                 staticModifier,
                 finalModifier,
                 syntheticModifier,
-                "class",
+                type,
                 name + (StringUtils.isBlank(genericModifier) ? "" : genericModifier),
                 implementsModifier,
                 extendsModifier)
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.joining(" "));
     }
+    
+    
+    private String str(JApiSuperclass supClz, boolean oldClass) {
+        Optional<CtClass> ctClass = convert(oldClass ? supClz.getOldSuperclass() : supClz.getNewSuperclass());
+        String supClassExt = ctClass.map(ctClz -> str(ctClz)).orElse(null);
+        return StringUtils.isBlank(supClassExt) ? null : "extends " + supClassExt;
+    }
+    
+    private String strImplements(List<JApiImplementedInterface> interfaces, boolean oldClass) {
+        if (interfaces.isEmpty()) {
+            return null;
+        }
+        
+        String interfaceStr = interfaces.stream()
+                .filter(i -> (oldClass && i.getChangeStatus() == NEW) || (!oldClass && i.getChangeStatus() == REMOVED))
+                .map(i -> str(i.getCtClass()))
+                .collect(Collectors.joining(", "));
+        
+        return StringUtils.isNotBlank(interfaceStr) ? "implements " + interfaceStr : null;
+    }
 
-//    private List<GenericTemplateChangeDTO> getGenericTemplateChanges(JApiHasGenericTemplates jApiHasGenericTemplates) {
-//        return jApiHasGenericTemplates.getGenericTemplates().stream()
-//                .filter(template -> template.getChangeStatus() != JApiChangeStatus.UNCHANGED)
-//                .map(template -> new GenericTemplateChangeDTO())
-//                .collect(Collectors.toList());
-//        
+    
+    private String str(CtClass ctClass) {
+        return ctClass.getName() + (StringUtils.isBlank(ctClass.getGenericSignature()) ? "" : "<" + ctClass.getGenericSignature() + ">");
+    }
+    
+    private String str(JApiClassType classType, boolean oldClass) {
+        return Optional.ofNullable(classType)
+                .flatMap(ct -> convert(oldClass ? ct.getOldTypeOptional() : ct.getNewTypeOptional()))
+                .map(ct -> ct.name().toLowerCase())
+                .orElse("class");
+    }
+
+    private String strGeneric(List<JApiGenericTemplate> templates, boolean oldClass) {
+        if (templates.isEmpty()) {
+            return null;
+        }
+
+        String genericParams = templates.stream()
+                .map(t -> convert(oldClass ? 
+                        str(t.getName(), convert(t.getOldTypeOptional()), t.getOldInterfaceTypes()) :
+                        str(t.getName(), convert(t.getNewTypeOptional()), t.getNewInterfaceTypes())
+                )
+                .filter(Optional::isPresent)
+                .map(t -> t.get())
+                .collect(Collectors.joining(", "));
+
+        return StringUtils.isBlank(genericParams)
+                ? null
+                : "<" + genericParams + ">";
+    }
+    
+    private String strGeneric(String name, Optional<String> mainType, List<JApiGenericType> genericType) {
+        
+    }
+
+    // jApiGenericTemplate.getName() + ":" + interfaceTypes.join( "&")
+//            
+//    private List<GenericTemplateChangeDTO> getGenericTemplateChanges(JApiHasGenericTemplates jApiHasGenericTemplates) {        
 //        if (!genericTemplates.isEmpty()) {
 //            sb.append(tabs(numberOfTabs)).append("GENERIC TEMPLATES: ");
 //            genericTemplates.sort(Comparator.comparing(JApiGenericTemplate::getName));
@@ -343,25 +395,24 @@ public class ChangeOutputGenerator extends OutputGenerator<ApiChangeDTO> {
 //            sb.append("\n");
 //        }
 //    }
-//    private void appendGenericTemplatesInterfaces(StringBuilder sb, JApiGenericTemplate jApiGenericTemplate, boolean printOld, boolean printNew) {
-//        if (printOld) {
-//            for (JApiGenericType jApiGenericType : jApiGenericTemplate.getOldInterfaceTypes()) {
-//                sb.append(" & ");
-//                sb.append(jApiGenericType.getType());
-//                appendGenericTypes(sb, false, jApiGenericType.getGenericTypes());
-//            }
-//        }
-//        if (printNew) {
-//            for (JApiGenericType jApiGenericType : jApiGenericTemplate.getNewInterfaceTypes()) {
-//                sb.append(" & ");
-//                sb.append(jApiGenericType.getType());
-//                appendGenericTypes(sb, false, jApiGenericType.getGenericTypes());
-//            }
-//        }
-//    }
-//    private String str(JApiHasGenericTemplates jApiHasGenericTemplates) {
-//        jApiHasGenericTemplates.getGenericTemplates().get(0).g
-//    }
+    private void appendGenericTemplatesInterfaces(StringBuilder sb, JApiGenericTemplate jApiGenericTemplate, boolean printOld, boolean printNew) {
+        if (printOld) {
+            for (JApiGenericType jApiGenericType : jApiGenericTemplate.getOldInterfaceTypes()) {
+                sb.append(" & ");
+                sb.append(jApiGenericType.getType());
+                appendGenericTypes(sb, false, jApiGenericType.getGenericTypes());
+            }
+        }
+        if (printNew) {
+            for (JApiGenericType jApiGenericType : jApiGenericTemplate.getNewInterfaceTypes()) {
+                sb.append(" & ");
+                sb.append(jApiGenericType.getType());
+                appendGenericTypes(sb, false, jApiGenericType.getGenericTypes());
+            }
+        }
+    }
+
+    
     private FieldChangeDTO getFieldChange(JApiField field) {
         return new FieldChangeDTO(
                 field.getChangeStatus(),
@@ -370,15 +421,11 @@ public class ChangeOutputGenerator extends OutputGenerator<ApiChangeDTO> {
     }
 
     private String getFieldString(JApiField field, boolean oldField) {
-        if (field.getChangeStatus() == NEW && oldField || field.getChangeStatus() == REMOVED && !oldField) {
-            return null;
-        }
-
         String accessModifier = str(get(field.getAccessModifier(), oldField).orElse(null));
         String staticModifier = str(get(field.getStaticModifier(), oldField).orElse(null));
         String finalModifier = str(get(field.getFinalModifier(), oldField).orElse(null));
         String syntheticModifier = str(get(field.getSyntheticModifier(), oldField).orElse(null));
-        String fieldType = strOpt(field.getType(), oldField).orElse("");
+        String fieldType = strOpt(field.getType(), oldField).orElse(null);
         String name = field.getName();
 
         return Stream.of(accessModifier, staticModifier, finalModifier, syntheticModifier, fieldType, name)
@@ -388,7 +435,7 @@ public class ChangeOutputGenerator extends OutputGenerator<ApiChangeDTO> {
 
     private String str(AccessModifier modifier) {
         if (modifier == null || modifier == AccessModifier.PACKAGE_PROTECTED) {
-            return "";
+            return null;
         } else {
             return modifier.name().toLowerCase();
         }
@@ -397,25 +444,25 @@ public class ChangeOutputGenerator extends OutputGenerator<ApiChangeDTO> {
     private String str(StaticModifier modifier) {
         return (modifier == StaticModifier.STATIC)
                 ? "static"
-                : "";
+                : null;
     }
 
     private String str(FinalModifier modifier) {
         return (modifier == FinalModifier.FINAL)
                 ? "final"
-                : "";
+                : null;
     }
 
     private String str(SyntheticModifier modifier) {
         return (modifier == SyntheticModifier.SYNTHETIC)
                 ? "synthetic"
-                : "";
+                : null;
     }
 
     private String str(AbstractModifier modifier) {
         return (modifier == AbstractModifier.ABSTRACT)
                 ? "abstract"
-                : "";
+                : null;
     }
 
     private Optional<String> strOpt(JApiType tp, boolean oldField) {
@@ -611,4 +658,5 @@ public class ChangeOutputGenerator extends OutputGenerator<ApiChangeDTO> {
 //        }
 //        return "n.a.";
 //    }
+
 }
