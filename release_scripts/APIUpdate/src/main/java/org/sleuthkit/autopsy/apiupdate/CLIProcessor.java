@@ -19,10 +19,14 @@
 package org.sleuthkit.autopsy.apiupdate;
 
 import java.io.File;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -74,11 +78,11 @@ public class CLIProcessor {
 
     private static final Option SRC_LOC_OPT = Option.builder()
             .argName("path")
-            .desc("The path to the root of the autopsy repor")
+            .desc("The path to the root of the autopsy report")
             .hasArg(true)
             .longOpt("src-path")
             .option("s")
-            .required(true)
+            .required(false)
             .build();
 
     private static final Option UPDATE_OPT = Option.builder()
@@ -102,9 +106,11 @@ public class CLIProcessor {
     private static final String DEFAULT_CURR_VERSION = "Current Version";
     private static final String DEFAULT_PREV_VERSION = "Previous Version";
     private static final String BUILD_REL_PATH = "build/cluster/modules";
+    private static final String JAR_SRC_REL_PATH = "../../../";
 
     /**
      * Creates an Options object from a list of options.
+     *
      * @param opts The list of options.
      * @return The options object.
      */
@@ -133,6 +139,7 @@ public class CLIProcessor {
 
     /**
      * Prints help message.
+     *
      * @param ex The exception or null if no exception.
      */
     static void printHelp(Exception ex) {
@@ -145,9 +152,10 @@ public class CLIProcessor {
 
     /**
      * Parses the CLI args.
+     *
      * @param args The arguments.
      * @return The CLIArgs object.
-     * @throws ParseException 
+     * @throws ParseException
      */
     static CLIArgs parseCli(String[] args) throws ParseException {
         CommandLine helpCmd = parser.parse(HELP_OPTIONS, args, true);
@@ -159,12 +167,23 @@ public class CLIProcessor {
         CommandLine cmd = parser.parse(CLI_OPTIONS, args);
         String curVers = cmd.hasOption(CUR_VERS_OPT) ? cmd.getOptionValue(CUR_VERS_OPT) : DEFAULT_CURR_VERSION;
         String prevVers = cmd.hasOption(PREV_VERS_OPT) ? cmd.getOptionValue(PREV_VERS_OPT) : DEFAULT_PREV_VERSION;
-        String curVersPath = cmd.hasOption(CUR_VERS_PATH_OPT) 
-                ? cmd.getOptionValue(CUR_VERS_PATH_OPT) 
-                : Paths.get(cmd.getOptionValue(SRC_LOC_OPT), BUILD_REL_PATH).toString();
-        
+
+        String srcPath;
+        try {
+            srcPath = cmd.hasOption(SRC_LOC_OPT)
+                    ? cmd.getOptionValue(SRC_LOC_OPT)
+                    : new File(CLIProcessor.class.getProtectionDomain().getCodeSource().getLocation()
+                            .toURI()).toPath().resolve(JAR_SRC_REL_PATH).toAbsolutePath().toString();
+        } catch (URISyntaxException ex) {
+            throw new ParseException("Unable to determine source path from current location: " + ex.getMessage());
+        }
+
+        String curVersPath = cmd.hasOption(CUR_VERS_PATH_OPT)
+                ? cmd.getOptionValue(CUR_VERS_PATH_OPT)
+                : Paths.get(srcPath, BUILD_REL_PATH).toString();
+
         String prevVersPath = cmd.getOptionValue(PREV_VERS_PATH_OPT);
-        String srcPath = cmd.getOptionValue(SRC_LOC_OPT);
+
         boolean makeUpdate = cmd.hasOption(UPDATE_OPT);
         File curVersFile = new File(curVersPath);
         File prevVersFile = new File(prevVersPath);
@@ -223,15 +242,16 @@ public class CLIProcessor {
         }
 
         /**
-         * @return The path to the directory containing the jars for current version.
+         * @return The path to the directory containing the jars for current
+         * version.
          */
         public File getCurrentVersPath() {
             return currentVersPath;
         }
 
-        
         /**
-         * @return The path to the directory containing the jars for previous version.
+         * @return The path to the directory containing the jars for previous
+         * version.
          */
         public File getPreviousVersPath() {
             return previousVersPath;

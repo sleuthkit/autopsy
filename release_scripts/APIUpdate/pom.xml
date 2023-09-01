@@ -46,6 +46,8 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
+                    <!--output jar file to project root-->
+                    <outputDirectory>${project.basedir}</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>
