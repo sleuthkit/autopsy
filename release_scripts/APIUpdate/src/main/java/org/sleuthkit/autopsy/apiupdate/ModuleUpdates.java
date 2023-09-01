@@ -25,8 +25,10 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,10 +62,6 @@ import org.xml.sax.SAXException;
 public class ModuleUpdates {
 
     private static final Logger LOGGER = Logger.getLogger(ModuleUpdates.class.getName());
-
-    static {
-        LOGGER.addHandler(new StreamHandler(System.out, new SimpleFormatter()));
-    }
 
     private static final Pattern SPEC_REGEX = Pattern.compile("^\\s*((?<major>\\d*)\\.)?(?<minor>\\d*)(\\.(?<patch>\\d*))?\\s*$");
 
@@ -236,6 +234,14 @@ public class ModuleUpdates {
             return;
         }
 
+        Set<String> notFoundModules = new HashSet<>(versNums.keySet());
+        notFoundModules.removeAll(moduleDirs.keySet());
+        if (!notFoundModules.isEmpty()) {
+            LOGGER.log(Level.SEVERE, MessageFormat.format("The following modules were not found in {0}: {1}.  Aborting...", srcDir, notFoundModules));
+            return;
+        }
+        
+        
         for (Entry<String, File> moduleNameDir : moduleDirs.entrySet()) {
             String moduleName = moduleNameDir.getKey();
             File moduleDir = moduleNameDir.getValue();

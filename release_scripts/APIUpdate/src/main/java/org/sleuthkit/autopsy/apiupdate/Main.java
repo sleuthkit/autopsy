@@ -38,7 +38,7 @@ public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
-        args = "-c C:\\Users\\gregd\\Desktop\\apidiff\\new -p C:\\Users\\gregd\\Desktop\\apidiff\\old -cv 4.21.0 -pv 4.20.0 -s C:\\Users\\gregd\\Documents\\Source\\autopsy".split(" ");
+        args = "-p C:\\Users\\gregd\\Desktop\\apidiff\\old -s C:\\Users\\gregd\\Documents\\Source\\autopsy".split(" ");
         CLIArgs cliArgs;
         try {
             cliArgs = CLIProcessor.parseCli(args);
@@ -68,7 +68,7 @@ public class Main {
 
                 outputDiff(commonJarFileName, record, prevVersionNums, projectedVersionNums);
 
-                newVersionNumMapping.put(commonJarFileName, projectedVersionNums);
+                newVersionNumMapping.put(projectedVersionNums.getRelease().getModuleName(), projectedVersionNums);
             } catch (IOException ex) {
                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
             }
