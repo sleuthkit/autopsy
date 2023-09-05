@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,7 +71,7 @@ import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsSearchParams;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.AnalysisResultConfigFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.KeywordHitResultFetcher;
-import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
+import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultDAO.MalwareResultConfigFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.AnalysisResultSearchParam;
 import org.sleuthkit.autopsy.mainui.datamodel.CommAccountsDAO.CommAccountFetcher;
 import org.sleuthkit.autopsy.mainui.datamodel.CreditCardBinSearchParams;
@@ -1485,6 +1485,25 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                     ex);
         }
     }
+    
+    /**
+     * Displays malware results of querying the DAO for given search query.
+     *
+     * @param setKey The search parameter query.
+     */
+    void displayMalwareResultSet(AnalysisResultSearchParam setKey) {
+        try {
+            this.searchResultManager = new SearchManager(new MalwareResultConfigFetcher(setKey), getPageSize());
+            SearchResultsDTO results = searchResultManager.getResults();
+            displaySearchResults(results, true, setKey.getNodeSelectionInfo());
+        } catch (ExecutionException | IllegalArgumentException ex) {
+            logger.log(Level.WARNING, MessageFormat.format(
+                    "There was an error fetching malware data for configuration: {0} and data source id: {1}.",
+                    setKey.getConfiguration(),
+                    setKey.getDataSourceId() == null ? "<null>" : setKey.getDataSourceId()),
+                    ex);
+        }
+    }    
  
     /**
      * Displays results of querying the DAO for given search parameters (set and

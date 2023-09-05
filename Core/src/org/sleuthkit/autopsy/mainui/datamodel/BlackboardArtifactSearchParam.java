@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.mainui.datamodel;
 
 import java.util.Objects;
 import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo;
-import org.sleuthkit.autopsy.mainui.nodes.ChildNodeSelectionInfo.BlackboardArtifactNodeSelectionInfo;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2021 Basis Technology Corp.
+ * Copyright 2021-23 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,6 +66,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbPreparedStatement;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Score;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -299,6 +300,36 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         TableData tableData = createTableData(artType, pagedArtifacts);
         return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), analysisResultCount.get());
     }
+    
+    private AnalysisResultTableSearchResultsDTO fetchMalwareResultsForTable(SearchParams<BlackboardArtifactSearchParam> cacheKey) throws NoCurrentCaseException, TskCoreException {
+
+        SleuthkitCase skCase = getCase();
+        Blackboard blackboard = skCase.getBlackboard();
+        BlackboardArtifact.Type artType = cacheKey.getParamData().getArtifactType();
+        List<BlackboardArtifact> arts = new ArrayList<>();        
+        Long dataSourceId = cacheKey.getParamData().getDataSourceId();
+        
+        String originalWhereClause = " artifacts.artifact_type_id = " + artType.getTypeID() 
+                + " AND (results.significance=" + Score.Significance.NOTABLE.getId()
+                + " OR results.significance=" + Score.Significance.LIKELY_NOTABLE.getId() + " )";
+        if (dataSourceId != null) {
+            originalWhereClause += " AND artifacts.data_source_obj_id = " + dataSourceId + " ";
+        }
+
+        String pagedWhereClause = originalWhereClause
+                + " ORDER BY artifacts.obj_id ASC"
+                + (cacheKey.getMaxResultsCount() != null && cacheKey.getMaxResultsCount() > 0 ? " LIMIT " + cacheKey.getMaxResultsCount() : "")
+                + (cacheKey.getStartItem() > 0 ? " OFFSET " + cacheKey.getStartItem() : "");
+        
+        arts.addAll(blackboard.getAnalysisResultsWhere(pagedWhereClause));
+        blackboard.loadBlackboardAttributes(arts);
+
+        // Get total number of results
+        long totalResultsCount = getTotalResultsCount(cacheKey, arts.size());
+
+        TableData tableData = createTableData(artType, arts);
+        return new AnalysisResultTableSearchResultsDTO(artType, tableData.columnKeys, tableData.rows, cacheKey.getStartItem(), totalResultsCount);
+    }
 
     @Override
     void addAnalysisResultColumnKeys(List<ColumnKey> columnKeys) {
@@ -403,6 +434,17 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
         SearchParams<AnalysisResultSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
         return configHitCache.get(searchParams, () -> fetchConfigResultsForTable(searchParams));
     }
+    
+    public AnalysisResultTableSearchResultsDTO getMalwareConfigResults(AnalysisResultSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
+        if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
+            throw new IllegalArgumentException(MessageFormat.format("Illegal data.  "
+                    + "Data source id must be null or > 0.  "
+                    + "Received data source id: {0}", artifactKey.getDataSourceId() == null ? "<null>" : artifactKey.getDataSourceId()));
+        }
+
+        SearchParams<BlackboardArtifactSearchParam> searchParams = new SearchParams<>(artifactKey, startItem, maxCount);
+        return analysisResultCache.get(searchParams, () -> fetchMalwareResultsForTable(searchParams));
+    }    
 
     public AnalysisResultTableSearchResultsDTO getKeywordHitsForTable(KeywordHitSearchParam artifactKey, long startItem, Long maxCount) throws ExecutionException, IllegalArgumentException {
         if (artifactKey.getDataSourceId() != null && artifactKey.getDataSourceId() < 0) {
@@ -500,6 +542,19 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
                 logger.log(Level.WARNING, "An error occurred while fetching artifact type counts with query:\nSELECT" + query, ex);
             }
         });
+        
+        // if there are TSK_MALWARE artifacts present then get a separate count 
+        // of those, including only the results we want to display
+        if (typeCounts.containsKey(BlackboardArtifact.Type.TSK_MALWARE)) {
+            boolean hasConfiguration = typeCounts.get(BlackboardArtifact.Type.TSK_MALWARE).getRight();
+            long count = 0;
+            try {
+                count = getMalwareCount(dataSourceId);
+            } catch (IllegalArgumentException | ExecutionException ex) {
+                logger.log(Level.WARNING, "An error occurred while fetching malware node count", ex);
+            }
+            typeCounts.put(BlackboardArtifact.Type.TSK_MALWARE, Pair.of(count, hasConfiguration));
+        }
 
         return typeCounts;
     }
@@ -600,6 +655,50 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
 
         return new TreeResultsDTO<>(allConfigurations);
     }
+    
+    /**
+     * Get count of Malware nodes to be used in the tree view. NOTE: we only
+     * display/count Malware nodes that have a score of NOTABLE or LIKELY_NOTABLE.
+     *
+     * @param dataSourceId The data source object id for which the results
+     *                     should be filtered or null if no data source
+     *                     filtering.
+     *
+     * @return Number of malware nodes that have a score of NOTABLE or LIKELY_NOTABLE.
+     *
+     * @throws IllegalArgumentException
+     * @throws ExecutionException
+     */
+    long getMalwareCount(Long dataSourceId) throws IllegalArgumentException, ExecutionException {
+
+        AtomicLong malwareResultCount = new AtomicLong(0);
+        try {
+            SleuthkitCase skCase = getCase();
+            String query = "COUNT(*) AS count " 
+                    + "FROM blackboard_artifacts,tsk_analysis_results WHERE "
+                    + "blackboard_artifacts.artifact_type_id=" + BlackboardArtifact.Type.TSK_MALWARE.getTypeID()
+                    + " AND tsk_analysis_results.artifact_obj_id=blackboard_artifacts.artifact_obj_id" 
+                    + " AND (tsk_analysis_results.significance=" + Score.Significance.NOTABLE.getId() 
+                    + " OR tsk_analysis_results.significance=" + Score.Significance.LIKELY_NOTABLE.getId() + " )";
+            if (dataSourceId != null && dataSourceId > 0) {
+                query += "  AND blackboard_artifacts.data_source_obj_id = " + dataSourceId; //NON-NLS
+            }
+
+            skCase.getCaseDbAccessManager().select(query, (resultSet) -> {
+                try {
+                    if (resultSet.next()) {
+                        malwareResultCount.set(resultSet.getLong("count"));
+                    }
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "An error occurred while fetching malware counts.", ex);
+                }
+            });
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            throw new ExecutionException("An error occurred while malware hits.", ex);
+        }
+
+        return malwareResultCount.get();
+    } 
 
     /**
      * Get counts for individual sets of the provided type to be used in the
@@ -1394,6 +1493,35 @@ public class AnalysisResultDAO extends BlackboardArtifactDAO {
             return getDAO().isAnalysisResultsConfigInvalidating(this.getParameters(), evt);
         }
     }
+    
+    /**
+     * Handles fetching and paging of malware results.
+     */
+    public static class MalwareResultConfigFetcher extends DAOFetcher<AnalysisResultSearchParam> {
+
+        /**
+         * Main constructor.
+         *
+         * @param params Parameters to handle fetching of data.
+         */
+        public MalwareResultConfigFetcher(AnalysisResultSearchParam params) {
+            super(params);
+        }
+
+        protected AnalysisResultDAO getDAO() {
+            return MainDAO.getInstance().getAnalysisResultDAO();
+        }
+
+        @Override
+        public SearchResultsDTO getSearchResults(int pageSize, int pageIdx) throws ExecutionException {
+            return getDAO().getMalwareConfigResults(this.getParameters(), pageIdx * pageSize, (long) pageSize);
+        }
+
+        @Override
+        public boolean isRefreshRequired(DAOEvent evt) {
+            return getDAO().isAnalysisResultsInvalidating(this.getParameters(), evt);
+        }
+    }    
 
     /**
      * Handles fetching and paging of keyword hits.

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2021 Basis Technology Corp.
+ * Copyright 2011-2023 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -494,6 +494,16 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      */
     public void displayKeywordHits(KeywordHitSearchParam keywordParams) {
         dataResultPanel.displayKeywordHits(keywordParams);
+    }
+
+    /**
+     * Displays results of querying the DAO for malware artifacts matching the 
+     * search parameters query.
+     *
+     * @param params The search parameters.
+     */
+    public void displayMalwareHits(AnalysisResultSearchParam params) {
+        dataResultPanel.displayMalwareResultSet(params);
     }
 
     /**
