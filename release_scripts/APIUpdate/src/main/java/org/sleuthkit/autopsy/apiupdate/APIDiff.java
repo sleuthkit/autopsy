@@ -26,15 +26,10 @@ import japicmp.config.Options;
 import japicmp.filter.BehaviorFilter;
 import japicmp.filter.ClassFilter;
 import japicmp.filter.FieldFilter;
-import japicmp.model.JApiAnnotation;
 import japicmp.model.JApiClass;
-import japicmp.model.JApiConstructor;
-import japicmp.model.JApiField;
-import japicmp.model.JApiHasChangeStatus;
-import japicmp.model.JApiImplementedInterface;
-import japicmp.model.JApiMethod;
-import japicmp.model.JApiSuperclass;
-import japicmp.output.Filter;
+import japicmp.model.JApiSemanticVersionLevel;
+import static japicmp.model.JApiSemanticVersionLevel.MAJOR;
+import japicmp.output.semver.SemverOut;
 import japicmp.output.stdout.StdoutOutputGenerator;
 import java.io.File;
 import java.io.FileFilter;
@@ -44,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +59,7 @@ import org.apache.commons.lang3.tuple.Pair;
  * Handles diffing the public API between two jar files.
  */
 public class APIDiff {
+
     private static final Logger LOGGER = Logger.getLogger(APIDiff.class.getName());
 
     // filters to a jar or nbm file
@@ -83,20 +78,20 @@ public class APIDiff {
         if (prev.isFile() && curr.isFile()) {
             return Arrays.asList(Pair.of(prev, curr));
         }
-        
+
         Map<String, File> prevJars = getJars(prev);
         Map<String, File> currJars = getJars(curr);
-        
+
         List<Pair<File, File>> retMapping = new ArrayList<>();
 
-        for (String prevKey: (Iterable<String>) prevJars.keySet().stream().sorted(StringUtils::compareIgnoreCase)::iterator) {
+        for (String prevKey : (Iterable<String>) prevJars.keySet().stream().sorted(StringUtils::compareIgnoreCase)::iterator) {
             File prevFile = prevJars.get(prevKey);
             File curFile = currJars.get(prevKey);
             if (prevFile != null && curFile != null) {
                 retMapping.add(Pair.of(prevFile, curFile));
             }
         }
-        
+
         return retMapping;
     }
 
@@ -158,11 +153,11 @@ public class APIDiff {
         // scope only to previous or current public packages
         Set<String> prevPublicApiPackages = getPublicPackages(prevJar);
         Set<String> curPublicApiPackages = getPublicPackages(curJar);
-        
+
         boolean filterToPublicPackages = (prevPublicApiPackages == null && curPublicApiPackages == null) ? false : true;
         prevPublicApiPackages = prevPublicApiPackages == null ? Collections.emptySet() : prevPublicApiPackages;
         curPublicApiPackages = curPublicApiPackages == null ? Collections.emptySet() : curPublicApiPackages;
-        
+
         Set<String> allPublicApiPackages = new HashSet<>();
         allPublicApiPackages.addAll(prevPublicApiPackages);
         allPublicApiPackages.addAll(curPublicApiPackages);
@@ -185,9 +180,9 @@ public class APIDiff {
         JarArchiveComparatorOptions comparatorOptions = new JarArchiveComparatorOptions();
         // only classes in prev or current public api
         if (filterToPublicPackages) {
-            comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !allPublicApiPackages.contains(ctClass.getPackageName()));    
+            comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !allPublicApiPackages.contains(ctClass.getPackageName()));
         }
-        
+
         // only public classes
         comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !Modifier.isPublic(ctClass.getModifiers()));
         // only fields, methods that are public or protected and class is not final
@@ -202,13 +197,12 @@ public class APIDiff {
                 new JApiCmpArchive(curJar, curVersion)
         );
 
-        PublicApiChangeType changeType = getChangeType(jApiClasses);
-
         Options options = Options.newDefault();
         options.setOldArchives(Arrays.asList(new JApiCmpArchive(prevJar, prevVersion)));
         options.setNewArchives(Arrays.asList(new JApiCmpArchive(curJar, curVersion)));
         options.setOutputOnlyModifications(true);
 
+        PublicApiChangeType changeType = getChangeType(options, jApiClasses);
         StdoutOutputGenerator stdoutOutputGenerator = new StdoutOutputGenerator(options, jApiClasses);
         String humanReadableApiChange = stdoutOutputGenerator.generate();
         return new ComparisonRecord(prevVersion, curVersion, prevJar, curJar, humanReadableApiChange, changeType, onlyPrevApiPackages, onlyCurApiPackages, commonApiPackages);
@@ -219,20 +213,26 @@ public class APIDiff {
      * (where no change is min and incompatible change is max).
      *
      * @param apiChangeRef The atomic ref to a public api change type.
-     * @param tp The possibly new change type.
+     * @param versionLevel The semantic version level of the current change.
      */
-    private static void updateToMax(AtomicReference<PublicApiChangeType> apiChangeRef, JApiHasChangeStatus tp) {
+    private static void updateToMax(AtomicReference<PublicApiChangeType> apiChangeRef, JApiSemanticVersionLevel versionLevel) {
         PublicApiChangeType apiChangeType;
-        switch (tp.getChangeStatus()) {
-            case UNCHANGED:
-                apiChangeType = PublicApiChangeType.NONE;
-                break;
-            case NEW:
+        if (versionLevel == null) {
+            return;
+        }
+
+        switch (versionLevel) {
+            case MINOR:
                 apiChangeType = PublicApiChangeType.COMPATIBLE_CHANGE;
                 break;
-            case MODIFIED:
-            case REMOVED:
+            case PATCH:
+                apiChangeType = PublicApiChangeType.COMPATIBLE_CHANGE;
+                break;
+            case MAJOR:
+                apiChangeType = PublicApiChangeType.INCOMPATIBLE_CHANGE;
+                break;
             default:
+                LOGGER.log(Level.WARNING, "Unknown sem ver type: " + versionLevel.name());
                 apiChangeType = PublicApiChangeType.INCOMPATIBLE_CHANGE;
                 break;
         }
@@ -244,49 +244,13 @@ public class APIDiff {
     /**
      * Determines the public api change type for the given classes.
      *
+     * @param options The options for output.
      * @param jApiClasses The classes.
      * @return The public API change type.
      */
-    static PublicApiChangeType getChangeType(List<JApiClass> jApiClasses) {
+    static PublicApiChangeType getChangeType(Options options, List<JApiClass> jApiClasses) {
         AtomicReference<PublicApiChangeType> apiChange = new AtomicReference<>(PublicApiChangeType.NONE);
-
-        Filter.filter(jApiClasses, new Filter.FilterVisitor() {
-            @Override
-            public void visit(Iterator<JApiClass> itrtr, JApiClass jac) {
-                updateToMax(apiChange, jac);
-            }
-
-            @Override
-            public void visit(Iterator<JApiMethod> itrtr, JApiMethod jam) {
-                updateToMax(apiChange, jam);
-            }
-
-            @Override
-            public void visit(Iterator<JApiConstructor> itrtr, JApiConstructor jac) {
-                updateToMax(apiChange, jac);
-            }
-
-            @Override
-            public void visit(Iterator<JApiImplementedInterface> itrtr, JApiImplementedInterface jaii) {
-                updateToMax(apiChange, jaii);
-            }
-
-            @Override
-            public void visit(Iterator<JApiField> itrtr, JApiField jaf) {
-                updateToMax(apiChange, jaf);
-            }
-
-            @Override
-            public void visit(Iterator<JApiAnnotation> itrtr, JApiAnnotation jaa) {
-                updateToMax(apiChange, jaa);
-            }
-
-            @Override
-            public void visit(JApiSuperclass jas) {
-                updateToMax(apiChange, jas);
-            }
-        });
-
+        new SemverOut(options, jApiClasses, (change, semanticVersionLevel) -> updateToMax(apiChange, semanticVersionLevel)).generate();
         return apiChange.get();
     }
 
