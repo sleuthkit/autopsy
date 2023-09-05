@@ -19,6 +19,7 @@
 # yaml reference here: https://snapcraft.io/docs/snapcraft-yaml-reference
 # sample yaml files here: https://github.com/videolan/vlc/blob/master/extras/package/snap/snapcraft.yaml, https://github.com/canonical/firefox-snap/blob/stable/snapcraft.yaml
 name: autopsy
+title: Autopsy
 # more on base snaps here: https://snapcraft.io/docs/base-snaps
 # core is based on corresponding ubuntu version.  ubuntu version information can be found here: https://wiki.ubuntu.com/Releases
 base: core22
