@@ -10,7 +10,7 @@ This code can be used to determine the public API changes between the previous v
 2. Make sure you build the current source directory in order for the program to find the new compiled jars.
 3. This code can be called from this directory with a command like: `java -jar APIUpdate-1.0-jar-with-dependencies.jar -p C:\path\to\prev\vers\jars\` to get api updates.
     - You can specify the `-u` flag to make updates in source code making the command: `java -jar APIUpdate-1.0-jar-with-dependencies.jar -p C:\path\to\prev\vers\jars\ -u`.  
-    - You can also add `  >C:\Users\gregd\Desktop\outputdiff.txt 2>&1` to output to a file. 
+    - You can also add `  >C:\path\to\outputdiff.txt 2>&1` to output to a file. 
 
 ## Arguments
 
