@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.apiupdate;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.tuple.Pair;
 import org.sleuthkit.autopsy.apiupdate.APIDiff.ComparisonRecord;
 import org.sleuthkit.autopsy.apiupdate.CLIProcessor.CLIArgs;
 import org.sleuthkit.autopsy.apiupdate.ModuleUpdates.ModuleVersionNumbers;
@@ -52,19 +54,26 @@ public class Main {
 
         Map<String, ModuleVersionNumbers> newVersionNumMapping = new HashMap<>();
 
-        for (String commonJarFileName : APIDiff.getCommonJars(cliArgs.getPreviousVersPath(), cliArgs.getCurrentVersPath())) {
+        for (Pair<File, File> prevCurJars : APIDiff.getCommonJars(cliArgs.getPreviousVersPath(), cliArgs.getCurrentVersPath())) {
             try {
-                ModuleVersionNumbers prevVersionNums = ModuleUpdates.getVersionsFromJar(cliArgs.getPreviousVersPath().toPath().resolve(commonJarFileName).toFile());
+                ModuleVersionNumbers prevVersionNums = ModuleUpdates.getVersionsFromJar(prevCurJars.getLeft());
 
                 ComparisonRecord record = APIDiff.getComparison(
                         cliArgs.getPreviousVersion(),
                         cliArgs.getCurrentVersion(),
-                        cliArgs.getPreviousVersPath().toPath().resolve(commonJarFileName).toFile(),
-                        cliArgs.getCurrentVersPath().toPath().resolve(commonJarFileName).toFile());
+                        prevCurJars.getLeft(),
+                        prevCurJars.getRight());
 
                 ModuleVersionNumbers projectedVersionNums = ModuleUpdates.getModuleVersionUpdate(prevVersionNums, record.getChangeType());
+                
+                String jarFileName;
+                if (prevCurJars.getLeft().getName().equalsIgnoreCase(prevCurJars.getRight().getName())) {
+                    jarFileName = prevCurJars.getLeft().getName();
+                } else {
+                    jarFileName = MessageFormat.format("[previous: {0}, current: {1}]", prevCurJars.getLeft().getName(), prevCurJars.getRight().getName());
+                }
 
-                outputDiff(commonJarFileName, record, prevVersionNums, projectedVersionNums);
+                outputDiff(jarFileName, record, prevVersionNums, projectedVersionNums);
 
                 newVersionNumMapping.put(projectedVersionNums.getRelease().getModuleName(), projectedVersionNums);
             } catch (IOException ex) {

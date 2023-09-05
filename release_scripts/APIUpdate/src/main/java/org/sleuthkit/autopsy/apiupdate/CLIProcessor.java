@@ -189,12 +189,16 @@ public class CLIProcessor {
         File prevVersFile = new File(prevVersPath);
         File srcPathFile = new File(srcPath);
 
-        if (!curVersFile.isDirectory()) {
+        if (!curVersFile.exists()) {
             throw new ParseException("No directory found at " + curVersFile.getAbsolutePath());
         }
 
-        if (!prevVersFile.isDirectory()) {
+        if (!prevVersFile.exists()) {
             throw new ParseException("No directory found at " + prevVersFile.getAbsolutePath());
+        }
+        
+        if (curVersFile.isDirectory() != prevVersFile.isDirectory()) {
+            throw new ParseException("Current and previous paths must both be directories or files");
         }
 
         if (!srcPathFile.isDirectory()) {

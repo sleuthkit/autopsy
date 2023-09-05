@@ -40,12 +40,17 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javassist.CtBehavior;
@@ -53,11 +58,14 @@ import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMember;
 import javassist.Modifier;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Handles diffing the public API between two jar files.
  */
 public class APIDiff {
+    private static final Logger LOGGER = Logger.getLogger(APIDiff.class.getName());
 
     // filters to a jar or nbm file
     private static final FileFilter JAR_FILTER
@@ -67,19 +75,29 @@ public class APIDiff {
      * Identifies common jar files between two directories. Only files listed in
      * the directory are considered. This method does not recurse.
      *
-     * @param prevDir The previous version directory.
-     * @param currDir The current version directory.
+     * @param prev The previous version directory.
+     * @param curr The current version directory.
      * @return The jar file names.
      */
-    static List<String> getCommonJars(File prevDir, File currDir) {
-        Set<String> prevJars = getJars(prevDir);
-        Set<String> currJars = getJars(currDir);
+    static List<Pair<File, File>> getCommonJars(File prev, File curr) {
+        if (prev.isFile() && curr.isFile()) {
+            return Arrays.asList(Pair.of(prev, curr));
+        }
+        
+        Map<String, File> prevJars = getJars(prev);
+        Map<String, File> currJars = getJars(curr);
+        
+        List<Pair<File, File>> retMapping = new ArrayList<>();
 
-        Set<String> commonJars = new HashSet<>(prevJars);
-        commonJars.retainAll(currJars);
-
-        // TODO how to handle different
-        return commonJars.stream().sorted().collect(Collectors.toList());
+        for (String prevKey: (Iterable<String>) prevJars.keySet().stream().sorted(StringUtils::compareIgnoreCase)::iterator) {
+            File prevFile = prevJars.get(prevKey);
+            File curFile = currJars.get(prevKey);
+            if (prevFile != null && curFile != null) {
+                retMapping.add(Pair.of(prevFile, curFile));
+            }
+        }
+        
+        return retMapping;
     }
 
     /**
@@ -88,10 +106,10 @@ public class APIDiff {
      * @param dir The directory.
      * @return The jar file names.
      */
-    private static Set<String> getJars(File dir) {
-        return Stream.of(dir.listFiles(JAR_FILTER))
-                .map(f -> f.getName())
-                .collect(Collectors.toSet());
+    private static Map<String, File> getJars(File dir) {
+        File[] files = dir.isDirectory() ? dir.listFiles(JAR_FILTER) : new File[]{dir};
+        files = files == null ? new File[0] : files;
+        return Stream.of(files).collect(Collectors.toMap(f -> f.getName(), f -> f, (f1, f2) -> f1));
     }
 
     /**
@@ -106,7 +124,8 @@ public class APIDiff {
     private static Set<String> getPublicPackages(File jarFile) throws IOException, IllegalStateException {
         String publicPackageStr = ManifestLoader.loadFromJar(jarFile).getValue("OpenIDE-Module-Public-Packages");
         if (publicPackageStr == null) {
-            throw new IllegalStateException(MessageFormat.format("Manifest for {0} does not have key of 'OpenIDE-Module-Public-Packages'", jarFile.getAbsolutePath()));
+            LOGGER.log(Level.WARNING, MessageFormat.format("Manifest for {0} does not have key of 'OpenIDE-Module-Public-Packages'", jarFile.getAbsolutePath()));
+            return null;
         } else {
             return Stream.of(publicPackageStr.split(","))
                     .map(String::trim)
@@ -139,7 +158,11 @@ public class APIDiff {
         // scope only to previous or current public packages
         Set<String> prevPublicApiPackages = getPublicPackages(prevJar);
         Set<String> curPublicApiPackages = getPublicPackages(curJar);
-
+        
+        boolean filterToPublicPackages = (prevPublicApiPackages == null && curPublicApiPackages == null) ? false : true;
+        prevPublicApiPackages = prevPublicApiPackages == null ? Collections.emptySet() : prevPublicApiPackages;
+        curPublicApiPackages = curPublicApiPackages == null ? Collections.emptySet() : curPublicApiPackages;
+        
         Set<String> allPublicApiPackages = new HashSet<>();
         allPublicApiPackages.addAll(prevPublicApiPackages);
         allPublicApiPackages.addAll(curPublicApiPackages);
@@ -161,7 +184,10 @@ public class APIDiff {
 
         JarArchiveComparatorOptions comparatorOptions = new JarArchiveComparatorOptions();
         // only classes in prev or current public api
-        comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !allPublicApiPackages.contains(ctClass.getPackageName()));
+        if (filterToPublicPackages) {
+            comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !allPublicApiPackages.contains(ctClass.getPackageName()));    
+        }
+        
         // only public classes
         comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !Modifier.isPublic(ctClass.getModifiers()));
         // only fields, methods that are public or protected and class is not final

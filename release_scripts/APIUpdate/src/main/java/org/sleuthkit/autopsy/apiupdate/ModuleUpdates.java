@@ -110,7 +110,7 @@ public class ModuleUpdates {
      */
     private static SemVer parseSemVer(String semVerStr, SemVer defaultSemVer, String resourceForLogging) {
         if (StringUtils.isBlank(semVerStr)) {
-            LOGGER.log(Level.SEVERE, MessageFormat.format("Unable to parse semver for empty string in {0}", resourceForLogging));
+            LOGGER.log(Level.WARNING, MessageFormat.format("Unable to parse semver for empty string in {0}", resourceForLogging));
             return defaultSemVer;
         }
 
@@ -127,7 +127,7 @@ public class ModuleUpdates {
                 LOGGER.log(Level.SEVERE, MessageFormat.format("Unable to parse semver string {0} for {1}", semVerStr, resourceForLogging), ex);
             }
         } else {
-            LOGGER.log(Level.SEVERE, MessageFormat.format("Unable to parse semver string {0} for {1}", semVerStr, resourceForLogging));
+            LOGGER.log(Level.WARNING, MessageFormat.format("Unable to parse semver string {0} for {1}", semVerStr, resourceForLogging));
         }
 
         return defaultSemVer;
@@ -154,7 +154,7 @@ public class ModuleUpdates {
             }
             return new ReleaseVal(releaseName, releaseNum);
         } else {
-            LOGGER.log(Level.SEVERE, MessageFormat.format("Unable to parse release version string {0} for {1}", releaseStr, resourceForLogging));
+            LOGGER.log(Level.WARNING, MessageFormat.format("Unable to parse release version string {0} for {1}", releaseStr, resourceForLogging));
         }
 
         return new ReleaseVal("", null);
@@ -175,7 +175,7 @@ public class ModuleUpdates {
         try {
             return Integer.parseInt(str);
         } catch (NullPointerException | NumberFormatException ex) {
-            LOGGER.log(Level.SEVERE, MessageFormat.format("Unable to parse version string {0} for {1}", str, resourceForLogging), ex);
+            LOGGER.log(Level.WARNING, MessageFormat.format("Unable to parse version string {0} for {1}", str, resourceForLogging), ex);
             return defaultVal;
         }
     }
@@ -193,8 +193,15 @@ public class ModuleUpdates {
         SemVer specSemVer = parseSemVer(spec, DEFAULT_SEMVER,
                 MessageFormat.format("{0} in manifest for {1}", MANIFEST_SPEC_KEY, jarFile));
 
-        int implementation = tryParse(manifest.getValue(MANIFEST_IMPL_KEY), DEFAULT_VERS_VAL,
-                MessageFormat.format("{0} in manifest for {1}", MANIFEST_IMPL_KEY, jarFile));
+        String implStr = manifest.getValue(MANIFEST_IMPL_KEY);
+        int implementation;
+        if (StringUtils.isBlank(implStr)) {
+            LOGGER.log(Level.WARNING, MessageFormat.format("No {0} for implementation found in {1}.  Using default of {2}.", MANIFEST_IMPL_KEY, jarFile.getName(), DEFAULT_VERS_VAL));
+            implementation = DEFAULT_VERS_VAL;
+        } else {
+            implementation = tryParse(implStr, DEFAULT_VERS_VAL,
+                    MessageFormat.format("{0} in manifest for {1}", MANIFEST_IMPL_KEY, jarFile));
+        }
 
         ReleaseVal release = parseReleaseVers(manifest.getValue(MANIFEST_RELEASE_KEY),
                 MessageFormat.format("{0} in manifest for {1}", MANIFEST_RELEASE_KEY, jarFile));
