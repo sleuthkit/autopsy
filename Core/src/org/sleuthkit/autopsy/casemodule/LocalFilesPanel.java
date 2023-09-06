@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -330,12 +331,7 @@ final class LocalFilesPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_changeNameButtonActionPerformed
 
     private void deleteButonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButonActionPerformed
-        int minIdx = this.fileList.getMinSelectionIndex();
-        int maxIdx = this.fileList.getMaxSelectionIndex();
-
-        if (minIdx >= 0 && maxIdx >= minIdx) {
-            this.listModel.remove(minIdx, maxIdx);
-        }
+        this.listModel.remove(this.fileList.getSelectedIndices());        
         this.fileList.clearSelection();
 
         enableNext = !this.listModel.getFiles().isEmpty();
@@ -516,16 +512,26 @@ final class LocalFilesPanel extends javax.swing.JPanel {
         }
 
         /**
-         * Removes files in the list starting at minIdx going to maxIdx.
-         *
-         * @param minIdx The minimum index of items to be removed.
-         * @param maxIdx The maximum index to be removed.
+         * Removes the selected indices.
+         * @param selectedIndices The selected indices.
          */
-        void remove(int minIdx, int maxIdx) {
-            for (int i = maxIdx; i >= minIdx; i--) {
-                items.remove(i);
+        void remove(int[] selectedIndices) {
+            if (selectedIndices != null) {
+                Iterable<Integer> sortedIndices = (Iterable<Integer>) () -> Arrays.stream(selectedIndices)
+                        .mapToObj(i -> i)
+                        // reverse order to remove highest index to lowest index
+                        .sorted((a,b) -> Integer.compare(b, a))
+                        .iterator();
+                
+                int prevIdxMax = items.size() - 1;
+                for (Integer idx: sortedIndices) {
+                    if (idx != null && idx >= 0 && idx < this.items.size()) {
+                        this.items.remove((int) idx);
+                    }
+                }
+                
+                this.fireContentsChanged(this, 0, prevIdxMax);
             }
-            this.fireContentsChanged(this, 0, items.size() - 1);
         }
 
         /**
