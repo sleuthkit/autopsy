@@ -56,24 +56,43 @@ public class Main {
 
         for (Pair<File, File> prevCurJars : APIDiff.getCommonJars(cliArgs.getPreviousVersPath(), cliArgs.getCurrentVersPath())) {
             try {
-                ModuleVersionNumbers prevVersionNums = ModuleUpdates.getVersionsFromJar(prevCurJars.getLeft());
-
-                ComparisonRecord record = APIDiff.getComparison(
-                        cliArgs.getPreviousVersion(),
-                        cliArgs.getCurrentVersion(),
-                        prevCurJars.getLeft(),
-                        prevCurJars.getRight());
-
-                ModuleVersionNumbers projectedVersionNums = ModuleUpdates.getModuleVersionUpdate(prevVersionNums, record.getChangeType());
+                File previous = prevCurJars.getLeft();
+                File current  = prevCurJars.getRight();
                 
-                String jarFileName;
-                if (prevCurJars.getLeft().getName().equalsIgnoreCase(prevCurJars.getRight().getName())) {
-                    jarFileName = prevCurJars.getLeft().getName();
+                // if no current, then we can't update; just continue
+                if (current == null || !current.exists()) {
+                    if (previous != null) {
+                        LOGGER.log(Level.WARNING, "No matching current jar found for previous jar: " + previous);
+                    }
+                    continue;
+                }
+                
+                String jarFileName = current.getName();
+                
+                ModuleVersionNumbers projectedVersionNums;
+                if (previous == null || !previous.exists()) {
+                    projectedVersionNums = ModuleVersionNumbers.getNewModule(current.getName());
+                    outputNewModule(jarFileName, projectedVersionNums);
                 } else {
-                    jarFileName = MessageFormat.format("[previous: {0}, current: {1}]", prevCurJars.getLeft().getName(), prevCurJars.getRight().getName());
+                    ModuleVersionNumbers prevVersionNums = ModuleUpdates.getVersionsFromJar(prevCurJars.getLeft());
+
+                    ComparisonRecord record = APIDiff.getComparison(
+                            cliArgs.getPreviousVersion(),
+                            cliArgs.getCurrentVersion(),
+                            prevCurJars.getLeft(),
+                            prevCurJars.getRight());
+
+                    projectedVersionNums = ModuleUpdates.getModuleVersionUpdate(prevVersionNums, record.getChangeType());
+                    outputDiff(jarFileName, record, prevVersionNums, projectedVersionNums);
+                }
+                
+                if (previous.getName().equalsIgnoreCase(current.getName())) {
+                    jarFileName = previous.getName();
+                } else {
+                    jarFileName = MessageFormat.format("[previous: {0}, current: {1}]", previous.getName(), current.getName());
                 }
 
-                outputDiff(jarFileName, record, prevVersionNums, projectedVersionNums);
+                
 
                 newVersionNumMapping.put(projectedVersionNums.getRelease().getModuleName(), projectedVersionNums);
             } catch (IOException ex) {
@@ -133,6 +152,37 @@ public class Main {
                 record.getOnlyPrevApiPackages(),
                 record.getOnlyCurrApiPackages(),
                 record.getHumanReadableApiChange()
+        ));
+    }
+    
+
+    /**
+     * Outputs new jar file name.
+     *
+     * @param jarFileName The jar file name.
+     * @param projectedVersionNums The calculated version numbers for current
+     * version.
+     */
+    private static void outputNewModule(
+            String jarFileName,
+            ModuleVersionNumbers projectedVersionNums
+    ) {
+    LOGGER.log(Level.INFO, MessageFormat.format("""
+                                                    
+                                                    ====================================
+                                                    NEW MODULE: {0}
+                                                    Current Version Numbers:
+                                                      - release: {1}
+                                                      - specification: {2}
+                                                      - implementation: {3}
+                                                    ====================================
+
+                                                    
+                                                    """,
+                jarFileName,
+                projectedVersionNums.getRelease().getFullReleaseStr(),
+                projectedVersionNums.getSpec().getSemVerStr(),
+                projectedVersionNums.getImplementation()
         ));
     }
 }

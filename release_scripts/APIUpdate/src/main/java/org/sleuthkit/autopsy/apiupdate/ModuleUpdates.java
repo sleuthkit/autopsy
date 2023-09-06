@@ -187,7 +187,7 @@ public class ModuleUpdates {
      * @return The module version numbers.
      * @throws IOException
      */
-    public static ModuleVersionNumbers getVersionsFromJar(File jarFile) throws IOException {
+    public static ModuleVersionNumbers getVersionsFromJar(File jarFile) throws IOException {       
         Attributes manifest = ManifestLoader.loadFromJar(jarFile);
         String spec = manifest.getValue(MANIFEST_SPEC_KEY);
         SemVer specSemVer = parseSemVer(spec, DEFAULT_SEMVER,
@@ -223,6 +223,14 @@ public class ModuleUpdates {
                 return new ModuleVersionNumbers(
                         prev.getModuleName(),
                         prev.getSpec(),
+                        prev.getImplementation(),
+                        prev.getRelease()
+                );
+            }
+            case INTERNAL_CHANGE -> {
+                return new ModuleVersionNumbers(
+                        prev.getModuleName(),
+                        prev.getSpec(),
                         prev.getImplementation() + 1,
                         prev.getRelease()
                 );
@@ -236,10 +244,7 @@ public class ModuleUpdates {
                                 prev.getSpec().getPatch()
                         ),
                         prev.getImplementation() + 1,
-                        new ReleaseVal(
-                                prev.getRelease().getModuleName(),
-                                prev.getRelease().getReleaseVersion()
-                        )
+                        prev.getRelease()
                 );
             }
             case INCOMPATIBLE_CHANGE -> {
@@ -247,8 +252,8 @@ public class ModuleUpdates {
                         prev.getModuleName(),
                         new SemVer(
                                 prev.getSpec().getMajor() + 1,
-                                prev.getSpec().getMinor(),
-                                prev.getSpec().getPatch()
+                                0,
+                                null
                         ),
                         prev.getImplementation() + 1,
                         new ReleaseVal(
@@ -584,6 +589,19 @@ public class ModuleUpdates {
      * Module version numbers record.
      */
     public static class ModuleVersionNumbers {
+        
+        /**
+         * Returns ModuleVersionNumbers for a brand new module.
+         * @param moduleName The module name.
+         * @return  The module version numbers
+         */
+        public static ModuleVersionNumbers getNewModule(String moduleName) {
+            return new ModuleVersionNumbers(
+                    moduleName, 
+                    new SemVer(1, 0, null), 
+                    1,
+                    new ReleaseVal(moduleName.replaceAll("-", "."), 1));
+        }
 
         private final String moduleName;
         private final SemVer spec;

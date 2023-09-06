@@ -81,15 +81,15 @@ public class APIDiff {
 
         Map<String, File> prevJars = getJars(prev);
         Map<String, File> currJars = getJars(curr);
+        Set<String> combined = new HashSet<>(prevJars.keySet());
+        combined.addAll(currJars.keySet());
 
         List<Pair<File, File>> retMapping = new ArrayList<>();
 
-        for (String prevKey : (Iterable<String>) prevJars.keySet().stream().sorted(StringUtils::compareIgnoreCase)::iterator) {
+        for (String prevKey : (Iterable<String>) combined.stream().sorted(StringUtils::compareIgnoreCase)::iterator) {
             File prevFile = prevJars.get(prevKey);
             File curFile = currJars.get(prevKey);
-            if (prevFile != null && curFile != null) {
-                retMapping.add(Pair.of(prevFile, curFile));
-            }
+            retMapping.add(Pair.of(prevFile, curFile));
         }
 
         return retMapping;
