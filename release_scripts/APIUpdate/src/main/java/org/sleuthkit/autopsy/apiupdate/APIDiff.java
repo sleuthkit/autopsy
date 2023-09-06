@@ -29,6 +29,7 @@ import japicmp.filter.FieldFilter;
 import japicmp.model.JApiClass;
 import japicmp.model.JApiSemanticVersionLevel;
 import static japicmp.model.JApiSemanticVersionLevel.MAJOR;
+import static japicmp.model.JApiSemanticVersionLevel.PATCH;
 import japicmp.output.semver.SemverOut;
 import japicmp.output.stdout.StdoutOutputGenerator;
 import java.io.File;
@@ -41,6 +42,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -150,52 +152,36 @@ public class APIDiff {
      * @throws IOException
      */
     static ComparisonRecord getComparison(String prevVersion, String curVersion, File prevJar, File curJar) throws IOException {
-        // scope only to previous or current public packages
+        // scope only to previous or current public packages if jars have public packages
         Set<String> prevPublicApiPackages = getPublicPackages(prevJar);
         Set<String> curPublicApiPackages = getPublicPackages(curJar);
-
-        boolean filterToPublicPackages = (prevPublicApiPackages == null && curPublicApiPackages == null) ? false : true;
-        prevPublicApiPackages = prevPublicApiPackages == null ? Collections.emptySet() : prevPublicApiPackages;
-        curPublicApiPackages = curPublicApiPackages == null ? Collections.emptySet() : curPublicApiPackages;
-
-        Set<String> allPublicApiPackages = new HashSet<>();
-        allPublicApiPackages.addAll(prevPublicApiPackages);
-        allPublicApiPackages.addAll(curPublicApiPackages);
 
         Set<String> onlyPrevApiPackages = new HashSet<>();
         Set<String> onlyCurApiPackages = new HashSet<>();
         Set<String> commonApiPackages = new HashSet<>();
-        for (String apiPackage : allPublicApiPackages) {
-            boolean inPrev = prevPublicApiPackages.contains(apiPackage);
-            boolean inCur = curPublicApiPackages.contains(apiPackage);
-            if (inPrev && !inCur) {
-                onlyPrevApiPackages.add(apiPackage);
-            } else if (!inPrev && inCur) {
-                onlyCurApiPackages.add(apiPackage);
-            } else {
-                commonApiPackages.add(apiPackage);
+
+        Optional<Set<String>> allPublicApiPackagesFilter = Optional.empty();
+        if (prevPublicApiPackages != null && curPublicApiPackages != null) {
+            Set<String> allPublicApiPackages = new HashSet<>();
+            allPublicApiPackages.addAll(prevPublicApiPackages);
+            allPublicApiPackages.addAll(curPublicApiPackages);
+            allPublicApiPackagesFilter.of(allPublicApiPackages);
+            
+            for (String apiPackage : allPublicApiPackages) {
+                boolean inPrev = prevPublicApiPackages.contains(apiPackage);
+                boolean inCur = curPublicApiPackages.contains(apiPackage);
+                if (inPrev && !inCur) {
+                    onlyPrevApiPackages.add(apiPackage);
+                } else if (!inPrev && inCur) {
+                    onlyCurApiPackages.add(apiPackage);
+                } else {
+                    commonApiPackages.add(apiPackage);
+                }
             }
         }
 
-        JarArchiveComparatorOptions comparatorOptions = new JarArchiveComparatorOptions();
-        // only classes in prev or current public api
-        if (filterToPublicPackages) {
-            comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !allPublicApiPackages.contains(ctClass.getPackageName()));
-        }
-
-        // only public classes
-        comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !Modifier.isPublic(ctClass.getModifiers()));
-        // only fields, methods that are public or protected and class is not final
-        comparatorOptions.getFilters().getExcludes().add((FieldFilter) (CtField ctField) -> excludeMember(ctField));
-        comparatorOptions.getFilters().getExcludes().add((BehaviorFilter) (CtBehavior ctBehavior) -> excludeMember(ctBehavior));
-
-        comparatorOptions.getIgnoreMissingClasses().setIgnoreAllMissingClasses(true);
-
-        JarArchiveComparator jarArchiveComparator = new JarArchiveComparator(comparatorOptions);
-        List<JApiClass> jApiClasses = jarArchiveComparator.compare(
-                new JApiCmpArchive(prevJar, prevVersion),
-                new JApiCmpArchive(curJar, curVersion)
-        );
+        // get classes diff for public api changes
+        List<JApiClass> jApiClasses = getClassDiff(true, allPublicApiPackagesFilter, prevJar, prevVersion, curJar, curVersion);
 
         Options options = Options.newDefault();
         options.setOldArchives(Arrays.asList(new JApiCmpArchive(prevJar, prevVersion)));
@@ -203,9 +189,40 @@ public class APIDiff {
         options.setOutputOnlyModifications(true);
 
         PublicApiChangeType changeType = getChangeType(options, jApiClasses);
+        
+        // if the change type is none, check for any internal changes
+        if (changeType == PublicApiChangeType.NONE) {
+            List<JApiClass> alljApiClasses = getClassDiff(false,Optional.empty(), prevJar, prevVersion, curJar, curVersion);
+            PublicApiChangeType allClassChangeType = getChangeType(options, jApiClasses);
+            changeType = allClassChangeType == PublicApiChangeType.NONE ? PublicApiChangeType.NONE : allClassChangeType.INTERNAL_CHANGE;
+        }
+        
         StdoutOutputGenerator stdoutOutputGenerator = new StdoutOutputGenerator(options, jApiClasses);
         String humanReadableApiChange = stdoutOutputGenerator.generate();
         return new ComparisonRecord(prevVersion, curVersion, prevJar, curJar, humanReadableApiChange, changeType, onlyPrevApiPackages, onlyCurApiPackages, commonApiPackages);
+    }
+
+    private static List<JApiClass> getClassDiff(boolean filter, Optional<Set<String>> publicPackagesFilter, File prevJar, String prevVersion, File curJar, String curVersion) {
+        JarArchiveComparatorOptions comparatorOptions = new JarArchiveComparatorOptions();
+        if (filter) {
+            // only classes in prev or current public api
+            if (publicPackagesFilter.isPresent()) {
+                final Set<String> publicPackages = publicPackagesFilter.get();
+                comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !publicPackages.contains(ctClass.getPackageName()));
+            }
+            // only public classes
+            comparatorOptions.getFilters().getExcludes().add((ClassFilter) (CtClass ctClass) -> !Modifier.isPublic(ctClass.getModifiers()));
+            // only fields, methods that are public or protected and class is not final
+            comparatorOptions.getFilters().getExcludes().add((FieldFilter) (CtField ctField) -> excludeMember(ctField));
+            comparatorOptions.getFilters().getExcludes().add((BehaviorFilter) (CtBehavior ctBehavior) -> excludeMember(ctBehavior));
+        }
+        comparatorOptions.getIgnoreMissingClasses().setIgnoreAllMissingClasses(true);
+        JarArchiveComparator jarArchiveComparator = new JarArchiveComparator(comparatorOptions);
+        List<JApiClass> jApiClasses = jarArchiveComparator.compare(
+                new JApiCmpArchive(prevJar, prevVersion),
+                new JApiCmpArchive(curJar, curVersion)
+        );
+        return jApiClasses;
     }
 
     /**
@@ -222,10 +239,10 @@ public class APIDiff {
         }
 
         switch (versionLevel) {
-            case MINOR:
-                apiChangeType = PublicApiChangeType.COMPATIBLE_CHANGE;
-                break;
             case PATCH:
+                apiChangeType = PublicApiChangeType.INTERNAL_CHANGE;
+                break;
+            case MINOR:
                 apiChangeType = PublicApiChangeType.COMPATIBLE_CHANGE;
                 break;
             case MAJOR:
