@@ -39,7 +39,7 @@ compression: lzo
 icon: snap/gui/autopsy.png
 
 plugs:
-  system-files-autopsy:
+  system-files-dev:
     interface: system-files
     read: [/dev]
   system-files-hugepages:
@@ -89,7 +89,6 @@ apps:
       # taken from https://snapcraft.io/docs/supported-interfaces
       - audio-playback
       - block-devices
-      - browser-sandbox
       - desktop
       - desktop-launch
       - desktop-legacy
@@ -109,7 +108,7 @@ apps:
       - opengl
       - optical-drive
       - removable-media
-      - system-files-autopsy
+      - system-files-dev
       - system-files-hugepages
       - system-observe
     slots:
