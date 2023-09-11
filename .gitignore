@@ -78,8 +78,6 @@ genfiles.properties
 !/netbeans-plat/15
 /docs/doxygen-user/user-docs
 /docs/doxygen-dev/build-docs
-/jdiff-javadocs/*
-/jdiff-logs/*
 /gen_version.txt
 hs_err_pid*.log
 
