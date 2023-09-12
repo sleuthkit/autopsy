@@ -175,7 +175,8 @@ public class AnalysisResultsViewModel {
         "AnalysisResultsViewModel_displayAttributes_score=Score",
         "AnalysisResultsViewModel_displayAttributes_type=Type",
         "AnalysisResultsViewModel_displayAttributes_configuration=Configuration",
-        "AnalysisResultsViewModel_displayAttributes_conclusion=Conclusion"
+        "AnalysisResultsViewModel_displayAttributes_conclusion=Conclusion",
+        "AnalysisResultsViewModel_displayAttributes_justification=Justification"
     })
     private ResultDisplayAttributes getDisplayAttributes(AnalysisResult analysisResult) {
         // The type of BlackboardArtifact.Type of the analysis result.
@@ -188,6 +189,8 @@ public class AnalysisResultsViewModel {
 
         // The standard attributes to display (score, type, configuration, conclusion)
         Stream<Pair<String, String>> baseAnalysisAttrs = Stream.of(
+                Pair.of(Bundle.AnalysisResultsViewModel_displayAttributes_justification(),
+                        normalizeAttr(analysisResult.getJustification())),
                 Pair.of(Bundle.AnalysisResultsViewModel_displayAttributes_score(),
                         normalizeAttr(analysisResult.getScore().getSignificance().getDisplayName())),
                 Pair.of(Bundle.AnalysisResultsViewModel_displayAttributes_type(),
