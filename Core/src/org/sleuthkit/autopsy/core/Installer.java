@@ -401,10 +401,8 @@ public class Installer extends ModuleInstall {
      * Checks system resources logging any potential issues.
      */
     @Messages({
-        "Installer_checkMemoryAvailable_physicalRamExpected_title=System Does Not Meet Requirements",
         "# {0} - physicalMemory",
         "Installer_checkMemoryAvailable_physicalRamExpected_desc=Physical memory: {0}, is less than the 8GB required.  Some aspects of the application may not work as expected.",
-        "Installer_checkMemoryAvailable_maxMemExpected_title=System Does Not Meet Requirements",
         "# {0} - maxMemory",
         "Installer_checkMemoryAvailable_maxMemExpected_desc=Maximum JVM memory: {0}, is less than the 2GB required.  Some aspects of the application may not work as expected."
     })
@@ -412,30 +410,16 @@ public class Installer extends ModuleInstall {
         long memorySize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory
                 .getOperatingSystemMXBean()).getTotalMemorySize();
         if (memorySize < 8_000_000) {
-            String desc = Bundle.Installer_checkMemoryAvailable_physicalRamExpected_desc(FileUtils.byteCountToDisplaySize(memorySize));
-
+            String desc = Bundle.Installer_checkMemoryAvailable_physicalRamExpected_desc(
+                    FileUtils.byteCountToDisplaySize(memorySize));
             logger.log(Level.SEVERE, desc);
-            if (!GraphicsEnvironment.isHeadless() && RuntimeProperties.runningWithGUI()) {
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                        "<html>" + desc + "</html>",
-                        Bundle.Installer_checkMemoryAvailable_physicalRamExpected_title(),
-                        JOptionPane.WARNING_MESSAGE);
-            }
-            return;
         }
 
         long maxMemory = Runtime.getRuntime().maxMemory();
         if (maxMemory < 2_000_000) {
-            String desc = Bundle.Installer_checkMemoryAvailable_maxMemExpected_desc(FileUtils.byteCountToDisplaySize(maxMemory));
-
+            String desc = Bundle.Installer_checkMemoryAvailable_maxMemExpected_desc(
+                    FileUtils.byteCountToDisplaySize(maxMemory));
             logger.log(Level.SEVERE, desc);
-            if (!GraphicsEnvironment.isHeadless() && RuntimeProperties.runningWithGUI()) {
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                        "<html>" + desc + "</html>",
-                        Bundle.Installer_checkMemoryAvailable_maxMemExpected_title(),
-                        JOptionPane.WARNING_MESSAGE);
-            }
-            return;
         }
     }
 
