@@ -18,19 +18,25 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Component;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JTable;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -56,7 +62,8 @@ final class LocalDiskSelectionDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     private List<LocalDisk> disks;
     private final LocalDiskModel model;
-
+    private final TooltipCellRenderer tooltipCellRenderer = new TooltipCellRenderer();
+    
     /**
      * Creates a new LocalDiskSelectionDialog instance.
      */
@@ -69,6 +76,10 @@ final class LocalDiskSelectionDialog extends JDialog {
         initComponents();
         refreshTable();
         
+        for (Enumeration<TableColumn> e = localDiskTable.getColumnModel().getColumns(); e.hasMoreElements();) {
+            e.nextElement().setCellRenderer(tooltipCellRenderer);
+        }
+           
         localDiskTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -82,10 +93,7 @@ final class LocalDiskSelectionDialog extends JDialog {
      * Display the dialog.
      */
     void display() {
-        setModal(true);
-        setSize(getPreferredSize());
         setLocationRelativeTo(this.getParent());
-        setAlwaysOnTop(false);
         setVisible(true);
     }
 
@@ -109,6 +117,7 @@ final class LocalDiskSelectionDialog extends JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle(org.openide.util.NbBundle.getMessage(LocalDiskSelectionDialog.class, "LocalDiskSelectionDialog.title")); // NOI18N
         setAlwaysOnTop(true);
+        setModal(true);
         setResizable(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(selectLocalDiskLabel, org.openide.util.NbBundle.getMessage(LocalDiskSelectionDialog.class, "LocalDiskSelectionDialog.selectLocalDiskLabel.text")); // NOI18N
@@ -255,6 +264,21 @@ final class LocalDiskSelectionDialog extends JDialog {
         }
         return null;
     }
+    
+    /**
+     * Shows tooltip for cell.
+     */
+    private class TooltipCellRenderer extends DefaultTableCellRenderer {
+        public Component getTableCellRendererComponent(
+                JTable table, Object value,
+                boolean isSelected, boolean hasFocus,
+                int row, int column) {
+            JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            String tooltip = value == null ? "" : value.toString();
+            c.setToolTipText(tooltip);
+            return c;
+        }
+    }
 
     @NbBundle.Messages({
         "LocalDiskSelectionDialog.tableMessage.loading=Loading local disks...",
@@ -295,13 +319,17 @@ final class LocalDiskSelectionDialog extends JDialog {
 
         @Override
         public int getColumnCount() {
-            return 2;
-
+            if (PlatformUtil.isLinuxOS()) {
+                return 3;
+            } else {
+                return 2;
+            }
         }
 
         @NbBundle.Messages({
             "LocalDiskSelectionDialog.columnName.diskName=Disk Name",
-            "LocalDiskSelectionDialog.columnName.diskSize=Disk Size"
+            "LocalDiskSelectionDialog.columnName.diskSize=Disk Size",
+            "LocalDiskSelectionDialog.columnName.Details=Details"
         })
 
         @Override
@@ -311,6 +339,8 @@ final class LocalDiskSelectionDialog extends JDialog {
                     return Bundle.LocalDiskSelectionDialog_columnName_diskName();
                 case 1:
                     return Bundle.LocalDiskSelectionDialog_columnName_diskSize();
+                case 2:
+                    return Bundle.LocalDiskSelectionDialog_columnName_Details();
                 default:
                     return "Unnamed"; //NON-NLS
             }
@@ -337,6 +367,8 @@ final class LocalDiskSelectionDialog extends JDialog {
                         return disks.get(rowIndex).getName();
                     case 1:
                         return disks.get(rowIndex).getReadableSize();
+                    case 2:
+                        return disks.get(rowIndex).getDetail();
                     default:
                         return disks.get(rowIndex).getPath();
                 }
