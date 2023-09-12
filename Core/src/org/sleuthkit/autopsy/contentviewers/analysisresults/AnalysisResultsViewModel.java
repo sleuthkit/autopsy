@@ -189,8 +189,6 @@ public class AnalysisResultsViewModel {
 
         // The standard attributes to display (score, type, configuration, conclusion)
         Stream<Pair<String, String>> baseAnalysisAttrs = Stream.of(
-                Pair.of(Bundle.AnalysisResultsViewModel_displayAttributes_justification(),
-                        normalizeAttr(analysisResult.getJustification())),
                 Pair.of(Bundle.AnalysisResultsViewModel_displayAttributes_score(),
                         normalizeAttr(analysisResult.getScore().getSignificance().getDisplayName())),
                 Pair.of(Bundle.AnalysisResultsViewModel_displayAttributes_type(),
@@ -198,7 +196,9 @@ public class AnalysisResultsViewModel {
                 Pair.of(Bundle.AnalysisResultsViewModel_displayAttributes_configuration(),
                         normalizeAttr(analysisResult.getConfiguration())),
                 Pair.of(Bundle.AnalysisResultsViewModel_displayAttributes_conclusion(),
-                        normalizeAttr(analysisResult.getConclusion()))
+                        normalizeAttr(analysisResult.getConclusion())),
+                Pair.of(Bundle.AnalysisResultsViewModel_displayAttributes_justification(),
+                        normalizeAttr(analysisResult.getJustification()))
         );
 
         // The BlackboardAttributes sorted by type display name.
