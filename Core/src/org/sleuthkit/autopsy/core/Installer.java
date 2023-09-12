@@ -407,19 +407,27 @@ public class Installer extends ModuleInstall {
         "Installer_checkMemoryAvailable_maxMemExpected_desc=Maximum JVM memory: {0}, is less than the 2GB required.  Some aspects of the application may not work as expected."
     })
     private void checkMemoryAvailable() {
-        long memorySize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory
-                .getOperatingSystemMXBean()).getTotalMemorySize();
-        if (memorySize < 8_000_000) {
-            String desc = Bundle.Installer_checkMemoryAvailable_physicalRamExpected_desc(
-                    FileUtils.byteCountToDisplaySize(memorySize));
-            logger.log(Level.SEVERE, desc);
+        try {
+            long memorySize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory
+                    .getOperatingSystemMXBean()).getTotalMemorySize();
+            if (memorySize < 8_000_000) {
+                String desc = Bundle.Installer_checkMemoryAvailable_physicalRamExpected_desc(
+                        FileUtils.byteCountToDisplaySize(memorySize));
+                logger.log(Level.SEVERE, desc);
+            }
+        } catch (Throwable t) {
+            logger.log(Level.SEVERE, "There was an error fetching physical memory size", t);
         }
 
-        long maxMemory = Runtime.getRuntime().maxMemory();
-        if (maxMemory < 2_000_000) {
-            String desc = Bundle.Installer_checkMemoryAvailable_maxMemExpected_desc(
-                    FileUtils.byteCountToDisplaySize(maxMemory));
-            logger.log(Level.SEVERE, desc);
+        try {
+            long maxMemory = Runtime.getRuntime().maxMemory();
+            if (maxMemory < 2_000_000) {
+                String desc = Bundle.Installer_checkMemoryAvailable_maxMemExpected_desc(
+                        FileUtils.byteCountToDisplaySize(maxMemory));
+                logger.log(Level.SEVERE, desc);
+            }
+        } catch (Throwable t) {
+            logger.log(Level.SEVERE, "There was an error fetching jvm max memory", t);
         }
     }
 
