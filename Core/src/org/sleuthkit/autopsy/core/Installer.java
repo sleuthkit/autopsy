@@ -402,15 +402,15 @@ public class Installer extends ModuleInstall {
      */
     @Messages({
         "# {0} - physicalMemory",
-        "Installer_checkMemoryAvailable_physicalRamExpected_desc=Physical memory: {0}, is less than the 8GB required.  Some aspects of the application may not work as expected.",
+        "Installer_checkMemoryAvailable_physicalRamExpected_desc=Physical memory: {0}, is less than the 8 GB required.  Some aspects of the application may not work as expected.",
         "# {0} - maxMemory",
-        "Installer_checkMemoryAvailable_maxMemExpected_desc=Maximum JVM memory: {0}, is less than the 2GB required.  Some aspects of the application may not work as expected."
+        "Installer_checkMemoryAvailable_maxMemExpected_desc=Maximum JVM memory: {0}, is less than the 2 GB required.  Some aspects of the application may not work as expected."
     })
     private void checkMemoryAvailable() {
         try {
             long memorySize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory
                     .getOperatingSystemMXBean()).getTotalMemorySize();
-            if (memorySize < 8_000_000) {
+            if (memorySize < 8_000_000_000L) {
                 String desc = Bundle.Installer_checkMemoryAvailable_physicalRamExpected_desc(
                         FileUtils.byteCountToDisplaySize(memorySize));
                 logger.log(Level.SEVERE, desc);
@@ -421,7 +421,7 @@ public class Installer extends ModuleInstall {
 
         try {
             long maxMemory = Runtime.getRuntime().maxMemory();
-            if (maxMemory < 2_000_000) {
+            if (maxMemory < 2_000_000_000L) {
                 String desc = Bundle.Installer_checkMemoryAvailable_maxMemExpected_desc(
                         FileUtils.byteCountToDisplaySize(maxMemory));
                 logger.log(Level.SEVERE, desc);
