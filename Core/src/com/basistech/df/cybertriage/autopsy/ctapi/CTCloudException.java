@@ -32,7 +32,7 @@ public class CTCloudException extends Exception{
     
     public enum ErrorCode {
         BAD_REQUEST("CT-400", "Unknown or Bad request. Please contact Basis support at " + Constants.SUPPORT_AT_CYBERTRIAGE_DOT_COM + " for help diagnosing the problem."),
-        INVALID_KEY("CT-401", "An invalid license ID was used to access CyberTriage Cloud Service. Please contact Basis support " + Constants.SUPPORT_AT_CYBERTRIAGE_DOT_COM + " for help diagnosing the problem."),
+        INVALID_KEY("CT-401", "An invalid license ID was used to access CyberTriage Cloud Service. Please remove the license from the Cyber Triage options panel."),
         GATEWAY_TIMEOUT("CT-504", "Request to CyberTriage Cloud Service timed out. Please retry after some time. If issue persists, please contact Basis support at " + Constants.SUPPORT_AT_CYBERTRIAGE_DOT_COM + " for assistance."),
         UN_AUTHORIZED("CT-403", "An authorization error occurred. Please contact Basis support " + Constants.SUPPORT_AT_CYBERTRIAGE_DOT_COM + " for help diagnosing the problem."),
         PROXY_UNAUTHORIZED("CT-407", "Proxy authentication failed. Please validate the connection settings from the Options panel Proxy Settings."),
