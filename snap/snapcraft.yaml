@@ -45,10 +45,6 @@ plugs:
   system-files-hugepages:
     interface: system-files
     read: [/sys/kernel/mm/hugepages]
-  # may provide ability for online/offline help
-  browser-sandbox:
-    interface: browser-support
-    allow-sandbox: true
 
 slots:
   # taken from thunderbird snap: https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
