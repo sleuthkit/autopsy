@@ -28,7 +28,7 @@ CTMalwareScannerOptionsPanel_licenseAddDialog_desc=License Number:
 CTMalwareScannerOptionsPanel_licenseAddDialog_title=Add a License...
 CTMalwareScannerOptionsPanel_licenseAddDialogEnteredErr_desc=The license number has already been entered
 CTMalwareScannerOptionsPanel_licenseAddDialogEnteredErr_title=License Number Already Entered
-CTMalwareScannerOptionsPanel_licenseAddDialogPatternErr_desc=Please verify that license number is of format 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'
+CTMalwareScannerOptionsPanel_licenseAddDialogPatternErr_desc=Please verify that license number is of format 'AUT-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX'
 CTMalwareScannerOptionsPanel_licenseAddDialogPatternErr_title=Invalid License Number
 CTMalwareScannerOptionsPanel_LicenseFetcher_apiErr_title=Server Error
 # {0} - licenseCode

@@ -162,7 +162,8 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
 
         setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.border.title_1"))); // NOI18N
         setMaximumSize(new java.awt.Dimension(650, 2147483647));
-        setPreferredSize(new java.awt.Dimension(650, 176));
+        setMinimumSize(new java.awt.Dimension(650, 206));
+        setPreferredSize(new java.awt.Dimension(650, 206));
         setLayout(new java.awt.GridBagLayout());
 
         incidentTextPanel.setLayout(new java.awt.GridBagLayout());
@@ -240,6 +241,8 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
         gridBagConstraints.weightx = 1.0;
         add(instructionsPanel, gridBagConstraints);
 
+        repoPanel.setMaximumSize(new java.awt.Dimension(650, 2147483647));
+        repoPanel.setPreferredSize(new java.awt.Dimension(650, 75));
         repoPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(fileRepoPathLabel, org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.fileRepoPathLabel.text")); // NOI18N
