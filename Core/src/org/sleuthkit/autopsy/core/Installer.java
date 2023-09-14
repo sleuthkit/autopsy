@@ -217,6 +217,7 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.casemodule.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.modules.hashdatabase.infrastructure.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.report.infrastructure.Installer.getDefault());
+        packageInstallers.add(com.basistech.df.cybertriage.autopsy.ctoptions.ctcloud.Installer.getDefault());
 
         /**
          * This is a temporary workaround for the following bug in Tika that

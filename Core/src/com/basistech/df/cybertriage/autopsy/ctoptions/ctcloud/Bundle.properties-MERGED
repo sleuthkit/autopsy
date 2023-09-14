@@ -68,3 +68,4 @@ CTLicenseDialog.licenseNumberTextField.toolTipText=AUT-XXXXXXXX-XXXX-XXXX-XXXX-X
 CTMalwareScannerOptionsPanel.licenseErrorLabel.text=
 CTMalwareScannerOptionsPanel.licenseInfoRemoveButton.text=Remove License
 CTMalwareScannerOptionsPanel.text=<html>The Cyber Triage Malware Scanner module uses 40+ malware scanning engines to identify if Windows executables are malicious. It requires a paid subscription to use.</html>
+Installer_LicenseCheck_cloudExceptionTitle=Cyber Triage Error
