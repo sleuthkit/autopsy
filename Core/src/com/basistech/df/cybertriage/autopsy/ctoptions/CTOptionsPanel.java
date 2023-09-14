@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  */
 public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
 
-    private static final int MAX_SUBPANEL_WIDTH = 650;
+    private static final int MAX_SUBPANEL_WIDTH = 750;
 
     private static final Logger logger = Logger.getLogger(CTOptionsPanel.class.getName());
 
