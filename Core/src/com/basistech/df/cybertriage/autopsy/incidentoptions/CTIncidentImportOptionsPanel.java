@@ -229,7 +229,7 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        gridBagConstraints.insets = new java.awt.Insets(5, 2, 5, 5);
         instructionsPanel.add(instructionsLinkLabel, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
