@@ -25,7 +25,7 @@ title: Autopsy
 base: core22
 version: 4.21.0
 summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
-description: "Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools.  Disclaimer: due to the system access necessary for Autopsy to perform correctly, this snap is highly privileged"
+description: "Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools.  Disclaimer: due to the system access necessary for Autopsy to perform correctly, this snap is highly privileged."
 source-code: https://github.com/sleuthkit/autopsy/
 website: https://www.autopsy.com/
 license: Apache-2.0
