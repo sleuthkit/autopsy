@@ -162,14 +162,13 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
 
         setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.border.title_1"))); // NOI18N
         setMaximumSize(new java.awt.Dimension(650, 2147483647));
-        setPreferredSize(null);
+        setPreferredSize(new java.awt.Dimension(650, 176));
         setLayout(new java.awt.GridBagLayout());
 
-        incidentTextPanel.setPreferredSize(null);
         incidentTextPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(incidentTextLabel, org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.incidentTextLabel.text")); // NOI18N
-        incidentTextLabel.setMaximumSize(new java.awt.Dimension(600, 16));
+        incidentTextLabel.setMaximumSize(new java.awt.Dimension(600, 32));
         incidentTextLabel.setPreferredSize(null);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -205,7 +204,6 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
         gridBagConstraints.weightx = 1.0;
         add(incidentTextPanel, gridBagConstraints);
 
-        instructionsPanel.setPreferredSize(null);
         instructionsPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(instructionsTextLabel, org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.instructionsTextLabel.text")); // NOI18N
@@ -242,7 +240,6 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
         gridBagConstraints.weightx = 1.0;
         add(instructionsPanel, gridBagConstraints);
 
-        repoPanel.setPreferredSize(null);
         repoPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(fileRepoPathLabel, org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.fileRepoPathLabel.text")); // NOI18N
