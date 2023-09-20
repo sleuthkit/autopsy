@@ -41,6 +41,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -64,6 +65,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -2284,6 +2286,8 @@ public class Case {
             checkForCancellation();
             openCommunicationChannels(progressIndicator);
             checkForCancellation();
+            checkImagePaths();
+            checkForCancellation();
             openFileSystemsInBackground();
             return null;
 
@@ -2300,6 +2304,40 @@ public class Case {
             }
             close(progressIndicator);
             throw ex;
+        }
+    }
+    
+    /**
+     * Check if content provider is present, all images have paths, or throw an error.
+     * @throws CaseActionException 
+     */
+    @Messages({
+        "# {0} - paths",
+        "Case_checkImagePaths_noPaths=The following images had no associated paths: {0}",
+        "Case_checkImagePaths_exceptionOccurred=An exception occurred while checking if image paths are present"
+    })
+    private void checkImagePaths() throws CaseActionException {
+        // if there is a content provider, images don't necessarily need paths
+        if (StringUtils.isNotBlank(this.metadata.getContentProviderName())) {
+            return;
+        }
+        
+        // identify images without paths
+        try {
+            List<Image> noPathImages = new ArrayList<>();
+            List<Image> images = this.caseDb.getImages();
+            for (Image img: images) {
+                if (ArrayUtils.isEmpty(img.getPaths())) {
+                    noPathImages.add(img);
+                }
+            }
+            
+            if (!noPathImages.isEmpty()) {
+                String imageListStr = noPathImages.stream().map(Image::getName).collect(Collectors.joining(", "));
+                throw new CaseActionException(Bundle.Case_checkImagePaths_noPaths(imageListStr));
+            }
+        } catch (TskCoreException ex) {
+            throw new CaseActionException(Bundle.Case_checkImagePaths_exceptionOccurred(), ex);
         }
     }
 

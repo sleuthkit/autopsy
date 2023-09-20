@@ -107,6 +107,9 @@ Case.servicesException.notificationTitle={0} Error
 Case.servicesException.serviceResourcesCloseError=Could not close case resources for {0} service: {1}
 Case_caseType_multiUser=Multi-user case
 Case_caseType_singleUser=Single-user case
+Case_checkImagePaths_exceptionOccurred=An exception occurred while checking if image paths are present
+# {0} - paths
+Case_checkImagePaths_noPaths=The following images had no associated paths: {0}
 CaseDetailsPanel.casePanel.border.title=Case
 CaseDetailsPanel.examinerLabel.text=Name:
 CaseDetailsPanel.examinerPanel.border.title=Examiner
