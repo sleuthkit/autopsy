@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
@@ -26,18 +27,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
@@ -315,11 +320,25 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     }
                     throw new AutopsyServiceException(Bundle.SolrSearch_unableToFindIndex_msg());
                 }
+                
+
 
                 if (context.cancelRequested()) {
                     return;
                 }
 
+                if (!IndexFinder.getCurrentSolrVersion().equals(indexToUse.getSolrVersion())) {
+                    Index prevIndex = indexToUse;
+                    indexToUse = tryUpgradeSolrVersion(context, indexToUse);
+                    if (indexToUse != prevIndex) {
+                        indexes.add(indexToUse);    
+                    }
+                }
+                
+                if (context.cancelRequested()) {
+                    return;
+                }
+                                
                 // check if schema is compatible
                 if (!indexToUse.isCompatible(IndexFinder.getCurrentSchemaVersion())) {
                     String msg = "Text index schema version " + indexToUse.getSchemaVersion() + " is not compatible with current schema";
@@ -354,6 +373,71 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         theCase.getSleuthkitCase().registerForEvents(this);
 
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
+    }
+    
+    
+    private static final long WAIT_TIME_MILLIS = 2000;
+    
+    /**
+     * Attempts to upgrade the solr version to most recent version first prompting the user.
+     * @param context The case context.
+     * @param index The current index.
+     * @return The new index.
+     * @throws org.sleuthkit.autopsy.appservices.AutopsyService.AutopsyServiceException 
+     */
+    @NbBundle.Messages({
+        "Server_configureSolrConnection_unsupportedSolrTitle=Unsupported Solr Version",
+        "# {0} - solrVersion",
+        "# {1} - caseName",
+        "Server_configureSolrConnection_unsupportedSolrDesc=<html><body><p style=\"width: 400px\">The current Solr version: {0} in the case: {1} is no longer supported.  You can continue without upgrading, but Solr will not be usable while the case is open, and you will encounter errors.  You can also choose to upgrade the Solr version for the case.  If you choose to do this, you will need to run Keyword Search with Solr indexing selected in order to use Solr features like ad hoc search with images in the case.</p></body></html>",
+        "Server_configureSolrConnection_unsupportedSolrDisableOpt=Continue",
+        "Server_configureSolrConnection_unsupportedSolrUpgradeOpt=Upgrade Solr Core"
+    })
+    private Index tryUpgradeSolrVersion(CaseContext context, Index index) throws AutopsyServiceException {
+        // if not, attempt to fix issue
+        if (RuntimeProperties.runningWithGUI()) {
+            Component parentComponent = WindowManager.getDefault().getMainWindow();
+            if (context.getProgressIndicator() instanceof ModalDialogProgressIndicator progInd && progInd.getDialog() != null) {
+                parentComponent = progInd.getDialog();
+
+            }
+            
+            if (context.cancelRequested()) {
+                return index;
+            }
+
+            try {
+                // progress updates occur right before this in the same window, so there is the possibility that
+                // the progress window will update just after the option pane is shown causing the option pane to
+                // not be visible or selectable.  This sleep is added to give the window enough time to finish
+                Thread.sleep(WAIT_TIME_MILLIS);
+            } catch (InterruptedException ex) {
+                // just proceed if interrupted
+            }
+            
+            if (context.cancelRequested()) {
+                return index;
+            }
+
+            int selection = JOptionPane.showOptionDialog(
+                    parentComponent,
+                    Bundle.Server_configureSolrConnection_unsupportedSolrDesc(index.getSolrVersion(), context.getCase().getDisplayName()),
+                    Bundle.Server_configureSolrConnection_unsupportedSolrTitle(),
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE,
+                    null,
+                    new Object[]{
+                        Bundle.Server_configureSolrConnection_unsupportedSolrDisableOpt(),
+                        Bundle.Server_configureSolrConnection_unsupportedSolrUpgradeOpt()
+                    },
+                    Bundle.Server_configureSolrConnection_unsupportedSolrDisableOpt());
+
+            if (selection == 1) {
+                return IndexFinder.createLatestVersionIndex(context.getCase());
+            }
+        }
+
+        throw new AutopsyServiceException("Unsupported Solr version: " + index.getSolrVersion());
     }
 
     /**

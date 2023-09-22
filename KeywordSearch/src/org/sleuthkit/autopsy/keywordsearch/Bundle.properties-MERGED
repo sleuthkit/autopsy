@@ -52,7 +52,7 @@ KeywordSearchResultFactory.createNodeForKey.noResultsFound.text=No results found
 KeywordSearchResultFactory.query.exception.msg=Could not perform the query 
 OpenIDE-Module-Display-Category=Ingest Module
 
-OpenIDE-Module-Long-Description=Keyword Search ingest module.\n\nThe module indexes files found in the disk image at ingest time.\nIt then periodically runs the search on the indexed files using one or more keyword lists (containing pure words and/or regular expressions) and posts results.\n\n\The module also contains additional tools integrated in the main GUI, such as keyword list configuration, keyword search bar in the top-right corner, extracted text viewer and search results viewer showing highlighted keywords found.
+OpenIDE-Module-Long-Description=Keyword Search ingest module.\n\nThe module indexes files found in the disk image at ingest time.\nIt then periodically runs the search on the indexed files using one or more keyword lists (containing pure words and/or regular expressions) and posts results.\n\nThe module also contains additional tools integrated in the main GUI, such as keyword list configuration, keyword search bar in the top-right corner, extracted text viewer and search results viewer showing highlighted keywords found.
 OpenIDE-Module-Name=KeywordSearch
 OptionsCategory_Name_KeywordSearchOptions=Keyword Search
 OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search
@@ -306,6 +306,14 @@ KeywordSearchModuleFactory.getIngestJobSettingsPanel.exception.msg=Expected sett
 KeywordSearchModuleFactory.createFileIngestModule.exception.msg=Expected settings argument to be instanceof KeywordSearchJobSettings
 SearchRunner.Searcher.done.err.msg=Error performing keyword search
 Server.status.failed.msg=Local Solr server did not respond to status request. This may be because the server failed to start or is taking too long to initialize.
+# {0} - indexVersion
+Server_configureSolrConnection_illegalSolrVersion=The solr version in the case: {0}, is not supported.
+# {0} - solrVersion
+# {1} - caseName
+Server_configureSolrConnection_unsupportedSolrDesc=<html><body><p style="width: 400px">The current Solr version: {0} in the case: {1} is no longer supported.  You can continue without upgrading, but Solr will not be usable while the case is open, and you will encounter errors.  You can also choose to upgrade the Solr version for the case.  If you choose to do this, you will need to run Keyword Search with Solr indexing selected in order to use Solr features like ad hoc search with images in the case.</p></body></html>
+Server_configureSolrConnection_unsupportedSolrDisableOpt=Continue
+Server_configureSolrConnection_unsupportedSolrTitle=Unsupported Solr Version
+Server_configureSolrConnection_unsupportedSolrUpgradeOpt=Upgrade Solr Core
 SolrConnectionCheck.HostnameOrPort=Invalid hostname and/or port number.
 SolrConnectionCheck.Hostname=Invalid hostname.
 SolrConnectionCheck.MissingHostname=Missing hostname.
