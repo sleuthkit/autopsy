@@ -386,10 +386,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      * @throws org.sleuthkit.autopsy.appservices.AutopsyService.AutopsyServiceException 
      */
     @NbBundle.Messages({
-        "Server_configureSolrConnection_unsupportedSolrTitle=Unsupported Solr Version",
+        "Server_configureSolrConnection_unsupportedSolrTitle=Unsupported Keyword Search in Case",
         "# {0} - solrVersion",
         "# {1} - caseName",
-        "Server_configureSolrConnection_unsupportedSolrDesc=<html><body><p style=\"width: 400px\">The current Solr version: {0} in the case: {1} is no longer supported.  You can continue without upgrading, but Solr will not be usable while the case is open, and you will encounter errors.  You can also choose to upgrade the Solr version for the case.  If you choose to do this, you will need to run Keyword Search with Solr indexing selected in order to use Solr features like ad hoc search with images in the case.</p></body></html>",
+        "Server_configureSolrConnection_unsupportedSolrDesc=<html><body><p style=\"width: 400px\">This case was made with an older version of Keyword Search that is no longer supported.  You can continue without upgrading, but some Keyword Search functionality will not be usable while the case is open, and you will encounter errors.  You can also choose to upgrade the Keyword Search version for the case.  If you choose to do this, you will need to run Keyword Search with Solr indexing selected in order to use features like ad hoc search with images in the case.</p></body></html>",
         "Server_configureSolrConnection_unsupportedSolrDisableOpt=Continue",
         "Server_configureSolrConnection_unsupportedSolrUpgradeOpt=Upgrade Solr Core"
     })
@@ -437,7 +437,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
         }
 
-        throw new AutopsyServiceException("Unsupported Solr version: " + index.getSolrVersion());
+        throw new AutopsyServiceException("Unsupported Keyword Search (Solr " + index.getSolrVersion() + ")");
     }
 
     /**
