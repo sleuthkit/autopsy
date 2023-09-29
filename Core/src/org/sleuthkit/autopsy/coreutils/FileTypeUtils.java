@@ -33,16 +33,17 @@ import org.openide.util.NbBundle;
  */
 public final class FileTypeUtils {
 
+    // lists augmented with https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
     private static final ImmutableSet<String> IMAGE_MIME_TYPES
             = new ImmutableSet.Builder<String>()
                     .addAll(removeAll(
                             asList(
-                                // remove any empty mime types provided by ImageIO.getReaderMIMETypes()
-                                // This prevents mime types added by SPI implementations from causing errors 
-                                // (i.e. 'jai-imageio' utilized with IcePDF)
-                                Arrays.stream(ImageIO.getReaderMIMETypes())
-                                    .filter((mimeType) -> StringUtils.isNotBlank(mimeType))
-                                    .toArray(String[]::new)),
+                                    // remove any empty mime types provided by ImageIO.getReaderMIMETypes()
+                                    // This prevents mime types added by SPI implementations from causing errors 
+                                    // (i.e. 'jai-imageio' utilized with IcePDF)
+                                    Arrays.stream(ImageIO.getReaderMIMETypes())
+                                            .filter((mimeType) -> StringUtils.isNotBlank(mimeType))
+                                            .toArray(String[]::new)),
                             asList("application/octet-stream"))) //this claims to be supported, but is not really an image.
                     .add("image/bmp", //NON-NLS
                             "image/gif", //NON-NLS
@@ -59,7 +60,9 @@ public final class FileTypeUtils {
                             "image/x-ms-bmp", //NON-NLS
                             "image/x-xbitmap", //NON-NLS
                             "image/x-portable-graymap", //NON-NLS
-                            "image/x-portable-bitmap" //NON-NLS 
+                            "image/x-portable-bitmap", //NON-NLS 
+                            "image/avif", //NON-NLS
+                            "image/svg+xml" //NON-NLS
                     ).build();
     private static final ImmutableSet<String> AUDIO_MIME_TYPES
             = new ImmutableSet.Builder<String>()
@@ -69,7 +72,13 @@ public final class FileTypeUtils {
                             "audio/ogg", //NON-NLS
                             "audio/wav", //NON-NLS
                             "audio/vnd.wave", //NON-NLS
-                            "audio/x-ms-wma"//NON-NLS
+                            "audio/x-ms-wma",//NON-NLS
+                            "application/x-cdf",//NON-NLS
+                            "audio/aac",//NON-NLS
+                            "audio/x-midi",//NON-NLS
+                            "audio/opus",//NON-NLS
+                            "audio/3gpp", //NON-NLS
+                            "audio/3gpp2" //NON-NLS
                     ).build();
     private static final ImmutableSet<String> VIDEO_MIME_TYPES
             = new ImmutableSet.Builder<String>()
@@ -83,7 +92,9 @@ public final class FileTypeUtils {
                             "video/x-msvideo", //NON-NLS
                             "video/x-flv", //NON-NLS
                             "video/x-m4v", //NON-NLS
-                            "video/x-ms-wmv"//NON-NLS
+                            "video/x-ms-wmv",//NON-NLS
+                            "video/mp2t", //NON-NLS
+                            "video/webm" //NON-NLS
                     ).build();
     private static final ImmutableSet<String> DOCUMENT_MIME_TYPES
             = new ImmutableSet.Builder<String>()
@@ -112,7 +123,21 @@ public final class FileTypeUtils {
                             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
                             "application/vnd.oasis.opendocument.presentation", //NON-NLS
                             "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
-                            "application/vnd.oasis.opendocument.text" //NON-NLS
+                            "application/vnd.oasis.opendocument.text", //NON-NLS
+                            "application/epub+zip",//NON-NLS
+                            "application/ld+json",//NON-NLS
+                            "application/vnd.amazon.ebook",//NON-NLS
+                            "application/vnd.visio",//NON-NLS
+                            "application/x-abiword",//NON-NLS
+                            "text/xml",//NON-NLS
+                            "application/atom+xml",//NON-NLS
+                            "text/calendar",//NON-NLS
+                            "text/javascript",//NON-NLS
+                            "application/vnd.mozilla.xul+xml",//NON-NLS
+                            "application/x-csh",//NON-NLS
+                            "application/x-httpd-php",//NON-NLS
+                            "application/x-sh"//NON-NLS
+
                     ).build();
     private static final ImmutableSet<String> EXECUTABLE_MIME_TYPES
             = new ImmutableSet.Builder<String>()
@@ -126,7 +151,8 @@ public final class FileTypeUtils {
                             "vms/exe",//NON-NLS
                             "application/x-winexe",//NON-NLS
                             "application/msdos-windows",//NON-NLS
-                            "application/x-msdos-program"//NON-NLS
+                            "application/x-msdos-program",//NON-NLS,
+                            "application/java-archive" //NON-NLS
                     ).build();
     private static final ImmutableSet<String> MULTI_MEDIA_MIME_TYPES
             = new ImmutableSet.Builder<String>()
