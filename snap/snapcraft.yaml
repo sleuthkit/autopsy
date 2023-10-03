@@ -25,7 +25,19 @@ title: Autopsy
 base: core22
 version: 4.21.0
 summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
-description: "Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools.  Disclaimer: due to the system access necessary for Autopsy to perform correctly, this snap is highly privileged."
+description: |
+  Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools.  
+  Disclaimer: due to the system access necessary for Autopsy to perform correctly, this snap is highly privileged and uses the following interfaces:
+  - block-devices, dm-crypt, fuse-support, removable-media, mount-observe, and system-files-dev (system-files read access to /dev) to find and ingest data sources
+  - system-files-hugepages (system-files read access to /sys/kernel/mm/hugepages), and hugepages-control to run Solr for indexing keywords in files, which in turn uses hugepages for performance implications
+  - desktop-launch to launch file manager to view autopsy log folders, web browsers online/offline help, and user default applications for opening extracted files in external applications
+  
+  You may want to manually connect the following interfaces (see https://snapcraft.io/docs/interface-management for more details)
+  - kernel-crypto-api for kernel cryptography functions
+  - network-observe, network-setup-observe, and system-observe may be necessary in some instances for multi-user networking
+
+  See https://snapcraft.io/docs/supported-interfaces for more details
+  
 source-code: https://github.com/sleuthkit/autopsy/
 website: https://www.autopsy.com/
 license: Apache-2.0
