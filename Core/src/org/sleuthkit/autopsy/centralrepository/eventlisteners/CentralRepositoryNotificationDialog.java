@@ -34,8 +34,9 @@ public class CentralRepositoryNotificationDialog {
      * application is running with a GUI.
      */
     static boolean shouldDisplay() {
-        return Version.getBuildType() == Version.Type.RELEASE 
-                && RuntimeProperties.runningWithGUI();
+        return //Version.getBuildType() == Version.Type.RELEASE 
+                //&&
+                RuntimeProperties.runningWithGUI();
     }
 
     /**
