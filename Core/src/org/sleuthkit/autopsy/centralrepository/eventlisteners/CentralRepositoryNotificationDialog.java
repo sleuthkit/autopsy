@@ -33,7 +33,7 @@ public class CentralRepositoryNotificationDialog {
      * This dialog should display iff the mode is RELEASE and the
      * application is running with a GUI.
      */
-    static boolean shouldDisplay() {
+    public static boolean shouldDisplay() {
         return //Version.getBuildType() == Version.Type.RELEASE 
                 //&&
                 RuntimeProperties.runningWithGUI();
@@ -51,7 +51,7 @@ public class CentralRepositoryNotificationDialog {
         "CentralRepositoryNotificationDialog.bulletThree=Create personas that group accounts",
         "CentralRepositoryNotificationDialog.finalRemarks=To limit what is stored, use the Central Repository options panel."
     })
-    static void display() {
+    public static void display() {
         assert shouldDisplay();
 
         MessageNotifyUtil.Message.info(

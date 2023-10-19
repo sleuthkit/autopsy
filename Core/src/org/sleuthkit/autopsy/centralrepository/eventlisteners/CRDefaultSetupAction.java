@@ -1,6 +1,20 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2017-2020 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
@@ -10,7 +24,6 @@ import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
-import org.openide.windows.OnShowing;
 import org.sleuthkit.autopsy.centralrepository.CentralRepoSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbChoice;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbManager;
@@ -21,25 +34,28 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
- *
- * @author gregd
+ * Runs the default setup for central repository and notifies the user if a)
+ * running with GUI and b) first launch.
  */
-@OnShowing
-public class OnUIShowing implements Runnable {
-    private static final Logger logger = Logger.getLogger(OnUIShowing.class.getName());
+public class CRDefaultSetupAction {
+
+    private static final Logger logger = Logger.getLogger(CRDefaultSetupAction.class.getName());
+    private static final CRDefaultSetupAction INSTANCE = new CRDefaultSetupAction();
     
-    @Override
-    public void run() {
-        setupDefaultCentralRepository();
+    public static CRDefaultSetupAction getInstance() {
+        return INSTANCE;
     }
-    
+
+    private CRDefaultSetupAction() {
+    }
+
     /**
      * Checks if the central repository has been set up and configured. If not,
-     * does the set up unconditionally. If the application is running with a
-     * GUI, a notification will be displayed to the user if the mode is RELEASE
-     * (in other words, developers are exempt from seeing the notification).
+     * does the set up unconditionally. 
+     * 
+     * @return Returns true if first run and a default CR was setup.
      */
-    private void setupDefaultCentralRepository() {
+    public boolean setupDefaultCentralRepository() {
         Map<String, String> centralRepoSettings = ModuleSettings.getConfigSettings(CentralRepoSettings.getInstance().getModuleSettingsKey());
         String initializedStr = centralRepoSettings.get("initialized");
 
@@ -55,13 +71,9 @@ public class OnUIShowing implements Runnable {
                 ModuleSettings.setConfigSetting(CentralRepoSettings.getInstance().getModuleSettingsKey(), "initialized", "true");
             }
         }
-        
-        if(initialized) {
-            return; // Nothing to do
-        }
 
-        if (CentralRepositoryNotificationDialog.shouldDisplay()) {
-            CentralRepositoryNotificationDialog.display();
+        if (initialized) {
+            return false; // Nothing to do
         }
 
         try {
@@ -79,8 +91,9 @@ public class OnUIShowing implements Runnable {
         }
 
         ModuleSettings.setConfigSetting(CentralRepoSettings.getInstance().getModuleSettingsKey(), "initialized", "true");
+        return true;
     }
-    
+
     /**
      * Display a central repository exception in a message box if running with a
      * GUI.
@@ -102,6 +115,5 @@ public class OnUIShowing implements Runnable {
             }
         }
     }
-
 
 }
