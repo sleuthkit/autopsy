@@ -23,6 +23,7 @@ import java.awt.Cursor;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.apache.commons.io.FileUtils;
@@ -42,6 +44,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -374,6 +377,7 @@ public class Installer extends ModuleInstall {
     @Override
     public void restored() {
         super.restored();
+        checkMemoryAvailable();
         ensurePythonModulesFolderExists();
         ensureClassifierFolderExists();
         ensureOcrLanguagePacksFolderExists();
@@ -395,6 +399,40 @@ public class Installer extends ModuleInstall {
         logger.log(Level.INFO, "Autopsy Core restore completed"); //NON-NLS    
         preloadJython();
         preloadTranslationServices();
+    }
+
+    /**
+     * Checks system resources logging any potential issues.
+     */
+    @Messages({
+        "# {0} - physicalMemory",
+        "Installer_checkMemoryAvailable_physicalRamExpected_desc=Physical memory: {0}, is less than the 8 GB required.  Some aspects of the application may not work as expected.",
+        "# {0} - maxMemory",
+        "Installer_checkMemoryAvailable_maxMemExpected_desc=Maximum JVM memory: {0}, is less than the 2 GB required.  Some aspects of the application may not work as expected."
+    })
+    private void checkMemoryAvailable() {
+        try {
+            long memorySize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory
+                    .getOperatingSystemMXBean()).getTotalMemorySize();
+            if (memorySize < 8_000_000_000L) {
+                String desc = Bundle.Installer_checkMemoryAvailable_physicalRamExpected_desc(
+                        FileUtils.byteCountToDisplaySize(memorySize));
+                logger.log(Level.SEVERE, desc);
+            }
+        } catch (Throwable t) {
+            logger.log(Level.SEVERE, "There was an error fetching physical memory size", t);
+        }
+
+        try {
+            long maxMemory = Runtime.getRuntime().maxMemory();
+            if (maxMemory < 2_000_000_000L) {
+                String desc = Bundle.Installer_checkMemoryAvailable_maxMemExpected_desc(
+                        FileUtils.byteCountToDisplaySize(maxMemory));
+                logger.log(Level.SEVERE, desc);
+            }
+        } catch (Throwable t) {
+            logger.log(Level.SEVERE, "There was an error fetching jvm max memory", t);
+        }
     }
 
     /**
