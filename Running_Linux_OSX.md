@@ -1,5 +1,8 @@
 # Overview
-When installing on Debian-based Linux or macOS systems, there are three general steps: [installing prerequisites](#installing-prerequisites), [installing The Sleuth Kit](#installing-the-sleuth-kit), and [installing Autopsy](#installing-autopsy) itself.  On macOS, you will want to [setup the JNA paths](#setup-macos-jna-paths).
+For Linux systems that [support snapd](https://snapcraft.io/docs/installing-snapd), there is currently the option to install Autopsy from the [snap package](#install-autopsy-snap).  Otherwise, when installing on Debian-based Linux or macOS systems, there are three general steps: [installing prerequisites](#installing-prerequisites), [installing The Sleuth Kit](#installing-the-sleuth-kit), and [installing Autopsy](#installing-autopsy) itself.  On macOS, you will want to [setup the JNA paths](#setup-macos-jna-paths).
+
+# Install Autopsy Snap
+You can download the snap package from the [releases section](https://github.com/sleuthkit/autopsy/releases).  In order for Autopsy to run properly, snap connections will need to be properly setup, which can be done by running this script: `snap connections autopsy | sed -nE 's/^[^ ]* *([^ ]*) *- *- *$/\1/p' | xargs -I{} sudo snap connect {}`.  See the [snap README](./snap/README.md) for more information.
 
 # Installing Prerequisites
 - **Linux**: Run [`linux_macos_install_scripts/install_prereqs_ubuntu.sh`](./linux_macos_install_scripts/install_prereqs_ubuntu.sh).

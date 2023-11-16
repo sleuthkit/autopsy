@@ -19,10 +19,11 @@
 # yaml reference here: https://snapcraft.io/docs/snapcraft-yaml-reference
 # sample yaml files here: https://github.com/videolan/vlc/blob/master/extras/package/snap/snapcraft.yaml, https://github.com/canonical/firefox-snap/blob/stable/snapcraft.yaml
 name: autopsy
+title: Autopsy
 # more on base snaps here: https://snapcraft.io/docs/base-snaps
 # core is based on corresponding ubuntu version.  ubuntu version information can be found here: https://wiki.ubuntu.com/Releases
 base: core22
-version: 4.20.0
+version: 4.21.0
 summary: A graphical interface to The Sleuth Kit and other digital forensics tools. # 79 char long summary
 description: Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools.
 source-code: https://github.com/sleuthkit/autopsy/
@@ -38,7 +39,7 @@ compression: lzo
 icon: snap/gui/autopsy.png
 
 plugs:
-  system-files-autopsy:
+  system-files-dev:
     interface: system-files
     read: [/dev]
   system-files-hugepages:
@@ -88,7 +89,6 @@ apps:
       # taken from https://snapcraft.io/docs/supported-interfaces
       - audio-playback
       - block-devices
-      - browser-sandbox
       - desktop
       - desktop-launch
       - desktop-legacy
@@ -108,7 +108,7 @@ apps:
       - opengl
       - optical-drive
       - removable-media
-      - system-files-autopsy
+      - system-files-dev
       - system-files-hugepages
       - system-observe
     slots:
@@ -119,8 +119,7 @@ parts:
     # more information on plugins here: https://snapcraft.io/docs/supported-plugins
     plugin: autotools
     source: https://github.com/sleuthkit/sleuthkit.git
-    source-branch: develop
-    #source-tag: sleuthkit-4.12.0
+    source-tag: sleuthkit-4.12.1
     build-environment: [JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64]
     # information on packages here: https://snapcraft.io/docs/package-repositories
     build-packages:
@@ -174,7 +173,7 @@ parts:
       - lsof
     plugin: nil
     source: https://github.com/sleuthkit/autopsy.git
-    source-branch: develop
+    source-tag: autopsy-4.21.0
     build-environment:
       - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
       - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
@@ -186,7 +185,7 @@ parts:
       AUTOPSY_PLATFORM_PATH="$AUTOPSY_SRC_PATH/netbeans-plat/$NETBEANS_PLAT_VER"
       AUTOPSY_HARNESS_PATH="$AUTOPSY_PLATFORM_PATH/harness"
       export TSK_HOME="$HOME/parts/sleuthkit/build"
-      ant -Dnbplatform.active.dir="$AUTOPSY_PLATFORM_PATH" -Dnbplatform.default.harness.dir="$AUTOPSY_HARNESS_PATH" build build-zip
+      ant -Dnbplatform.active.dir="$AUTOPSY_PLATFORM_PATH" -Dnbplatform.default.harness.dir="$AUTOPSY_HARNESS_PATH" build-zip
 
       # ----- SETUP EXTRACT DIRECTORY -----
       AUTOPSY_LOCATION="$SNAPCRAFT_PART_INSTALL/autopsy"
