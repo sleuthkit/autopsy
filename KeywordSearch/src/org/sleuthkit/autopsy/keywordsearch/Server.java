@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
+import javax.swing.JOptionPane;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -82,6 +83,7 @@ import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -611,18 +613,22 @@ public class Server {
         startLocalSolr(SOLR_VERSION.SOLR8);
     }
     
+    @Messages({
+        "# {0} - indexVersion",
+        "Server_configureSolrConnection_illegalSolrVersion=The solr version in the case: {0}, is not supported."
+    })
     private void configureSolrConnection(Case theCase, Index index) throws KeywordSearchModuleException, SolrServerNoPortException {
         
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
 
                 // makes sure the proper local Solr server is running
-                if (IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
-                    startLocalSolr(SOLR_VERSION.SOLR8);
-                } else {
-                    startLocalSolr(SOLR_VERSION.SOLR4);
+                if (!IndexFinder.getCurrentSolrVersion().equals(index.getSolrVersion())) {
+                    throw new KeywordSearchModuleException(Bundle.Server_configureSolrConnection_illegalSolrVersion(index.getSolrVersion()));
                 }
 
+                startLocalSolr(SOLR_VERSION.SOLR8);
+                
                 // check if the local Solr server is running
                 if (!this.isLocalSolrRunning()) {
                     logger.log(Level.SEVERE, "Local Solr server is not running"); //NON-NLS
@@ -684,8 +690,7 @@ public class Server {
         if (version == SOLR_VERSION.SOLR8) {
             localSolrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         } else {
-            // solr4
-            localSolrFolder = InstalledFileLocator.getDefault().locate("solr4", Server.class.getPackage().getName(), false); //NON-NLS
+            throw new KeywordSearchModuleException(Bundle.Server_configureSolrConnection_illegalSolrVersion(version.name()));
         }
 
         if (isLocalSolrRunning()) {
