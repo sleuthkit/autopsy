@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Cursor;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
+import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
@@ -206,9 +207,11 @@ public class Case {
      * changing the main window title.
      */
     static {
-        WindowManager.getDefault().invokeWhenUIReady(() -> {
-            mainFrame = WindowManager.getDefault().getMainWindow();
-        });
+        if (!GraphicsEnvironment.isHeadless()) {
+            WindowManager.getDefault().invokeWhenUIReady(() -> {
+                mainFrame = WindowManager.getDefault().getMainWindow();
+            });
+        }
     }
 
     /**
