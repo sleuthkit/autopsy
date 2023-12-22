@@ -490,6 +490,22 @@
                 <binary-origin>release/modules/ext/DatCon.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/bined-core-0.2.1-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bined-core-0.2.1-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/bined-swing-0.2.1-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bined-swing-0.2.1-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/bined-highlight-swing-0.2.1-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bined-highlight-swing-0.2.1-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/paged_data-0.2.1-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/paged_data-0.2.1-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/decodetect-core-0.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/decodetect-core-0.3.jar</binary-origin>
             </class-path-extension>
