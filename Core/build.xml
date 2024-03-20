@@ -140,8 +140,8 @@
               tofile="${ext.dir}/postgresql-42.7.3.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.5.jar"
               tofile="${ext.dir}/c3p0-0.9.5.5.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-00.3.0.jar"
-              tofile="${ext.dir}/mchange-commons-java-00.3.0.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.3.0.jar"
+              tofile="${ext.dir}/mchange-commons-java-0.3.0.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
               tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	
         <copy file="${env.TSK_HOME}/case-uco/java/dist/sleuthkit-caseuco-${TSK_VERSION}.jar" 

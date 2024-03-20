@@ -638,7 +638,7 @@
                 <binary-origin>release/modules/ext/logback-core-1.2.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/mchange-commons-java-00.3.0.jar</runtime-relative-path>
+                <runtime-relative-path>ext/mchange-commons-java-0.3.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mchange-commons-java-00.3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
