@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.actions;
 
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;

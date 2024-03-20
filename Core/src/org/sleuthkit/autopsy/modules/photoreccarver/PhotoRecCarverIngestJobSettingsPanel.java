@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.modules.photoreccarver;
 
 import java.awt.Color;
 import java.awt.Cursor;
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;

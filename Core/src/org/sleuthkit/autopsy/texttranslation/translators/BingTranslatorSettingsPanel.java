@@ -34,7 +34,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.net.URISyntaxException;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
