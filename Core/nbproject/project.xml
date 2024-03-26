@@ -638,8 +638,8 @@
                 <binary-origin>release/modules/ext/logback-core-1.2.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/mchange-commons-java-0.2.20.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/mchange-commons-java-0.2.20.jar</binary-origin>
+                <runtime-relative-path>ext/mchange-commons-java-0.3.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mchange-commons-java-00.3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.18.0.jar</runtime-relative-path>
@@ -698,8 +698,8 @@
                 <binary-origin>release/modules/ext/okio-1.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/postgresql-42.3.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/postgresql-42.3.5.jar</binary-origin>
+                <runtime-relative-path>ext/postgresql-42.7.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/postgresql-42.7.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/Rejistry-1.1-SNAPSHOT.jar</runtime-relative-path>
