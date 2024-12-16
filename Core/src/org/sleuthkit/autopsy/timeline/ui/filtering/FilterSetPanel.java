@@ -158,14 +158,6 @@ final public class FilterSetPanel extends BorderPane {
                     throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
             }
         });
-        
-        //Block the default treetable keyboard events.
-        filterTreeTable.addEventFilter(KeyEvent.ANY, new EventHandler<KeyEvent>() {
-            @Override 
-            public void handle(KeyEvent event) {
-                event.consume();
-            }
-        });
     }
 
     public FilterSetPanel(TimeLineController controller) {
