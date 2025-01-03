@@ -59,6 +59,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     private Host host;
     private ImageWriterSettings imageWriterSettings;
     private boolean ignoreFatOrphanFiles;
+    private String password;
 
     /**
      * Constructs a local drive data source processor that implements the
@@ -182,7 +183,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         }
 
         addDiskTask = new AddImageTask(
-                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings),
+                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings, password),
                 progressMonitor,
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()),
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
@@ -250,7 +251,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             return;
         }
 
-        addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings),
+        addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings, password),
                 progressMonitor,
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()),
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));

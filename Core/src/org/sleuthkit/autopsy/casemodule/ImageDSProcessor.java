@@ -82,6 +82,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     private String sha1;
     private String sha256;
     private Host host = null;
+    private String password;
 
     static {
         filtersList.add(allFilter);
@@ -162,7 +163,9 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     @Override
     public boolean isPanelValid() {
-        return configPanel.validatePanel();
+        // before attempting to validate the panel (a potentially long running operation), 
+        // check if the validation is loading or on delay.
+        return !configPanel.isValidationLoading() && configPanel.validatePanel();
     }
 
     /**
@@ -206,7 +209,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.host = host;
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, this.host);
+                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, this.password, this.host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -215,7 +218,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             return;
         }
 
-        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progressMonitor, callback);
+        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, this.password, progressMonitor, callback);
     }
 
     /**
@@ -270,7 +273,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         // Set up the data source before creating the ingest stream
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, this.host);
+                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, this.password, this.host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -290,7 +293,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             ingestStream = new DefaultIngestStream();
         }
 
-        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progress, callBack);
+        doAddImageProcess(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, this.password, progress, callBack);
     }
 
     /**
@@ -314,6 +317,10 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         sha256 = configPanel.getSha256();
         if (sha256.isEmpty()) {
             sha256 = null;
+        }
+        password = configPanel.getPassword();
+        if (password.isEmpty()) {
+            password = null;
         }
     }
 
@@ -352,7 +359,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         ingestStream = new DefaultIngestStream();
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                    new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId);
+                    new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId, this.password, null);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -361,7 +368,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             return;
         }
 
-        doAddImageProcess(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
+        doAddImageProcess(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, null, null, null, this.password, progressMonitor, callback);
     }
 
     /**
@@ -389,11 +396,12 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * @param md5                  The MD5 hash of the image, may be null.
      * @param sha1                 The SHA-1 hash of the image, may be null.
      * @param sha256               The SHA-256 hash of the image, may be null.
+     * @param password             Password for image decryption.  May be null.
      * @param progressMonitor      Progress monitor for reporting progress
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void doAddImageProcess(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    private void doAddImageProcess(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, String password, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
 
         // If the data source or ingest stream haven't been initialized, stop processing
         if (ingestStream == null) {
@@ -413,7 +421,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             return;
         }
 
-        AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null);
+        AddImageTask.ImageDetails imageDetails = new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, password);
         addImageTask = new AddImageTask(imageDetails,
                 progressMonitor,
                 new StreamingAddDataSourceCallbacks(ingestStream),
@@ -449,6 +457,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         timeZone = null;
         ignoreFatOrphanFiles = false;
         host = null;
+        password = null;
         configPanel.reset();
     }
 
@@ -470,10 +479,20 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         }
 
         try {
-            // verify that the image has a file system that TSK can process
-            if (!DataSourceUtils.imageHasFileSystem(dataSourcePath)) {
-                // image does not have a file system that TSK can process
-                return 0;
+            if (password == null) {
+
+                // verify that the image has a file system that TSK can process
+                if (!DataSourceUtils.imageHasFileSystem(dataSourcePath)) {
+                    // image does not have a file system that TSK can process
+                    return 0;
+                }
+            } else {
+                // verify that the image has a file system that TSK can process
+                if (!DataSourceUtils.imageHasFileSystem(dataSourcePath, password)) {
+                    // image does not have a file system that TSK can process
+                    return 0;
+                }
+                
             }
         } catch (Exception ex) {
             throw new AutoIngestDataSourceProcessorException("Exception inside canProcess() method", ex);
@@ -501,7 +520,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         ingestStream = new DefaultIngestStream();
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                    new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId, host);
+                    new String[]{imagePath}, sectorSize, timeZone, "", "", "", deviceId, this.password, host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -510,7 +529,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             return;
         }
 
-        doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
+        doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, null, progressMonitor, callBack);
     }
 
     @Override
@@ -531,7 +550,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         // Set up the data source before creating the ingest stream
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
-                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, host);
+                    new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, this.password, host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding data source with path " + imagePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -551,7 +570,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             return null;
         }
 
-        doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
+        doAddImageProcess(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, null, progressMonitor, callBack);
 
         return ingestStream;
     }

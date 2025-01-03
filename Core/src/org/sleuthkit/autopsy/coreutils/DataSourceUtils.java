@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.coreutils;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.text.MessageFormat;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Utility methods for working with data sources.
@@ -41,4 +43,25 @@ public class DataSourceUtils {
     public static boolean imageHasFileSystem(Path dataSourcePath) throws IOException {
         return SleuthkitJNI.isImageSupported(dataSourcePath.toString());
     }
+
+    public static boolean imageHasFileSystem(Path dataSourcePath, String password) throws IOException {
+        try {
+//            LOGGER.info("Testing if disk image {} can be opened", hostPath);
+            SleuthkitJNI.TestOpenImageResult openImageResult = SleuthkitJNI.testOpenImage(dataSourcePath.toString(), password);
+            if (!openImageResult.wasSuccessful()) {
+                String message = MessageFormat.format("An error occurred while opening {0}: {1}",
+                        dataSourcePath.toString(),
+                        openImageResult == null || StringUtils.isBlank(openImageResult.getMessage())
+                        ? "<unknown>"
+                        : openImageResult.getMessage());
+                return false;
+            }
+        } catch (Throwable ex) {
+            String message = "An error occurred while opening " + dataSourcePath.toString();
+            return false;
+        }        
+        return SleuthkitJNI.isImageSupported(dataSourcePath.toString());
+        
+    }
 }
+

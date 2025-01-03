@@ -49,6 +49,8 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
     private JPanel currentPanel;
 
     private final Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<>();
+    
+    private final PanelUpdateListener panelUpdateListener;
 
     private String currentDsp;
 
@@ -60,6 +62,7 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
     AddImageWizardDataSourceSettingsVisual(AddImageWizardDataSourceSettingsPanel wizPanel) {
         initComponents();
         this.wizPanel = wizPanel;
+        this.panelUpdateListener = new PanelUpdateListener();
         typePanel.setLayout(new BorderLayout());
         discoverDataSourceProcessors();
         currentDsp = ImageDSProcessor.getType(); //default value to the ImageDSProcessor
@@ -107,23 +110,36 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
      */
     @SuppressWarnings("deprecation")
     private void updateCurrentPanel(JPanel panel) {
+        cleanupUpdateListener(currentPanel);
         currentPanel = panel;
         typePanel.removeAll();
         typePanel.add(currentPanel, BorderLayout.CENTER);
         typePanel.validate();
         typePanel.repaint();
-        currentPanel.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString())) {
-                    wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
-                }
-                if (evt.getPropertyName().equals(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString())) {
-                    wizPanel.moveFocusToNext();
-                }
-            }
-        });
+        cleanupUpdateListener(currentPanel);
+        currentPanel.addPropertyChangeListener(panelUpdateListener);
         this.wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
+    }
+    
+    /**
+     * Removes PanelUpdateListener from panel if found.
+     * @param panel The panel from which to remove the listener.
+     */
+    private void cleanupUpdateListener(JPanel panel) {
+        if (panel == null) {
+            return;
+        }
+        
+        PropertyChangeListener[] listeners = panel.getPropertyChangeListeners();
+        if (listeners == null) {
+            return;
+        }
+        
+        for (PropertyChangeListener listener: listeners) {
+            if (listener instanceof PanelUpdateListener) {
+                panel.removePropertyChangeListener(listener);
+            }
+        }
     }
 
     /**
@@ -220,5 +236,21 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
         }
 
         protected abstract boolean addSeparatorAfter(JList list, Object value, int index);
+    }
+    
+    /**
+     * A property change listener that responds to update events.
+     */
+    private class PanelUpdateListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (evt.getPropertyName().equals(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString())) {
+                wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
+            }
+            if (evt.getPropertyName().equals(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString())) {
+                wizPanel.moveFocusToNext();
+            }
+        }        
     }
 }
