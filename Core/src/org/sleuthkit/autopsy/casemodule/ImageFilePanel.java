@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -64,10 +66,12 @@ public class ImageFilePanel extends JPanel {
     private final String contextName;
     private final List<FileFilter> fileChooserFilters;
     
-    private static int VALIDATE_TIMEOUT_MILLIS = 1200;
+    private static int VALIDATE_TIMEOUT_MILLIS = 1000;
     static ScheduledThreadPoolExecutor delayedValidationService = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("ImageFilePanel delayed validation").build());
 
-    private final Object validateActionLock = new Object();
+    private final ReentrantLock validationWaitingLock = new ReentrantLock();
+    private final ReentrantLock validationLock = new ReentrantLock();
+
     private Runnable validateAction = null;
     private Future<?> validateFuture = null;
 
@@ -599,6 +603,23 @@ public class ImageFilePanel extends JPanel {
     }
 
     /**
+     * Sets UI enabled state.
+     *
+     * @param enabled True
+     */
+    private void setUIEnabled(boolean enabled, boolean validNonE01) {
+        this.browseButton.setEnabled(enabled);
+        this.noFatOrphansCheckbox.setEnabled(enabled);
+        this.passwordTextField.setEnabled(enabled);
+        this.pathTextField.setEnabled(enabled);
+        this.sectorSizeComboBox.setEnabled(enabled);
+        this.md5HashTextField.setEnabled(enabled && validNonE01);
+        this.sha1HashTextField.setEnabled(enabled && validNonE01);
+        this.sha256HashTextField.setEnabled(enabled && validNonE01);
+        this.timeZoneComboBox.setEnabled(enabled);
+    }
+
+    /**
      * Should we enable the next button of the wizard?
      *
      * @return true if a proper image has been selected, false otherwise
@@ -614,49 +635,66 @@ public class ImageFilePanel extends JPanel {
         "ImageFilePanel_validatePanel_unknownError=<html><body><p>An unknown error occurred while attempting to validate the image</p></body></html>"
     })
     public boolean validatePanel() {
-        String path = getContentPaths();
-        if (!isImagePathValid()) {
-            showError(null);
-            return false;
-        }
+        return runWithLock(this.validationLock, () -> {
+            boolean validNonE01 = true;
+            try {
 
-        if (!StringUtils.isBlank(getMd5()) && !HashUtility.isValidMd5Hash(getMd5())) {
-            showError(Bundle.ImageFilePanel_validatePanel_invalidMD5());
-            return false;
-        }
+                // acquire field values at the beginning to minimize chance of changing while validating.
+                String path = getContentPaths();
 
-        if (!StringUtils.isBlank(getSha1()) && !HashUtility.isValidSha1Hash(getSha1())) {
-            showError(Bundle.ImageFilePanel_validatePanel_invalidSHA1());
-            return false;
-        }
+                validNonE01 = isValidNonE01(path);
+                setUIEnabled(false, validNonE01);
 
-        if (!StringUtils.isBlank(getSha256()) && !HashUtility.isValidSha256Hash(getSha256())) {
-            showError(Bundle.ImageFilePanel_validatePanel_invalidSHA256());
-            return false;
-        }
-        
-        try {
-            String password = this.getPassword();
-            TestOpenImageResult testResult = SleuthkitJNI.testOpenImage(path, password);
-            if (!testResult.wasSuccessful()) {
-                showError(Bundle.ImageFilePanel_validatePanel_imageOpenError(
-                        StringUtils.defaultIfBlank(
-                                testResult.getMessage(), 
-                                Bundle.ImageFilePanel_validatePanel_unknownErrorMsg())));
-                return false;
+                String md5 = getMd5();
+                String sha1 = getSha1();
+                String sha256 = getSha256();
+                String password = getPassword();
+
+                if (!isImagePathValid(path)) {
+                    showError(null);
+                    return false;
+                }
+
+                if (!StringUtils.isBlank(md5) && !HashUtility.isValidMd5Hash(md5)) {
+                    showError(Bundle.ImageFilePanel_validatePanel_invalidMD5());
+                    return false;
+                }
+
+                if (!StringUtils.isBlank(sha1) && !HashUtility.isValidSha1Hash(sha1)) {
+                    showError(Bundle.ImageFilePanel_validatePanel_invalidSHA1());
+                    return false;
+                }
+
+                if (!StringUtils.isBlank(sha256) && !HashUtility.isValidSha256Hash(sha256)) {
+                    showError(Bundle.ImageFilePanel_validatePanel_invalidSHA256());
+                    return false;
+                }
+
+                try {
+                    TestOpenImageResult testResult = SleuthkitJNI.testOpenImage(path, password);
+                    if (!testResult.wasSuccessful()) {
+                        showError(Bundle.ImageFilePanel_validatePanel_imageOpenError(
+                                StringUtils.defaultIfBlank(
+                                        testResult.getMessage(),
+                                        Bundle.ImageFilePanel_validatePanel_unknownErrorMsg())));
+                        return false;
+                    }
+                } catch (Throwable t) {
+                    logger.log(Level.SEVERE, "An unknown error occurred test opening image: " + path, t);
+                    showError(Bundle.ImageFilePanel_validatePanel_unknownError());
+                    return false;
+                }
+
+                if (!PathValidator.isValidForCaseType(path, Case.getCurrentCase().getCaseType())) {
+                    showError(Bundle.ImageFilePanel_validatePanel_dataSourceOnCDriveError());
+                } else {
+                    showError(null);
+                }
+                return true;
+            } finally {
+                setUIEnabled(true, validNonE01);
             }
-        } catch (Throwable t) {
-            logger.log(Level.SEVERE, "An unknown error occurred test opening image: " + path, t);
-            showError(Bundle.ImageFilePanel_validatePanel_unknownError());
-            return false;
-        }
-        
-        if (!PathValidator.isValidForCaseType(path, Case.getCurrentCase().getCaseType())) {
-            showError(Bundle.ImageFilePanel_validatePanel_dataSourceOnCDriveError());
-        } else {
-            showError(null);    
-        }
-        return true;
+        });
     }
     
     /**
@@ -675,25 +713,28 @@ public class ImageFilePanel extends JPanel {
             errorLabel.setText("");
         }
     }
-    
-    private boolean isImagePathValid() {
-        String path = getContentPaths();
-        
+
+    /**
+     * Returns true if path is valid for processing.
+     *
+     * @param path The path.
+     * @return True if valid for processing.
+     */
+    private boolean isImagePathValid(String path) {
         if (StringUtils.isBlank(path) || (!(new File(path).isFile() || DriveUtils.isPhysicalDrive(path) || DriveUtils.isPartition(path)))) {
             return false;
         }
-        
+
         return true;
     }
     
     /**
-     * @return True if the panel is on a delay for validating (i.e. typing a
-     * password for bitlocker).
+     * Returns true if the path is a valid image that is not an E01.
+     * @param path The path.
+     * @return True if valid image and not E01.
      */
-    public boolean isValidationLoading() {
-        synchronized (this.validateActionLock) {
-            return this.validateAction != null;
-        }
+    private boolean isValidNonE01(String path) {
+        return StringUtils.isNotBlank(path) && isImagePathValid(path) && !path.toLowerCase().endsWith(".e01");
     }
 
     public void storeSettings() {
@@ -721,12 +762,13 @@ public class ImageFilePanel extends JPanel {
         "ImageFilePanel.moduleErr.msg=A module caused an error listening to ImageFilePanel updates."
         + " See log to determine which module. Some data could be incomplete.\n"})
     private void updateHelper() {
-        if (isImagePathValid() && !getContentPaths().toLowerCase().endsWith(".e01")) {
+        String path = getContentPaths();
+        if (isValidNonE01(path)) {
             setHashValuesComponentsEnabled(true);
         } else {
             setHashValuesComponentsEnabled(false);
         }
-        
+
         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
 
@@ -737,6 +779,34 @@ public class ImageFilePanel extends JPanel {
         pathTextField.requestFocusInWindow();
     }
     
+    /**
+     * Runs the supplier action with the reentrant lock or blocks until
+     * acquired.
+     *
+     * @param <T>
+     * @param lock The reentrant lock.
+     * @param action The action to run.
+     * @return The value of the supplier.
+     */
+    private <T> T runWithLock(ReentrantLock lock, Supplier<T> action) {
+        try {
+            lock.lock();
+            return action.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @return True if the panel is on a delay for validating (i.e. typing a
+     * password for bitlocker).
+     */
+    public boolean isValidationLoading() {
+        return runWithLock(this.validationWaitingLock, () -> this.validateFuture != null
+                && !this.validateFuture.isCancelled()
+                && !this.validateFuture.isDone());
+    }
+
     /**
      * This class validates on a delay canceling any tasks previously scheduled
      * so that password validation doesn't lock up the system.
@@ -763,34 +833,34 @@ public class ImageFilePanel extends JPanel {
          * while typing.
          */
         private void delayValidate() {
-            boolean triggerUpdate = false;
-            synchronized (ImageFilePanel.this.validateActionLock) {
-                if (ImageFilePanel.this.validateFuture != null && 
-                        !ImageFilePanel.this.validateFuture.isCancelled() &&
-                        !ImageFilePanel.this.validateFuture.isDone()) {
-                    ImageFilePanel.this.validateFuture.cancel(true);
-                    triggerUpdate = true;
-                }
-                
-                ImageFilePanel.this.validateAction = new ValidationRunnable();
 
-                ImageFilePanel.this.validateFuture = ImageFilePanel.this.delayedValidationService.schedule(
-                        ImageFilePanel.this.validateAction,
+            boolean triggerUpdate = runWithLock(validationWaitingLock, () -> {
+
+                boolean toRetTriggerUpdate = false;
+                if (isValidationLoading()) {
+                    validateFuture.cancel(true);
+                    toRetTriggerUpdate = true;
+                }
+
+                validateAction = new ValidationRunnable();
+
+                validateFuture = delayedValidationService.schedule(
+                        validateAction,
                         VALIDATE_TIMEOUT_MILLIS,
                         TimeUnit.MILLISECONDS);
-            }
-            
+
+                return toRetTriggerUpdate;
+            });
+
+            errorLabel.setVisible(false);
+            loadingLabel.setVisible(true);
+
             // trigger invalidation after setting up new runnable if not already triggered
             if (triggerUpdate) {
                 firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
             }
-
-            errorLabel.setVisible(false);
-            if (!ImageFilePanel.this.loadingLabel.isVisible()) {
-                ImageFilePanel.this.loadingLabel.setVisible(true);
-            }
         }
-        
+     
         /**
          * Runnable to run the updateHelper if the validation action remains
          * this runnable.
@@ -799,23 +869,28 @@ public class ImageFilePanel extends JPanel {
 
             @Override
             public void run() {
-                if (Thread.interrupted()) {
-                    return;
-                }
-                
-                synchronized (ImageFilePanel.this.validateActionLock) {
-                    if (ImageFilePanel.this.validateAction != this) {
-                        return;
+
+                boolean isRunningAction = runWithLock(validationWaitingLock, () -> {
+                    if (validateAction != this) {
+                        return false;
                     }
 
                     // set the validation action to null to indicate that this is done running and can be validated.
-                    ImageFilePanel.this.validateAction = null;
-                    ImageFilePanel.this.validateFuture = null;
+                    validateAction = null;
+                    validateFuture = null;
+
+                    return true;
+                });
+
+                if (!isRunningAction) {
+                    return;
+                } else if (Thread.interrupted()) {
+                    return;
                 }
-                
+
                 ImageFilePanel.this.updateHelper();
             }
-            
+
         }
     }
 }
