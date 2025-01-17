@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.EventQueue;
+import java.awt.GraphicsEnvironment;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Serializable;
@@ -574,15 +575,17 @@ public class IngestManager implements IngestProgressSnapshotProvider {
 
         // initialize IngestMessageInbox, if it hasn't been initialized yet. This can't be done in
         // the constructor because that ends up freezing the UI on startup (JIRA-7345).
-        if (SwingUtilities.isEventDispatchThread()) {
-            initIngestMessageInbox();
-        } else {
-            try {
-                SwingUtilities.invokeAndWait(() -> initIngestMessageInbox());
-            } catch (InterruptedException ex) {
-                // ignore interruptions
-            } catch (InvocationTargetException ex) {
-                logger.log(Level.WARNING, "There was an error starting ingest message inbox", ex);
+        if (!GraphicsEnvironment.isHeadless()) {
+            if (SwingUtilities.isEventDispatchThread()) {
+                initIngestMessageInbox();
+            } else {
+                try {
+                    SwingUtilities.invokeAndWait(() -> initIngestMessageInbox());
+                } catch (InterruptedException ex) {
+                    // ignore interruptions
+                } catch (InvocationTargetException ex) {
+                    logger.log(Level.WARNING, "There was an error starting ingest message inbox", ex);
+                }
             }
         }
 

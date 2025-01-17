@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -68,7 +69,9 @@ public class Installer extends ModuleInstall {
     @Override
     public boolean closing() {
         //force ingest inbox closed on exit and save state as such
-        IngestMessageTopComponent.findInstance().close();
+        if (!GraphicsEnvironment.isHeadless()) {
+            IngestMessageTopComponent.findInstance().close();
+        }
         return true;
     }
 
