@@ -2573,7 +2573,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 return null;
             }
             String deviceId = manifest.getDeviceId();
-            return new AutoIngestDataSource(deviceId, dataSourcePath);
+            String password = manifest.getPassword();
+            return new AutoIngestDataSource(deviceId, dataSourcePath, password);
         }
 
         /**
@@ -2603,7 +2604,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 // Get an ordered list of data source processors to try
                 List<AutoIngestDataSourceProcessor> validDataSourceProcessors;
                 try {
-                    validDataSourceProcessors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(dataSource.getPath());
+                    validDataSourceProcessors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(dataSource.getPath(), dataSource.getPassword());
                 } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
                     sysLogger.log(Level.SEVERE, "Exception while determining best data source processor for {0}", dataSource.getPath());
                     // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
@@ -2641,7 +2642,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                 jobLogger.logIngestJobSettingsErrors();
                                 throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException("Error(s) in ingest job settings for " + manifestPath);
                             }
-                            currentIngestStream = selectedProcessor.processWithIngestStream(dataSource.getDeviceId(), dataSource.getPath(), ingestJobSettings, progressMonitor, callBack);
+                            currentIngestStream = selectedProcessor.processWithIngestStream(dataSource.getDeviceId(), dataSource.getPath(), dataSource.getPassword(), null, ingestJobSettings, progressMonitor, callBack);
                             if (currentIngestStream == null) {
                                 // Either there was a failure to add the data source object to the database or the ingest settings were bad.
                                 // An error in the ingest settings is the more likely scenario.
@@ -2651,7 +2652,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                 throw new AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException("Error initializing processing for " + manifestPath + ", probably due to an ingest settings error");
                             }
                         } else {
-                            selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                            selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), dataSource.getPassword(), null, progressMonitor, callBack);
                         }
                         ingestLock.wait();
 

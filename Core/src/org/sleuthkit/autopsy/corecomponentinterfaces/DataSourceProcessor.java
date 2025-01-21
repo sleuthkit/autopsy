@@ -129,6 +129,27 @@ public interface DataSourceProcessor {
         run(progressMonitor, callback);
     }
     
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Returns as soon as the background task is started.
+     * The background task uses a callback object to signal task completion and
+     * return results.
+     *
+     * This method should not be called unless isPanelValid returns true.
+     *
+     * @param password        The password 
+     * @param host            Host for the data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callback        Callback that will be used by the background task
+     *                        to return results.
+     */
+    default void run(String password, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        run(host, progressMonitor, callback);
+    }
+    
     /**
      * Adds a data source to the case database using a background task in a
      * separate thread and the settings provided by the selection and
@@ -174,6 +195,31 @@ public interface DataSourceProcessor {
     default void runWithIngestStream(Host host, IngestJobSettings settings, DataSourceProcessorProgressMonitor progress,
             DataSourceProcessorCallback callBack) {
         runWithIngestStream(settings, progress, callBack);
+    }
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread and the settings provided by the selection and
+     * configuration panel. Files found during ingest will be sent directly to
+     * the IngestStream provided. Returns as soon as the background task is
+     * started. The background task uses a callback object to signal task
+     * completion and return results.
+     *
+     * This method should not be called unless isPanelValid returns true, and
+     * should only be called for DSPs that support ingest streams. The ingest
+     * settings must be complete before calling this method.
+     *
+     * @param password The password to decrypt the data source.
+     * @param host     Host for this data source.
+     * @param settings The ingest job settings.
+     * @param progress Progress monitor that will be used by the background task
+     *                 to report progress.
+     * @param callBack Callback that will be used by the background task to
+     *                 return results.
+     */
+    default void runWithIngestStream(String password, Host host, IngestJobSettings settings, DataSourceProcessorProgressMonitor progress,
+            DataSourceProcessorCallback callBack) {
+        runWithIngestStream(host, settings, progress, callBack);
     }
 
     /**

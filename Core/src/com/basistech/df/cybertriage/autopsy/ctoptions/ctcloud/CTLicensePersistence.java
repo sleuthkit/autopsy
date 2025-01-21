@@ -50,6 +50,15 @@ public class CTLicensePersistence {
     public static CTLicensePersistence getInstance() {
         return instance;
     }
+    
+    public synchronized boolean deleteLicenseResponse() {
+        File licenseFile = getCTLicenseFile();
+        if (licenseFile.exists()) {
+            return licenseFile.delete();
+        } else {
+            return false;
+        }
+    }
 
     public synchronized boolean saveLicenseResponse(LicenseResponse licenseResponse) {
         if (licenseResponse != null) {

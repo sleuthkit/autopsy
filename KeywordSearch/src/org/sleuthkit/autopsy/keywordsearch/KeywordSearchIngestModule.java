@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharSource;
 import java.io.IOException;
@@ -33,10 +32,26 @@ import java.util.HashMap;
 import java.util.List;
 import static java.util.Locale.US;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
+import org.apache.tika.metadata.DublinCore;
+import org.apache.tika.metadata.FileSystem;
+import org.apache.tika.metadata.IPTC;
+import org.apache.tika.metadata.Office;
+import org.apache.tika.metadata.OfficeOpenXMLCore;
+import org.apache.tika.metadata.OfficeOpenXMLExtended;
+import org.apache.tika.metadata.PDF;
+import org.apache.tika.metadata.Photoshop;
+import org.apache.tika.metadata.TikaCoreProperties;
+import org.apache.tika.metadata.XMP;
+import org.apache.tika.metadata.XMPDM;
 import org.apache.tika.mime.MimeTypes;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -130,24 +145,69 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
-    private static final List<String> METADATA_DATE_TYPES
-            = ImmutableList.of(
-                    "Last-Save-Date", //NON-NLS
-                    "Last-Printed", //NON-NLS
-                    "Creation-Date"); //NON-NLS
-
-    private static final Map<String, BlackboardAttribute.ATTRIBUTE_TYPE> METADATA_TYPES_MAP = ImmutableMap.<String, BlackboardAttribute.ATTRIBUTE_TYPE>builder()
-            .put("Last-Save-Date", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED)
-            .put("Last-Author", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID)
-            .put("Creation-Date", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED)
-            .put("Company", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ORGANIZATION)
-            .put("Author", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OWNER)
-            .put("Application-Name", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)
-            .put("Last-Printed", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_PRINTED_DATETIME)
-            .put("Producer", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)
-            .put("Title", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)
-            .put("pdf:PDFVersion", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VERSION)
-            .build();
+    private static final Map<String, Pair<BlackboardAttribute.ATTRIBUTE_TYPE, Integer>> METADATA_TYPES_MAP = Stream.of(
+            Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED, List.of(
+                    "Last-Save-Date",
+                    TikaCoreProperties.MODIFIED.getName(),
+                    FileSystem.MODIFIED.getName(),
+                    DublinCore.MODIFIED.getName(),
+                    PDF.DOC_INFO_MODIFICATION_DATE.getName(),
+                    PDF.PDFVT_MODIFIED.getName(),
+                    XMP.MODIFY_DATE.getName(),
+                    XMPDM.AUDIO_MOD_DATE.getName(),
+                    XMPDM.METADATA_MOD_DATE.getName(),
+                    XMPDM.VIDEO_MOD_DATE.getName())),
+            Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_ID, List.of(
+                    "Last-Author",
+                    Office.LAST_AUTHOR.getName(),
+                    TikaCoreProperties.MODIFIER.getName())),
+            Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED, List.of(
+                    "Creation-Date",
+                    TikaCoreProperties.CREATED.getName(),
+                    FileSystem.CREATED.getName(),
+                    DublinCore.CREATED.getName(),
+                    IPTC.DATE_CREATED.getName(),
+                    Office.CREATION_DATE.getName(),
+                    PDF.DOC_INFO_CREATED.getName(),
+                    Photoshop.DATE_CREATED.getName(),
+                    XMP.CREATE_DATE.getName())),
+            Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ORGANIZATION, List.of(
+                    "Company",
+                    DublinCore.PUBLISHER.getName(),
+                    IPTC.ORGANISATION_NAME.getName(),
+                    OfficeOpenXMLExtended.COMPANY.getName())),
+            Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_OWNER, List.of(
+                    "Author",
+                    TikaCoreProperties.CREATOR.getName(),
+                    DublinCore.CREATOR.getName(),
+                    Office.INITIAL_AUTHOR.getName(),
+                    Office.AUTHOR.getName(),
+                    Photoshop.AUTHORS_POSITION.getName(),
+                    PDF.DOC_INFO_CREATOR.getName())),
+            Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME, List.of(
+                    "Application-Name",
+                    "Producer",
+                    OfficeOpenXMLExtended.APPLICATION.getName(),
+                    org.apache.tika.metadata.RTFMetadata.EMB_APP_VERSION.getName())),
+            Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_PRINTED_DATETIME, List.of(
+                    "Last-Printed",
+                    OfficeOpenXMLCore.LAST_PRINTED.getName())),
+            Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION, List.of(
+                    "Title",
+                    DublinCore.TITLE.getName(),
+                    IPTC.TITLE.getName(),
+                    PDF.DOC_INFO_TITLE.getName())),
+            Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VERSION, List.of(
+                    PDF.PDF_VERSION.getName(),
+                    OfficeOpenXMLCore.VERSION.getName())))
+            .flatMap(pr -> {
+                BlackboardAttribute.ATTRIBUTE_TYPE attrType = pr.getKey();
+                List<String> keys = pr.getValue();
+                return IntStream.range(0, keys.size())
+                        .mapToObj(idx -> Triple.of(keys.get(idx), attrType, idx));
+            })
+            .collect(Collectors.toMap(Triple::getLeft, trip -> Pair.of(trip.getMiddle(), trip.getRight()), (v1, v2) -> v1.getRight() < v2.getRight() ? v1 : v2));
+    
 
     private static final String IMAGE_MIME_TYPE_PREFIX = "image/";
 
@@ -624,14 +684,28 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        
+        /**
+         * Get best matched metadata for each attribute type found in metadata map.
+         */
+        Map<BlackboardAttribute.ATTRIBUTE_TYPE, Pair<Integer, String>> intermediateMapping = new HashMap<>();
         for (Map.Entry<String, String> entry : metadata.entrySet()) {
-            if (METADATA_TYPES_MAP.containsKey(entry.getKey())) {
-                BlackboardAttribute bba = checkAttribute(entry.getKey(), entry.getValue());
-                if (bba != null) {
-                    attributes.add(bba);
-                }
+            Pair<BlackboardAttribute.ATTRIBUTE_TYPE, Integer> attrPair = METADATA_TYPES_MAP.get(entry.getKey());
+            if (attrPair != null) {
+                intermediateMapping.compute(attrPair.getKey(), (k, v) -> {
+                    if (v == null || v.getKey() > attrPair.getValue()) {
+                        return Pair.of(attrPair.getValue(), entry.getValue());
+                    } else {
+                        return v;
+                    }
+                });
             }
         }
+        
+        for (Entry<BlackboardAttribute.ATTRIBUTE_TYPE, Pair<Integer, String>> interEntry: intermediateMapping.entrySet()) {
+            attributes.add(checkAttribute(interEntry.getKey(), interEntry.getValue().getValue()));
+        }
+        
         if (!attributes.isEmpty()) {
             try {
                 BlackboardArtifact bbart = aFile.newDataArtifact(new BlackboardArtifact.Type(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA), attributes);
@@ -653,24 +727,31 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
     }
 
-    private BlackboardAttribute checkAttribute(String key, String value) {
+    /**
+     * Create a metadata blackboard attribute based on specified content.
+     * @param attrType The attribute type.
+     * @param key The key for the attribute.
+     * @param value The value of the attribute.
+     * @return 
+     */
+    private BlackboardAttribute checkAttribute(BlackboardAttribute.ATTRIBUTE_TYPE attrType, String value) {
         String moduleName = KeywordSearchIngestModule.class.getName();
-        if (!value.isEmpty() && value.charAt(0) != ' ') {
-            if (METADATA_DATE_TYPES.contains(key)) {
+        if (attrType != null && !value.isEmpty() && value.charAt(0) != ' ') {
+            if (attrType.getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
                 SimpleDateFormat metadataDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", US);
                 Long metadataDateTime = Long.valueOf(0);
                 try {
                     String metadataDate = value.replaceAll("T", " ").replaceAll("Z", "");
                     Date usedDate = metadataDateFormat.parse(metadataDate);
                     metadataDateTime = usedDate.getTime() / 1000;
-                    return new BlackboardAttribute(METADATA_TYPES_MAP.get(key), moduleName, metadataDateTime);
+                    return new BlackboardAttribute(attrType, moduleName, metadataDateTime);
                 } catch (ParseException ex) {
                     // catching error and displaying date that could not be parsed then will continue on.
-                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for metadata attribute %s.", value, key), ex); //NON-NLS
+                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for metadata attribute %s.", value, attrType == null ? "<null>" : attrType.name()), ex); //NON-NLS
                     return null;
                 }
             } else {
-                return new BlackboardAttribute(METADATA_TYPES_MAP.get(key), moduleName, value);
+                return new BlackboardAttribute(attrType, moduleName, value);
             }
         }
 

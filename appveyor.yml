@@ -6,15 +6,17 @@ cache:
   - C:\ProgramData\chocolatey\lib
   - '%APPVEYOR_BUILD_FOLDER%\Core\test\qa-functional\data'
 
-image: Visual Studio 2015
+image: Visual Studio 2019
 platform: x64
 
 environment:
   global:
     TSK_HOME: "C:\\sleuthkit"
-    JDK_HOME: "C:\\Program Files\\Java\\jdk13"
-    JAVA_HOME: "C:\\Program Files\\Java\\jdk13"
+    JDK_HOME: "C:\\Program Files\\Java\\jdk17"
+    JAVA_HOME: "C:\\Program Files\\Java\\jdk17"
     PYTHON: "C:\\Python36-x64"
+    PLATFORM_REL_DIR: "netbeans-plat/15"
+    HARNESS_REL_DIR: "netbeans-plat/15/harness"
 
 install:
   - ps: choco install nuget.commandline
@@ -27,7 +29,7 @@ install:
   - python setupSleuthkitBranch.py
 
 services:
-  - postgresql95
+  - postgresql96
 
 build_script:
   - cd %TSK_HOME%
@@ -41,8 +43,9 @@ build_script:
   - cmd: ant -q
   - ps: popd
   - cd %APPVEYOR_BUILD_FOLDER%
-  - cmd: ant -q build
+  - cmd: ant -q -Dnbplatform.active.dir="%APPVEYOR_BUILD_FOLDER%/%PLATFORM_REL_DIR%" -Dnbplatform.default.harness.dir="%APPVEYOR_BUILD_FOLDER%/%HARNESS_REL_DIR%" build
 
 test_script:
   - cd %APPVEYOR_BUILD_FOLDER%
-  - cmd: ant -q test-no-regression
+  - cmd: ant -f "%APPVEYOR_BUILD_FOLDER%/Core/build.xml" -Dnbplatform.active.dir="%APPVEYOR_BUILD_FOLDER%/%PLATFORM_REL_DIR%" -Dnbplatform.default.harness.dir="%APPVEYOR_BUILD_FOLDER%/%HARNESS_REL_DIR%" test-unit
+  - cmd: ant -f "%APPVEYOR_BUILD_FOLDER%/KeywordSearch/build.xml" -Dnbplatform.active.dir="%APPVEYOR_BUILD_FOLDER%/%PLATFORM_REL_DIR%" -Dnbplatform.default.harness.dir="%APPVEYOR_BUILD_FOLDER%/%HARNESS_REL_DIR%" test-unit

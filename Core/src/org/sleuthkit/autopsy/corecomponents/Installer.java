@@ -44,6 +44,8 @@ import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineIngestManager;
+import org.sleuthkit.autopsy.centralrepository.eventlisteners.CRDefaultSetupAction;
+import org.sleuthkit.autopsy.centralrepository.eventlisteners.CentralRepositoryNotificationDialog;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineOptionProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -93,6 +95,12 @@ public class Installer extends ModuleInstall {
         
         final CommandLineOptionProcessor finalprocessor = processor;
         
+        /**
+         * Runs central repo default setup. Triggered here to track if this is
+         * first time setup in order to show CR notification dialog prior to any
+         * startup window.
+         */
+        final boolean crFirstTimeSetup = CRDefaultSetupAction.getInstance().setupDefaultCentralRepository();
         
         // When the --nogui flag is supplied invokeWhenUIReady happens a lot sooner
         // than it would when running wiht the gui. Makes sense. That means that 
@@ -120,19 +128,31 @@ public class Installer extends ModuleInstall {
         } else {
             WindowManager.getDefault().invokeWhenUIReady(() -> {
                 if(WindowManager.getDefault().getMainWindow().isVisible() || finalprocessor == null || finalprocessor.getState() == CommandLineOptionProcessor.ProcessState.COMPLETED) {
-                    StartupWindowProvider.getInstance().open();
+                    showStartupWindows(crFirstTimeSetup);
                 } else {
                     finalprocessor.addPropertyChangeListener(new PropertyChangeListener(){
                         @Override
                         public void propertyChange(PropertyChangeEvent evt) {
                             if(evt.getPropertyName().equals(CommandLineOptionProcessor.PROCESSING_COMPLETED)) {
-                                StartupWindowProvider.getInstance().open();
+                                showStartupWindows(crFirstTimeSetup);
                             }
                         }
                     });
                 }
             });
         }
+    }
+    
+    /**
+     * Show startup window(s) in sequence.
+     * @param crFirstTimeSetup If true, attempts to show the central repo notification dialog
+     */
+    private void showStartupWindows(boolean crFirstTimeSetup) {
+        if (crFirstTimeSetup && CentralRepositoryNotificationDialog.shouldDisplay()) {
+            CentralRepositoryNotificationDialog.display();
+        }
+        
+        StartupWindowProvider.getInstance().open();
     }
 
     @Override

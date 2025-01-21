@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Cursor;
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.awt.EventQueue;
 import java.io.IOException;
 import java.nio.file.Path;

@@ -198,7 +198,8 @@ public class CommandLineIngestManager extends CommandLineManager {
                                 }
 
                                 String dataSourcePath = inputs.get(CommandLineCommand.InputType.DATA_SOURCE_PATH.name());
-                                dataSource = new AutoIngestDataSource(UUID.randomUUID().toString(), Paths.get(dataSourcePath));
+                                String password = inputs.get(CommandLineCommand.InputType.BITLOCKER_KEY.name());
+                                dataSource = new AutoIngestDataSource(UUID.randomUUID().toString(), Paths.get(dataSourcePath), password);
                                 runDataSourceProcessor(caseForJob, dataSource);
 
                                 String outputDirPath = getOutputDirPath(caseForJob);
@@ -406,7 +407,7 @@ public class CommandLineIngestManager extends CommandLineManager {
             // Get an ordered list of data source processors to try
             List<AutoIngestDataSourceProcessor> validDataSourceProcessors;
             try {
-                validDataSourceProcessors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(dataSource.getPath());
+                validDataSourceProcessors = DataSourceProcessorUtility.getOrderedListOfDataSourceProcessors(dataSource.getPath(), dataSource.getPassword());
             } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException ex) {
                 LOGGER.log(Level.SEVERE, "Exception while determining best data source processor for {0}", dataSource.getPath());
                 // rethrow the exception. 
@@ -429,7 +430,7 @@ public class CommandLineIngestManager extends CommandLineManager {
                     DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId, ingestLock);
                     caseForJob.notifyAddingDataSource(taskId);
                     LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
-                    selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                    selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), dataSource.getPassword(), null, progressMonitor, callBack);
                     ingestLock.wait();
 
                     // at this point we got the content object(s) from the current DSP.

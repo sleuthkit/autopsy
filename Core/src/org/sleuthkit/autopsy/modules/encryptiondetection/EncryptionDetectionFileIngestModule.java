@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
@@ -287,7 +288,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     bin = new BufferedInputStream(in);
                     ContentHandler handler = new BodyContentHandler(-1);
                     Metadata metadata = new Metadata();
-                    metadata.add(Metadata.RESOURCE_NAME_KEY, file.getName());
+                    metadata.add(TikaCoreProperties.RESOURCE_NAME_KEY, file.getName());
                     AutoDetectParser parser = new AutoDetectParser();
                     parser.parse(bin, handler, metadata, new ParseContext());
                 } catch (EncryptedDocumentException ex) {

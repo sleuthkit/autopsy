@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
-import javax.jms.JMSException;
+import jakarta.jms.JMSException;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;

@@ -146,7 +146,7 @@ grant {
   permission java.security.SecurityPermission "putProviderProperty.SaslPlainServer";
   permission java.security.SecurityPermission "insertProvider";
 
-  permission javax.xml.bind.JAXBPermission "setDatatypeConverter";
+  permission jakarta.xml.bind.JAXBPermission "setDatatypeConverter";
 
   // SSL related properties for Solr tests
   permission javax.net.ssl.SSLPermission "setDefaultSSLContext";

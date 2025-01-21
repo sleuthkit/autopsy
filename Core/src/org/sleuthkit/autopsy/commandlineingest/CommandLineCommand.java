@@ -49,7 +49,9 @@ class CommandLineCommand {
         DATA_SOURCE_PATH,
         DATA_SOURCE_ID,
         INGEST_PROFILE_NAME,
-        REPORT_PROFILE_NAME;
+        REPORT_PROFILE_NAME,
+        BITLOCKER_KEY,
+        ;
     }
 
     private final CommandType type;

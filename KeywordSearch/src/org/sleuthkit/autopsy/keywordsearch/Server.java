@@ -395,7 +395,6 @@ public class Server {
         CloudSolrClient client = new CloudSolrClient.Builder(solrUrls)
                 .withConnectionTimeout(connectionTimeoutMs)
                 .withSocketTimeout(connectionTimeoutMs)
-                .withResponseParser(new XMLResponseParser())
                 .build();
         if (!defaultCollectionName.isEmpty()) {
             client.setDefaultCollection(defaultCollectionName);

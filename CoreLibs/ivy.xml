@@ -1,7 +1,3 @@
-<!DOCTYPE ivy-module [
-    <!ENTITY javafx.version "17.0.7">
-    <!ENTITY jackson.version "2.15.2">
-]>
 <ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
     <info organisation="org.sleuthkit.autopsy" module="corelibs"/>
     <configurations >
@@ -10,43 +6,43 @@
         
     </configurations>
     <dependencies>
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-fxml" rev="&javafx.version;">
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-fxml" rev="${javafx.version}">
             <artifact name="javafx-fxml" type="jar" />
             <artifact name="javafx-fxml" type="jar" e:classifier="win"/>
             <artifact name="javafx-fxml" type="jar" e:classifier="mac"/>
             <artifact name="javafx-fxml" type="jar" e:classifier="linux"/>
         </dependency> 
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-graphics" rev="&javafx.version;">
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-graphics" rev="${javafx.version}">
             <artifact name="javafx-graphics" type="jar" />
             <artifact name="javafx-graphics" type="jar" e:classifier="win"/>
             <artifact name="javafx-graphics" type="jar" e:classifier="mac"/>
             <artifact name="javafx-graphics" type="jar" e:classifier="linux"/>
         </dependency>
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-controls" rev="&javafx.version;">
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-controls" rev="${javafx.version}">
             <artifact name="javafx-controls" type="jar" />
             <artifact name="javafx-controls" type="jar" e:classifier="win"/>
             <artifact name="javafx-controls" type="jar" e:classifier="mac"/>
             <artifact name="javafx-controls" type="jar" e:classifier="linux"/>
         </dependency> 
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-base" rev="&javafx.version;">
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-base" rev="${javafx.version}">
             <artifact name="javafx-base" type="jar" />
             <artifact name="javafx-base" type="jar" e:classifier="win"/>
             <artifact name="javafx-base" type="jar" e:classifier="mac"/>
             <artifact name="javafx-base" type="jar" e:classifier="linux"/>
         </dependency> 
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-swing" rev="&javafx.version;"  >
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-swing" rev="${javafx.version}"  >
             <artifact name="javafx-swing" type="jar" />
             <artifact name="javafx-swing" type="jar" e:classifier="win"/>
             <artifact name="javafx-swing" type="jar" e:classifier="mac"/>
             <artifact name="javafx-swing" type="jar" e:classifier="linux"/>
         </dependency> 
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-web" rev="&javafx.version;" >
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-web" rev="${javafx.version}" >
             <artifact name="javafx-web" type="jar" />
             <artifact name="javafx-web" type="jar" e:classifier="win"/>
             <artifact name="javafx-web" type="jar" e:classifier="mac"/>
             <artifact name="javafx-web" type="jar" e:classifier="linux"/>
         </dependency> 
-        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-media" rev="&javafx.version;">
+        <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-media" rev="${javafx.version}">
             <artifact name="javafx-media" type="jar" />
             <artifact name="javafx-media" type="jar" e:classifier="win"/>
             <artifact name="javafx-media" type="jar" e:classifier="mac"/>
@@ -54,8 +50,8 @@
         </dependency>
 
 
-        <dependency conf="autopsy_core->default" org="org.apache.ant" name="ant-launcher" rev="1.10.12"/>
-        <dependency conf="autopsy_core->default" org="org.apache.ant" name="ant" rev="1.10.12"/>
+        <dependency conf="autopsy_core->default" org="org.apache.ant" name="ant-launcher" rev="1.10.15"/>
+        <dependency conf="autopsy_core->default" org="org.apache.ant" name="ant" rev="1.10.15"/>
 
         <!-- apple for swing -->
         <dependency conf="autopsy_core->default" org="com.apple" name="AppleJavaExtensions" rev="1.4"/>
@@ -67,29 +63,29 @@
         <!-- for file search -->
         <dependency conf="autopsy_core->default" org="com.github.lgooddatepicker" name="LGoodDatePicker" rev="11.2.1"/>
         
-        <dependency conf="autopsy_core->default" org="commons-codec" name="commons-codec" rev="1.15"/>
+        <dependency conf="autopsy_core->default" org="commons-codec" name="commons-codec" rev="1.17.1"/>
 
         <!-- Google dependencies (translate needs to be kept with guava because translate depends on guava)-->
-        <dependency conf="autopsy_core->default" org="com.google.cloud" name="google-cloud-translate" rev="2.1.11"/>
+        <dependency conf="autopsy_core->default" org="com.google.cloud" name="google-cloud-translate" rev="2.54.0"/>
         
         <!-- commmon -->
-        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-lang3" rev="3.12.0"/>
-        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-csv" rev="1.9.0"/>
-        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-text" rev="1.10.0"/>
+        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-lang3" rev="3.17.0"/>
+        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-csv" rev="1.12.0"/>
+        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-text" rev="1.13.0"/>
     
         <!-- keep old commons-lang because some deps may need it at runtime. 
         Note there is no namespace collision with ver 3 -->
         <dependency conf="autopsy_core->default" org="commons-lang" name="commons-lang" rev="2.6"/> 
-        <dependency conf="autopsy_core->default" org="commons-logging" name="commons-logging" rev="1.2"/>
-        <dependency conf="autopsy_core->default" org="commons-io" name="commons-io" rev="2.11.0"/>
-        <dependency conf="autopsy_core->default" org="commons-validator" name="commons-validator" rev="1.7"/>
-        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-collections4" rev="4.4"/>
+        <dependency conf="autopsy_core->default" org="commons-logging" name="commons-logging" rev="1.3.4"/>
+        <dependency conf="autopsy_core->default" org="commons-io" name="commons-io" rev="2.18.0"/>
+        <dependency conf="autopsy_core->default" org="commons-validator" name="commons-validator" rev="1.9.0"/>
+        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-collections4" rev="4.5.0-M2"/>
         <dependency conf="autopsy_core->default" org="commons-collections" name="commons-collections" rev="3.2.2"/>
 
         <dependency conf="autopsy_core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.4"/>
 
-        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="&jackson.version;"/>
-        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.datatype" name="jackson-datatype-jsr310" rev="&jackson.version;"/>
+        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-csv" rev="${jackson.version}"/>
+        <dependency conf="autopsy_core->default" org="com.fasterxml.jackson.datatype" name="jackson-datatype-jsr310" rev="${jackson.version}"/>
         
         <!-- better image resizing -->
         <dependency conf="autopsy_core->default" org="org.imgscalr" name="imgscalr-lib" rev="4.2" />
@@ -101,54 +97,47 @@
              
              https://github.com/controlsfx/controlsfx/issues/1241
         -->
-        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="11.1.2" />
+        <dependency conf="autopsy_core->*" org="org.controlsfx" name="controlsfx" rev="11.2.1" />
 
-        <dependency conf="autopsy_core->default" org="joda-time" name="joda-time" rev="2.10.14" />
+        <dependency conf="autopsy_core->default" org="joda-time" name="joda-time" rev="2.13.0" />
 
         <!-- timeline  -->
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-fxml" rev="17-r1" />
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-controls" rev="17-r1" />
-        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-common" rev="17-r1" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-fxml" rev="${jfxtras.version}" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-controls" rev="${jfxtras.version}" />
+        <dependency conf="autopsy_core->default" org="org.jfxtras" name="jfxtras-common" rev="${jfxtras.version}" />
         <!-- templateing engine used by timeline to generate its snapshot report -->
-        <dependency conf="autopsy_core->default" org="com.github.spullara.mustache.java" name="compiler" rev="0.9.10" />
+        <dependency conf="autopsy_core->default" org="com.github.spullara.mustache.java" name="compiler" rev="0.9.14" />
         
         <!-- image support for autopsy and image gallery -->
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.common" name="common-lang" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.common" name="common-io" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.common" name="common-image" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-jpeg" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-bmp" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-tiff" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-pnm" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-psd" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-iff" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-pcx" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-pict" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-sgi" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-tga" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-icns" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-thumbsdb" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-core" rev="3.8.2" />
-        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.8.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.common" name="common-lang" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.common" name="common-io" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.common" name="common-image" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-jpeg" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-bmp" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-tiff" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-pnm" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-psd" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-iff" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-pcx" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-pict" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-sgi" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-tga" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-icns" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-thumbsdb" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-core" rev="${twelvemonkeys.version}" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="${twelvemonkeys.version}" />
         <dependency conf="autopsy_core->default" org="org.sejda.webp-imageio" name="webp-imageio-sejda" rev="0.1.0"/>
-        <dependency conf="autopsy_core->default" org="com.googlecode.plist" name="dd-plist" rev="1.23"/>
-        <dependency conf="autopsy_core->default" org="org.slf4j" name="slf4j-reload4j" rev="1.7.36"/>
+        <dependency conf="autopsy_core->default" org="com.googlecode.plist" name="dd-plist" rev="1.28"/>
+        <dependency conf="autopsy_core->default" org="org.slf4j" name="slf4j-reload4j" rev="2.0.16"/>
         
-        <dependency conf="autopsy_core->default" org="org.apache.logging.log4j" name="log4j-api" rev="2.17.2" transitive="false"/>
-        <dependency conf="autopsy_core->default" org="org.apache.logging.log4j" name="log4j-core" rev="2.17.2" transitive="false"/>
+        <dependency conf="autopsy_core->default" org="org.apache.logging.log4j" name="log4j-api" rev="${log4j.version}" transitive="false"/>
+        <dependency conf="autopsy_core->default" org="org.apache.logging.log4j" name="log4j-core" rev="${log4j.version}" transitive="false"/>
         
         <exclude org="*" ext="*" type="javadoc"/>
         <exclude org="log4j" module="log4j"/>
 
-        <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
+        <override org="com.google.guava" module="guava" rev="33.4.0-jre"/>
+        <override org="io.netty" module="netty-transport" rev="4.1.116.Final"/>
         
-        <override org="com.google.code.gson" module="gson" rev="2.9.0"/>
-        <override org="com.google.guava" module="guava" rev="32.0.1-jre"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-databind" rev="&jackson.version;"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="&jackson.version;"/>
-        
-        <!-- changes to bouncy castle version may also be reflected in thirdparty/IcePDF 6.2.2 -->
-        <override org="org.bouncycastle" module="bcprov-jdk15on" rev="1.70"/>
-        <override org="org.bouncycastle" module="bcpkix-jdk15on" rev="1.70"/>
     </dependencies>
 </ivy-module>

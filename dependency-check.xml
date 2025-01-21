@@ -1,0 +1,29 @@
+<project name="AutopsyDependencyCheck">
+    <!-- after downloading dependency-check from https://jeremylong.github.io/DependencyCheck and building Autopsy, can be run with a command like
+     `ant dependency-check -f dependency-check.xml -Ddependency-check-dir=/path/to/dir -Ddependency-check-out=/path/to/dir -Djar-dir=%AUTOPSY_SRC_PATH%\build\cluster\modules\ext` -->
+    
+    <!--set up dependency check: https://jeremylong.github.io/DependencyCheck/dependency-check-ant/ -->
+    <path id="dependency-check.path">
+       <pathelement location="${dependency-check-dir}/dependency-check-ant.jar"/>
+        <fileset dir="${dependency-check-dir}/lib">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+    <taskdef resource="dependency-check-taskdefs.properties">
+       <classpath refid="dependency-check.path" />
+    </taskdef>
+    
+    <property name="jar-dir" value="${basedir}/build/cluster/modules/ext"/>
+
+    <!--runs dependency check as an ant task: https://jeremylong.github.io/DependencyCheck/dependency-check-ant/configuration.html -->
+    <target name="dependency-check" description="Dependency-Check Analysis">
+        <dependency-check projectname="Autopsy"
+                          reportoutputdirectory="${dependency-check-out}"
+                          reportformat="ALL">
+            <!--<suppressionfile path="${basedir}/path/to/suppression.xml" />-->
+            <fileset dir="${jar-dir}">
+                <include name="**/*.jar"/>
+            </fileset>
+        </dependency-check>
+    </target>
+</project>

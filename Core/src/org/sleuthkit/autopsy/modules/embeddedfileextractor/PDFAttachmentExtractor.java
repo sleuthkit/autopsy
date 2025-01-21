@@ -30,6 +30,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
@@ -125,7 +126,7 @@ final class PDFAttachmentExtractor {
             //Resource naming scheme is used internally in autopsy, therefore we can guarentee uniqueness.
             String uniqueExtractedName = "extract_" + attachmentCount++; //NON-NLS
             
-            String name = mtdt.get(Metadata.RESOURCE_NAME_KEY);
+            String name = mtdt.get(TikaCoreProperties.RESOURCE_NAME_KEY);
             String ext = FilenameUtils.getExtension(name);
             
             //Append the extension if we can.

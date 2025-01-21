@@ -40,7 +40,13 @@
         
         <!-- Make a report that lists out the dependencies that our JARs have -->	
         <ivy:report todir='${basedir}/build/ivy-reports' graph='true' xml='false'/>
-        <ivy:retrieve pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]">
+            <!-- this is to prevent an issue with '+' in the version identifier which messes with the properties file -->
+            <firstmatchmapper>
+                <regexpmapper from="^(.*)\+(.*)$" to="\1\2"/>
+                <identitymapper/>
+            </firstmatchmapper>
+        </ivy:retrieve>
     </target>
     
     <target name="init" depends="get-deps,harness.init"/>

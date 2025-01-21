@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.awt.Window;
 import java.io.File;
 import java.io.IOException;

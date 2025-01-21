@@ -1,4 +1,10 @@
 <ivysettings>
+    <property name="javafx.version" value="17.0.14-ea+2"/>
+    <property name="jackson.version" value="2.18.2"/>
+    <property name="jfxtras.version" value="17-r1"/>
+    <property name="twelvemonkeys.version" value="3.12.0"/>
+    <property name="log4j.version" value="2.24.3"/>
+    
     <settings defaultResolver="main"/>
     <resolvers>
         <chain name="main">

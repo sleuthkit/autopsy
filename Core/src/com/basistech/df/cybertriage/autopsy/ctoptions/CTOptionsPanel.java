@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
  */
 public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
 
-    private static final int MAX_SUBPANEL_WIDTH = 650;
+    private static final int MAX_SUBPANEL_WIDTH = 700;
 
     private static final Logger logger = Logger.getLogger(CTOptionsPanel.class.getName());
 
@@ -70,14 +70,14 @@ public class CTOptionsPanel extends IngestModuleGlobalSettingsPanel {
     }
 
     private void addSubOptionsPanels(List<CTOptionsSubPanel> subPanels) {
-            GridBagConstraints disclaimerConstraints = new GridBagConstraints();
-            disclaimerConstraints.gridx = 0;
-            disclaimerConstraints.gridy = 0;
-            disclaimerConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-            disclaimerConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-            disclaimerConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
-            disclaimerConstraints.weighty = 0;
-            disclaimerConstraints.weightx = 0;
+        GridBagConstraints disclaimerConstraints = new GridBagConstraints();
+        disclaimerConstraints.gridx = 0;
+        disclaimerConstraints.gridy = 0;
+        disclaimerConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        disclaimerConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        disclaimerConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        disclaimerConstraints.weighty = 0;
+        disclaimerConstraints.weightx = 0;
 
         for (int i = 0; i < subPanels.size(); i++) {
             CTOptionsSubPanel subPanel = subPanels.get(i);

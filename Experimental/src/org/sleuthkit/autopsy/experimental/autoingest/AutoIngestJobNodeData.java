@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
 import javax.lang.model.type.TypeKind;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * An object that converts auto ingest job data for an auto ingest job
@@ -31,7 +32,7 @@ import javax.lang.model.type.TypeKind;
  */
 final class AutoIngestJobNodeData {
 
-    private static final int CURRENT_VERSION = 3;
+    private static final int CURRENT_VERSION = 4;
     private static final int DEFAULT_PRIORITY = 0;
 
     /*
@@ -85,6 +86,12 @@ final class AutoIngestJobNodeData {
     private boolean ocrEnabled;
 
     /**
+     * Version 4 fields.
+     */
+    private String password; // password to decrypt the image
+    
+    
+    /**
      * Gets the current version of the auto ingest job coordination service node
      * data.
      *
@@ -121,6 +128,7 @@ final class AutoIngestJobNodeData {
         setProcessingStageDetails(job.getProcessingStageDetails());
         setDataSourceSize(job.getDataSourceSize());
         setOcrEnabled(job.getOcrEnabled());
+        setPassword(manifest.getPassword());
     }
 
     /**
@@ -157,6 +165,7 @@ final class AutoIngestJobNodeData {
         this.processingStageDetailsStartDate = 0L;
         this.dataSourceSize = 0L;
         this.ocrEnabled = false;
+        this.password = "";
 
         /*
          * Get fields from node data.
@@ -206,6 +215,13 @@ final class AutoIngestJobNodeData {
                  */
                 int ocrFlag = buffer.getInt();
                 this.ocrEnabled = (1 == ocrFlag);
+            }
+            
+            if (buffer.hasRemaining()) {
+                /*
+                 * Get version 4 fields.
+                 */
+                setPassword(getStringFromBuffer(buffer, TypeKind.SHORT));
             }
 
         } catch (BufferUnderflowException ex) {
@@ -472,6 +488,22 @@ final class AutoIngestJobNodeData {
     }
 
     /**
+     * @return The password to decrypt the image.  Empty indicates no password.
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * @param password The password to decrypt the image.
+     */
+    public void setPassword(String password) {
+        this.password = StringUtils.defaultString(password);
+    }
+    
+    
+
+    /**
      * Get the processing stage of the job.
      *
      * @return The processing stage.
@@ -603,7 +635,11 @@ final class AutoIngestJobNodeData {
             
             if (this.version >= 3) {
                 buffer.putInt(this.ocrEnabled ? 1 : 0);
-            }            
+            }
+
+            if (this.version >= 4) {
+                putStringIntoBuffer(this.password, buffer, TypeKind.SHORT);
+            }
         }
 
         // Prepare the array

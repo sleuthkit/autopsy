@@ -1,6 +1,3 @@
-<!DOCTYPE ivy-module [
-    <!ENTITY httpcomponents.version "4.5.14">
-]>
 <ivy-module version="2.0">
     <info organisation="org.sleuthkit.autopsy" module="core"/>
     <configurations >
@@ -10,43 +7,44 @@
     <dependencies >
         <dependency conf="core->default" org="com.github.vlsi.mxgraph" name="jgraphx" rev="4.2.2" />
 
-        <dependency conf="core->default" org="org.apache.activemq" name="activemq-all" rev="5.16.4"/>
-        <dependency conf="core->default" org="org.apache.curator" name="curator-client" rev="5.2.1"/>
-        <dependency conf="core->default" org="org.apache.curator" name="curator-framework" rev="5.2.1"/>
-        <dependency conf="core->default" org="org.apache.curator" name="curator-recipes" rev="5.2.1"/>
+        <dependency org="jakarta.jms" name="jakarta.jms-api" rev="3.1.0"/>
+        <dependency conf="core->default" org="org.apache.activemq" name="activemq-all" rev="6.1.4"/>
+        <dependency conf="core->default" org="org.apache.curator" name="curator-client" rev="${curator.version}"/>
+        <dependency conf="core->default" org="org.apache.curator" name="curator-framework" rev="${curator.version}"/>
+        <dependency conf="core->default" org="org.apache.curator" name="curator-recipes" rev="${curator.version}"/>
 
-        <dependency conf="core->default" org="org.python" name="jython-standalone" rev="2.7.2" />
+        <dependency conf="core->default" org="org.python" name="jython-standalone" rev="2.7.4" />
 
         <dependency conf="core->default" org="com.adobe.xmp" name="xmpcore" rev="6.1.11"/>
-        <dependency conf="core->default" org="org.apache.zookeeper" name="zookeeper" rev="3.8.0"/>
+        <dependency conf="core->default" org="org.apache.zookeeper" name="zookeeper" rev="3.9.3"/>
 
-        <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess" rev="4.0.1"/>
-        <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess-encrypt" rev="4.0.1"/>
+        <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess" rev="4.0.7"/>
+        <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess-encrypt" rev="4.0.2"/>
 
-        <dependency conf="core->default" org="org.apache.commons" name="commons-dbcp2" rev="2.9.0"/>
+        <dependency conf="core->default" org="org.apache.commons" name="commons-dbcp2" rev="2.13.0"/>
 
-        <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.16.1"/>
+        <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.18.3"/>
 
-        <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.18.0"/>
+        <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.19.0"/>
         <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
 
-        <dependency conf="core->default" org="com.googlecode.libphonenumber" name="libphonenumber" rev="8.12.45" />
+        <dependency conf="core->default" org="com.googlecode.libphonenumber" name="libphonenumber" rev="8.13.52" />
 
-        <dependency conf="core->default" org="com.squareup.okhttp" name="okhttp" rev="2.7.5"/>
-        <dependency conf="core->default" org="org.jfree" name="jfreechart" rev="1.5.3"/>
+        <dependency conf="core->default" org="com.squareup.okhttp3" name="okhttp" rev="4.12.0"/>
+        <dependency conf="core->default" org="org.jfree" name="jfreechart" rev="1.5.5"/>
 
         <!-- for yaml reading/writing -->
-        <dependency conf="core->default" org="org.yaml" name="snakeyaml" rev="2.0"/>
+        <dependency conf="core->default" org="org.yaml" name="snakeyaml" rev="2.3"/>
 
         <!-- map support for geolocation -->
-        <dependency conf="core->default" org="org.jxmapviewer" name="jxmapviewer2" rev="2.6"/>
+        <dependency conf="core->default" org="org.jxmapviewer" name="jxmapviewer2" rev="2.8"/>
 
         <!-- for handling diffs -->
-        <dependency conf="core->default" org="io.github.java-diff-utils" name="java-diff-utils" rev="4.11"/>
+        <dependency conf="core->default" org="io.github.java-diff-utils" name="java-diff-utils" rev="4.15"/>
         
         <!-- JAXB -->
-        <dependency conf="core->default" org="javax.xml.bind" name="jaxb-api" rev="2.3.1"/>
-        <dependency conf="core->default" org="org.glassfish.jaxb" name="jaxb-runtime" rev="2.3.3"/>
+        <dependency conf="core->default" org="jakarta.xml.bind" name="jakarta.xml.bind-api" rev="4.0.2"/>
+        <dependency conf="core->default" org="com.sun.xml.bind" name="jaxb-impl" rev="4.0.5"/>
 
         <dependency conf="core->default" org="org.icepdf.os" name="icepdf-viewer" rev="6.2.2">
             <!-- get the new latest batik items below, override bouncy castle -->
@@ -62,40 +60,52 @@
             <exclude org="com.sun.media" module="jai_imageio"/>
         </dependency>
 
-        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-awt-util" rev="1.14"/>
-        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-dom" rev="1.14"/>
-        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-svg-dom" rev="1.14"/>
-        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-svggen" rev="1.14"/>
-        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-util" rev="1.14"/>
-        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-xml" rev="1.14"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-awt-util" rev="${batik.version}"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-dom" rev="${batik.version}"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-svg-dom" rev="${batik.version}"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-svggen" rev="${batik.version}"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-util" rev="${batik.version}"/>
+        <dependency conf="core->default" org="org.apache.xmlgraphics" name="batik-xml" rev="${batik.version}"/>
 
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency conf="core->default" org="javax.ws.rs" name="javax.ws.rs-api" rev="2.1.1"/>
+        <dependency org="org.jdom" name="jdom2" rev="2.0.6.1"/>
+
 
         <!-- annotations like guarded by -->
-        <dependency conf="core->default" org="com.github.spotbugs" name="spotbugs-annotations" rev="4.6.0"/>
+        <dependency conf="core->default" org="com.github.spotbugs" name="spotbugs-annotations" rev="4.8.6"/>
 
-        <dependency conf="core->default" org="com.license4j" name="license4j-runtime-library" rev="4.7.1"/>
+        <dependency conf="core->default" org="com.license4j" name="license4j-runtime-library" rev="4.7.3"/>
 
-        <dependency conf="core->default" org="org.apache.httpcomponents" name="httpclient" rev="&httpcomponents.version;"/>
-        <dependency conf="core->default" org="org.apache.httpcomponents" name="httpmime" rev="&httpcomponents.version;"/>
-        <dependency conf="core->default" org="org.apache.httpcomponents" name="httpclient-win" rev="&httpcomponents.version;">
+        <dependency conf="core->default" org="org.apache.httpcomponents" name="httpclient" rev="${httpcomponents.version}"/>
+        <dependency conf="core->default" org="org.apache.httpcomponents" name="httpmime" rev="${httpcomponents.version}"/>
+        <dependency conf="core->default" org="org.apache.httpcomponents" name="httpclient-win" rev="${httpcomponents.version}">
             <exclude name="jna" />
             <exclude name="jna-platform" />
         </dependency>
 
-        <override org="org.apache.zookeeper" module="zookeeper" rev="3.8.0"/>
-        <override org="org.apache.zookeeper" module="zookeeper-jute" rev="3.8.0"/>
-        
-        <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>
-        <override org="org.slf4j" module="slf4j-api" rev="1.7.36"/>
-        <override org="com.google.guava" module="guava" rev="32.0.1-jre"/>
-        <override org="com.fasterxml.jackson.core" module="jackson-core" rev="2.15.2"/>
+        <dependency conf="core->default" org="org.bouncycastle" name="bcprov-jdk18on" rev="${bouncycastle.version}"/>
+        <dependency conf="core->default" org="org.bouncycastle" name="bcpkix-jdk18on" rev="${bouncycastle.version}"/>
 
-        <!-- changes to bouncy castle version may also be reflected in thirdparty/IcePDF 6.2.2 -->
-        <override org="org.bouncycastle" module="bcprov-ext-jdk15on" rev="1.70"/>
-        <override org="org.bouncycastle" module="bcprov-jdk15on" rev="1.70"/>
-        <override org="org.bouncycastle" module="bcpkix-jdk15on" rev="1.70"/>
+        <exclude org="org.bouncycastle" module="bcprov-jdk15on"/>
+        <exclude org="org.bouncycastle" module="bcprov-ext-jdk15on"/>
+        <exclude org="org.bouncycastle" module="bcpkix-jdk15on"/>
+        
+        <exclude org="*" ext="*" type="javadoc"/>
+
+
+        <override org="xalan" module="xalan" rev="2.7.3"/>
+        <override org="xerces" module="xercesImpl" rev="2.12.2"/>
+        <override org="org.bouncycastle" module="bcprov-jdk18on" rev="${bouncycastle.version}"/>
+        <override org="org.bouncycastle" module="bcpkix-jdk18on" rev="${bouncycastle.version}"/>
+        <override org="commons-io" module="commons-io" rev="2.18.0"/>
+        <override org="com.google.guava" module="guava" rev="33.4.0-jre"/>
+        <override org="io.netty" module="netty-transport" rev="${netty.version}"/>
+        <override org="io.netty" module="netty-transport-native-epoll" rev="${netty.version}"/>
+        <override org="io.netty" module="netty-transport-classes-epoll" rev="${netty.version}"/>
+        <override org="io.netty" module="netty-common" rev="${netty.version}"/>
+        <override org="io.netty" module="netty-tcnative-boringssl-static" rev="2.0.69.Final"/>
+
         <override org="junit" module="junit" rev="4.13.2"/>
     </dependencies>
 </ivy-module>

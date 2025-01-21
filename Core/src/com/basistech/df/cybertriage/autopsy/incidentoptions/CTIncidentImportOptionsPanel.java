@@ -161,24 +161,31 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
         caseOpenWarningLabel = new javax.swing.JLabel();
 
         setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.border.title_1"))); // NOI18N
+        setMaximumSize(new java.awt.Dimension(650, 2147483647));
+        setMinimumSize(new java.awt.Dimension(650, 206));
+        setPreferredSize(new java.awt.Dimension(650, 206));
         setLayout(new java.awt.GridBagLayout());
 
         incidentTextPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(incidentTextLabel, org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.incidentTextLabel.text")); // NOI18N
+        incidentTextLabel.setMaximumSize(new java.awt.Dimension(600, 32));
+        incidentTextLabel.setPreferredSize(null);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
         incidentTextPanel.add(incidentTextLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(importModule, org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.importModule.text")); // NOI18N
+        importModule.setPreferredSize(null);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 3);
         incidentTextPanel.add(importModule, gridBagConstraints);
 
@@ -194,11 +201,14 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
         add(incidentTextPanel, gridBagConstraints);
 
         instructionsPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(instructionsTextLabel, org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.instructionsTextLabel.text")); // NOI18N
+        instructionsTextLabel.setPreferredSize(null);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
@@ -209,6 +219,7 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(instructionsLinkLabel, getHtmlLink(CT_IMPORTER_DOC_LINK));
         instructionsLinkLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        instructionsLinkLabel.setPreferredSize(null);
         instructionsLinkLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 instructionsLinkLabelMouseClicked(evt);
@@ -218,18 +229,25 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 2, 5, 5);
         instructionsPanel.add(instructionsLinkLabel, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
         add(instructionsPanel, gridBagConstraints);
 
+        repoPanel.setMaximumSize(new java.awt.Dimension(650, 2147483647));
+        repoPanel.setPreferredSize(new java.awt.Dimension(650, 75));
         repoPanel.setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(fileRepoPathLabel, org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.fileRepoPathLabel.text")); // NOI18N
+        fileRepoPathLabel.setMaximumSize(new java.awt.Dimension(600, 16));
+        fileRepoPathLabel.setPreferredSize(null);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
@@ -239,6 +257,7 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
         repoPanel.add(fileRepoPathLabel, gridBagConstraints);
 
         fileRepoPathField.setText(org.openide.util.NbBundle.getMessage(CTIncidentImportOptionsPanel.class, "CTIncidentImportOptionsPanel.fileRepoPathField.text")); // NOI18N
+        fileRepoPathField.setPreferredSize(null);
         fileRepoPathField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileRepoPathFieldActionPerformed(evt);
@@ -274,13 +293,16 @@ public class CTIncidentImportOptionsPanel extends CTOptionsSubPanel {
         gridBagConstraints.gridy = 2;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
         repoPanel.add(caseOpenWarningLabel, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
         add(repoPanel, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
     private void fileRepoBrowseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileRepoBrowseButtonActionPerformed

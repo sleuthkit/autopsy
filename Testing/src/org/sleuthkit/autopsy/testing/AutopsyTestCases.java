@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
+import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.TreePath;
 import org.apache.commons.io.IOUtils;
@@ -64,7 +65,6 @@ import org.netbeans.jemmy.operators.JCheckBoxOperator;
 import org.netbeans.jemmy.operators.JComboBoxOperator;
 import org.netbeans.jemmy.operators.JDialogOperator;
 import org.netbeans.jemmy.operators.JFileChooserOperator;
-import org.netbeans.jemmy.operators.JLabelOperator;
 import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
@@ -177,13 +177,23 @@ public class AutopsyTestCases {
             JToggleButtonOperator jtbo = new JToggleButtonOperator(wo, 0);
             jtbo.clickMouse();
             wo.btNext().clickMouse();
+            new Timeout("pausing", 5000).sleep();
             JTextFieldOperator jtfo0 = new JTextFieldOperator(wo, 0);
             String img_path = getEscapedPath(System.getProperty("img_path"));
             String imageDir = img_path;
+            logger.log(Level.INFO, "setting image path to " + imageDir);
             ((JTextComponent) jtfo0.getSource()).setText(imageDir);
+            new Timeout("pausing", 5000).sleep();
             JComboBoxOperator comboBoxOperator = new JComboBoxOperator(wo, 0);
+            logger.log(Level.INFO, "setting time zone");
             comboBoxOperator.setSelectedItem("(GMT-5:00) America/New_York");
-            wo.btNext().clickMouse();
+            // do in invoke later to allow time for validation to happen.
+            new Thread(() -> {
+                new Timeout("pausing", 5000).sleep();
+                logger.log(Level.INFO, "clicking next button");
+                wo.btNext().clickMouse();
+            }).start();
+            new Timeout("pausing", 8000).sleep();
         } catch (TimeoutExpiredException ex) {
             logger.log(Level.SEVERE, "AutopsyTestCases.testNewCaseWizard encountered timed out", ex);
             logSystemDiagnostics();

@@ -105,6 +105,12 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
      * Version 4 fields.
      */
     private boolean ocrEnabled;
+    
+    /**
+     * Version 5 fields
+     */
+    @GuardedBy("this")
+    private String password;
 
     /**
      * Constructs a new automated ingest job. All job state not specified in the
@@ -166,7 +172,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
             /*
              * Version 0 fields.
              */
-            this.manifest = new Manifest(nodeData.getManifestFilePath(), nodeData.getManifestFileDate(), nodeData.getCaseName(), nodeData.getDeviceId(), nodeData.getDataSourcePath(), Collections.emptyMap());
+            this.manifest = new Manifest(nodeData.getManifestFilePath(), nodeData.getManifestFileDate(), nodeData.getCaseName(), nodeData.getDeviceId(), nodeData.getDataSourcePath(), nodeData.getPassword(), Collections.emptyMap());
             this.nodeName = nodeData.getProcessingHostName();
             this.caseDirectoryPath = nodeData.getCaseDirectoryPath().toString();
             this.priority = nodeData.getPriority();
@@ -203,6 +209,11 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
              * Version 4 fields
              */
             this.ocrEnabled = nodeData.getOcrEnabled();
+            
+            /**
+             * Version 5 fields
+             */
+            this.password = nodeData.getPassword();
             
         } catch (Exception ex) {
             throw new AutoIngestJobException(String.format("Error creating automated ingest job"), ex);
@@ -282,6 +293,21 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
         this.ocrEnabled = enabled;
     }    
 
+    /**
+     * @return The password to decrypt the image.
+     */
+    synchronized String getPassword() {
+        return password;
+    }
+
+    /**
+     * @param password The password to decrypt the image.
+     */
+    synchronized void setPassword(String password) {
+        this.password = password;
+    }
+
+    
     /**
      * Sets the processing stage of the job. The start date/time for the stage
      * is set when the stage is set.

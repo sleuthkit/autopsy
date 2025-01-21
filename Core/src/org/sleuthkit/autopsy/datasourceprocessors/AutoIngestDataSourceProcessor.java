@@ -51,6 +51,25 @@ public interface AutoIngestDataSourceProcessor extends DataSourceProcessor {
     int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException;
 
     /**
+     * Indicates whether the DataSourceProcessor is capable of processing the
+     * data source. Returns a confidence value. Method can throw an exception
+     * for a system level problem. The exception should not be thrown for an issue
+     * related to bad input data.
+     *
+     * @param dataSourcePath Path to the data source.
+     * @param password The password to decrypt the data source.
+     * @return Confidence value. Values between 0 and 100 are recommended. Zero
+     *         or less means the data source is not supported by the
+     *         DataSourceProcessor. Value of 100 indicates high certainty in
+     *         being able to process the data source.
+     * @throws org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
+     */
+    default int canProcess(Path dataSourcePath, String password) throws AutoIngestDataSourceProcessorException {
+        return canProcess(dataSourcePath);
+    }
+    
+    
+    /**
      * Adds a data source to the case database using a background task in a
      * separate thread by calling DataSourceProcessor.run() method. Returns as
      * soon as the background task is started. The background task uses a
@@ -90,6 +109,30 @@ public interface AutoIngestDataSourceProcessor extends DataSourceProcessor {
     default void process(String deviceId, Path dataSourcePath, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         process(deviceId, dataSourcePath, progressMonitor, callBack);
     }
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread by calling DataSourceProcessor.run() method. Returns as
+     * soon as the background task is started. The background task uses a
+     * callback object to signal task completion and return results. Method can
+     * throw an exception for a system level problem. The exception should not
+     * be thrown for an issue related to bad input data.
+     *
+     * @param deviceId        An ASCII-printable identifier for the device
+     *                        associated with the data source that is intended
+     *                        to be unique across multiple cases (e.g., a UUID).
+     * @param dataSourcePath  Path to the data source.
+     * @param password        The password to decrypt the datasource.
+     * @param host            Host for this data source.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callBack        Callback that will be used by the background task
+     *                        to return results.
+     */
+    default void process(String deviceId, Path dataSourcePath, String password, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        process(deviceId, dataSourcePath, progressMonitor, callBack);
+    }
+    
     
     /**
      * Adds a data source to the case database using a background task in a
@@ -138,8 +181,35 @@ public interface AutoIngestDataSourceProcessor extends DataSourceProcessor {
      */
     default IngestStream processWithIngestStream(String deviceId, Path dataSourcePath, Host host, IngestJobSettings settings, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         return processWithIngestStream(deviceId, dataSourcePath, settings, progressMonitor, callBack);
+    }   
+    
+    /**
+     * Adds a data source to the case database using a background task in a
+     * separate thread by calling DataSourceProcessor.run() method. Returns as
+     * soon as the background task is started. The background task uses a
+     * callback object to signal task completion and return results. Method can
+     * throw an exception for a system level problem. The exception should not
+     * be thrown for an issue related to bad input data.
+     * 
+     * @param deviceId        An ASCII-printable identifier for the device
+     *                        associated with the data source that is intended
+     *                        to be unique across multiple cases (e.g., a UUID).
+     * @param dataSourcePath  Path to the data source.
+    * @param password        The password to decrypt the datasource.
+     * @param host            The host for this data source.
+     * @param settings        The ingest job settings.
+     * @param progressMonitor Progress monitor that will be used by the
+     *                        background task to report progress.
+     * @param callBack        Callback that will be used by the background task
+     *                        to return results.
+     * 
+     * @return The new ingest stream or null if an error occurred. Errors will be handled by the callback.
+     */
+    default IngestStream processWithIngestStream(String deviceId, Path dataSourcePath, String password, Host host, IngestJobSettings settings, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
+        return processWithIngestStream(deviceId, dataSourcePath, settings, progressMonitor, callBack);
     }    
     
+         
     /**
      * A custom exception for the use of AutomatedIngestDataSourceProcessor.
      */

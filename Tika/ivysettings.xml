@@ -1,5 +1,9 @@
 <ivysettings>
   <settings defaultResolver="main"/>
+  <property name="log4j.version" value="2.24.3"/>
+  <property name="bouncycastle.version" value="1.79"/>
+  <property name="tika.version" value="3.0.0"/>
+  
   <resolvers>
     <chain name="main">
         <ibiblio name="central" root="https://repo1.maven.org/maven2" m2compatible="true"/>
