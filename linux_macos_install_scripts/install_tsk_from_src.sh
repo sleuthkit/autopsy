@@ -63,7 +63,7 @@ fi
 echo "Installing Sleuthkit..."
 pushd $SLEUTHKIT_SRC_DIR &&
     ./bootstrap &&
-    ./configure &&
+    ./configure --enable-java &&
     make &&
     sudo make install &&
     popd
