@@ -49,7 +49,8 @@ The table below shows a summary of the command line operations. You can run one 
 
 <tr><td><b>Add a Data Source</b></td><td><pre>--addDataSource
 --runIngest (optional)
---runIngest=(ingest profile name) (optional)</pre></td><td><pre>--dataSourcePath</pre></td><td><pre>--addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest</pre></td></tr>
+--runIngest=(ingest profile name) (optional)</pre></td><td><pre>--dataSourcePath
+--k (optional)</pre></td><td><pre>--addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest --k password</pre></td></tr>
 
 <tr><td><b>Run Ingest on Existing Data Source</b><td><pre>--runIngest
 --runIngest=(ingest profile name)</pre></td><td><pre>--dataSourceObjectId</pre></td><td><pre>--runIngest --dataSourceObjectId=1
@@ -116,6 +117,12 @@ Next we'll add a third data source ("red_images.img") to the case and run ingest
 \verbatim
 autopsy64.exe --caseName="test6" --caseBaseDir="C:\work\cases" --addDataSource --runIngest="imageAnalysis"
    --dataSourcePath="R:\work\images\red_images.img"
+\endverbatim
+
+Next we'll add a fourth data source ("purple_images.img") that has Bitlocker encryption.
+\verbatim
+autopsy64.exe --caseName="test6" --caseBaseDir="C:\work\cases" --addDataSource --runIngest="imageAnalysis"
+   --dataSourcePath="R:\work\images\red_images.img" --k bitlocker-password
 \endverbatim
 
 Finally we'll add a folder ("Test files") as a logical file set to a new case ("test9"). 
