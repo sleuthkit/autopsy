@@ -275,8 +275,8 @@
                 <binary-origin>release/modules/ext/http2-client-11.0.24.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/http2-common-9.4.53.v20231009.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/http2-common-9.4.53.v20231009.jar</binary-origin>
+                <runtime-relative-path>ext/http2-common-9.4.57.v20241219.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/http2-common-9.4.57.v20241219.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/http2-hpack-9.4.53.v20231009.jar</runtime-relative-path>

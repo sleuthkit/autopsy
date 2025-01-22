@@ -58,6 +58,8 @@
 
         <override org="org.xerial.snappy" module="snappy-java" rev="1.1.10.7"/>
 
+        <override org="org.eclipse.jetty.http2" module="http2-common" rev="9.4.57.v20241219"/>
+
         <override org="io.netty" module="netty-transport" rev="${netty.version}"/>
         <override org="io.netty" module="netty-common" rev="${netty.version}"/>
         <override org="io.netty" module="netty-transport-native-epoll" rev="${netty.version}"/>

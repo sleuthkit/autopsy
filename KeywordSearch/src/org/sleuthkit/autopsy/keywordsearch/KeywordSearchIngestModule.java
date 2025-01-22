@@ -145,6 +145,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
+    /**
+     * A mapping of the Tika metadata key to the corresponding attribute type
+     * and the priority of that key versus other related keys (lower integer
+     * value is higher priority).
+     */
     private static final Map<String, Pair<BlackboardAttribute.ATTRIBUTE_TYPE, Integer>> METADATA_TYPES_MAP = Stream.of(
             Pair.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED, List.of(
                     "Last-Save-Date",
@@ -686,24 +691,34 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         
         /**
-         * Get best matched metadata for each attribute type found in metadata map.
+         * This map will map the attribute type to a pair of the priority (lower
+         * number value is higher priority), and the string value for the
+         * attribute.
+         *
+         * Get best matched metadata for each attribute type found in metadata
+         * map by bumping out lower priority.
          */
         Map<BlackboardAttribute.ATTRIBUTE_TYPE, Pair<Integer, String>> intermediateMapping = new HashMap<>();
         for (Map.Entry<String, String> entry : metadata.entrySet()) {
-            Pair<BlackboardAttribute.ATTRIBUTE_TYPE, Integer> attrPair = METADATA_TYPES_MAP.get(entry.getKey());
-            if (attrPair != null) {
-                intermediateMapping.compute(attrPair.getKey(), (k, v) -> {
-                    if (v == null || v.getKey() > attrPair.getValue()) {
-                        return Pair.of(attrPair.getValue(), entry.getValue());
-                    } else {
-                        return v;
-                    }
-                });
+            if (entry.getValue() != null) {
+                Pair<BlackboardAttribute.ATTRIBUTE_TYPE, Integer> attrPair = METADATA_TYPES_MAP.get(entry.getKey());
+                if (attrPair != null && attrPair.getKey() != null && attrPair.getValue() != null) {
+                    intermediateMapping.compute(attrPair.getKey(), (k, v) -> {
+                        if (v == null || v.getKey() > attrPair.getValue()) {
+                            return Pair.of(attrPair.getValue(), entry.getValue());
+                        } else {
+                            return v;
+                        }
+                    });
+                }
             }
         }
         
         for (Entry<BlackboardAttribute.ATTRIBUTE_TYPE, Pair<Integer, String>> interEntry: intermediateMapping.entrySet()) {
-            attributes.add(checkAttribute(interEntry.getKey(), interEntry.getValue().getValue()));
+            BlackboardAttribute attribute = checkAttribute(interEntry.getKey(), interEntry.getValue().getValue());
+            if (attribute != null) {
+                attributes.add(attribute);
+            }
         }
         
         if (!attributes.isEmpty()) {
