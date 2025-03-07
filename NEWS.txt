@@ -9,7 +9,7 @@ Add Datasource Updates
 - Add VHDX support
 
 GUI Updates
-- Change Tagnames from Unknown to Suspicious
+- Tagging a file causes it to have a suspicious score
 
 Library Updates
 - Update JNA Version
