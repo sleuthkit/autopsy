@@ -28,7 +28,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>11</release-version>
-                        <specification-version>11.0</specification-version>
+                        <specification-version>2.0</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
