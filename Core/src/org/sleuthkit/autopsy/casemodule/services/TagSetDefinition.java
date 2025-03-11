@@ -166,8 +166,8 @@ final public class TagSetDefinition {
     // In TSK release 4.13.0 and Autopsy release 4.22.0 we:
     // 1) renamed "TskData.KnownStatus" to "TskData.TagType"
     // 2) renamed "TagSetDefinition.knownStatus" to "TagSetDefinition.tagType"
-    // 3) renamed "TskData.KnownStatus" of "unknown" used to carry a score if "suspicious". 
-    //      Now "TskData.TagType" of "unknown" used to carries a score if "unknown".
+    // 3) "TskData.KnownStatus" of "unknown" used to carry a score if "suspicious". 
+    //      Now "TskData.TagType" of "unknown" carries a score if "unknown".
     //      
     private static class TagSetDefinitionDeserializer implements JsonDeserializer<TagSetDefinition> {
 
