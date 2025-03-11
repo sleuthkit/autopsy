@@ -6,6 +6,15 @@
 package org.sleuthkit.autopsy.casemodule.services;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
+import java.lang.reflect.Type;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -17,13 +26,19 @@ import java.util.List;
 import javax.annotation.concurrent.Immutable;
 import java.io.FileFilter;
 import java.io.FileReader;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Definition of a tag set.
  */
 @Immutable
 final public class TagSetDefinition {
+    
+    private static final Logger LOGGER = Logger.getLogger(TagSetDefinition.class.getName());
 
     private final static String FILE_NAME_TEMPLATE = "%s-tag-set.json";
     private final static Path TAGS_USER_CONFIG_DIR = Paths.get(PlatformUtil.getUserConfigDirectory(), "tags");
@@ -102,10 +117,24 @@ final public class TagSetDefinition {
         }
 
         File[] fileList = dir.listFiles(new TagSetJsonFileFilter());
-        Gson gson = new Gson();
+        if (fileList == null) {
+            return tagSetList;
+        }
+        
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(TagSetDefinition.class, new TagSetDefinitionDeserializer())  // Use custom deserializer
+                .create();
+
         for (File file : fileList) {
             try (FileReader reader = new FileReader(file)) {
-                tagSetList.add(gson.fromJson(reader, TagSetDefinition.class));
+                TagSetDefinition tagSet = gson.fromJson(reader, TagSetDefinition.class);
+                if (tagSet != null) {
+                    tagSetList.add(tagSet);
+                }
+            } catch (JsonSyntaxException e) {
+                LOGGER.log(Level.SEVERE, "Skipping invalid JSON file: " + file.getName() + " - " + e.getMessage());
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Error reading file: " + file.getName() + " - " + e.getMessage());
             }
         }
 
@@ -131,5 +160,57 @@ final public class TagSetDefinition {
             return file.getName().endsWith("tag-set.json");
         }
 
+    }
+    
+    // Custom JSON Deserializer for TagSetDefinition to support legacy user tags and tag set JSON files.
+    // In release 4.13.0 we:
+    // 1) renamed "TskData.KnownStatus" to "TskData.TagType"
+    // 2) renamed "TagSetDefinition.knownStatus" to "TagSetDefinition.tagType"
+    // 3) renamed "TskData.KnownStatus" of "unknown" used to carry a score if "suspicious". 
+    //      Now "TskData.TagType" of "unknown" used to carries a score if "unknown".
+    //      
+    private static class TagSetDefinitionDeserializer implements JsonDeserializer<TagSetDefinition> {
+
+        @Override
+        public TagSetDefinition deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonObject = json.getAsJsonObject();
+
+            String name = jsonObject.has("name") ? jsonObject.get("name").getAsString() : null;
+            JsonArray tagArray = jsonObject.has("tagNameDefinitionList") ? jsonObject.getAsJsonArray("tagNameDefinitionList") : new JsonArray();
+            List<TagNameDefinition> tagNameDefinitions = new ArrayList<>();
+
+            for (JsonElement element : tagArray) {
+                JsonObject tagObject = element.getAsJsonObject();
+
+                String displayName = tagObject.has("displayName") ? tagObject.get("displayName").getAsString() : null;
+                String description = tagObject.has("description") ? tagObject.get("description").getAsString() : null;
+                TagName.HTML_COLOR color = context.deserialize(tagObject.get("color"), TagName.HTML_COLOR.class);
+
+                TskData.TagType tagType = null;
+                // Handle tagType vs knownStatus
+                if (tagObject.has("tagType") && !tagObject.get("tagType").isJsonNull()) {
+                    tagType = context.deserialize(tagObject.get("tagType"), TskData.TagType.class);
+                } else if (tagObject.has("knownStatus") && !tagObject.get("knownStatus").isJsonNull()) {
+                    TskData.TagType legacyStatus = context.deserialize(tagObject.get("knownStatus"), TskData.TagType.class);
+
+                    // Before release 4.13.0 "UNKNOWN" tag type used to carry an automatic "SUSPICIOUS" score.
+                    // If knownStatus was "UNKNOWN", use "SUSPICIOUS" instead
+                    if (legacyStatus == TskData.TagType.UNKNOWN) {
+                        tagType = TskData.TagType.SUSPICIOUS;
+                    } else {
+                        tagType = legacyStatus;
+                    }
+                }
+                
+                if (tagType == null) {
+                    LOGGER.log(Level.SEVERE, "Failed to initialize tagType for tag: {0}. Skipping entry.", displayName);
+                    continue;
+                }
+
+                tagNameDefinitions.add(new TagNameDefinition(displayName, description, color, tagType));
+            }
+
+            return new TagSetDefinition(name, tagNameDefinitions);
+        }
     }
 }
