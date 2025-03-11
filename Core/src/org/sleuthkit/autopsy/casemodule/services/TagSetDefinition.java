@@ -163,7 +163,7 @@ final public class TagSetDefinition {
     }
     
     // Custom JSON Deserializer for TagSetDefinition to support legacy user tags and tag set JSON files.
-    // In release 4.13.0 we:
+    // In TSK release 4.13.0 and Autopsy release 4.22.0 we:
     // 1) renamed "TskData.KnownStatus" to "TskData.TagType"
     // 2) renamed "TagSetDefinition.knownStatus" to "TagSetDefinition.tagType"
     // 3) renamed "TskData.KnownStatus" of "unknown" used to carry a score if "suspicious". 
@@ -193,7 +193,7 @@ final public class TagSetDefinition {
                 } else if (tagObject.has("knownStatus") && !tagObject.get("knownStatus").isJsonNull()) {
                     TskData.TagType legacyStatus = context.deserialize(tagObject.get("knownStatus"), TskData.TagType.class);
 
-                    // Before release 4.13.0 "UNKNOWN" tag type used to carry an automatic "SUSPICIOUS" score.
+                    // "UNKNOWN" tag type used to carry an automatic "SUSPICIOUS" score.
                     // If knownStatus was "UNKNOWN", use "SUSPICIOUS" instead
                     if (legacyStatus == TskData.TagType.UNKNOWN) {
                         tagType = TskData.TagType.SUSPICIOUS;
