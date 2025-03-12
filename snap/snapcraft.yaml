@@ -121,10 +121,11 @@ apps:
 parts:
   sleuthkit:
     # more information on plugins here: https://snapcraft.io/docs/supported-plugins
-    plugin: autotools
+    plugin: nil
     source: https://github.com/sleuthkit/sleuthkit.git
     source-tag: sleuthkit-4.13.0
-    build-environment: [JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64]
+    build-environment: 
+    - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     # information on packages here: https://snapcraft.io/docs/package-repositories
     build-packages:
     - build-essential
@@ -139,17 +140,25 @@ parts:
     - ant-optional
     - libpq-dev
     - testdisk
+    - libvslvm-dev
     - libafflib-dev
     - libewf-dev
     - libvhdi-dev
     - libvmdk-dev
+    - libstdc++6
     stage-packages:
     - libpq-dev
     - testdisk
+    - libvslvm-dev
     - libafflib-dev
     - libewf-dev
     - libvhdi-dev
     - libvmdk-dev
+    override-build: |
+      ./bootstrap
+      ./configure --enable-java
+      make
+      make install
   autopsy:
     after: [sleuthkit]
     # information on packages here: https://snapcraft.io/docs/package-repositories
@@ -235,9 +244,9 @@ parts:
       for snap in "core22" "gnome-42-2204"; do
         cd "/snap/$snap/current/usr/lib"
         for filename in [ *.so* ]; do
-          rm -f "$CRAFT_PRIME/usr/lib/$CRAFT_ARCH_TRIPLET/$filename"
+          rm -f "$CRAFT_PRIME/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/$filename"
         done
-        cd "/snap/$snap/current/usr/lib/$CRAFT_ARCH_TRIPLET"
+        cd "/snap/$snap/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
         for filename in [ *.so* ]; do
           rm -f "$CRAFT_PRIME/usr/lib/$filename"
         done
