@@ -139,7 +139,6 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
         description.setContentType("text/html"); // NOI18N
         jScrollPane2.setViewportView(description);
 
-        verboseLoggingButton.setBackground(new java.awt.Color(255, 255, 255));
         verboseLoggingButton.setText("Activate verbose logging");
         verboseLoggingButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -147,7 +146,6 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
             }
         });
 
-        jButton2.setBackground(new java.awt.Color(255, 255, 255));
         jButton2.setText(NbBundle.getMessage(AboutWindowPanel.class, "LBL_Close")); // NOI18N
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -178,10 +176,10 @@ public final class AboutWindowPanel extends JPanel implements HyperlinkListener 
                 .addContainerGap()
                 .addComponent(logoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 184, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(verboseLoggingButton)
                 .addGap(18, 18, 18)
                 .addComponent(jButton2)
