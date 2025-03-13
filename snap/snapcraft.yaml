@@ -158,7 +158,7 @@ parts:
       ./bootstrap
       ./configure --enable-java
       make
-      make install
+      make install DESTDIR="${SNAPCRAFT_PART_INSTALL}"
   autopsy:
     after: [sleuthkit]
     # information on packages here: https://snapcraft.io/docs/package-repositories
