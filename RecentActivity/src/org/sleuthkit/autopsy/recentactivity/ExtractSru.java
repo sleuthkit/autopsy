@@ -63,7 +63,7 @@ final class ExtractSru extends Extract {
     private static final String NETWORK_USAGE_SOURCE_NAME = "System Resource Usage - Network Usage";
     private static final String SRU_TOOL_FOLDER = "markmckinnon"; //NON-NLS
     private static final String SRU_TOOL_NAME_WINDOWS = "Export_Srudb.exe"; //NON-NLS
-    private static final String SRU_TOOL_NAME_LINUX = "Export_Srudb_Linux.exe"; //NON-NLS
+    private static final String SRU_TOOL_NAME_LINUX = "export_srudb_linux"; //NON-NLS
     private static final String SRU_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String SRU_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
 
