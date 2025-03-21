@@ -107,7 +107,7 @@ else
 fi
 
 # make sure thirdparty files are executable
-chmod a+x autopsy/markmckinnon/Export*
+chmod a+x autopsy/markmckinnon/export*
 chmod a+x autopsy/markmckinnon/parse*
 
 # allow solr dependencies to execute
