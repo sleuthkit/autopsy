@@ -4,15 +4,10 @@ cannotParseXml=Unable to parse XML file:
 ChromeCacheExtract_adding_artifacts_msg=Chrome Cache: Adding %d artifacts for analysis.
 ChromeCacheExtract_adding_extracted_files_msg=Chrome Cache: Adding %d extracted files for analysis.
 ChromeCacheExtract_loading_files_msg=Chrome Cache: Loading files from %s.
-# {0} - module name
-# {1} - row number
-# {2} - table length
-# {3} - cache path
 ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}
 DataSourceUsage_AndroidMedia=Android Media Card
 DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card
 DataSourceUsage_FlashDrive=Flash Drive
-# {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.displayName=Data Source Usage Analyzer
 DefaultPriorityDomainCategorizer_searchEngineCategory=Search Engine
@@ -26,7 +21,6 @@ ExtractEdge_process_errMsg_spartanFail=Failure processing Microsoft Edge spartan
 ExtractEdge_process_errMsg_unableFindESEViewer=Unable to find ESEDatabaseViewer
 ExtractEdge_process_errMsg_webcacheFail=Failure processing Microsoft Edge WebCacheV01.dat file
 ExtractFavicon_Display_Name=Favicon
-# {0} - sub module name
 ExtractIE_executePasco_errMsg_errorRunningPasco={0}: Error analyzing Internet Explorer web history
 ExtractOs.androidOs.label=Android
 ExtractOs.androidVolume.label=OS Drive (Android)
@@ -59,7 +53,6 @@ ExtractOs.windowsVolume.label=OS Drive (Windows)
 ExtractOs.yellowDogLinuxOs.label=Linux (Yellow Dog)
 ExtractOs.yellowDogLinuxVolume.label=OS Drive (Linux Yellow Dog)
 ExtractOS_progressMessage=Checking for OS
-# {0} - sub module name
 ExtractPrefetch_errMsg_prefetchParsingFailed={0}: Error analyzing prefetch files
 ExtractPrefetch_module_name=Windows Prefetch Analyzer
 ExtractRecycleBin_module_name=Recycle Bin Analyzer
@@ -75,6 +68,15 @@ ExtractSru_process_errormsg_find_software_hive=Unable to find SOFTWARE HIVE file
 ExtractSru_process_errormsg_find_srudb_dat=Unable to find srudb.dat file
 ExtractSru_process_errormsg_write_software_hive=Unable to write SOFTWARE HIVE file
 ExtractSru_process_errormsg_write_srudb_dat=Unable to write srudb.dat file
+ExtractUsb_error_finding_usbparser_program=Error finding usbparser program
+ExtractUsb_module_name=USB Analyzer
+ExtractUsb_process_error_executing_export_srudb_program=Error running usbparser program
+ExtractUsb_process_errormsg_find_evtx=Unable to find evtx file
+ExtractUsb_process_errormsg_find_hive=Unable to find HIVE file
+ExtractUsb_process_errormsg_find_lnk=Unable to find lnk file
+ExtractUsb_process_errormsg_write_evtx=Unable to write evtx file
+ExtractUsb_process_errormsg_write_hive=Unable to write HIVE file
+ExtractUsb_process_errormsg_write_lnk=Unable to write lnk file
 ExtractWebAccountType.role.admin=Administrator role
 ExtractWebAccountType.role.moderator=Moderator role
 ExtractWebAccountType.role.user=User role
@@ -170,21 +172,15 @@ Firefox.getDlV24.errMsg.errAnalyzeFile={0}: Error while trying to analyze file:{
 Firefox.getDlV24.errMsg.errParsingArtifacts={0}: Error parsing {1} Firefox web download artifacts.
 Progress_Message_Analyze_Registry=Analyzing Registry Files
 Progress_Message_Analyze_Usage=Data Sources Usage Analysis
-# {0} - browserName
 Progress_Message_Chrome_AutoFill=Chrome Auto Fill Browser {0}
-# {0} - browserName
 Progress_Message_Chrome_Bookmarks=Chrome Bookmarks Browser {0}
 Progress_Message_Chrome_Cache=Chrome Cache
-# {0} - browserName
 Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}
-# {0} - browserName
 Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}
 Progress_Message_Chrome_Extensions=Chrome Extensions {0}
 Progress_Message_Chrome_Favicons=Chrome Downloads Favicons {0}
 Progress_Message_Chrome_FormHistory=Chrome Form History
-# {0} - browserName
 Progress_Message_Chrome_History=Chrome History Browser {0}
-# {0} - browserName
 Progress_Message_Chrome_Logins=Chrome Logins Browser {0}
 Progress_Message_Chrome_Profiles=Chrome Profiles {0}
 Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks
@@ -247,7 +243,6 @@ Sam_Security_Answer_3_Attribute_Display_Name=Security Answer 3
 Sam_Security_Question_1_Attribute_Display_Name=Security Question 1
 Sam_Security_Question_2_Attribute_Display_Name=Security Question 2
 Sam_Security_Question_3_Attribute_Display_Name=Security Question 3
-# {0} - file name
 SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}.
 SearchEngineURLQueryAnalyzer.moduleName.text=Search Engine Query Analyzer
 SearchEngineURLQueryAnalyzer.engineName.none=NONE

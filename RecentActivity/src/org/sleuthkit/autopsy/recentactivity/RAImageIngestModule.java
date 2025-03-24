@@ -64,6 +64,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
         tskCase = Case.getCurrentCase().getSleuthkitCase();
 
+        Extract usb = new ExtractUsb(context);
         Extract iexplore = new ExtractIE(context);
         Extract edge = new ExtractEdge(context);
         Extract registry = new ExtractRegistry(context);
@@ -82,7 +83,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract messageDomainType = new DomainCategoryRunner(context);
         Extract jumpList = new ExtractJumpLists(context);
 
-        extractors.add(recycleBin);
+        extractors.add(usb);
+/*        extractors.add(recycleBin);
         extractors.add(jumpList);
         extractors.add(recentDocuments);
         extractors.add(registry); //  needs to run before the DataSourceUsageAnalyzer
@@ -105,7 +107,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         browserExtractors.add(iexplore);
         browserExtractors.add(edge);
         browserExtractors.add(safari);
-
+*/
         for (Extract extractor : extractors) {
             extractor.startUp();
         }
