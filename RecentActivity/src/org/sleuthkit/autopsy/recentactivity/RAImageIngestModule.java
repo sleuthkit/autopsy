@@ -83,8 +83,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract messageDomainType = new DomainCategoryRunner(context);
         Extract jumpList = new ExtractJumpLists(context);
 
-        extractors.add(usb);
-/*        extractors.add(recycleBin);
+        extractors.add(recycleBin);
         extractors.add(jumpList);
         extractors.add(recentDocuments);
         extractors.add(registry); //  needs to run before the DataSourceUsageAnalyzer
@@ -100,6 +99,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         extractors.add(zoneInfo); // this needs to run after the web browser modules
         extractors.add(sru);
         extractors.add(prefetch);
+        extractors.add(usb);
         extractors.add(messageDomainType);
 
         browserExtractors.add(chrome);
@@ -107,7 +107,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         browserExtractors.add(iexplore);
         browserExtractors.add(edge);
         browserExtractors.add(safari);
-*/
+
         for (Extract extractor : extractors) {
             extractor.startUp();
         }
