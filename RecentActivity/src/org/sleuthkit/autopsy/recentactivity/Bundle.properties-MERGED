@@ -4,16 +4,22 @@ cannotParseXml=Unable to parse XML file:
 ChromeCacheExtract_adding_artifacts_msg=Chrome Cache: Adding %d artifacts for analysis.
 ChromeCacheExtract_adding_extracted_files_msg=Chrome Cache: Adding %d extracted files for analysis.
 ChromeCacheExtract_loading_files_msg=Chrome Cache: Loading files from %s.
+# {0} - module name
+# {1} - row number
+# {2} - table length
+# {3} - cache path
 ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}
 DataSourceUsage_AndroidMedia=Android Media Card
 DataSourceUsage_DJU_Drone_DAT=DJI Internal SD Card
 DataSourceUsage_FlashDrive=Flash Drive
+# {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.displayName=Data Source Usage Analyzer
 DefaultPriorityDomainCategorizer_searchEngineCategory=Search Engine
 DomainCategoryRunner_moduleName_text=Domain Category Analyzer
 DomainCategoryRunner_parentModuleName=Recent Activity
 DomainCategoryRunner_Progress_Message_Domain_Types=Finding Domain Types
+EventPartitionLog_Not_Found=Event Log Partition information not found
 ExtractEdge_getHistory_containerFileNotFound=Error while trying to analyze Edge history
 ExtractEdge_Module_Name=Microsoft Edge Analyzer
 ExtractEdge_process_errMsg_errGettingWebCacheFiles=Error trying to retrieving Edge WebCacheV01 file
@@ -21,6 +27,7 @@ ExtractEdge_process_errMsg_spartanFail=Failure processing Microsoft Edge spartan
 ExtractEdge_process_errMsg_unableFindESEViewer=Unable to find ESEDatabaseViewer
 ExtractEdge_process_errMsg_webcacheFail=Failure processing Microsoft Edge WebCacheV01.dat file
 ExtractFavicon_Display_Name=Favicon
+# {0} - sub module name
 ExtractIE_executePasco_errMsg_errorRunningPasco={0}: Error analyzing Internet Explorer web history
 ExtractOs.androidOs.label=Android
 ExtractOs.androidVolume.label=OS Drive (Android)
@@ -53,6 +60,7 @@ ExtractOs.windowsVolume.label=OS Drive (Windows)
 ExtractOs.yellowDogLinuxOs.label=Linux (Yellow Dog)
 ExtractOs.yellowDogLinuxVolume.label=OS Drive (Linux Yellow Dog)
 ExtractOS_progressMessage=Checking for OS
+# {0} - sub module name
 ExtractPrefetch_errMsg_prefetchParsingFailed={0}: Error analyzing prefetch files
 ExtractPrefetch_module_name=Windows Prefetch Analyzer
 ExtractRecycleBin_module_name=Recycle Bin Analyzer
@@ -172,15 +180,21 @@ Firefox.getDlV24.errMsg.errAnalyzeFile={0}: Error while trying to analyze file:{
 Firefox.getDlV24.errMsg.errParsingArtifacts={0}: Error parsing {1} Firefox web download artifacts.
 Progress_Message_Analyze_Registry=Analyzing Registry Files
 Progress_Message_Analyze_Usage=Data Sources Usage Analysis
+# {0} - browserName
 Progress_Message_Chrome_AutoFill=Chrome Auto Fill Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Bookmarks=Chrome Bookmarks Browser {0}
 Progress_Message_Chrome_Cache=Chrome Cache
+# {0} - browserName
 Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}
 Progress_Message_Chrome_Extensions=Chrome Extensions {0}
 Progress_Message_Chrome_Favicons=Chrome Downloads Favicons {0}
 Progress_Message_Chrome_FormHistory=Chrome Form History
+# {0} - browserName
 Progress_Message_Chrome_History=Chrome History Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Logins=Chrome Logins Browser {0}
 Progress_Message_Chrome_Profiles=Chrome Profiles {0}
 Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks
@@ -243,6 +257,7 @@ Sam_Security_Answer_3_Attribute_Display_Name=Security Answer 3
 Sam_Security_Question_1_Attribute_Display_Name=Security Question 1
 Sam_Security_Question_2_Attribute_Display_Name=Security Question 2
 Sam_Security_Question_3_Attribute_Display_Name=Security Question 3
+# {0} - file name
 SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}.
 SearchEngineURLQueryAnalyzer.moduleName.text=Search Engine Query Analyzer
 SearchEngineURLQueryAnalyzer.engineName.none=NONE
@@ -255,4 +270,18 @@ ExtractWebAccountType.parentModuleName=Recent Activity
 Shellbag_Artifact_Display_Name=Shell Bags
 Shellbag_Key_Attribute_Display_Name=Key
 Shellbag_Last_Write_Attribute_Display_Name=Last Write
+SoftwareHiveFile_Not_Found=SOFTWARE hive file not found
+SystemHiveFile_Not_Found=SYSTEM hive file not found
+USB_ARTIFACT_CONNECT_DISCONNECT=USB Connects/Disconnects
+USB_Artifact_Name=USB Removable Device
+Usb_connect_disconnect=Connection Type
+Usb_disconnectedTime=Disconnected Time
+Usb_diskSignature=Disk Signature
+Usb_driveLetter=Drive Letter
+Usb_fileSystem=File System
+Usb_firstConnectTime=First Connect Time
+Usb_lastConnectTime=Last Connect Time
+Usb_serialNumber=Serial Number
+Usb_volumeName=Volume Label
+Usb_vsn=Volume Serial Number
 UsbDeviceIdMapper.parseAndLookup.text=Product: {0}
