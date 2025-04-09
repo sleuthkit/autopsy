@@ -726,8 +726,8 @@
                 <binary-origin>release/modules/ext/okio-jvm-3.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/postgresql-42.7.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/postgresql-42.7.3.jar</binary-origin>
+                <runtime-relative-path>ext/postgresql-42.7.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/postgresql-42.7.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/Rejistry-1.1-SNAPSHOT.jar</runtime-relative-path>
