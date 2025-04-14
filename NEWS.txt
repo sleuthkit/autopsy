@@ -1,3 +1,10 @@
+---------------- VERSION 4.22.1 ---------------
+Library Updates
+- Use Sleuthkit 4.14.0 from Sleuth Kit Labs
+
+Reporting
+- Fix error in generating Excel reports
+
 ---------------- VERSION 4.22.0 ---------------
 
 Ingest Module Updates
