@@ -93,7 +93,7 @@ final class ExtractUsb extends Extract {
     private BlackboardAttribute.Type usbVSNAttributeType = null;
     private BlackboardAttribute.Type usbFileSystemAttributeType = null;
 
-    private static final Map<String, AbstractFile> applicationFilesFound = new HashMap<>();
+//    private static final Map<String, AbstractFile> applicationFilesFound = new HashMap<>();
     private final IngestJobContext context;
 
     @Messages({
@@ -440,9 +440,9 @@ final class ExtractUsb extends Extract {
 
                 String serialNumber = resultSet.getString("serial_number"); //NON-NLS
                 String description = resultSet.getString("Description");
-                Long firstConnectTime = Long.valueOf(resultSet.getLong("first_connect_time")); //NON-NLS
-                Long lastConnectTime = Long.valueOf(resultSet.getLong("last_connect_time")); //NON-NLS
-                Long lastDisconnectedTime = Long.valueOf(resultSet.getLong("last_disconnected_time")); //NON-NLS
+                Long firstConnectTime = resultSet.getLong("first_connect_time"); //NON-NLS
+                Long lastConnectTime = resultSet.getLong("last_connect_time"); //NON-NLS
+                Long lastDisconnectedTime = resultSet.getLong("last_disconnected_time"); //NON-NLS
                 String volumeLabelName = resultSet.getString("volume_name_label"); //NON-NLS
                 String driveLetter = resultSet.getString("drive_letter"); //NON-NLS
                 String vsn = resultSet.getString("vsn"); //NON-NLS
@@ -511,7 +511,7 @@ final class ExtractUsb extends Extract {
                 }
 
                 String serialNumber = resultSet.getString("SerialNum");
-                Long timeCreated = Long.valueOf(resultSet.getLong("TimeCreated_SystemTime")); //NON-NLS
+                Long timeCreated = resultSet.getLong("TimeCreated_SystemTime"); //NON-NLS
                 String connectType = resultSet.getString("connectType");
                 String vsn = resultSet.getString("vsn"); //NON-NLS
                 String diskSignature = resultSet.getString("disksignature"); //NON-NLS
@@ -550,7 +550,7 @@ final class ExtractUsb extends Extract {
     }
 
     @NbBundle.Messages({
-      "USB_Artifact_Name=USB Removable Device",
+      "Usb_Artifact_Name=USB Removable Device",
       "Usb_serialNumber=Serial Number",
       "Usb_firstConnectTime=First Connect Time",
       "Usb_lastConnectTime=Last Connect Time",
@@ -560,7 +560,7 @@ final class ExtractUsb extends Extract {
       "Usb_vsn=Volume Serial Number",
       "Usb_diskSignature=Disk Signature",
       "Usb_fileSystem=File System",  
-      "USB_ARTIFACT_CONNECT_DISCONNECT=USB Connects/Disconnects",
+      "Usb_Artifact_Connect_Disconnect=USB Connects/Disconnects",
       "Usb_connect_disconnect=Connection Type"
     })
     
@@ -568,40 +568,40 @@ final class ExtractUsb extends Extract {
      * Returns the custom USB artifact type or creates it if it does not
      * currently exist.
      *
-     * @return BlackboardArtifact.Type for shellbag artifacts
+     * @return BlackboardArtifact.Type for USB artifacts
      *
      * @throws TskCoreException
      */
     private BlackboardArtifact.Type getUSBArtifact() throws TskCoreException {
-        if (usbConnDisconnArtifactType == null) {
+        if (usbArtifactType == null) {
             try {
-                usbConnDisconnArtifactType = tskCase.getBlackboard().getOrAddArtifactType(USB_ARTIFACT_NAME, Bundle.USB_Artifact_Name());
+                usbArtifactType = tskCase.getBlackboard().getOrAddArtifactType(USB_ARTIFACT_NAME, Bundle.Usb_Artifact_Name());
             } catch (Blackboard.BlackboardException ex) {
-                throw new TskCoreException(String.format("Failed to get shell bag artifact type", USB_CONN_DISCONN_ARTIFACT_NAME), ex);
+                throw new TskCoreException(String.format("Failed to get USB artifact type", USB_CONN_DISCONN_ARTIFACT_NAME), ex);
             }
         }
 
-        return usbConnDisconnArtifactType;
+        return usbArtifactType;
     }
 
      /**
      * Returns the custom USB artifact type or creates it if it does not
      * currently exist.
      *
-     * @return BlackboardArtifact.Type for shellbag artifacts
+     * @return BlackboardArtifact.Type for Connect/Disconnect artifact
      *
      * @throws TskCoreException
      */
     private BlackboardArtifact.Type getUSBConnectDisconnectArtifact() throws TskCoreException {
-        if (usbArtifactType == null) {
+        if (usbConnDisconnArtifactType == null) {
             try {
-                usbArtifactType = tskCase.getBlackboard().getOrAddArtifactType(USB_CONN_DISCONN_ARTIFACT_NAME, Bundle.USB_ARTIFACT_CONNECT_DISCONNECT());
+                usbConnDisconnArtifactType = tskCase.getBlackboard().getOrAddArtifactType(USB_CONN_DISCONN_ARTIFACT_NAME, Bundle.Usb_Artifact_Connect_Disconnect());
             } catch (Blackboard.BlackboardException ex) {
-                throw new TskCoreException(String.format("Failed to get shell bag artifact type", USB_ARTIFACT_NAME), ex);
+                throw new TskCoreException(String.format("Failed to get connect/disconnect artifact type", USB_ARTIFACT_NAME), ex);
             }
         }
 
-        return usbArtifactType;
+        return usbConnDisconnArtifactType;
     }
 
    /**
