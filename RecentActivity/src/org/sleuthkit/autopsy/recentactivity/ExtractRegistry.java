@@ -766,36 +766,35 @@ class ExtractRegistry extends Extract {
                                         // @@@ BC: Why are we ignoring this...
                                         break;
                                     case "usb": //NON-NLS
-// replaced by new USB Parsing,                                        
-//                                        try {
-//                                            Long usbMtime = Long.valueOf("0");
-//                                            if (!artnode.getAttribute("mtime").isEmpty()) {
-//                                                usbMtime = Long.parseLong(artnode.getAttribute("mtime")); //NON-NLS
-//                                            } 
-//                                            usbMtime = Long.valueOf(usbMtime.toString());
-//                                            if (usbMtime > 0) {
-//                                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, usbMtime));
-//                                            }
-//                                            String dev = artnode.getAttribute("dev"); //NON-NLS
-//                                            String make = "";
-//                                            String model = dev;
-//                                            if (dev.toLowerCase().contains("vid")) { //NON-NLS
-//                                                USBInfo info = USB_MAPPER.parseAndLookup(dev);
-//                                                if (info.getVendor() != null) {
-//                                                    make = info.getVendor();
-//                                                }
-//                                                if (info.getProduct() != null) {
-//                                                    model = info.getProduct();
-//                                                }
-//                                            }
-//                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, parentModuleName, make));
-//                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, parentModuleName, model));
-//                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, value));
-//                                            newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_DEVICE_ATTACHED, regFile, bbattributes));
-//                                        } catch (TskCoreException ex) {
-//                                            logger.log(Level.SEVERE, String.format("Error adding device_attached artifact to blackboard for file %d.", regFile.getId()), ex); //NON-NLS
-//                                        }
-//                                        break;
+                                        // replaced by new USB Parsing,                                        
+                                        //try {
+                                        //    Long usbMtime = Long.valueOf("0");
+                                        //    if (!artnode.getAttribute("mtime").isEmpty()) {
+                                        //        usbMtime = Long.parseLong(artnode.getAttribute("mtime")); //NON-NLS
+                                        //    } 
+                                        //    usbMtime = Long.valueOf(usbMtime.toString());
+                                        //    if (usbMtime > 0) {
+                                        //        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, usbMtime));
+                                        //    }
+                                        //    String dev = artnode.getAttribute("dev"); //NON-NLS
+                                        //    String make = "";
+                                        //    String model = dev;
+                                        //    if (dev.toLowerCase().contains("vid")) { //NON-NLS
+                                        //        USBInfo info = USB_MAPPER.parseAndLookup(dev);
+                                        //        if (info.getVendor() != null) {
+                                        //            make = info.getVendor();
+                                        //        }
+                                        //        if (info.getProduct() != null) {
+                                        //            model = info.getProduct();
+                                        //        }
+                                        //    }
+                                        //    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, parentModuleName, make));
+                                        //    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, parentModuleName, model));
+                                        //    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, value));
+                                        //    newArtifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_DEVICE_ATTACHED, regFile, bbattributes));
+                                        //} catch (TskCoreException ex) {
+                                        //    logger.log(Level.SEVERE, String.format("Error adding device_attached artifact to blackboard for file %d.", regFile.getId()), ex); //NON-NLS                                        }
+                                        break;
                                     case "uninstall": //NON-NLS
                                         Long itemMtime = null;
                                         try {
