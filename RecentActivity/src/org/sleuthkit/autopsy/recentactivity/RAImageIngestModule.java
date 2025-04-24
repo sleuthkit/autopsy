@@ -85,6 +85,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         extractors.add(recycleBin);
         extractors.add(jumpList);
         extractors.add(recentDocuments);
+        extractors.add(sru);
+        extractors.add(prefetch);
         extractors.add(registry); //  needs to run before the DataSourceUsageAnalyzer
         extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
         extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
@@ -96,8 +98,6 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         extractors.add(SEUQA); // this needs to run after the web browser modules
         extractors.add(webAccountType); // this needs to run after the web browser modules
         extractors.add(zoneInfo); // this needs to run after the web browser modules
-        extractors.add(sru);
-        extractors.add(prefetch);
         extractors.add(messageDomainType);
 
         browserExtractors.add(chrome);
