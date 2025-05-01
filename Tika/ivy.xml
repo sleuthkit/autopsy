@@ -11,7 +11,7 @@
 
         <dependency conf="tika->default" org="org.apache.tika" name="tika-core" rev="${tika.version}"/>
 
-        <dependency conf="tika->default" org="org.apache.poi" name="ooxml-schemas" rev="1.4"/>
+        <dependency org="org.apache.poi" name="poi-ooxml-full" rev="5.3.0"/>
 
         <dependency conf="tika->default" org="org.bouncycastle" name="bcprov-jdk18on" rev="${bouncycastle.version}"/>
         <dependency conf="tika->default" org="org.bouncycastle" name="bcpkix-jdk18on" rev="${bouncycastle.version}"/>

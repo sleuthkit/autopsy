@@ -584,10 +584,6 @@
                 <binary-origin>release/modules/ext/netcdf4-4.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/ooxml-schemas-1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/ooxml-schemas-1.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/openjson-1.0.13.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/openjson-1.0.13.jar</binary-origin>
             </class-path-extension>
