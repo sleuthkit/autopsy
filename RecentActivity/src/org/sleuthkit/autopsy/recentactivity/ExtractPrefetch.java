@@ -69,9 +69,7 @@ final class ExtractPrefetch extends Extract {
     private static final String PREFETCH_TSK_COMMENT = "Prefetch File";
     private static final String PREFETCH_FILE_LOCATION = "/windows/prefetch";
     private static final String PREFETCH_TOOL_FOLDER = "markmckinnon"; //NON-NLS
-    private static final String PREFETCH_TOOL_NAME_WINDOWS_64 = "parse_prefetch_x64.exe"; //NON-NLS
-    private static final String PREFETCH_TOOL_NAME_WINDOWS_32 = "parse_prefetch_x32.exe"; //NON-NLS
-    private static final String PREFETCH_TOOL_NAME_MACOS = "parse_prefetch_macos"; //NON-NLS
+    private static final String PREFETCH_TOOL_NAME_WINDOWS = "parse_prefetch.exe"; //NON-NLS
     private static final String PREFETCH_TOOL_NAME_LINUX = "parse_prefetch_linux"; //NON-NLS
     private static final String PREFETCH_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String PREFETCH_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
@@ -178,7 +176,6 @@ final class ExtractPrefetch extends Extract {
                 }
             }
         }
-
     }
 
     /**
@@ -219,16 +216,10 @@ final class ExtractPrefetch extends Extract {
     private String getPathForPrefetchDumper() {
         Path path = null;
         if (PlatformUtil.isWindowsOS()) {
-            if (PlatformUtil.is64BitOS()) {
-                path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_WINDOWS_64);
-            } else {
-                path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_WINDOWS_32);
-            }
+            path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_WINDOWS);
         } else {
             if ("Linux".equals(PlatformUtil.getOSName())) {
                 path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_LINUX);
-            } else {
-                path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_MACOS);
             }
         }
         File prefetchToolFile = InstalledFileLocator.getDefault().locate(path.toString(),

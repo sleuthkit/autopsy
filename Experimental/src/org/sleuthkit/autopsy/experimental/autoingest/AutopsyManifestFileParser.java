@@ -45,6 +45,7 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
     private static final String MANIFEST_FILE_NAME_SIGNATURE = "_MANIFEST.XML";
     private static final String ROOT_ELEM_TAG_NAME = "AutopsyManifest";
     private static final String CASE_NAME_XPATH = "/AutopsyManifest/CaseName/text()";
+    private static final String PASSWORD_XPATH = "/AutopsyManifest/Password/text()";
     private static final String DEVICE_ID_XPATH = "/AutopsyManifest/DeviceId/text()";
     private static final String DATA_SOURCE_NAME_XPATH = "/AutopsyManifest/DataSource/text()";
     private static final Logger logger = Logger.getLogger(AutopsyManifestFileParser.class.getName());
@@ -102,7 +103,10 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
             }
             Path dataSourcePath = filePath.getParent().resolve(dataSourceName);
 
-            return new Manifest(filePath, dateFileCreated, caseName, deviceId, dataSourcePath, new HashMap<>());
+            expr = xpath.compile(PASSWORD_XPATH);
+            String password = (String) expr.evaluate(doc, XPathConstants.STRING);
+            
+            return new Manifest(filePath, dateFileCreated, caseName, deviceId, dataSourcePath, password, new HashMap<>());
         } catch (Exception ex) {
             throw new ManifestFileParserException(String.format("Error parsing manifest %s", filePath), ex);
         } finally {

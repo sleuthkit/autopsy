@@ -158,7 +158,7 @@ final class ReportVisualPanel2 extends JPanel {
         }
 
         for (TagName tagName : tagNamesInUse) {
-            String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            String notableString = tagName.getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
             tagStates.put(tagName.getDisplayName() + notableString, Boolean.FALSE);
         }
         tags.addAll(tagStates.keySet());

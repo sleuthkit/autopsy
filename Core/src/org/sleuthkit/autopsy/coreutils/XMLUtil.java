@@ -73,14 +73,7 @@ public class XMLUtil {
     }
     
     private static SchemaFactory getSchemaFactory(String schemaLanguage) {
-        // See JIRA-6958 for details about class loading and jaxb.
-        ClassLoader original = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
-            return SchemaFactory.newInstance(schemaLanguage);
-        } finally {
-            Thread.currentThread().setContextClassLoader(original);
-        }
+        return SchemaFactory.newInstance(schemaLanguage);
     }
     
     private static TransformerFactory getTransformerFactory() {

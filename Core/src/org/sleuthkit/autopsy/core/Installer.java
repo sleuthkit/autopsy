@@ -20,8 +20,10 @@ package org.sleuthkit.autopsy.core;
 
 import com.sun.jna.platform.win32.Kernel32;
 import java.awt.Cursor;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 import org.apache.commons.io.FileUtils;
@@ -41,6 +44,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -62,11 +66,17 @@ public class Installer extends ModuleInstall {
 
     private static final long serialVersionUID = 1L;
 
+    private static final String JAVA_TEMP = "java.io.tmpdir";
+    private static final String AUTOPSY_TEMP_DIR_SUFFIX = "_temp";
+    private static final String TSK_TEMP = "tsk.tmpdir";
+    
     private final List<ModuleInstall> packageInstallers;
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static volatile boolean javaFxInit = false;
 
     static {
+        setTskTemp();
+        
         loadDynLibraries();
         
         // This call was moved from MediaViewImagePanel so that it is 
@@ -75,6 +85,25 @@ public class Installer extends ModuleInstall {
         
         // This will cause OpenCvLoader to load its library instead of 
         OpenCvLoader.openCvIsLoaded();
+    }
+    
+    /**
+     * Set TSK temp directory to de-conflict with other programs using TSK libs.
+     */
+    private static void setTskTemp() {
+        try {
+            String curTemp = System.getProperty(JAVA_TEMP, "");
+            String autopsyTempDir = StringUtils.defaultIfBlank(UserPreferences.getAppName(), "autopsy").replaceAll("[^a-zA-Z0-9_\\-]", "_") + AUTOPSY_TEMP_DIR_SUFFIX;
+            String tskTemp = Paths.get(StringUtils.defaultString(curTemp), autopsyTempDir).toString();
+            System.setProperty(TSK_TEMP, tskTemp);
+            File tskTempDir = new File(tskTemp);
+            tskTempDir.mkdirs();
+            if (!tskTempDir.isDirectory()) {
+                throw new IOException("Unable to create directory at " + tskTemp);
+            }
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "There was an error setting up tsk temp directory", ex);
+        }
     }
 
     private static void loadDynLibraries() {
@@ -217,6 +246,7 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.casemodule.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.modules.hashdatabase.infrastructure.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.report.infrastructure.Installer.getDefault());
+        packageInstallers.add(com.basistech.df.cybertriage.autopsy.ctoptions.ctcloud.Installer.getDefault());
 
         /**
          * This is a temporary workaround for the following bug in Tika that
@@ -373,10 +403,15 @@ public class Installer extends ModuleInstall {
     @Override
     public void restored() {
         super.restored();
+        checkMemoryAvailable();
         ensurePythonModulesFolderExists();
         ensureClassifierFolderExists();
         ensureOcrLanguagePacksFolderExists();
-        initJavaFx();
+
+        if (!GraphicsEnvironment.isHeadless()) {
+            initJavaFx();
+        }
+
         initializeSevenZip();
         for (ModuleInstall mi : packageInstallers) {
             try {
@@ -390,6 +425,40 @@ public class Installer extends ModuleInstall {
         logger.log(Level.INFO, "Autopsy Core restore completed"); //NON-NLS    
         preloadJython();
         preloadTranslationServices();
+    }
+
+    /**
+     * Checks system resources logging any potential issues.
+     */
+    @Messages({
+        "# {0} - physicalMemory",
+        "Installer_checkMemoryAvailable_physicalRamExpected_desc=Physical memory: {0}, is less than the 8 GB required.  Some aspects of the application may not work as expected.",
+        "# {0} - maxMemory",
+        "Installer_checkMemoryAvailable_maxMemExpected_desc=Maximum JVM memory: {0}, is less than the 2 GB required.  Some aspects of the application may not work as expected."
+    })
+    private void checkMemoryAvailable() {
+        try {
+            long memorySize = ((com.sun.management.OperatingSystemMXBean) ManagementFactory
+                    .getOperatingSystemMXBean()).getTotalMemorySize();
+            if (memorySize < 8_000_000_000L) {
+                String desc = Bundle.Installer_checkMemoryAvailable_physicalRamExpected_desc(
+                        FileUtils.byteCountToDisplaySize(memorySize));
+                logger.log(Level.SEVERE, desc);
+            }
+        } catch (Throwable t) {
+            logger.log(Level.SEVERE, "There was an error fetching physical memory size", t);
+        }
+
+        try {
+            long maxMemory = Runtime.getRuntime().maxMemory();
+            if (maxMemory < 2_000_000_000L) {
+                String desc = Bundle.Installer_checkMemoryAvailable_maxMemExpected_desc(
+                        FileUtils.byteCountToDisplaySize(maxMemory));
+                logger.log(Level.SEVERE, desc);
+            }
+        } catch (Throwable t) {
+            logger.log(Level.SEVERE, "There was an error fetching jvm max memory", t);
+        }
     }
 
     /**
@@ -480,7 +549,10 @@ public class Installer extends ModuleInstall {
     @Override
     public boolean closing() {
         if (IngestRunningCheck.checkAndConfirmProceed(Bundle.Installer_closing_confirmationDialog_title(), Bundle.Installer_closing_confirmationDialog_message())) {
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            if (!GraphicsEnvironment.isHeadless() && RuntimeProperties.runningWithGUI()) {
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            }
+
             FutureTask<Void> future = new FutureTask<>(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
@@ -498,7 +570,9 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.SEVERE, "Error closing the current case", ex);
                 MessageNotifyUtil.Message.error(Bundle.Installer_closing_messageBox_caseCloseExceptionMessage(ex.getMessage()));
             } finally {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                if (!GraphicsEnvironment.isHeadless() && RuntimeProperties.runningWithGUI()) {
+                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                }
             }
             return true;
         } else {
@@ -512,11 +586,6 @@ public class Installer extends ModuleInstall {
 
         logger.log(Level.INFO, "close()"); //NON-NLS
 
-        //exit JavaFx plat
-        if (javaFxInit) {
-            Platform.exit();
-        }
-
         for (ModuleInstall mi : packageInstallers) {
             logger.log(Level.INFO, "{0} close()", mi.getClass().getName()); //NON-NLS
             try {
@@ -527,6 +596,11 @@ public class Installer extends ModuleInstall {
         }
         for (Handler h : logger.getHandlers()) {
             h.close();   //must call h.close or a .LCK file will remain.
+        }
+        
+        //exit JavaFx plat
+        if (javaFxInit) {
+            Platform.exit();
         }
     }
 }

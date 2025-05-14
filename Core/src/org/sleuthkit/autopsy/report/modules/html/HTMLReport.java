@@ -954,7 +954,7 @@ public class HTMLReport implements TableReportModule {
             }
             for (int i = 0; i < contentTags.size(); i++) {
                 ContentTag tag = contentTags.get(i);
-                String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                String notableString = tag.getName().getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
                 linkToThumbnail.append(tag.getName().getDisplayName()).append(notableString);
                 if (i != contentTags.size() - 1) {
                     linkToThumbnail.append(", ");

@@ -64,7 +64,7 @@ public final class TagUtils {
             logger.log(Level.SEVERE, String.format("Failed to get TagSet for TagName '%s' (ID=%d)", tagName.getDisplayName(), tagName.getId()));            
         }
 
-        if (tagName.getKnownStatus() == TskData.FileKnown.BAD) {
+        if (tagName.getTagType() == TskData.TagType.BAD) {
             displayName += " (Notable)";
         }
 

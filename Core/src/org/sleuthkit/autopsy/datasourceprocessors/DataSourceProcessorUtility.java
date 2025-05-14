@@ -49,9 +49,27 @@ public class DataSourceProcessorUtility {
      * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
      */
     public static Map<AutoIngestDataSourceProcessor, Integer> getDataSourceProcessorForFile(Path dataSourcePath, Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) throws AutoIngestDataSourceProcessorException {
+        return getDataSourceProcessorForFile(dataSourcePath, null, processorCandidates);
+    }
+
+    /**
+     * A utility method to find all Data Source Processors (DSP) that are able
+     * to process the input data source. Only the DSPs that implement
+     * AutoIngestDataSourceProcessor interface are used.
+     *
+     * @param dataSourcePath Full path to the data source
+     * @param password The password to decrypt the data source.
+     * @param processorCandidates Possible DSPs that can handle the data source
+     * 
+     * @return Hash map of all DSPs that can process the data source along with
+     * their confidence score
+     * @throws
+     * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
+     */
+    public static Map<AutoIngestDataSourceProcessor, Integer> getDataSourceProcessorForFile(Path dataSourcePath, String password, Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) throws AutoIngestDataSourceProcessorException {
         Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap = new HashMap<>();
         for (AutoIngestDataSourceProcessor processor : processorCandidates) {
-            int confidence = processor.canProcess(dataSourcePath);
+            int confidence = processor.canProcess(dataSourcePath, password);
             if (confidence > 0) {
                 validDataSourceProcessorsMap.put(processor, confidence);
             }
@@ -76,9 +94,29 @@ public class DataSourceProcessorUtility {
      * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
      */
     public static List<AutoIngestDataSourceProcessor> getOrderedListOfDataSourceProcessors(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
+        return getOrderedListOfDataSourceProcessors(dataSourcePath, (String) null);
+    }
+    
+    /**
+     * A utility method to find all Data Source Processors (DSP) that are able
+     * to process the input data source. Only the DSPs that implement
+     * AutoIngestDataSourceProcessor interface are used. Returns ordered list of
+     * data source processors. DSPs are ordered in descending order from highest
+     * confidence to lowest.
+     *
+     * @param dataSourcePath      Full path to the data source
+     * @param password            The password to decrypt the data source.
+     *
+     * @return Ordered list of data source processors. DSPs are ordered in
+     *         descending order from highest confidence to lowest.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
+     */
+    public static List<AutoIngestDataSourceProcessor> getOrderedListOfDataSourceProcessors(Path dataSourcePath, String password) throws AutoIngestDataSourceProcessorException {
         // lookup all AutomatedIngestDataSourceProcessors 
         Collection<? extends AutoIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutoIngestDataSourceProcessor.class);
-        return getOrderedListOfDataSourceProcessors(dataSourcePath, processorCandidates);
+        return getOrderedListOfDataSourceProcessors(dataSourcePath, password, processorCandidates);
     }
     
     /**
@@ -98,7 +136,28 @@ public class DataSourceProcessorUtility {
      * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
      */
     public static List<AutoIngestDataSourceProcessor> getOrderedListOfDataSourceProcessors(Path dataSourcePath, Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) throws AutoIngestDataSourceProcessorException {
-        Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap = getDataSourceProcessorForFile(dataSourcePath, processorCandidates);
+        return getOrderedListOfDataSourceProcessors(dataSourcePath, null, processorCandidates);
+    }
+    
+    /**
+     * A utility method to find all Data Source Processors (DSP) that are able
+     * to process the input data source. Only the DSPs that implement
+     * AutoIngestDataSourceProcessor interface are used. Returns ordered list of
+     * data source processors. DSPs are ordered in descending order from highest
+     * confidence to lowest.
+     *
+     * @param dataSourcePath      Full path to the data source
+     * @param password            The password to decrypt the data source.
+     * @param processorCandidates Collection of AutoIngestDataSourceProcessor objects to use
+     *
+     * @return Ordered list of data source processors. DSPs are ordered in
+     *         descending order from highest confidence to lowest.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
+     */
+    public static List<AutoIngestDataSourceProcessor> getOrderedListOfDataSourceProcessors(Path dataSourcePath, String password, Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) throws AutoIngestDataSourceProcessorException {
+        Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap = getDataSourceProcessorForFile(dataSourcePath, password, processorCandidates);
         return orderDataSourceProcessorsByConfidence(validDataSourceProcessorsMap);
     }   
 

@@ -188,7 +188,7 @@ public class TagsManager implements Closeable {
     }
 
     /**
-     * Gets the set of display names of notable (TskData.FileKnown.BAD) tag
+     * Gets the set of display names of notable (TskData.TagType.BAD) tag
      * types. If a case is not open the list will only include only the user
      * defined custom tags. Otherwise the list will include all notable tags.
      *
@@ -197,7 +197,7 @@ public class TagsManager implements Closeable {
     public static List<String> getNotableTagDisplayNames() {
         List<String> tagDisplayNames = new ArrayList<>();
         for (TagNameDefinition tagDef : TagNameDefinition.getTagNameDefinitions()) {
-            if (tagDef.getKnownStatus() == TskData.FileKnown.BAD) {
+            if (tagDef.getTagType() == TskData.TagType.BAD) {
                 tagDisplayNames.add(tagDef.getDisplayName());
             }
         }
@@ -205,7 +205,7 @@ public class TagsManager implements Closeable {
         try {
             TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
             for (TagName tagName : tagsManager.getAllTagNames()) {
-                if (tagName.getKnownStatus() == TskData.FileKnown.BAD
+                if (tagName.getTagType() == TskData.TagType.BAD
                         && !tagDisplayNames.contains(tagName.getDisplayName())) {
                     tagDisplayNames.add(tagName.getDisplayName());
                 }
@@ -303,14 +303,14 @@ public class TagsManager implements Closeable {
                 
                 // add the standard tag names
                 for (TagNameDefinition def : TagNameDefinition.getStandardTagNameDefinitions()) {
-                    taggingMgr.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus());
+                    taggingMgr.addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getTagType());
                 }
                 
                 //Assume new case and add all tag sets
                 for (TagSetDefinition setDef : TagSetDefinition.readTagSetDefinitions()) {
                     List<TagName> tagNamesInSet = new ArrayList<>();
                     for (TagNameDefinition tagNameDef : setDef.getTagNameDefinitions()) {
-                        tagNamesInSet.add(taggingMgr.addOrUpdateTagName(tagNameDef.getDisplayName(), tagNameDef.getDescription(), tagNameDef.getColor(), tagNameDef.getKnownStatus()));
+                        tagNamesInSet.add(taggingMgr.addOrUpdateTagName(tagNameDef.getDisplayName(), tagNameDef.getDescription(), tagNameDef.getColor(), tagNameDef.getTagType()));
                     }
 
                     if (!tagNamesInSet.isEmpty()) {
@@ -505,7 +505,7 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public TagName addTagName(String displayName) throws TagNameAlreadyExistsException, TskCoreException {
-        return addTagName(displayName, "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN);
+        return addTagName(displayName, "", TagName.HTML_COLOR.NONE, TskData.TagType.SUSPICIOUS);
     }
 
     /**
@@ -524,7 +524,7 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public TagName addTagName(String displayName, String description) throws TagNameAlreadyExistsException, TskCoreException {
-        return addTagName(displayName, description, TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN);
+        return addTagName(displayName, description, TagName.HTML_COLOR.NONE, TskData.TagType.SUSPICIOUS);
     }
 
     /**
@@ -543,7 +543,23 @@ public class TagsManager implements Closeable {
      *                                       name to the case database.
      */
     public TagName addTagName(String displayName, String description, TagName.HTML_COLOR color) throws TagNameAlreadyExistsException, TskCoreException {
-        return addTagName(displayName, description, color, TskData.FileKnown.UNKNOWN);
+        return addTagName(displayName, description, color, TskData.TagType.SUSPICIOUS);
+    }
+    
+    /**
+     * 
+     * @param displayName
+     * @param description
+     * @param color
+     * @param knownStatus
+     * @return
+     * @throws org.sleuthkit.autopsy.casemodule.services.TagsManager.TagNameAlreadyExistsException
+     * @throws TskCoreException
+     * @deprecated addTagName(String displayName, String description, TagName.HTML_COLOR color, TskData.TagType tagType) should be used instead
+     */
+    @Deprecated
+    public TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
+        return addTagName(displayName, description, color, TskData.TagType.convertFileKnownToTagType(knownStatus));
     }
 
     /**
@@ -553,8 +569,8 @@ public class TagsManager implements Closeable {
      * @param displayName The display name for the new tag type.
      * @param description The description for the new tag type.
      * @param color       The color to associate with the new tag type.
-     * @param knownStatus The knownStatus to be used for the tag when
-     *                    correlating on the tagged item
+     * @param tagType The tagType to be used for the tag when
+                    correlating on the tagged item
      *
      * @return A TagName object that can be used to add instances of the tag
      *         type to the case database.
@@ -563,12 +579,12 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException              If there is an error adding the tag
      *                                       name to the case database.
      */
-    public TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown knownStatus) throws TagNameAlreadyExistsException, TskCoreException {
+    public TagName addTagName(String displayName, String description, TagName.HTML_COLOR color, TskData.TagType tagType) throws TagNameAlreadyExistsException, TskCoreException {
         synchronized (lock) {
             try {
-                TagName tagName = caseDb.getTaggingManager().addOrUpdateTagName(displayName, description, color, knownStatus);
+                TagName tagName = caseDb.getTaggingManager().addOrUpdateTagName(displayName, description, color, tagType);
                 Set<TagNameDefinition> customTypes = TagNameDefinition.getTagNameDefinitions();
-                customTypes.add(new TagNameDefinition(displayName, description, color, knownStatus));
+                customTypes.add(new TagNameDefinition(displayName, description, color, tagType));
                 TagNameDefinition.setTagNameDefinitions(customTypes);
                 return tagName;
             } catch (TskCoreException ex) {

@@ -49,7 +49,8 @@ Le tableau ci-dessous présente un résumé des opérations en ligne de commande
 
 <tr><td><b>Ajouter une source de données</b></td><td><pre>--addDataSource
 --runIngest (facultatif)
---runIngest=(nom du profil d'acquisition) (facultatif)</pre></td><td><pre>--dataSourcePath</pre></td><td><pre>--addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest</pre></td></tr>
+--runIngest=(nom du profil d'acquisition) (facultatif)</pre></td><td><pre>--dataSourcePath
+--k (optional)</pre></td><td><pre>--addDataSource --dataSourcePath="R:\work\images\small2.img" --runIngest</pre></td></tr> --k password
 
 <tr><td><b>Exécuter l'acquisition sur une source de données existante</b><td><pre>--runIngest
 --runIngest=(nom du profil d'acquisition)</pre></td><td><pre>--dataSourceObjectId</pre></td><td><pre>--runIngest --dataSourceObjectId=1
@@ -116,6 +117,13 @@ Ensuite, nous allons ajouter une troisième source de données ("red_images.img"
 autopsy64.exe --caseDir="C:\work\cases\test6_2019_09_20_13_00_51" --addDataSource --runIngest="imageAnalysis"
    --dataSourcePath="R:\work\images\red_images.img"
 \endverbatim
+
+Nous ajouterons ensuite une quatrième source de données ("purple_images.img") dotée du cryptage Bitlocker.
+\verbatim
+autopsy64.exe --caseName="test6" --caseBaseDir="C:\work\cases" --addDataSource --runIngest="imageAnalysis"
+   --dataSourcePath="R:\work\images\red_images.img" --k bitlocker-password
+\endverbatim
+
 
 Enfin, nous ajouterons un dossier ("Test files") en tant que fichier logique défini dans un nouveau cas ("test9"). 
 

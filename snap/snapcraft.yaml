@@ -23,7 +23,7 @@ title: Autopsy
 # more on base snaps here: https://snapcraft.io/docs/base-snaps
 # core is based on corresponding ubuntu version.  ubuntu version information can be found here: https://wiki.ubuntu.com/Releases
 base: core22
-version: 4.21.0
+version: 4.22.1
 summary: Extensible Digital Forensics Platform # 79 char long summary
 description: |
   Autopsy® is the premier open source forensics platform which is fast, easy-to-use, and capable of analyzing all types of mobile devices and digital media. Its plug-in architecture enables extensibility from community-developed or custom-built modules. Autopsy evolves to meet the needs of hundreds of thousands of professionals in law enforcement, national security, litigation support, and corporate investigation.
@@ -70,20 +70,23 @@ apps:
     # more on env vars here: https://snapcraft.io/docs/environment-variables
     environment:
       jdkhome: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
-      HOME: "$SNAP_USER_COMMON"
+      HOME: $SNAP_USER_COMMON
       SOLR_JAVA_HOME: $SNAP/usr/lib/jvm/java-17-openjdk-amd64
       # provide means for java gstreamer to find gstreamer libs with jna.library.path
       # set user home to new home value to avoid issues writing cache files to home
       # can also specify '-Djdk.gtk.verbose=true' for gtk verbose logging: https://stackoverflow.com/a/22457177
-      jreflags: $jreflags '-Djdk.gtk.version=3' '-Duser.home=$SNAP_USER_COMMON' '-Djava.io.tmpdir=$SNAP_USER_COMMON/tmp' '-Djna.library.path=$SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
+      jreflags: $jreflags '-Djdk.gtk.version=3' '-Duser.home=$SNAP_USER_COMMON' '-Djava.io.tmpdir=$SNAP_USER_COMMON/tmp'
+        '-Djna.library.path=$SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu:$SNAP/usr/local/lib'
       # to load libtsk.so
       LD_LIBRARY_PATH: $SNAP/usr/local/lib:$LD_LIBRARY_PATH
       # make sure path is set up to ensure things like photorec are found
       PATH: $SNAP/usr/bin:$SNAP/usr/local/bin:$PATH
       # gstreamer scans for plugins (i.e. app integration plugins).  this tells gstreamer where to look for the scanner and libraries
       # more information here: https://forum.snapcraft.io/t/trouble-with-ros-and-gstreamer/5518/6
-      GST_PLUGIN_SYSTEM_PATH: $SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu/gstreamer-1.0:$SNAP/usr/lib/x86_64-linux-gnu/gstreamer-1.0:$GST_PLUGIN_SYSTEM_PATH
-      GST_PLUGIN_SCANNER: $SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
+      GST_PLUGIN_SYSTEM_PATH: 
+        $SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu/gstreamer-1.0:$SNAP/usr/lib/x86_64-linux-gnu/gstreamer-1.0:$GST_PLUGIN_SYSTEM_PATH
+      GST_PLUGIN_SCANNER: 
+        $SNAP_DESKTOP_RUNTIME/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner
       SOLR_LOGS_DIR: $SNAP_USER_COMMON/.autopsy/dev/solr/logs
       SOLR_PID_DIR: $SNAP_USER_COMMON/.autopsy/dev/solr/logs
       # taken from thunderbird snap: https://github.com/ubuntu/thunderbird/blob/stable/snapcraft.yaml
@@ -95,96 +98,105 @@ apps:
     common-id: org.sleuthkit.autopsy
     plugs:
       # taken from https://snapcraft.io/docs/supported-interfaces
-      - audio-playback
-      - block-devices
-      - desktop
-      - desktop-launch
-      - desktop-legacy
-      - dm-crypt
-      - fuse-support
-      - gsettings
-      - hardware-observe
-      - home
-      - hugepages-control
-      - kernel-crypto-api
-      - mount-observe
-      - network
-      - network-bind
-      - network-observe
-      - network-setup-observe
-      - network-status
-      - opengl
-      - optical-drive
-      - removable-media
-      - system-files-dev
-      - system-files-hugepages
-      - system-observe
+    - audio-playback
+    - block-devices
+    - desktop
+    - desktop-launch
+    - desktop-legacy
+    - dm-crypt
+    - fuse-support
+    - gsettings
+    - hardware-observe
+    - home
+    - hugepages-control
+    - kernel-crypto-api
+    - mount-observe
+    - network
+    - network-bind
+    - network-observe
+    - network-setup-observe
+    - network-status
+    - opengl
+    - optical-drive
+    - removable-media
+    - system-files-dev
+    - system-files-hugepages
+    - system-observe
     slots:
-      - dbus-daemon
+    - dbus-daemon
 
 parts:
   sleuthkit:
     # more information on plugins here: https://snapcraft.io/docs/supported-plugins
-    plugin: autotools
+    plugin: nil
     source: https://github.com/sleuthkit/sleuthkit.git
-    source-tag: sleuthkit-4.12.1
-    build-environment: [JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64]
+    source-tag: sleuthkit-4.14.0
+    build-environment: 
+    - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     # information on packages here: https://snapcraft.io/docs/package-repositories
     build-packages:
-      - build-essential
-      - autoconf
-      - libtool
-      - automake
-      - zip
-      - openjdk-17-jdk
-      - openjdk-17-jre
-      - ant
-      - ant-contrib
-      - ant-optional
-      - libpq-dev
-      - testdisk
-      - libafflib-dev
-      - libewf-dev
-      - libvhdi-dev
-      - libvmdk-dev
+    - build-essential
+    - autoconf
+    - libtool
+    - automake
+    - zip
+    - openjdk-17-jdk
+    - openjdk-17-jre
+    - ant
+    - ant-contrib
+    - ant-optional
+    - libpq-dev
+    - testdisk
+    - libvslvm-dev
+    - libafflib-dev
+    - libewf-dev
+    - libvhdi-dev
+    - libvmdk-dev
+    - libstdc++6
     stage-packages:
-      - libpq-dev
-      - testdisk
-      - libafflib-dev
-      - libewf-dev
-      - libvhdi-dev
-      - libvmdk-dev
+    - libpq-dev
+    - testdisk
+    - libvslvm-dev
+    - libafflib-dev
+    - libewf-dev
+    - libvhdi-dev
+    - libvmdk-dev
+    override-build: |
+      ./bootstrap
+      ./configure --enable-java
+      make
+      make install DESTDIR="${SNAPCRAFT_PART_INSTALL}"
   autopsy:
     after: [sleuthkit]
     # information on packages here: https://snapcraft.io/docs/package-repositories
     build-packages:
-      - zip
-      - unzip
-      - openjdk-17-jdk
-      - openjdk-17-jre
-      - ant
-      - doxygen
+    - zip
+    - unzip
+    - openjdk-17-jdk
+    - openjdk-17-jre
+    - ant
+    - doxygen
     stage-packages:
       # lib heif reqs
-      - libheif-dev
-      - libde265-dev
+    - libheif-dev
+    - libde265-dev
       # pg reqs
-      - libpq-dev
-      - testdisk
+    - libpq-dev
+    - testdisk
       # libgstreamer additional plugin reqs that aren't in gnome package extension: https://snapcraft.io/docs/gnome-extension, https://github.com/ubuntu/gnome-sdk/blob/gnome-42-2204/snapcraft.yaml
-      - gstreamer1.0-plugins-bad
-      - gstreamer1.0-plugins-ugly
-      - gstreamer1.0-libav
+    - gstreamer1.0-plugins-bad
+    - gstreamer1.0-plugins-ugly
+    - gstreamer1.0-libav
       # java req
-      - openjdk-17-jre
+    - openjdk-17-jre
       # needed by solr to determine locally running ports
-      - lsof
+    - lsof
     plugin: nil
     source: https://github.com/sleuthkit/autopsy.git
-    source-tag: autopsy-4.21.0
+    source-tag: autopsy-4.22.1
     build-environment:
-      - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-      - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
+    - JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+    - TSK_JAVA_LIB_PATH: $SNAPCRAFT_STAGE/usr/local/share/java
     # information on parts environment variables here: https://snapcraft.io/docs/parts-environment-variables
     override-build: |
       # ----- BUILD ZIP -----
@@ -239,9 +251,9 @@ parts:
       for snap in "core22" "gnome-42-2204"; do
         cd "/snap/$snap/current/usr/lib"
         for filename in [ *.so* ]; do
-          rm -f "$CRAFT_PRIME/usr/lib/$CRAFT_ARCH_TRIPLET/$filename"
+          rm -f "$CRAFT_PRIME/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/$filename"
         done
-        cd "/snap/$snap/current/usr/lib/$CRAFT_ARCH_TRIPLET"
+        cd "/snap/$snap/current/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR"
         for filename in [ *.so* ]; do
           rm -f "$CRAFT_PRIME/usr/lib/$filename"
         done

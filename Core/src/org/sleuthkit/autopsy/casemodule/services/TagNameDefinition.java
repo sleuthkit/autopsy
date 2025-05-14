@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2024 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,20 +54,20 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
     private static final String TAGS_SETTINGS_NAME = "Tags"; //NON-NLS
     private static final String TAG_NAMES_SETTING_KEY = "TagNames"; //NON-NLS 
     private static final String TAG_SETTING_VERSION_KEY = "CustomTagNameVersion";
-    private static final int TAG_SETTINGS_VERSION = 1;
+    private static final int TAG_SETTINGS_VERSION = 2; // Changed tag type from TskData.FileKnown to TskData.TagType
 
     private final String displayName;
     private final String description;
     private final TagName.HTML_COLOR color;
-    private final TskData.FileKnown knownStatus;
+    private final TskData.TagType tagType;
 
     private static final List<TagNameDefinition> STANDARD_TAGS_DEFINITIONS = new ArrayList<>();
     private static final List<String> PROJECT_VIC_NAMES_NO_LONGER_USED = new ArrayList<>();
 
     static {
-        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
-        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_followUp_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN));
-        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), "", TagName.HTML_COLOR.NONE, TskData.FileKnown.BAD));
+        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_bookmark_text(), "", TagName.HTML_COLOR.NONE, TskData.TagType.SUSPICIOUS));
+        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_followUp_text(), "", TagName.HTML_COLOR.NONE, TskData.TagType.SUSPICIOUS));
+        STANDARD_TAGS_DEFINITIONS.add(new TagNameDefinition(Bundle.TagNameDefinition_predefTagNames_notableItem_text(), "", TagName.HTML_COLOR.NONE, TskData.TagType.BAD));
 
         PROJECT_VIC_NAMES_NO_LONGER_USED.add("CAT-1: Child Exploitation (Illegal)");
         PROJECT_VIC_NAMES_NO_LONGER_USED.add("CAT-2: Child Exploitation (Non-Illegal/Age Difficult)");
@@ -79,18 +79,27 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
 
     /**
      * Constructs a tag name definition consisting of a display name,
-     * description, color and knownStatus.
+     * description, color and tag type.
      *
      * @param displayName The display name for the tag name.
      * @param description The description for the tag name.
      * @param color       The color for the tag name.
      * @param status      The status denoted by the tag name.
+     * @deprecated TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.TagType status) should be used instead.
      */
+    @Deprecated
     public TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.FileKnown status) {
         this.displayName = displayName;
         this.description = description;
         this.color = color;
-        this.knownStatus = status;
+        this.tagType = TskData.TagType.convertFileKnownToTagType(status);
+    }
+    
+    public TagNameDefinition(String displayName, String description, TagName.HTML_COLOR color, TskData.TagType status) {
+        this.displayName = displayName;
+        this.description = description;
+        this.color = color;
+        this.tagType = status;
     }
 
     static Collection<TagNameDefinition> getStandardTagNameDefinitions() {
@@ -164,10 +173,21 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
     /**
      * The status which will be applied to items with this tag.
      *
-     * @return a value of TskData.FileKnown which is associated with this tag
+     * @return a value of TskData.TagType which is associated with this tag
      */
+    public TskData.TagType getTagType() {
+        return tagType;
+    }
+    
+    /**
+     * The status which will be applied to items with this tag.
+     *
+     * @return a value of TskData.FileKnown which is associated with this tag
+     * @deprecated getTagType() should be used instead.
+     */
+    @Deprecated
     public TskData.FileKnown getKnownStatus() {
-        return knownStatus;
+        return TskData.TagType.convertTagTypeToFileKnown(tagType);
     }
 
     /**
@@ -212,7 +232,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
             return false;
         }
         boolean sameName = this.getDisplayName().equals(((TagNameDefinition) obj).getDisplayName());
-        boolean sameStatus = this.getKnownStatus().equals(((TagNameDefinition) obj).getKnownStatus());
+        boolean sameStatus = this.getTagType().equals(((TagNameDefinition) obj).getTagType());
         return sameName && sameStatus;
     }
 
@@ -231,13 +251,13 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      *         that is used by the tags settings file.
      */
     private String toSettingsFormat() {
-        return displayName + "," + description + "," + color.name() + "," + knownStatus.toString();
+        return displayName + "," + description + "," + color.name() + "," + tagType.toString();
     }
 
     TagName saveToCase(SleuthkitCase caseDb) {
         TagName tagName = null;
         try {
-            tagName = caseDb.getTaggingManager().addOrUpdateTagName(displayName, description, color, knownStatus);
+            tagName = caseDb.getTaggingManager().addOrUpdateTagName(displayName, description, color, tagType);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error saving tag name definition", ex);
         }
@@ -251,7 +271,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
      * The currently custom tags properties are stored in one string property
      * value separated by ;. The properties of an individual tag are comma
      * separated in the format of:
-     * tag_name,tag_description,tag_color,known_status
+     * tag_name,tag_description,tag_color,tag_type
      *
      * In prior versions of autopsy the known_status was stored in the central
      * repository, therefore the properties file only had three values.
@@ -279,7 +299,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
             String[] attributes = tagProps.split(",");
 
             definitions.add(new TagNameDefinition(attributes[0], attributes[1],
-                    TagName.HTML_COLOR.valueOf(attributes[2]), TskData.FileKnown.valueOf(attributes[3])));
+                    TagName.HTML_COLOR.valueOf(attributes[2]), TskData.TagType.valueOf(attributes[3])));
         }
 
         return definitions;
@@ -316,7 +336,7 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
         Integer version = getPropertyFileVersion();
         List<TagNameDefinition> definitions = new ArrayList<>();
 
-        if (version == null) {
+        if (version == null || version == 1) {
             String tagsProperty = ModuleSettings.getConfigSetting(TAGS_SETTINGS_NAME, TAG_NAMES_SETTING_KEY);
             if (tagsProperty == null || tagsProperty.isEmpty()) {
                 ModuleSettings.setConfigSetting(TAGS_SETTINGS_NAME, TAG_SETTING_VERSION_KEY, Integer.toString(TAG_SETTINGS_VERSION));
@@ -332,22 +352,27 @@ final public class TagNameDefinition implements Comparable<TagNameDefinition> {
             List<String> notableTagList = null;
             for (String tagProps : individualTags) {
                 String[] attributes = tagProps.split(",");
-                TskData.FileKnown fileKnown = TskData.FileKnown.UNKNOWN;
+                TskData.TagType tagType = TskData.TagType.SUSPICIOUS;
                 if (attributes.length == 3) {
                     // If notableTagList is null load it from the CR.
                     if (notableTagList == null) {
                         notableTagList = getCRNotableList();
                     } else {
                         if (notableTagList.contains(attributes[0])) {
-                            fileKnown = TskData.FileKnown.BAD;
+                            tagType = TskData.TagType.BAD;
                         }
                     }
                 } else {
-                    fileKnown = TskData.FileKnown.valueOf(attributes[3]);
+                    if (version == 1) {
+                        // handle backwards compatibility
+                        tagType = TskData.TagType.convertFileKnownToTagType(TskData.FileKnown.valueOf(attributes[3]));
+                    } else {
+                        tagType = TskData.TagType.valueOf(attributes[3]);
+                    }
                 }
 
                 definitions.add(new TagNameDefinition(attributes[0], attributes[1],
-                        TagName.HTML_COLOR.valueOf(attributes[2]), fileKnown));
+                        TagName.HTML_COLOR.valueOf(attributes[2]), tagType));
             }
         }
 

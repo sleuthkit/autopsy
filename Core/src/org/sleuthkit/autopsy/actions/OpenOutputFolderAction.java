@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.actions;
 
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;

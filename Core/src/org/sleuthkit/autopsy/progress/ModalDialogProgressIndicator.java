@@ -263,4 +263,11 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
         dialog.setLocationRelativeTo(parent);
         this.dialog.setVisible(true);
     }
+    
+    /**
+     * @return The GUI dialog presenting the progress.  Possibly null.
+     */
+    public Dialog getDialog() {
+        return this.dialog;
+    }
 }

@@ -174,10 +174,10 @@ public class GetTagNameDialog extends JDialog {
 
         private final String name;
         private final String description;
-        private final TskData.FileKnown status;
+        private final TskData.TagType status;
         private final TagName.HTML_COLOR color;
         
-        AddTagNameWorker(String name, String description, TskData.FileKnown status, TagName.HTML_COLOR color) {
+        AddTagNameWorker(String name, String description, TskData.TagType status, TagName.HTML_COLOR color) {
             this.name = name;
             this.description = description;
             this.status = status;
@@ -375,7 +375,7 @@ public class GetTagNameDialog extends JDialog {
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         String tagDisplayName = tagNameField.getText();
         String userTagDescription = descriptionTextArea.getText();
-        TskData.FileKnown status = notableCheckbox.isSelected() ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
+        TskData.TagType status = notableCheckbox.isSelected() ? TskData.TagType.BAD : TskData.TagType.SUSPICIOUS;
         if (tagDisplayName.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),

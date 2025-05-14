@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Color;
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.io.File;

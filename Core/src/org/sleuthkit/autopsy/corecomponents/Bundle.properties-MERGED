@@ -26,6 +26,7 @@ AutopsyOptionsPanel_storeTempDir_onError_title=Error Saving Temporary Directory
 # {0} - path
 AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_description=Unable to create temporary directory within specified path: {0}
 AutopsyOptionsPanel_tempDirectoryBrowseButtonActionPerformed_onInvalidPath_title=Path cannot be used
+CTL_CustomAboutAction=About
 CTL_DataContentAction=DataContent
 CTL_DataContentTopComponent=Data Content
 CTL_OfflineHelpAction=Offline Autopsy Documentation
@@ -77,7 +78,7 @@ DataContentViewerHex.pageLabel2.text=Page
 # Product Information panel
 LBL_Description=<div style=\"font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif;\">\n    <b>Product Version:</b> {0} ({9}) <br><b>Sleuth Kit Version:</b> {7} <br><b>Netbeans RCP Build:</b> {8} <br> <b>Java:</b> {1}; {2}<br> <b>System:</b> {3}; {4}; {5}<br><b>Userdir:</b> {6}</div>
 Format_OperatingSystem_Value={0} version {1} running on {2}
-LBL_Copyright=<div style\="font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif; ">Autopsy&trade; is a digital forensics platform based on The Sleuth Kit&trade; and other tools. <br><ul><li>General Information: <a style\="color: \#1E2A60;" href\="http://www.sleuthkit.org">http://www.sleuthkit.org</a>.</li><li>Training: <a style\="color: \#1E2A60;" href\="https://www.autopsy.com/support/training/">https://www.autopsy.com/support/training/</a></li><li>Support: <a style\="color: \#1E2A60;" href\="https://www.sleuthkit.org/support.php">https://www.sleuthkit.org/support.php</a></li></ul>Copyright &copy; 2003-2020. </div>
+LBL_Copyright=<div style\="font-size: 12pt; font-family: Verdana, 'Verdana CE',  Arial, 'Arial CE', 'Lucida Grande CE', lucida, 'Helvetica CE', sans-serif; ">Autopsy&trade; is a digital forensics platform based on The Sleuth Kit&trade; and other tools. <br><ul><li>General Information: <a style\="color: \#1E2A60;" href\="http://www.autopsy.com">http://www.autopsy.com</a>.</li><li>Training: <a style\="color: \#1E2A60;" href\="https://www.autopsy.com/support/training/">https://www.autopsy.com/support/training/</a></li><li>Support: <a style\="color: \#1E2A60;" href\="https://www.autopsy.com/community/">https://www.autopsy.com/community/</a></li></ul>Copyright &copy; 2003-2025 Sleuth Kit Labs, Inc. <br><br> Maintained by: Sleuth Kit Labs <a style\="color: \#1E2A60;" href\="https://www.sleuthkitlabs.com">https://www.sleuthkitlabs.com</a><br><br> Sponsored by: Cyber Triage <a style\="color: \#1E2A60;" href\="https://www.cybertriage.com">https://www.cybertriage.com</a></div>
 SortChooser.dialogTitle=Choose Sort Criteria
 ThumbnailViewChildren.progress.cancelling=(Cancelling)
 # {0} - file name

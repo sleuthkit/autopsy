@@ -18,9 +18,16 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.File;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
+import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -32,11 +39,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.guiutils.JFileChooserFactory;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.SleuthkitJNI;
+import org.sleuthkit.datamodel.SleuthkitJNI.TestOpenImageResult;
 
 /**
  * Panel for adding an image file such as .img, .E0x, .00x, etc. Allows the user
@@ -44,8 +54,10 @@ import org.sleuthkit.datamodel.HashUtility;
  * files in FAT32.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class ImageFilePanel extends JPanel implements DocumentListener {
+public class ImageFilePanel extends JPanel {
 
+    private static final Logger logger = Logger.getLogger(AddImageTask.class.getName());
+    
     private static final long serialVersionUID = 1L;
     private static final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
     private static final String[] SECTOR_SIZE_CHOICES = {"Auto Detect", "512", "1024", "2048", "4096"};
@@ -53,6 +65,15 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     private JFileChooser fileChooser;
     private final String contextName;
     private final List<FileFilter> fileChooserFilters;
+    
+    private static int VALIDATE_TIMEOUT_MILLIS = 1000;
+    static ScheduledThreadPoolExecutor delayedValidationService = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("ImageFilePanel delayed validation").build());
+
+    private final ReentrantLock validationWaitingLock = new ReentrantLock();
+    private final ReentrantLock validationLock = new ReentrantLock();
+
+    private Runnable validateAction = null;
+    private Future<?> validateFuture = null;
 
     /**
      * Creates new form ImageFilePanel
@@ -76,6 +97,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         sectorSizeComboBox.setSelectedIndex(0);
 
         errorLabel.setVisible(false);
+        loadingLabel.setVisible(false);
         this.fileChooserFilters = fileChooserFilters;
     }
 
@@ -105,11 +127,17 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      */
     public static synchronized ImageFilePanel createInstance(String context, List<FileFilter> fileChooserFilters) {
         ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters);
+        DocumentListener delayedValidationListener = instance.new DelayedValidationDocListener();
+        
         // post-constructor initialization of listener support without leaking references of uninitialized objects
-        instance.getPathTextField().getDocument().addDocumentListener(instance);
-        instance.getMd5TextFieldField().getDocument().addDocumentListener(instance);
-        instance.getSha1TextField().getDocument().addDocumentListener(instance);
-        instance.getSha256TextField().getDocument().addDocumentListener(instance);
+        for (JTextField textField: List.of(
+                instance.getPathTextField(),
+                instance.getMd5TextFieldField(), 
+                instance.getSha1TextField(), 
+                instance.getSha256TextField(), 
+                instance.getPasswordTextField())) {
+            textField.getDocument().addDocumentListener(delayedValidationListener);
+        }
         return instance;
     }
 
@@ -127,6 +155,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     private JTextField getSha256TextField() {
         return sha256HashTextField;
+    }
+    
+    private JTextField getPasswordTextField() {
+        return passwordTextField;
     }
     
     private JFileChooser getChooser() {
@@ -151,6 +183,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
 
         pathLabel = new javax.swing.JLabel();
         browseButton = new javax.swing.JButton();
@@ -169,11 +202,25 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         md5HashLabel = new javax.swing.JLabel();
         hashValuesLabel = new javax.swing.JLabel();
         hashValuesNoteLabel = new javax.swing.JLabel();
+        passwordLabel = new javax.swing.JLabel();
+        passwordTextField = new javax.swing.JTextField();
+        javax.swing.JPanel spacer = new javax.swing.JPanel();
+        loadingLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(403, 65));
+        setLayout(new java.awt.GridBagLayout());
 
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.pathLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        add(pathLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(browseButton, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.browseButton.text")); // NOI18N
         browseButton.addActionListener(new java.awt.event.ActionListener() {
@@ -181,125 +228,227 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 browseButtonActionPerformed(evt);
             }
         });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(browseButton, gridBagConstraints);
 
         pathTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.pathTextField.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(pathTextField, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.timeZoneLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(timeZoneLabel, gridBagConstraints);
 
         timeZoneComboBox.setMaximumRowCount(30);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(timeZoneComboBox, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.noFatOrphansCheckbox.text")); // NOI18N
         noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.noFatOrphansCheckbox.toolTipText")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(noFatOrphansCheckbox, gridBagConstraints);
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.errorLabel.text")); // NOI18N
+        errorLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        errorLabel.setMaximumSize(new java.awt.Dimension(500, 60));
+        errorLabel.setMinimumSize(new java.awt.Dimension(200, 20));
+        errorLabel.setPreferredSize(new java.awt.Dimension(200, 60));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 11;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        add(errorLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(sectorSizeLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sectorSizeLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(sectorSizeLabel, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(sectorSizeComboBox, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(sha256HashLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sha256HashLabel.text")); // NOI18N
         sha256HashLabel.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(sha256HashLabel, gridBagConstraints);
 
         sha256HashTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sha256HashTextField.text")); // NOI18N
         sha256HashTextField.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(sha256HashTextField, gridBagConstraints);
 
         sha1HashTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sha1HashTextField.text")); // NOI18N
         sha1HashTextField.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(sha1HashTextField, gridBagConstraints);
 
         md5HashTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.md5HashTextField.text")); // NOI18N
         md5HashTextField.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 7;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(md5HashTextField, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(sha1HashLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sha1HashLabel.text")); // NOI18N
         sha1HashLabel.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(sha1HashLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(md5HashLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.md5HashLabel.text")); // NOI18N
         md5HashLabel.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 7;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(md5HashLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(hashValuesLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.hashValuesLabel.text")); // NOI18N
         hashValuesLabel.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        add(hashValuesLabel, gridBagConstraints);
 
         org.openide.awt.Mnemonics.setLocalizedText(hashValuesNoteLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.hashValuesNoteLabel.text")); // NOI18N
         hashValuesNoteLabel.setEnabled(false);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(hashValuesNoteLabel, gridBagConstraints);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(pathTextField)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(browseButton)
-                .addGap(2, 2, 2))
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pathLabel)
-                    .addComponent(noFatOrphansCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 368, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(errorLabel)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(timeZoneLabel)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(sectorSizeLabel)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(sectorSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(md5HashLabel)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(md5HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(sha1HashLabel)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(sha1HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(sha256HashLabel)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(sha256HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(hashValuesNoteLabel)
-                    .addComponent(hashValuesLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        org.openide.awt.Mnemonics.setLocalizedText(passwordLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.passwordLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.insets = new java.awt.Insets(0, 5, 5, 5);
+        add(passwordLabel, gridBagConstraints);
+
+        passwordTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.passwordTextField.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 5, 5);
+        add(passwordTextField, gridBagConstraints);
+
+        javax.swing.GroupLayout spacerLayout = new javax.swing.GroupLayout(spacer);
+        spacer.setLayout(spacerLayout);
+        spacerLayout.setHorizontalGroup(
+            spacerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(pathLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(browseButton)
-                    .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(noFatOrphansCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(timeZoneLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(sectorSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sectorSizeLabel))
-                .addGap(39, 39, 39)
-                .addComponent(hashValuesLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(md5HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(md5HashLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(sha1HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sha1HashLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(sha256HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sha256HashLabel))
-                .addGap(18, 18, 18)
-                .addComponent(hashValuesNoteLabel)
-                .addGap(18, 18, 18)
-                .addComponent(errorLabel)
-                .addContainerGap(51, Short.MAX_VALUE))
+        spacerLayout.setVerticalGroup(
+            spacerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 12;
+        gridBagConstraints.weighty = 1.0;
+        add(spacer, gridBagConstraints);
+
+        loadingLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/working_spinner.gif"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(loadingLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.loadingLabel.text")); // NOI18N
+        loadingLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        loadingLabel.setMaximumSize(new java.awt.Dimension(500, 60));
+        loadingLabel.setMinimumSize(new java.awt.Dimension(200, 20));
+        loadingLabel.setPreferredSize(new java.awt.Dimension(200, 60));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 11;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(5, 5, 5, 5);
+        add(loadingLabel, gridBagConstraints);
     }// </editor-fold>//GEN-END:initComponents
 
     @NbBundle.Messages({"ImageFilePanel.000.confirmationMessage=The selected file"
@@ -349,9 +498,12 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     private javax.swing.JLabel errorLabel;
     private javax.swing.JLabel hashValuesLabel;
     private javax.swing.JLabel hashValuesNoteLabel;
+    private javax.swing.JLabel loadingLabel;
     private javax.swing.JLabel md5HashLabel;
     private javax.swing.JTextField md5HashTextField;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
+    private javax.swing.JLabel passwordLabel;
+    private javax.swing.JTextField passwordTextField;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
     private javax.swing.JComboBox<String> sectorSizeComboBox;
@@ -436,6 +588,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     String getSha256() {
         return this.sha256HashTextField.getText();
     }
+    
+    String getPassword() {
+        return this.passwordTextField.getText();
+    }
 
     public void reset() {
         //reset the UI elements to default 
@@ -443,6 +599,24 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         this.md5HashTextField.setText(null);
         this.sha1HashTextField.setText(null);
         this.sha256HashTextField.setText(null);
+        this.passwordTextField.setText(null);
+    }
+
+    /**
+     * Sets UI enabled state.
+     *
+     * @param enabled True
+     */
+    private void setUIEnabled(boolean enabled, boolean validNonE01) {
+        this.browseButton.setEnabled(enabled);
+        this.noFatOrphansCheckbox.setEnabled(enabled);
+        this.passwordTextField.setEnabled(enabled);
+        this.pathTextField.setEnabled(enabled);
+        this.sectorSizeComboBox.setEnabled(enabled);
+        this.md5HashTextField.setEnabled(enabled && validNonE01);
+        this.sha1HashTextField.setEnabled(enabled && validNonE01);
+        this.sha256HashTextField.setEnabled(enabled && validNonE01);
+        this.timeZoneComboBox.setEnabled(enabled);
     }
 
     /**
@@ -454,49 +628,113 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         "ImageFilePanel.validatePanel.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive",
         "ImageFilePanel.validatePanel.invalidMD5=Invalid MD5 hash",
         "ImageFilePanel.validatePanel.invalidSHA1=Invalid SHA1 hash",
-        "ImageFilePanel.validatePanel.invalidSHA256=Invalid SHA256 hash",})
+        "ImageFilePanel.validatePanel.invalidSHA256=Invalid SHA256 hash",
+        "# {0} - imageOpenError",
+        "ImageFilePanel_validatePanel_imageOpenError=<html><body><p>An error occurred while opening the image:{0}</p></body></html>",
+        "ImageFilePanel_validatePanel_unknownErrorMsg=<unknown>",
+        "ImageFilePanel_validatePanel_unknownError=<html><body><p>An unknown error occurred while attempting to validate the image</p></body></html>"
+    })
     public boolean validatePanel() {
-        errorLabel.setVisible(false);
+        return runWithLock(this.validationLock, () -> {
+            boolean validNonE01 = true;
+            try {
 
-        String path = getContentPaths();
-        if (!isImagePathValid()) {
-            return false;
-        }
+                // acquire field values at the beginning to minimize chance of changing while validating.
+                String path = getContentPaths();
 
-        if (!StringUtils.isBlank(getMd5()) && !HashUtility.isValidMd5Hash(getMd5())) {
+                validNonE01 = isValidNonE01(path);
+                setUIEnabled(false, validNonE01);
+
+                String md5 = getMd5();
+                String sha1 = getSha1();
+                String sha256 = getSha256();
+                String password = getPassword();
+
+                if (!isImagePathValid(path)) {
+                    showError(null);
+                    return false;
+                }
+
+                if (!StringUtils.isBlank(md5) && !HashUtility.isValidMd5Hash(md5)) {
+                    showError(Bundle.ImageFilePanel_validatePanel_invalidMD5());
+                    return false;
+                }
+
+                if (!StringUtils.isBlank(sha1) && !HashUtility.isValidSha1Hash(sha1)) {
+                    showError(Bundle.ImageFilePanel_validatePanel_invalidSHA1());
+                    return false;
+                }
+
+                if (!StringUtils.isBlank(sha256) && !HashUtility.isValidSha256Hash(sha256)) {
+                    showError(Bundle.ImageFilePanel_validatePanel_invalidSHA256());
+                    return false;
+                }
+
+                try {
+                    TestOpenImageResult testResult = SleuthkitJNI.testOpenImage(path, password);
+                    if (!testResult.wasSuccessful()) {
+                        showError(Bundle.ImageFilePanel_validatePanel_imageOpenError(
+                                StringUtils.defaultIfBlank(
+                                        testResult.getMessage(),
+                                        Bundle.ImageFilePanel_validatePanel_unknownErrorMsg())));
+                        return false;
+                    }
+                } catch (Throwable t) {
+                    logger.log(Level.SEVERE, "An unknown error occurred test opening image: " + path, t);
+                    showError(Bundle.ImageFilePanel_validatePanel_unknownError());
+                    return false;
+                }
+
+                if (!PathValidator.isValidForCaseType(path, Case.getCurrentCase().getCaseType())) {
+                    showError(Bundle.ImageFilePanel_validatePanel_dataSourceOnCDriveError());
+                } else {
+                    showError(null);
+                }
+                return true;
+            } finally {
+                setUIEnabled(true, validNonE01);
+            }
+        });
+    }
+    
+    /**
+     * Show an error message if error message is non-empty. Otherwise, hide
+     * error message.  Either way, hide loading label.
+     *
+     * @param errorMessage The error message to show or null for no error.
+     */
+    private void showError(String errorMessage) {
+        loadingLabel.setVisible(false);
+        if (StringUtils.isNotBlank(errorMessage)) {
             errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_invalidMD5());
-            return false;
+            errorLabel.setText(errorMessage);
+        } else {
+            errorLabel.setVisible(false);
+            errorLabel.setText("");
         }
+    }
 
-        if (!StringUtils.isBlank(getSha1()) && !HashUtility.isValidSha1Hash(getSha1())) {
-            errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_invalidSHA1());
+    /**
+     * Returns true if path is valid for processing.
+     *
+     * @param path The path.
+     * @return True if valid for processing.
+     */
+    private boolean isImagePathValid(String path) {
+        if (StringUtils.isBlank(path) || (!(new File(path).isFile() || DriveUtils.isPhysicalDrive(path) || DriveUtils.isPartition(path)))) {
             return false;
-        }
-
-        if (!StringUtils.isBlank(getSha256()) && !HashUtility.isValidSha256Hash(getSha256())) {
-            errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_invalidSHA256());
-            return false;
-        }
-
-        if (!PathValidator.isValidForCaseType(path, Case.getCurrentCase().getCaseType())) {
-            errorLabel.setVisible(true);
-            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_dataSourceOnCDriveError());
         }
 
         return true;
     }
     
-    private boolean isImagePathValid() {
-        String path = getContentPaths();
-        
-        if (StringUtils.isBlank(path) || (!(new File(path).isFile() || DriveUtils.isPhysicalDrive(path) || DriveUtils.isPartition(path)))) {
-            return false;
-        }
-        
-        return true;
+    /**
+     * Returns true if the path is a valid image that is not an E01.
+     * @param path The path.
+     * @return True if valid image and not E01.
+     */
+    private boolean isValidNonE01(String path) {
+        return StringUtils.isNotBlank(path) && isImagePathValid(path) && !path.toLowerCase().endsWith(".e01");
     }
 
     public void storeSettings() {
@@ -514,21 +752,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
     }
 
-    @Override
-    public void insertUpdate(DocumentEvent e) {
-        updateHelper();
-    }
-
-    @Override
-    public void removeUpdate(DocumentEvent e) {
-        updateHelper();
-    }
-
-    @Override
-    public void changedUpdate(DocumentEvent e) {
-        updateHelper();
-    }
-
     /**
      * Update functions are called by the pathTextField which has this set as
      * it's DocumentEventListener. Each update function fires a property change
@@ -539,12 +762,13 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         "ImageFilePanel.moduleErr.msg=A module caused an error listening to ImageFilePanel updates."
         + " See log to determine which module. Some data could be incomplete.\n"})
     private void updateHelper() {
-        if (isImagePathValid() && !getContentPaths().toLowerCase().endsWith(".e01")) {
+        String path = getContentPaths();
+        if (isValidNonE01(path)) {
             setHashValuesComponentsEnabled(true);
         } else {
             setHashValuesComponentsEnabled(false);
         }
-        
+
         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
 
@@ -553,5 +777,120 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      */
     public void select() {
         pathTextField.requestFocusInWindow();
+    }
+    
+    /**
+     * Runs the supplier action with the reentrant lock or blocks until
+     * acquired.
+     *
+     * @param <T>
+     * @param lock The reentrant lock.
+     * @param action The action to run.
+     * @return The value of the supplier.
+     */
+    private <T> T runWithLock(ReentrantLock lock, Supplier<T> action) {
+        try {
+            lock.lock();
+            return action.get();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @return True if the panel is on a delay for validating (i.e. typing a
+     * password for bitlocker).
+     */
+    public boolean isValidationLoading() {
+        return runWithLock(this.validationWaitingLock, () -> this.validateFuture != null
+                && !this.validateFuture.isCancelled()
+                && !this.validateFuture.isDone());
+    }
+
+    /**
+     * This class validates on a delay canceling any tasks previously scheduled
+     * so that password validation doesn't lock up the system.
+     */
+    private class DelayedValidationDocListener implements DocumentListener {
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            delayValidate();
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            delayValidate();
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            delayValidate();
+        }
+
+        /**
+         * Run validation on a delay to avoid password checking too many times
+         * while typing.
+         */
+        private void delayValidate() {
+
+            boolean triggerUpdate = runWithLock(validationWaitingLock, () -> {
+
+                boolean toRetTriggerUpdate = false;
+                if (isValidationLoading()) {
+                    validateFuture.cancel(true);
+                    toRetTriggerUpdate = true;
+                }
+
+                validateAction = new ValidationRunnable();
+
+                validateFuture = delayedValidationService.schedule(
+                        validateAction,
+                        VALIDATE_TIMEOUT_MILLIS,
+                        TimeUnit.MILLISECONDS);
+
+                return toRetTriggerUpdate;
+            });
+
+            errorLabel.setVisible(false);
+            loadingLabel.setVisible(true);
+
+            // trigger invalidation after setting up new runnable if not already triggered
+            if (triggerUpdate) {
+                firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+            }
+        }
+     
+        /**
+         * Runnable to run the updateHelper if the validation action remains
+         * this runnable.
+         */
+        private class ValidationRunnable implements Runnable {
+
+            @Override
+            public void run() {
+
+                boolean isRunningAction = runWithLock(validationWaitingLock, () -> {
+                    if (validateAction != this) {
+                        return false;
+                    }
+
+                    // set the validation action to null to indicate that this is done running and can be validated.
+                    validateAction = null;
+                    validateFuture = null;
+
+                    return true;
+                });
+
+                if (!isRunningAction) {
+                    return;
+                } else if (Thread.interrupted()) {
+                    return;
+                }
+
+                ImageFilePanel.this.updateHelper();
+            }
+
+        }
     }
 }

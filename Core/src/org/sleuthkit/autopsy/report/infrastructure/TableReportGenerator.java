@@ -94,7 +94,7 @@ class TableReportGenerator {
 
         String notableString = "";
         for (TagName tagName : tagNamesInUse) {
-            notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            notableString = tagName.getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
             tagNames.add(tagName.getDisplayName() + notableString);
         }
         tagNamesFilter = new HashSet<>(tagNames);
@@ -369,7 +369,7 @@ class TableReportGenerator {
             }
 
             // skip tags that we are not reporting on 
-            String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            String notableString = tag.getName().getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
             if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
                 continue;
             }
@@ -461,7 +461,7 @@ class TableReportGenerator {
                 return;
             }
 
-            String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            String notableString = tag.getName().getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
             if (passesTagNamesFilter(tag.getName().getDisplayName() + notableString) == false) {
                 continue;
             }
@@ -1193,7 +1193,7 @@ class TableReportGenerator {
                 try {
                     List<ContentTag> contentTags = Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(content);
                     for (ContentTag ct : contentTags) {
-                        String notableString = ct.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                        String notableString = ct.getName().getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
                         allTags.add(ct.getName().getDisplayName() + notableString);
                     }
                 } catch (TskCoreException | NoCurrentCaseException ex) {
@@ -1239,7 +1239,7 @@ class TableReportGenerator {
                 List<BlackboardArtifactTag> tags = Case.getCurrentCaseThrows().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);
                 HashSet<String> uniqueTagNames = new HashSet<>();
                 for (BlackboardArtifactTag tag : tags) {
-                    String notableString = tag.getName().getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+                    String notableString = tag.getName().getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
                     uniqueTagNames.add(tag.getName().getDisplayName() + notableString);
                 }
                 if (failsTagFilter(uniqueTagNames, tagNamesFilter)) {

@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.modules.yara.ui;
 
 import java.awt.Component;
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;

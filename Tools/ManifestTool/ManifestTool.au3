@@ -89,9 +89,17 @@ $distanceFromLeft = $leftMargin
 $distanceFromTop = $distanceFromTop + $fieldHeight + $gapBetweenHeight
 
 Global $caseNameLabel = GUICtrlCreateLabel("Case Name", $distanceFromLeft, $distanceFromTop+$labelOffset)
-$distanceFromLeft = $distanceFromLeft+$labelWidth+$gapBetweenWidth 
+$distanceFromLeft = $distanceFromLeft+$labelWidth+$gapBetweenWidth
 Global $caseNameField = GUICtrlCreateInput("", $distanceFromLeft, $distanceFromTop, $fieldWidth, $fieldHeight)
+$distanceFromLeft = $leftMargin
+$distanceFromTop = $distanceFromTop + $fieldHeight + $gapBetweenHeight
+
+Global $passwordLabel = GUICtrlCreateLabel("Password", $distanceFromLeft, $distanceFromTop+$labelOffset)
+$distanceFromLeft = $distanceFromLeft+$labelWidth+$gapBetweenWidth
+Global $passwordField = GUICtrlCreateInput("", $distanceFromLeft, $distanceFromTop, $fieldWidth, $fieldHeight)
 $distanceFromLeft = $distanceFromLeft +$fieldWidth+$gapBetweenWidth
+Global $optionalLabel = GUICtrlCreateLabel("* Optional", $distanceFromLeft, $distanceFromTop)
+;$distanceFromLeft = $distanceFromLeft-$fieldWidth+$gapBetweenWidth
 $distanceFromTop = $distanceFromTop + $fieldHeight + $gapBetweenHeight
 
 $distanceFromTop = $distanceFromTop + $gapBetweenHeight ;add an extra gap before Generate Manifest button
@@ -167,7 +175,7 @@ Func WritePropertiesFile()
 	EndIf
 	FileWrite($propertiesFileHandle, GUICtrlRead($algorithmComboBox) & @CRLF)
 	FileWrite($propertiesFileHandle, $defaultDirectory & @CRLF)
-	FileClose($propertiesFileHandle) 
+	FileClose($propertiesFileHandle)
 EndFunc
 
 
@@ -195,10 +203,13 @@ Func ChangeToSingleDataSourceGUI()
 	GUICtrlSetData($caseDirectoryLabel, "Data Source")
 	GUICtrlSetState($caseNameField, $GUI_SHOW)
 	GUICtrlSetState($caseNameLabel, $GUI_SHOW)
+	GUICtrlSetState($passwordField, $GUI_SHOW)
+	GUICtrlSetState($passwordLabel, $GUI_SHOW)
+	GUICtrlSetState($optionalLabel, $GUI_SHOW)
 	GUICtrlSetOnEvent($browseButton, "BrowseForDataSourceFile")
 	GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
 
-EndFunc 
+EndFunc
 
 ;Change the controls displayed in the GUI to the ones needed for the Folder of Logical Files algorithm
 Func ChangeToFolderOfLogicalFilesGUI()
@@ -207,9 +218,12 @@ Func ChangeToFolderOfLogicalFilesGUI()
 	GUICtrlSetData($caseDirectoryLabel, "Data Source")
 	GUICtrlSetState($caseNameField, $GUI_SHOW)
 	GUICtrlSetState($caseNameLabel, $GUI_SHOW)
+	GUICtrlSetState($passwordField, $GUI_HIDE)
+	GUICtrlSetState($passwordLabel, $GUI_HIDE)
+	GUICtrlSetState($optionalLabel, $GUI_HIDE)
 	GUICtrlSetOnEvent($browseButton, "Browse")
 	GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
-EndFunc 
+EndFunc
 
 ;Change the controls displayed in the GUI to the ones needed for One Data Source Per Folder
 Func ChangeToDefaultGUI()
@@ -219,6 +233,9 @@ Func ChangeToDefaultGUI()
 	GUICtrlSetState($caseDirectoryLabel, $GUI_SHOW)
 	GUICtrlSetState($caseNameField, $GUI_HIDE)
 	GUICtrlSetState($caseNameLabel, $GUI_HIDE)
+	GUICtrlSetState($passwordField, $GUI_HIDE)
+	GUICtrlSetState($passwordLabel, $GUI_HIDE)
+	GUICtrlSetState($optionalLabel, $GUI_HIDE)
 	GUICtrlSetOnEvent($browseButton, "Browse")
 	;rename to RootDirectory to root directory
 	;hide case name field
@@ -241,28 +258,29 @@ Func ValidateFields($oldCaseName, $oldRootFolder)
 	EndIf
 EndFunc
 
-;ensure that the settings for the default algorithm are valid before enabling it 
+;ensure that the settings for the default algorithm are valid before enabling it
 Func ValidateDefaultFields($rootFolderPath)
 	if ($rootFolderPath <> "" And FileExists($rootFolderPath)) Then
-		GUICtrlSetState($generateManifestButton, $GUI_ENABLE)			
+		GUICtrlSetState($generateManifestButton, $GUI_ENABLE)
 	Else
-		GUICtrlSetState($generateManifestButton, $GUI_DISABLE)	
+		GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
 	EndIf
 EndFunc
 
-;ensure that the settings for the Single Data Source and Folder of Logical Files algorithms are valid 
+;ensure that the settings for the Single Data Source and Folder of Logical Files algorithms are valid
 Func ValidateSingleDataSourceFields($dataSourcePath, $caseName)
 	if ($dataSourcePath <> "" And FileExists($dataSourcePath) And $caseName <> "") Then
 		GUICtrlSetState($generateManifestButton, $GUI_ENABLE)
-	Else		
-		GUICtrlSetState($generateManifestButton, $GUI_DISABLE)	
-	EndIf	
+	Else
+		GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
+	EndIf
 EndFunc
 
 ;clear all input fields, and reset them to an empty string
 Func ClearFields()
 	GUICtrlSetData($rootFolderField, "")
 	GUICtrlSetData($caseNameField, "")
+	GUICtrlSetData($passwordField, "")
 EndFunc
 
 ;Open a directory chooser
@@ -272,9 +290,11 @@ Func Browse()
 	Local $selectedDirectory = FileSelectFolder("Select Folder", $defaultDirectory)
 	Local $caseDir = ""
 	Local $caseDrive = ""
+	Local $fileName = ""
+	Local $fileExtension = ""
 	If (FileExists($selectedDirectory)) Then
-		_PathSplit($selectedDirectory, $caseDrive, $caseDir, "", "")
-		$defaultDirectory  = $caseDrive & $caseDir 
+		_PathSplit($selectedDirectory, $caseDrive, $caseDir, $fileName, $fileExtension)
+		$defaultDirectory  = $caseDrive & $caseDir
 		GUICtrlSetData($rootFolderField, $selectedDirectory)
 	EndIf
 	If  GUICtrlRead($algorithmComboBox) == $allAlgorithmNames[2] Then ;"One Data Source Per Folder"
@@ -290,13 +310,15 @@ EndFunc   ;==>BrowseButton
 ; Open a file chooser
 Func BrowseForDataSourceFile()
     ; Note: At this point @GUI_CtrlId would equal $browseButton
-	GUICtrlSetState($browseButton, $GUI_DISABLE)	
+	GUICtrlSetState($browseButton, $GUI_DISABLE)
 	Local $selectedDataSource = FileOpenDialog("Select Data Source", $defaultDirectory, "All Supported Types (*.img; *.dd; *.001; *.aa; *.raw; *.bin; *.E01; *.vmdk; *.vhd) |Raw Images (*.img; *.dd; *.001; *.aa; *.raw; *.bin) |Encase Images (*.E01) |Virtual Machines (*.vmdk; *.vhd) |Logical Evidence File (*.L01) |All Files (*.*)", $FD_FILEMUSTEXIST)
 	Local $caseDir = ""
 	Local $caseDrive = ""
+	Local $fileName = ""
+	Local $fileExtension = ""
 	If (FileExists($selectedDataSource)) Then
-		_PathSplit ($selectedDataSource, $caseDrive, $caseDir, "", "")
-		$defaultDirectory  = $caseDrive & $caseDir 
+		_PathSplit ($selectedDataSource, $caseDrive, $caseDir, $fileName, $fileExtension)
+		$defaultDirectory  = $caseDrive & $caseDir
 		GUICtrlSetData($rootFolderField, $selectedDataSource)
 	EndIf
 	GUICtrlSetState($caseNameField, $GUI_FOCUS)
@@ -313,11 +335,12 @@ EndFunc   ;==>GenerateManifestButton
 
 ;Get an array of settings as they are set on this panel
 Func GetSettings()
-	Local $settings[2]
+	Local $settings[3]
 	$settings[0] =  GUICtrlRead($rootFolderField)
 	$settings[1] = GUICtrlRead($caseNameField)
+	$settings[2] = GUICtrlRead($passwordField)
 	Return $settings
-EndFunc 
+EndFunc
 
 ;Close the tool
 Func CLOSEButton()
@@ -329,4 +352,4 @@ Func CLOSEButton()
 		Exit
     EndIf
 	GUICtrlSetState($exitButton, $GUI_ENABLE)
-EndFunc   ;==>CLOSEButton 
+EndFunc   ;==>CLOSEButton

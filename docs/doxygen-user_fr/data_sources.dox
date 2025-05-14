@@ -65,7 +65,7 @@ Autopsy prend en charge les images disque dans les formats suivants:
 - Raw Split (*.001, *.aa)
 - EnCase (*.e01)
 - Virtual Machine Disk (*.vmdk)
-- Virtual Hard Disk (*.vhd)
+- Virtual Hard Disk (*.vhd, *.vhdx)
 
 \image html data_source_disk_image.png
 
@@ -76,6 +76,7 @@ Pour ajouter une image disque:
 <li>Accédez au premier fichier de l'image disque. Vous devez spécifier uniquement le premier fichier et Autopsy trouvera le reste.  <li>Choisissez d'effectuer la recherche de fichiers orphelins sur les systèmes de fichiers FAT. Cela peut prendre beaucoup de temps, car il faudra qu'Autopsy examine chaque secteur de l'appareil. 
 <li>Choisissez le fuseau horaire d'où provient l'image disque. Ceci est le plus important lors de l'ajout de systèmes de fichiers FAT car ils ne stockent pas les informations de fuseau horaire et Autopsy ne saura pas comment se normaliser en UTC.
 <li>Choisissez éventuellement la taille du secteur. Le mode de détection automatique fonctionnera correctement sur la majorité des images, mais si l'ajout de la source de données échoue, vous souhaiterez peut-être essayer les autres tailles de secteur.
+<li>Choisissez éventuellement le mot de passe pour une image chiffrée Bitlocker. Une vérification sera effectuée si l'image nécessite un mot de passe qui devra être fourni.
 <li>Entrez éventuellement un ou plusieurs hachages pour l'image. Ceux-ci seront enregistrés dans les métadonnées de l'image et pourront être vérifiés à l'aide du module \ref data_source_integrity_page.
 </ol>
 

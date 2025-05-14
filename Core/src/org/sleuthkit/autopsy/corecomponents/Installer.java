@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -39,10 +40,12 @@ import javax.swing.plaf.FontUIResource;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineIngestManager;
+import org.sleuthkit.autopsy.centralrepository.eventlisteners.CRDefaultSetupAction;
+import org.sleuthkit.autopsy.centralrepository.eventlisteners.CentralRepositoryNotificationDialog;
 import org.sleuthkit.autopsy.commandlineingest.CommandLineOptionProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -80,15 +83,24 @@ public class Installer extends ModuleInstall {
         }
         
         
-        SwingUtilities.invokeLater(() -> {
-            setLookAndFeel();  
-        });
-        UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
-        UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
-        UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+        if (!GraphicsEnvironment.isHeadless()) {
+            SwingUtilities.invokeLater(() -> {
+                setLookAndFeel();
+            });
+
+            UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
+            UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
+            UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+        }
         
         final CommandLineOptionProcessor finalprocessor = processor;
         
+        /**
+         * Runs central repo default setup. Triggered here to track if this is
+         * first time setup in order to show CR notification dialog prior to any
+         * startup window.
+         */
+        final boolean crFirstTimeSetup = CRDefaultSetupAction.getInstance().setupDefaultCentralRepository();
         
         // When the --nogui flag is supplied invokeWhenUIReady happens a lot sooner
         // than it would when running wiht the gui. Makes sense. That means that 
@@ -100,20 +112,47 @@ public class Installer extends ModuleInstall {
         // Why not just listen to the command processor instead of using the invokeWhen? 
         // If there were no command line options supplied then the process method will never
         // be called. 
-        WindowManager.getDefault().invokeWhenUIReady(() -> {
-            if(WindowManager.getDefault().getMainWindow().isVisible() || finalprocessor == null || finalprocessor.getState() == CommandLineOptionProcessor.ProcessState.COMPLETED) {
-                StartupWindowProvider.getInstance().open();
+        if (GraphicsEnvironment.isHeadless()) {
+            if (finalprocessor.getState() == CommandLineOptionProcessor.ProcessState.COMPLETED) {
+                new CommandLineIngestManager().start();
             } else {
-                finalprocessor.addPropertyChangeListener(new PropertyChangeListener(){
+                finalprocessor.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
-                        if(evt.getPropertyName().equals(CommandLineOptionProcessor.PROCESSING_COMPLETED)) {
-                            StartupWindowProvider.getInstance().open();
+                        if (evt.getPropertyName().equals(CommandLineOptionProcessor.PROCESSING_COMPLETED)) {
+                            new CommandLineIngestManager().start();
                         }
-                    }       
+                    }
                 });
-            }
-        });
+            }   
+        } else {
+            WindowManager.getDefault().invokeWhenUIReady(() -> {
+                if(WindowManager.getDefault().getMainWindow().isVisible() || finalprocessor == null || finalprocessor.getState() == CommandLineOptionProcessor.ProcessState.COMPLETED) {
+                    showStartupWindows(crFirstTimeSetup);
+                } else {
+                    finalprocessor.addPropertyChangeListener(new PropertyChangeListener(){
+                        @Override
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            if(evt.getPropertyName().equals(CommandLineOptionProcessor.PROCESSING_COMPLETED)) {
+                                showStartupWindows(crFirstTimeSetup);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
+    
+    /**
+     * Show startup window(s) in sequence.
+     * @param crFirstTimeSetup If true, attempts to show the central repo notification dialog
+     */
+    private void showStartupWindows(boolean crFirstTimeSetup) {
+        if (crFirstTimeSetup && CentralRepositoryNotificationDialog.shouldDisplay()) {
+            CentralRepositoryNotificationDialog.display();
+        }
+        
+        StartupWindowProvider.getInstance().open();
     }
 
     @Override

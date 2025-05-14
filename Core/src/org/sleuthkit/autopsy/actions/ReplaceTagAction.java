@@ -226,7 +226,7 @@ abstract class ReplaceTagAction<T extends Tag> extends AbstractAction implements
      */
     private JMenuItem createMenutItem(TagName tagName, Set<String> tagNamesToDisable, Collection<? extends T> selectedTags) {
         String tagDisplayName = tagName.getDisplayName();
-        String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+        String notableString = tagName.getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
         JMenuItem tagNameItem = new JMenuItem(tagDisplayName + notableString);
 
         if (tagDisplayName.equals(TagsManager.getBookmarkTagDisplayName())) {

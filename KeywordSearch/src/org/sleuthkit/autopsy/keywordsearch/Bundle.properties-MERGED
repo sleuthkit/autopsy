@@ -306,6 +306,14 @@ KeywordSearchModuleFactory.getIngestJobSettingsPanel.exception.msg=Expected sett
 KeywordSearchModuleFactory.createFileIngestModule.exception.msg=Expected settings argument to be instanceof KeywordSearchJobSettings
 SearchRunner.Searcher.done.err.msg=Error performing keyword search
 Server.status.failed.msg=Local Solr server did not respond to status request. This may be because the server failed to start or is taking too long to initialize.
+# {0} - indexVersion
+Server_configureSolrConnection_illegalSolrVersion=The solr version in the case: {0}, is not supported.
+# {0} - solrVersion
+# {1} - caseName
+Server_configureSolrConnection_unsupportedSolrDesc=<html><body><p style="width: 400px">This case was made with an older version of Keyword Search that is no longer supported.  You can continue without upgrading, but some Keyword Search functionality will not be usable while the case is open, and you will encounter errors.  You can also choose to upgrade the Keyword Search version for the case.  If you choose to do this, you will need to run Keyword Search with Solr indexing selected in order to use features like ad hoc search with images in the case.</p></body></html>
+Server_configureSolrConnection_unsupportedSolrDisableOpt=Continue
+Server_configureSolrConnection_unsupportedSolrTitle=Unsupported Keyword Search in Case
+Server_configureSolrConnection_unsupportedSolrUpgradeOpt=Upgrade Solr Core
 SolrConnectionCheck.HostnameOrPort=Invalid hostname and/or port number.
 SolrConnectionCheck.Hostname=Invalid hostname.
 SolrConnectionCheck.MissingHostname=Missing hostname.

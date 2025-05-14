@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.ArrayUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.netbeans.api.sendopts.CommandException;
 import org.netbeans.spi.sendopts.Env;
@@ -52,6 +53,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option dataSourcePathOption = Option.requiredArgument('s', "dataSourcePath");
     private final Option dataSourceObjectIdOption = Option.requiredArgument('i', "dataSourceObjectId");
     private final Option addDataSourceCommandOption = Option.withoutArgument('a', "addDataSource");
+    private final Option bitlockerKeyCommandOption = Option.requiredArgument('k', "key");
     private final Option runIngestCommandOption = Option.optionalArgument('r', "runIngest");
     private final Option listAllDataSourcesCommandOption = Option.withoutArgument('l', "listAllDataSources");
     private final Option generateReportsOption = Option.optionalArgument('g', "generateReports");
@@ -81,20 +83,21 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
     @Override
     protected Set<Option> getOptions() {
-        Set<Option> set = new HashSet<>();
-        set.add(createCaseCommandOption);
-        set.add(caseNameOption);
-        set.add(caseTypeOption);
-        set.add(caseBaseDirOption);
-        set.add(dataSourcePathOption);
-        set.add(addDataSourceCommandOption);
-        set.add(dataSourceObjectIdOption);
-        set.add(runIngestCommandOption);
-        set.add(listAllDataSourcesCommandOption);
-        set.add(generateReportsOption);
-        set.add(listAllIngestProfileOption);
-        set.add(defaultArgument);
-        return set;
+        return Set.of(
+                createCaseCommandOption,
+                caseNameOption,
+                caseTypeOption,
+                caseBaseDirOption,
+                dataSourcePathOption,
+                addDataSourceCommandOption,
+                bitlockerKeyCommandOption,
+                dataSourceObjectIdOption,
+                runIngestCommandOption,
+                listAllDataSourcesCommandOption,
+                generateReportsOption,
+                listAllIngestProfileOption,
+                defaultArgument
+        );
     }
 
     @Override
@@ -203,6 +206,9 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 }
             }
 
+            String[] keysArgs = values.get(bitlockerKeyCommandOption);
+            String bitlockerKey = ArrayUtils.isNotEmpty(keysArgs) ? keysArgs[0] : null;
+            
             String dataSourceId = "";
             if (values.containsKey(dataSourceObjectIdOption)) {
 
@@ -247,6 +253,11 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 newCommand.addInputValue(CommandLineCommand.InputType.CASE_NAME.name(), inputCaseName);
                 newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
                 newCommand.addInputValue(CommandLineCommand.InputType.DATA_SOURCE_PATH.name(), dataSourcePath);
+                
+                if (bitlockerKey != null) {
+                    newCommand.addInputValue(CommandLineCommand.InputType.BITLOCKER_KEY.name(), bitlockerKey);
+                }
+                
                 commands.add(newCommand);
                 runFromCommandLine(true);
             }

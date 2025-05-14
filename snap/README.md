@@ -29,3 +29,7 @@ An error like "Local Solr Server did not respond to status request" or something
 ### There are no local disks for processing
 
 Autopsy looks at the block devices in the `/dev` directory for local disks to process.  If autopsy can't read block devices in that directory, it won't show the local disk.  You may need to set the connections for the Autopsy snap that aren't set manually.  See the [connections section](#setting-snap-connections) for more information.  You may also need to run autopsy with the right OS permissions.  In most instances, starting autopsy with a command like `sudo -g disk autopsy` should give autopsy the right permissions to view local disks.  This assumes that the `disk` group has read rights to local disks (i.e. `/dev/sda1`).  Appropriate permissions can be determined by running something like `ls -l /dev` looking for the permissions required for the local disks.  Then autopsy should be started in such a way that the `$USER` and `$HOME` are preserved (i.e. running as root may be problematic), but the user account and, consequently, autopsy, has sufficient permissions to access local disk block devices.
+
+### Out of space error when building snap
+
+It might be worth reinitializing lxd for building the image.  This can be done by running `sudo snap remove --purge lxd` removing lxd and cached data.  Run `sudo snap install lxd` and then `sudo snap lxd init` with defaults to reinitialize.

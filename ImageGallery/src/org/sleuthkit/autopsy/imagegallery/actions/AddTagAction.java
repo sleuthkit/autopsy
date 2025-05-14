@@ -68,7 +68,7 @@ public class AddTagAction extends Action {
         this.selectedFileIDs = selectedFileIDs;
         this.tagName = tagName;
         setGraphic(controller.getTagsManager().getGraphic(tagName));
-        String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+        String notableString = tagName.getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
         setText(tagName.getDisplayName() + notableString);
         setEventHandler(actionEvent -> addTagWithComment(""));
     }

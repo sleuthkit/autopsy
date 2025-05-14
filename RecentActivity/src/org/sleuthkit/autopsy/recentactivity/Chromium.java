@@ -320,6 +320,8 @@ class Chromium extends Extract {
                     jProfile = jElement.get("profile").getAsJsonObject(); //NON-NLS
                     jInfoCache = jProfile.get("info_cache").getAsJsonObject();
                 } else {
+                    userProfiles.put(browserLocation, "Default");
+                    browserLocations.put(browserLocation, browser);                    
                     continue;
                 }
             } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
@@ -854,60 +856,62 @@ class Chromium extends Extract {
             Set<String> bookmarkKeys = jRoot.keySet();
             for (String bookmarkKey : bookmarkKeys) {
                 JsonObject jBookmark = jRoot.get(bookmarkKey).getAsJsonObject(); //NON-NLS
-                JsonArray jBookmarkArray = jBookmark.getAsJsonArray("children"); //NON-NLS
-                for (JsonElement result : jBookmarkArray) {
-                    JsonObject address = result.getAsJsonObject();
-                    if (address == null) {
-                        continue;
-                    }
-                    JsonElement urlEl = address.get("url"); //NON-NLS
-                    String url;
-                    if (urlEl != null) {
-                        url = urlEl.getAsString();
-                    } else {
-                        url = "";
-                    }
-                    String name;
-                    JsonElement nameEl = address.get("name"); //NON-NLS
-                    if (nameEl != null) {
-                        name = nameEl.getAsString();
-                    } else {
-                        name = "";
-                    }
-                    Long date;
-                    JsonElement dateEl = address.get("date_added"); //NON-NLS
-                    if (dateEl != null) {
-                        date = dateEl.getAsLong();
-                    } else {
-                        date = Long.valueOf(0);
-                    }
-                    String domain = NetworkUtils.extractDomain(url);
-                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                    //TODO Revisit usage of deprecated constructor as per TSK-583
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                            RecentActivityExtracterModuleFactory.getModuleName(), url));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
-                            RecentActivityExtracterModuleFactory.getModuleName(), name));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                            RecentActivityExtracterModuleFactory.getModuleName(), (date / 1000000) - Long.valueOf("11644473600")));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                            RecentActivityExtracterModuleFactory.getModuleName(), browserName));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            RecentActivityExtracterModuleFactory.getModuleName(), domain));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                            RecentActivityExtracterModuleFactory.getModuleName(), userName));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
-                            RecentActivityExtracterModuleFactory.getModuleName(), bookmarkKey));
+                if (jBookmark.has("children")) {
+                    JsonArray jBookmarkArray = jBookmark.getAsJsonArray("children"); //NON-NLS
+                    for (JsonElement result : jBookmarkArray) {
+                        JsonObject address = result.getAsJsonObject();
+                        if (address == null) {
+                            continue;
+                        }
+                        JsonElement urlEl = address.get("url"); //NON-NLS
+                        String url;
+                        if (urlEl != null) {
+                            url = urlEl.getAsString();
+                        } else {
+                            url = "";
+                        }
+                        String name;
+                        JsonElement nameEl = address.get("name"); //NON-NLS
+                        if (nameEl != null) {
+                            name = nameEl.getAsString();
+                        } else {
+                            name = "";
+                        }
+                        Long date;
+                        JsonElement dateEl = address.get("date_added"); //NON-NLS
+                        if (dateEl != null) {
+                            date = dateEl.getAsLong();
+                        } else {
+                            date = Long.valueOf(0);
+                        }
+                        String domain = NetworkUtils.extractDomain(url);
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                        //TODO Revisit usage of deprecated constructor as per TSK-583
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                                RecentActivityExtracterModuleFactory.getModuleName(), url));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
+                                RecentActivityExtracterModuleFactory.getModuleName(), name));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                                RecentActivityExtracterModuleFactory.getModuleName(), (date / 1000000) - Long.valueOf("11644473600")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                                RecentActivityExtracterModuleFactory.getModuleName(), browserName));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                                RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                                RecentActivityExtracterModuleFactory.getModuleName(), userName));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COMMENT,
+                                RecentActivityExtracterModuleFactory.getModuleName(), bookmarkKey));
 
 
-                    try {
-                        bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes));
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, String.format("Failed to create bookmark artifact for file (%d)", bookmarkFile.getId()), ex);
-                    }
+                        try {
+                            bbartifacts.add(createArtifactWithAttributes(BlackboardArtifact.Type.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes));
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, String.format("Failed to create bookmark artifact for file (%d)", bookmarkFile.getId()), ex);
+                        }
 
+                    }
                 }
-            }
+             }
             
             if (!context.dataSourceIngestIsCancelled()) {
                 postArtifacts(bbartifacts);

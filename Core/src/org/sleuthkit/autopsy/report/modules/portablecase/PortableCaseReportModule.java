@@ -344,7 +344,7 @@ public class PortableCaseReportModule implements ReportModule {
         progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_copyingTags());
         try {
             for (TagName tagName : tagNames) {
-                TagName newTagName = portableSkCase.getTaggingManager().addOrUpdateTagName(tagName.getDisplayName(), tagName.getDescription(), tagName.getColor(), tagName.getKnownStatus());
+                TagName newTagName = portableSkCase.getTaggingManager().addOrUpdateTagName(tagName.getDisplayName(), tagName.getDescription(), tagName.getColor(), tagName.getTagType());
                 oldTagNameToNewTagName.put(tagName, newTagName);
             }
         } catch (TskCoreException ex) {

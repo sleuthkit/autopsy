@@ -59,6 +59,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
     private Host host;
     private ImageWriterSettings imageWriterSettings;
     private boolean ignoreFatOrphanFiles;
+    private String password;
 
     /**
      * Constructs a local drive data source processor that implements the
@@ -135,9 +136,14 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      */
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        run(null, progressMonitor, callback);
+        run(null, null, progressMonitor, callback);
     }
 
+    @Override
+    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        run(null, host, progressMonitor, callback);
+    }
+    
     /**
      * Adds a data source to the case database using a background task in a
      * separate thread and the settings provided by the selection and
@@ -154,7 +160,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      *                        to return results.
      */
     @Override
-    public void run(Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    public void run(String password, Host host, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         deviceId = UUID.randomUUID().toString();
         drivePath = configPanel.getContentPath();
         sectorSize = configPanel.getSectorSize();
@@ -167,12 +173,13 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         }
 
         this.host = host;
+        this.password = password;
 
         Image image;
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
                     new String[]{drivePath}, sectorSize,
-                    timeZone, null, null, null, deviceId, this.host);
+                    timeZone, null, null, null, deviceId, this.password, this.host);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -182,7 +189,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         }
 
         addDiskTask = new AddImageTask(
-                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings),
+                new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings, this.password),
                 progressMonitor,
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()),
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));
@@ -241,7 +248,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
                     new String[]{drivePath}, sectorSize,
-                    timeZone, null, null, null, deviceId);
+                    timeZone, null, null, null, deviceId, this.password, null);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error adding local disk with path " + drivePath + " to database", ex);
             final List<String> errors = new ArrayList<>();
@@ -250,7 +257,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
             return;
         }
 
-        addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings),
+        addDiskTask = new AddImageTask(new AddImageTask.ImageDetails(deviceId, image, sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, imageWriterSettings, this.password),
                 progressMonitor,
                 new StreamingAddDataSourceCallbacks(new DefaultIngestStream()),
                 new StreamingAddImageTaskCallback(new DefaultIngestStream(), callback));

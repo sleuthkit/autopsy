@@ -307,7 +307,7 @@ public class CentralRepoDbUtil {
     }
 
     /**
-     * Conver thte Type's DbTableName string to the *_instances table name.
+     * Convert the Type's DbTableName string to the *_instances table name.
      *
      * @param type Correlation Type
      *

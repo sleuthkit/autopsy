@@ -38,8 +38,8 @@ public class GeneralFilter extends FileFilter {
     @NbBundle.Messages("GeneralFilter.encaseImageDesc.text=Encase Images (*.e01)")
     public static final String ENCASE_IMAGE_DESC = Bundle.GeneralFilter_encaseImageDesc_text();
 
-    public static final List<String> VIRTUAL_MACHINE_EXTS = Arrays.asList(".vmdk", ".vhd"); //NON-NLS
-    @NbBundle.Messages("GeneralFilter.virtualMachineImageDesc.text=Virtual Machines (*.vmdk, *.vhd)")
+    public static final List<String> VIRTUAL_MACHINE_EXTS = Arrays.asList(".vmdk", ".vhd", ".vhdx"); //NON-NLS
+    @NbBundle.Messages("GeneralFilter.virtualMachineImageDesc.text=Virtual Machines (*.vmdk, *.vhd, *.vhdx)")
     public static final String VIRTUAL_MACHINE_DESC = Bundle.GeneralFilter_virtualMachineImageDesc_text();
 
     public static final List<String> EXECUTABLE_EXTS = Arrays.asList(".exe"); //NON-NLS

@@ -44,12 +44,12 @@
                 <package>org.junit.validator</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/byte-buddy-1.12.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/byte-buddy-1.12.18.jar</binary-origin>
+                <runtime-relative-path>ext/byte-buddy-1.15.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/byte-buddy-1.15.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/byte-buddy-agent-1.12.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/byte-buddy-agent-1.12.18.jar</binary-origin>
+                <runtime-relative-path>ext/byte-buddy-agent-1.15.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/byte-buddy-agent-1.15.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/hamcrest-core-1.3.jar</runtime-relative-path>
@@ -64,8 +64,8 @@
                 <binary-origin>release/modules/ext/mockito-core-4.8.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/objenesis-3.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/objenesis-3.3.jar</binary-origin>
+                <runtime-relative-path>ext/objenesis-3.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/objenesis-3.4.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

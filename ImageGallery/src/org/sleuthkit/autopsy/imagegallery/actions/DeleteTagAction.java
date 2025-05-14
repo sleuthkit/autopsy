@@ -66,7 +66,7 @@ public class DeleteTagAction extends Action {
         this.tagName = tagName;
         this.contentTag = contentTag;
         setGraphic(controller.getTagsManager().getGraphic(tagName));
-        String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+        String notableString = tagName.getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
         setText(tagName.getDisplayName() + notableString);
         setEventHandler(actionEvent -> deleteTag());
     }

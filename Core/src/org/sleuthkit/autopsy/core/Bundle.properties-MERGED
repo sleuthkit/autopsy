@@ -2,6 +2,10 @@ Installer.closing.confirmationDialog.message=Ingest is running, are you sure you
 Installer.closing.confirmationDialog.title=Ingest is Running
 # {0} - exception message
 Installer.closing.messageBox.caseCloseExceptionMessage=Error closing case: {0}
+# {0} - maxMemory
+Installer_checkMemoryAvailable_maxMemExpected_desc=Maximum JVM memory: {0}, is less than the 2 GB required.  Some aspects of the application may not work as expected.
+# {0} - physicalMemory
+Installer_checkMemoryAvailable_physicalRamExpected_desc=Physical memory: {0}, is less than the 8 GB required.  Some aspects of the application may not work as expected.
 OpenIDE-Module-Display-Category=Infrastructure
 OpenIDE-Module-Long-Description=\
     This is the core Autopsy module.\n\n\

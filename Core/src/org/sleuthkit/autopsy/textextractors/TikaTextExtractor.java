@@ -49,7 +49,6 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParsingReader;
 import org.apache.tika.parser.microsoft.OfficeParserConfig;
-import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.pdf.PDFParserConfig;
 import org.openide.util.NbBundle;
 import org.openide.modules.InstalledFileLocator;
@@ -75,7 +74,9 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Set;
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MimeTypes;
+import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.pdf.PDFParserConfig.OCR_STRATEGY;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.HybridTerminator;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
@@ -284,9 +285,10 @@ final class TikaTextExtractor implements TextExtractor {
             // during extraction
             TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
             String tesseractFolder = TESSERACT_PATH.getParent();
-            ocrConfig.setTesseractPath(tesseractFolder);
+            // coming from https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=109454096#TikaOCR-OverridingDefaultConfiguration
+            ocrConfig.getOtherTesseractConfig().put("tessdataPath", PlatformUtil.getOcrLanguagePacksPath());
+            ocrConfig.getOtherTesseractConfig().put("tesseractPath", tesseractFolder);
             ocrConfig.setLanguage(languagePacks);
-            ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
             parseContext.set(TesseractOCRConfig.class, ocrConfig);
 
             // Configure how Tika handles OCRing PDFs

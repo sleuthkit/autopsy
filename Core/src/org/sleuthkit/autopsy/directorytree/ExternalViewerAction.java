@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import java.awt.Desktop;
+import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;

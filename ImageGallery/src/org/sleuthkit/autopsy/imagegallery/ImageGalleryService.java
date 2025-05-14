@@ -65,11 +65,11 @@ public class ImageGalleryService implements AutopsyService {
 
     static {
         // NOTE: The colors here are what will be shown in the border
-        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT0, "", TagName.HTML_COLOR.GREEN, TskData.FileKnown.UNKNOWN));
-        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT1, "", TagName.HTML_COLOR.RED, TskData.FileKnown.BAD));
-        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT2, "", TagName.HTML_COLOR.YELLOW, TskData.FileKnown.BAD));
-        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT3, "", TagName.HTML_COLOR.FUCHSIA, TskData.FileKnown.BAD));
-        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT4, "", TagName.HTML_COLOR.BLUE, TskData.FileKnown.UNKNOWN));
+        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT0, "", TagName.HTML_COLOR.GREEN, TskData.TagType.SUSPICIOUS));
+        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT1, "", TagName.HTML_COLOR.RED, TskData.TagType.BAD));
+        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT2, "", TagName.HTML_COLOR.YELLOW, TskData.TagType.BAD));
+        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT3, "", TagName.HTML_COLOR.FUCHSIA, TskData.TagType.BAD));
+        PROJECT_VIC_US_CATEGORIES.add(new TagNameDefinition(PV_US_CAT4, "", TagName.HTML_COLOR.BLUE, TskData.TagType.SUSPICIOUS));
     }
 
     @Override
@@ -149,7 +149,7 @@ public class ImageGalleryService implements AutopsyService {
     private void addProjetVicTagSet(Case currentCase) throws TskCoreException {
         List<TagName> tagNames = new ArrayList<>();
         for (TagNameDefinition def : PROJECT_VIC_US_CATEGORIES) {
-            tagNames.add(currentCase.getSleuthkitCase().getTaggingManager().addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getKnownStatus()));
+            tagNames.add(currentCase.getSleuthkitCase().getTaggingManager().addOrUpdateTagName(def.getDisplayName(), def.getDescription(), def.getColor(), def.getTagType()));
         }
         currentCase.getServices().getTagsManager().addTagSet(PROJECT_VIC_TAG_SET_NAME, tagNames);
     }

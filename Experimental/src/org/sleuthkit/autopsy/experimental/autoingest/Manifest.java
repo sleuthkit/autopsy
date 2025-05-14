@@ -42,9 +42,14 @@ public final class Manifest implements Serializable {
     private final String caseName;
     private final String deviceId;
     private final String dataSourceFileName;
+    private final String password;
     private final Map<String, String> manifestProperties;
 
     public Manifest(Path manifestFilePath, Date dateFileCreated, String caseName, String deviceId, Path dataSourcePath, Map<String, String> manifestProperties) {
+        this(manifestFilePath, dateFileCreated, caseName, deviceId, dataSourcePath, null, manifestProperties);
+    }
+    
+    public Manifest(Path manifestFilePath, Date dateFileCreated, String caseName, String deviceId, Path dataSourcePath, String password, Map<String, String> manifestProperties) {
         this.filePathString = manifestFilePath.toString();
         this.filePath = Paths.get(filePathString);
 
@@ -60,6 +65,7 @@ public final class Manifest implements Serializable {
             this.dataSourcePath = Paths.get("");
             dataSourceFileName = "";
         }
+        this.password = password;
         this.manifestProperties = new HashMap<>(manifestProperties);
     }
     
@@ -89,6 +95,13 @@ public final class Manifest implements Serializable {
             this.dataSourcePath = Paths.get(dataSourcePathString);
         }
         return dataSourcePath;
+    }
+
+    /**
+     * @return The password to decrypt the data source (may be null).
+     */
+    public String getPassword() {
+        return password;
     }
 
     public String getDataSourceFileName() {

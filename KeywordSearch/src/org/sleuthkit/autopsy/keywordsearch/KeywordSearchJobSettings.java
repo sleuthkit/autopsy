@@ -29,7 +29,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 public final class KeywordSearchJobSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
-
+    private static final boolean DEFAULT_INDEX_TO_SOLR = true;
+    
     private final HashSet<String> namesOfEnabledKeywordLists;
     private HashSet<String> namesOfDisabledKeywordLists; // Added in version 1.1
 
@@ -42,7 +43,8 @@ public final class KeywordSearchJobSettings implements IngestModuleIngestJobSett
 
     private boolean ocrOnly;
     
-    private boolean indexToSolr;
+    // use object boolean so older settings missing this setting will deserialize to null.
+    private Boolean indexToSolr;
 
     /**
      * Constructs ingest job settings for the keywords search module.
@@ -202,7 +204,7 @@ public final class KeywordSearchJobSettings implements IngestModuleIngestJobSett
     }
     
     boolean isIndexToSolrEnabled() {
-        return indexToSolr;
+        return indexToSolr == null ? DEFAULT_INDEX_TO_SOLR : indexToSolr;
     }
     
     void setIndexToSolrEnabled(boolean enabled){

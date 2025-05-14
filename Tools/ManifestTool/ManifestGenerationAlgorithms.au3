@@ -25,7 +25,7 @@
 #include <GuiEdit.au3>
 #include <Date.au3>
 
-;Get the list of names of algorithms 
+;Get the list of names of algorithms
 Global $algorithms[3] ;increase size of array when adding new algorithms
 $algorithms[0] = "Single data source"
 $algorithms[1] = "Folder of logical files"
@@ -45,7 +45,7 @@ Global $manifestExtension = ".xml"
 ;Return an array containing the names of all algorithms
 Func GetAlgorithmNames()
 	Return $algorithms
-EndFunc   
+EndFunc
 
 ;Return the description for the specified algorithm index
 Func GetAlgorithmDescription($index)
@@ -82,29 +82,29 @@ Func GenerateCaseNameAndWriteManifestFile($caseDir, $subDirName, $manifestFile)
 	Local $dataSourcePath = ""
 	;If the manifestDirectory is not Null use it for the file name
 	if ($subDirName <> Null) Then
-		$manifestName = $subDirName 
-		$dataSourcePath = $manifestName 
+		$manifestName = $subDirName
+		$dataSourcePath = $manifestName
 		if ($manifestFile <> Null) Then
 			$dataSourcePath = $dataSourcePath & "\" & $manifestFile
 		EndIf
-	;If the manifestDirectory was Null then use the file name 
+	;If the manifestDirectory was Null then use the file name
 	ElseIf ($manifestFile <> Null) Then
 		$manifestName = $manifestFile
-		$dataSourcePath = $manifestName 
-	Else 
+		$dataSourcePath = $manifestName
+	Else
 		UpdateProgressArea("ERROR: Invalid arguements provided, unable to create manifest file")
 		Return
 	EndIf
-	
+
 	Local $splitCaseDir = StringSplit($caseDir, "\", $STR_ENTIRESPLIT)
 	$caseName = $splitCaseDir[$splitCaseDir[0]]
-	
+
 	Local $manfiestFilePath = $caseDir & "\" & $manifestName & "_" & $manifestFileNameEnd & $manifestExtension
-	WriteManifestFile($manfiestFilePath, $manifestName, $caseName, $dataSourcePath)
+	WriteManifestFile($manfiestFilePath, $manifestName, $caseName, "", $dataSourcePath)
 EndFunc
 
-;Write the specified manifest file.  
-Func WriteManifestFile($manifestFilePath, $manifestName, $caseName, $dataSourcePath)
+;Write the specified manifest file.
+Func WriteManifestFile($manifestFilePath, $manifestName, $caseName, $password, $dataSourcePath)
 	_FileCreate($manifestFilePath)
 	Local $fileHandle = FileOpen($manifestFilePath, $FO_APPEND)
 	If $fileHandle == -1 Then
@@ -114,41 +114,49 @@ Func WriteManifestFile($manifestFilePath, $manifestName, $caseName, $dataSourceP
 	FileWrite($fileHandle,'<?xml version="1.0" encoding="UTF-8" standalone="no"?>' & @CRLF)
 	FileWrite($fileHandle,'<AutopsyManifest>' & @CRLF)
 	FileWrite($fileHandle,'<CaseName>' & $caseName &'</CaseName>' & @CRLF)
-	;Device ID is not a required field 
+	if Not($password == "") or Not(StringLen($password) == 0) Then
+		FileWrite($fileHandle,'<Password>' & $password &'</Password>' & @CRLF)
+	EndIf
+	;Device ID is not a required field
 	FileWrite($fileHandle,'<DataSource>' & $dataSourcePath & '</DataSource>' & @CRLF)
 	FileWrite($fileHandle,'</AutopsyManifest>' & @CRLF)
 	FileClose($fileHandle)
 	UpdateProgressArea($manifestName & " manifest created")
 EndFunc
 
-;get the extension of a file 
+;get the extension of a file
 Func GetFileExtension($fileName)
+	Local $drive
+	Local $dir
+	Local $fName
 	Local $fileExtension
-	_PathSplit ($fileName, "", "", "", $fileExtension)
+	local $pathSplit = _PathSplit ($fileName, $drive, $dir, $fName, $fileExtension)
 	Return $fileExtension
 EndFunc
 
 ;Return 0 for false if no manifest files exist in the caseDir, or 1 for true if manifest files do exist
 Func ManifestFilesAlreadyExist($fileList)
-	Local $fileName 
+	Local $fileName
 	Local $fileExtension
+	Local $drive
+	Local $dir
 	For $i = 1 To $fileList[0] Step 1
-		_PathSplit ($fileList[$i], "", "", $fileName, $fileExtension)
+		_PathSplit ($fileList[$i], $drive, $dir, $fileName, $fileExtension)
 		If StringCompare($fileExtension, $manifestExtension, $STR_NOCASESENSE) == 0 Then
 			Local $splitFileName = StringSplit($fileName, "_", $STR_ENTIRESPLIT)
-			if $splitFileName[0] > 1 Then ;It split into more than one chunk so the last chunk should match our _Manifest 
+			if $splitFileName[0] > 1 Then ;It split into more than one chunk so the last chunk should match our _Manifest
 				If StringCompare($splitFileName[$splitFileName[0]], $manifestFileNameEnd, $STR_NOCASESENSE) == 0 Then
 					UpdateProgressArea("Folder already contains manifest file: " & $fileList[$i])
 					Return 1
 				EndIf
 			EndIf
-		EndIf		
+		EndIf
 	Next
 	Return 0
 EndFunc
 
 ;Check if a manifest file already exists for a specific datasource in the case Dir
-;Return 1 if a manifest exists 
+;Return 1 if a manifest exists
 ;Return 0 if no manifest exists
 Func ManifestAlreadyExists($manifestFilePath)
 	If FileExists($manifestFilePath) == 1 Then
@@ -159,7 +167,7 @@ Func ManifestAlreadyExists($manifestFilePath)
 EndFunc
 
 
-;Algorithm for the "One Data Source Per Folder" 
+;Algorithm for the "One Data Source Per Folder"
 ;Creates manifest files
 Func OneDataSourcePerFolder($settings)
 	Local $validDirectory = 1
@@ -171,9 +179,9 @@ Func OneDataSourcePerFolder($settings)
 	if ($caseDirSplit[0] > 1) Then
 		;if case folder is longer than one directory display just the directory name in progress messages
 		$caseDirName = $caseDirSplit[$caseDirSplit[0]]
-	Else 
+	Else
 		;if there is only one directory use the entire case dir path
-	EndIf	
+	EndIf
 	If (@error == 1)	Then
 		$validDirectory = 0
 		UpdateProgressArea("ERROR: " & $caseDirName & " not found")
@@ -188,7 +196,7 @@ Func OneDataSourcePerFolder($settings)
 		MsgBox($MB_OK, "Selected Directory Empty", "Selected directory " & $caseDirName & " did not contain any subfolders to use as data sources for manifest files.")
 		$validDirectory = 0
 	EndIf
-	
+
  	If $validDirectory = 1 Then
 		Local $validExtensions[4] = [".e01", ".l01", ".001", ".ad1"]  ;valid extensions for the One Data Source Per Folder algorithm
 		Local $subDirectoryFileList
@@ -222,7 +230,7 @@ Func OneDataSourcePerFolder($settings)
 				If (ManifestAlreadyExists($manifestFilePath) <> 1) Then
 					;should only be one file and it should end with a valid extension add as image file, or the whole directory is added as a logical file set
 					GenerateCaseNameAndWriteManifestFile($caseDir, $manifestDirName, $manifestFile)
-				Else 
+				Else
 					UpdateProgressArea($manifestDirName & " manifest exists, skipping")
 				EndIf
 			EndIf
@@ -233,22 +241,23 @@ EndFunc
 
 ;Create a manifest file for a single data source in the same directory that contains the data source (also used for Folder of Logical Files)
 Func SingleDataSource($settings)
-	Local $dataSourcePath = $settings[0] 
+	Local $dataSourcePath = $settings[0]
 	Local $caseDir = ""
 	Local $caseDrive = ""
 	Local $dsName = ""
 	Local $dsExtension = ""
 	_PathSplit ($dataSourcePath, $caseDrive, $caseDir, $dsName, $dsExtension)
-	$caseDir = $caseDrive & $caseDir 
+	$caseDir = $caseDrive & $caseDir
 	Local $caseName = $settings[1]
+	Local $password = $settings[2]
 	Local $manfiestFilePath = $caseDir & "\" & $dsName & "_" & $manifestFileNameEnd & $manifestExtension
 	If (ManifestAlreadyExists($manfiestFilePath) <> 1) Then
 		;should only be one file and it should end with a valid extension add as image file, or the whole directory is added as a logical file set
-		WriteManifestFile($manfiestFilePath, $dsName, $caseName, $dsName & $dsExtension)
-	Else 
+		WriteManifestFile($manfiestFilePath, $dsName, $caseName, $password, $dsName & $dsExtension)
+	Else
 		UpdateProgressArea($dsName & " manifest exists, skipping")
 	EndIf
-	
+
 EndFunc
 
 ;Algorithm for the All Files in One Folder
@@ -270,7 +279,7 @@ Func AllFilesInOneFolder($settings)
 			$validDirectory = 0
 		EndIf
 		;An acceptable condition as no files means no manifest files
-	ElseIf ManifestFilesAlreadyExist($fileList) == 1 Then  
+	ElseIf ManifestFilesAlreadyExist($fileList) == 1 Then
 		UpdateProgressArea("Selected directory " & $caseDir & " already contains manifest files, they must be deleted before generating new ones")
 		MsgBox($MB_OK, "Manifest Files Exist", "Selected directory " & $caseDir & " already contains manifest files, they must be deleted before generating new ones")
 		$validDirectory = 0

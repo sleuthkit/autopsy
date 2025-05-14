@@ -62,7 +62,7 @@ final class TagNameDialog extends javax.swing.JDialog {
         initComponents();
         tagNameTextField.setText(tagNameToEdit.getDisplayName());
         descriptionTextArea.setText(tagNameToEdit.getDescription());
-        notableCheckbox.setSelected(tagNameToEdit.getKnownStatus() == TskData.FileKnown.BAD);
+        notableCheckbox.setSelected(tagNameToEdit.getTagType() == TskData.TagType.BAD);
         tagNameTextField.setEnabled(false);
         this.display();
     }

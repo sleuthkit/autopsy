@@ -167,8 +167,8 @@ public final class OtherOccurrences {
         if (newNode.getKnown() != TskData.FileKnown.BAD) {
             List<ContentTag> fileMatchTags = autopsyCase.getServices().getTagsManager().getContentTagsByContent(newFile);
             for (ContentTag tag : fileMatchTags) {
-                TskData.FileKnown tagKnownStatus = tag.getName().getKnownStatus();
-                if (tagKnownStatus.equals(TskData.FileKnown.BAD)) {
+                TskData.TagType tagType = tag.getName().getTagType();
+                if (tagType.equals(TskData.TagType.BAD)) {
                     newNode.updateKnown(TskData.FileKnown.BAD);
                     break;
                 }

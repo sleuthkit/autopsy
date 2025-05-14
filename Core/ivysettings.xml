@@ -1,4 +1,10 @@
 <ivysettings>
+  <property name="httpcomponents.version" value="4.5.14"/>
+  <property name="curator.version" value="5.7.1"/>
+  <property name="batik.version" value="1.18"/>
+  <property name="bouncycastle.version" value="1.79"/>
+  <property name="netty.version" value="4.1.116.Final"/>
+
   <settings defaultResolver="main"/>
   <resolvers>
     <chain name="main">

@@ -482,10 +482,11 @@ public final class CaseEventListener implements PropertyChangeListener {
                 for (BlackboardArtifactTag bbTag : artifactTags) {
                     //start with assumption that none of the other tags applied to this Correlation Attribute will prevent it's status from being changed
                     boolean hasTagWithConflictingKnownStatus = false;
-                    // if the status of the tag has been changed to TskData.FileKnown.UNKNOWN
+                    // if the status of the tag has been changed to TskData.TagType.UNKNOWN or TskData.TagType.SUSPICIOUS
                     // we need to check the status of all other tags on this correlation attribute before changing
                     // the status of the correlation attribute in the central repository
-                    if (tagName.getKnownStatus() == TskData.FileKnown.UNKNOWN) {
+                    if (tagName.getTagType() == TskData.TagType.UNKNOWN
+                            || tagName.getTagType() == TskData.TagType.SUSPICIOUS) {
                         Content content = bbTag.getContent();
                         // If the content which this Blackboard Artifact Tag is linked to is an AbstractFile with KNOWN status then 
                         // it's status in the central reporsitory should not be changed to UNKNOWN
@@ -503,7 +504,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                                 continue;
                             }
                             //if any other tags on this artifact are Notable in status then this artifact can not have its status changed 
-                            if (TskData.FileKnown.BAD == t.getName().getKnownStatus()) {
+                            if (TskData.TagType.BAD == t.getName().getTagType()) {
                                 //a tag with a conflicting status has been found, the status of this correlation attribute can not be modified
                                 hasTagWithConflictingKnownStatus = true;
                                 break;
@@ -522,10 +523,11 @@ public final class CaseEventListener implements PropertyChangeListener {
                 for (ContentTag contentTag : fileTags) {
                     //start with assumption that none of the other tags applied to this ContentTag will prevent it's status from being changed
                     boolean hasTagWithConflictingKnownStatus = false;
-                    // if the status of the tag has been changed to TskData.FileKnown.UNKNOWN
+                    // if the status of the tag has been changed to TskData.TagType.UNKNOWN or TskData.TagType.SUSPICIOUS
                     // we need to check the status of all other tags on this file before changing
                     // the status of the file in the central repository
-                    if (tagName.getKnownStatus() == TskData.FileKnown.UNKNOWN) {
+                    if (tagName.getTagType() == TskData.TagType.UNKNOWN
+                            || tagName.getTagType() == TskData.TagType.SUSPICIOUS) {
                         Content content = contentTag.getContent();
                         TagsManager tagsManager = Case.getCurrentCaseThrows().getServices().getTagsManager();
                         List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
@@ -536,7 +538,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                                 continue;
                             }
                             //if any other tags on this file are Notable in status then this file can not have its status changed 
-                            if (TskData.FileKnown.BAD == t.getName().getKnownStatus()) {
+                            if (TskData.TagType.BAD == t.getName().getTagType()) {
                                 //a tag with a conflicting status has been found, the status of this file can not be modified
                                 hasTagWithConflictingKnownStatus = true;
                                 break;
@@ -556,7 +558,7 @@ public final class CaseEventListener implements PropertyChangeListener {
                     }
                 }
             } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Cannot update known status in central repository for tag: " + modifiedTagName, ex);  //NON-NLS
+                LOGGER.log(Level.SEVERE, "Cannot update tag type in central repository for tag: " + modifiedTagName, ex);  //NON-NLS
             } catch (CentralRepoException ex) {
                 LOGGER.log(Level.SEVERE, "Cannot get central repository for tag: " + modifiedTagName, ex);  //NON-NLS
             } catch (NoCurrentCaseException ex) {

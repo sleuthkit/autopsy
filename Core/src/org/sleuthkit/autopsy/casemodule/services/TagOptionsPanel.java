@@ -314,7 +314,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         TagNameDialog dialog = new TagNameDialog();
         TagNameDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == TagNameDialog.BUTTON_PRESSED.OK) {
-            TskData.FileKnown status = dialog.isTagNotable() ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
+            TskData.TagType status = dialog.isTagNotable() ? TskData.TagType.BAD : TskData.TagType.SUSPICIOUS;
             TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), dialog.getTagDesciption(), DEFAULT_COLOR, status);
             /*
              * If tag name already exists, don't add the tag name.
@@ -348,7 +348,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         TagNameDialog dialog = new TagNameDialog(originalTagName);
         TagNameDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == TagNameDialog.BUTTON_PRESSED.OK) {
-            TskData.FileKnown status = dialog.isTagNotable() ? TskData.FileKnown.BAD : TskData.FileKnown.UNKNOWN;
+            TskData.TagType status = dialog.isTagNotable() ? TskData.TagType.BAD : TskData.TagType.SUSPICIOUS;
             TagNameDefinition newTagType = new TagNameDefinition(dialog.getTagName(), dialog.getTagDesciption(), DEFAULT_COLOR, status);
             /*
              * If tag name already exists, don't add the tag name.
@@ -359,7 +359,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
             tagNamesList.setSelectedValue(newTagType, true);
             updatePanel();
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            if (originalTagName.getKnownStatus() != newTagType.getKnownStatus() && Case.isCaseOpen()) {
+            if (originalTagName.getTagType() != newTagType.getTagType() && Case.isCaseOpen()) {
                 updatedStatusTags.add(newTagType.getDisplayName());
             }
         }
@@ -449,7 +449,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         deleteTagNameButton.setEnabled(enableEdit);
         if (isSelected) {
             descriptionTextArea.setText(tagNamesList.getSelectedValue().getDescription());
-            if (tagNamesList.getSelectedValue().getKnownStatus() == TskData.FileKnown.BAD) {
+            if (tagNamesList.getSelectedValue().getTagType() == TskData.TagType.BAD) {
                 notableYesOrNoLabel.setText("Yes");
             } else {
                 notableYesOrNoLabel.setText("No");

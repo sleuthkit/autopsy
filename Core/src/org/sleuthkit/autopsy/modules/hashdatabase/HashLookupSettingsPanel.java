@@ -64,7 +64,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepository;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
-    private static final String NSRL_URL = "https://sourceforge.net/projects/autopsy/files/NSRL/";
+    private static final String NSRL_URL = "https://github.com/SleuthKitLabs/NSRL/releases";
     private static final String NSRL_NAME_STRING = "nsrl";
     private static final String NO_SELECTION_TEXT = NbBundle
             .getMessage(HashLookupSettingsPanel.class, "HashDbConfigPanel.noSelectionText");

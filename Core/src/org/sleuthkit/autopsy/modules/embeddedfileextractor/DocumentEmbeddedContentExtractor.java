@@ -50,6 +50,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.parser.AutoDetectParser;
@@ -728,7 +729,7 @@ class DocumentEmbeddedContentExtractor {
             }
 
             // try to get the name of the embedded file from the metadata
-            String name = metadata.get(Metadata.RESOURCE_NAME_KEY);
+            String name = metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY);
 
             // TODO: This can be removed after we upgrade to Tika 1.16 or
             // above. The 1.16 version of Tika keeps track of files that 

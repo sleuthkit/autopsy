@@ -107,7 +107,7 @@ class AddImageTask implements Runnable {
         try {
             synchronized (tskAddImageProcessLock) {
                 if (!tskAddImageProcessStopped) {
-                    tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(imageDetails.timeZone, true, imageDetails.ignoreFatOrphanFiles, imageWriterPath);
+                    tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(imageDetails.timeZone, true, imageDetails.ignoreFatOrphanFiles, imageWriterPath, imageDetails.password);
                 } else {
                     return;
                 }
@@ -319,8 +319,9 @@ class AddImageTask implements Runnable {
         String sha1; 
         String sha256;
         ImageWriterSettings imageWriterSettings;
+        String password;
         
-        ImageDetails(String deviceId, Image image, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings) {
+        ImageDetails(String deviceId, Image image, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, ImageWriterSettings imageWriterSettings, String password) {
             this.deviceId = deviceId;
             this.image = image;
             this.sectorSize = sectorSize;
@@ -330,6 +331,7 @@ class AddImageTask implements Runnable {
             this.sha1 = sha1; 
             this.sha256 = sha256; 
             this.imageWriterSettings = imageWriterSettings;
+            this.password = password;
         }
 	
         String getImagePath() {

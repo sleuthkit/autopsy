@@ -239,7 +239,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
          */
         private JMenuItem createMenutItem(TagName tagName) {
             String tagDisplayName = tagName.getDisplayName();
-            String notableString = tagName.getKnownStatus() == TskData.FileKnown.BAD ? TagsManager.getNotableTagLabel() : "";
+            String notableString = tagName.getTagType() == TskData.TagType.BAD ? TagsManager.getNotableTagLabel() : "";
             JMenuItem tagNameItem = new JMenuItem(tagDisplayName + notableString);
 
             if (tagDisplayName.equals(TagsManager.getBookmarkTagDisplayName())) {

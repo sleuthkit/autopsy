@@ -34,7 +34,7 @@ if [[ -z "${SLEUTHKIT_SRC_DIR}" ]]; then
     exit 1
 fi
 
-if [[ ! -d $SLEUTHKIT_SRC_DIR ]]; then
+if [[ ! -d $SLEUTHKIT_SRC_DIR/.git ]]; then
     TSK_REPO_PATH=$(dirname "$SLEUTHKIT_SRC_DIR")
     echo "Cloning Sleuthkit to $TSK_REPO_PATH..."
     mkdir -p $TSK_REPO_PATH &&
@@ -63,7 +63,7 @@ fi
 echo "Installing Sleuthkit..."
 pushd $SLEUTHKIT_SRC_DIR &&
     ./bootstrap &&
-    ./configure &&
+    ./configure --enable-java &&
     make &&
     sudo make install &&
     popd

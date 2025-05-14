@@ -30,13 +30,20 @@ public class AutoIngestDataSource {
 
     private final String deviceId;
     private final Path path;
+    private final String password;
     private DataSourceProcessorResult resultCode;
     private List<String> errorMessages;
     private List<Content> content;
+    
 
-    public AutoIngestDataSource(String deviceId, Path path) {
+    public AutoIngestDataSource(String deviceId, Path path, String password) {
         this.deviceId = deviceId;
         this.path = path;
+        this.password = password;
+    }
+    
+    public AutoIngestDataSource(String deviceId, Path path) {
+        this(deviceId, path, null);
     }
 
     public String getDeviceId() {
@@ -45,6 +52,13 @@ public class AutoIngestDataSource {
 
     public Path getPath() {
         return this.path;
+    }
+
+    /**
+     * @return The password to decrypt the data source.
+     */
+    public String getPassword() {
+        return password;
     }
 
     public synchronized void setDataSourceProcessorOutput(DataSourceProcessorResult result, List<String> errorMessages, List<Content> content) {
