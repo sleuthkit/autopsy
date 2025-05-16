@@ -180,7 +180,7 @@ class ExtractRegistry extends Extract {
     final private static String RIP_PL_INCLUDE_FLAG = "-I";
     final private static int MS_IN_SEC = 1000;
     final private static String NEVER_DATE = "Never";
-    final private static String SECTION_DIVIDER = "-------------------------";
+    final private static String SECTION_DIVIDER = "----------------------------------------";
     final private static Logger logger = Logger.getLogger(ExtractRegistry.class.getName());
     private final List<String> rrCmd = new ArrayList<>();
     private final List<String> rrFullCmd = new ArrayList<>();
