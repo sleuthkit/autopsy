@@ -2,6 +2,7 @@
 # silentprocessexit_tln
 #
 # Change history:
+#  20201005 - MITRE update
 #  20180601 - created
 # 
 # Ref:
@@ -14,12 +15,13 @@ package silentprocessexit_tln;
 use strict;
 
 my %config = (hive          => "Software",
-							category      => "autostart",
+			  category      => "persistence",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20180601);
+              MITRE         => "T1546",
+			  output		=> "tln",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {

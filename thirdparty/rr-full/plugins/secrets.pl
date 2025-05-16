@@ -4,6 +4,9 @@
 # 
 #
 # History
+#   20201005 - category update
+#   20200831 - MITRE updates
+#   20200517 - updated date output format
 #   20140730 - created
 #
 # Note: When gsecdump.exe is run with the "-a" switch, or the LSA
@@ -13,7 +16,9 @@
 #       correlate to the time that gsecdump.exe was run.  Insight for this
 #       plugin was provided by Jamie Levy
 #
-# copyright 2014 Quantum Analytics Research, LLC
+#  https://attack.mitre.org/techniques/T1555/
+#
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package secrets;
@@ -23,8 +28,10 @@ my %config = (hive          => "Security",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20140730);
+              MITRE         => "T1555",
+              category      => "credential access",
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -50,7 +57,7 @@ sub pluginmain {
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 
 	}

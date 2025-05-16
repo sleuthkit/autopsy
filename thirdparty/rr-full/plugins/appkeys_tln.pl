@@ -2,6 +2,7 @@
 # appkeys_tln.pl
 #
 # Change history
+#   20200813 - MITRE updates
 #   20180920 - created
 #
 # References
@@ -19,9 +20,11 @@ my %config = (hive          => "NTUSER\.DAT, Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
+              MITRE         => "",
               category      => "persistence",
-              version       => 20180920);
+			  output        => "tln",
+              version       => 20200813);
+
 my $VERSION = getVersion();
 
 sub getConfig {return %config}

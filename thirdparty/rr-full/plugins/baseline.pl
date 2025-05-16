@@ -3,24 +3,27 @@
 # baseline.pl
 #
 # History
+#    20200904 - MITRE updates
 #    20130211 - Created
 # 
-# copyright 2013 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package baseline;
 use strict;
 
-my %config = (hive          => "All",
+my %config = (hive          => "all",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20130211);
+              MITRE         => "",
+			  output 		=> "report",
+              category      => "config",
+              version       => 20200904);
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Scans a hive file, checking sizes of binary value data";	
+	return "Baseline scan of hive file, checking sizes of binary value data";	
 }
 sub getDescr{}
 sub getRefs {}

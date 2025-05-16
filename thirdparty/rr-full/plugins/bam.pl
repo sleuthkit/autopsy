@@ -2,6 +2,8 @@
 # bam.pl
 #
 # History:
+#  20200904 - MITRE updates
+#  20200427 - updated output date format
 #  20180225 - created
 #
 # References:
@@ -10,21 +12,22 @@
 #  http://batcmd.com/windows/10/services/bam/
 # 
 # 
-# copyright 2018 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package bam;
 use strict;
 
 my %config = (hive          => "System",
-							hivemask      => 4,
-							output        => "report",
-							category      => "Program Execution",
+			  hivemask      => 4,
+			  output        => "report",
+			  category      => "execution",
+			  MITRE         => "T1059",
+			  output        => "report",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 31,  #XP - Win7
-              version       => 20180225);
+              version       => 20200904);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -43,8 +46,10 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching bam v.".$VERSION);
-	::rptMsg("bam v.".$VERSION); # banner
-  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+	::rptMsg("bam v.".$VERSION); 
+	::rptMsg("(".$config{hive}.") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -56,7 +61,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		$current = $key->get_value("Current")->get_data();
 		$ccs = "ControlSet00".$current;
-		my $bam_path = $ccs."\\Services\\bam\\UserSettings";
+		my $bam_path = $ccs."\\Services\\bam\\State\\UserSettings";
 		my $bam;
 		if ($bam = $root_key->get_subkey($bam_path)) {
 			my @sk = $bam->get_list_of_subkeys();
@@ -94,7 +99,7 @@ sub processKey {
 			if ($v->get_type() == 3) {
 				my ($t0,$t1) = unpack("VV",substr($v->get_data(),0,8));
 				$t = ::getTime($t0,$t1);
-				::rptMsg("  ".gmtime($t)." - ".$name);
+				::rptMsg("  ".::format8601Date($t)."Z"." - ".$name);
 			}
 				
 		}

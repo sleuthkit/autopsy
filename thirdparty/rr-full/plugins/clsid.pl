@@ -1,9 +1,11 @@
 #-----------------------------------------------------------
 # clsid.pl
-# Plugin to extract file association data from the Software hive file
+# Plugin to extract CLSID data from the Software hive file
 # Can take considerable time to run; recommend running it via rip.exe
 #
 # History
+#   20200904 - MITRE updates
+#   20200526 - updated date output format, added support for USRCLASS.DAT
 #   20180823 - minor code fix
 #   20180819 - updated to incorporate check for "TreatAs" value; code rewrite
 #   20180319 - fixed minor code issue
@@ -12,21 +14,25 @@
 #   20100227 - created
 #
 # References
+#   https://pentestlab.blog/2020/05/20/persistence-com-hijacking/
 #   http://msdn.microsoft.com/en-us/library/ms724475%28VS.85%29.aspx
 #   https://docs.microsoft.com/en-us/windows/desktop/com/treatas
-#
-# #copyright 2010, Quantum Analytics Research, LLC
-# copyright 2018, Quantum Analytics Research, LLC
+#   https://attack.mitre.org/techniques/T1546/015/
+# 
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package clsid;
 use strict;
 
-my %config = (hive          => "Software",
-              osmask        => 22,
+my %config = (hive          => "Software, USRCLASS\.DAT",
+              MITRE         => "T1546\.015",
+              category      => "persistence",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20180823);
+			  output 		=> "report",
+              version       => 20200904);
 
 sub getConfig{return %config}
 
@@ -45,43 +51,58 @@ sub pluginmain {
 	my $hive = shift;
 	my %clsid;
 	::logMsg("Launching clsid v.".$VERSION);
-	::rptMsg("clsid v.".$VERSION); # banner
-  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
+	::rptMsg("clsid v.".$VERSION);
+	::rptMsg("(".$config{hive}.") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
+#---------------------------------------------------------------  
+# First, determine the hive
+	my %guess = ();
+	my $hive_guess = "";
+	my %guess = ::guessHive($hive);
+	foreach my $g (keys %guess) {
+		$hive_guess = $g if ($guess{$g} == 1);
+	}  
+# Set paths
+ 	my @paths = ();
+ 	if ($hive_guess eq "software") {
+ 		@paths = ("Classes\\CLSID","Classes\\Wow6432Node\\CLSID");
+ 	}
+ 	elsif ($hive_guess eq "usrclass") {
+ 		@paths = ("CLSID");
+ 	}
+ 	else {}
+ 	
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
-#	my $key_path = "Classes\\CLSID";
-  my @paths = ("Classes\\CLSID","Classes\\Wow6432Node\\CLSID");
   foreach my $key_path (@paths) {
 		my $key;
 		if ($key = $root_key->get_subkey($key_path)) {
 			::rptMsg($key_path);
 #		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
 			::rptMsg("");
-# First step will be to get a list of all of the file extensions
-			my %ext;
+
 			my @sk = $key->get_list_of_subkeys();
 			if (scalar(@sk) > 0) {
 				foreach my $s (@sk) {
 				
 					my $name = $s->get_name();
-					my $n;
-					eval {
-						$n = $s->get_value("")->get_data();
-						$name .= "  ".$n unless ($n eq "");
-					};
-					
-					::rptMsg($name);
-					::rptMsg("  LastWrite: ".gmtime($s->get_timestamp())." Z");
+					::rptMsg(sprintf "%-20s %-30s",::format8601Date($s->get_timestamp())."Z",$name);
 					
 			  	eval {
 			  		my $proc = $s->get_subkey("InprocServer32")->get_value("")->get_data();
-						::rptMsg("  InprocServer32: ".$proc);
+						::rptMsg(sprintf "%-20s  ".$name."\\InprocServer32: ".$proc, ::format8601Date($s->get_subkey("InprocServer32")->get_timestamp())."Z");
 			  	};
-				
+			  						
+					eval {
+			  		my $prog = $s->get_subkey("ProgID")->get_value("")->get_data();
+						::rptMsg(sprintf "%-20s  ".$name."\\ProgID: ".$prog, ::format8601Date($s->get_subkey("ProgID")->get_timestamp())."Z");
+			  	};
+					
 					eval {
 			  		my $treat = $s->get_subkey("TreatAs")->get_value("")->get_data();
-						::rptMsg("  TreatAs: ".$treat);
+						::rptMsg(sprintf "%-20s  ".$name."\\TreatAs: ".$treat, ::format8601Date($s->get_subkey("TreatAs")->get_timestamp())."Z");
 			  	};
 			  	::rptMsg("");
 				}

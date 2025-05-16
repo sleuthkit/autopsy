@@ -3,24 +3,27 @@
 # 
 #
 # Change history
+#  20200916 - MITRE updates
+#  20200525 - updated date output format
 #  20140203 - created
 #
 # References
 #
 # 
-# copyright 2014 QAR, LLC
+# copyright 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package winscp;
 use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
-              category      => "program execution",
+              category      => "lateral movement",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20140203);
+              MITRE         => "T1021",
+			  output		=> "report",
+              version       => 20200916);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -46,7 +49,7 @@ sub pluginmain {
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 # CDCache
 		eval {

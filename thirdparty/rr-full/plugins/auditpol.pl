@@ -4,6 +4,8 @@
 # *Works for Win7 and Win10 at the moment
 #
 # History
+#   20200813 - MITRE updates
+#   20200515 - updated date output format
 #   20190510 - updated; Win2016
 #   20151202 - created
 #
@@ -14,7 +16,7 @@
 #
 # Equiv: auditpol /get /category:*
 #
-# copyright 2015 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package auditpol;
@@ -24,8 +26,10 @@ my %config = (hive          => "Security",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20190510);
+              MITRE         => "",
+              category      => "config",
+			  output        => "report",
+              version       => 20200813);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -57,7 +61,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("auditpol");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		
 		my $data;

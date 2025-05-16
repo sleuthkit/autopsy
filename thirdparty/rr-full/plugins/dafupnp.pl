@@ -6,11 +6,15 @@
 # 	(UPnP) data.  DAFUPnP is used to stream media across a network.
 #
 # History:
+#   20200904 - MITRE updates
+#   20200525 - minor updates
 #   20180705 - updated, code tweaks
 #   20180628 - Created
 # 
 #
-# Author: M. Jones, mictjon@gmail.com
+# Original Author: M. Jones, mictjon@gmail.com
+# copyright 2020 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package dafupnp;
 use strict;
@@ -19,8 +23,10 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20180705);
+              MITRE         => "",
+			  output		=> "report",
+              category      => "devices",
+              version       => 20200904);
 			  
 my $VERSION = getVersion();
 			  
@@ -37,8 +43,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching dafupnp v.".$VERSION);
-	::rptMsg("dafupnp v.".$VERSION); # banner
-    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+	::rptMsg("dafupnp v.".$VERSION); 
+    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my ($current,$ccs);

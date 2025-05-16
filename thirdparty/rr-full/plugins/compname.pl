@@ -4,6 +4,8 @@
 # computername
 # 
 # Change history
+#   20201021 - added checks for domains
+#   20200904 - MITRE updates
 #   20090727 - added Hostname
 #
 # References
@@ -18,12 +20,14 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20090727);
+              category      => "config",
+              MITRE         => "",
+			  output		=> "report",
+              version       => 20201021);
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Gets ComputerName and Hostname values from System hive";	
+	return "Gets ComputerName, Hostname, and domain values from System hive";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -37,7 +41,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching compname v.".$VERSION);
 	::rptMsg("compname v.".$VERSION); # banner
-    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -53,25 +57,33 @@ sub pluginmain {
 		my $cn;
 		if ($cn = $root_key->get_subkey($cn_path)) {
 			my $name = $cn->get_value("ComputerName")->get_data();
-			::rptMsg("ComputerName    = ".$name);
+			::rptMsg(sprintf "%-20s %-50s","ComputerName",$name);
 		}
 		else {
 			::rptMsg($cn_path." not found.");
-			::logMsg($cn_path." not found.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 	
-	my $hostname;
-	eval {
-		my $host_path = $ccs."\\Services\\Tcpip\\Parameters";
-		$hostname = $root_key->get_subkey($host_path)->get_value("Hostname")->get_data();
-		::rptMsg("TCP/IP Hostname = ".$hostname);
-	};
+	my @hostnames = ("Hostname","NV Hostname");
+	my $host_path = $ccs."\\Services\\Tcpip\\Parameters";
+	foreach my $hostname (@hostnames) {
+		eval {
+			my $host = $root_key->get_subkey($host_path)->get_value($hostname)->get_data();
+			::rptMsg(sprintf "%-20s %-50s",$hostname,$host);
+		};
+	}
 	
+	my @domains = ("Domain","ICSDomain","DhcpDomain","NV Domain");
+	my $domain_path = $ccs."\\Services\\Tcpip\\Parameters";
+	foreach my $domain (@domains) {
+		eval {
+			my $d = $root_key->get_subkey($domain_path)->get_value($domain)->get_data();
+			::rptMsg(sprintf "%-20s %-50s",$domain,$d);
+		};
+	}
 }
 
 1;

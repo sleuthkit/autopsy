@@ -3,6 +3,7 @@
 # 
 #
 # History
+#   20200911 - MITRE updates
 #   20150529 - created
 #
 # References
@@ -14,13 +15,14 @@
 package gpohist_tln;
 use strict;
 
-my %config = (hive          => "Software","NTUSER\.DAT",
-              osmask        => 22,
-              category      => "settings",
+my %config = (hive          => "Software, NTUSER\.DAT",
+              MITRE         => "",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20150529);
+			  output		=> "report",
+              version       => 20200911);
 
 sub getConfig{return %config}
 

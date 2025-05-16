@@ -3,12 +3,14 @@
 # 
 #
 # Change history
+#   20200904 - MITRE updates
+#   20200515 - updated date output format
 #   20120820 - created
 #
 # References
 #
 # 
-# copyright 2012 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package appspecific;
@@ -18,8 +20,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20120820);
+              MITRE         => "",
+			  output        => "report",
+              category      => "config",
+              version       => 20200904);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -48,17 +52,15 @@ sub pluginmain {
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
 			foreach my $s (@subkeys) { 
-				::rptMsg($s->get_name()." [".gmtime($s->get_timestamp())." (UTC)]");
+				::rptMsg($s->get_name()." [".::format8601Date($s->get_timestamp())."Z]");
 				
 				my $ts;
 				eval {
 					$ts = $s->get_value("Timestamp")->get_data();
 					my $t = ::getTime(0,$ts);
-					::rptMsg("Timestamp: ".gmtime($t));
+					::rptMsg("Timestamp: ".::format8601Date($t)."Z");
 					
 				};
-				
-				
 				::rptMsg("");
 			}
 		}

@@ -5,6 +5,8 @@
 # works within an analysis process.
 #
 # History:
+#  20220920 - updated Win8.1 parsing
+#  20201005 - MITRE update
 #  20190112 - updated parsing for Win8.1
 #  20180311 - updated for more recent version of Win10/Win2016
 #  20160528 - created
@@ -26,14 +28,13 @@ package shimcache_tln;
 use strict;
 
 my %config = (hive          => "System",
-							hivemask      => 4,
-							output        => "tln",
-							category      => "Program Execution",
+			  category      => "file existence",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 31,  
-              version       => 20190112);
+              MITRE         => "",  
+			  output		=> "tln",
+              version       => 20220920);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -284,7 +285,6 @@ sub appWin8 {
 	
 	while($ofs < $len) {
 		my $tag = unpack("V",substr($data,$ofs,4));
-        last unless (defined $tag);
 # 32-bit		
 		if ($tag == 0x73746f72) {
 			$jmp = unpack("V",substr($data,$ofs + 8,4));
@@ -330,8 +330,7 @@ sub appWin81 {
 	
 	while ($ofs < $len) {
 		$tag = substr($data,$ofs,4);
-        last unless (defined $tag);
-		if ($tag eq "10ts") {
+		if ($tag eq "10ts" || $tag eq "00ts") {
 			
 			$sz = unpack("V",substr($data,$ofs + 0x08,4));
 			$name_len   = unpack("v",substr($data,$ofs + 0x0c,2));

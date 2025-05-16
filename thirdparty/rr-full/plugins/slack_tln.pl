@@ -4,6 +4,7 @@
 # 
 #
 # Change history
+#   20201005 - MITRE update
 #   20190506 - slack_tln.pl created
 #   20180926 - original slack.pl created
 #
@@ -21,9 +22,10 @@ my %config = (hive          => "All",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
+              MITRE         => "",
               category      => "slack",
-              version       => 20190506);
+			  output		=> "tln",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {

@@ -2,13 +2,14 @@
 # recentapps_tln.pl
 #  
 # Change history
+#  20200922 - MITRE update
 #  20190513 - updated timestamp issue
 #  20171013 - created
 #
 # References
-#  https://twitter.com/EricRZimmerman/status/916422135987474433
+#  https://df-stream.com/2017/10/recentapps/
 # 
-# copyright 2017 H. Carvey, keydet89@yahoo.com
+# copyright 2020 H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package recentapps_tln;
 use strict;
@@ -17,8 +18,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20190513);
+              MITRE         => "",
+              category      => "user activity",
+			  output		=> "tln",
+              version       => 20200922);
 
 sub getConfig{return %config}
 sub getShortDescr {

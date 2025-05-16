@@ -3,24 +3,27 @@
 # 
 #
 # History
+#   20200911 - MITRE updates
+#   20200525 - updated date output format
 #   20150521 - created
 #
 # References
 #   https://support.microsoft.com/en-us/kb/201453
 #   
-# copyright 2015 QAR, LLC
+# copyright 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package gpohist;
 use strict;
 
-my %config = (hive          => "Software","NTUSER\.DAT",
-              osmask        => 22,
-              category      => "settings",
+my %config = (hive          => "Software, NTUSER\.DAT",
+              MITRE         => "",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20150521);
+			  output        => "report",
+              version       => 20200911);
 
 sub getConfig{return %config}
 
@@ -65,7 +68,7 @@ sub pluginmain {
 					my @subkeys2 = $sk1->get_list_of_subkeys();
 					if (scalar(@subkeys2) > 0) {
 						foreach my $sk2 (@subkeys2) {
-							::rptMsg("  ".$sk2->get_name()."  LastWrite time: ".gmtime($sk2->get_timestamp())." UTC");
+							::rptMsg("  ".$sk2->get_name()."  LastWrite time: ".::format8601Date($sk2->get_timestamp())."Z");
 							::rptMsg("  DisplayName: ".$sk2->get_value("DisplayName")->get_data());
 							::rptMsg("  FileSysPath: ".$sk2->get_value("FileSysPath")->get_data());
 							::rptMsg("  Link       : ".$sk2->get_value("Link")->get_data());

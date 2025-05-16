@@ -4,6 +4,9 @@
 #  
 #
 # Change history
+#    20200911 - MITRE updates
+#    20200525 - updated date output format
+#    20160120 - added display of value name
 #    20150110 - updated with additional detection
 #    20150101 - Created
 # 
@@ -12,8 +15,9 @@
 #    http://www.malwaretech.com/2014/12/phase-bot-fileless-rootkit.html
 #    http://www.kernelmode.info/forum/viewtopic.php?f=16&t=3669
 #
+#	https://attack.mitre.org/techniques/T1059/001/
 #
-# copyright 2015 QAR, LLC
+# copyright 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package fileless;
@@ -23,8 +27,10 @@ my %config = (hive          => "All",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20150110);
+			  output		=> "report",
+              MITRE         => "T1059\.001",
+              category      => "persistence",
+              version       => 20200911);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -45,8 +51,10 @@ sub pluginmain {
 	my $reg = Parse::Win32Registry->new($file);
 	my $root_key = $reg->get_root_key;
 	::logMsg("Launching fileless v.".$VERSION);
-	::rptMsg("fileless v.".$VERSION); # banner
-  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner 
+	::rptMsg("fileless v.".$VERSION);
+	::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	traverse($root_key);
 }
 
@@ -59,13 +67,14 @@ sub traverse {
   	if ($type == 1 || $type == 2) {
   		my $data = $val->get_data();
 			$data = lc($data);
-			if ($data =~ m/^rundll32 javascript/ || $data =~ m/^mshta/) {
+			if ($data =~ m/^rundll32 javascript/ || $data =~ m/^mshta/ || grep(/powershell/,$data)) {
 				::rptMsg("**Possible fileless malware found\.");
 				my $path = $key->get_path();
 				my @p = split(/\\/,$path);
   			$path = join('\\',@p[1..(scalar(@p) - 1)]);
 				::rptMsg($path);
-				::rptMsg("LastWrite time: ".gmtime($ts)." UTC");
+				::rptMsg("LastWrite time: ".::format8601Date($ts)."Z");
+				::rptMsg("Value Name: ".$val->get_name());
 				::rptMsg("Data: ".$data);		
 				::rptMsg("");
 			}

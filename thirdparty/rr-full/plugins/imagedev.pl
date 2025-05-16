@@ -1,23 +1,26 @@
 #-----------------------------------------------------------
-# imagedev.pl
+# imagedev.pl - Get Still Image Capture Devices
 #
 # History:
+#  20200911 - MITRE updates
 #  20140104 - changed "FriendlyName" to "DeviceDesc" (value)
 #  20080813 - created
 #
 #
-# copyright 2014 QAR, LLC
+# copyright 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package imagedev;
 use strict;
 
 my %config = (hive          => "System",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "devices",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20140104);
+			  output		=> "report",
+              version       => 20200911);
 
 sub getConfig{return %config}
 
@@ -76,8 +79,6 @@ sub pluginmain {
 					$desc = $s->get_value("DeviceDesc")->get_data();
 					::rptMsg("  ".$desc);
 				};
-				
-				
 			}
 		}
 		else {

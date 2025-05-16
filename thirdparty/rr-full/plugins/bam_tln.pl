@@ -2,6 +2,7 @@
 # bam_tln.pl
 #
 # History:
+#  20200904 - MITRE updates
 #  20180225 - created
 #
 # References:
@@ -17,14 +18,14 @@ package bam_tln;
 use strict;
 
 my %config = (hive          => "System",
-							hivemask      => 4,
-							output        => "tln",
-							category      => "Program Execution",
+			  hivemask      => 4,
+			  output        => "tln",
+			  category      => "program execution",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 31,  #XP - Win7
-              version       => 20180225);
+              MITRE         => "",
+              version       => 20200904);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -53,7 +54,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		$current = $key->get_value("Current")->get_data();
 		$ccs = "ControlSet00".$current;
-		my $bam_path = $ccs."\\Services\\bam\\UserSettings";
+		my $bam_path = $ccs."\\Services\\bam\\State\\UserSettings";
 		my $bam;
 		if ($bam = $root_key->get_subkey($bam_path)) {
 			my @sk = $bam->get_list_of_subkeys();

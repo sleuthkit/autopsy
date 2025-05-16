@@ -2,6 +2,8 @@
 # nic2.pl
 # 
 # Change history
+#    20200922 - MITRE update
+#    20200525 - updated date output format
 #    20150812 - included updates from Yogesh Khatri
 #    20100401 - created
 #
@@ -9,7 +11,7 @@
 #   LeaseObtainedTime - http://technet.microsoft.com/en-us/library/cc978465.aspx
 #   T1 - http://technet.microsoft.com/en-us/library/cc978470.aspx
 # 
-# copyright 2015 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package nic2;
 use strict;
@@ -18,8 +20,10 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20150812);
+              MITRE         => "",
+              category      => "config",
+			  output		=> "report",
+              version       => 20200922);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -57,14 +61,14 @@ sub pluginmain {
 		if (scalar @guids > 0) {
 			foreach my $g (@guids) {
 				::rptMsg("Adapter: ".$g->get_name());
-				::rptMsg("LastWrite Time: ".gmtime($g->get_timestamp())." Z");
+				::rptMsg("LastWrite Time: ".::format8601Date($g->get_timestamp())."Z");
 				eval {
 					my @vals = $g->get_list_of_values();
 					foreach my $v (@vals) {
 						my $name = $v->get_name();
 						my $data = $v->get_data();
-						$data = gmtime($data)." Z" if ($name eq "T1" || $name eq "T2");
-						$data = gmtime($data)." Z" if ($name =~ m/Time$/);
+						$data = ::format8601Date($data)."Z" if ($name eq "T1" || $name eq "T2");
+						$data = ::format8601Date($data)."Z" if ($name =~ m/Time$/);
 						$data = pack("h*",reverse $data) if (uc($name) eq uc("DhcpNetworkHint")); # SSID nibbles reversed //YK
 						::rptMsg(sprintf "  %-28s %-20s",$name,$data);
 					}
@@ -77,14 +81,14 @@ sub pluginmain {
 						::rptMsg("Adapter: ".$g->get_name()."/".$ssid->get_name());
 						my $ssid_realname = pack("h*",reverse $ssid->get_name());
 						::rptMsg("SSID Decoded: ".$ssid_realname);
-						::rptMsg("LastWrite Time: ".gmtime($ssid->get_timestamp())." Z");
+						::rptMsg("LastWrite Time: ".::format8601Date($ssid->get_timestamp())."Z");
 						eval {
 							my @vals = $ssid->get_list_of_values();
 							foreach my $v (@vals) {
 								my $name = $v->get_name();
 								my $data = $v->get_data();
-								$data = gmtime($data)." Z" if ($name eq "T1" || $name eq "T2");
-								$data = gmtime($data)." Z" if ($name =~ m/Time$/);
+								$data = ::format8601Date($data)."Z" if ($name eq "T1" || $name eq "T2");
+								$data = ::format8601Date($data)."Z" if ($name =~ m/Time$/);
 								$data = pack("h*",reverse $data) if (uc($name) eq uc("DhcpNetworkHint"));
 								::rptMsg(sprintf "  %-28s %-20s",$name,$data);
 							}

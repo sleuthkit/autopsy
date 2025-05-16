@@ -3,10 +3,11 @@
 # Checks key for files to autostart from cmd.exe
 #
 # Change History
+#   20200904 - MITRE updates
 #   20130425 - created
 #
 # References:
-#   
+#   https://attack.mitre.org/techniques/T1546/
 # Category: autostart,malware,programexecution 
 #
 # copyright 2013 Quantum Analytics Research,
@@ -16,16 +17,18 @@ package cmdproc_tln;
 use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
-              osmask        => 22,
+              MITRE         => "T1546",
+              category      => "persistence",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20130425);
+			  output        => "tln",
+              version       => 20200904);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Autostart - get Command Processor\\AutoRun value from NTUSER.DAT hive (TLN)";	
+	return "Autostart - get Command Processor\\AutoRun value from NTUSER\.DAT hive (TLN)";	
 }
 sub getDescr{}
 sub getRefs {}

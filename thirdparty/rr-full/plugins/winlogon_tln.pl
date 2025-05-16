@@ -3,6 +3,7 @@
 # Get values from WinLogon key
 # 
 # History
+#   20200916 - MITRE updates
 #   20130429 - created, from winlogon.pl
 # 
 # References
@@ -17,11 +18,13 @@ package winlogon_tln;
 use strict;
 
 my %config = (hive          => "Software",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20130429);
+			  output		=> "tln",
+              version       => 20200916);
 
 sub getConfig{return %config}
 

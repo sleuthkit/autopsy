@@ -4,6 +4,7 @@
 # 
 #
 # Change history
+#   20200904 - MITRE updates
 #   20190506 - updated
 #   20140807 - created
 #
@@ -18,13 +19,14 @@
 package del_tln;
 use strict;
 
-my %config = (hive          => "All",
+my %config = (hive          => "all",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
+			  output		=> "tln",
+              MITRE         => "T1485",
               category      => "deleted",
-              version       => 20190506);
+              version       => 20200904);
 
 sub getConfig{return %config}
 sub getShortDescr {

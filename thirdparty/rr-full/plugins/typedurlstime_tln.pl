@@ -5,6 +5,7 @@
 # TypedURLsTime values/data from Windows 8 systems
 #
 # Change history
+#   20201012 - MITRE update
 #   20120613 - created
 #
 # References
@@ -23,8 +24,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              osmask        => 22,
-              version       => 20120613);
+              MITRE         => "",
+              category      => "user activity",
+			  output		=> "tln",
+              version       => 20201012);
 
 sub getConfig{return %config}
 sub getShortDescr {

@@ -3,26 +3,31 @@
 #
 # Gets the processor_architecture registry values from the system hive
 #
+# Change history:
+#   20200922 - MITRE Update 
+#
 # Ref: 
 #
 #   
-# copyright 2014 Corey Harrell (jIIr) http://journeyintoir.blogspot.com/
-# Corey Harrell <corey_harrell@yahoo.com>
+# copyright 2020 QAR, LLC
+# H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package processor_architecture;
 use strict;
 
-my %config = (hive          => "System",
-              osmask        => 22,
+my %config = (hive          => "system",
+              MITRE         => "",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20140505);
+			  output		=> "report",
+              version       => 20200922);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Get from the processor architecture from the System's environment key";	
+	return "Get from the processor architecture System hive";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -73,7 +78,6 @@ sub pluginmain {
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 1;

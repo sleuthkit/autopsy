@@ -7,15 +7,18 @@
 # Category: Malware
 #
 # Change history
+#  20220926 - updated
+#  20200814 - MITRE updates
+#  20200525 - updated date output format, removed alertMsg() functionality
 #  20130425 - added alertMsg() functionality
 #  20130117 - created
 #
 # References
 #  http://journeyintoir.blogspot.com/2010/10/anatomy-of-drive-by-part-2.html
 #  http://support.microsoft.com/kb/883260
-#  http://blog.handlerdiaries.com/?p=703
+#  https://support.microsoft.com/en-us/topic/information-about-the-attachment-manager-in-microsoft-windows-c48a4dcd-8de5-2af5-ee9b-cd795ae42738
 # 
-# copyright 2013 Quantum Analytics Research, LLC
+# copyright 2022 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package attachmgr;
@@ -25,8 +28,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20130425);
+			  output 		=> "report",
+              MITRE         => "T1553\.005",
+              category      => "defense evasion",
+              version       => 20220926);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -42,11 +47,12 @@ my $VERSION = getVersion();
 sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
-	my @temps;
 	
 	::logMsg("Launching attachmgr v.".$VERSION);
-	::rptMsg("attachmgr v.".$VERSION); # banner
-	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+	::rptMsg("attachmgr v.".$VERSION); 
+	::rptMsg("(".$config{hive}.") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	
@@ -57,19 +63,13 @@ sub pluginmain {
 		my $key;
 		if ($key = $root_key->get_subkey($key_path)) {
 			::rptMsg($key_path);
-			::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+			::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 			my @vals = $key->get_list_of_values();
 			if (scalar(@vals) > 0) {
 				foreach my $v (@vals) { 
 					my $name = $v->get_name();
 					my $data = $v->get_data();
-# checks added 20130425					
-# settings information derived from MS KB 883260					
-					::alertMsg("ALERT: attachmgr: ".$key_path." SaveZoneInformation value found: ".$data) if ($name eq "SaveZoneInformation");
-					::alertMsg("ALERT: attachmgr: ".$key_path." ScanWithAntiVirus value found: ".$data) if ($name eq "ScanWithAntiVirus");
-					::alertMsg("ALERT: attachmgr: ".$key_path." LowRiskFileTypes value includes exe: ".$data) if ($name eq "LowRiskFileTypes" && grep(/exe/,$data));
-					
-					::rptMsg(sprintf "%-15s  %-6s",$name,$data);
+					::rptMsg(sprintf "%-30s  %-6s",$name,$data);
 				}
 			}
 			else {
@@ -81,6 +81,13 @@ sub pluginmain {
 		}
 		::rptMsg("");
 	}
+#	::rptMsg("");
+	::rptMsg("Analysis Tip: Attachment Manager settings can determine security settings related to attachments.");
+	::rptMsg("");
+	::rptMsg("SaveZoneInformation = 1 disables saving of zone information (MOTW)");
+	::rptMsg("HideZoneInfoOnProperties = 1 hides the ability for the users to manually remove zone info from files.");
+	::rptMsg("");
+	::rptMsg("Ref: https://support.microsoft.com/en-us/topic/information-about-the-attachment-manager-in-microsoft-windows-c48a4dcd-8de5-2af5-ee9b-cd795ae42738");
 }
 
 1;
