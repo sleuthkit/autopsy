@@ -4,7 +4,7 @@ The Snap Store has a snap package for [Autopsy](https://snapcraft.io/autopsy).  
 
 ## Setting Snap Connections
 
-By default, snap doesn't allow certain interactions with the operating system.  These [Super-privileged connections](https://snapcraft.io/docs/super-privileged-interfaces) may need to be connected.  This can be done manually by running `snap connections autopsy` to determine any missing connections, and then running `snap connect autopsy:home` replacing `home` with the name of the plug.  Another option is to run this script, which will connect all missing plugs: `for connection in dm-crypt block-devices fuse-support removable-media mount-observe system-files-dev system-files-hugepages hugepages-control desktop-launch; do sudo snap connect "autopsy:$connection"; done`.  More information on interface management can be found at the [snapcraft website](https://snapcraft.io/docs/interface-management).
+By default, snap doesn't allow certain interactions with the operating system.  These [Super-privileged connections](https://snapcraft.io/docs/super-privileged-interfaces) may need to be connected.  This can be done manually by running `snap connections autopsy` to determine any missing connections, and then running `snap connect autopsy:home` replacing `home` with the name of the plug.  Another option is to run this script, which will connect all missing plugs: `snap connections autopsy | sed -nE 's/^[^ ]* *([^ ]*) *- *- *$/\1/p' | xargs -I{} sudo snap connect {}`.  More information on interface management can be found at the [snapcraft website](https://snapcraft.io/docs/interface-management).
 
 ## Running Autopsy
 
