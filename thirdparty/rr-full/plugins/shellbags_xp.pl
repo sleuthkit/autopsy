@@ -1,6 +1,6 @@
 #-----------------------------------------------------------
 # shellbags.pl
-# RR plugin to parse (Vista, Win7/Win2008R2) shell bags
+# RR plugin to parse XP shell bags
 #
 # History:
 #   20200831 - MITRE updates
@@ -41,7 +41,7 @@
 # copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
-package shellbags;
+package shellbags_xp;
 use strict;
 use Time::Local;
 
@@ -58,7 +58,7 @@ my %config = (hive          => "USRCLASS\.DAT, NTUSER\.DAT",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Shell/BagMRU traversal in Win7+ USRCLASS\.DAT hives";	
+	return "Shell/BagMRU traversal in XP USRCLASS\.DAT hives";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -185,15 +185,15 @@ my %folder_types = ("{724ef170-a42d-4fef-9f26-b60e846fba4f}" => "Administrative 
 sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
-	::logMsg("Launching shellbags v.".$VERSION);
-	::rptMsg("shellbags v.".$VERSION); 
+	::logMsg("Launching shellbags_xp v.".$VERSION);
+	::rptMsg("shellbags_xp v.".$VERSION); 
   ::rptMsg("(".getHive().") ".getShortDescr()."\n"); 
 	my %item = ();
 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
-	my $key_path = "Local Settings\\Software\\Microsoft\\Windows\\Shell\\BagMRU";
+	my $key_path = "Software\\Microsoft\\Windows\\ShellNoRoam\\BagMRU";
 	my $key;
 	
 	if ($key = $root_key->get_subkey($key_path)) {
