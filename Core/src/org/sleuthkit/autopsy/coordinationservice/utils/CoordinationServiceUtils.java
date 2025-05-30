@@ -28,7 +28,7 @@ import org.apache.zookeeper.ZooKeeper;
  */
 public final class CoordinationServiceUtils {
 
-    private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 3000;
+    private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 15000;
     private static final int ZOOKEEPER_CONNECTION_TIMEOUT_MILLIS = 15000;
 
     /**
