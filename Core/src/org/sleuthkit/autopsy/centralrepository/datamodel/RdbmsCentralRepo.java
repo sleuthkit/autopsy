@@ -46,6 +46,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoAccount.CentralRepoAccountType;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil.correlationAttribHasAnAccount;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil.correlationTypeToInstanceTableName;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.CentralRepoDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
@@ -1668,7 +1670,14 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     @Override
     public void commitAttributeInstancesBulk() throws CentralRepoException {
         List<CorrelationAttributeInstance.Type> artifactTypes = getDefinedCorrelationTypes();
-
+        
+        Map<String, Boolean> correlationHasAccount = new HashMap<>();
+        for (CorrelationAttributeInstance.Type artifactType : artifactTypes) {
+           String tableName = correlationTypeToInstanceTableName(artifactType);
+           Boolean isAccount = Boolean.valueOf(correlationAttribHasAnAccount(artifactType)); 
+           correlationHasAccount.put(correlationTypeToInstanceTableName(artifactType), Boolean.valueOf(correlationAttribHasAnAccount(artifactType)));
+        }
+        
         Connection conn = connect();
         PreparedStatement bulkPs = null;
 
@@ -1680,14 +1689,23 @@ abstract class RdbmsCentralRepo implements CentralRepository {
 
                 for (String tableName : bulkArtifacts.keySet()) {
 
-                    String sql
-                            = "INSERT INTO "
-                            + tableName
-                            + " (case_id, data_source_id, value, file_path, known_status, comment, file_obj_id) "
-                            + "VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), "
-                            + "(SELECT id FROM data_sources WHERE datasource_obj_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?, ?) "
-                            + getConflictClause();
-
+                    String sql;
+                    if (correlationHasAccount.get(tableName)) {
+                        sql = "INSERT INTO "
+                              + tableName
+                              + " (case_id, data_source_id, value, file_path, known_status, comment, file_obj_id, account_id) "
+                              + "VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), "
+                              + "(SELECT id FROM data_sources WHERE datasource_obj_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?, ?, ?) "
+                              + getConflictClause();
+                    } else {
+                        sql = "INSERT INTO "
+                              + tableName
+                              + " (case_id, data_source_id, value, file_path, known_status, comment, file_obj_id) "
+                              + "VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), "
+                              + "(SELECT id FROM data_sources WHERE datasource_obj_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?, ?) "
+                              + getConflictClause();
+                    }
+                    
                     bulkPs = conn.prepareStatement(sql);
 
                     Collection<CorrelationAttributeInstance> eamArtifacts = bulkArtifacts.get(tableName);
@@ -1730,6 +1748,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                                     bulkPs.setString(7, eamArtifact.getComment());
                                 }
                                 bulkPs.setLong(8, eamArtifact.getFileObjectId());
+                                if (correlationHasAccount.get(tableName)) {
+                                    bulkPs.setLong(9, eamArtifact.getAccountId());
+                                }
                                 bulkPs.addBatch();
                             } else {
                                 logger.log(Level.WARNING, ("Artifact value too long for central repository."
