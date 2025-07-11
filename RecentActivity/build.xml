@@ -25,6 +25,9 @@
         <copy todir="${basedir}/release/markmckinnon/" >
             <fileset dir="${thirdparty.dir}/markmckinnon/" />
         </copy>
+        <copy todir="${basedir}/release/thumbcache_parser/" >
+            <fileset dir="${thirdparty.dir}/thumbcache_parser/" />
+        </copy>
     </target>
     
     
