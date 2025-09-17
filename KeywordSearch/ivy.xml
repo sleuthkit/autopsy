@@ -45,7 +45,7 @@
 
         <exclude org="" ext="*" type="javadoc"/>
         
-        <override org="commons-io" module="commons-io" rev="2.18.0"/>
+        <override org="commons-io" module="commons-io" rev="2.20.0"/>
         <override org="com.google.guava" module="guava" rev="33.4.0-jre"/>
         
         <override org="org.apache.logging.log4j" module="log4j-api" rev="${log4j.version}"/>

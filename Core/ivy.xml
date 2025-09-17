@@ -18,12 +18,12 @@
         <dependency conf="core->default" org="com.adobe.xmp" name="xmpcore" rev="6.1.11"/>
         <dependency conf="core->default" org="org.apache.zookeeper" name="zookeeper" rev="3.9.3"/>
 
-        <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess" rev="4.0.7"/>
-        <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess-encrypt" rev="4.0.2"/>
+        <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess" rev="4.0.8"/>
+        <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess-encrypt" rev="4.0.3"/>
 
         <dependency conf="core->default" org="org.apache.commons" name="commons-dbcp2" rev="2.13.0"/>
 
-        <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.18.3"/>
+        <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.21.2"/>
 
         <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.19.0"/>
         <dependency conf="core->default" org="com.ethteck.decodetect" name="decodetect-core" rev="0.3"/>
@@ -98,7 +98,7 @@
         <override org="xerces" module="xercesImpl" rev="2.12.2"/>
         <override org="org.bouncycastle" module="bcprov-jdk18on" rev="${bouncycastle.version}"/>
         <override org="org.bouncycastle" module="bcpkix-jdk18on" rev="${bouncycastle.version}"/>
-        <override org="commons-io" module="commons-io" rev="2.18.0"/>
+        <override org="commons-io" module="commons-io" rev="2.20.0"/>
         <override org="com.google.guava" module="guava" rev="33.4.0-jre"/>
         <override org="io.netty" module="netty-transport" rev="${netty.version}"/>
         <override org="io.netty" module="netty-transport-native-epoll" rev="${netty.version}"/>

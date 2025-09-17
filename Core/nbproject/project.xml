@@ -386,64 +386,64 @@
                 <binary-origin>release/modules/ext/audience-annotations-0.12.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-awt-util-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-awt-util-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-awt-util-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-awt-util-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-constants-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-constants-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-constants-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-constants-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-css-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-css-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-css-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-css-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-dom-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-dom-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-dom-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-dom-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-ext-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-ext-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-ext-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-ext-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-i18n-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-i18n-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-i18n-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-i18n-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-parser-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-parser-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-parser-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-parser-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-shared-resources-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-shared-resources-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-shared-resources-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-shared-resources-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-svg-dom-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-svg-dom-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-svg-dom-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-svg-dom-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-svggen-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-svggen-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-svggen-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-svggen-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-util-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-util-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-util-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-util-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/batik-xml-1.18.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/batik-xml-1.18.jar</binary-origin>
+                <runtime-relative-path>ext/batik-xml-1.19.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/batik-xml-1.19.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/bcpkix-jdk18on-1.79.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/bcpkix-jdk18on-1.79.jar</binary-origin>
+                <runtime-relative-path>ext/bcpkix-jdk18on-1.81.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcpkix-jdk18on-1.81.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/bcprov-jdk18on-1.79.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/bcprov-jdk18on-1.79.jar</binary-origin>
+                <runtime-relative-path>ext/bcprov-jdk18on-1.81.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcprov-jdk18on-1.81.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/bcutil-jdk18on-1.79.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/bcutil-jdk18on-1.79.jar</binary-origin>
+                <runtime-relative-path>ext/bcutil-jdk18on-1.81.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcutil-jdk18on-1.81.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.10.2.jar</runtime-relative-path>
@@ -454,16 +454,16 @@
                 <binary-origin>release/modules/ext/checker-qual-3.43.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-codec-1.11.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-codec-1.11.jar</binary-origin>
+                <runtime-relative-path>ext/commons-codec-1.19.0jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.19.0jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-dbcp2-2.13.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-dbcp2-2.13.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-io-2.18.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-io-2.18.0.jar</binary-origin>
+                <runtime-relative-path>ext/commons-io-2.20.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-io-2.20.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.10.jar</runtime-relative-path>
@@ -538,12 +538,12 @@
                 <binary-origin>release/modules/ext/j2objc-annotations-3.0.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackcess-4.0.7.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackcess-4.0.7.jar</binary-origin>
+                <runtime-relative-path>ext/jackcess-4.0.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-4.0.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackcess-encrypt-4.0.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackcess-encrypt-4.0.2.jar</binary-origin>
+                <runtime-relative-path>ext/jackcess-encrypt-4.0.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-encrypt-4.0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jai_core-1.1.3.jar</runtime-relative-path>
@@ -614,8 +614,8 @@
                 <binary-origin>release/modules/ext/jgraphx-4.2.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jsoup-1.18.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jsoup-1.18.3.jar</binary-origin>
+                <runtime-relative-path>ext/jsoup-1.21.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jsoup-1.21.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jsr305-3.0.2.jar</runtime-relative-path>
@@ -766,8 +766,8 @@
                 <binary-origin>release/modules/ext/spotbugs-annotations-4.8.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sqlite-jdbc-3.49.1.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.49.1.0.jar</binary-origin>
+                <runtime-relative-path>ext/sqlite-jdbc-3.50.3.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sqlite-jdbc-3.50.3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xalan-2.7.3.jar</runtime-relative-path>
