@@ -341,6 +341,24 @@ public class PlatformUtil {
     }
 
     /**
+     * Check if running on linux OS
+     *
+     * @return true if running on Windows OS
+     */
+    public static boolean isLinuxOS() {
+        return PlatformUtil.getOSName().toLowerCase().contains("linux"); //NON-NLS
+    }
+
+    /**
+     * Check if running on linux OS
+     *
+     * @return true if running on Windows OS
+     */
+    public static boolean isMacOS() {
+        return PlatformUtil.getOSName().toLowerCase().contains("macos"); //NON-NLS
+    }
+
+    /**
      * Convert file path (quote) for OS specific
      *
      * @param origFilePath
