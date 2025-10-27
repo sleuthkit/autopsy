@@ -62,7 +62,7 @@ final class ExtractSru extends Extract {
     private static final String APPLICATION_USAGE_SOURCE_NAME = "System Resource Usage - Application Usage"; //NON-NLS
     private static final String NETWORK_USAGE_SOURCE_NAME = "System Resource Usage - Network Usage";
     private static final String SRU_TOOL_FOLDER = "markmckinnon"; //NON-NLS
-    private static final String SRU_TOOL_NAME_X64_WINDOWS = "mm_artifact_parser_x64_windows.exe"; //NON-NLS
+    private static final String SRU_TOOL_NAME_X64_WINDOWS = "mm_artifact_parser_x64_win.exe"; //NON-NLS
     private static final String SRU_TOOL_NAME_X64_LINUX = "mm_artifact_parser_x64_linux"; //NON-NLS
     private static final String SRU_TOOL_NAME_X64_MACOS = "mm_artifact_parser_x64_macos"; //NON-NLS
     private static final String SRU_TOOL_NAME_AARCH64_LINUX = "mm_artifact_parser_aarch64_linux"; //NON-NLS
