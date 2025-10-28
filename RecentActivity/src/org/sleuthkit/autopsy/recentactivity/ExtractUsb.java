@@ -59,8 +59,11 @@ final class ExtractUsb extends Extract {
     private static final Logger logger = Logger.getLogger(ExtractUsb.class.getName());
 
     private static final String USB_TOOL_FOLDER = "markmckinnon"; //NON-NLS
-    private static final String USB_TOOL_NAME_WINDOWS = "usbparser.exe"; //NON-NLS
-    private static final String USB_TOOL_NAME_LINUX = "usbparser"; //NON-NLS
+    private static final String USB_TOOL_NAME_X64_WINDOWS = "mm_artifact_parser_x64_win.exe"; //NON-NLS
+    private static final String USB_TOOL_NAME_X64_LINUX = "mm_artifact_parser_x64_linux"; //NON-NLS
+    private static final String USB_TOOL_NAME_X64_MACOS = "mm_artifact_parser_x64_macos"; //NON-NLS
+    private static final String USB_TOOL_NAME_AARCH64_LINUX = "mm_artifact_parser_aarch64_linux"; //NON-NLS
+    private static final String USB_TOOL_NAME_AARCH64_MACOS = "mm_artifact_parser_aarch64_macos"; //NON-NLS
     private static final String USB_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String USB_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
     
@@ -389,9 +392,13 @@ final class ExtractUsb extends Extract {
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(usbExePath);
-        commandLine.add("-d"); //NON-NLS
+        commandLine.add("-a");
+        commandLine.add("usb)");
+        commandLine.add("-db"); //NON-NLS
         commandLine.add(tempOutFile);
         commandLine.add("-f"); //NON-NLS
+        commandLine.add(tempOutPath);
+        commandLine.add("-jl"); //NON-NLS
         commandLine.add(tempOutPath);
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
@@ -404,10 +411,18 @@ final class ExtractUsb extends Extract {
     private String getPathForUsbDumper() {
         Path path = null;
         if (PlatformUtil.isWindowsOS()) {
-            path = Paths.get(USB_TOOL_FOLDER, USB_TOOL_NAME_WINDOWS);
-        } else {
-            if ("Linux".equals(PlatformUtil.getOSName())) {
-                path = Paths.get(USB_TOOL_FOLDER, USB_TOOL_NAME_LINUX);
+            path = Paths.get(USB_TOOL_FOLDER, USB_TOOL_NAME_X64_WINDOWS);
+        } else if (PlatformUtil.isLinuxOS()) {
+            if ("aarch64".equals(PlatformUtil.getOSArch())) {
+                path = Paths.get(USB_TOOL_FOLDER, USB_TOOL_NAME_AARCH64_LINUX);
+            } else {
+                path = Paths.get(USB_TOOL_FOLDER, USB_TOOL_NAME_X64_LINUX);
+            }
+        } else if (PlatformUtil.isMacOS()) {
+            if ("aarch64".equals(PlatformUtil.getOSArch())) {
+                path = Paths.get(USB_TOOL_FOLDER, USB_TOOL_NAME_AARCH64_MACOS);
+            } else {
+                path = Paths.get(USB_TOOL_FOLDER, USB_TOOL_NAME_X64_MACOS);
             }
         }
         File usbToolFile = InstalledFileLocator.getDefault().locate(path.toString(),
