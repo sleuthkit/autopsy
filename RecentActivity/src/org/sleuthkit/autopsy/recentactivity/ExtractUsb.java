@@ -393,7 +393,7 @@ final class ExtractUsb extends Extract {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(usbExePath);
         commandLine.add("-a");
-        commandLine.add("usb)");
+        commandLine.add("usb");
         commandLine.add("-db"); //NON-NLS
         commandLine.add(tempOutFile);
         commandLine.add("-f"); //NON-NLS
