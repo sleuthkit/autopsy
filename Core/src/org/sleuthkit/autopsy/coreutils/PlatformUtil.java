@@ -355,7 +355,6 @@ public class PlatformUtil {
      * @return true if running on Windows OS
      */
     public static boolean isMacOS() {
-        String platformOs = PlatformUtil.getOSName().toLowerCase();
         return PlatformUtil.getOSName().toLowerCase().contains("mac"); //NON-NLS
     }
 
