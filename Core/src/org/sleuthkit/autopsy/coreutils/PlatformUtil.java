@@ -350,9 +350,9 @@ public class PlatformUtil {
     }
 
     /**
-     * Check if running on Mac OS
+     * Check if running on Macos OS
      *
-     * @return true if running on Mac OS
+     * @return true if running on Macos OS
      */
     public static boolean isMacOS() {
         return PlatformUtil.getOSName().toLowerCase().contains("mac"); //NON-NLS
