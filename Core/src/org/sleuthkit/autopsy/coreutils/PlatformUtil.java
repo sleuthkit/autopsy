@@ -343,7 +343,7 @@ public class PlatformUtil {
     /**
      * Check if running on Linux OS
      *
-     * @return true if running on Linux
+     * @return true if running on Linux OS
      */
     public static boolean isLinuxOS() {
         return PlatformUtil.getOSName().toLowerCase().contains("linux"); //NON-NLS
@@ -355,7 +355,7 @@ public class PlatformUtil {
      * @return true if running on Macos OS
      */
     public static boolean isMacOS() {
-        return PlatformUtil.getOSName().toLowerCase().contains("macos"); //NON-NLS
+        return PlatformUtil.getOSName().toLowerCase().contains("mac"); //NON-NLS
     }
 
     /**
