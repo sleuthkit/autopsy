@@ -18,6 +18,17 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import org.openide.util.NbBundle.Messages;
+
 /**
  * Representation of a PhysicalDisk or partition.
  */
@@ -26,11 +37,17 @@ public class LocalDisk {
     private String name;
     private String path;
     private long size;
+    private String mountPoint;
+    private static final Logger logger = Logger.getLogger(LocalDisk.class.getName());
 
     public LocalDisk(String name, String path, long size) {
         this.name = name;
         this.path = path;
         this.size = size;
+        mountPoint = "";
+        if (PlatformUtil.isLinuxOS() ) {
+            findLinuxMointPoint(this.path);
+        }
     }
 
     public String getName() {
@@ -43,6 +60,30 @@ public class LocalDisk {
 
     public long getSize() {
         return size;
+    }
+   
+    /**
+     * Returns details about the mount point 
+     * of the drive as well as if it is an Autopsy 
+     * config or iso.
+     * 
+     * NOTE: Currently only works for linux.
+     */
+    @Messages({
+        "LocalDisk_getDetail_autopsyConfig=Autopsy Config",
+        "LocalDisk_getDetail_cdRom=CD-ROM",
+    })
+    public String getDetail() {
+        String toRet = mountPoint == null ? "" : mountPoint;
+        if(isConfigDrive()) {
+            toRet += ", " + Bundle.LocalDisk_getDetail_autopsyConfig();
+        } 
+            
+        if (isCDDrive()) {
+            toRet += ", " + Bundle.LocalDisk_getDetail_cdRom();
+        }
+        
+        return toRet;
     }
 
     public String getReadableSize() {
@@ -60,4 +101,44 @@ public class LocalDisk {
         return name + ": " + getReadableSize();
     }
 
+    private void findLinuxMointPoint(String path) {
+        try {
+            List<String> commandLine = new ArrayList<>();
+            commandLine.add("/bin/bash");
+            commandLine.add("-c");
+            commandLine.add("df -h | grep " + path + " | awk '{print $6}'");
+
+            ProcessBuilder pb = new ProcessBuilder(commandLine);
+            Process process = pb.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder builder = new StringBuilder();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+            }
+            this.mountPoint = builder.toString();
+            process.destroy();
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to find the mount point for the device", ex);
+        }
+    }
+
+    /**
+     * If AutopsyConfig folder is present, linux autopsy will display drive
+     * details including 'Autopsy Config'.
+     */
+    private boolean isConfigDrive() {
+        Path path = Paths.get(this.mountPoint, "AutopsyConfig");
+        File configFile = new File(path.toString());
+        return configFile.exists();
+    }
+
+    /**
+     * For linux autopsy, determines if drive is CD-ROM if the device starts
+     * with /dev/sr.
+     */
+    private boolean isCDDrive() {
+        return this.path.toString().trim().toLowerCase().startsWith("/dev/sr");
+    }
 }

@@ -7,6 +7,7 @@
       <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="LocalDiskSelectionDialog.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
     </Property>
     <Property name="alwaysOnTop" type="boolean" value="true"/>
+    <Property name="modal" type="boolean" value="true"/>
     <Property name="resizable" type="boolean" value="false"/>
   </Properties>
   <SyntheticProperties>
