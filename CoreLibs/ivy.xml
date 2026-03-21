@@ -69,7 +69,7 @@
         <dependency conf="autopsy_core->default" org="com.google.cloud" name="google-cloud-translate" rev="2.54.0"/>
         
         <!-- commmon -->
-        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-lang3" rev="3.17.0"/>
+        <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-lang3" rev="3.18.0"/>
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-csv" rev="1.12.0"/>
         <dependency conf="autopsy_core->default" org="org.apache.commons" name="commons-text" rev="1.13.0"/>
     
