@@ -1,0 +1,3 @@
+node_modules/
+dist/
+!dist/autopsy-mcp-stdio.exe

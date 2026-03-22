@@ -67,7 +67,9 @@ class McpProtocolHandler {
         return switch (toolName) {
             case "query_files"        -> queryService.queryFiles(args);
             case "query_artifacts"    -> queryService.queryArtifacts(args);
-            case "query_data_sources" -> queryService.queryDataSources();
+            case "get_hosts"            -> queryService.getHosts();
+            case "query_data_sources"   -> queryService.queryDataSources();
+            case "get_data_source_tree" -> queryService.getDataSourceTree(args);
             case "get_case_summary"   -> queryService.getCaseSummary();
             case "query_tags"         -> queryService.queryTags(args);
             default -> throw new McpException("Unknown tool: " + toolName);
