@@ -46,6 +46,9 @@ public class AutopsyMcpModule implements Runnable {
     private void onCaseEvent(PropertyChangeEvent evt) {
         if (evt.getNewValue() != null) {
             // A case was opened — newValue is the Case object.
+            if (!McpOptionsPanel.isMcpEnabled()) {
+                return;
+            }
             Case openedCase = (Case) evt.getNewValue();
             try {
                 McpServer server = new McpServer(openedCase);

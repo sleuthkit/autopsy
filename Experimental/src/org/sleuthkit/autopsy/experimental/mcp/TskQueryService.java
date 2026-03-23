@@ -254,8 +254,9 @@ class TskQueryService {
             tool("get_communications_accounts",
                 "List accounts found in communications data: email addresses, phone numbers, " +
                 "Skype/Facebook/WhatsApp/Twitter/Instagram usernames, etc. Optionally filter " +
-                "by account type. Available types: EMAIL, PHONE, SKYPE, FACEBOOK, WHATSAPP, " +
-                "TWITTER, INSTAGRAM, MESSAGING_APP, WEBSITE_ACCOUNT, DEVICE. " +
+                "by account type. Available types: CREDIT_CARD, DEVICE, EMAIL, FACEBOOK, " +
+                "IMO, INSTAGRAM, LINE, MESSAGING_APP, PHONE, SHAREIT, SKYPE, TANGO, TEXTNOW, " +
+                "THREEMA, TWITTER, VIBER, WEBSITE, WHATSAPP, XENDER, ZAPYA. " +
                 "Returns account type, identifier, device ID, and relationship count.",
                 Map.of(
                     "accountType", param("string",  "Filter by account type e.g. EMAIL, PHONE, SKYPE"),
@@ -896,10 +897,17 @@ class TskQueryService {
         }
 
         // Decode as UTF-8, replacing undecodable bytes with '?'
+        // REPLACE mode should never throw, but decode() declares CharacterCodingException.
         CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
                 .onMalformedInput(CodingErrorAction.REPLACE)
                 .onUnmappableCharacter(CodingErrorAction.REPLACE);
-        CharBuffer chars = decoder.decode(ByteBuffer.wrap(buf));
+        CharBuffer chars;
+        try {
+            chars = decoder.decode(ByteBuffer.wrap(buf));
+        } catch (java.nio.charset.CharacterCodingException ex) {
+            // Cannot happen with REPLACE policy; fall back to lossy Latin-1 conversion
+            chars = CharBuffer.wrap(new String(buf, StandardCharsets.ISO_8859_1));
+        }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("fileId",    fileId);
@@ -1205,17 +1213,27 @@ class TskQueryService {
      */
     private static Account.Type lookupAccountType(String name) {
         switch (name.toUpperCase()) {
-            case "EMAIL":            return Account.Type.EMAIL;
-            case "PHONE":            return Account.Type.PHONE;
-            case "SKYPE":            return Account.Type.SKYPE;
-            case "FACEBOOK":         return Account.Type.FACEBOOK;
-            case "WHATSAPP":         return Account.Type.WHATSAPP;
-            case "TWITTER":          return Account.Type.TWITTER;
-            case "INSTAGRAM":        return Account.Type.INSTAGRAM;
-            case "MESSAGING_APP":    return Account.Type.MESSAGING_APP;
-            case "WEBSITE_ACCOUNT":  return Account.Type.WEBSITE_ACCOUNT;
-            case "DEVICE":           return Account.Type.DEVICE;
-            default:                 return null;
+            case "CREDIT_CARD":   return Account.Type.CREDIT_CARD;
+            case "DEVICE":        return Account.Type.DEVICE;
+            case "EMAIL":         return Account.Type.EMAIL;
+            case "FACEBOOK":      return Account.Type.FACEBOOK;
+            case "IMO":           return Account.Type.IMO;
+            case "INSTAGRAM":     return Account.Type.INSTAGRAM;
+            case "LINE":          return Account.Type.LINE;
+            case "MESSAGING_APP": return Account.Type.MESSAGING_APP;
+            case "PHONE":         return Account.Type.PHONE;
+            case "SHAREIT":       return Account.Type.SHAREIT;
+            case "SKYPE":         return Account.Type.SKYPE;
+            case "TANGO":         return Account.Type.TANGO;
+            case "TEXTNOW":       return Account.Type.TEXTNOW;
+            case "THREEMA":       return Account.Type.THREEMA;
+            case "TWITTER":       return Account.Type.TWITTER;
+            case "VIBER":         return Account.Type.VIBER;
+            case "WEBSITE":       return Account.Type.WEBSITE;
+            case "WHATSAPP":      return Account.Type.WHATSAPP;
+            case "XENDER":        return Account.Type.XENDER;
+            case "ZAPYA":         return Account.Type.ZAPYA;
+            default:              return null;
         }
     }
 

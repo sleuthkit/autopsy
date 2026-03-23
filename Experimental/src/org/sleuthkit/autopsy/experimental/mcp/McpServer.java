@@ -54,14 +54,13 @@ public class McpServer {
         });
 
         // Auth filter — every request must have valid Bearer token
-        /* TODO @@@ ADD THIS BACK IN
         app.before(ctx -> {
             String auth = ctx.header("Authorization");
             if (auth == null || !auth.equals("Bearer " + authToken)) {
                 ctx.status(401).result("Unauthorized");
                 ctx.skipRemainingHandlers();
             }
-        });*/
+        });
 
         // MCP endpoint
         app.post("/mcp", this::handleMcpRequest);
