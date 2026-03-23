@@ -27,14 +27,26 @@ import java.util.Map;
 /**
  * Parses incoming MCP JSON-RPC requests, routes tool calls to TskQueryService,
  * and formats JSON-RPC responses.
+ *
+ * queryService is null when no case is open. tools/list always works (tool
+ * definitions are static). tools/call returns a clean error when null.
  */
 class McpProtocolHandler {
 
-    private final TskQueryService queryService;
+    // Used solely for tools/list — listTools() has no case dependency.
+    private static final TskQueryService TOOLS_LIST_SERVICE = new TskQueryService(null, null);
+
+    private volatile TskQueryService queryService; // null = no case open
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public McpProtocolHandler(TskQueryService queryService) {
-        this.queryService = queryService;
+    McpProtocolHandler() { }
+
+    void setQueryService(TskQueryService qs) {
+        this.queryService = qs;
+    }
+
+    void clearQueryService() {
+        this.queryService = null;
     }
 
     /**
@@ -49,7 +61,7 @@ class McpProtocolHandler {
 
         try {
             Object result = switch (method) {
-                case "tools/list"   -> queryService.listTools();
+                case "tools/list"   -> TOOLS_LIST_SERVICE.listTools();
                 case "tools/call"   -> dispatchToolCall(params);
                 case "initialize"   -> handleInitialize();
                 default             -> throw new McpException("Unknown method: " + method);
@@ -64,21 +76,27 @@ class McpProtocolHandler {
         String toolName = params.path("name").asText();
         JsonNode args = params.path("arguments");
 
+        TskQueryService qs = queryService;
+        if (qs == null) {
+            throw new McpException(
+                "No case is currently open in Autopsy. Open a case first to use MCP tools.");
+        }
+
         return switch (toolName) {
-            case "query_files"        -> queryService.queryFiles(args);
-            case "query_data_artifacts"    -> queryService.queryDataArtifacts(args);
-            case "query_analysis_results"  -> queryService.queryAnalysisResults(args);
-            case "get_hosts"            -> queryService.getHosts();
-            case "query_data_sources"   -> queryService.queryDataSources();
-            case "get_data_source_tree" -> queryService.getDataSourceTree(args);
-            case "get_case_summary"   -> queryService.getCaseSummary();
-            case "get_file_content"            -> queryService.getFileContent(args);
-            case "query_tags"                  -> queryService.queryTags(args);
-            case "query_timeline"              -> queryService.queryTimeline(args);
-            case "summarize_timeline"          -> queryService.summarizeTimeline(args);
-            case "get_os_accounts"             -> queryService.getOsAccounts();
-            case "get_communications_accounts" -> queryService.getCommunicationsAccounts(args);
-            case "get_account_relationships"   -> queryService.getAccountRelationships(args);
+            case "query_files"        -> qs.queryFiles(args);
+            case "query_data_artifacts"    -> qs.queryDataArtifacts(args);
+            case "query_analysis_results"  -> qs.queryAnalysisResults(args);
+            case "get_hosts"            -> qs.getHosts();
+            case "query_data_sources"   -> qs.queryDataSources();
+            case "get_data_source_tree" -> qs.getDataSourceTree(args);
+            case "get_case_summary"   -> qs.getCaseSummary();
+            case "get_file_content"            -> qs.getFileContent(args);
+            case "query_tags"                  -> qs.queryTags(args);
+            case "query_timeline"              -> qs.queryTimeline(args);
+            case "summarize_timeline"          -> qs.summarizeTimeline(args);
+            case "get_os_accounts"             -> qs.getOsAccounts();
+            case "get_communications_accounts" -> qs.getCommunicationsAccounts(args);
+            case "get_account_relationships"   -> qs.getAccountRelationships(args);
             default -> throw new McpException("Unknown tool: " + toolName);
         };
     }

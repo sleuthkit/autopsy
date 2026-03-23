@@ -24,8 +24,10 @@ import java.awt.Insets;
 import java.io.File;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
@@ -44,7 +46,9 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
     "McpOptionsPanel.windowsOnlyLabel.text=MCP server is only supported on Windows.",
     "McpOptionsPanel.stdioLocationLabel.text=STDIO wrapper location:",
     "McpOptionsPanel.stdioNotFoundLabel.text=Not found",
-    "McpOptionsPanel.restartNoteLabel.text=Changes take effect when the next case is opened."
+    "McpOptionsPanel.restartNoteLabel.text=Changes take effect after restarting Autopsy.",
+    "McpOptionsPanel.restartDialogTitle.text=Restart Required",
+    "McpOptionsPanel.restartDialogMessage.text=Autopsy must be restarted for MCP server changes to take effect."
 })
 public class McpOptionsPanel extends JPanel {
 
@@ -131,10 +135,20 @@ public class McpOptionsPanel extends JPanel {
 
     /**
      * Saves current UI state to preferences. Called when OK or Apply is clicked.
+     * Shows a restart-required dialog if the enabled state changed.
      */
     void store() {
+        boolean wasEnabled = isMcpEnabled();
+        boolean nowEnabled = enabledCheckBox.isSelected();
         NbPreferences.forModule(McpOptionsPanel.class)
-                .putBoolean(PREF_MCP_ENABLED, enabledCheckBox.isSelected());
+                .putBoolean(PREF_MCP_ENABLED, nowEnabled);
+        if (wasEnabled != nowEnabled) {
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
+                    this,
+                    Bundle.McpOptionsPanel_restartDialogMessage_text(),
+                    Bundle.McpOptionsPanel_restartDialogTitle_text(),
+                    JOptionPane.WARNING_MESSAGE));
+        }
     }
 
     /**

@@ -26,10 +26,11 @@ import org.openide.modules.OnStart;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
- * Registers with the Autopsy case lifecycle and starts/stops the MCP server
- * when a case is opened or closed.
- *
- * Runs at application startup via @OnStart, then listens for Case.Events.CURRENT_CASE.
+ * Starts the MCP HTTP server at application startup (if enabled) and keeps it
+ * running for the lifetime of the application. Case open/close events update
+ * the active case reference inside the server — the HTTP listener itself never
+ * stops. When no case is open, tools/list still works but tools/call returns a
+ * clean "no case open" error message.
  */
 @OnStart
 public class AutopsyMcpModule implements Runnable {
@@ -40,30 +41,31 @@ public class AutopsyMcpModule implements Runnable {
 
     @Override
     public void run() {
+        if (!McpOptionsPanel.isMcpEnabled()) {
+            return;
+        }
+        try {
+            McpServer server = new McpServer();
+            server.start();
+            mcpServer = server;
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Failed to start Autopsy MCP server", ex);
+            return;
+        }
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this::onCaseEvent);
     }
 
     private void onCaseEvent(PropertyChangeEvent evt) {
+        McpServer server = mcpServer;
+        if (server == null) {
+            return;
+        }
         if (evt.getNewValue() != null) {
-            // A case was opened — newValue is the Case object.
-            if (!McpOptionsPanel.isMcpEnabled()) {
-                return;
-            }
-            Case openedCase = (Case) evt.getNewValue();
-            try {
-                McpServer server = new McpServer(openedCase);
-                server.start();
-                mcpServer = server;
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Failed to start Autopsy MCP server", ex);
-            }
+            // Case opened — wire up the query service.
+            server.updateCase((Case) evt.getNewValue());
         } else {
-            // A case was closed — newValue is null, oldValue is the closed Case.
-            McpServer server = mcpServer;
-            if (server != null) {
-                server.stop();
-                mcpServer = null;
-            }
+            // Case closed — clear the query service; server keeps listening.
+            server.clearCase();
         }
     }
 }

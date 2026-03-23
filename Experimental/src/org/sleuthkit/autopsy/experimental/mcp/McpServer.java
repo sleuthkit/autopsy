@@ -1,5 +1,5 @@
 /*
- * Autopsy 
+ * Autopsy
  *
  * Copyright 2026 Sleuth Kit Labs
  * Contact: carrier <at> sleuthkit <dot> org
@@ -27,25 +27,49 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * Owns the Javalin HTTP server instance. Starts on case open, stops on case close.
- * Generates an ephemeral per-session auth token written to ~/.autopsy/mcp-token.
- * Binds exclusively to 127.0.0.1 (never 0.0.0.0).
+ * Owns the Javalin HTTP server instance. Starts at application startup and
+ * runs for the lifetime of the application. The active case is updated via
+ * updateCase() / clearCase() as cases are opened and closed. When no case is
+ * open, tools/list still works and tools/call returns a clean error message.
+ *
+ * An ephemeral auth token is generated at server start and written to
+ * ~/.autopsy/mcp-token. It is not rotated between cases — it is valid for the
+ * entire application session and removed on JVM exit.
  */
 public class McpServer {
 
+    private static final Logger logger = Logger.getLogger(McpServer.class.getName());
     private static final int DEFAULT_PORT = 8765;
 
     private final String authToken;
     private final McpProtocolHandler protocolHandler;
     private Javalin app;
 
-    public McpServer(Case currentCase) {
+    public McpServer() {
         this.authToken = generateToken();
-        this.protocolHandler = new McpProtocolHandler(
-                new TskQueryService(currentCase.getSleuthkitCase(), currentCase.getDisplayName()));
-        writeTokenFile();
+        this.protocolHandler = new McpProtocolHandler();
+    }
+
+    /**
+     * Called when a case is opened. Creates a TskQueryService for the case and
+     * makes it available to the protocol handler.
+     */
+    public void updateCase(Case openedCase) {
+        protocolHandler.setQueryService(
+                new TskQueryService(openedCase.getSleuthkitCase(), openedCase.getDisplayName()));
+    }
+
+    /**
+     * Called when a case is closed. Clears the query service so subsequent
+     * tool calls return a "no case open" error. The HTTP server keeps running
+     * and the token file remains valid so the STDIO wrapper stays connected.
+     */
+    public void clearCase() {
+        protocolHandler.clearQueryService();
     }
 
     public void start() {
@@ -71,6 +95,7 @@ public class McpServer {
         });
 
         app.start(DEFAULT_PORT);
+        writeTokenFile();
     }
 
     public void stop() {
@@ -108,7 +133,7 @@ public class McpServer {
             Files.writeString(tokenPath, authToken);
             tokenPath.toFile().deleteOnExit();
         } catch (IOException ex) {
-            // TODO: log
+            logger.log(Level.WARNING, "Failed to write MCP token file", ex);
         }
     }
 
@@ -116,7 +141,7 @@ public class McpServer {
         try {
             Files.deleteIfExists(getTokenPath());
         } catch (IOException ex) {
-            // TODO: log
+            logger.log(Level.WARNING, "Failed to delete MCP token file", ex);
         }
     }
 }
