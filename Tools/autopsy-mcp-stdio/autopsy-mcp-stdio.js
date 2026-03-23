@@ -110,6 +110,32 @@ async function runTest() {
         checks.push(`       - ${t.name}`);
     }
 
+    // 5. Case status — call get_case_summary to see if a case is open
+    try {
+        const caseRes = await fetch("http://127.0.0.1:8765/mcp", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ jsonrpc: "2.0", id: "2", method: "tools/call",
+                params: { name: "get_case_summary", arguments: {} } })
+        });
+        const caseData = await caseRes.json();
+        if (caseData.error) {
+            // MCP-level error — no case open
+            checks.push(`  [--] No case is currently open`);
+        } else {
+            // Parse the text content from the tool result
+            const text = caseData.result?.content?.[0]?.text;
+            const summary = text ? JSON.parse(text) : null;
+            const caseName = summary?.caseName ?? "(unknown)";
+            checks.push(`  [OK] Case is open: ${caseName}`);
+        }
+    } catch {
+        checks.push(`  [--] Could not determine case status`);
+    }
+
     printTestResults(checks, true);
 }
 

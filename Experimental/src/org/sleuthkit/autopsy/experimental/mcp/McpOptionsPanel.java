@@ -18,14 +18,20 @@
  */
 package org.sleuthkit.autopsy.experimental.mcp;
 
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.io.File;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
@@ -40,7 +46,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 @Messages({
     "McpOptionsPanel.descriptionLabel.text=<html>The Autopsy MCP (Model Context Protocol) server allows AI assistants "
         + "such as Claude to query the currently open case using natural language. "
-        + "When enabled, a local HTTP server starts on 127.0.0.1 when a case is opened, "
+        + "When enabled, a local HTTP server starts on 127.0.0.1 when Autopsy starts, "
         + "and an auth token is written to ~/.autopsy/mcp-token for use by the STDIO wrapper.</html>",
     "McpOptionsPanel.enabledCheckBox.text=Enable MCP server",
     "McpOptionsPanel.windowsOnlyLabel.text=MCP server is only supported on Windows.",
@@ -48,7 +54,9 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
     "McpOptionsPanel.stdioNotFoundLabel.text=Not found",
     "McpOptionsPanel.restartNoteLabel.text=Changes take effect after restarting Autopsy.",
     "McpOptionsPanel.restartDialogTitle.text=Restart Required",
-    "McpOptionsPanel.restartDialogMessage.text=Autopsy must be restarted for MCP server changes to take effect."
+    "McpOptionsPanel.restartDialogMessage.text=Autopsy must be restarted for MCP server changes to take effect.",
+    "McpOptionsPanel.claudeConfigLabel.text=Claude configuration (paste into claude_desktop_config.json or .claude.json):",
+    "McpOptionsPanel.copyButton.text=Copy to Clipboard"
 })
 public class McpOptionsPanel extends JPanel {
 
@@ -57,11 +65,13 @@ public class McpOptionsPanel extends JPanel {
     private final McpOptionsPanelController controller;
     private final JCheckBox enabledCheckBox;
     private final JTextField stdioPathField;
+    private final JTextArea configSnippetArea;
 
     McpOptionsPanel(McpOptionsPanelController controller) {
         this.controller = controller;
-        enabledCheckBox = new JCheckBox(Bundle.McpOptionsPanel_enabledCheckBox_text());
-        stdioPathField  = new JTextField();
+        enabledCheckBox  = new JCheckBox(Bundle.McpOptionsPanel_enabledCheckBox_text());
+        stdioPathField   = new JTextField();
+        configSnippetArea = new JTextArea(7, 40);
         initLayout();
     }
 
@@ -78,16 +88,12 @@ public class McpOptionsPanel extends JPanel {
         gbc.weightx = 1.0;
 
         // Description
-        JLabel descriptionLabel = new JLabel(Bundle.McpOptionsPanel_descriptionLabel_text());
-        add(descriptionLabel, gbc);
+        add(new JLabel(Bundle.McpOptionsPanel_descriptionLabel_text()), gbc);
 
-        // Checkbox (disabled on non-Windows)
+        // Checkbox (Windows only)
         gbc.gridy++;
-        gbc.gridwidth = 2;
         if (PlatformUtil.isWindowsOS()) {
-            enabledCheckBox.addActionListener(e -> {
-                controller.changed();
-            });
+            enabledCheckBox.addActionListener(e -> controller.changed());
             add(enabledCheckBox, gbc);
 
             gbc.gridy++;
@@ -96,26 +102,44 @@ public class McpOptionsPanel extends JPanel {
             add(new JLabel(Bundle.McpOptionsPanel_windowsOnlyLabel_text()), gbc);
         }
 
-        // STDIO wrapper location label
+        // STDIO wrapper location
         gbc.gridy++;
         gbc.gridwidth = 1;
         gbc.weightx   = 0.0;
         add(new JLabel(Bundle.McpOptionsPanel_stdioLocationLabel_text()), gbc);
 
-        // STDIO path field (read-only)
         gbc.gridx   = 1;
         gbc.weightx = 1.0;
         stdioPathField.setEditable(false);
         stdioPathField.setColumns(40);
         add(stdioPathField, gbc);
 
-        // Fill remaining vertical space
+        // Claude config snippet label
         gbc.gridx     = 0;
         gbc.gridy++;
         gbc.gridwidth = 2;
-        gbc.weighty   = 1.0;
-        gbc.fill      = GridBagConstraints.BOTH;
-        add(new JPanel(), gbc);
+        add(new JLabel(Bundle.McpOptionsPanel_claudeConfigLabel_text()), gbc);
+
+        // Config snippet text area (read-only, monospace) — gets all remaining vertical space
+        configSnippetArea.setEditable(false);
+        configSnippetArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
+        configSnippetArea.setLineWrap(false);
+        gbc.gridy++;
+        gbc.fill    = GridBagConstraints.BOTH;
+        gbc.weighty = 1.0;
+        add(new JScrollPane(configSnippetArea), gbc);
+
+        // Copy to clipboard button (right-aligned, fixed height)
+        JButton copyButton = new JButton(Bundle.McpOptionsPanel_copyButton_text());
+        copyButton.addActionListener(e -> {
+            StringSelection sel = new StringSelection(configSnippetArea.getText());
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(sel, sel);
+        });
+        gbc.gridy++;
+        gbc.fill    = GridBagConstraints.NONE;
+        gbc.anchor  = GridBagConstraints.EAST;
+        gbc.weighty = 0.0;
+        add(copyButton, gbc);
     }
 
     /**
@@ -130,7 +154,10 @@ public class McpOptionsPanel extends JPanel {
      */
     void load() {
         enabledCheckBox.setSelected(isMcpEnabled());
-        stdioPathField.setText(findStdioExePath());
+        String exePath = findStdioExePath();
+        stdioPathField.setText(exePath);
+        configSnippetArea.setText(buildConfigSnippet(exePath));
+        configSnippetArea.setCaretPosition(0);
     }
 
     /**
@@ -152,12 +179,28 @@ public class McpOptionsPanel extends JPanel {
     }
 
     /**
+     * Builds the JSON snippet for the Claude config file, with backslashes
+     * doubled as required by JSON string encoding.
+     */
+    private static String buildConfigSnippet(String exePath) {
+        // Double every backslash for JSON encoding
+        String jsonPath = exePath.replace("\\", "\\\\"); //NON-NLS
+        return "{\n"
+             + "  \"mcpServers\": {\n"
+             + "    \"autopsy\": {\n"
+             + "      \"command\": \"" + jsonPath + "\"\n"
+             + "    }\n"
+             + "  }\n"
+             + "}";
+    }
+
+    /**
      * Locates autopsy-mcp-stdio.exe in the Autopsy installation bin directory.
      */
     private static String findStdioExePath() {
         String exePath = PlatformUtil.getInstallPath()
-                + File.separator + "bin"          //NON-NLS
-                + File.separator + "autopsy-mcp-stdio.exe"; //NON-NLS
+                + File.separator + "bin"                      //NON-NLS
+                + File.separator + "autopsy-mcp-stdio.exe";   //NON-NLS
         File exeFile = new File(exePath);
         return exeFile.exists() ? exeFile.getAbsolutePath()
                                 : Bundle.McpOptionsPanel_stdioNotFoundLabel_text();
