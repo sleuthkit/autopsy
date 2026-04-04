@@ -16,8 +16,6 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   TSK_HOME: "${{ github.workspace }}\\sleuthkit"
-  PLATFORM_REL_DIR: "netbeans-plat/15"
-  HARNESS_REL_DIR: "netbeans-plat/15/harness"
 
 jobs:
   build:
@@ -35,13 +33,11 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Set JDK_HOME and NetBeans platform paths
+      - name: Set JDK_HOME
         shell: bash
         run: |
           echo "JDK_HOME=$JAVA_HOME" >> $GITHUB_ENV
           echo "INCLUDE=$INCLUDE;$JAVA_HOME/include;$JAVA_HOME/include/win32" >> $GITHUB_ENV
-          echo "NB_PLATFORM_DIR=$GITHUB_WORKSPACE/${{ env.PLATFORM_REL_DIR }}" >> $GITHUB_ENV
-          echo "NB_HARNESS_DIR=$GITHUB_WORKSPACE/${{ env.HARNESS_REL_DIR }}" >> $GITHUB_ENV
 
       - name: Cache Chocolatey packages
         uses: actions/cache@v4
@@ -84,22 +80,10 @@ jobs:
           ant -q
 
       - name: Build Autopsy
-        run: >-
-          ant -q
-          -Dnbplatform.download.netbeans.dest.dir=${{ env.NB_PLATFORM_DIR }}
-          -Dnbplatform.download.harness.dir=${{ env.NB_HARNESS_DIR }}
-          build
+        run: ant -q build
 
       - name: Run Core unit tests
-        run: >-
-          ant -f ${{ github.workspace }}/Core/build.xml
-          -Dnbplatform.download.netbeans.dest.dir=${{ env.NB_PLATFORM_DIR }}
-          -Dnbplatform.download.harness.dir=${{ env.NB_HARNESS_DIR }}
-          test-unit
+        run: ant -f Core/build.xml test-unit
 
       - name: Run KeywordSearch unit tests
-        run: >-
-          ant -f ${{ github.workspace }}/KeywordSearch/build.xml
-          -Dnbplatform.download.netbeans.dest.dir=${{ env.NB_PLATFORM_DIR }}
-          -Dnbplatform.download.harness.dir=${{ env.NB_HARNESS_DIR }}
-          test-unit
+        run: ant -f KeywordSearch/build.xml test-unit
