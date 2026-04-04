@@ -1,0 +1,101 @@
+name: Build Autopsy on Windows
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  TSK_HOME: "C:\\sleuthkit"
+  PLATFORM_REL_DIR: "netbeans-plat/15"
+  HARNESS_REL_DIR: "netbeans-plat/15/harness"
+
+jobs:
+  build:
+    runs-on: windows-2025
+
+    steps:
+      - name: Checkout Autopsy
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Set JDK_HOME
+        shell: bash
+        run: |
+          echo "JDK_HOME=$JAVA_HOME" >> $GITHUB_ENV
+          echo "INCLUDE=$INCLUDE;$JAVA_HOME/include;$JAVA_HOME/include/win32" >> $GITHUB_ENV
+
+      - name: Cache Chocolatey packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\ProgramData\chocolatey\bin
+            C:\ProgramData\chocolatey\lib
+          key: choco-nuget-ant
+
+      - name: Install nuget and ant
+        run: |
+          choco install nuget.commandline
+          choco install ant --ignore-dependencies
+
+      - name: Clone SleuthKit
+        run: |
+          git clone --branch develop-4.14 https://github.com/sleuthkit/sleuthkit C:\sleuthkit
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: C:\sleuthkit\win32\packages
+          key: nuget-${{ hashFiles('C:\sleuthkit\win32\libtsk\packages.config') }}
+          restore-keys: nuget-
+
+      - name: Build SleuthKit native libraries
+        working-directory: C:\sleuthkit
+        run: |
+          nuget restore win32\libtsk -PackagesDirectory win32\packages
+          python win32\updateAndBuildAll.py -m
+
+      - name: Build SleuthKit Java bindings
+        working-directory: C:\sleuthkit\bindings\java
+        run: |
+          ant -version
+          ant dist
+
+      - name: Build case-uco Java
+        working-directory: C:\sleuthkit\case-uco\java
+        run: |
+          ant -q
+
+      - name: Build Autopsy
+        run: >-
+          ant -q
+          -Dnbplatform.active.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
+          -Dnbplatform.default.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
+          build
+
+      - name: Run Core unit tests
+        run: >-
+          ant -f "${{ github.workspace }}/Core/build.xml"
+          -Dnbplatform.active.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
+          -Dnbplatform.default.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
+          test-unit
+
+      - name: Run KeywordSearch unit tests
+        run: >-
+          ant -f "${{ github.workspace }}/KeywordSearch/build.xml"
+          -Dnbplatform.active.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
+          -Dnbplatform.default.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
+          test-unit
