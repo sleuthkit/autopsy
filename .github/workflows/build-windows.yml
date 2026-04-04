@@ -35,11 +35,13 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Set JDK_HOME
+      - name: Set JDK_HOME and NetBeans platform paths
         shell: bash
         run: |
           echo "JDK_HOME=$JAVA_HOME" >> $GITHUB_ENV
           echo "INCLUDE=$INCLUDE;$JAVA_HOME/include;$JAVA_HOME/include/win32" >> $GITHUB_ENV
+          echo "NB_PLATFORM_DIR=$GITHUB_WORKSPACE/${{ env.PLATFORM_REL_DIR }}" >> $GITHUB_ENV
+          echo "NB_HARNESS_DIR=$GITHUB_WORKSPACE/${{ env.HARNESS_REL_DIR }}" >> $GITHUB_ENV
 
       - name: Cache Chocolatey packages
         uses: actions/cache@v4
@@ -84,20 +86,20 @@ jobs:
       - name: Build Autopsy
         run: >-
           ant -q
-          -Dnbplatform.download.netbeans.dest.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
-          -Dnbplatform.download.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
+          -Dnbplatform.download.netbeans.dest.dir=${{ env.NB_PLATFORM_DIR }}
+          -Dnbplatform.download.harness.dir=${{ env.NB_HARNESS_DIR }}
           build
 
       - name: Run Core unit tests
         run: >-
-          ant -f "${{ github.workspace }}/Core/build.xml"
-          -Dnbplatform.download.netbeans.dest.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
-          -Dnbplatform.download.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
+          ant -f ${{ github.workspace }}/Core/build.xml
+          -Dnbplatform.download.netbeans.dest.dir=${{ env.NB_PLATFORM_DIR }}
+          -Dnbplatform.download.harness.dir=${{ env.NB_HARNESS_DIR }}
           test-unit
 
       - name: Run KeywordSearch unit tests
         run: >-
-          ant -f "${{ github.workspace }}/KeywordSearch/build.xml"
-          -Dnbplatform.download.netbeans.dest.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
-          -Dnbplatform.download.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
+          ant -f ${{ github.workspace }}/KeywordSearch/build.xml
+          -Dnbplatform.download.netbeans.dest.dir=${{ env.NB_PLATFORM_DIR }}
+          -Dnbplatform.download.harness.dir=${{ env.NB_HARNESS_DIR }}
           test-unit
