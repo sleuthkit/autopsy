@@ -42,6 +42,11 @@ public interface ArtifactPropertyEnricher {
      * Implementations must be efficient: this is called on every node
      * expansion. Results should be cached where appropriate.
      *
+     * The returned Sheet.Set must have a name that does not conflict with any
+     * set already present in the sheet (e.g., Sheet.PROPERTIES). If a
+     * duplicate name is detected at runtime the set will be skipped and a
+     * warning logged.
+     *
      * @param artifact The artifact whose property sheet is being built.
      *
      * @return A Sheet.Set to append, or null if none.

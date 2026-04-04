@@ -1154,10 +1154,16 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             try {
                 Sheet.Set enrichmentSet = enricher.getEnrichment(artifact);
                 if (enrichmentSet != null) {
-                    sheet.put(enrichmentSet);
+                    if (sheet.get(enrichmentSet.getName()) != null) {
+                        logger.log(Level.WARNING, String.format("Enricher %s returned a Sheet.Set with duplicate name '%s' for artifact %d; skipping to avoid overwriting existing properties",
+                                enricher.getClass().getName(), enrichmentSet.getName(), artifact.getArtifactID()));
+                    } else {
+                        sheet.put(enrichmentSet);
+                    }
                 }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, String.format("Error getting property enrichment for artifact %d", artifact.getArtifactID()), ex);
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, String.format("Error getting property enrichment from %s for artifact %d",
+                        enricher.getClass().getName(), artifact.getArtifactID()), ex);
             }
         }
 
