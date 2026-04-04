@@ -258,6 +258,8 @@
         <subant buildpath="${basedir}/CoreTestLibs/build.xml" target="build" inheritrefs="false" inheritall="false">
             <property name="nbplatform.active.dir" value="${nbplatform.active.dir}" />
             <property name="nbplatform.default.harness.dir" value="${nbplatform.default.harness.dir}" />
+            <property name="nbplatform.download.harness.dir" value="${nbplatform.active.dir}/harness" />
+            <property name="nbplatform.download.netbeans.dest.dir" value="${nbplatform.active.dir}" />
         </subant>
     </target>
     
