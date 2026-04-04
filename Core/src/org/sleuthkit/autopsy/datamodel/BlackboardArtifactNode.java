@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy 
  *
- * Copyright 2012-2021 Basis Technology Corp.
+ * Copyright 2012-2026 Sleuth Kit Labs
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
