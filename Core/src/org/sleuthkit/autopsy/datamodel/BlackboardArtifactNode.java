@@ -1150,6 +1150,17 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             backgroundTasksPool.submit(scoTask);
         }
 
+        for (ArtifactPropertyEnricher enricher : Lookup.getDefault().lookupAll(ArtifactPropertyEnricher.class)) {
+            try {
+                Sheet.Set enrichmentSet = enricher.getEnrichment(artifact);
+                if (enrichmentSet != null) {
+                    sheet.put(enrichmentSet);
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Error getting property enrichment for artifact %d", artifact.getArtifactID()), ex);
+            }
+        }
+
         return sheet;
     }
 
