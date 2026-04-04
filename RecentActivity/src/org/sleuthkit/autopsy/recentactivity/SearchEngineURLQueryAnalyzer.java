@@ -169,6 +169,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             File f = new File(path);
             logger.log(Level.INFO, "Load successful"); //NON-NLS
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setFeature("http://xml.org/sax/features/external-general-entities", false); //NON-NLS
+            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false); //NON-NLS
+            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false); //NON-NLS
+            dbf.setXIncludeAware(false);
+            dbf.setExpandEntityReferences(false);
             DocumentBuilder db = dbf.newDocumentBuilder();
             xmlinput = db.parse(f);
 

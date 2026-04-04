@@ -569,7 +569,13 @@ class ExtractRegistry extends Extract {
             result = result.replace('\0', ' '); // NON-NLS
             String enddoc = "</document>"; //NON-NLS
             String stringdoc = startdoc + result + enddoc;
-            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setFeature("http://xml.org/sax/features/external-general-entities", false); //NON-NLS
+            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false); //NON-NLS
+            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false); //NON-NLS
+            dbf.setXIncludeAware(false);
+            dbf.setExpandEntityReferences(false);
+            DocumentBuilder builder = dbf.newDocumentBuilder();
             Document doc = builder.parse(new InputSource(new StringReader(stringdoc)));
 
             // cycle through the elements in the doc

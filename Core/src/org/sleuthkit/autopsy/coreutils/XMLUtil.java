@@ -66,6 +66,12 @@ public class XMLUtil {
         try {
             Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
             DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+            // Explicitly disable external entity loading to prevent XXE injection.
+            builderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false); //NON-NLS
+            builderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false); //NON-NLS
+            builderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false); //NON-NLS
+            builderFactory.setXIncludeAware(false);
+            builderFactory.setExpandEntityReferences(false);
             return builderFactory.newDocumentBuilder();
         } finally {
             Thread.currentThread().setContextClassLoader(original);

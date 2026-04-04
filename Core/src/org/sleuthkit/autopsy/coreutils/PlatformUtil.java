@@ -44,7 +44,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.swing.filechooser.FileSystemView;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
@@ -581,64 +580,19 @@ public class PlatformUtil {
      *         it couldn't be determined
      */
     public static synchronized long[] getJavaPIDs(String argsSubQuery) {
+        // Use ProcessHandle to enumerate processes without spawning a shell,
+        // avoiding shell/command injection from the argsSubQuery parameter.
+        String regexStr = ".*java.*" + convertSqlLikeToRegex(argsSubQuery) + ".*"; //NON-NLS
         try {
-        if (isWindowsOS()) {
-            
-            ProcessBuilder pb = new ProcessBuilder("wmic process where \"name='java.exe' AND commandline LIKE '%" + argsSubQuery + "%'\" get ProcessID");
-            String output = IOUtils.toString(pb.start().getInputStream(), StandardCharsets.UTF_8);
-            String[] lines = output.split("\\r?\\n");
-            
-            return Stream.of(lines).skip(1).map(ln -> {
-                if (ln == null || ln.trim().isEmpty()) {
-                    return null;
-                }
-                
-                try {
-                    return Long.parseLong(ln.trim());
-                } catch (NumberFormatException ex) {
-                    return null;
-                }
-            })
-                    .filter(num -> num != null)
-                    .mapToLong(l -> l)
+            Pattern pattern = Pattern.compile(regexStr, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+            return ProcessHandle.allProcesses()
+                    .filter(ph -> ph.info().commandLine()
+                            .map(cmd -> pattern.matcher(cmd).matches())
+                            .orElse(false))
+                    .mapToLong(ProcessHandle::pid)
                     .toArray();
-
-        } else {
-            String sigarRegexQuery = convertSqlLikeToRegex(argsSubQuery);
-            ProcessBuilder pb = new ProcessBuilder("sh", "-c", "ps -ef | grep -E 'java.*" + sigarRegexQuery + ".*'");
-            String output = IOUtils.toString(pb.start().getInputStream(), StandardCharsets.UTF_8);
-            List<String> lines = Arrays.asList(output.split("\\r?\\n"));
-            
-            if (lines.size() > 0) {
-                // ignore last one as it will be the same as this command
-                lines.remove(lines.size() - 1);
-            }
-            
-            return lines.stream().skip(1).map(ln -> {
-                if (ln == null || ln.trim().isEmpty()) {
-                    return null;
-                }
-                
-                ln = ln.trim();
-                
-                String[] pieces = ln.split("\\s*");
-                if (pieces.length < 2) {
-                    return null;
-                }
-                
-                try {
-                    return Long.parseLong(pieces[1]);
-                } catch (NumberFormatException ex) {
-                    return null;
-                }
-            })
-                    .filter(num -> num != null)
-                    .mapToLong(l -> l)
-                    .toArray();
-        }
-        } catch (IOException ex) {
-            System.out.println("An exception occurred while fetching java pids with query: " + argsSubQuery + " with IO Exception: " + ex.getMessage());
-            ex.printStackTrace();
+        } catch (Exception ex) {
+            System.out.println("An exception occurred while fetching java pids with query: " + argsSubQuery + " : " + ex.getMessage());
             return null;
         }
     }

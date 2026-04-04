@@ -87,8 +87,11 @@ final class ReportingConfigLoader {
     @SuppressWarnings("unchecked")
     static synchronized ReportingConfig loadConfig(String configName) throws ReportConfigException {
 
-        // construct the configuration directory path
-        Path reportDirPath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName);
+        // construct the configuration directory path and validate against traversal
+        Path reportDirPath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName).normalize();
+        if (!reportDirPath.startsWith(Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH).normalize())) {
+            throw new ReportConfigException("Invalid report configuration name: " + configName);
+        }
         File reportDirectory = reportDirPath.toFile();
 
         // Return null if a reporting configuration for the given name does not exist.
@@ -181,10 +184,13 @@ final class ReportingConfigLoader {
             throw new ReportConfigException("Reporting configuration is NULL");
         }
 
-        // construct the configuration directory path
-        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, reportConfig.getName());
+        // construct the configuration directory path and validate against traversal
+        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, reportConfig.getName()).normalize();
+        if (!pathToConfigDir.startsWith(Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH).normalize())) {
+            throw new ReportConfigException("Invalid report configuration name: " + reportConfig.getName());
+        }
 
-        // create configuration directory 
+        // create configuration directory
         try {
             Files.createDirectories(pathToConfigDir); // does not throw if directory already exists
         } catch (IOException | SecurityException ex) {
