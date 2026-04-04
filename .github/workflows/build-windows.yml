@@ -14,7 +14,7 @@ concurrency:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  TSK_HOME: "C:\\sleuthkit"
+  TSK_HOME: "${{ github.workspace }}\\sleuthkit"
   PLATFORM_REL_DIR: "netbeans-plat/15"
   HARNESS_REL_DIR: "netbeans-plat/15/harness"
 
@@ -48,54 +48,54 @@ jobs:
 
       - name: Install nuget and ant
         run: |
-          choco install nuget.commandline
-          choco install ant --ignore-dependencies
+          choco install nuget.commandline -y
+          choco install ant --ignore-dependencies -y
 
       - name: Clone SleuthKit
         run: |
-          git clone --branch develop-4.14 https://github.com/sleuthkit/sleuthkit C:\sleuthkit
+          git clone --branch develop-4.14 https://github.com/sleuthkit/sleuthkit "${{ github.workspace }}\sleuthkit"
 
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
-          path: C:\sleuthkit\win32\packages
-          key: nuget-${{ hashFiles('C:\sleuthkit\win32\libtsk\packages.config') }}
+          path: ${{ github.workspace }}\sleuthkit\win32\packages
+          key: nuget-${{ hashFiles('sleuthkit/win32/libtsk/packages.config') }}
           restore-keys: nuget-
 
       - name: Build SleuthKit native libraries
-        working-directory: C:\sleuthkit
+        working-directory: ${{ github.workspace }}\sleuthkit
         run: |
           nuget restore win32\libtsk -PackagesDirectory win32\packages
           python win32\updateAndBuildAll.py -m
 
       - name: Build SleuthKit Java bindings
-        working-directory: C:\sleuthkit\bindings\java
+        working-directory: ${{ github.workspace }}\sleuthkit\bindings\java
         run: |
           ant -version
           ant dist
 
       - name: Build case-uco Java
-        working-directory: C:\sleuthkit\case-uco\java
+        working-directory: ${{ github.workspace }}\sleuthkit\case-uco\java
         run: |
           ant -q
 
       - name: Build Autopsy
         run: >-
           ant -q
-          -Dnbplatform.active.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
-          -Dnbplatform.default.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
+          -Dnbplatform.download.netbeans.dest.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
+          -Dnbplatform.download.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
           build
 
       - name: Run Core unit tests
         run: >-
           ant -f "${{ github.workspace }}/Core/build.xml"
-          -Dnbplatform.active.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
-          -Dnbplatform.default.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
+          -Dnbplatform.download.netbeans.dest.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
+          -Dnbplatform.download.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
           test-unit
 
       - name: Run KeywordSearch unit tests
         run: >-
           ant -f "${{ github.workspace }}/KeywordSearch/build.xml"
-          -Dnbplatform.active.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
-          -Dnbplatform.default.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
+          -Dnbplatform.download.netbeans.dest.dir="${{ github.workspace }}/${{ env.PLATFORM_REL_DIR }}"
+          -Dnbplatform.download.harness.dir="${{ github.workspace }}/${{ env.HARNESS_REL_DIR }}"
           test-unit
