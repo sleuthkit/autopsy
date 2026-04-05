@@ -10,6 +10,7 @@
     <!-- IMPORTANT: nbproject/platform.properties has a netbeans-plat-version property that MUST be kept in sync (manually) -->
     <property name="netbeans-plat-version" value="15" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
+    <property name="nbplatform.default.harness.dir" value="${nbplatform.active.dir}/harness" />
     <!-- Supported java versions.-->
 
     <condition property="supported-java-versions">
@@ -258,6 +259,8 @@
         <subant buildpath="${basedir}/CoreTestLibs/build.xml" target="build" inheritrefs="false" inheritall="false">
             <property name="nbplatform.active.dir" value="${nbplatform.active.dir}" />
             <property name="nbplatform.default.harness.dir" value="${nbplatform.default.harness.dir}" />
+            <property name="nbplatform.download.harness.dir" value="${nbplatform.active.dir}/harness" />
+            <property name="nbplatform.download.netbeans.dest.dir" value="${nbplatform.active.dir}" />
         </subant>
     </target>
     
