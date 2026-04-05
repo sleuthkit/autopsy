@@ -87,6 +87,13 @@ final class ReportingConfigLoader {
     @SuppressWarnings("unchecked")
     static synchronized ReportingConfig loadConfig(String configName) throws ReportConfigException {
 
+        // reject names that are blank, self-referential, or contain path separators
+        if (configName == null || configName.isEmpty() || configName.equals(".")
+                || configName.indexOf('/') >= 0 || configName.indexOf('\\') >= 0
+                || configName.indexOf(File.separatorChar) >= 0) {
+            throw new ReportConfigException("Invalid report configuration name: " + configName);
+        }
+
         // construct the configuration directory path and validate against traversal
         Path reportDirPath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName).normalize();
         if (!reportDirPath.startsWith(Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH).normalize())) {
@@ -184,10 +191,18 @@ final class ReportingConfigLoader {
             throw new ReportConfigException("Reporting configuration is NULL");
         }
 
+        // reject names that are blank, self-referential, or contain path separators
+        String configName = reportConfig.getName();
+        if (configName == null || configName.isEmpty() || configName.equals(".")
+                || configName.indexOf('/') >= 0 || configName.indexOf('\\') >= 0
+                || configName.indexOf(File.separatorChar) >= 0) {
+            throw new ReportConfigException("Invalid report configuration name: " + configName);
+        }
+
         // construct the configuration directory path and validate against traversal
-        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, reportConfig.getName()).normalize();
+        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName).normalize();
         if (!pathToConfigDir.startsWith(Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH).normalize())) {
-            throw new ReportConfigException("Invalid report configuration name: " + reportConfig.getName());
+            throw new ReportConfigException("Invalid report configuration name: " + configName);
         }
 
         // create configuration directory

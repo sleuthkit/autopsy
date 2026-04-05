@@ -37,7 +37,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -541,34 +540,39 @@ public class PlatformUtil {
             return "";
         }
 
-        Map<Character, String> likeEscapeSequences = new HashMap<>() {
-            {
-                put('%', ".*");
-                put('_', ".");
-            }
-        };
+        // Build the regex by quoting each literal segment and replacing wildcards.
+        // The original implementation incorrectly called Pattern.quote() on the
+        // entire string before substituting wildcards, which placed the substituted
+        // ".*" and "." inside the \Q...\E literal region where they are not treated
+        // as regex metacharacters.
+        StringBuilder regex = new StringBuilder();
+        StringBuilder literal = new StringBuilder();
 
-        String regexQuoted = Pattern.quote(originalLikeStatement);
-        char[] charArr = regexQuoted.toCharArray();
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < charArr.length; i++) {
-            char curChar = charArr[i];
-            String regexReplacement = likeEscapeSequences.get(curChar);
-            if (regexReplacement == null) {
-                sb.append(curChar);
-            } else {
-                Character nextChar = charArr.length > i + 1 ? charArr[i + 1] : null;
-                if (nextChar != null && curChar == nextChar) {
-                    sb.append(curChar);
+        char[] chars = originalLikeStatement.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            char cur = chars[i];
+            if (cur == '%' || cur == '_') {
+                // Doubled wildcard (e.g. %% or __) is treated as an escaped literal.
+                if (i + 1 < chars.length && chars[i + 1] == cur) {
+                    literal.append(cur);
                     i++;
                 } else {
-                    sb.append(regexReplacement);
+                    if (literal.length() > 0) {
+                        regex.append(Pattern.quote(literal.toString()));
+                        literal.setLength(0);
+                    }
+                    regex.append(cur == '%' ? ".*" : "."); //NON-NLS
                 }
+            } else {
+                literal.append(cur);
             }
         }
 
-        return sb.toString();
+        if (literal.length() > 0) {
+            regex.append(Pattern.quote(literal.toString()));
+        }
+
+        return regex.toString();
     }
 
     /**
