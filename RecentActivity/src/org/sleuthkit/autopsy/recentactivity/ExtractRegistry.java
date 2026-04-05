@@ -36,7 +36,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
@@ -44,6 +43,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -569,13 +569,7 @@ class ExtractRegistry extends Extract {
             result = result.replace('\0', ' '); // NON-NLS
             String enddoc = "</document>"; //NON-NLS
             String stringdoc = startdoc + result + enddoc;
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setFeature("http://xml.org/sax/features/external-general-entities", false); //NON-NLS
-            dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false); //NON-NLS
-            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false); //NON-NLS
-            dbf.setXIncludeAware(false);
-            dbf.setExpandEntityReferences(false);
-            DocumentBuilder builder = dbf.newDocumentBuilder();
+            DocumentBuilder builder = XMLUtil.getDocumentBuilder();
             Document doc = builder.parse(new InputSource(new StringReader(stringdoc)));
 
             // cycle through the elements in the doc

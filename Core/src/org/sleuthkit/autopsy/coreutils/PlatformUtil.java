@@ -584,8 +584,21 @@ public class PlatformUtil {
      *         it couldn't be determined
      */
     public static synchronized long[] getJavaPIDs(String argsSubQuery) {
-        // Use ProcessHandle to enumerate processes without spawning a shell,
-        // avoiding shell/command injection from the argsSubQuery parameter.
+        // Previously this method used WMIC on Windows and "ps -ef | grep" on
+        // Linux/Mac by constructing shell commands with Runtime.getRuntime().exec().
+        // Those approaches had a shell injection vulnerability (argsSubQuery was
+        // interpolated directly into the WMIC query string), and the Linux pipe
+        // was likely broken because exec(String) does not invoke a shell.
+        // Both were replaced with ProcessHandle (requires Java 9+, fine since
+        // Autopsy now requires Java 21).
+        //
+        // Known limitation: on Windows, ProcessHandle.Info.commandLine() returns
+        // Optional.empty() for processes owned by other users or running as a
+        // service. The old WMIC approach did not have this restriction. In
+        // practice this should not matter because Autopsy starts Solr under the
+        // same user account, but if getJavaPIDs() ever starts returning empty
+        // results when a matching process is known to exist, cross-user
+        // visibility is the first thing to investigate.
         String regexStr = ".*java.*" + convertSqlLikeToRegex(argsSubQuery) + ".*"; //NON-NLS
         try {
             Pattern pattern = Pattern.compile(regexStr, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
