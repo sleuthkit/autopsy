@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
@@ -178,8 +179,12 @@ class LuceneQuery implements KeywordSearchQuery {
                         //check against file name and actual content seperately.
                         for (Object content_obj : content) {
                             String content_str = (String) content_obj;
+                            if (content_str == null) {
+                                continue;
+                            }
                             //for new schemas, check that the hit is before the chunk/window boundary.
-                            int firstOccurence = content_str.toLowerCase().indexOf(strippedQueryString.toLowerCase());
+                            int firstOccurence = strippedQueryString == null ? -1
+                                    : content_str.toLowerCase(Locale.ROOT).indexOf(strippedQueryString.toLowerCase(Locale.ROOT));
                             //there is no chunksize field for "parent" entries in the index
                             if (chunkSize == null || chunkSize == 0 || (firstOccurence > -1 && firstOccurence < chunkSize)) {
                                 matches.add(createKeywordtHit(highlightResponse, docId));

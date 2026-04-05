@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datasourceprocessors.xry;
 
 import java.time.Instant;
+import java.util.Locale;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -134,11 +135,11 @@ final class XRYUtils {
      */
     private static String removeDateTimeLocale(String dateTime) {
         String result = dateTime;
-        int deviceIndex = result.toLowerCase().indexOf(DEVICE_LOCALE);
+        int deviceIndex = result.toLowerCase(Locale.ROOT).indexOf(DEVICE_LOCALE);
         if (deviceIndex != -1) {
             result = result.substring(0, deviceIndex);
         }
-        int networkIndex = result.toLowerCase().indexOf(NETWORK_LOCALE);
+        int networkIndex = result.toLowerCase(Locale.ROOT).indexOf(NETWORK_LOCALE);
         if (networkIndex != -1) {
             result = result.substring(0, networkIndex);
         }
