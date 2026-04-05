@@ -71,6 +71,7 @@ public class TimeZonePanel extends TitledPane {
                 });
     }
 
+    @SuppressWarnings("this-escape")
     public TimeZonePanel() {
         FXMLConstructor.construct(this, "TimeZonePanel.fxml"); // NON-NLS
     }

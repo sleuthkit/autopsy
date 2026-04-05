@@ -160,6 +160,7 @@ final public class FilterSetPanel extends BorderPane {
         });
     }
 
+    @SuppressWarnings("this-escape")
     public FilterSetPanel(TimeLineController controller) {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();

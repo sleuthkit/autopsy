@@ -617,7 +617,7 @@ public class AutopsyTestCases {
 
                             return Triple.of(name, speed, errorDescription);
                         },
-                        (a, b) -> StringUtils.compareIgnoreCase(a.getLeft(), b.getRight()));
+                        (a, b) -> a.getLeft().compareToIgnoreCase(b.getRight()));
 
                 List<Pair<String, Long>> diskStatus = getKeyValLimited(
                         getWmicTable("wmic path Win32_PerfFormattedData_PerfDisk_LogicalDisk get AvgDiskQueueLength,Name").stream()

@@ -23,7 +23,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Level;
 import javafx.fxml.FXMLLoader;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -39,7 +38,7 @@ public class FXMLConstructor {
     private static Logger logger = Logger.getLogger(FXMLConstructor.class.getName());
 
     static public void construct(Object n, String fxmlFileName) {
-        final String name = "nbres:/" + StringUtils.replace(n.getClass().getPackage().getName(), ".", "/") + "/" + fxmlFileName; //NON-NLS
+        final String name = "nbres:/" + n.getClass().getPackage().getName().replace(".", "/") + "/" + fxmlFileName; //NON-NLS
 
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(new URL(name));

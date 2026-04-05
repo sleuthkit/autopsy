@@ -97,6 +97,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
     @FXML
     private BorderPane bottomBorder;
 
+    @SuppressWarnings("this-escape")
     public IntervalSelector(IntervalSelectorProvider<X> chart) {
         this.chart = chart;
         this.controller = chart.getController();

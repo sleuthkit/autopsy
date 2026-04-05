@@ -85,6 +85,7 @@ public class SummaryTablePane extends AnchorPane {
         new Thread(() -> handleCategoryChanged(null)).start();
     }
 
+    @SuppressWarnings("this-escape")
     public SummaryTablePane(ImageGalleryController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "SummaryTablePane.fxml"); //NON-NLS

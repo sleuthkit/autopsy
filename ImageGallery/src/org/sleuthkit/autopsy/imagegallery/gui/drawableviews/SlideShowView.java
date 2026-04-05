@@ -79,6 +79,7 @@ public class SlideShowView extends DrawableTileBase {
 
     private volatile MediaLoadTask mediaTask;
 
+    @SuppressWarnings("this-escape")
     SlideShowView(GroupPane gp, ImageGalleryController controller) {
         super(gp, controller);
         FXMLConstructor.construct(this, "SlideShowView.fxml"); //NON-NLS

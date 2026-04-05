@@ -316,6 +316,7 @@ public class CountsViewPane extends AbstractTimelineChart<String, Number, Node, 
         /**
          * Constructor
          */
+        @SuppressWarnings("this-escape")
         CountsViewSettingsPane() {
             FXMLConstructor.construct(this, "CountsViewSettingsPane.fxml"); // NON-NLS
         }

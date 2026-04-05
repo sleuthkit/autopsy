@@ -179,7 +179,7 @@ class LuceneQuery implements KeywordSearchQuery {
                         for (Object content_obj : content) {
                             String content_str = (String) content_obj;
                             //for new schemas, check that the hit is before the chunk/window boundary.
-                            int firstOccurence = StringUtils.indexOfIgnoreCase(content_str, strippedQueryString);
+                            int firstOccurence = content_str.toLowerCase().indexOf(strippedQueryString.toLowerCase());
                             //there is no chunksize field for "parent" entries in the index
                             if (chunkSize == null || chunkSize == 0 || (firstOccurence > -1 && firstOccurence < chunkSize)) {
                                 matches.add(createKeywordtHit(highlightResponse, docId));

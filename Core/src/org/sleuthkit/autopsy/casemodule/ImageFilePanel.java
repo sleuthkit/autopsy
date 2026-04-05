@@ -466,7 +466,7 @@ public class ImageFilePanel extends JPanel {
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             String path = chooser.getSelectedFile().getPath();
             if (path.endsWith(".001")) {
-                String zeroX3_path = StringUtils.removeEnd(path, ".001") + ".000";
+                String zeroX3_path = path.substring(0, path.length() - 4) + ".000";
                 if (new File(zeroX3_path).exists()) {
                     int showConfirmDialog = JOptionPane.showConfirmDialog(this,
                             Bundle.ImageFilePanel_000_confirmationMessage(),

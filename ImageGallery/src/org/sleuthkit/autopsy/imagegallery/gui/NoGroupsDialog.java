@@ -52,6 +52,7 @@ public class NoGroupsDialog extends GridPane {
 
     }
 
+    @SuppressWarnings("this-escape")
     private NoGroupsDialog() {
         FXMLConstructor.construct(this, "NoGroupsDialog.fxml"); //NON-NLS
     }
