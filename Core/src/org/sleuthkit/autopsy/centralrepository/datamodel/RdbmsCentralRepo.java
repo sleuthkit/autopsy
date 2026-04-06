@@ -1674,8 +1674,8 @@ abstract class RdbmsCentralRepo implements CentralRepository {
         Map<String, Boolean> correlationHasAccount = new HashMap<>();
         for (CorrelationAttributeInstance.Type artifactType : artifactTypes) {
            String tableName = correlationTypeToInstanceTableName(artifactType);
-           Boolean isAccount = Boolean.valueOf(correlationAttribHasAnAccount(artifactType)); 
-           correlationHasAccount.put(correlationTypeToInstanceTableName(artifactType), Boolean.valueOf(correlationAttribHasAnAccount(artifactType)));
+           Boolean isAccount = correlationAttribHasAnAccount(artifactType); 
+           correlationHasAccount.put(tableName, isAccount);
         }
         
         Connection conn = connect();
@@ -1749,7 +1749,11 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                                 }
                                 bulkPs.setLong(8, eamArtifact.getFileObjectId());
                                 if (correlationHasAccount.get(tableName)) {
-                                    bulkPs.setLong(9, eamArtifact.getAccountId());
+                                    if (eamArtifact.getAccountId() != null && eamArtifact.getAccountId() >= 0) {
+                                        bulkPs.setLong(9, eamArtifact.getAccountId());
+                                    } else {
+                                        bulkPs.setNull(9, Types.INTEGER);
+                                    }
                                 }
                                 bulkPs.addBatch();
                             } else {
