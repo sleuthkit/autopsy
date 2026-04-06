@@ -62,8 +62,11 @@ final class ExtractSru extends Extract {
     private static final String APPLICATION_USAGE_SOURCE_NAME = "System Resource Usage - Application Usage"; //NON-NLS
     private static final String NETWORK_USAGE_SOURCE_NAME = "System Resource Usage - Network Usage";
     private static final String SRU_TOOL_FOLDER = "markmckinnon"; //NON-NLS
-    private static final String SRU_TOOL_NAME_WINDOWS = "Export_Srudb.exe"; //NON-NLS
-    private static final String SRU_TOOL_NAME_LINUX = "export_srudb_linux"; //NON-NLS
+    private static final String SRU_TOOL_NAME_X64_WINDOWS = "mm_artifact_parser_x64_win.exe"; //NON-NLS
+    private static final String SRU_TOOL_NAME_X64_LINUX = "mm_artifact_parser_x64_linux"; //NON-NLS
+    private static final String SRU_TOOL_NAME_X64_MACOS = "mm_artifact_parser_x64_macos"; //NON-NLS
+    private static final String SRU_TOOL_NAME_AARCH64_LINUX = "mm_artifact_parser_aarch64_linux"; //NON-NLS
+    private static final String SRU_TOOL_NAME_AARCH64_MACOS = "mm_artifact_parser_aarch64_macos"; //NON-NLS
     private static final String SRU_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String SRU_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
 
@@ -237,9 +240,11 @@ final class ExtractSru extends Extract {
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(sruExePath);
+        commandLine.add("-a");
+        commandLine.add("sru");
         commandLine.add("-sr");
         commandLine.add(sruFile);  //NON-NLS
-        commandLine.add("-s");
+        commandLine.add("-sh");
         commandLine.add(softwareHiveFile);
         commandLine.add("-db");
         commandLine.add(tempOutFile);
@@ -254,10 +259,18 @@ final class ExtractSru extends Extract {
     private String getPathForSruDumper() {
         Path path = null;
         if (PlatformUtil.isWindowsOS()) {
-            path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_WINDOWS);
-        } else {
-            if ("Linux".equals(PlatformUtil.getOSName())) {
-                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_LINUX);
+            path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_X64_WINDOWS);
+        } else if (PlatformUtil.isLinuxOS()) {
+            if ("aarch64".equals(PlatformUtil.getOSArch())) {
+                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_AARCH64_LINUX);
+            } else {
+                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_X64_LINUX);
+            }
+        } else if (PlatformUtil.isMacOS()) {
+            if ("aarch64".equals(PlatformUtil.getOSArch())) {
+                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_AARCH64_MACOS);
+            } else {
+                path = Paths.get(SRU_TOOL_FOLDER, SRU_TOOL_NAME_X64_MACOS);
             }
         }
         File sruToolFile = InstalledFileLocator.getDefault().locate(path.toString(),
