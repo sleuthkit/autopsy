@@ -69,8 +69,11 @@ final class ExtractPrefetch extends Extract {
     private static final String PREFETCH_TSK_COMMENT = "Prefetch File";
     private static final String PREFETCH_FILE_LOCATION = "/windows/prefetch";
     private static final String PREFETCH_TOOL_FOLDER = "markmckinnon"; //NON-NLS
-    private static final String PREFETCH_TOOL_NAME_WINDOWS = "parse_prefetch.exe"; //NON-NLS
-    private static final String PREFETCH_TOOL_NAME_LINUX = "parse_prefetch_linux"; //NON-NLS
+    private static final String PREFETCH_TOOL_NAME_X64_WINDOWS = "mm_artifact_parser_x64_win.exe"; //NON-NLS
+    private static final String PREFETCH_TOOL_NAME_X64_LINUX = "mm_artifact_parser_x64_linux"; //NON-NLS
+    private static final String PREFETCH_TOOL_NAME_X64_MACOS = "mm_artifact_parser_x64_macos"; //NON-NLS
+    private static final String PREFETCH_TOOL_NAME_AARCH64_LINUX = "mm_artifact_parser_aarch64_linux"; //NON-NLS
+    private static final String PREFETCH_TOOL_NAME_AARCH64_MACOS = "mm_artifact_parser_aarch64_macos"; //NON-NLS
     private static final String PREFETCH_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String PREFETCH_ERROR_FILE_NAME = "Error.txt"; //NON-NLS
     private static final String PREFETCH_PARSER_DB_FILE = "Autopsy_PF_DB.db3"; //NON-NLS
@@ -196,7 +199,11 @@ final class ExtractPrefetch extends Extract {
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(prefetchExePath);
+        commandLine.add("-a");
+        commandLine.add("prefetch");
+        commandLine.add("-f");
         commandLine.add(prefetchDir);  //NON-NLS
+        commandLine.add("-db");
         commandLine.add(tempOutFile);
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
@@ -216,11 +223,20 @@ final class ExtractPrefetch extends Extract {
     private String getPathForPrefetchDumper() {
         Path path = null;
         if (PlatformUtil.isWindowsOS()) {
-            path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_WINDOWS);
-        } else {
-            if ("Linux".equals(PlatformUtil.getOSName())) {
-                path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_LINUX);
+            path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_X64_WINDOWS);
+        } else if (PlatformUtil.isLinuxOS()) {
+            if ("aarch64".equals(PlatformUtil.getOSArch())) {
+                path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_AARCH64_LINUX);
+            } else {
+                path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_X64_LINUX);                
             }
+        } else if (PlatformUtil.isMacOS()) {
+            if ("aarch64".equals(PlatformUtil.getOSArch())) {
+                path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_AARCH64_MACOS);
+            } else {
+                path = Paths.get(PREFETCH_TOOL_FOLDER, PREFETCH_TOOL_NAME_X64_MACOS);                
+            }
+            
         }
         File prefetchToolFile = InstalledFileLocator.getDefault().locate(path.toString(),
                 ExtractPrefetch.class.getPackage().getName(), false);

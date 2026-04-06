@@ -26,8 +26,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.UUID;
+import java.util.Objects;
 import javax.swing.filechooser.FileFilter;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -91,10 +91,8 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         filtersList.add(encaseFilter);
         allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
         allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
-        if (!System.getProperty("os.name").toLowerCase().contains("mac")) {
-            filtersList.add(virtualMachineFilter);
-            allExt.addAll(GeneralFilter.VIRTUAL_MACHINE_EXTS);
-        }
+        filtersList.add(virtualMachineFilter);
+        allExt.addAll(GeneralFilter.VIRTUAL_MACHINE_EXTS);
     }
 
     /**
@@ -214,7 +212,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         ingestStream = new DefaultIngestStream();
         readConfigSettings();
         this.host = host;
-        this.password = StringUtils.defaultString(password, this.password);
+        this.password = Objects.toString(password, this.password);
         try {
             image = SleuthkitJNI.addImageToDatabase(Case.getCurrentCase().getSleuthkitCase(),
                     new String[]{imagePath}, sectorSize, timeZone, md5, sha1, sha256, deviceId, this.password, this.host);
@@ -324,7 +322,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         // Read the settings from the wizard 
         readConfigSettings();
         this.host = host;
-        this.password = StringUtils.defaultString(password, this.password);
+        this.password = Objects.toString(password, this.password);
 
         // Set up the data source before creating the ingest stream
         try {
@@ -547,7 +545,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.imagePath = dataSourcePath.toString();
         this.sectorSize = 0;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
-        this.password = StringUtils.defaultString(password, this.password);
+        this.password = Objects.toString(password, this.password);
         this.host = host;
         this.ignoreFatOrphanFiles = false;
 
@@ -586,7 +584,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.sectorSize = 0;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.host = host;
-        this.password = password;
+        this.password = Objects.toString(password, this.password);
         this.ignoreFatOrphanFiles = false;
 
         // Set up the data source before creating the ingest stream

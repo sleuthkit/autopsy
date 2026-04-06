@@ -1,7 +1,7 @@
 /*
- * Autopsy Forensic Browser
+ * Autopsy 
  *
- * Copyright 2012-2021 Basis Technology Corp.
+ * Copyright 2012-2026 Sleuth Kit Labs
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1148,6 +1148,23 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
         if (scoTask != null) {
             backgroundTasksPool.submit(scoTask);
+        }
+
+        for (ArtifactPropertyEnricher enricher : Lookup.getDefault().lookupAll(ArtifactPropertyEnricher.class)) {
+            try {
+                Sheet.Set enrichmentSet = enricher.getEnrichment(artifact);
+                if (enrichmentSet != null) {
+                    if (sheet.get(enrichmentSet.getName()) != null) {
+                        logger.log(Level.WARNING, String.format("Enricher %s returned a Sheet.Set with duplicate name '%s' for artifact %d; skipping to avoid overwriting existing properties",
+                                enricher.getClass().getName(), enrichmentSet.getName(), artifact.getArtifactID()));
+                    } else {
+                        sheet.put(enrichmentSet);
+                    }
+                }
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, String.format("Error getting property enrichment from %s for artifact %d",
+                        enricher.getClass().getName(), artifact.getArtifactID()), ex);
+            }
         }
 
         return sheet;
