@@ -37,8 +37,8 @@ import java.util.logging.Logger;
  * open, tools/list still works and tools/call returns a clean error message.
  *
  * An ephemeral auth token is generated at server start and written to
- * ~/.autopsy/mcp-token. It is not rotated between cases — it is valid for the
- * entire application session and removed on JVM exit.
+ * %LOCALAPPDATA%\autopsy\mcp\mcp-token. It is not rotated between cases —
+ * it is valid for the entire application session and removed on JVM exit.
  */
 public class McpServer {
 
@@ -122,8 +122,16 @@ public class McpServer {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
+    private Path getMcpDir() {
+        String localAppData = System.getenv("LOCALAPPDATA");
+        if (localAppData != null && !localAppData.isEmpty()) {
+            return Path.of(localAppData, "autopsy", "mcp");
+        }
+        return Path.of(System.getProperty("user.home"), "AppData", "Local", "autopsy", "mcp");
+    }
+
     private Path getTokenPath() {
-        return Path.of(System.getProperty("user.home"), ".autopsy", "mcp-token");
+        return getMcpDir().resolve("mcp-token");
     }
 
     private void writeTokenFile() {

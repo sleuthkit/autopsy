@@ -18,10 +18,18 @@ import * as path from "path";
 import * as os from "os";
 
 // ---------------------------------------------------------------------------
+// Paths — store token and logs under %LOCALAPPDATA%\autopsy\mcp on Windows
+// ---------------------------------------------------------------------------
+
+const MCP_DIR = process.env.LOCALAPPDATA
+    ? path.join(process.env.LOCALAPPDATA, "autopsy", "mcp")
+    : path.join(os.homedir(), "AppData", "Local", "autopsy", "mcp");
+
+// ---------------------------------------------------------------------------
 // Logging
 // ---------------------------------------------------------------------------
 
-const LOG_PATH = path.join(os.homedir(), ".autopsy", "mcp-stdio.log");
+const LOG_PATH = path.join(MCP_DIR, "mcp-stdio.log");
 const MAX_LOG_BYTES = 1 * 1024 * 1024; // 1 MB — rotate when exceeded
 
 function log(level, message) {
@@ -48,7 +56,7 @@ async function runTest() {
     let token;
 
     // 1. Token file
-    const tokenPath = path.join(os.homedir(), ".autopsy", "mcp-token");
+    const tokenPath = path.join(MCP_DIR, "mcp-token");
     try {
         token = fs.readFileSync(tokenPath, "utf8").trim();
         checks.push(`  [OK] Token file found: ${tokenPath}`);
@@ -153,7 +161,7 @@ function printTestResults(checks, passed) {
 // ---------------------------------------------------------------------------
 
 function readToken() {
-    const tokenPath = path.join(os.homedir(), ".autopsy", "mcp-token");
+    const tokenPath = path.join(MCP_DIR, "mcp-token");
     try {
         return fs.readFileSync(tokenPath, "utf8").trim();
     } catch {
