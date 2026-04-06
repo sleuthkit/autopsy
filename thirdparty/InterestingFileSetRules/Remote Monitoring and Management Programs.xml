@@ -1,0 +1,800 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<INTERESTING_FILE_SETS>
+   <INTERESTING_FILE_SET description="Remote Montitoring Management Programs" ignoreKnown="false" name="Remote Monitoring Management Programs" standardSet="false" versionNumber="0">
+      <NAME isExclusive="false" name="Chrome Remote Desktop" regex="false" typeFilter="file">remote_host.exe</NAME>
+      <NAME isExclusive="false" name="Chrome Remote Desktop" regex="false" typeFilter="file">remoting_host.exe</NAME>
+      <NAME isExclusive="false" name="Yandex.Disk" regex="false" typeFilter="file">YandexDisk2.exe</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="false" typeFilter="file">ScreenConnect.ClientService.exe</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="false" typeFilter="file">Remote Workforce Client.exe</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="false" typeFilter="file">ScreenConnect.WindowsClient.exe</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="true" typeFilter="file">screenconnect.*\.exe</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="false" typeFilter="file">screenconnect.windowsclient.exe</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="true" typeFilter="file">ConnectWiseControl.*\.exe</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="true" typeFilter="file">connectwise.*\.exe</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="false" typeFilter="file">screenconnect.clientservice.exe</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="false" typeFilter="file">Session.db</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="false" typeFilter="file">User.xml</NAME>
+      <NAME isExclusive="false" name="ScreenConnect" regex="false" typeFilter="file">user.config</NAME>
+      <NAME isExclusive="false" name="VNC" regex="true" typeFilter="file">winvnc.*\.exe</NAME>
+      <NAME isExclusive="false" name="VNC" regex="false" typeFilter="file">vncserver.exe</NAME>
+      <NAME isExclusive="false" name="VNC" regex="false" typeFilter="file">winwvc.exe</NAME>
+      <NAME isExclusive="false" name="VNC" regex="false" typeFilter="file">winvncsc.exe</NAME>
+      <NAME isExclusive="false" name="VNC" regex="false" typeFilter="file">vncserverui.exe</NAME>
+      <NAME isExclusive="false" name="VNC" regex="false" typeFilter="file">vncviewer.exe</NAME>
+      <NAME isExclusive="false" name="VNC" regex="false" typeFilter="file">winvnc.exe</NAME>
+      <NAME isExclusive="false" name="Laplink Gold" regex="false" typeFilter="file">tsircusr.exe</NAME>
+      <NAME isExclusive="false" name="Laplink Gold" regex="false" typeFilter="file">laplink.exe</NAME>
+      <NAME isExclusive="false" name="NetLock RMM" regex="false" typeFilter="file">NetLock_RMM_Agent_Installer.exe</NAME>
+      <NAME isExclusive="false" name="NetLock RMM" regex="false" typeFilter="file">NetLock_RMM_Agent_Installer</NAME>
+      <NAME isExclusive="false" name="NetLock RMM" regex="false" typeFilter="file">NetLock_RMM_User_Process.exe</NAME>
+      <NAME isExclusive="false" name="NetLock RMM" regex="false" typeFilter="file">NetLock_RMM_User_UAC.exe</NAME>
+      <NAME isExclusive="false" name="NetLock RMM" regex="false" typeFilter="file">server_config.json</NAME>
+      <NAME isExclusive="false" name="NetLock RMM" regex="false" typeFilter="file">netlock-rmm-agent-comm.service</NAME>
+      <NAME isExclusive="false" name="NetLock RMM" regex="false" typeFilter="file">com.netlock.rmm.agentcomm.plist</NAME>
+      <NAME isExclusive="false" name="NetLock RMM" regex="false" typeFilter="file">netlock-rmm-agent-comm.log</NAME>
+      <NAME isExclusive="false" name="KiTTY" regex="false" typeFilter="file">kitty.exe</NAME>
+      <NAME isExclusive="false" name="ToDesk" regex="false" typeFilter="file">todesk.exe</NAME>
+      <NAME isExclusive="false" name="ToDesk" regex="false" typeFilter="file">ToDesk_Service.exe</NAME>
+      <NAME isExclusive="false" name="ToDesk" regex="false" typeFilter="file">ToDesk_Setup.exe</NAME>
+      <NAME isExclusive="false" name="Zoho Assist" regex="false" typeFilter="file">zaservice.exe</NAME>
+      <NAME isExclusive="false" name="Zoho Assist" regex="false" typeFilter="file">ZMAgent.exe</NAME>
+      <NAME isExclusive="false" name="Zoho Assist" regex="false" typeFilter="file">ZA_Access.exe</NAME>
+      <NAME isExclusive="false" name="Zoho Assist" regex="false" typeFilter="file">ZohoMeeting.exe</NAME>
+      <NAME isExclusive="false" name="Zoho Assist" regex="false" typeFilter="file">Zohours.exe</NAME>
+      <NAME isExclusive="false" name="Zoho Assist" regex="false" typeFilter="file">zohotray.exe</NAME>
+      <NAME isExclusive="false" name="Zoho Assist" regex="false" typeFilter="file">ZohoURSService.exe</NAME>
+      <NAME isExclusive="false" name="Zoho Assist" regex="false" typeFilter="file">Zaservice.exe</NAME>
+      <NAME isExclusive="false" name="Zoho Assist" regex="false" typeFilter="file">za_connect.exe</NAME>
+      <NAME isExclusive="false" name="Zoho Assist" regex="false" typeFilter="file">connect.exe</NAME>
+      <NAME isExclusive="false" name="Auvik" regex="false" typeFilter="file">auvik.engine.exe</NAME>
+      <NAME isExclusive="false" name="Auvik" regex="false" typeFilter="file">auvik.agent.exe</NAME>
+      <NAME isExclusive="false" name="Lite Manager" regex="false" typeFilter="file">LMNoIpServer.exe</NAME>
+      <NAME isExclusive="false" name="Laplink Everywhere" regex="false" typeFilter="file">laplink.exe</NAME>
+      <NAME isExclusive="false" name="Laplink Everywhere" regex="true" typeFilter="file">laplink-everywhere-setup.*\.exe</NAME>
+      <NAME isExclusive="false" name="Laplink Everywhere" regex="false" typeFilter="file">laplinkeverywhere.exe</NAME>
+      <NAME isExclusive="false" name="Laplink Everywhere" regex="false" typeFilter="file">llrcservice.exe</NAME>
+      <NAME isExclusive="false" name="Laplink Everywhere" regex="false" typeFilter="file">serverproxyservice.exe</NAME>
+      <NAME isExclusive="false" name="Laplink Everywhere" regex="false" typeFilter="file">OOSysAgent.exe</NAME>
+      <NAME isExclusive="false" name="ServerEye" regex="true" typeFilter="file">servereye.*\.exe</NAME>
+      <NAME isExclusive="false" name="ServerEye" regex="false" typeFilter="file">ServiceProxyLocalSys.exe</NAME>
+      <NAME isExclusive="false" name="PuTTY" regex="false" typeFilter="file">putty.exe</NAME>
+      <NAME isExclusive="false" name="SkyFex" regex="false" typeFilter="file">Deskroll.exe</NAME>
+      <NAME isExclusive="false" name="SkyFex" regex="false" typeFilter="file">DeskRollUA.exe</NAME>
+      <NAME isExclusive="false" name="ZeroTier" regex="true" typeFilter="file">zerotier.*\.msi</NAME>
+      <NAME isExclusive="false" name="ZeroTier" regex="true" typeFilter="file">zerotier.*\.exe</NAME>
+      <NAME isExclusive="false" name="ZeroTier" regex="false" typeFilter="file">zero-powershell.exe</NAME>
+      <NAME isExclusive="false" name="NinjaRMM" regex="false" typeFilter="file">ninjarmmagent.exe</NAME>
+      <NAME isExclusive="false" name="NinjaRMM" regex="false" typeFilter="file">NinjaRMMAgent.exe</NAME>
+      <NAME isExclusive="false" name="NinjaRMM" regex="false" typeFilter="file">NinjaRMMAgenPatcher.exe</NAME>
+      <NAME isExclusive="false" name="NinjaRMM" regex="false" typeFilter="file">ninjarmm-cli.exe</NAME>
+      <NAME isExclusive="false" name="mstsc" regex="false" typeFilter="file">mstsc.exe</NAME>
+      <NAME isExclusive="false" name="LiteManager" regex="false" typeFilter="file">lmnoipserver.exe</NAME>
+      <NAME isExclusive="false" name="LiteManager" regex="false" typeFilter="file">ROMFUSClient.exe</NAME>
+      <NAME isExclusive="false" name="LiteManager" regex="false" typeFilter="file">romfusclient.exe</NAME>
+      <NAME isExclusive="false" name="LiteManager" regex="false" typeFilter="file">romviewer.exe</NAME>
+      <NAME isExclusive="false" name="LiteManager" regex="false" typeFilter="file">romserver.exe</NAME>
+      <NAME isExclusive="false" name="LiteManager" regex="false" typeFilter="file">ROMServer.exe</NAME>
+      <NAME isExclusive="false" name="Insync" regex="false" typeFilter="file">Insync.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">strwinclt.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">Splashtop-Splashtop Streamer-Status%4Operational.evtx</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">Splashtop-Splashtop Streamer-Remote Session%4Operational.evtx</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">FTCLog.txt</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">agent_log.txt</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">SPLog.txt</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">svcinfo.txt</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">sysinfo.txt</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">SRService.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">SRAgent.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">SSUAgent.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">SRUtility.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">SRFeature.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop" regex="false" typeFilter="file">SRAgent.sqlite3</NAME>
+      <NAME isExclusive="false" name="Royal Apps" regex="false" typeFilter="file">royalserver.exe</NAME>
+      <NAME isExclusive="false" name="Royal Apps" regex="false" typeFilter="file">royalts.exe</NAME>
+      <NAME isExclusive="false" name="MyGreenPC" regex="false" typeFilter="file">mygreenpc.exe</NAME>
+      <NAME isExclusive="false" name="Any Support" regex="false" typeFilter="file">ManualLauncher.exe</NAME>
+      <NAME isExclusive="false" name="Zabbix Agent" regex="true" typeFilter="file">zabbix_agent.*\.exe</NAME>
+      <NAME isExclusive="false" name="BeInSync" regex="true" typeFilter="file">Beinsync.*\.exe</NAME>
+      <NAME isExclusive="false" name="Quick Assist" regex="false" typeFilter="file">quickassist.exe</NAME>
+      <NAME isExclusive="false" name="SecureCRT" regex="false" typeFilter="file">SecureCRT.EXE</NAME>
+      <NAME isExclusive="false" name="Impero Connect" regex="false" typeFilter="file">ImperoClientSVC.exe</NAME>
+      <NAME isExclusive="false" name="HelpBeam" regex="true" typeFilter="file">helpbeam.*\.exe</NAME>
+      <NAME isExclusive="false" name="N-Able Advanced Monitoring Agent" regex="false" typeFilter="file">BASupSrvc.exe</NAME>
+      <NAME isExclusive="false" name="N-Able Advanced Monitoring Agent" regex="false" typeFilter="file">winagent.exe</NAME>
+      <NAME isExclusive="false" name="N-Able Advanced Monitoring Agent" regex="false" typeFilter="file">BASupApp.exe</NAME>
+      <NAME isExclusive="false" name="N-Able Advanced Monitoring Agent" regex="false" typeFilter="file">BASupTSHelper.exe</NAME>
+      <NAME isExclusive="false" name="N-Able Advanced Monitoring Agent" regex="true" typeFilter="file">Agent_.*\_RW.exe</NAME>
+      <NAME isExclusive="false" name="N-Able Advanced Monitoring Agent" regex="false" typeFilter="file">BASEClient.exe</NAME>
+      <NAME isExclusive="false" name="N-Able Advanced Monitoring Agent" regex="false" typeFilter="file">BASupSrvcCnfg.exe</NAME>
+      <NAME isExclusive="false" name="UltraVNC" regex="true" typeFilter="file">UltraVNC.*\.exe</NAME>
+      <NAME isExclusive="false" name="DW Service" regex="false" typeFilter="file">dwagsvc.exe</NAME>
+      <NAME isExclusive="false" name="DW Service" regex="false" typeFilter="file">dwagent.exe</NAME>
+      <NAME isExclusive="false" name="Jump Desktop" regex="false" typeFilter="file">jumpclient.exe</NAME>
+      <NAME isExclusive="false" name="Jump Desktop" regex="false" typeFilter="file">jumpdesktop.exe</NAME>
+      <NAME isExclusive="false" name="Jump Desktop" regex="false" typeFilter="file">jumpservice.exe</NAME>
+      <NAME isExclusive="false" name="Jump Desktop" regex="false" typeFilter="file">jumpconnect.exe</NAME>
+      <NAME isExclusive="false" name="Jump Desktop" regex="false" typeFilter="file">jumpupdater.exe</NAME>
+      <NAME isExclusive="false" name="Free Ping Tool" regex="false" typeFilter="file">can't find this one</NAME>
+      <NAME isExclusive="false" name="Total Software Deployment" regex="false" typeFilter="file">tniwinagent.exe</NAME>
+      <NAME isExclusive="false" name="Total Software Deployment" regex="false" typeFilter="file">Tsdservice.exe</NAME>
+      <NAME isExclusive="false" name="FleetDeck.io" regex="false" typeFilter="file">fleetdeck_agent_svc.exe</NAME>
+      <NAME isExclusive="false" name="FleetDeck.io" regex="false" typeFilter="file">fleetdeck_commander_svc.exe</NAME>
+      <NAME isExclusive="false" name="FleetDeck.io" regex="false" typeFilter="file">fleetdeck_installer.exe</NAME>
+      <NAME isExclusive="false" name="FleetDeck.io" regex="false" typeFilter="file">fleetdeck_commander_launcher.exe</NAME>
+      <NAME isExclusive="false" name="FleetDeck.io" regex="false" typeFilter="file">fleetdeck_agent.exe</NAME>
+      <NAME isExclusive="false" name="MobaXterm" regex="false" typeFilter="file">MobaXterm_installer_12.1.msi</NAME>
+      <NAME isExclusive="false" name="MobaXterm" regex="true" typeFilter="file">MobaXterm_installer_.*\.msi</NAME>
+      <NAME isExclusive="false" name="AweRay" regex="true" typeFilter="file">aweray_remote.*\.exe</NAME>
+      <NAME isExclusive="false" name="AweRay" regex="false" typeFilter="file">AweSun.exe</NAME>
+      <NAME isExclusive="false" name="Panorama9" regex="true" typeFilter="file">p9agent.*\.exe</NAME>
+      <NAME isExclusive="false" name="Parsec" regex="false" typeFilter="file">parsecd.exe</NAME>
+      <NAME isExclusive="false" name="Parsec" regex="false" typeFilter="file">pservice.exe</NAME>
+      <NAME isExclusive="false" name="Parsec" regex="false" typeFilter="file">teams.exe</NAME>
+      <NAME isExclusive="false" name="Apple Remote Desktop" regex="false" typeFilter="file">ARDAgent.app</NAME>
+      <NAME isExclusive="false" name="DameWare" regex="true" typeFilter="file">SolarWinds-Dameware-DRS.*\.exe</NAME>
+      <NAME isExclusive="false" name="DameWare" regex="true" typeFilter="file">DameWare Mini Remote Control.*\.exe</NAME>
+      <NAME isExclusive="false" name="DameWare" regex="true" typeFilter="file">dntus.*\.exe</NAME>
+      <NAME isExclusive="false" name="DameWare" regex="false" typeFilter="file">dwrcs.exe</NAME>
+      <NAME isExclusive="false" name="DameWare" regex="false" typeFilter="file">dwrcst.exe</NAME>
+      <NAME isExclusive="false" name="DameWare" regex="false" typeFilter="file">DameWare Remote Support.exe</NAME>
+      <NAME isExclusive="false" name="DameWare" regex="true" typeFilter="file">SolarWinds-Dameware-MRC.*\.exe</NAME>
+      <NAME isExclusive="false" name="pcAnywhere" regex="false" typeFilter="file">awhost32.exe</NAME>
+      <NAME isExclusive="false" name="pcAnywhere" regex="false" typeFilter="file">awrem32.exe</NAME>
+      <NAME isExclusive="false" name="pcAnywhere" regex="false" typeFilter="file">pcaquickconnect.exe</NAME>
+      <NAME isExclusive="false" name="pcAnywhere" regex="false" typeFilter="file">winaw32.exe</NAME>
+      <NAME isExclusive="false" name="ITSupport247 (ConnectWise)" regex="false" typeFilter="file">saazapsc.exe</NAME>
+      <NAME isExclusive="false" name="CentraStage (Now Datto)" regex="false" typeFilter="file">CagService.exe</NAME>
+      <NAME isExclusive="false" name="CentraStage (Now Datto)" regex="false" typeFilter="file">AEMAgent.exe</NAME>
+      <NAME isExclusive="false" name="Action1" regex="false" typeFilter="file">action1_agent.exe</NAME>
+      <NAME isExclusive="false" name="Action1" regex="true" typeFilter="file">action1_log_.*\.log</NAME>
+      <NAME isExclusive="false" name="ezHelp" regex="false" typeFilter="file">ezhelpclientmanager.exe</NAME>
+      <NAME isExclusive="false" name="ezHelp" regex="false" typeFilter="file">ezHelpManager.exe</NAME>
+      <NAME isExclusive="false" name="ezHelp" regex="false" typeFilter="file">ezhelpclient.exe</NAME>
+      <NAME isExclusive="false" name="ISL Online" regex="false" typeFilter="file">islalwaysonmonitor.exe</NAME>
+      <NAME isExclusive="false" name="ISL Online" regex="false" typeFilter="file">isllight.exe</NAME>
+      <NAME isExclusive="false" name="ISL Online" regex="false" typeFilter="file">isllightservice.exe</NAME>
+      <NAME isExclusive="false" name="ISL Online" regex="false" typeFilter="file">ISLLightClient.exe</NAME>
+      <NAME isExclusive="false" name="ISL Online" regex="true" typeFilter="file">ISL Light.*\ </NAME>
+      <NAME isExclusive="false" name="ISL Online" regex="false" typeFilter="file">ISLLight.exe</NAME>
+      <NAME isExclusive="false" name="DeskDay" regex="true" typeFilter="file">ultimate_.*\.exe</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">AnyDesk.app</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">ad_svc.trace</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">connection_trace.txt</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">ad.trace</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="true" typeFilter="file">.*\.txt</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">user.conf</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">service.conf</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">system.conf</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">AnyDesk.lnk</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">Uninstall AnyDesk.lnk</NAME>
+      <NAME isExclusive="false" name="AnyDesk" regex="true" typeFilter="file">.*\.anydesk</NAME>
+      <NAME isExclusive="false" name="Alpemix" regex="false" typeFilter="file">AlpemixService.exe</NAME>
+      <NAME isExclusive="false" name="Alpemix" regex="false" typeFilter="file">Alpemix.ini</NAME>
+      <NAME isExclusive="false" name="GoToAssist" regex="false" typeFilter="file">gotoassist.exe</NAME>
+      <NAME isExclusive="false" name="GoToAssist" regex="true" typeFilter="file">g2a.*\.exe</NAME>
+      <NAME isExclusive="false" name="GoToAssist" regex="false" typeFilter="file">GoTo Assist Opener.exe</NAME>
+      <NAME isExclusive="false" name="GoToAssist" regex="false" typeFilter="file">g2mcomm.exe</NAME>
+      <NAME isExclusive="false" name="GoToAssist" regex="false" typeFilter="file">g2mupdate.com</NAME>
+      <NAME isExclusive="false" name="GoToAssist" regex="false" typeFilter="file">goto opener.exe</NAME>
+      <NAME isExclusive="false" name="GoToAssist" regex="false" typeFilter="file">g2ax_comm_customer.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (aka Impero Connect)" regex="false" typeFilter="file">nhostsvc.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (aka Impero Connect)" regex="false" typeFilter="file">nhstw32.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (aka Impero Connect)" regex="false" typeFilter="file">nldrw32.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (aka Impero Connect)" regex="false" typeFilter="file">rmserverconsolemediator.exe</NAME>
+      <NAME isExclusive="false" name="SysAid" regex="false" typeFilter="file">IliAS.exe</NAME>
+      <NAME isExclusive="false" name="LANDesk" regex="false" typeFilter="file">issuser.exe</NAME>
+      <NAME isExclusive="false" name="LANDesk" regex="false" typeFilter="file">landeskagentbootstrap.exe</NAME>
+      <NAME isExclusive="false" name="LANDesk" regex="false" typeFilter="file">LANDeskPortalManager.exe</NAME>
+      <NAME isExclusive="false" name="LANDesk" regex="false" typeFilter="file">ldinv32.exe</NAME>
+      <NAME isExclusive="false" name="LANDesk" regex="false" typeFilter="file">ldsensors.exe</NAME>
+      <NAME isExclusive="false" name="LANDesk" regex="false" typeFilter="file">softmon.exe</NAME>
+      <NAME isExclusive="false" name="LANDesk" regex="false" typeFilter="file">tmcsvc.exe</NAME>
+      <NAME isExclusive="false" name="247ithelp.com (ConnectWise)" regex="false" typeFilter="file">Remote Workforce Client.exe</NAME>
+      <NAME isExclusive="false" name="Mocha VNC Lite" regex="false" typeFilter="file">This installs a modified VNC and cannot be blocked by path separate from VNC</NAME>
+      <NAME isExclusive="false" name="Ericom Connect" regex="true" typeFilter="file">EricomConnectRemoteHost.*\.exe</NAME>
+      <NAME isExclusive="false" name="Ericom Connect" regex="false" typeFilter="file">ericomconnnectconfigurationtool.exe</NAME>
+      <NAME isExclusive="false" name="eHorus" regex="false" typeFilter="file">ehorus standalone.exe</NAME>
+      <NAME isExclusive="false" name="Naverisk" regex="true" typeFilter="file">AgentSetup-.*\.exe</NAME>
+      <NAME isExclusive="false" name="rdpwrap" regex="false" typeFilter="file">RDPWInst.exe</NAME>
+      <NAME isExclusive="false" name="rdpwrap" regex="false" typeFilter="file">RDPCheck.exe</NAME>
+      <NAME isExclusive="false" name="rdpwrap" regex="false" typeFilter="file">RDPConf.exe</NAME>
+      <NAME isExclusive="false" name="Chrome SSH Extension" regex="true" typeFilter="file">iodihamcpbpeioajjeobimgagajmlibd.*\ </NAME>
+      <NAME isExclusive="false" name="Solar-PuTTY" regex="false" typeFilter="file">Solar-PuTTY.exe</NAME>
+      <NAME isExclusive="false" name="Kabuto" regex="false" typeFilter="file">Kabuto.App.Runner.exe</NAME>
+      <NAME isExclusive="false" name="Domotz" regex="false" typeFilter="file">domotz.exe</NAME>
+      <NAME isExclusive="false" name="Domotz" regex="false" typeFilter="file">Domotz Pro Desktop App.exe</NAME>
+      <NAME isExclusive="false" name="Domotz" regex="false" typeFilter="file">domotz_bash.exe</NAME>
+      <NAME isExclusive="false" name="Domotz" regex="true" typeFilter="file">domotz.*\.exe</NAME>
+      <NAME isExclusive="false" name="Domotz" regex="true" typeFilter="file">Domotz Pro Desktop App Setup.*\.exe</NAME>
+      <NAME isExclusive="false" name="Domotz" regex="true" typeFilter="file">domotz-windows.*\.exe</NAME>
+      <NAME isExclusive="false" name="Jump Cloud" regex="true" typeFilter="file">JumpCloud.*\.exe </NAME>
+      <NAME isExclusive="false" name="CloudFlare Tunnel" regex="false" typeFilter="file">cloudflared.exe</NAME>
+      <NAME isExclusive="false" name="RPort" regex="false" typeFilter="file">rport.exe</NAME>
+      <NAME isExclusive="false" name="Instant Housecall" regex="false" typeFilter="file">hsloader.exe</NAME>
+      <NAME isExclusive="false" name="Instant Housecall" regex="false" typeFilter="file">InstantHousecall.exe</NAME>
+      <NAME isExclusive="false" name="Instant Housecall" regex="false" typeFilter="file">ihcserver.exe</NAME>
+      <NAME isExclusive="false" name="Instant Housecall" regex="false" typeFilter="file">instanthousecall.exe</NAME>
+      <NAME isExclusive="false" name="Pcnow" regex="false" typeFilter="file">mwcliun.exe</NAME>
+      <NAME isExclusive="false" name="Pcnow" regex="false" typeFilter="file">pcnmgr.exe</NAME>
+      <NAME isExclusive="false" name="Pcnow" regex="false" typeFilter="file">webexpcnow.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">Online Backup.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">CBBackupPlan.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">Cloud.Backup.Scheduler.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">Cloud.Backup.RM.Service.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">cbb.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">CloudRaService.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">CloudRaSd.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">CloudRaCmd.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">CloudRaUtilities.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">Remote Desktop.exe</NAME>
+      <NAME isExclusive="false" name="MSP360" regex="false" typeFilter="file">Connect.exe</NAME>
+      <NAME isExclusive="false" name="SimpleHelp" regex="false" typeFilter="file">simplehelpcustomer.exe</NAME>
+      <NAME isExclusive="false" name="SimpleHelp" regex="false" typeFilter="file">simpleservice.exe</NAME>
+      <NAME isExclusive="false" name="SimpleHelp" regex="false" typeFilter="file">simplegatewayservice.exe</NAME>
+      <NAME isExclusive="false" name="SimpleHelp" regex="false" typeFilter="file">remote access.exe</NAME>
+      <NAME isExclusive="false" name="SimpleHelp" regex="false" typeFilter="file">windowslauncher.exe</NAME>
+      <NAME isExclusive="false" name="SimpleHelp" regex="false" typeFilter="file">spsrv.exe</NAME>
+      <NAME isExclusive="false" name="SimpleHelp" regex="false" typeFilter="file">serviceconfig.xml</NAME>
+      <NAME isExclusive="false" name="Pocket Controller (Soti Xsight)" regex="false" typeFilter="file">pocketcontroller.exe</NAME>
+      <NAME isExclusive="false" name="Pocket Controller (Soti Xsight)" regex="false" typeFilter="file">wysebrowser.exe</NAME>
+      <NAME isExclusive="false" name="Pocket Controller (Soti Xsight)" regex="false" typeFilter="file">XSightService.exe</NAME>
+      <NAME isExclusive="false" name="Sophos-Remote Management System" regex="false" typeFilter="file">clientmrinit.exe</NAME>
+      <NAME isExclusive="false" name="Sophos-Remote Management System" regex="false" typeFilter="file">mgntsvc.exe</NAME>
+      <NAME isExclusive="false" name="Sophos-Remote Management System" regex="false" typeFilter="file">routernt.exe</NAME>
+      <NAME isExclusive="false" name="RemoteUtilities" regex="false" typeFilter="file">rutview.exe</NAME>
+      <NAME isExclusive="false" name="RemoteUtilities" regex="false" typeFilter="file">rutserv.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop (Beta)" regex="false" typeFilter="file">SRServer.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop (Beta)" regex="false" typeFilter="file">SplashtopSOS.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop (Beta)" regex="true" typeFilter="file">Splashtop_Streamer_Windows.*\.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop (Beta)" regex="false" typeFilter="file">SRManager.exe</NAME>
+      <NAME isExclusive="false" name="Guacamole" regex="false" typeFilter="file">guacd.exe</NAME>
+      <NAME isExclusive="false" name="Remote.it" regex="false" typeFilter="file">remote-it-installer.exe</NAME>
+      <NAME isExclusive="false" name="Remote.it" regex="false" typeFilter="file">remote.it.exe</NAME>
+      <NAME isExclusive="false" name="Remote.it" regex="false" typeFilter="file">remoteit.exe</NAME>
+      <NAME isExclusive="false" name="Goverlan" regex="false" typeFilter="file">goverrmc.exe</NAME>
+      <NAME isExclusive="false" name="Goverlan" regex="true" typeFilter="file">govsrv.*\.exe</NAME>
+      <NAME isExclusive="false" name="Goverlan" regex="false" typeFilter="file">GovAgentInstallHelper.exe</NAME>
+      <NAME isExclusive="false" name="Goverlan" regex="false" typeFilter="file">GovAgentx64.exe</NAME>
+      <NAME isExclusive="false" name="Goverlan" regex="false" typeFilter="file">GovReachClient.exe</NAME>
+      <NAME isExclusive="false" name="Goverlan" regex="false" typeFilter="file">GovSrv.exe</NAME>
+      <NAME isExclusive="false" name="Syncro" regex="false" typeFilter="file">Syncro.Installer.exe</NAME>
+      <NAME isExclusive="false" name="Syncro" regex="false" typeFilter="file">Kabuto.App.Runner.exe</NAME>
+      <NAME isExclusive="false" name="Syncro" regex="false" typeFilter="file">Syncro.Overmind.Service.exe</NAME>
+      <NAME isExclusive="false" name="Syncro" regex="false" typeFilter="file">Kabuto.Installer.exe</NAME>
+      <NAME isExclusive="false" name="Syncro" regex="false" typeFilter="file">KabutoSetup.exe</NAME>
+      <NAME isExclusive="false" name="Syncro" regex="false" typeFilter="file">Syncro.Service.exe</NAME>
+      <NAME isExclusive="false" name="Syncro" regex="false" typeFilter="file">Kabuto.Service.Runner.exe</NAME>
+      <NAME isExclusive="false" name="Syncro" regex="false" typeFilter="file">Syncro.App.Runner.exe</NAME>
+      <NAME isExclusive="false" name="Syncro" regex="false" typeFilter="file">SyncroLive.Service.exe</NAME>
+      <NAME isExclusive="false" name="Syncro" regex="false" typeFilter="file">SyncroLive.Agent.exe</NAME>
+      <NAME isExclusive="false" name="AliWangWang-remote-control" regex="false" typeFilter="file">alitask.exe</NAME>
+      <NAME isExclusive="false" name="Aspia" regex="false" typeFilter="file">aspia_client.exe</NAME>
+      <NAME isExclusive="false" name="Aspia" regex="false" typeFilter="file">client.ini</NAME>
+      <NAME isExclusive="false" name="Aspia" regex="true" typeFilter="file">aspia_client-.*\.log</NAME>
+      <NAME isExclusive="false" name="Aspia" regex="false" typeFilter="file">qt.conf</NAME>
+      <NAME isExclusive="false" name="OCS inventory" regex="false" typeFilter="file">ocsinventory.exe</NAME>
+      <NAME isExclusive="false" name="OCS inventory" regex="false" typeFilter="file">ocsservice.exe</NAME>
+      <NAME isExclusive="false" name="SuperPuTTY" regex="false" typeFilter="file">superputty.exe</NAME>
+      <NAME isExclusive="false" name="Netviewer (GoToMeet)" regex="false" typeFilter="file">nvClient.exe</NAME>
+      <NAME isExclusive="false" name="Netviewer (GoToMeet)" regex="false" typeFilter="file">netviewer.exe</NAME>
+      <NAME isExclusive="false" name="LabTeach (Connectwise Automate)" regex="false" typeFilter="file">ltsvc.exe</NAME>
+      <NAME isExclusive="false" name="Manage Engine (Desktop Central)" regex="false" typeFilter="file">dcagentservice.exe</NAME>
+      <NAME isExclusive="false" name="Manage Engine (Desktop Central)" regex="false" typeFilter="file">dcagentregister.exe</NAME>
+      <NAME isExclusive="false" name="Remote Manipulator System" regex="false" typeFilter="file">rfusclient.exe</NAME>
+      <NAME isExclusive="false" name="Remote Manipulator System" regex="false" typeFilter="file">rutserv.exe</NAME>
+      <NAME isExclusive="false" name="Sorillus" regex="true" typeFilter="file">Sorillus-Launcher.*\.exe</NAME>
+      <NAME isExclusive="false" name="Sorillus" regex="false" typeFilter="file">Sorillus Launcher.exe</NAME>
+      <NAME isExclusive="false" name="Ericom AccessNow" regex="true" typeFilter="file">accessserver.*\.exe</NAME>
+      <NAME isExclusive="false" name="Ericom AccessNow" regex="false" typeFilter="file">accessserver.exe</NAME>
+      <NAME isExclusive="false" name="NTR Remote" regex="false" typeFilter="file">NTRsupportPro_EN.exe</NAME>
+      <NAME isExclusive="false" name="Access Remote PC" regex="false" typeFilter="file">RemotePCUIU.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (Impero Connect)" regex="false" typeFilter="file">nhostsvc.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (Impero Connect)" regex="false" typeFilter="file">nhstw32.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (Impero Connect)" regex="false" typeFilter="file">ngstw32.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (Impero Connect)" regex="false" typeFilter="file">Netop Ondemand.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (Impero Connect)" regex="false" typeFilter="file">nldrw32.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (Impero Connect)" regex="false" typeFilter="file">rmserverconsolemediator.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (Impero Connect)" regex="false" typeFilter="file">ImperoInit.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (Impero Connect)" regex="true" typeFilter="file">Connect.Backdrop.cloud.*\.exe</NAME>
+      <NAME isExclusive="false" name="Netop Remote Control (Impero Connect)" regex="false" typeFilter="file">ImperoClientSVC.exe</NAME>
+      <NAME isExclusive="false" name="GatherPlace-desktop sharing" regex="false" typeFilter="file">gp3.exe</NAME>
+      <NAME isExclusive="false" name="GatherPlace-desktop sharing" regex="false" typeFilter="file">gp4.exe</NAME>
+      <NAME isExclusive="false" name="GatherPlace-desktop sharing" regex="false" typeFilter="file">gp5.exe</NAME>
+      <NAME isExclusive="false" name="NoMachine" regex="true" typeFilter="file">nomachine.*\.exe</NAME>
+      <NAME isExclusive="false" name="NoMachine" regex="true" typeFilter="file">nxservice.*\.ese</NAME>
+      <NAME isExclusive="false" name="NoMachine" regex="false" typeFilter="file">nxd.exe</NAME>
+      <NAME isExclusive="false" name="ShowMyPC" regex="false" typeFilter="file">SMPCSetup.exe</NAME>
+      <NAME isExclusive="false" name="ShowMyPC" regex="true" typeFilter="file">showmypc.*\.exe</NAME>
+      <NAME isExclusive="false" name="ShowMyPC" regex="false" typeFilter="file">showmypc.exe</NAME>
+      <NAME isExclusive="false" name="ShowMyPC" regex="false" typeFilter="file">smpcsetup.exe</NAME>
+      <NAME isExclusive="false" name="Ivanti Remote Control" regex="false" typeFilter="file">IvantiRemoteControl.exe</NAME>
+      <NAME isExclusive="false" name="Ivanti Remote Control" regex="false" typeFilter="file">ArcUI.exe</NAME>
+      <NAME isExclusive="false" name="Ivanti Remote Control" regex="false" typeFilter="file">AgentlessRC.exe</NAME>
+      <NAME isExclusive="false" name="RemoteCall" regex="false" typeFilter="file">rcengmgru.exe</NAME>
+      <NAME isExclusive="false" name="RemoteCall" regex="false" typeFilter="file">rcmgrsvc.exe</NAME>
+      <NAME isExclusive="false" name="RemoteCall" regex="false" typeFilter="file">rxstartsupport.exe</NAME>
+      <NAME isExclusive="false" name="RemoteCall" regex="false" typeFilter="file">rcstartsupport.exe</NAME>
+      <NAME isExclusive="false" name="RemoteCall" regex="false" typeFilter="file">raautoup.exe</NAME>
+      <NAME isExclusive="false" name="RemoteCall" regex="false" typeFilter="file">agentu.exe</NAME>
+      <NAME isExclusive="false" name="RemoteCall" regex="false" typeFilter="file">remotesupportplayeru.exe</NAME>
+      <NAME isExclusive="false" name="RDPView" regex="false" typeFilter="file">dwrcs.exe</NAME>
+      <NAME isExclusive="false" name="BeAnyWhere" regex="false" typeFilter="file">basuptshelper.exe</NAME>
+      <NAME isExclusive="false" name="BeAnyWhere" regex="false" typeFilter="file">basupsrvcupdate.exe</NAME>
+      <NAME isExclusive="false" name="BeAnyWhere" regex="false" typeFilter="file">BASupApp.exe</NAME>
+      <NAME isExclusive="false" name="BeAnyWhere" regex="false" typeFilter="file">BASupSysInf.exe</NAME>
+      <NAME isExclusive="false" name="BeAnyWhere" regex="false" typeFilter="file">BASupAppSrvc.exe</NAME>
+      <NAME isExclusive="false" name="BeAnyWhere" regex="false" typeFilter="file">TakeControl.exe</NAME>
+      <NAME isExclusive="false" name="BeAnyWhere" regex="false" typeFilter="file">BASupAppElev.exe</NAME>
+      <NAME isExclusive="false" name="BeAnyWhere" regex="false" typeFilter="file">basupsrvc.exe</NAME>
+      <NAME isExclusive="false" name="Rocket Remote Desktop" regex="false" typeFilter="file">RDConsole.exe</NAME>
+      <NAME isExclusive="false" name="Rocket Remote Desktop" regex="false" typeFilter="file">RocketRemoteDesktop_Setup.exe</NAME>
+      <NAME isExclusive="false" name="PDQ Connect" regex="true" typeFilter="file">pdq-connect.*\.exe</NAME>
+      <NAME isExclusive="false" name="PDQ Connect" regex="true" typeFilter="file">PDQConnectUpdater-.*\.msi</NAME>
+      <NAME isExclusive="false" name="PDQ Connect" regex="false" typeFilter="file">PDQConnectAgent.db-journal</NAME>
+      <NAME isExclusive="false" name="SuperOps" regex="false" typeFilter="file">superopsticket.exe</NAME>
+      <NAME isExclusive="false" name="SuperOps" regex="false" typeFilter="file">superops.exe</NAME>
+      <NAME isExclusive="false" name="Level.io" regex="false" typeFilter="file">level-windows-amd64.exe</NAME>
+      <NAME isExclusive="false" name="Level.io" regex="false" typeFilter="file">level.exe</NAME>
+      <NAME isExclusive="false" name="Level.io" regex="false" typeFilter="file">level-remote-control-ffmpeg.exe</NAME>
+      <NAME isExclusive="false" name="MioNet (WD Anywhere Access)" regex="false" typeFilter="file">mionet.exe</NAME>
+      <NAME isExclusive="false" name="MioNet (WD Anywhere Access)" regex="false" typeFilter="file">mionetmanager.exe</NAME>
+      <NAME isExclusive="false" name="EMCO Remote Console" regex="false" typeFilter="file">remoteconsole.exe</NAME>
+      <NAME isExclusive="false" name="Pcvisit" regex="false" typeFilter="file">pcvisit.exe</NAME>
+      <NAME isExclusive="false" name="Pcvisit" regex="false" typeFilter="file">pcvisit_client.exe</NAME>
+      <NAME isExclusive="false" name="Pcvisit" regex="false" typeFilter="file">pcvisit-easysupport.exe</NAME>
+      <NAME isExclusive="false" name="Pcvisit" regex="false" typeFilter="file">pcvisit_service_client.exe</NAME>
+      <NAME isExclusive="false" name="ISL Light" regex="false" typeFilter="file">islalwaysonmonitor.exe</NAME>
+      <NAME isExclusive="false" name="ISL Light" regex="false" typeFilter="file">isllight.exe</NAME>
+      <NAME isExclusive="false" name="ISL Light" regex="false" typeFilter="file">isllightservice.exe</NAME>
+      <NAME isExclusive="false" name="ngrok" regex="false" typeFilter="file">ngrok.exe</NAME>
+      <NAME isExclusive="false" name="ngrok" regex="false" typeFilter="file">ngrok.zip</NAME>
+      <NAME isExclusive="false" name="ngrok" regex="true" typeFilter="file">ngrok.*\ </NAME>
+      <NAME isExclusive="false" name="AeroAdmin" regex="false" typeFilter="file">aeroadmin.exe</NAME>
+      <NAME isExclusive="false" name="AeroAdmin" regex="false" typeFilter="file">AeroAdmin.exe</NAME>
+      <NAME isExclusive="false" name="BeyondTrust (Bomgar)" regex="true" typeFilter="file">bomgar-scc-.*\.exe</NAME>
+      <NAME isExclusive="false" name="BeyondTrust (Bomgar)" regex="false" typeFilter="file">bomgar-scc.exe</NAME>
+      <NAME isExclusive="false" name="BeyondTrust (Bomgar)" regex="true" typeFilter="file">bomgar-pac-.*\.exe</NAME>
+      <NAME isExclusive="false" name="BeyondTrust (Bomgar)" regex="false" typeFilter="file">bomgar-pac.exe</NAME>
+      <NAME isExclusive="false" name="BeyondTrust (Bomgar)" regex="false" typeFilter="file">bomgar-rdp.exe</NAME>
+      <NAME isExclusive="false" name="MEGAsync" regex="false" typeFilter="file">MEGAsyncSetup64.exe</NAME>
+      <NAME isExclusive="false" name="MEGAsync" regex="false" typeFilter="file">MEGAupdater.exe</NAME>
+      <NAME isExclusive="false" name="RuDesktop" regex="false" typeFilter="file">rd.exe</NAME>
+      <NAME isExclusive="false" name="RuDesktop" regex="true" typeFilter="file">rudesktop.*\.exe</NAME>
+      <NAME isExclusive="false" name="TigerVNC" regex="true" typeFilter="file">tigervnc.*\.exe</NAME>
+      <NAME isExclusive="false" name="TigerVNC" regex="false" typeFilter="file">winvnc4.exe</NAME>
+      <NAME isExclusive="false" name="TigerVNC" regex="false" typeFilter="file">tvnserver.exe</NAME>
+      <NAME isExclusive="false" name="CrossTec Remote Control" regex="false" typeFilter="file">PCIVIDEO.EXE</NAME>
+      <NAME isExclusive="false" name="CrossTec Remote Control" regex="false" typeFilter="file">supporttool.exe</NAME>
+      <NAME isExclusive="false" name="ScreenMeet" regex="false" typeFilter="file">ScreenMeetSupport.exe</NAME>
+      <NAME isExclusive="false" name="ScreenMeet" regex="false" typeFilter="file">ScreenMeet.Support.exe</NAME>
+      <NAME isExclusive="false" name="RemotePC" regex="false" typeFilter="file">Idrive.File-Transfer</NAME>
+      <NAME isExclusive="false" name="RemotePC" regex="false" typeFilter="file">remotepcservice.exe</NAME>
+      <NAME isExclusive="false" name="RemotePC" regex="false" typeFilter="file">RemotePC.exe</NAME>
+      <NAME isExclusive="false" name="RemotePC" regex="false" typeFilter="file">remotepchost.exe</NAME>
+      <NAME isExclusive="false" name="RemotePC" regex="false" typeFilter="file">idrive.RemotePCAgent</NAME>
+      <NAME isExclusive="false" name="RemotePC" regex="false" typeFilter="file">rpcsuite.exe</NAME>
+      <NAME isExclusive="false" name="RemotePC" regex="false" typeFilter="file">RemotePCService.exe</NAME>
+      <NAME isExclusive="false" name="Pulseway" regex="false" typeFilter="file">PCMonitorManager.exe</NAME>
+      <NAME isExclusive="false" name="Pulseway" regex="false" typeFilter="file">pcmonitorsrv.exe</NAME>
+      <NAME isExclusive="false" name="Tactical RMM" regex="false" typeFilter="file">tacticalrmm.exe</NAME>
+      <NAME isExclusive="false" name="I'm InTouch" regex="false" typeFilter="file">iit.exe</NAME>
+      <NAME isExclusive="false" name="I'm InTouch" regex="false" typeFilter="file">intouch.exe</NAME>
+      <NAME isExclusive="false" name="I'm InTouch" regex="false" typeFilter="file">I'm InTouch Go Installer.exe</NAME>
+      <NAME isExclusive="false" name="PuTTY Tray" regex="false" typeFilter="file">puttytray.exe</NAME>
+      <NAME isExclusive="false" name="DragonDisk" regex="false" typeFilter="file">DragonDisk.exe</NAME>
+      <NAME isExclusive="false" name="ManageEngine" regex="false" typeFilter="file">InstallShield Setup.exe</NAME>
+      <NAME isExclusive="false" name="ManageEngine" regex="false" typeFilter="file">ManageEngine_Remote_Access_Plus.exe</NAME>
+      <NAME isExclusive="false" name="ManageEngine" regex="false" typeFilter="file">dcagentservice.exe</NAME>
+      <NAME isExclusive="false" name="HelpU" regex="false" typeFilter="file">helpu_install.exe</NAME>
+      <NAME isExclusive="false" name="HelpU" regex="false" typeFilter="file">HelpuUpdater.exe</NAME>
+      <NAME isExclusive="false" name="HelpU" regex="false" typeFilter="file">HelpuManager.exe</NAME>
+      <NAME isExclusive="false" name="GoToAssist Agent Desktop Console" regex="false" typeFilter="file">G2RDesktopConsole-x64.msi</NAME>
+      <NAME isExclusive="false" name="RAdmin" regex="false" typeFilter="file">Radmin.exe</NAME>
+      <NAME isExclusive="false" name="RAdmin" regex="false" typeFilter="file">rserver3.exe</NAME>
+      <NAME isExclusive="false" name="RAdmin" regex="false" typeFilter="file">FamItrfc</NAME>
+      <NAME isExclusive="false" name="RAdmin" regex="false" typeFilter="file">FamItrf2</NAME>
+      <NAME isExclusive="false" name="RAdmin" regex="false" typeFilter="file">Radm_log.htm</NAME>
+      <NAME isExclusive="false" name="RAdmin" regex="true" typeFilter="file">.*\.htm</NAME>
+      <NAME isExclusive="false" name="SmarTTY" regex="false" typeFilter="file">SmarTTY.exe</NAME>
+      <NAME isExclusive="false" name="Bitvise SSH Client" regex="false" typeFilter="file">BvSshClient-Inst.exe</NAME>
+      <NAME isExclusive="false" name="Pocket Controller" regex="false" typeFilter="file">pocketcontroller.exe</NAME>
+      <NAME isExclusive="false" name="Pocket Controller" regex="false" typeFilter="file">pocketcloudservice.exe</NAME>
+      <NAME isExclusive="false" name="Pocket Controller" regex="false" typeFilter="file">wysebrowser.exe</NAME>
+      <NAME isExclusive="false" name="ESET Remote Administrator" regex="false" typeFilter="file">era.exe</NAME>
+      <NAME isExclusive="false" name="ESET Remote Administrator" regex="false" typeFilter="file">einstaller.exe</NAME>
+      <NAME isExclusive="false" name="ESET Remote Administrator" regex="true" typeFilter="file">ezhelp.*\.exe</NAME>
+      <NAME isExclusive="false" name="ESET Remote Administrator" regex="false" typeFilter="file">eratool.exe</NAME>
+      <NAME isExclusive="false" name="ESET Remote Administrator" regex="false" typeFilter="file">ERAAgent.exe</NAME>
+      <NAME isExclusive="false" name="WinSCP" regex="false" typeFilter="file">WinSCP.exe</NAME>
+      <NAME isExclusive="false" name="QQ IM-remote assistance" regex="false" typeFilter="file">qq.exe</NAME>
+      <NAME isExclusive="false" name="QQ IM-remote assistance" regex="false" typeFilter="file">QQProtect.exe</NAME>
+      <NAME isExclusive="false" name="QQ IM-remote assistance" regex="false" typeFilter="file">qqpcmgr.exe</NAME>
+      <NAME isExclusive="false" name="Xeox" regex="false" typeFilter="file">xeox-agent_x64.exe</NAME>
+      <NAME isExclusive="false" name="Xeox" regex="false" typeFilter="file">xeox_service_windows.exe</NAME>
+      <NAME isExclusive="false" name="Xeox" regex="true" typeFilter="file">xeox-agent_.*\.exe</NAME>
+      <NAME isExclusive="false" name="Xeox" regex="false" typeFilter="file">xeox-agent_x86.exe</NAME>
+      <NAME isExclusive="false" name="Comodo RMM" regex="false" typeFilter="file">itsmagent.exe</NAME>
+      <NAME isExclusive="false" name="Comodo RMM" regex="false" typeFilter="file">rviewer.exe</NAME>
+      <NAME isExclusive="false" name="Remote Desktop Plus" regex="false" typeFilter="file">rdp.exe</NAME>
+      <NAME isExclusive="false" name="Rapid7" regex="false" typeFilter="file">ir_agent.exe</NAME>
+      <NAME isExclusive="false" name="Rapid7" regex="false" typeFilter="file">rapid7_agent_core.exe</NAME>
+      <NAME isExclusive="false" name="Rapid7" regex="false" typeFilter="file">rapid7_endpoint_broker.exe</NAME>
+      <NAME isExclusive="false" name="Echoware" regex="true" typeFilter="file">echoserver.*\.exe</NAME>
+      <NAME isExclusive="false" name="Echoware" regex="false" typeFilter="file">echoware.dll</NAME>
+      <NAME isExclusive="false" name="GotoHTTP" regex="false" typeFilter="file">GotoHTTP_x64.exe</NAME>
+      <NAME isExclusive="false" name="GotoHTTP" regex="false" typeFilter="file">gotohttp.exe</NAME>
+      <NAME isExclusive="false" name="GotoHTTP" regex="true" typeFilter="file">GotoHTTP.*\.exe</NAME>
+      <NAME isExclusive="false" name="TightVNC" regex="false" typeFilter="file">tvnviewer.exe</NAME>
+      <NAME isExclusive="false" name="TightVNC" regex="true" typeFilter="file">TightVNCViewerPortable.*\.exe</NAME>
+      <NAME isExclusive="false" name="TightVNC" regex="false" typeFilter="file">tvnserver.exe</NAME>
+      <NAME isExclusive="false" name="ZOC" regex="false" typeFilter="file">zoc.exe</NAME>
+      <NAME isExclusive="false" name="SmartFTP" regex="false" typeFilter="file">SfShellTools.dll.mui</NAME>
+      <NAME isExclusive="false" name="FastViewer" regex="false" typeFilter="file">fastclient.exe</NAME>
+      <NAME isExclusive="false" name="FastViewer" regex="false" typeFilter="file">fastmaster.exe</NAME>
+      <NAME isExclusive="false" name="FastViewer" regex="false" typeFilter="file">FastViewer.exe</NAME>
+      <NAME isExclusive="false" name="Devolutions Remote Desktop Manager" regex="false" typeFilter="file">Remote Desktop Manager</NAME>
+      <NAME isExclusive="false" name="Devolutions Remote Desktop Manager" regex="false" typeFilter="file">RemoteDesktopManager.exe</NAME>
+      <NAME isExclusive="false" name="Devolutions Remote Desktop Manager" regex="false" typeFilter="file">Connections.log</NAME>
+      <NAME isExclusive="false" name="Devolutions Remote Desktop Manager" regex="false" typeFilter="file">Mru.xml</NAME>
+      <NAME isExclusive="false" name="Devolutions Remote Desktop Manager" regex="false" typeFilter="file">Connections.db</NAME>
+      <NAME isExclusive="false" name="ExtraPuTTY" regex="false" typeFilter="file">ExtraPuTTY-0.30-2016-01-28-installer.exe</NAME>
+      <NAME isExclusive="false" name="SpyAnywhere" regex="false" typeFilter="file">sysdiag.exe</NAME>
+      <NAME isExclusive="false" name="OptiTune" regex="false" typeFilter="file">OTService.exe</NAME>
+      <NAME isExclusive="false" name="OptiTune" regex="false" typeFilter="file">OTPowerShell.exe</NAME>
+      <NAME isExclusive="false" name="Pilixo" regex="false" typeFilter="file">rdp.exe</NAME>
+      <NAME isExclusive="false" name="Pilixo" regex="true" typeFilter="file">Pilixo_Installer.*\.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">AgentPackageNetworkDiscovery.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">AgentPackageTaskScheduler.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">AteraAgent.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">atera_agent.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">ateraagent.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">Atera Networks</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">syncrosetup.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">log.txt</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">AlphaAgent.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">AgentPackageSTRemote.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">AgentPackageMonitoring.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">AgentPackageHeartbeat.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">AgentPackageFileExplorer.exe</NAME>
+      <NAME isExclusive="false" name="Atera" regex="false" typeFilter="file">AgentPackageRunCommandInteractive.exe</NAME>
+      <NAME isExclusive="false" name="KHelpDesk" regex="false" typeFilter="file">KHelpDesk.exe</NAME>
+      <NAME isExclusive="false" name="RemoteView" regex="false" typeFilter="file">remoteview.exe</NAME>
+      <NAME isExclusive="false" name="RemoteView" regex="false" typeFilter="file">rv.exe</NAME>
+      <NAME isExclusive="false" name="RemoteView" regex="false" typeFilter="file">rvagent.exe</NAME>
+      <NAME isExclusive="false" name="RemoteView" regex="false" typeFilter="file">rvagtray.exe</NAME>
+      <NAME isExclusive="false" name="Supremo" regex="false" typeFilter="file">supremo.exe</NAME>
+      <NAME isExclusive="false" name="Supremo" regex="false" typeFilter="file">supremoservice.exe</NAME>
+      <NAME isExclusive="false" name="Supremo" regex="false" typeFilter="file">supremosystem.exe</NAME>
+      <NAME isExclusive="false" name="Supremo" regex="false" typeFilter="file">supremohelper.exe</NAME>
+      <NAME isExclusive="false" name="Neturo" regex="true" typeFilter="file">neturo.*\.exe</NAME>
+      <NAME isExclusive="false" name="Neturo" regex="false" typeFilter="file">ntrntservice.exe</NAME>
+      <NAME isExclusive="false" name="Neturo" regex="false" typeFilter="file">neturo.exe</NAME>
+      <NAME isExclusive="false" name="FreeNX" regex="false" typeFilter="file">nxplayer.exe</NAME>
+      <NAME isExclusive="false" name="FixMe.it" regex="false" typeFilter="file">FixMeit Client.exe</NAME>
+      <NAME isExclusive="false" name="FixMe.it" regex="false" typeFilter="file">TiExpertStandalone.exe</NAME>
+      <NAME isExclusive="false" name="FixMe.it" regex="true" typeFilter="file">FixMeitClient.*\.exe</NAME>
+      <NAME isExclusive="false" name="FixMe.it" regex="false" typeFilter="file">TiExpertCore.exe</NAME>
+      <NAME isExclusive="false" name="FixMe.it" regex="false" typeFilter="file">FixMeit Unattended Access Setup.exe</NAME>
+      <NAME isExclusive="false" name="FixMe.it" regex="false" typeFilter="file">FixMeit Expert Setup.exe</NAME>
+      <NAME isExclusive="false" name="FixMe.it" regex="false" typeFilter="file">fixmeitclient.exe</NAME>
+      <NAME isExclusive="false" name="FixMe.it" regex="false" typeFilter="file">TiClientCore.exe</NAME>
+      <NAME isExclusive="false" name="FixMe.it" regex="true" typeFilter="file">TiClientHelper.*\.exe</NAME>
+      <NAME isExclusive="false" name="FixMe.it" regex="false" typeFilter="file">9380CC75B872221A7425D7503565B67580407F60</NAME>
+      <NAME isExclusive="false" name="RES Automation Manager" regex="true" typeFilter="file">wisshell.*\.exe</NAME>
+      <NAME isExclusive="false" name="RES Automation Manager" regex="false" typeFilter="file">wmc.exe</NAME>
+      <NAME isExclusive="false" name="RES Automation Manager" regex="false" typeFilter="file">wmc_deployer.exe</NAME>
+      <NAME isExclusive="false" name="RES Automation Manager" regex="false" typeFilter="file">wmcsvc.exe</NAME>
+      <NAME isExclusive="false" name="LogMeIn rescue" regex="true" typeFilter="file">support-logmeinrescue.*\.exe</NAME>
+      <NAME isExclusive="false" name="LogMeIn rescue" regex="false" typeFilter="file">support-logmeinrescue.exe</NAME>
+      <NAME isExclusive="false" name="LogMeIn rescue" regex="false" typeFilter="file">lmi_rescue.exe</NAME>
+      <NAME isExclusive="false" name="LogMeIn rescue" regex="false" typeFilter="file">lmi_rescue_srv.exe</NAME>
+      <NAME isExclusive="false" name="Xpra" regex="false" typeFilter="file">Xpra-Launcher.exe</NAME>
+      <NAME isExclusive="false" name="Xpra" regex="false" typeFilter="file">Xpra-x86_64_Setup.exe</NAME>
+      <NAME isExclusive="false" name="WebRDP" regex="false" typeFilter="file">webrdp.exe</NAME>
+      <NAME isExclusive="false" name="Royal TS" regex="false" typeFilter="file">royalts.exe</NAME>
+      <NAME isExclusive="false" name="NetSupport Manager" regex="false" typeFilter="file">pcictlui.exe</NAME>
+      <NAME isExclusive="false" name="NetSupport Manager" regex="false" typeFilter="file">pcicfgui.exe</NAME>
+      <NAME isExclusive="false" name="NetSupport Manager" regex="false" typeFilter="file">client32.exe</NAME>
+      <NAME isExclusive="false" name="Pandora RC (eHorus)" regex="false" typeFilter="file">ehorus standalone.exe</NAME>
+      <NAME isExclusive="false" name="Pandora RC (eHorus)" regex="false" typeFilter="file">ehorus_agent.exe</NAME>
+      <NAME isExclusive="false" name="Seetrol" regex="false" typeFilter="file">seetrolcenter.exe</NAME>
+      <NAME isExclusive="false" name="Seetrol" regex="false" typeFilter="file">seetrolclient.exe</NAME>
+      <NAME isExclusive="false" name="Seetrol" regex="false" typeFilter="file">seetrolmyservice.exe</NAME>
+      <NAME isExclusive="false" name="Seetrol" regex="false" typeFilter="file">seetrolremote.exe</NAME>
+      <NAME isExclusive="false" name="Seetrol" regex="false" typeFilter="file">seetrolsetting.exe</NAME>
+      <NAME isExclusive="false" name="HopToDesk" regex="false" typeFilter="file">hoptodesk.exe</NAME>
+      <NAME isExclusive="false" name="HopToDesk" regex="false" typeFilter="file">HopToDesk.app</NAME>
+      <NAME isExclusive="false" name="HopToDesk" regex="false" typeFilter="file">HopToDesk.exe</NAME>
+      <NAME isExclusive="false" name="HopToDesk" regex="false" typeFilter="file">privacyhelper.exe</NAME>
+      <NAME isExclusive="false" name="HopToDesk" regex="false" typeFilter="file">PrivacyMode.dll</NAME>
+      <NAME isExclusive="false" name="HopToDesk" regex="false" typeFilter="file">sciter.dll</NAME>
+      <NAME isExclusive="false" name="HopToDesk" regex="false" typeFilter="file">HopToDesk.toml</NAME>
+      <NAME isExclusive="false" name="HopToDesk" regex="false" typeFilter="file">hoptodesk_rCURRENT.log</NAME>
+      <NAME isExclusive="false" name="GetScreen" regex="false" typeFilter="file">GetScreen.exe</NAME>
+      <NAME isExclusive="false" name="GetScreen" regex="false" typeFilter="file">getscreen.exe</NAME>
+      <NAME isExclusive="false" name="Tanium" regex="false" typeFilter="file">TaniumClient.exe</NAME>
+      <NAME isExclusive="false" name="Tanium" regex="false" typeFilter="file">TaniumCX.exe</NAME>
+      <NAME isExclusive="false" name="Tanium" regex="false" typeFilter="file">TaniumExecWrapper.exe</NAME>
+      <NAME isExclusive="false" name="Tanium" regex="false" typeFilter="file">TaniumFileInfo.exe</NAME>
+      <NAME isExclusive="false" name="Tanium" regex="false" typeFilter="file">TPowerShell.exe</NAME>
+      <NAME isExclusive="false" name="PSEXEC" regex="false" typeFilter="file">psexec.exe</NAME>
+      <NAME isExclusive="false" name="PSEXEC" regex="false" typeFilter="file">psexecsvc.exe</NAME>
+      <NAME isExclusive="false" name="CrossLoop" regex="false" typeFilter="file">crossloopservice.exe</NAME>
+      <NAME isExclusive="false" name="CrossLoop" regex="false" typeFilter="file">CrossLoopConnect.exe</NAME>
+      <NAME isExclusive="false" name="CrossLoop" regex="false" typeFilter="file">WinVNCStub.exe</NAME>
+      <NAME isExclusive="false" name="Pocket Cloud (Wyse)" regex="true" typeFilter="file">pocketcloud.*\.exe</NAME>
+      <NAME isExclusive="false" name="Pocket Cloud (Wyse)" regex="false" typeFilter="file">pocketcloudservice.exe</NAME>
+      <NAME isExclusive="false" name="Remobo" regex="false" typeFilter="file">remobo.exe</NAME>
+      <NAME isExclusive="false" name="Remobo" regex="false" typeFilter="file">remobo_client.exe</NAME>
+      <NAME isExclusive="false" name="Remobo" regex="false" typeFilter="file">remobo_tracker.exe</NAME>
+      <NAME isExclusive="false" name="Microsoft RDP" regex="false" typeFilter="file">termsrv.exe</NAME>
+      <NAME isExclusive="false" name="Microsoft RDP" regex="false" typeFilter="file">mstsc.exe</NAME>
+      <NAME isExclusive="false" name="Microsoft RDP" regex="false" typeFilter="file">Microsoft Remote Desktop</NAME>
+      <NAME isExclusive="false" name="Absolute (Computrace)" regex="false" typeFilter="file">rpcnet.exe</NAME>
+      <NAME isExclusive="false" name="Absolute (Computrace)" regex="false" typeFilter="file">ctes.exe</NAME>
+      <NAME isExclusive="false" name="Absolute (Computrace)" regex="false" typeFilter="file">ctespersitence.exe</NAME>
+      <NAME isExclusive="false" name="Absolute (Computrace)" regex="false" typeFilter="file">cteshostsvc.exe</NAME>
+      <NAME isExclusive="false" name="Absolute (Computrace)" regex="false" typeFilter="file">rpcld.exe</NAME>
+      <NAME isExclusive="false" name="Level" regex="false" typeFilter="file">level.exe</NAME>
+      <NAME isExclusive="false" name="Level" regex="false" typeFilter="file">osqueryi.exe</NAME>
+      <NAME isExclusive="false" name="Level" regex="false" typeFilter="file">level.log</NAME>
+      <NAME isExclusive="false" name="Remcos" regex="true" typeFilter="file">remcos.*\.exe</NAME>
+      <NAME isExclusive="false" name="GoToMyPC" regex="false" typeFilter="file">goto.log</NAME>
+      <NAME isExclusive="false" name="LabTech RMM (Now ConnectWise Automate)" regex="false" typeFilter="file">ltsvc.exe</NAME>
+      <NAME isExclusive="false" name="LabTech RMM (Now ConnectWise Automate)" regex="false" typeFilter="file">ltsvcmon.exe</NAME>
+      <NAME isExclusive="false" name="LabTech RMM (Now ConnectWise Automate)" regex="false" typeFilter="file">lttray.exe</NAME>
+      <NAME isExclusive="false" name="RemotePass" regex="false" typeFilter="file">remotepass-access.exe</NAME>
+      <NAME isExclusive="false" name="RemotePass" regex="false" typeFilter="file">rpaccess.exe</NAME>
+      <NAME isExclusive="false" name="RemotePass" regex="false" typeFilter="file">rpwhostscr.exe</NAME>
+      <NAME isExclusive="false" name="Addigy" regex="true" typeFilter="file">addigy-.*\.pkg</NAME>
+      <NAME isExclusive="false" name="Iperius Remote" regex="false" typeFilter="file">iperius.exe</NAME>
+      <NAME isExclusive="false" name="Iperius Remote" regex="false" typeFilter="file">iperiusremote.exe</NAME>
+      <NAME isExclusive="false" name="Parallels Access" regex="true" typeFilter="file">parallelsaccess-.*\.exe</NAME>
+      <NAME isExclusive="false" name="Parallels Access" regex="false" typeFilter="file">TSClient.exe</NAME>
+      <NAME isExclusive="false" name="Parallels Access" regex="false" typeFilter="file">prl_deskctl_agent.exe</NAME>
+      <NAME isExclusive="false" name="Parallels Access" regex="false" typeFilter="file">prl_deskctl_wizard.exe</NAME>
+      <NAME isExclusive="false" name="Parallels Access" regex="false" typeFilter="file">prl_pm_service.exe</NAME>
+      <NAME isExclusive="false" name="Ultra VNC" regex="false" typeFilter="file">UVNC_Launch.exe</NAME>
+      <NAME isExclusive="false" name="Ultra VNC" regex="false" typeFilter="file">winvnc.exe</NAME>
+      <NAME isExclusive="false" name="Ultra VNC" regex="false" typeFilter="file">vncviewer.exe</NAME>
+      <NAME isExclusive="false" name="Bitvise SSH Server" regex="false" typeFilter="file">BvSshServer-Inst.exe</NAME>
+      <NAME isExclusive="false" name="Duplicati" regex="false" typeFilter="file">Duplicati.Server.exe</NAME>
+      <NAME isExclusive="false" name="Ammyy Admin" regex="false" typeFilter="file">AMMYY_Admin.exe</NAME>
+      <NAME isExclusive="false" name="Ammyy Admin" regex="true" typeFilter="file">aa_v.*\.exe</NAME>
+      <NAME isExclusive="false" name="Ammyy Admin" regex="false" typeFilter="file">access.log</NAME>
+      <NAME isExclusive="false" name="Ammyy Admin" regex="false" typeFilter="file">AA_v3.log</NAME>
+      <NAME isExclusive="false" name="MultCloud" regex="false" typeFilter="file">requires sign up</NAME>
+      <NAME isExclusive="false" name="MyIVO" regex="false" typeFilter="file">myivomgr.exe</NAME>
+      <NAME isExclusive="false" name="MyIVO" regex="false" typeFilter="file">myivomanager.exe</NAME>
+      <NAME isExclusive="false" name="UltraViewer" regex="false" typeFilter="file">UltraViewer_Service.exe</NAME>
+      <NAME isExclusive="false" name="UltraViewer" regex="true" typeFilter="file">UltraViewer_setup.*\ </NAME>
+      <NAME isExclusive="false" name="UltraViewer" regex="false" typeFilter="file">UltraViewer_Desktop.exe</NAME>
+      <NAME isExclusive="false" name="UltraViewer" regex="false" typeFilter="file">ultraviewer.exe</NAME>
+      <NAME isExclusive="false" name="UltraViewer" regex="false" typeFilter="file">ultraviewer_desktop.exe</NAME>
+      <NAME isExclusive="false" name="UltraViewer" regex="false" typeFilter="file">ultraviewer_service.exe</NAME>
+      <NAME isExclusive="false" name="Anyplace Control" regex="false" typeFilter="file">apc_host.exe</NAME>
+      <NAME isExclusive="false" name="Distant Desktop" regex="false" typeFilter="file">ddsystem.exe</NAME>
+      <NAME isExclusive="false" name="Distant Desktop" regex="false" typeFilter="file">dd.exe</NAME>
+      <NAME isExclusive="false" name="Distant Desktop" regex="false" typeFilter="file">distant-desktop.exe</NAME>
+      <NAME isExclusive="false" name="Remote Utilities" regex="false" typeFilter="file">rutview.exe</NAME>
+      <NAME isExclusive="false" name="Remote Utilities" regex="false" typeFilter="file">rutserv.exe</NAME>
+      <NAME isExclusive="false" name="Xshell" regex="false" typeFilter="file">xShell.exe</NAME>
+      <NAME isExclusive="false" name="Connectwise Automate (LabTech)" regex="false" typeFilter="file">ltsvc.exe</NAME>
+      <NAME isExclusive="false" name="Connectwise Automate (LabTech)" regex="false" typeFilter="file">ltsvcmon.exe</NAME>
+      <NAME isExclusive="false" name="Connectwise Automate (LabTech)" regex="false" typeFilter="file">lttray.exe</NAME>
+      <NAME isExclusive="false" name="TeleDesktop" regex="false" typeFilter="file">pstlaunch.exe</NAME>
+      <NAME isExclusive="false" name="TeleDesktop" regex="false" typeFilter="file">ptdskclient.exe</NAME>
+      <NAME isExclusive="false" name="TeleDesktop" regex="false" typeFilter="file">ptdskhost.exe</NAME>
+      <NAME isExclusive="false" name="Bluetrait" regex="false" typeFilter="file">Bluetrait MSP Agent.exe</NAME>
+      <NAME isExclusive="false" name="Bluetrait" regex="false" typeFilter="file">BluetraitUserAgent.exe</NAME>
+      <NAME isExclusive="false" name="Bluetrait" regex="false" typeFilter="file">config.db</NAME>
+      <NAME isExclusive="false" name="Bluetrait" regex="false" typeFilter="file">config.json</NAME>
+      <NAME isExclusive="false" name="Bluetrait" regex="false" typeFilter="file">paexec.exe</NAME>
+      <NAME isExclusive="false" name="Quest KACE Agent (formerly Dell KACE)" regex="false" typeFilter="file">konea.exe</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">teamviewer_desktop.exe</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">teamviewer_service.exe</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">teamviewerhost</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">TV15Install.log</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">.log</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">Connections_incoming.txt</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">TVNetwork.log</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">teamviewerqs.exe</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">tv_w32.exe</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">tv_w64.exe</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">tv_x64.exe</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">teamviewer.exe</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">tvchatfilecache.db</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">tvprint.db</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="false" typeFilter="file">TeamViewer.lnk</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="true" typeFilter="file">connections.*\.txt</NAME>
+      <NAME isExclusive="false" name="TeamViewer" regex="true" typeFilter="file">.*\tvc</NAME>
+      <NAME isExclusive="false" name="Microsoft TSC" regex="false" typeFilter="file">termsrv.exe</NAME>
+      <NAME isExclusive="false" name="Microsoft TSC" regex="false" typeFilter="file">mstsc.exe</NAME>
+      <NAME isExclusive="false" name="RustDesk" regex="true" typeFilter="file">rustdesk.*\.exe</NAME>
+      <NAME isExclusive="false" name="RustDesk" regex="false" typeFilter="file">rustdesk.exe</NAME>
+      <NAME isExclusive="false" name="RustDesk" regex="false" typeFilter="file">RustDesk</NAME>
+      <NAME isExclusive="false" name="Mikogo" regex="false" typeFilter="file">mikogo.exe</NAME>
+      <NAME isExclusive="false" name="Mikogo" regex="false" typeFilter="file">mikogo-starter.exe</NAME>
+      <NAME isExclusive="false" name="Mikogo" regex="false" typeFilter="file">mikogo-service.exe</NAME>
+      <NAME isExclusive="false" name="Mikogo" regex="false" typeFilter="file">mikogolauncher.exe</NAME>
+      <NAME isExclusive="false" name="Mikogo" regex="false" typeFilter="file">Mikogo-Service.exe</NAME>
+      <NAME isExclusive="false" name="Mikogo" regex="false" typeFilter="file">Mikogo-Screen-Service.exe</NAME>
+      <NAME isExclusive="false" name="SunLogin" regex="false" typeFilter="file">OrayRemoteShell.exe</NAME>
+      <NAME isExclusive="false" name="SunLogin" regex="false" typeFilter="file">OrayRemoteService.exe</NAME>
+      <NAME isExclusive="false" name="SunLogin" regex="true" typeFilter="file">sunlogin.*\.exe</NAME>
+      <NAME isExclusive="false" name="PSEXEC (Clone)" regex="false" typeFilter="file">paexec.exe</NAME>
+      <NAME isExclusive="false" name="PSEXEC (Clone)" regex="true" typeFilter="file">PAExec-.*\.exe</NAME>
+      <NAME isExclusive="false" name="PSEXEC (Clone)" regex="false" typeFilter="file">csexec.exe </NAME>
+      <NAME isExclusive="false" name="PSEXEC (Clone)" regex="false" typeFilter="file">remcom.exe</NAME>
+      <NAME isExclusive="false" name="PSEXEC (Clone)" regex="false" typeFilter="file">remcomsvc.exe</NAME>
+      <NAME isExclusive="false" name="PSEXEC (Clone)" regex="false" typeFilter="file">xcmd.exe</NAME>
+      <NAME isExclusive="false" name="PSEXEC (Clone)" regex="false" typeFilter="file">xcmdsvc.exe</NAME>
+      <NAME isExclusive="false" name="DesktopNow" regex="false" typeFilter="file">desktopnow.exe</NAME>
+      <NAME isExclusive="false" name="BeamYourScreen" regex="false" typeFilter="file">beamyourscreen.exe</NAME>
+      <NAME isExclusive="false" name="BeamYourScreen" regex="false" typeFilter="file">beamyourscreen-host.exe</NAME>
+      <NAME isExclusive="false" name="Acronis Cyber Protect (Remotix)" regex="true" typeFilter="file">AcronisCyberProtectConnectQuickAssist.*\.exe</NAME>
+      <NAME isExclusive="false" name="Acronis Cyber Protect (Remotix)" regex="false" typeFilter="file">AcronisCyberProtectConnectAgent.exe</NAME>
+      <NAME isExclusive="false" name="Syncthing" regex="false" typeFilter="file">Syncthing.exe</NAME>
+      <NAME isExclusive="false" name="S3 Browser" regex="true" typeFilter="file">s3browser.*\.exe</NAME>
+      <NAME isExclusive="false" name="MeshCentral" regex="true" typeFilter="file">meshcentral.*\.exe</NAME>
+      <NAME isExclusive="false" name="MeshCentral" regex="true" typeFilter="file">meshagent.*\.exe</NAME>
+      <NAME isExclusive="false" name="MeshCentral" regex="false" typeFilter="file">MeshAgent.exe</NAME>
+      <NAME isExclusive="false" name="MeshCentral" regex="false" typeFilter="file">MeshAgent.msh</NAME>
+      <NAME isExclusive="false" name="MeshCentral" regex="false" typeFilter="file">meshagent</NAME>
+      <NAME isExclusive="false" name="MeshCentral" regex="false" typeFilter="file">meshagent.db</NAME>
+      <NAME isExclusive="false" name="MeshCentral" regex="false" typeFilter="file">meshagent.msh</NAME>
+      <NAME isExclusive="false" name="KickIdler" regex="true" typeFilter="file">grabberEM.*\.msi</NAME>
+      <NAME isExclusive="false" name="KickIdler" regex="true" typeFilter="file">grabberTT.*\.msi</NAME>
+      <NAME isExclusive="false" name="Syspectr" regex="true" typeFilter="file">oo-syspectr.*\.exe</NAME>
+      <NAME isExclusive="false" name="Syspectr" regex="false" typeFilter="file">OOSysAgent.exe</NAME>
+      <NAME isExclusive="false" name="GoTo Opener" regex="false" typeFilter="file">GoTo Opener</NAME>
+      <NAME isExclusive="false" name="Adobe Connect" regex="true" typeFilter="file">ConnectAppSetup.*\.exe</NAME>
+      <NAME isExclusive="false" name="Adobe Connect" regex="true" typeFilter="file">ConnectShellSetup.*\.exe</NAME>
+      <NAME isExclusive="false" name="Adobe Connect" regex="false" typeFilter="file">Connect.exe</NAME>
+      <NAME isExclusive="false" name="Adobe Connect" regex="false" typeFilter="file">ConnectDetector.exe</NAME>
+      <NAME isExclusive="false" name="Tailscale" regex="true" typeFilter="file">tailscale-.*\.exe</NAME>
+      <NAME isExclusive="false" name="Tailscale" regex="false" typeFilter="file">tailscaled.exe</NAME>
+      <NAME isExclusive="false" name="Tailscale" regex="false" typeFilter="file">tailscale-ipn.exe</NAME>
+      <NAME isExclusive="false" name="Kaseya (VSA)" regex="false" typeFilter="file">agentmon.log</NAME>
+      <NAME isExclusive="false" name="Kaseya (VSA)" regex="false" typeFilter="file">system.log</NAME>
+      <NAME isExclusive="false" name="Kaseya (VSA)" regex="true" typeFilter="file">logs.*\ </NAME>
+      <NAME isExclusive="false" name="Kaseya (VSA)" regex="false" typeFilter="file">KASetup.log</NAME>
+      <NAME isExclusive="false" name="Kaseya (VSA)" regex="false" typeFilter="file">logs</NAME>
+      <NAME isExclusive="false" name="Kaseya (VSA)" regex="false" typeFilter="file">makecert.txt</NAME>
+      <NAME isExclusive="false" name="Kaseya (VSA)" regex="true" typeFilter="file">KaseyaEndpoint.*\ </NAME>
+      <NAME isExclusive="false" name="Kaseya (VSA)" regex="true" typeFilter="file">Session_.*\ </NAME>
+      <NAME isExclusive="false" name="Splashtop Remote" regex="false" typeFilter="file">strwinclt.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop Remote" regex="true" typeFilter="file">Splashtop_Streamer_Windows.*\.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop Remote" regex="false" typeFilter="file">SplashtopSOS.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop Remote" regex="false" typeFilter="file">sragent.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop Remote" regex="false" typeFilter="file">srmanager.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop Remote" regex="false" typeFilter="file">srserver.exe</NAME>
+      <NAME isExclusive="false" name="Splashtop Remote" regex="false" typeFilter="file">srservice.exe</NAME>
+      <NAME isExclusive="false" name="IntelliAdmin Remote Control" regex="false" typeFilter="file">iadmin.exe</NAME>
+      <NAME isExclusive="false" name="IntelliAdmin Remote Control" regex="false" typeFilter="file">intelliadmin.exe</NAME>
+      <NAME isExclusive="false" name="IntelliAdmin Remote Control" regex="false" typeFilter="file">agent32.exe</NAME>
+      <NAME isExclusive="false" name="IntelliAdmin Remote Control" regex="false" typeFilter="file">agent64.exe</NAME>
+      <NAME isExclusive="false" name="IntelliAdmin Remote Control" regex="false" typeFilter="file">agent_setup_5.exe</NAME>
+      <NAME isExclusive="false" name="TurboMeeting" regex="false" typeFilter="file">pcstarter.exe</NAME>
+      <NAME isExclusive="false" name="TurboMeeting" regex="false" typeFilter="file">turbomeeting.exe</NAME>
+      <NAME isExclusive="false" name="TurboMeeting" regex="false" typeFilter="file">turbomeetingstarter.exe</NAME>
+      <NAME isExclusive="false" name="DeskShare" regex="false" typeFilter="file">TeamTaskManager.exe</NAME>
+      <NAME isExclusive="false" name="DeskShare" regex="false" typeFilter="file">DSGuest.exe</NAME>
+      <NAME isExclusive="false" name="Netviewer" regex="true" typeFilter="file">netviewer.*\.exe</NAME>
+      <NAME isExclusive="false" name="Netviewer" regex="false" typeFilter="file">netviewer.exe</NAME>
+      <NAME isExclusive="false" name="Weezo" regex="false" typeFilter="file">weezohttpd.exe</NAME>
+      <NAME isExclusive="false" name="Weezo" regex="false" typeFilter="file">weezo.exe</NAME>
+      <NAME isExclusive="false" name="Weezo" regex="true" typeFilter="file">weezo setup.*\.exe</NAME>
+      <NAME isExclusive="false" name="MioNet (Also known as WD Anywhere Access)" regex="false" typeFilter="file">mionet.exe</NAME>
+      <NAME isExclusive="false" name="MioNet (Also known as WD Anywhere Access)" regex="false" typeFilter="file">mionetmanager.exe</NAME>
+      <NAME isExclusive="false" name="NoteOn-desktop sharing" regex="true" typeFilter="file">nateon.*\.exe</NAME>
+      <NAME isExclusive="false" name="NoteOn-desktop sharing" regex="false" typeFilter="file">nateon.exe</NAME>
+      <NAME isExclusive="false" name="NoteOn-desktop sharing" regex="false" typeFilter="file">nateonmain.exe</NAME>
+      <NAME isExclusive="false" name="ConnectWise Control" regex="false" typeFilter="file">connectwisechat-customer.exe</NAME>
+      <NAME isExclusive="false" name="ConnectWise Control" regex="false" typeFilter="file">connectwisecontrol.client.exe</NAME>
+      <NAME isExclusive="false" name="ConnectWise Control" regex="false" typeFilter="file">screenconnect.windowsclient.exe</NAME>
+      <NAME isExclusive="false" name="rdp2tcp" regex="false" typeFilter="file">tdp2tcp.exe</NAME>
+      <NAME isExclusive="false" name="rdp2tcp" regex="false" typeFilter="file">rdp2tcp.py</NAME>
+      <NAME isExclusive="false" name="Senso.cloud" regex="false" typeFilter="file">SensoClient.exe</NAME>
+      <NAME isExclusive="false" name="Senso.cloud" regex="false" typeFilter="file">SensoService.exe</NAME>
+      <NAME isExclusive="false" name="Senso.cloud" regex="false" typeFilter="file">aadg.exe</NAME>
+      <NAME isExclusive="false" name="mRemoteNG" regex="false" typeFilter="file">mRemoteNG.exe</NAME>
+      <NAME isExclusive="false" name="mRemoteNG" regex="false" typeFilter="file">mRemoteNG</NAME>
+      <NAME isExclusive="false" name="mRemoteNG" regex="true" typeFilter="file">mRemoteNG-Installer-.*\.msi</NAME>
+      <NAME isExclusive="false" name="mRemoteNG" regex="false" typeFilter="file">mRemoteNG.log</NAME>
+      <NAME isExclusive="false" name="mRemoteNG" regex="false" typeFilter="file">confCons.xml</NAME>
+      <NAME isExclusive="false" name="mRemoteNG" regex="false" typeFilter="file">user.config</NAME>
+      <NAME isExclusive="false" name="Centurion" regex="false" typeFilter="file">ctiserv.exe</NAME>
+      <NAME isExclusive="false" name="Site24x7" regex="false" typeFilter="file">MEAgentHelper.exe</NAME>
+      <NAME isExclusive="false" name="Site24x7" regex="false" typeFilter="file">MonitoringAgent.exe</NAME>
+      <NAME isExclusive="false" name="Site24x7" regex="false" typeFilter="file">Site24x7WindowsAgentTrayIcon.exe</NAME>
+      <NAME isExclusive="false" name="Site24x7" regex="false" typeFilter="file">Site24x7PluginAgent.exe</NAME>
+      <NAME isExclusive="false" name="Microsoft Quick Assist" regex="false" typeFilter="file">quickassist.exe</NAME>
+      <NAME isExclusive="false" name="Onionshare" regex="true" typeFilter="file">onionshare.*\.exe</NAME>
+      <NAME isExclusive="false" name="Onionshare" regex="true" typeFilter="file">OnionShare-win.*\.msi</NAME>
+      <NAME isExclusive="false" name="Itarian" regex="false" typeFilter="file">ITSMAgent.exe</NAME>
+      <NAME isExclusive="false" name="Itarian" regex="false" typeFilter="file">RViewer.exe</NAME>
+      <NAME isExclusive="false" name="Itarian" regex="false" typeFilter="file">ItsmRsp.exe</NAME>
+      <NAME isExclusive="false" name="Itarian" regex="false" typeFilter="file">RAccess.exe</NAME>
+      <NAME isExclusive="false" name="Itarian" regex="false" typeFilter="file">RmmService.exe</NAME>
+      <NAME isExclusive="false" name="Itarian" regex="false" typeFilter="file">ITarianRemoteAccessSetup.exe</NAME>
+      <NAME isExclusive="false" name="Itarian" regex="false" typeFilter="file">RDesktop.exe</NAME>
+      <NAME isExclusive="false" name="Itarian" regex="false" typeFilter="file">ComodoRemoteControl.exe</NAME>
+      <NAME isExclusive="false" name="Itarian" regex="false" typeFilter="file">ITSMService.exe</NAME>
+      <NAME isExclusive="false" name="Itarian" regex="false" typeFilter="file">RHost.exe</NAME>
+      <EXTENSION isExclusive="false" name="ScreenConnect" pathFilter="/Program Files (x86)/ScreenConnect Client (Random)" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="ScreenConnect" pathRegex="/Program Files.*\/ScreenConnect/App_Data" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="ScreenConnect" pathRegex="/ProgramData/ScreenConnect Client.*\ " typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="NetLock RMM" pathFilter="/Program Files/0x101 Cyber Security/NetLock RMM/UserAgent" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="NetLock RMM" pathFilter="/ProgramData/0x101 Cyber Security/NetLock RMM/Comm Agent" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Insync" pathFilter="/Users/USERNAME/AppData/Roaming/Insync/App" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Insync" pathRegex="/Users/.*\/AppData/Roaming/Insync/App" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Splashtop" pathFilter="/windows/System32/winevt/Logs" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Splashtop" pathFilter="/ProgramData/Splashtop/Temp/log" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Splashtop" pathFilter="/Program Files (x86)/Splashtop/Splashtop Remote/Server/log" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Splashtop" pathFilter="/Program Files (x86)/Splashtop/Splashtop Remote/Server" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Splashtop" pathFilter="/Program Files (x86)/Splashtop/Splashtop Software Updater" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Splashtop" pathFilter="/Program Files (x86)/Splashtop/Splashtop Remote/Server/db" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Parsec" pathFilter="/Program Files/Parsec" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Action1" pathFilter="/Windows/Action1" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="ISL Online" pathFilter="/Program Files (x86)/ISL Online" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="ISL Online" pathRegex=".*\/ISL Online" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="AnyDesk" pathFilter="/ProgramData/AnyDesk" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="AnyDesk" pathRegex="/Users/.*\/AppData/AnyDesk" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="AnyDesk" pathRegex="/Users/.*\/AppData/AnyDesk/chat" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="AnyDesk" pathFilter="/ProgramData/Microsoft/Windows/Start Menu/Programs/AnyDesk" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="AnyDesk" pathRegex="/Users/.*\/Videos/AnyDesk" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Alpemix" pathRegex="/Users/.*\/AppData/Local/Alpemix" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Aspia" pathRegex="/Users/.*\/AppData/Roaming/aspia" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Aspia" pathRegex="/Users/.*\/AppData/Local/Temp/aspia" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Aspia" pathFilter="/Program Files/Aspia/Client" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Access Remote PC" pathFilter="/Program Files (x86)/RemotePC" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="PDQ Connect" pathFilter="/ProgramData/PDQ/PDQConnectAgent" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="RAdmin" pathFilter="/Program Files (x86)/Radmin Viewer 3" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="RAdmin" pathFilter="/Windows/SysWOW64/rserver30" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="RAdmin" pathFilter="/Windows/System32/rserver30" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="RAdmin" pathRegex="/Windows/System32/rserver30/CHATLOGS/.*\ " typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="RAdmin" pathRegex="/Users/.*\ /Documents/ChatLogs/.*\ " typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Devolutions Remote Desktop Manager" pathFilter="/Program Files/Devolutions" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Devolutions Remote Desktop Manager" pathRegex="/Users/.*\/AppData/Local/Devolutions/RemoteDesktopManager" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Devolutions Remote Desktop Manager" pathRegex="/Users/.*\/AppData/Local/Devolutions/RemoteDesktopManager[GUID]" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Atera" pathFilter="/Program Files/ATERA Networks/AteraAgent/Packages/AgentPackageRunCommandInteractive" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Atera" pathFilter="/Program Files/ATERA Networks/AteraAgent" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Atera" pathFilter="/Program Files/Atera Networks" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Atera" pathFilter="/Program Files/ATERA Networks/AteraAgent/Packages/AgentPackageSTRemote" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Atera" pathFilter="/Program Files/ATERA Networks/AteraAgent/Packages/AgentPackageMonitoring" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Atera" pathFilter="/Program Files/ATERA Networks/AteraAgent/Packages/AgentPackageHeartbeat" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Atera" pathFilter="/Program Files/ATERA Networks/AteraAgent/Packages/AgentPackageFileExplorer" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="LogMeIn rescue" pathRegex="/Users/.*\/AppData/Local/LogMeIn Rescue Applet/LMIR.*\.tmp" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="HopToDesk" pathFilter="/Program Files (x86)/HopToDesk" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="HopToDesk" pathRegex="/Users/.*\/AppData/Roaming/HopToDesk/config" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="HopToDesk" pathRegex="/System/Volumes/Data/Users/.*\/Library/Logs/HopToDesk" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Level" pathFilter="/Program Files/Level" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="GoToMyPC" pathFilter="/Users/.*\/AppData/GoTo/Logs" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Ammyy Admin" pathFilter="/ProgramData/AMMYY" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="UltraViewer" pathFilter="/Program Files (x86)/UltraViewer" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Bluetrait" pathFilter="/Program Files (x86)/Bluetrait Agent" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Bluetrait" pathFilter="/Program Files (x86)/Bluetrait Agent/libraries" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="TeamViewer" pathFilter="/Users/username/AppData/Local/Temp/TeamViewer" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="TeamViewer" pathFilter="TeamViewer/d/d_Logfile" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="TeamViewer" pathFilter="/Program Files/TeamViewer" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="TeamViewer" pathRegex="/Users/.*\/AppData/Local/Temp/TeamViewer" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="TeamViewer" pathRegex="/Users/.*\/AppData//TeamViewer//TeamViewer/d/d_Logfile" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="TeamViewer" pathRegex="/Users/.*\/AppData/Local/TeamViewer/Database" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="TeamViewer" pathRegex="/Users/.*\/AppData/Local/TeamViewer/RemotePrinting" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="TeamViewer" pathRegex="/Program Files.*\/TeamViewer" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="TeamViewer" pathRegex="/Users/.*\/AppData/Roaming/TeamViewer/MRU/RemoteSupport" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="RustDesk" pathRegex="/Users/.*\/AppData/Local/rustdesk" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="MeshCentral" pathFilter="/Program Files/Mesh Agent" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="MeshCentral" pathFilter="/usr/local/mesh_services/meshagent/meshagent" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="MeshCentral" pathFilter="/usr/local/mesh_services/meshagent" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Kaseya (VSA)" pathRegex="/Program Files.*\ /Kaseya/.*\ " typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Kaseya (VSA)" pathRegex=" /Users/.*\ /opt/kaseya/.*\ " typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Kaseya (VSA)" pathFilter="/Kaseya/api/v1.5/endpoint" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Kaseya (VSA)" pathFilter="/Kaseya/api/v1.5/endpoints" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Kaseya (VSA)" pathFilter="/Kaseya/WebPages/install" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="Kaseya (VSA)" pathRegex="/ProgramData/Kaseya/Log/Endpoint/Instance_.*\ " typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="mRemoteNG" pathRegex="/Users/.*\/AppData/Roaming/mRemoteNG" typeFilter="dir"/>
+      <EXTENSION isExclusive="false" name="mRemoteNG" pathRegex="/Users/.*\/AppData/.*\/mRemoteNG/.*\.*\10" typeFilter="dir"/>
+  </INTERESTING_FILE_SET>
+</INTERESTING_FILE_SETS>
