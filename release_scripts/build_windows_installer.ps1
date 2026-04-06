@@ -76,7 +76,7 @@ $repoRoot   = Split-Path -Parent $PSScriptRoot
 $distDir    = Join-Path $repoRoot "dist"
 $unsignedZip = Join-Path $distDir "autopsy-$Version.zip"
 $signedZip   = Join-Path $distDir "autopsy-$Version-signed.zip"
-$instDir    = Join-Path $distDir  "autopsy-$Version-installer"  # versioned so multiple builds can coexist
+$instDir    = Join-Path $distDir  "autopsy-$Version"  # the folder the ZIP extracts into
 $aipSrc     = Join-Path $repoRoot "installer_autopsy\installer_autopsy.aip"
 $aipBase    = Join-Path $distDir  "installer_autopsy_$Version-base.aip"
 $aip64      = Join-Path $distDir  "installer_autopsy_$Version-64.aip"
@@ -134,27 +134,9 @@ if (Test-Path $instDir) {
     Write-Host "  Removing existing staging directory..."
     Remove-Item -Recurse -Force $instDir
 }
-New-Item -ItemType Directory -Path $instDir | Out-Null
-
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-$zip = [System.IO.Compression.ZipFile]::OpenRead($ZipFile)
-try {
-    foreach ($entry in $zip.Entries) {
-        # The ZIP root folder is "autopsy-X.Y.Z/"; strip it so the content
-        # lands directly in the staging directory.
-        $relPath = $entry.FullName -replace '^[^/]+/', ''
-        if ([string]::IsNullOrEmpty($relPath) -or $relPath.EndsWith('/')) {
-            continue
-        }
-        $destPath = Join-Path $instDir ($relPath.Replace('/', '\'))
-        $destParent = Split-Path -Parent $destPath
-        if (-not (Test-Path $destParent)) {
-            New-Item -ItemType Directory -Path $destParent | Out-Null
-        }
-        [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destPath, $true)
-    }
-} finally {
-    $zip.Dispose()
+Expand-Archive -Path $ZipFile -DestinationPath $distDir
+if (-not (Test-Path $instDir)) {
+    throw "Expected folder not found after extraction: $instDir`nEnsure the ZIP contains a root folder named 'autopsy-$Version'."
 }
 Write-Host "  Done."
 
