@@ -1690,7 +1690,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 for (String tableName : bulkArtifacts.keySet()) {
 
                     String sql;
-                    if (correlationHasAccount.get(tableName)) {
+                    if (correlationHasAccount.getOrDefault(tableName, false)) {
                         sql = "INSERT INTO "
                               + tableName
                               + " (case_id, data_source_id, value, file_path, known_status, comment, file_obj_id, account_id) "
