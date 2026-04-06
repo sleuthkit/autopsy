@@ -584,7 +584,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.sectorSize = 0;
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.host = host;
-        this.password = password;
+        this.password = Objects.toString(password, this.password);
         this.ignoreFatOrphanFiles = false;
 
         // Set up the data source before creating the ingest stream
