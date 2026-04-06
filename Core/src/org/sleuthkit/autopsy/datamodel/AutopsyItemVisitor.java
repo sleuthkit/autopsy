@@ -90,7 +90,9 @@ public interface AutopsyItemVisitor<T> {
     T visit(AnalysisResults aThis);
 
     T visit(DataArtifacts aThis);
-    
+
+    T visit(CyberTriageData cyberTriageData);
+
 
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
@@ -254,6 +256,11 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(AnalysisResults aThis) {
             return defaultVisit(aThis);
+        }
+
+        @Override
+        public T visit(CyberTriageData cyberTriageData) {
+            return defaultVisit(cyberTriageData);
         }
     }
 }
