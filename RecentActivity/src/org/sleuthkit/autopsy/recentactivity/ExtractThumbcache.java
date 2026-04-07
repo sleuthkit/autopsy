@@ -95,7 +95,7 @@ final class ExtractThumbcache extends Extract {
 
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "thumbcache", context.getJobId()); //NON-NLS
         List<AbstractFile> thumbcacheFiles = getThumbcacheFiles(dataSource, tempDirPath);
-        if (thumbcacheFiles == null) {
+        if (thumbcacheFiles.isEmpty()) {
             this.addErrorMessage(Bundle.Thumbcache_Files_Not_Found());
             logger.log(Level.WARNING, "Error finding thumbcache files"); //NON-NLS
             return; //If we cannot find the thumbcache files we cannot proceed
@@ -150,11 +150,11 @@ final class ExtractThumbcache extends Extract {
             thumbcacheFiles = fileManager.findFiles(dataSource, "thumbcache_%.db", ""); //NON-NLS            
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING,"Unable to find thumbcache files.", ex); //NON-NLS
-            return null;  // No need to continue
+            return new ArrayList<>();  // No need to continue
         }
         
         if (thumbcacheFiles.isEmpty()) {
-            return null;  // No thumbcache files found
+           return new ArrayList<>();  // No thumbcache files found
         }
         
         for (AbstractFile thumbcacheFile : thumbcacheFiles) {
