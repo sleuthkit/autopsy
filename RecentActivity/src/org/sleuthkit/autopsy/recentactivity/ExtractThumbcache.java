@@ -97,14 +97,14 @@ final class ExtractThumbcache extends Extract {
         List<AbstractFile> thumbcacheFiles = getThumbcacheFiles(dataSource, tempDirPath);
         if (thumbcacheFiles == null) {
             this.addErrorMessage(Bundle.Thumbcache_Files_Not_Found());
-            logger.log(Level.SEVERE, "Error finding thumbcache files"); //NON-NLS
+            logger.log(Level.WARNING, "Error finding thumbcache files"); //NON-NLS
             return; //If we cannot find the thumbcache files we cannot proceed
             
         }
         final String thumbcacheDumper = getPathForThumbcacheDumper();
         if (thumbcacheDumper == null) {
             this.addErrorMessage(Bundle.ExtractThumbcache_error_finding_program());
-            logger.log(Level.SEVERE, "Error finding thumbcache parsing program"); //NON-NLS
+            logger.log(Level.WARNING, "Error finding thumbcache parsing program"); //NON-NLS
             return; //If we cannot find the thumbcache parser program we cannot proceed
         }
 
