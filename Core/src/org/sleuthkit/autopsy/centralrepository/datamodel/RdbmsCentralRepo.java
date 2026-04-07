@@ -1749,8 +1749,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                                 }
                                 bulkPs.setLong(8, eamArtifact.getFileObjectId());
                                 if (tableHasAccount) {
-                                    if (eamArtifact.getAccountId() != null && eamArtifact.getAccountId() >= 0) {
-                                        bulkPs.setLong(9, eamArtifact.getAccountId());
+                                    Long accountId = eamArtifact.getAccountId();
+                                    if (accountId != null && accountId >= 0) {
+                                        bulkPs.setLong(9, accountId);
                                     } else {
                                         bulkPs.setNull(9, Types.INTEGER);
                                     }
