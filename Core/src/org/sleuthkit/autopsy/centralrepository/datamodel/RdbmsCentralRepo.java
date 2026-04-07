@@ -1688,9 +1688,9 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 }
 
                 for (String tableName : bulkArtifacts.keySet()) {
-
+                    final boolean tableHasAccount = correlationHasAccount.getOrDefault(tableName, false);
                     String sql;
-                    if (correlationHasAccount.getOrDefault(tableName, false)) {
+                    if (tableHasAccount) {
                         sql = "INSERT INTO "
                               + tableName
                               + " (case_id, data_source_id, value, file_path, known_status, comment, file_obj_id, account_id) "
@@ -1748,7 +1748,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                                     bulkPs.setString(7, eamArtifact.getComment());
                                 }
                                 bulkPs.setLong(8, eamArtifact.getFileObjectId());
-                                if (correlationHasAccount.get(tableName)) {
+                                if (tableHasAccount) {
                                     if (eamArtifact.getAccountId() != null && eamArtifact.getAccountId() >= 0) {
                                         bulkPs.setLong(9, eamArtifact.getAccountId());
                                     } else {
