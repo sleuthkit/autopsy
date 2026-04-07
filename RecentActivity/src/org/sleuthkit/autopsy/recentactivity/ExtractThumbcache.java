@@ -83,11 +83,11 @@ final class ExtractThumbcache extends Extract {
     void process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
         if (!PlatformUtil.isWindowsOS()) {
-            logger.log(Level.WARNING,"Thumbcache only Supported on Windows Plaatform."); //NON-NLS
+            logger.log(Level.WARNING,"Thumbcache only Supported on Windows Platform."); //NON-NLS
             return;  // No need to continue
         }
         
-        String modOutPath = Case.getCurrentCase().getModuleDirectory() + File.separator + "thumbcache";
+        String modOutPath = RAImageIngestModule.getRAOutputPath(Case.getCurrentCase(), "thumbcache", context.getJobId());
         File dir = new File(modOutPath);
         if (dir.exists() == false) {
             dir.mkdirs();
@@ -105,7 +105,7 @@ final class ExtractThumbcache extends Extract {
         if (thumbcacheDumper == null) {
             this.addErrorMessage(Bundle.ExtractThumbcache_error_finding_program());
             logger.log(Level.SEVERE, "Error finding thumbcache parsing program"); //NON-NLS
-            return; //If we cannot find the usbParser program we cannot proceed
+            return; //If we cannot find the thumbcache parser program we cannot proceed
         }
 
         if (context.dataSourceIngestIsCancelled()) {
@@ -151,6 +151,10 @@ final class ExtractThumbcache extends Extract {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING,"Unable to find thumbcache files.", ex); //NON-NLS
             return null;  // No need to continue
+        }
+        
+        if (thumbcacheFiles.isEmpty()) {
+            return null;  // No thumbcache files found
         }
         
         for (AbstractFile thumbcacheFile : thumbcacheFiles) {
@@ -216,16 +220,17 @@ final class ExtractThumbcache extends Extract {
             
             Path candidate = file.toPath();
             
-            if (candidate.getFileName().toString().equals("Error.txt") || candidate.getFileName().toString().equals("Output.txt")) {
-                continue;    
+            if (candidate.getFileName().toString().equals(THUMBCACHE_ERROR_FILE_NAME) || candidate.getFileName().toString().equals(THUMBCACHE_OUTPUT_FILE_NAME)) {
+                 continue;    
             }
             try {
-                final Path caseDirectory = Paths.get(Case.getCurrentCaseThrows().getCaseDirectory());
+                final Case currentCase = Case.getCurrentCaseThrows();
+                final Path caseDirectory = Paths.get(currentCase.getCaseDirectory());
                 final BasicFileAttributes attrs = Files.readAttributes(candidate, BasicFileAttributes.class);
                 final Path localCasePath = caseDirectory.relativize(candidate);
             
-                final DerivedFile tcacheFile = Case.getCurrentCaseThrows().getSleuthkitCase()
-                        .addDerivedFile(candidate.getFileName().toString(),
+                final DerivedFile tcacheFile = currentCase.getSleuthkitCase()
+                         .addDerivedFile(candidate.getFileName().toString(),
                                 localCasePath.toString(), attrs.size(), 0L,
                                 attrs.creationTime().to(TimeUnit.SECONDS),
                                 attrs.lastAccessTime().to(TimeUnit.SECONDS),
