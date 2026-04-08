@@ -76,7 +76,8 @@ final class ExtractThumbcache extends Extract {
     @Messages({
         "Thumbcache_Files_Not_Found=Thumbcache files not found",
         "ExtractThumbcache_error_finding_program=Could not find thumbcache_viewer_cmd.exe program",
-        "Thumbcache_process_error_executing_export_thumbcache_program=Error running thumbcache program"
+        "Thumbcache_process_error_executing_export_thumbcache_program=Error running thumbcache program",
+        "Thumbcache_Files_TSK_Error=TSK error searching for thumbcache files"
     })
 
     @Override
@@ -95,6 +96,11 @@ final class ExtractThumbcache extends Extract {
 
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "thumbcache", context.getJobId()); //NON-NLS
         List<AbstractFile> thumbcacheFiles = getThumbcacheFiles(dataSource, tempDirPath);
+        if (thumbcacheFiles == null) {
+            this.addErrorMessage(Bundle.Thumbcache_Files_TSK_Error());
+            return; //If we cannot find the thumbcache files we cannot proceed
+        }
+        
         if (thumbcacheFiles.isEmpty()) {
             this.addErrorMessage(Bundle.Thumbcache_Files_Not_Found());
             logger.log(Level.WARNING, "Error finding thumbcache files"); //NON-NLS
@@ -113,6 +119,9 @@ final class ExtractThumbcache extends Extract {
         }
         String thumbcacheFileLocation = null;
         for (AbstractFile thumbcacheFile: thumbcacheFiles) {
+            if (context.dataArtifactIngestIsCancelled()) {
+                return;
+            }
             try {
                 File thumbcacheFileName = new File(tempDirPath + File.separator + thumbcacheFile.getId() + "_" + thumbcacheFile.getName());
                 if (thumbcacheFileName.exists()) {
@@ -149,8 +158,8 @@ final class ExtractThumbcache extends Extract {
         try {
             thumbcacheFiles = fileManager.findFiles(dataSource, "thumbcache_%.db", ""); //NON-NLS            
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING,"Unable to find thumbcache files.", ex); //NON-NLS
-            return new ArrayList<>();  // No need to continue
+            logger.log(Level.SEVERE,"TskCoreException Looking for thumbcache file.", ex); //NON-NLS
+            return null;  // No need to continue
         }
         
         if (thumbcacheFiles.isEmpty()) {
@@ -212,7 +221,7 @@ final class ExtractThumbcache extends Extract {
 
     private void addThumbcacheDerivedFiles(String outputFolder, AbstractFile thumbcacheFile) {
         Path outputFolderPath = Paths.get(outputFolder);
-        List<File> files = (List<File>) FileUtils.listFiles(outputFolderPath.toFile(), null, true);
+        java.util.Collection<File> files = (List<File>) FileUtils.listFiles(outputFolderPath.toFile(), null, true);
         for (File file : files) {
             if (context.dataSourceIngestIsCancelled()) {
                 return;
