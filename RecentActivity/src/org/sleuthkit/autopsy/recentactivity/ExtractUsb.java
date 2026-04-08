@@ -123,14 +123,14 @@ final class ExtractUsb extends Extract {
         }
 
         String tempDirPath = RAImageIngestModule.getRATempPath(Case.getCurrentCase(), "usb", context.getJobId()); //NON-NLS
-        AbstractFile softwareHiveFile = getHiveFile(dataSource, tempDirPath, "software", "/config/");
+        AbstractFile softwareHiveFile = getHiveFile(dataSource, tempDirPath, "software", "/Windows/System32/config/");
         if (softwareHiveFile == null) {
             this.addErrorMessage(Bundle.SoftwareHiveFile_Not_Found());
             logger.log(Level.WARNING, "Error finding SOFTWARE Hive file"); //NON-NLS
             return; //If we cannot find the SOFTWARE hive we cannot proceed
             
         }
-        AbstractFile systemHiveFile = getHiveFile(dataSource, tempDirPath, "system", "/config/");
+        AbstractFile systemHiveFile = getHiveFile(dataSource, tempDirPath, "system", "/Windows/System32/config/");
         if (systemHiveFile == null) {
             this.addErrorMessage(Bundle.SystemHiveFile_Not_Found());
             logger.log(Level.WARNING, "Error finding SOFTWARE Hive file"); //NON-NLS
@@ -153,20 +153,19 @@ final class ExtractUsb extends Extract {
         }
 
         try {
-            String modOutFile = modOutPath + File.separator + "parseusb.db3";
+            String modOutFile = modOutPath + File.separator + "parseusb-" + context.getJobId() + ".db3";
             String usbFileLocation = tempDirPath;
 
             extractUsbFiles(usbDumper, modOutFile, usbFileLocation);
+            createUSBArtifacts(modOutFile, systemHiveFile);
             
             AbstractFile evtPartitionFile = getEvtFile(dataSource, tempDirPath, "Microsoft-Windows-Partition%4Diagnostic.evtx", "/Windows/System32/winevt/logs/");
             if (evtPartitionFile == null) {
                 this.addErrorMessage(Bundle.EventPartitionLog_Not_Found());
                 logger.log(Level.WARNING, "Error finding Event Log file"); //NON-NLS
                 return; //If we cannot find the event log we cannot proceed
+            }
             
-        }
-
-            createUSBArtifacts(modOutFile, systemHiveFile);
             createConnectDisconnectArtifacts(modOutFile, evtPartitionFile);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error processing USB artifacts", ex); //NON-NLS=
@@ -451,9 +450,9 @@ final class ExtractUsb extends Extract {
 
                 String serialNumber = resultSet.getString("serial_number"); //NON-NLS
                 String description = resultSet.getString("Description");
-                Long firstConnectTime = resultSet.getLong("first_connect_time"); //NON-NLS
-                Long lastConnectTime = resultSet.getLong("last_connect_time"); //NON-NLS
-                Long lastDisconnectedTime = resultSet.getLong("last_disconnected_time"); //NON-NLS
+                Long firstConnectTime = readNullableLong(resultSet,"first_connect_time"); //NON-NLS
+                Long lastConnectTime = readNullableLong(resultSet,"last_connect_time"); //NON-NLS
+                Long lastDisconnectedTime = readNullableLong(resultSet,"last_disconnected_time"); //NON-NLS
                 String volumeLabelName = resultSet.getString("volume_name_label"); //NON-NLS
                 String driveLetter = resultSet.getString("drive_letter"); //NON-NLS
                 String vsn = resultSet.getString("vsn"); //NON-NLS
@@ -522,7 +521,7 @@ final class ExtractUsb extends Extract {
                 }
 
                 String serialNumber = resultSet.getString("SerialNum");
-                Long timeCreated = resultSet.getLong("TimeCreated_SystemTime"); //NON-NLS
+                Long timeCreated = readNullableLong(resultSet,"TimeCreated_SystemTime"); //NON-NLS
                 String connectType = resultSet.getString("connectType");
                 String vsn = resultSet.getString("vsn"); //NON-NLS
                 String diskSignature = resultSet.getString("disksignature"); //NON-NLS
@@ -835,4 +834,12 @@ final class ExtractUsb extends Extract {
         return usbFileSystemAttributeType;
     }
     
+    private static Long readNullableLong(ResultSet resultSet, String column) {
+        try {
+            long value = resultSet.getLong(column);
+            return resultSet.wasNull() ? null : value;
+        } catch (SQLException ex) {
+            return null;
+        }
+    }
 }
