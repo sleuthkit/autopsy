@@ -126,14 +126,14 @@ final class ExtractUsb extends Extract {
         AbstractFile softwareHiveFile = getHiveFile(dataSource, tempDirPath, "software", "/config/");
         if (softwareHiveFile == null) {
             this.addErrorMessage(Bundle.SoftwareHiveFile_Not_Found());
-            logger.log(Level.SEVERE, "Error finding SOFTWARE Hive file"); //NON-NLS
+            logger.log(Level.WARNING, "Error finding SOFTWARE Hive file"); //NON-NLS
             return; //If we cannot find the SOFTWARE hive we cannot proceed
             
         }
         AbstractFile systemHiveFile = getHiveFile(dataSource, tempDirPath, "system", "/config/");
         if (systemHiveFile == null) {
             this.addErrorMessage(Bundle.SystemHiveFile_Not_Found());
-            logger.log(Level.SEVERE, "Error finding SOFTWARE Hive file"); //NON-NLS
+            logger.log(Level.WARNING, "Error finding SOFTWARE Hive file"); //NON-NLS
             return; //If we cannot find the SYSTEM hive we cannot proceed
             
         }
@@ -144,7 +144,7 @@ final class ExtractUsb extends Extract {
         final String usbDumper = getPathForUsbDumper();
         if (usbDumper == null) {
             this.addErrorMessage(Bundle.ExtractUsb_error_finding_usbparser_program());
-            logger.log(Level.SEVERE, "Error finding usbparser program"); //NON-NLS
+            logger.log(Level.WARNING, "Error finding usbparser program"); //NON-NLS
             return; //If we cannot find the usbParser program we cannot proceed
         }
 
@@ -158,19 +158,18 @@ final class ExtractUsb extends Extract {
 
             extractUsbFiles(usbDumper, modOutFile, usbFileLocation);
             
-
             AbstractFile evtPartitionFile = getEvtFile(dataSource, tempDirPath, "Microsoft-Windows-Partition%4Diagnostic.evtx", "/Windows/System32/winevt/logs/");
             if (evtPartitionFile == null) {
-            this.addErrorMessage(Bundle.EventPartitionLog_Not_Found());
-            logger.log(Level.SEVERE, "Error finding Event Log file"); //NON-NLS
-            return; //If we cannot find the event log we cannot proceed
+                this.addErrorMessage(Bundle.EventPartitionLog_Not_Found());
+                logger.log(Level.WARNING, "Error finding Event Log file"); //NON-NLS
+                return; //If we cannot find the event log we cannot proceed
             
         }
 
             createUSBArtifacts(modOutFile, systemHiveFile);
             createConnectDisconnectArtifacts(modOutFile, evtPartitionFile);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error processing SRUDB.dat file", ex); //NON-NLS=
+            logger.log(Level.WARNING, "Error processing USB artifacts", ex); //NON-NLS=
             this.addErrorMessage(Bundle.ExtractSru_process_error_executing_export_srudb_program());
         }
     }
@@ -326,7 +325,6 @@ final class ExtractUsb extends Extract {
         }
 
         AbstractFile evtAbsFile = null;
-        String evtxFileName = null;
 
         for (AbstractFile evtxFile : evtxFiles) {
             evtAbsFile = evtxFile;
