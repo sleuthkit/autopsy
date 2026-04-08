@@ -102,11 +102,10 @@ final class ExtractThumbcache extends Extract {
         }
         
         if (thumbcacheFiles.isEmpty()) {
-            this.addErrorMessage(Bundle.Thumbcache_Files_Not_Found());
             logger.log(Level.WARNING, "Error finding thumbcache files"); //NON-NLS
             return; //If we cannot find the thumbcache files we cannot proceed
-            
         }
+
         final String thumbcacheDumper = getPathForThumbcacheDumper();
         if (thumbcacheDumper == null) {
             this.addErrorMessage(Bundle.ExtractThumbcache_error_finding_program());
@@ -117,9 +116,10 @@ final class ExtractThumbcache extends Extract {
         if (context.dataSourceIngestIsCancelled()) {
             return;
         }
+
         String thumbcacheFileLocation = null;
         for (AbstractFile thumbcacheFile: thumbcacheFiles) {
-            if (context.dataArtifactIngestIsCancelled()) {
+            if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
             try {
@@ -249,13 +249,13 @@ final class ExtractThumbcache extends Extract {
 
                 context.addFilesToJob(Arrays.asList(tcacheFile));
                 IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(tcacheFile));
+                dataFound = true;
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "I/O error encountered during thumbcache processing.", ex);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Unable to add thumbcache as derived files.", ex);
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.WARNING, "No open case!", ex);
-
             }
         }
     }    
