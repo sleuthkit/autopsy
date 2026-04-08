@@ -32,7 +32,7 @@ import java.net.SocketTimeoutException;
  */
 public final class CoordinationServiceUtils {
 
-    private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 3000;
+    private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 15000;
     
     /**
      * Determines if ZooKeeper is accessible with the current settings. Closes
@@ -46,9 +46,8 @@ public final class CoordinationServiceUtils {
     public static boolean isZooKeeperAccessible(String hostName, String port) throws InterruptedException, IOException {
         boolean result = false;
         
-        try {
+        try (Socket socket = new Socket()){
             
-            Socket socket = new Socket();
             socket.connect(new InetSocketAddress(hostName, Integer.valueOf(port)), ZOOKEEPER_SESSION_TIMEOUT_MILLIS);
             socket.setSoTimeout(ZOOKEEPER_SESSION_TIMEOUT_MILLIS);
 
@@ -59,9 +58,7 @@ public final class CoordinationServiceUtils {
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String response = reader.readLine();
 
-            socket.close();
-
-            if (response.toLowerCase().contains("imok")) {
+            if (response != null && response.toLowerCase().contains("imok")) {
                 result = true;
             }
         } catch (SocketTimeoutException e) {
