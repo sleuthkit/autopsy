@@ -18,9 +18,13 @@
  */
 package org.sleuthkit.autopsy.coordinationservice.utils;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.IOException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooKeeper;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 /**
  * A utility class for coordination service and ZooKeeper. This class is in a 
@@ -28,9 +32,8 @@ import org.apache.zookeeper.ZooKeeper;
  */
 public final class CoordinationServiceUtils {
 
-    private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 3000;
-    private static final int ZOOKEEPER_CONNECTION_TIMEOUT_MILLIS = 15000;
-
+    private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 15000;
+    
     /**
      * Determines if ZooKeeper is accessible with the current settings. Closes
      * the connection prior to returning.
@@ -42,22 +45,25 @@ public final class CoordinationServiceUtils {
      */
     public static boolean isZooKeeperAccessible(String hostName, String port) throws InterruptedException, IOException {
         boolean result = false;
-        Object workerThreadWaitNotifyLock = new Object();
-        String connectString = hostName + ":" + port;
-        ZooKeeper zooKeeper = new ZooKeeper(connectString, ZOOKEEPER_SESSION_TIMEOUT_MILLIS,
-                (WatchedEvent event) -> {
-                    synchronized (workerThreadWaitNotifyLock) {
-                        workerThreadWaitNotifyLock.notify();
-                    }
-                });
-        synchronized (workerThreadWaitNotifyLock) {
-            workerThreadWaitNotifyLock.wait(ZOOKEEPER_CONNECTION_TIMEOUT_MILLIS);
+        
+        try (Socket socket = new Socket()){
+            
+            socket.connect(new InetSocketAddress(hostName, Integer.valueOf(port)), ZOOKEEPER_SESSION_TIMEOUT_MILLIS);
+            socket.setSoTimeout(ZOOKEEPER_SESSION_TIMEOUT_MILLIS);
+
+            OutputStream out = socket.getOutputStream();
+            out.write("ruok".getBytes());
+            out.flush();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String response = reader.readLine();
+
+            if (response != null && response.toLowerCase().contains("imok")) {
+                result = true;
+            }
+        } catch (SocketTimeoutException e) {
+            result = false;
         }
-        ZooKeeper.States state = zooKeeper.getState();
-        if (state == ZooKeeper.States.CONNECTED || state == ZooKeeper.States.CONNECTEDREADONLY) {
-            result = true;
-        }
-        zooKeeper.close();
         return result;
     }
 }
