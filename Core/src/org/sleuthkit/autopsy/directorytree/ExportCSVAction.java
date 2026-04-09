@@ -29,6 +29,8 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -322,7 +324,7 @@ public final class ExportCSVAction extends AbstractAction {
 
             CsvMapper mapper = new CsvMapper();
             ObjectWriter writer = mapper.writerFor(Map.class).with(schema);
-            try (OutputStreamWriter outWriter = new OutputStreamWriter(new FileOutputStream(outputFile), StandardCharsets.UTF_8); 
+            try (OutputStreamWriter outWriter = new OutputStreamWriter(Files.newOutputStream(outputFile.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE), StandardCharsets.UTF_8); 
                     SequenceWriter seqWriter = writer.writeValues(outWriter)) {
                 // Write each line
                 Iterator<?> nodeIterator = nodesToExport.iterator();
