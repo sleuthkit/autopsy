@@ -1671,13 +1671,6 @@ abstract class RdbmsCentralRepo implements CentralRepository {
     public void commitAttributeInstancesBulk() throws CentralRepoException {
         List<CorrelationAttributeInstance.Type> artifactTypes = getDefinedCorrelationTypes();
         
-        Map<String, Boolean> correlationHasAccount = new HashMap<>();
-        for (CorrelationAttributeInstance.Type artifactType : artifactTypes) {
-           String tableName = correlationTypeToInstanceTableName(artifactType);
-           Boolean isAccount = correlationAttribHasAnAccount(artifactType); 
-           correlationHasAccount.put(tableName, isAccount);
-        }
-        
         Connection conn = connect();
         PreparedStatement bulkPs = null;
 
@@ -1688,7 +1681,7 @@ abstract class RdbmsCentralRepo implements CentralRepository {
                 }
 
                 for (String tableName : bulkArtifacts.keySet()) {
-                    final boolean tableHasAccount = correlationHasAccount.getOrDefault(tableName, false);
+                    final boolean tableHasAccount = doesColumnExist(conn, tableName, "account_id");
                     String sql;
                     if (tableHasAccount) {
                         sql = "INSERT INTO "
