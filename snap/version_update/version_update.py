@@ -1,6 +1,6 @@
 import sys
 import argparse
-import ruamel.yaml
+from ruamel.yaml import YAML
 from typing import Union
 from os.path import join, dirname, abspath, realpath
 
@@ -23,7 +23,7 @@ def update_versions(sleuthkit_version_tag: str,
     autopsy_repo = autopsy_repo if autopsy_repo is not None and len(
         autopsy_repo.strip()) > 0 else AUTOPSY_REPO
 
-    yaml = ruamel.yaml.YAML()
+    yaml = YAML()
     with open(snapcraft_yaml_path) as snapcraft_file:
         yaml_dict = yaml.load(snapcraft_file)
 
