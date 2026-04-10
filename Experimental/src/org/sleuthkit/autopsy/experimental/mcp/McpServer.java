@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.mcp;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import static io.javalin.apibuilder.ApiBuilder.*;
@@ -31,6 +32,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,6 +51,7 @@ import java.util.logging.Logger;
 public class McpServer {
 
     private static final Logger logger = Logger.getLogger(McpServer.class.getName());
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final int DEFAULT_PORT = 8743;
     private static final String CONFIG_FILE_NAME = "mcp-config.properties";
     private static final String PORT_PROPERTY = "port";
@@ -120,9 +124,22 @@ public class McpServer {
             String response = protocolHandler.handle(requestBody);
             ctx.contentType("application/json").result(response);
         } catch (Exception ex) {
-            String msg = ex.getMessage() != null ? ex.getMessage().replace("\"", "'") : "Internal error";
-            String body = "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":" + McpProtocolHandler.ERR_INTERNAL_ERROR + ","
-                    + "\"message\":\"Internal error\",\"data\":\"" + msg + "\"},\"id\":null}";
+            String msg = ex.getMessage() != null ? ex.getMessage() : "Internal error";
+            Map<String, Object> errorDetail = new LinkedHashMap<>();
+            errorDetail.put("code",    McpProtocolHandler.ERR_INTERNAL_ERROR);
+            errorDetail.put("message", "Internal error");
+            errorDetail.put("data",    msg);
+            Map<String, Object> envelope = new LinkedHashMap<>();
+            envelope.put("jsonrpc", "2.0");
+            envelope.put("error",   errorDetail);
+            envelope.put("id",      null);
+            String body;
+            try {
+                body = MAPPER.writeValueAsString(envelope);
+            } catch (Exception jsonEx) {
+                // Absolute last resort — envelope itself failed to serialize
+                body = "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":" + McpProtocolHandler.ERR_INTERNAL_ERROR + ",\"message\":\"Internal error\"},\"id\":null}";
+            }
             ctx.status(500).contentType("application/json").result(body);
         }
     }

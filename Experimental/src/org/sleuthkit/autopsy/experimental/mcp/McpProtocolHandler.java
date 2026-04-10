@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.mcp;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -36,6 +37,7 @@ import java.util.Map;
 class McpProtocolHandler {
 
     // JSON-RPC 2.0 reserved error codes (package-private for reuse in McpServer)
+    static final int ERR_PARSE_ERROR      = -32700;
     static final int ERR_METHOD_NOT_FOUND = -32601;
     static final int ERR_INTERNAL_ERROR   = -32603;
 
@@ -60,14 +62,17 @@ class McpProtocolHandler {
      * Returns a JSON-RPC response string.
      */
     public String handle(String requestJson) throws Exception {
-        JsonNode request = mapper.readTree(requestJson);
-        String method = request.path("method").asText();
-        JsonNode params = request.path("params");
-        // Preserve the id as a JsonNode so its original type (number, string, null,
-        // or absent) is returned unchanged in the response, as the JSON-RPC spec requires.
-        JsonNode id = request.has("id") ? request.get("id") : NullNode.getInstance();
-
+        // id defaults to NullNode so parse errors return a conforming response
+        // even when the request cannot be read at all (JSON-RPC spec §5).
+        JsonNode id = NullNode.getInstance();
         try {
+            JsonNode request = mapper.readTree(requestJson);
+            String method = request.path("method").asText();
+            JsonNode params = request.path("params");
+            // Preserve the id as a JsonNode so its original type (number, string, null,
+            // or absent) is returned unchanged in the response, as the JSON-RPC spec requires.
+            id = request.has("id") ? request.get("id") : NullNode.getInstance();
+
             Object result = switch (method) {
                 case "tools/list"   -> TOOLS_LIST_SERVICE.listTools();
                 case "tools/call"   -> dispatchToolCall(params);
@@ -75,6 +80,8 @@ class McpProtocolHandler {
                 default             -> throw new McpException("Unknown method: " + method, McpException.ERR_METHOD_NOT_FOUND);
             };
             return buildSuccess(id, result);
+        } catch (JsonProcessingException ex) {
+            return buildError(NullNode.getInstance(), ERR_PARSE_ERROR, "Parse error");
         } catch (McpException ex) {
             return buildError(id, ex.getJsonRpcCode(), ex.getMessage());
         } catch (Exception ex) {
