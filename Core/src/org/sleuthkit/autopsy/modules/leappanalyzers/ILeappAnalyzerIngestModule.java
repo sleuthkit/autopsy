@@ -78,12 +78,15 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     private static final String XMLFILE = "ileapp-artifact-attribute-reference.xml"; //NON-NLS
 
     // iOS-specific files used to detect whether the data source is from an iOS device.
-    // All three live under /private/var/mobile/, a path that does not exist on macOS.
-    // Filename and parent-path pairs searched in order; finding any one is sufficient.
+    // Entries cover both /private/var/mobile/ (canonical) and /var/mobile/ (symlinked path
+    // that some acquisition tools use). Finding any one file is sufficient.
     private static final List<String[]> IOS_INDICATOR_FILES = Arrays.asList(
-            new String[]{"sms.db", "/private/var/mobile/Library/SMS/"},                           //NON-NLS
-            new String[]{"AddressBook.sqlitedb", "/private/var/mobile/Library/AddressBook/"},     //NON-NLS
-            new String[]{"com.apple.mobilephone.plist", "/private/var/mobile/Library/Preferences/"}); //NON-NLS
+            new String[]{"sms.db", "/private/var/mobile/Library/SMS/"},                                //NON-NLS
+            new String[]{"sms.db", "/var/mobile/Library/SMS/"},                                        //NON-NLS
+            new String[]{"AddressBook.sqlitedb", "/private/var/mobile/Library/AddressBook/"},          //NON-NLS
+            new String[]{"AddressBook.sqlitedb", "/var/mobile/Library/AddressBook/"},                  //NON-NLS
+            new String[]{"com.apple.mobilephone.plist", "/private/var/mobile/Library/Preferences/"},   //NON-NLS
+            new String[]{"com.apple.mobilephone.plist", "/var/mobile/Library/Preferences/"});          //NON-NLS
 
     private File iLeappExecutable;
 
@@ -562,8 +565,8 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
 
     /**
      * Searches for a small set of files that are present on virtually all iOS
-     * devices under /private/var/mobile/, a path that does not exist on macOS.
-     * Returns true as soon as any one is found.
+     * devices under /private/var/mobile/ or /var/mobile/ (symlinked path used
+     * by some acquisition tools). Returns true as soon as any one is found.
      *
      * @param dataSource the data source to search
      *
@@ -578,6 +581,7 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, String.format("Error searching for iOS indicator file '%s'", fileInfo[0]), ex); //NON-NLS
+                return true; // Fail open: an inconclusive search is not a negative result.
             }
         }
         return false;

@@ -161,7 +161,6 @@
       <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">ad_svc.trace</NAME>
       <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">connection_trace.txt</NAME>
       <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">ad.trace</NAME>
-      <NAME isExclusive="false" name="AnyDesk" regex="true" typeFilter="file">.*\.txt</NAME>
       <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">user.conf</NAME>
       <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">service.conf</NAME>
       <NAME isExclusive="false" name="AnyDesk" regex="false" typeFilter="file">system.conf</NAME>
@@ -394,7 +393,6 @@
       <NAME isExclusive="false" name="RAdmin" regex="false" typeFilter="file">FamItrfc</NAME>
       <NAME isExclusive="false" name="RAdmin" regex="false" typeFilter="file">FamItrf2</NAME>
       <NAME isExclusive="false" name="RAdmin" regex="false" typeFilter="file">Radm_log.htm</NAME>
-      <NAME isExclusive="false" name="RAdmin" regex="true" typeFilter="file">.*\.htm</NAME>
       <NAME isExclusive="false" name="SmarTTY" regex="false" typeFilter="file">SmarTTY.exe</NAME>
       <NAME isExclusive="false" name="Bitvise SSH Client" regex="false" typeFilter="file">BvSshClient-Inst.exe</NAME>
       <NAME isExclusive="false" name="Pocket Controller" regex="false" typeFilter="file">pocketcontroller.exe</NAME>
