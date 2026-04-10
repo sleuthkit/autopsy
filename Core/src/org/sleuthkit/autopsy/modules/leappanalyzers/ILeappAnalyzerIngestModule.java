@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -54,9 +55,12 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Data source ingest module that runs iLeapp against logical iOS files.
@@ -72,6 +76,14 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
     private static final String ILEAPP_PATHS_FILE = "iLeapp_paths.txt"; //NON-NLS
 
     private static final String XMLFILE = "ileapp-artifact-attribute-reference.xml"; //NON-NLS
+
+    // iOS-specific files used to detect whether the data source is from an iOS device.
+    // All three live under /private/var/mobile/, a path that does not exist on macOS.
+    // Filename and parent-path pairs searched in order; finding any one is sufficient.
+    private static final List<String[]> IOS_INDICATOR_FILES = Arrays.asList(
+            new String[]{"sms.db", "/private/var/mobile/Library/SMS/"},                           //NON-NLS
+            new String[]{"AddressBook.sqlitedb", "/private/var/mobile/Library/AddressBook/"},     //NON-NLS
+            new String[]{"com.apple.mobilephone.plist", "/private/var/mobile/Library/Preferences/"}); //NON-NLS
 
     private File iLeappExecutable;
 
@@ -122,9 +134,18 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
         "ILeappAnalyzerIngestModule.has.run=iLeapp",
         "ILeappAnalyzerIngestModule.iLeapp.cancelled=iLeapp run was canceled",
         "ILeappAnalyzerIngestModule.completed=iLeapp Processing Completed",
-        "ILeappAnalyzerIngestModule.report.name=iLeapp Html Report"})
+        "ILeappAnalyzerIngestModule.report.name=iLeapp Html Report",
+        "ILeappAnalyzerIngestModule.notIOS.skipped=iLeapp skipped: data source does not appear to be an iOS device."})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
+
+        if (!isIOSDataSource(dataSource)) {
+            logger.log(Level.INFO, "iLeapp: data source does not appear to be iOS, skipping."); //NON-NLS
+            IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
+                    MODULE_NAME, Bundle.ILeappAnalyzerIngestModule_notIOS_skipped());
+            IngestServices.getInstance().postMessage(message);
+            return ProcessResult.OK;
+        }
 
         statusHelper.switchToIndeterminate();
         statusHelper.progress(Bundle.ILeappAnalyzerIngestModule_running_iLeapp());
@@ -495,6 +516,71 @@ public class ILeappAnalyzerIngestModule implements DataSourceIngestModule {
                         filePath.toString(), iLeappFile.getId()), ex); //NON-NLS
             }
         }
+    }
+
+    /**
+     * Determines whether the data source appears to be from an iOS device.
+     * For disk images, rules out clearly non-iOS filesystem types first (fast,
+     * no I/O): Ext2/3/4, YAFFS2 (Android), and NTFS (Windows) are
+     * iOS-negative. HFS and APFS are ambiguous (also used by macOS) and fall
+     * through to a file-based check. FAT and unknown types also fall through.
+     *
+     * @param dataSource the data source to evaluate
+     *
+     * @return true if the data source appears to be iOS
+     */
+    private boolean isIOSDataSource(Content dataSource) {
+        if (dataSource instanceof Image) {
+            try {
+                boolean hasDefinitelyNonIOSFs = false;
+                for (FileSystem fs : ((Image) dataSource).getFileSystems()) {
+                    switch (fs.getFsType()) {
+                        case TSK_FS_TYPE_EXT2:
+                        case TSK_FS_TYPE_EXT3:
+                        case TSK_FS_TYPE_EXT4:
+                        case TSK_FS_TYPE_EXT_DETECT:
+                        case TSK_FS_TYPE_YAFFS2:
+                        case TSK_FS_TYPE_YAFFS2_DETECT:
+                        case TSK_FS_TYPE_NTFS:
+                        case TSK_FS_TYPE_NTFS_DETECT:
+                            hasDefinitelyNonIOSFs = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                if (hasDefinitelyNonIOSFs) {
+                    return false;
+                }
+                // HFS, APFS, FAT, or unknown: fall through to file check
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error checking filesystem types for iLeapp iOS detection", ex); //NON-NLS
+            }
+        }
+        return hasIOSIndicatorFiles(dataSource);
+    }
+
+    /**
+     * Searches for a small set of files that are present on virtually all iOS
+     * devices under /private/var/mobile/, a path that does not exist on macOS.
+     * Returns true as soon as any one is found.
+     *
+     * @param dataSource the data source to search
+     *
+     * @return true if at least one iOS indicator file is found
+     */
+    private boolean hasIOSIndicatorFiles(Content dataSource) {
+        FileManager fileManager = getCurrentCase().getServices().getFileManager();
+        for (String[] fileInfo : IOS_INDICATOR_FILES) {
+            try {
+                if (!fileManager.findFiles(dataSource, fileInfo[0], fileInfo[1]).isEmpty()) {
+                    return true;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Error searching for iOS indicator file '%s'", fileInfo[0]), ex); //NON-NLS
+            }
+        }
+        return false;
     }
 
     /**
