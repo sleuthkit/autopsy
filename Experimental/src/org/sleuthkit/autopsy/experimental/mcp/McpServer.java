@@ -24,10 +24,14 @@ import static io.javalin.apibuilder.ApiBuilder.*;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,7 +48,9 @@ import java.util.logging.Logger;
 public class McpServer {
 
     private static final Logger logger = Logger.getLogger(McpServer.class.getName());
-    private static final int DEFAULT_PORT = 8765;
+    private static final int DEFAULT_PORT = 8743;
+    private static final String CONFIG_FILE_NAME = "mcp-config.properties";
+    private static final String PORT_PROPERTY = "port";
 
     private final String authToken;
     private final McpProtocolHandler protocolHandler;
@@ -90,7 +96,8 @@ public class McpServer {
             });
         });
 
-        app.start("127.0.0.1", DEFAULT_PORT); // localhost only — never 0.0.0.0
+        int port = readOrCreateConfigPort();
+        app.start("127.0.0.1", port); // localhost only — never 0.0.0.0
         try {
             writeTokenFile();
         } catch (IOException ex) {
@@ -115,6 +122,48 @@ public class McpServer {
         } catch (Exception ex) {
             ctx.status(500).result("{\"error\": \"Internal server error\"}");
         }
+    }
+
+    /**
+     * Reads the port from mcp-config.properties in the MCP directory. If the
+     * file does not exist it is created with the default port so users have a
+     * file they can edit. Returns the configured port, or DEFAULT_PORT if the
+     * file cannot be read or contains an invalid value.
+     */
+    private int readOrCreateConfigPort() {
+        Path configPath = getMcpDir().resolve(CONFIG_FILE_NAME);
+        Properties props = new Properties();
+
+        if (Files.exists(configPath)) {
+            try (InputStream in = Files.newInputStream(configPath)) {
+                props.load(in);
+                String portStr = props.getProperty(PORT_PROPERTY, "").trim();
+                int port = Integer.parseInt(portStr);
+                if (port > 0 && port <= 65535) {
+                    return port;
+                }
+                logger.log(Level.WARNING, "Invalid port in MCP config ({0}), using default {1}",
+                        new Object[]{portStr, DEFAULT_PORT});
+            } catch (IOException | NumberFormatException ex) {
+                logger.log(Level.WARNING, "Could not read MCP config port, using default", ex);
+            }
+        } else {
+            // Create the file so users know it exists and can edit it.
+            try {
+                Files.createDirectories(configPath.getParent());
+                props.setProperty(PORT_PROPERTY, String.valueOf(DEFAULT_PORT));
+                try (OutputStream out = Files.newOutputStream(configPath,
+                        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                    props.store(out,
+                            "Autopsy MCP server configuration\n"
+                            + "# Change the port number below if it conflicts with another application.\n"
+                            + "# Restart Autopsy after editing this file.");
+                }
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Could not create MCP config file, using default port", ex);
+            }
+        }
+        return DEFAULT_PORT;
     }
 
     private String generateToken() {
