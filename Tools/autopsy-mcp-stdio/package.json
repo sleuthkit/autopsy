@@ -1,0 +1,17 @@
+{
+  "name": "autopsy-mcp-stdio",
+  "version": "1.0.0",
+  "description": "STDIO wrapper that bridges Claude Desktop/Code to the Autopsy MCP HTTP server",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.10.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "pkg": "^5.8.1"
+  },
+  "scripts": {
+    "bundle": "esbuild autopsy-mcp-stdio.js --bundle --platform=node --format=cjs --outfile=dist/bundle.cjs",
+    "package": "npm run bundle && pkg dist/bundle.cjs --target node18-win-x64 --output dist/autopsy-mcp-stdio.exe --no-bytecode --public-packages \"*\" --public"
+  }
+}

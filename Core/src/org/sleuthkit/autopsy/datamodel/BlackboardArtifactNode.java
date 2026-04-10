@@ -1316,8 +1316,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()
                         || attribute.getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON) {
                     /*
-                     * Do nothing.
+                     * For Cyber Triage's CT_JSON_DATA_ATTRIBUTE, parse the JSON
+                     * and expand each field into the property map. All other
+                     * skipped attributes (including other JSON types) are ignored.
                      */
+                    if (attribute.getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.JSON
+                            && CyberTriageData.CT_JSON_ATTRIBUTE_TYPE_NAME.equals(
+                                    attribute.getAttributeType().getTypeName())) {
+                        CyberTriageData.addCtJsonProperties(map, attribute.getValueString());
+                    }
                 } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                     addEmailMsgProperty(map, attribute);
                 } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {

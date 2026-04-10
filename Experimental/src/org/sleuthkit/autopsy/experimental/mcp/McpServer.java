@@ -1,0 +1,155 @@
+/*
+ * Autopsy
+ *
+ * Copyright 2026 Sleuth Kit Labs
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.experimental.mcp;
+
+import io.javalin.Javalin;
+import io.javalin.http.Context;
+import org.sleuthkit.autopsy.casemodule.Case;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.SecureRandom;
+import java.util.Base64;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ * Owns the Javalin HTTP server instance. Starts at application startup and
+ * runs for the lifetime of the application. The active case is updated via
+ * updateCase() / clearCase() as cases are opened and closed. When no case is
+ * open, tools/list still works and tools/call returns a clean error message.
+ *
+ * An ephemeral auth token is generated at server start and written to
+ * %LOCALAPPDATA%\autopsy\mcp\mcp-token. It is not rotated between cases —
+ * it is valid for the entire application session and removed on JVM exit.
+ */
+public class McpServer {
+
+    private static final Logger logger = Logger.getLogger(McpServer.class.getName());
+    private static final int DEFAULT_PORT = 8765;
+
+    private final String authToken;
+    private final McpProtocolHandler protocolHandler;
+    private Javalin app;
+
+    public McpServer() {
+        this.authToken = generateToken();
+        this.protocolHandler = new McpProtocolHandler();
+    }
+
+    /**
+     * Called when a case is opened. Creates a TskQueryService for the case and
+     * makes it available to the protocol handler.
+     */
+    public void updateCase(Case openedCase) {
+        protocolHandler.setQueryService(
+                new TskQueryService(openedCase.getSleuthkitCase(), openedCase.getDisplayName()));
+    }
+
+    /**
+     * Called when a case is closed. Clears the query service so subsequent
+     * tool calls return a "no case open" error. The HTTP server keeps running
+     * and the token file remains valid so the STDIO wrapper stays connected.
+     */
+    public void clearCase() {
+        protocolHandler.clearQueryService();
+    }
+
+    public void start() {
+        app = Javalin.create(config -> {
+            config.jetty.defaultHost = "127.0.0.1"; // localhost only — never 0.0.0.0
+        });
+
+        // Auth filter — every request must have valid Bearer token
+        app.before(ctx -> {
+            String auth = ctx.header("Authorization");
+            if (auth == null || !auth.equals("Bearer " + authToken)) {
+                ctx.status(401).result("Unauthorized");
+                ctx.skipRemainingHandlers();
+            }
+        });
+
+        // MCP endpoint
+        app.post("/mcp", this::handleMcpRequest);
+
+        // SSE endpoint for streaming (MCP spec)
+        app.get("/mcp/sse", ctx -> {
+            // TODO: implement SSE transport if needed
+        });
+
+        app.start(DEFAULT_PORT);
+        writeTokenFile();
+    }
+
+    public void stop() {
+        if (app != null) {
+            app.stop();
+            app = null;
+        }
+        deleteTokenFile();
+    }
+
+    private void handleMcpRequest(Context ctx) {
+        try {
+            String requestBody = ctx.body();
+            String response = protocolHandler.handle(requestBody);
+            ctx.contentType("application/json").result(response);
+        } catch (Exception ex) {
+            ctx.status(500).result("{\"error\": \"Internal server error\"}");
+        }
+    }
+
+    private String generateToken() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private Path getMcpDir() {
+        String localAppData = System.getenv("LOCALAPPDATA");
+        if (localAppData != null && !localAppData.isEmpty()) {
+            return Path.of(localAppData, "autopsy", "mcp");
+        }
+        return Path.of(System.getProperty("user.home"), "AppData", "Local", "autopsy", "mcp");
+    }
+
+    private Path getTokenPath() {
+        return getMcpDir().resolve("mcp-token");
+    }
+
+    private void writeTokenFile() {
+        try {
+            Path tokenPath = getTokenPath();
+            Files.createDirectories(tokenPath.getParent());
+            Files.writeString(tokenPath, authToken);
+            tokenPath.toFile().deleteOnExit();
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed to write MCP token file", ex);
+        }
+    }
+
+    private void deleteTokenFile() {
+        try {
+            Files.deleteIfExists(getTokenPath());
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed to delete MCP token file", ex);
+        }
+    }
+}

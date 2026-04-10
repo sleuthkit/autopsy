@@ -139,7 +139,8 @@
             <fileset dir="${basedir}/linux_macos_install_scripts"/>
         </copy>
         
-        <copy file="${basedir}/Tools/ManifestTool/ManifestTool.exe" todir="${zip-tmp}/${app.name}/bin"/>        
+        <copy file="${basedir}/Tools/ManifestTool/ManifestTool.exe" todir="${zip-tmp}/${app.name}/bin"/>
+        <copy file="${basedir}/Tools/autopsy-mcp-stdio/dist/autopsy-mcp-stdio.exe" todir="${zip-tmp}/${app.name}/bin"/>
         
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         

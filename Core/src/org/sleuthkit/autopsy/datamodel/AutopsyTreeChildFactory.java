@@ -19,6 +19,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -145,7 +146,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             } else {
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                 // data source by type view
-                nodes = Arrays.asList(
+                List<Object> nodeList = new ArrayList<>(Arrays.asList(
                         new DataSourcesByType(),
                         new Views(skCase),
                         new DataArtifacts(),
@@ -154,7 +155,11 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
                         new Tags(),
                         new ScoreContent(skCase),
                         new Reports()
-                );
+                ));
+                if (CyberTriageData.isCyberTriageDatabase(skCase)) {
+                    nodeList.add(new CyberTriageData(skCase));
+                }
+                nodes = nodeList;
             }
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to create tree because there is no current case", ex); //NON-NLS

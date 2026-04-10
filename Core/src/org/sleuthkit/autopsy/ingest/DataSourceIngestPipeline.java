@@ -92,8 +92,13 @@ final class DataSourceIngestPipeline extends IngestPipeline<DataSourceIngestTask
             ingestJobExecutor.switchDataSourceIngestProgressBarToIndeterminate();
             ingestManager.setIngestTaskProgress(task, getDisplayName());
             logger.log(Level.INFO, "{0} analysis of {1} starting", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS
-            module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobExecutor));
-            logger.log(Level.INFO, "{0} analysis of {1} finished", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS            
+            try {
+                module.process(dataSource, new DataSourceIngestModuleProgress(ingestJobExecutor));
+                logger.log(Level.INFO, "{0} analysis of {1} finished", new Object[]{getDisplayName(), dataSource.getName()}); //NON-NLS
+            } finally {
+                ingestJobExecutor.changeDataSourceIngestProgressBarTitle(NbBundle.getMessage(this.getClass(), "IngestJob.progress.dataSourceIngest.initialDisplayName", dataSource.getName()));
+                ingestJobExecutor.switchDataSourceIngestProgressBarToIndeterminate();
+            }
             if (!ingestJobExecutor.isCancelled() && ingestJobExecutor.currentDataSourceIngestModuleIsCancelled()) {
                 ingestJobExecutor.currentDataSourceIngestModuleCancellationCompleted(getDisplayName());
             }

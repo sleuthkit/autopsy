@@ -211,6 +211,15 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(LocalFilesDataSourceNode lfdsn);
 
+    /*
+     * Cyber Triage Data
+     */
+    T visit(CyberTriageData.RootNode node);
+
+    T visit(CyberTriageData.ErrorsNode node);
+
+    T visit(CyberTriageData.ErrorNode node);
+
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -595,6 +604,21 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(LocalFilesDataSourceNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(CyberTriageData.RootNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(CyberTriageData.ErrorsNode node) {
+            return defaultVisit(node);
+        }
+
+        @Override
+        public T visit(CyberTriageData.ErrorNode node) {
             return defaultVisit(node);
         }
     }

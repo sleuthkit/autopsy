@@ -6,7 +6,7 @@
 *.xml                   text
 *.form                   text
 *.properties                   text
-*.properties-MERGED                  text
+*.properties-MERGED                  text eol=lf
 *.html                   text diff=html
 *.dox                   text
 Doxyfile                text

@@ -213,5 +213,10 @@ public class RootContentChildren extends Children.Keys<Object> {
             return new DataArtifacts.RootNode(
                     dataArtifacts.getFilteringDataSourceObjId());
         }
+
+        @Override
+        public AbstractNode visit(CyberTriageData cyberTriageData) {
+            return new CyberTriageData.RootNode(cyberTriageData.getSleuthkitCase());
+        }
     }
 }
