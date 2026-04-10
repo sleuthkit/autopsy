@@ -283,6 +283,19 @@ class TskQueryService {
                 Map.of(
                     "accountType", param("string", "Account type e.g. EMAIL, PHONE"),
                     "accountId",   param("string", "Type-specific identifier e.g. user@example.com or +15551234567")
+                )),
+
+            tool("get_object_children",
+                "Return the parent and children of any object in the case database by its object ID. " +
+                "All TSK objects (files, directories, artifacts, images, volume systems, volumes, " +
+                "file systems) share a common parent-child hierarchy. A file's children may include " +
+                "both derived files and blackboard artifacts. An image's children include volume systems " +
+                "and file systems. Use this to navigate the object tree starting from any known ID. " +
+                "Each child entry includes its id, objectType, and type-specific summary fields " +
+                "(name/path/size for files; artifactType/attributes for artifacts; fsType for file " +
+                "systems; etc.).",
+                Map.of(
+                    "objectId", param("integer", "Object ID of the item whose children you want (required)")
                 ))
         );
     }
@@ -1116,6 +1129,122 @@ class TskQueryService {
         result.put("totalRelationships", cm.getRelationshipSourcesCount(targetAdi, filter));
         result.put("relatedAccounts",    relationships);
         return result;
+    }
+
+    // -------------------------------------------------------------------------
+    // get_object_children
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns the parent and children of any TSK object by object ID.
+     * Children are heterogeneous: a file's children may include both derived
+     * files and blackboard artifacts; an image's children include volume systems.
+     */
+    Map<String, Object> getObjectChildren(JsonNode args) throws TskCoreException, McpException {
+        if (args.path("objectId").isMissingNode()) {
+            throw new McpException("objectId is required");
+        }
+        long objectId = args.path("objectId").asLong();
+
+        Content content = skCase.getContentById(objectId);
+        if (content == null) {
+            throw new McpException("No object found with id " + objectId);
+        }
+
+        List<Content> children = content.getChildren();
+        List<Map<String, Object>> childList = new ArrayList<>(children.size());
+        for (Content child : children) {
+            childList.add(buildContentSummary(child));
+        }
+
+        Content parent = content.getParent();
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("object",     buildContentSummary(content));
+        result.put("parent",     parent != null ? buildContentSummary(parent) : null);
+        result.put("childCount", childList.size());
+        result.put("children",   childList);
+        return result;
+    }
+
+    /**
+     * Builds a concise type-dispatched summary map for any Content object.
+     * The objectType field indicates which additional fields are present.
+     */
+    private Map<String, Object> buildContentSummary(Content c) throws TskCoreException {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", c.getId());
+
+        if (c instanceof BlackboardArtifact) {
+            BlackboardArtifact artifact = (BlackboardArtifact) c;
+            item.put("objectType",    "artifact");
+            item.put("artifactId",    artifact.getArtifactID());
+            item.put("artifactType",  artifact.getArtifactTypeName());
+            item.put("sourceObjectId", artifact.getObjectID());
+            item.put("dataSourceId",  artifact.getDataSourceObjectID());
+            List<Map<String, Object>> attrList = new ArrayList<>();
+            for (BlackboardAttribute attr : artifact.getAttributes()) {
+                Map<String, Object> attrMap = new LinkedHashMap<>();
+                attrMap.put("type",  attr.getAttributeType().getTypeName());
+                attrMap.put("value", attrValueAsObject(attr));
+                attrList.add(attrMap);
+            }
+            item.put("attributes", attrList);
+
+        } else if (c instanceof AbstractFile) {
+            AbstractFile f = (AbstractFile) c;
+            item.put("objectType", "file");
+            item.put("name",       f.getName());
+            try {
+                item.put("path", f.getUniquePath());
+            } catch (TskCoreException ex) {
+                item.put("path", f.getParentPath() + f.getName());
+            }
+            item.put("size",         f.getSize());
+            item.put("mimeType",     f.getMIMEType());
+            item.put("fileType",     f.getType().name());
+            item.put("dirType",      f.getDirTypeAsString());
+            item.put("isDirectory",  f.isDir());
+            item.put("modifiedTime", epochToIso(f.getMtime()));
+            item.put("createdTime",  epochToIso(f.getCrtime()));
+
+        } else if (c instanceof Image) {
+            Image img = (Image) c;
+            item.put("objectType", "image");
+            item.put("name",       img.getName());
+            item.put("imageType",  img.getType().getName());
+            item.put("size",       img.getSize());
+
+        } else if (c instanceof VolumeSystem) {
+            VolumeSystem vs = (VolumeSystem) c;
+            item.put("objectType", "volumeSystem");
+            item.put("vsType",     vs.getType().getName());
+            item.put("offset",     vs.getOffset());
+            item.put("blockSize",  vs.getBlockSize());
+
+        } else if (c instanceof Volume) {
+            Volume vol = (Volume) c;
+            item.put("objectType",    "volume");
+            item.put("addr",          vol.getAddr());
+            item.put("description",   vol.getDescription());
+            item.put("startSector",   vol.getStart());
+            item.put("lengthSectors", vol.getLength());
+            item.put("flags",         vol.getFlagsAsString());
+
+        } else if (c instanceof FileSystem) {
+            FileSystem fs = (FileSystem) c;
+            item.put("objectType",  "fileSystem");
+            item.put("fsType",      fs.getFsType().getDisplayName());
+            item.put("imageOffset", fs.getImageOffset());
+            item.put("blockSize",   fs.getBlock_size());
+            item.put("blockCount",  fs.getBlock_count());
+
+        } else {
+            item.put("objectType", c.getClass().getSimpleName());
+            item.put("name",       c.getName());
+        }
+
+        return item;
     }
 
     // -------------------------------------------------------------------------
