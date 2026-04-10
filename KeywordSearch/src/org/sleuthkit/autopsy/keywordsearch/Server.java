@@ -65,7 +65,6 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrClient;
-import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CollectionAdminRequest;
 import org.apache.solr.client.solrj.response.CollectionAdminResponse;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
@@ -361,7 +360,6 @@ public class Server {
         return new HttpSolrClient.Builder(solrUrl)
                 .withSocketTimeout(connectionTimeoutMs)
                 .withConnectionTimeout(connectionTimeoutMs)
-                .withResponseParser(new XMLResponseParser())
                 .build();
     }
 
@@ -376,7 +374,6 @@ public class Server {
                 .withThreadCount(numThreads)
                 .withSocketTimeout(connectionTimeoutMs)
                 .withConnectionTimeout(connectionTimeoutMs)
-                .withResponseParser(new XMLResponseParser())
                 .build();
 
         return client;

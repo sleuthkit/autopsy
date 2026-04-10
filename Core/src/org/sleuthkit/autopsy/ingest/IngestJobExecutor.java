@@ -1084,6 +1084,7 @@ final class IngestJobExecutor {
             SwingUtilities.invokeLater(() -> {
                 if (dataSourceIngestProgressBar != null) {
                     dataSourceIngestProgressBar.switchToIndeterminate();
+                    dataSourceIngestProgressBar.progress(""); //NON-NLS
                 }
             });
         }
