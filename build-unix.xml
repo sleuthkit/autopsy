@@ -26,10 +26,7 @@
     </target>
     
     <target name="copyLibsToZip" />
-    
+
     <target name="copyLibsToBaseDir" />
-    
-    <target name="build-installer-unix">
-        <echo>Unix installer creation not supported at this time</echo>
-    </target>
+
 </project>
