@@ -4,12 +4,13 @@
 # based on LastWrite times of subkeys
 # 
 # History
+#   20201007 - MITRE update
 #   20100308 - created
 #
 # References
 #   http://msdn.microsoft.com/en-us/library/cc144123%28VS.85%29.aspx
-#   Coreflood - http://vil.nai.com/vil/content/v_102053.htm
-#   http://www.secureworks.com/research/threats/coreflood/?threat=coreflood
+#   https://attack.mitre.org/techniques/T1546/015/
+#   https://www.welivesecurity.com/wp-content/uploads/2016/10/eset-sednit-part-2.pdf, pg 69
 #
 # Analysis Tip: Malware such as Coreflood uses a random subkey name and a
 #               random CLSID GUID value
@@ -24,8 +25,10 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20100308);
+              MITRE         => "T1546\.015",
+              category      => "persistence",
+			  output		=> "report",
+              version       => 20201007);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -41,8 +44,10 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching shelloverlay v.".$VERSION);
-	::rptMsg("shelloverlay v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("shelloverlay v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	
@@ -53,7 +58,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("shelloverlay");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite time: ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		
 		my @subkeys = $key->get_list_of_subkeys();
@@ -69,11 +74,14 @@ sub pluginmain {
 			}
 			
 			foreach my $t (reverse sort {$a <=> $b} keys %id) {
-				::rptMsg(gmtime($t)." Z");
+				::rptMsg(::format8601Date($t)."Z");
 				foreach my $item (@{$id{$t}}) {
 					::rptMsg("  ".$item);
 				}
 				::rptMsg("");
+				::rptMsg("Analysis Tip: ShellIconOverlays can be used for persistence.");
+				::rptMsg("See pg 69 of https://www.welivesecurity.com/wp-content/uploads/2016/10/eset-sednit-part-2.pdf");
+#				::rptMsg("");
 			}
 			
 		}

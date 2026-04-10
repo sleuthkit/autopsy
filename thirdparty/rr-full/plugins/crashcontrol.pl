@@ -2,6 +2,7 @@
 # crashcontrol.pl
 #
 # History:
+#   20200904 - MITRE updates
 #   20131210 - updated to include ref/values for Win8/2012
 #   20081212 - created
 #
@@ -17,11 +18,13 @@ package crashcontrol;
 use strict;
 
 my %config = (hive          => "System",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20131210);
+			  output		=> "report",
+              version       => 20200904);
 
 sub getConfig{return %config}
 

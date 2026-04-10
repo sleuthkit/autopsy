@@ -312,6 +312,7 @@ final public class ViewFrame extends BorderPane {
      * @param controller The TimeLineController for this ViewFrame
      * @param eventsTree The EventsTree this ViewFrame hosts.
      */
+    @SuppressWarnings("this-escape")
     public ViewFrame(@Nonnull TimeLineController controller, @Nonnull EventsTree eventsTree) {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();
@@ -723,6 +724,7 @@ final public class ViewFrame extends BorderPane {
 
         private final Runnable closeCallback;
 
+        @SuppressWarnings("this-escape")
         private NoEventsDialog(Runnable closeCallback) {
             this.closeCallback = closeCallback;
             FXMLConstructor.construct(this, "NoEventsDialog.fxml"); //NON-NLS

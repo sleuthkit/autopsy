@@ -3,6 +3,8 @@
 # Plugin for Registry Ripper 
 #
 # Change history
+#   20200904 - MITRE updates
+#   20200517 - updated date output format
 #   20180702 - update to parseGUID function
 #   20180627 - updated to address Win10, per input from Geoff Rempel
 #   20121005 - updated to address shell item type 0x3A
@@ -16,7 +18,7 @@
 #   Win2000 - http://support.microsoft.com/kb/319958
 #   XP - http://support.microsoft.com/kb/322948/EN-US/
 #		
-# copyright 2018 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package comdlg32;
@@ -27,8 +29,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20180702);
+			  output		=> "report",
+              category      => "user activity",
+              MITRE         => "",
+              version       => 20200904);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -99,7 +103,7 @@ sub pluginmain {
 	my @vals;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		
 		my @subkeys = $key->get_list_of_subkeys();
 		
@@ -107,42 +111,42 @@ sub pluginmain {
 			foreach my $s (@subkeys) {
 				if ($s->get_name() eq "LastVisitedMRU") {
 					::rptMsg("LastVisitedMRU");
-					::rptMsg("LastWrite: ".gmtime($s->get_timestamp()));
+					::rptMsg("LastWrite: ".::format8601Date($s->get_timestamp())."Z");
 					parseLastVisitedMRU($s); 
 					::rptMsg("");
 				}
 				
 				if ($s->get_name() eq "OpenSaveMRU") {
 					::rptMsg("OpenSaveMRU");
-					::rptMsg("LastWrite: ".gmtime($s->get_timestamp()));
+					::rptMsg("LastWrite: ".::format8601Date($s->get_timestamp())."Z");
 					parseOpenSaveMRU($s); 
 					::rptMsg("");
 				}
 				
 				if ($s->get_name() eq "CIDSizeMRU") {
 					::rptMsg("CIDSizeMRU");
-					::rptMsg("LastWrite: ".gmtime($s->get_timestamp()));
+					::rptMsg("LastWrite: ".::format8601Date($s->get_timestamp())."Z");
 					parseCIDSizeMRU($s);
 					::rptMsg("");
 				}
 				
 				if ($s->get_name() eq "FirstFolder") {
 					::rptMsg("FirstFolder");
-					::rptMsg("LastWrite: ".gmtime($s->get_timestamp()));
+					::rptMsg("LastWrite time: ".::format8601Date($s->get_timestamp())."Z");
 					parseFirstFolder($s);
 					::rptMsg("");
 				}
 				
 				if ($s->get_name() eq "LastVisitedPidlMRU" || $s->get_name() eq "LastVisitedPidlMRULegacy") {
 					::rptMsg("LastVisitedPidlMRU");
-					::rptMsg("LastWrite: ".gmtime($s->get_timestamp()));
+					::rptMsg("LastWrite time: ".::format8601Date($s->get_timestamp())."Z");
 					parseLastVisitedPidlMRU($s); 
 					::rptMsg("");
 				}
 				
 				if ($s->get_name() eq "OpenSavePidlMRU") {
 					::rptMsg("OpenSavePidlMRU");
-					::rptMsg("LastWrite: ".gmtime($s->get_timestamp()));
+					::rptMsg("LastWrite time: ".::format8601Date($s->get_timestamp())."Z");
 					parseOpenSavePidlMRU($s); 
 					::rptMsg("");
 				}
@@ -213,7 +217,7 @@ sub parseOpenSaveMRU {
 sub parseOpenSaveValues {
 	my $key = shift;
 	::rptMsg("OpenSaveMRU\\".$key->get_name());
-	::rptMsg("LastWrite Time: ".gmtime($key->get_timestamp())." Z");
+	::rptMsg("LastWrite time: ".::format8601Date($key->get_timestamp())."Z");
 	my %osmru;
 	my @vals = $key->get_list_of_values();
 	if (scalar(@vals) > 0) {
@@ -432,7 +436,6 @@ sub parseShellItem {
 	while ($tag) {
 		my %item = ();
 		my $sz = unpack("v",substr($data,$cnt,2));
-        return %str unless (defined $sz);
 		$tag = 0 if (($sz == 0) || ($cnt + $sz > $len));
 		
 		my $dat = substr($data,$cnt,$sz);
@@ -606,7 +609,6 @@ sub parseFolderEntry {
 	my $str = "";
 	while($tag) {
 		my $s = substr($data,$ofs_shortname + $cnt,1);
-        return %item unless (defined $s);
 		if ($s =~ m/\00/ && ((($cnt + 1) % 2) == 0)) {
 			$tag = 0;
 		}
@@ -622,9 +624,7 @@ sub parseFolderEntry {
 	my $tag = 1;
 	my $cnt = 0;
 	while ($tag) {
-        my $s = substr($data,$ofs + $cnt,2);
-        return %item unless (defined $s); 
-		if (unpack("v",$s) == 0xbeef) {
+		if (unpack("v",substr($data,$ofs + $cnt,2)) == 0xbeef) {
 			$tag = 0;
 		}
 		else {

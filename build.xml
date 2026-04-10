@@ -197,12 +197,36 @@
 
         <delete dir="${zip-tmp}"/>
         <!-- <delete file="${nbdist.dir}/${app.name}.zip"/> -->
-        
+
+        <echo message=" "/>
+        <echo message="=== Step 1 complete ===" />
+        <echo message="  ZIP: ${nbdist.dir}/${app.name}-${app.version}.zip" />
+        <echo message=" "/>
+        <echo message="Next steps (Windows installer):" />
+        <echo message="  1. Extract the ZIP and sign the EXEs (autopsy64.exe, etc.)." />
+        <echo message="  2. Re-zip with the same internal layout and save it as:" />
+        <echo message="       ${nbdist.dir}\${app.name}-${app.version}-signed.zip" />
+        <echo message="  3. Run the installer build script (from the repo root):" />
+        <echo message="       powershell.exe -ExecutionPolicy Bypass -File .\release_scripts\build_windows_installer.ps1 ${app.version}" />
+        <echo message="     (The script uses the -signed.zip automatically if present.)" />
         <echo message=" "/>
         <echo message="cleaning and finalizing release" />
         <delete dir="${release.dir}"/>
     </target>
     
+    <!-- build-installer is superseded by the two-step signing process.
+         Run 'ant build-zip', sign the EXEs, then run build_windows_installer.ps1. -->
+    <target name="build-installer" depends="build-zip"
+            description="Deprecated: see release_scripts/build_windows_installer.ps1">
+        <echo message=" "/>
+        <echo message="NOTE: 'ant build-installer' is no longer supported." />
+        <echo message="To build the Windows installer, complete the two-step process:" />
+        <echo message="  1. Sign the EXEs in ${nbdist.dir}\${app.name}-${app.version}.zip" />
+        <echo message="     and save the result as ${nbdist.dir}\${app.name}-${app.version}-signed.zip" />
+        <echo message="  2. powershell.exe -ExecutionPolicy Bypass -File .\release_scripts\build_windows_installer.ps1 ${app.version}" />
+        <echo message=" "/>
+    </target>
+
     <target name="getProps" depends="prop-files,input-build-type,input-version">
         <property name="nbdist.dir" value="dist"/>
     </target>
@@ -356,24 +380,6 @@
     
     <target name="versioning-script" depends="check-release, versioning-script-if-release, versioning-script-if-not-release"/>
          
-    <target name="build-installer" depends="build-zip" description="Builds Autopsy installer.">    
-        <!-- Unzip file -->
-        <delete dir="${nbdist.dir}/${app.name}-tmp-installer" quiet="true"/>
-        <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-tmp-installer"/>
-        
-        <!-- Make a folder to move the contents into so that we get rid of the folder with the version number -->
-        <delete dir="${nbdist.dir}/${app.name}-installer" quiet="true"/>
-        <mkdir dir="${nbdist.dir}/${app.name}-installer"/>
-        <move todir="${nbdist.dir}/${app.name}-installer">
-            <fileset dir="${nbdist.dir}/${app.name}-tmp-installer/${app.name}-${app.version}">
-                <include name="**"/>
-            </fileset>
-        </move>
-        <delete dir="${nbdist.dir}/${app.name}-tmp-installer" quiet="true"/>
-        
-        <antcall target="build-installer-${os.family}" />
-    </target>
-    
     <target name="chmod_executables" >
         <chmod perm="a+x">
             <fileset dir="${cluster}/markmckinnon" casesensitive="no" id="mm">

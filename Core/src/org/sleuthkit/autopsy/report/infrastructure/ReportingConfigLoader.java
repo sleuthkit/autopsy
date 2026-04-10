@@ -76,19 +76,36 @@ final class ReportingConfigLoader {
      * Deserialize all of the settings that make up a reporting configuration in
      * an atomic, thread safe way.
      *
-     * @param configName Name of the reporting configuration
+     * @param configName Name of the reporting configuration. Must not be null,
+     *                   empty, or equal to ".". Must not contain path separator
+     *                   characters ('/', '\\', or File.separatorChar). These
+     *                   restrictions prevent path traversal outside the report
+     *                   configuration folder. The command-line --generateReports
+     *                   path passes unsanitized user input here, so the
+     *                   validation inside this method is the enforcement point.
      *
      * @return ReportingConfig object if a persisted configuration exists, null
      *         otherwise
      *
      * @throws ReportConfigException if an error occurred while reading the
-     *                               configuration
+     *                               configuration, or if configName fails
+     *                               validation
      */
     @SuppressWarnings("unchecked")
     static synchronized ReportingConfig loadConfig(String configName) throws ReportConfigException {
 
-        // construct the configuration directory path
-        Path reportDirPath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName);
+        // reject names that are blank, self-referential, or contain path separators
+        if (configName == null || configName.isEmpty() || configName.equals(".")
+                || configName.indexOf('/') >= 0 || configName.indexOf('\\') >= 0
+                || configName.indexOf(File.separatorChar) >= 0) {
+            throw new ReportConfigException("Invalid report configuration name: " + configName);
+        }
+
+        // construct the configuration directory path and validate against traversal
+        Path reportDirPath = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName).normalize();
+        if (!reportDirPath.startsWith(Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH).normalize())) {
+            throw new ReportConfigException("Invalid report configuration name: " + configName);
+        }
         File reportDirectory = reportDirPath.toFile();
 
         // Return null if a reporting configuration for the given name does not exist.
@@ -170,10 +187,21 @@ final class ReportingConfigLoader {
      * Serialize all of the settings that make up a reporting configuration in
      * an atomic, thread safe way.
      *
-     * @param reportConfig ReportingConfig object to serialize to disk
+     * @param reportConfig ReportingConfig object to serialize to disk. Its
+     *                     name (reportConfig.getName()) must not be null, empty,
+     *                     or equal to ".". Must not contain path separator
+     *                     characters ('/', '\\', or File.separatorChar). These
+     *                     restrictions prevent path traversal outside the report
+     *                     configuration folder. The sole caller
+     *                     (ReportWizardAction.saveReportingConfiguration) always
+     *                     passes either a hardcoded constant or a name that has
+     *                     already been sanitized with replaceAll("[^A-Za-z0-9_]",
+     *                     ""), so the validation here is a defense-in-depth
+     *                     guard rather than the primary enforcement point.
      *
      * @throws ReportConfigException if an error occurred while saving the
-     *                               configuration
+     *                               configuration, or if the name in
+     *                               reportConfig fails validation
      */
     static synchronized void saveConfig(ReportingConfig reportConfig) throws ReportConfigException {
 
@@ -181,10 +209,21 @@ final class ReportingConfigLoader {
             throw new ReportConfigException("Reporting configuration is NULL");
         }
 
-        // construct the configuration directory path
-        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, reportConfig.getName());
+        // reject names that are blank, self-referential, or contain path separators
+        String configName = reportConfig.getName();
+        if (configName == null || configName.isEmpty() || configName.equals(".")
+                || configName.indexOf('/') >= 0 || configName.indexOf('\\') >= 0
+                || configName.indexOf(File.separatorChar) >= 0) {
+            throw new ReportConfigException("Invalid report configuration name: " + configName);
+        }
 
-        // create configuration directory 
+        // construct the configuration directory path and validate against traversal
+        Path pathToConfigDir = Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH, configName).normalize();
+        if (!pathToConfigDir.startsWith(Paths.get(ReportingConfigLoader.REPORT_CONFIG_FOLDER_PATH).normalize())) {
+            throw new ReportConfigException("Invalid report configuration name: " + configName);
+        }
+
+        // create configuration directory
         try {
             Files.createDirectories(pathToConfigDir); // does not throw if directory already exists
         } catch (IOException | SecurityException ex) {

@@ -5,10 +5,15 @@
 # looks to see if there is a MostRecentApplication subkey; if there is, it
 # then tries to retrieve the "Name" value/data
 #
+# Ref:
+#  https://twitter.com/SBousseaden/status/1171461656724955143
+#
 # History:
+#  20200904 - MITRE updates
+#  20190911 - added ref
 #  20120608 - created
 #
-# copyright 2012 Quantum Analytics Research, LLC
+# copyright 2019-2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package direct_tln;
@@ -18,8 +23,10 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              osmask        => 22,
-              version       => 20120608);
+              MITRE         => "",
+			  output		=> "tln",
+              category      => "program execution",
+              version       => 20200904);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -36,7 +43,7 @@ sub pluginmain {
 	my $hive = shift;
 	my @keys = ('Microsoft','Wow6432Node\\Microsoft');
 	
-	::rptMsg("Launching direct v.".$VERSION);
+#	::rptMsg("Launching direct v.".$VERSION);
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 

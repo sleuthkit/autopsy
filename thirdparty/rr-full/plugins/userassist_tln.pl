@@ -5,6 +5,7 @@
 # UserAssist values 
 #
 # Change history
+#  20200916 - MITRE updates
 #  20180710 - removed alert functionality
 #  20130603 - added alert functionality
 #  20110516 - created, modified from userassist2.pl
@@ -24,8 +25,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20180710);
+              MITRE         => "T1204",
+              category      => "program execution",
+			  output		=> "tln",
+              version       => 20200916);
 
 sub getConfig{return %config}
 sub getShortDescr {

@@ -6,9 +6,12 @@
 # and listing them in order by LastWrite time.
 #
 # Change history
+#   20201005 - MITRE update
+#   20200517 - updated date output format
+#   20080324 - created
 # 
-# 
-# copyright 2008 H. Carvey
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package listsoft;
 use strict;
@@ -17,8 +20,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20080324);
+              MITRE         => "",
+			  output        => "report",
+              category      => "config", #installed software
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -55,16 +60,16 @@ sub pluginmain {
 			
 			foreach my $t (reverse sort {$a <=> $b} keys %soft) {
 				foreach my $item (@{$soft{$t}}) {
-					::rptMsg(gmtime($t)."Z \t".$item);
+					::rptMsg(::format8601Date($t)."Z \t".$item);
 				}
 			}	
 		}
 		else {
-			::logMsg($key_path." has no subkeys.");
+			::rptMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
-		::logMsg("Could not access ".$key_path);
+		::rptMsg("Could not access ".$key_path);
 	}
 }
 

@@ -2,6 +2,8 @@
 # appinitdlls
 #
 # Change history:
+#  20200730 - added MITRE ATT&CK 
+#  20200427 - updated output date format
 #  20130425 - added alertMsg() functionality
 #  20130305 - updated to address 64-bit systems
 #  20080324 - created
@@ -10,19 +12,22 @@
 #  http://msdn.microsoft.com/en-us/library/windows/desktop/dd744762(v=vs.85).aspx
 #  http://support.microsoft.com/kb/q197571
 #
-# copyright 2013 QAR,LLC 
+#  https://attack.mitre.org/techniques/T1546/010/
+#
+# copyright 2020 QAR,LLC 
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package appinitdlls;
 use strict;
 
 my %config = (hive          => "Software",
-							category      => "autostart",
+			  category      => "persistence",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              osmask        => 22,
-              version       => 20130425);
+			  output        => "report",
+              MITRE         => "T1546\.010",
+              version       => 20200730);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -43,8 +48,11 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::rptMsg("Launching appinitdlls v.".$VERSION);
-	::rptMsg("appinitdlls v.".$VERSION); # banner
-	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+	::rptMsg("appinitdlls v.".$VERSION); 
+	::rptMsg("(".$config{hive}.") ".getShortDescr());  
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
+
 	my @paths = ('Microsoft\\Windows NT\\CurrentVersion\\Windows',
 	         'Wow6432Node\\Microsoft\\Windows NT\\CurrentVersion\\Windows');
 	
@@ -56,7 +64,7 @@ sub pluginmain {
 		my $key;
 		if ($key = $root_key->get_subkey($key_path)) {
 			::rptMsg($key_path);
-			::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+			::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 			
 			eval {
 				my $app = $key->get_value("AppInit_DLLs")->get_data();

@@ -4,14 +4,15 @@
 #   NTUSER.DAT hive
 #
 # History:
+#   20201012 - MITRE updates
 #   20150608 - created
 #
 # References:
 #   http://herrcore.blogspot.com.tr/2015/06/malware-persistence-with.html
 #   http://www.nobunkum.ru/analytics/en-com-hijacking
+#   https://attack.mitre.org/techniques/T1218/002/
 #
-#
-# copyright 2015 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package cached_tln;
@@ -21,12 +22,14 @@ my %config = (hive          => "NTUSER.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20150608);
+			  output		=> "tln",
+              MITRE         => "T1218\.002",
+              category      => "persistence",
+              version       => 20201012);
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Gets cached Shell Extensions from NTUSER.DAT hive (TLN)";	
+	return "Gets cached Shell Extensions from NTUSER\.DAT hive (TLN)";	
 }
 sub getDescr{}
 sub getRefs {}

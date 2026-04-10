@@ -1,5 +1,4 @@
 auditpol
-auditpol_xp
-lsasecrets
-polacdms
 secrets
+secrets_tln
+securityproviders

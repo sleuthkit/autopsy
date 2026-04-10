@@ -6,6 +6,8 @@
 #  https://community.landesk.com/docs/DOC-3249
 #
 # Change history
+#   20201005 - MITRE update
+#   20200517 - updated date output format
 #   20160823 - added "Current Duration" parsing
 #   20160822 - updated based on client engagement
 #   20130326 - added Wow6432Node path
@@ -14,16 +16,19 @@
 #
 # Orignal copyright 2009 Don C. Weber
 # Updated copyright 2013 QAR, LLC
+# Updated copyright 2020 QAR, LLC
 #-----------------------------------------------------------
 package landesk;
 use strict;
 
 my %config = (hive          => "Software",
-              osmask        => 22,
+              MITRE         => "T1204",
+              category      => "execution",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20160823);
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 
@@ -42,6 +47,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching landesk v.".$VERSION);
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
@@ -58,11 +65,11 @@ sub pluginmain {
 			if (scalar(@subkeys) > 0) {
 				foreach my $s (@subkeys) {
 				  ::rptMsg($s->get_name());
-					::rptMsg("  LastWrite: ".gmtime($s->get_timestamp())." Z");
+					::rptMsg("  LastWrite: ".::format8601Date($s->get_timestamp())."Z");
 					
 					eval {
 						@ts = unpack("VV",$s->get_value("Last Started")->get_data());
-						::rptMsg("  Last Started: ".gmtime(::getTime($ts[0],$ts[1]))." Z");
+						::rptMsg("  Last Started: ".::format8601Date(::getTime($ts[0],$ts[1]))."Z");
 					};
 					
 					eval {
@@ -88,7 +95,7 @@ sub pluginmain {
 					
 					eval {
 						@ts = unpack("VV",$s->get_value("First Started")->get_data());
-						::rptMsg("  First Started: ".gmtime(::getTime($ts[0],$ts[1]))." Z");
+						::rptMsg("  First Started: ".::format8601Date(::getTime($ts[0],$ts[1]))."Z");
 					};
 					
 					eval {
@@ -121,7 +128,7 @@ sub pluginmain {
 		if ($key = $root_key->get_subkey($key_path)) {
 			::rptMsg("");	
 			::rptMsg($key_path);
-			::rptMsg("LastWrite: ".gmtime($key->get_timestamp()));
+			::rptMsg("LastWrite: ".::format8601Date($key->get_timestamp())."Z");
 			::rptMsg("");	
 		
 			my @vals = $key->get_list_of_values();
@@ -129,7 +136,7 @@ sub pluginmain {
 				foreach my $v (@vals) {
 					my $name = $v->get_name();
 					my $data = $v->get_data();
-					::rptMsg($data."  Logon: ".gmtime($name));
+					::rptMsg($data."  Logon: ".::format8601Date($name)."Z");
 				}
 			
 			}

@@ -4,6 +4,8 @@
 # MountedDevices
 # 
 # Change history
+#   20200921 - MITRE update
+#   20200517 - updated date output format
 #   20140721 - update provided by Espen Øyslebø <eoyslebo@gmail.com>
 #   20130530 - updated to output Disk Signature in correct format, thanks to
 #              info provided by Tom Yarrish (see ref.)
@@ -15,7 +17,7 @@
 # References
 #   http://blogs.technet.com/b/markrussinovich/archive/2011/11/08/3463572.aspx
 # 
-# copyright 2013 QAR, LLC
+# copyright 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package mountdev2;
@@ -47,12 +49,14 @@ sub squad {
 }
 
 
-my %config = (hive          => "System",
+my %config = (hive          => "system",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20140721);
+              MITRE         => "",
+			  output		=> "report",
+              category      => "devices",
+              version       => 20200921);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -79,7 +83,7 @@ sub pluginmain {
 	my (%md,%dos,%vol,%offset,%macs);
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite time = ".gmtime($key->get_timestamp())."Z");
+		::rptMsg("LastWrite time = ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		my @vals = $key->get_list_of_values();
 		if (scalar(@vals) > 0) {
@@ -104,7 +108,7 @@ sub pluginmain {
 					$offset{$v->get_name()} = $o;
 				}
 				elsif ($len > 12) {
-					$data =~ s/\x00//g;
+					$data =~ s/\00//g;
 					push(@{$md{$data}},$v->get_name());
 				}
 				else {
@@ -120,15 +124,15 @@ sub pluginmain {
 			}
 			::rptMsg("");
 			foreach my $v (sort keys %vol) {
-				next unless ($v =~ m/^\\\?\?\\Volume\{/);
+				next unless ($v =~ m/^\\\?\?\\Volume{/);
 				my $id = $v;
-				$id =~ s/^\\\?\?\\Volume\{//;
+				$id =~ s/^\\\?\?\\Volume{//;
 				$id =~ s/}$//;
 				$id =~ s/-//g;
 				my $l = hex(substr($id,0,8));
 				my $m = hex(substr($id,8,4));
 				my $h = hex(substr($id,12,4)) & 0x0fff;
-				$h = $m | $h << 16;
+				my $h = $m | $h << 16;
 				my $t = (::getTime($l,$h) - 574819200);
 				::rptMsg($v);
 				::rptMsg("  ".gmtime($t));
@@ -141,7 +145,7 @@ sub pluginmain {
 					
 					if ($item =~ m/^\\\?\?\\Volume/) {
 						my $id = $item;
-						$id =~ s/^\\\?\?\\Volume\{//;
+						$id =~ s/^\\\?\?\\Volume{//;
 						$id =~ s/}$//;
 #						$id =~ s/-//g;
 #						my $l = hex(substr($id,0,8));

@@ -35,7 +35,6 @@ import javafx.concurrent.Worker;
 import javafx.scene.image.Image;
 import javafx.util.Pair;
 import javax.annotation.Nonnull;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -324,7 +323,11 @@ public abstract class DrawableFile {
             return drawablePath;
         } else {
             try {
-                drawablePath = StringUtils.removeEnd(getUniquePath(), getName());
+                String uniquePath = getUniquePath();
+                String drawableName = getName();
+                drawablePath = uniquePath.endsWith(drawableName)
+                        ? uniquePath.substring(0, uniquePath.length() - drawableName.length())
+                        : uniquePath;
                 return drawablePath;
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "failed to get drawablePath from " + getContentPathSafe(), ex); //NON-NLS

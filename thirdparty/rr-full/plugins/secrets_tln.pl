@@ -4,6 +4,8 @@
 # 
 #
 # History
+#   20201005 - category update
+#   20200831 - MITRE updates
 #   20140730 - created
 #
 # Note: When gsecdump.exe is run with the "-a" switch, or the LSA
@@ -13,7 +15,9 @@
 #       correlate to the time that gsecdump.exe was run.  Insight for this
 #       plugin was provided by Jamie Levy
 #
-# copyright 2014 Quantum Analytics Research, LLC
+#  https://attack.mitre.org/techniques/T1555/
+#
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package secrets_tln;
@@ -23,8 +27,10 @@ my %config = (hive          => "Security",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20140814);
+              MITRE         => "T1555",
+			  output		=> "tln",
+              category      => "credential access",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {

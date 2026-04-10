@@ -3,36 +3,31 @@
 # This key may have something to do with the Start Menu Cache - nothing 
 #  definitive yet.
 #
-# In my tests *some* installers/applications populate this key on *some* systems
-#  and Windows shows *some* of these items as "Recently Installed" at the top of
-#  the start menu. More research is still needed. -Keith Twombley
-#  ktwombley@gmail.com
-#
 # Change history
+#   20201005 - MITRE update
+#   20200427 - updated output date format
+#   20200330 - updated
 #   20130412 - created - IN PROCESS; NOT COMPLETE
-#   20190305 - updated - outputs entries from shc
 #   
-#
 # References
 #   
 #   https://chentiangemalc.wordpress.com/2011/11/02/customizing-default-start-menu-in-windows-developer-preview/
 #   http://social.msdn.microsoft.com/Forums/en-US/windowsdeveloperpreviewgeneral/thread/296cd88b-d806-4a81-a3d0-ea27de4c8b52
 # 
-# Copyright 2013 QAR, LLC
+# Copyright 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package shc;
 use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
-							hivemask      => 16,
-							output        => "report",
-							category      => "",
+			  category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 32,  #Windows 8
-              version       => 20190305);
+              MITRE         => "",
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -49,8 +44,8 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching shc v.".$VERSION);
-	::rptMsg("shc v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("shc v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); 
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 
@@ -58,21 +53,13 @@ sub pluginmain {
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		my @vals = $key->get_list_of_values();
 		
 		if (scalar(@vals) > 0) {
-			my %shc;
-
 			foreach my $v (@vals) {
-				my $name = $v->get_name();
-				my $data = $v->get_data();
-				$shc{$name} = $data
-			}
-
-			foreach my $u (sort {$a <=> $b} keys %shc) {
-				::rptMsg("  ".$u." -> ".$shc{$u});
+				::rptMsg($v->get_name()." - ".$v->get_data());	
 			}
 		}
 		else {

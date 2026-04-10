@@ -1,22 +1,31 @@
 #-----------------------------------------------------------
 # winver.pl
 #
-# copyright 2008-2009 H. Carvey, keydet89@yahoo.com
+#
+# Change History:
+#   20200916 - MITRE updates
+#   20200525 - updated date output format, other updates
+#   20081210 - created
+#
+# copyright 2020 Quantum Analytics Research, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package winver;
 use strict;
 
 my %config = (hive          => "Software",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20081210);
+			  output		=> "report",
+              version       => 20200916);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Get Windows version";	
+	return "Get Windows version & build info";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -29,81 +38,48 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching winver v.".$VERSION);
-	::rptMsg("winver v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("winver v.".$VERSION); 
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); 
+  
+  
+  my %vals = (1 => "ProductName",
+              2 => "ReleaseID",
+              3 => "CSDVersion",
+              4 => "BuildLab",
+              5 => "BuildLabEx",
+              6 => "CompositionEditionID",
+              7 => "RegisteredOrganization",
+              8 => "RegisteredOwner");
+         
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
-
 	my $key_path = "Microsoft\\Windows NT\\CurrentVersion";
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
-#		::rptMsg("{name}");
-#		::rptMsg($key_path);
-#		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
 		
-		my $prod;
+		foreach my $v (sort {$a <=> $b} keys %vals) {
+			
+			eval {
+				my $i = $key->get_value($vals{$v})->get_data();
+				::rptMsg(sprintf "%-25s %-20s",$vals{$v},$i);
+			};
+		}
+		
 		eval {
-			$prod = $key->get_value("ProductName")->get_data();
+			my $install = $key->get_value("InstallDate")->get_data();
+			::rptMsg(sprintf "%-25s %-20s","InstallDate",::format8601Date($install)."Z");
 		};
-		if ($@) {
-#			::rptMsg("ProductName value not found.");
-		}
-		else {
-			::rptMsg("ProductName = ".$prod);
-		}
-		
-		my $csd;
+	
 		eval {
-			$csd = $key->get_value("CSDVersion")->get_data();
+			my $it = $key->get_value("InstallTime")->get_data();
+			my ($t0,$t1) = unpack("VV",$it);
+			my $t = ::getTime($t0,$t1);
+			::rptMsg(sprintf "%-25s %-20s","InstallTime",::format8601Date($t)."Z");
 		};
-		if ($@) {
-#			::rptMsg("CSDVersion value not found.");
-		}
-		else {
-			::rptMsg("CSDVersion  = ".$csd);
-		}
-		
-		
-		my $build;
-		eval {
-			$build = $key->get_value("BuildName")->get_data();
-		};
-		if ($@) {
-#			::rptMsg("BuildName value not found.");
-		}
-		else {
-			::rptMsg("BuildName = ".$build);
-		}
-		
-		my $buildex;
-		eval {
-			$buildex = $key->get_value("BuildNameEx")->get_data();
-		};
-		if ($@) {
-#			::rptMsg("BuildName value not found.");
-		}
-		else {
-			::rptMsg("BuildNameEx = ".$buildex);
-		}
-		
-		
-		my $install;
-		eval {
-			$install = $key->get_value("InstallDate")->get_data();
-		};
-		if ($@) {
-#			::rptMsg("InstallDate value not found.");
-		}
-		else {
-			::rptMsg("InstallDate = ".gmtime($install));
-		}
-		
 		
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
-	
 }
 1;

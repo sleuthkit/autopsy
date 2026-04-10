@@ -4,6 +4,8 @@
 # Some malware is known to create persistent routes
 #
 # Change History:
+#  20200922 - MITRE updates
+#  20200526 - updated date output format
 #  20100817 - created
 #	
 # Ref: 
@@ -11,22 +13,25 @@
 #  http://www.symantec.com/security_response/writeup.jsp?docid=
 #         2010-041308-3301-99&tabid=2
 #
-# copyright 2010 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package routes;
 use strict;
 
 my %config = (hive          => "System",
-              osmask        => 22,
+              MITRE         => "T1112",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20100817);
+			  output		=> "report",
+              version       => 20200922);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Get persistent routes";	
+	return "Get persistent routes from the Registry";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -45,19 +50,17 @@ sub pluginmain {
 	my $root_key = $reg->get_root_key;
 
 # Code for System file, getting CurrentControlSet
- my $current;
 	my $key_path = 'Select';
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
-		$current = $key->get_value("Current")->get_data();
-		my $ccs = "ControlSet00".$current;
+		my $ccs = ::getCCS($root_key);
 	
 		my $sb_path = $ccs."\\Services\\Tcpip\\Parameters\\PersistentRoutes";
 		
 		my $sb;
 		if ($sb = $root_key->get_subkey($sb_path)) {
 			::rptMsg($sb_path);
-			::rptMsg("LastWrite: ".gmtime($sb->get_timestamp()));
+			::rptMsg("LastWrite: ".::format8601Date($sb->get_timestamp())."Z");
 			::rptMsg("");
 			my @vals = $sb->get_list_of_values();
 			
@@ -67,6 +70,9 @@ sub pluginmain {
 					my ($addr,$netmask,$gateway,$metric) = split(/,/,$v->get_name(),4);
 					::rptMsg(sprintf "%-15s  %-15s %-15s %-5s",$addr,$netmask,$gateway,$metric);
 				}
+				::rptMsg("");
+				::rptMsg("Analysis Tip: Persistent routes may provide alternative paths out of the infrastructure.");
+				::rptMsg("To create a persistent route, use the \'route add\' command.");
 			}
 			else {
 				::rptMsg($sb_path." has no values.");

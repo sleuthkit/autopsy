@@ -7,6 +7,7 @@
 # Category: Malware
 #
 # Change history
+#  20200816 - MITRE updates
 #  20130425 - created
 #
 # References
@@ -23,8 +24,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20130425);
+              MITRE         => "",
+			  output 		=> "tln",
+              category      => "config",
+              version       => 20200816);
 
 sub getConfig{return %config}
 sub getShortDescr {

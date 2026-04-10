@@ -24,7 +24,6 @@ import java.net.URL;
 import java.util.logging.Level;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
@@ -75,7 +74,7 @@ public class FXMLConstructor {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     static public void construct(Node node, Class<? extends Node> clazz, String fxmlFileName) {
-        final String name = "nbres:/" + StringUtils.replace(clazz.getPackage().getName(), ".", "/") + "/" + fxmlFileName; // NON-NLS
+        final String name = "nbres:/" + clazz.getPackage().getName().replace(".", "/") + "/" + fxmlFileName; // NON-NLS
 
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(new URL(name));

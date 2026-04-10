@@ -6,25 +6,28 @@
 # which interpret the RLO control charater
 #
 # Change history
+#   20200921 - MITRE updates
+#   20200517 - minor updates
 #   20130904 - created
 #
 # References:
 #   https://blog.commtouch.com/cafe/malware/exe-read-backwards-spells-malware/
-#
+#   https://attack.mitre.org/techniques/T1036/002/
 # 
-# copyright 2013 QAR, LLC
+# copyright 2020 QAR, LLC
 # Author: H. Carvey
 #-----------------------------------------------------------
 package rlo;
 use strict;
 
-my %config = (hive          => "All",
+my %config = (hive          => "all",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              category      => "malware",
-              version       => 20130904);
+              MITRE         => "T1036\.002",
+              category      => "defense evasion",
+			  output		=> "report",
+              version       => 20200921);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -70,6 +73,7 @@ sub traverse {
   	my ($n,$n2) = convertRLOName($name);
   	$path =~ s/$name/$n/;
   	::rptMsg("RLO control char detected in key name: ".$path." [".$n2."]");
+  	::rptMsg("Key LastWrite time: ".::format8601Date($ts)."Z");
   }
   
   foreach my $val ($key->get_list_of_values()) {
