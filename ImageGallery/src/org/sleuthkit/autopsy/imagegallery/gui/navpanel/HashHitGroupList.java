@@ -47,6 +47,7 @@ final public class HashHitGroupList extends NavPanel<DrawableGroup> {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private SortedList<DrawableGroup> sorted;
 
+    @SuppressWarnings("this-escape")
     public HashHitGroupList(ImageGalleryController controller) {
         super(controller);
         FXMLConstructor.construct(this, "NavPanel.fxml"); //NON-NLS

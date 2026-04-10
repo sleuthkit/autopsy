@@ -194,6 +194,7 @@ class ListTimeline extends BorderPane {
      *
      * @param controller The controller for this timeline
      */
+    @SuppressWarnings("this-escape")
     ListTimeline(TimeLineController controller) {
         this.controller = controller;
         sleuthkitCase = controller.getAutopsyCase().getSleuthkitCase();

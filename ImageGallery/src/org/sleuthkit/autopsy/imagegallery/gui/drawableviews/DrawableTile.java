@@ -87,6 +87,7 @@ public class DrawableTile extends DrawableTileBase {
         });
     }
 
+    @SuppressWarnings("this-escape")
     public DrawableTile(GroupPane gp, ImageGalleryController controller) {
         super(gp, controller);
         FXMLConstructor.construct(this, "DrawableTile.fxml"); //NON-NLS

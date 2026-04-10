@@ -251,6 +251,7 @@ public class GroupPane extends BorderPane {
         });
     };
 
+    @SuppressWarnings("this-escape")
     public GroupPane(ImageGalleryController controller) {
         this.controller = controller;
         this.selectionModel = controller.getSelectionModel();

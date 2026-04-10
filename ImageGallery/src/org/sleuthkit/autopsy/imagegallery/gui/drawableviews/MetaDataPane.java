@@ -92,6 +92,7 @@ public class MetaDataPane extends DrawableUIBase {
     private final MenuItem copyMenuItem = new MenuItem(Bundle.MetaDataPane_copyMenuItem_text());
     private final ContextMenu contextMenu = new ContextMenu(copyMenuItem);
 
+    @SuppressWarnings("this-escape")
     public MetaDataPane(ImageGalleryController controller) {
         super(controller);
         FXMLConstructor.construct(this, "MetaDataPane.fxml"); //NON-NLS

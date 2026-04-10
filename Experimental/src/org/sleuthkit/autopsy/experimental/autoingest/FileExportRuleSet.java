@@ -680,7 +680,7 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
                 if (0 != retVal) {
                     return retVal;
                 }
-                retVal = new Long(this.size).compareTo(new Long(that.getSize()));
+                retVal = Long.compare(this.size, that.getSize());
                 if (0 != retVal) {
                     return retVal;
                 }
