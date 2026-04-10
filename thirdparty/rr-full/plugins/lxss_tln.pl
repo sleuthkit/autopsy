@@ -71,8 +71,13 @@ sub pluginmain {
 				};
 				
 				eval {
+					my $basepath = $sk->get_value("BasePath")->get_data();
+					$str .= " - ".$basepath;
+				};
+				
+				eval {
 					my $kern = $sk->get_value("KernelCommandLine")->get_data();
-					$str .= " (".$kern.")";
+					$str .= " - (".$kern.")";
 				};
 				::rptMsg($lw."|REG|||Lxss - ".$str);
 			}
