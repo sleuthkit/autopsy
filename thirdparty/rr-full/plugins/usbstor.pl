@@ -1,32 +1,33 @@
 #-----------------------------------------------------------
-# usbstor
+# usbstor.pl 
+# Parses contents of Enum\USBStor 
+# 
+# History
+#   20220524 - copied from usbdevices.pl
 #
-# History:
-#   20141111 - updated check for key LastWrite times
-#		20141015 - added subkey LastWrite times
-#   20130630 - added FirstInstallDate, InstallDate query
-#   20080418 - created
+# References:
+#	http://www.swiftforensics.com/2013/11/windows-8-new-registry-artifacts-part-1.html
+#   https://www.researchgate.net/publication/318514858_USB_Storage_Device_Forensics_for_Windows_10
 #
-# Ref:
-#   http://studioshorts.com/blog/2012/10/windows-8-device-property-ids-device-enumeration-pnpobject/
-#
-# copyright 2014 QAR, LLC
-# Author: H. Carvey, keydet89@yahoo.com
+# copyright 2022 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package usbstor;
 use strict;
 
 my %config = (hive          => "System",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "devices",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20141111);
+			  output		=> "report",
+              version       => 20220524);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Get USBStor key info";	
+	return "Parses Enum\\USBStor key";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -34,80 +35,46 @@ sub getHive {return $config{hive};}
 sub getVersion {return $config{version};}
 
 my $VERSION = getVersion();
+my $reg;
 
 sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
-	::logMsg("Launching usbstor v.".$VERSION);
-	::rptMsg("usbstor v.".$VERSION); # banner
-  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
-	my $reg = Parse::Win32Registry->new($hive);
+	$reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
+	::logMsg("Launching usbstor v.".$VERSION);
+	::rptMsg("usbstor v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n");
 
-# Code for System file, getting CurrentControlSet
-	my $current;
-	my $ccs;
-	my $key_path = 'Select';
 	my $key;
+	my $ccs = ::getCCS($root_key);
+	my $key_path = $ccs."\\Enum\\USBStor";
+	my $key;
+	
+	my @vals = ("DeviceDesc","Mfg","Service","FriendlyName");
+	
 	if ($key = $root_key->get_subkey($key_path)) {
-		$current = $key->get_value("Current")->get_data();
-		$ccs = "ControlSet00".$current;
-	}
-	else {
-		::rptMsg($key_path." not found.");
-		return;
-	}
-
-	$key_path = $ccs."\\Enum\\USBStor";
-	if ($key = $root_key->get_subkey($key_path)) {
-		::rptMsg("USBStor");
-		::rptMsg($key_path);
-		::rptMsg("");
 		
 		my @subkeys = $key->get_list_of_subkeys();
-		if (scalar(@subkeys) > 0) {
+		if (scalar @subkeys > 0) {
 			foreach my $s (@subkeys) {
-				::rptMsg($s->get_name()." [".gmtime($s->get_timestamp())."]");
-				
+				::rptMsg($s->get_name());
 				my @sk = $s->get_list_of_subkeys();
-				if (scalar(@sk) > 0) {
+				if (scalar @sk > 0) {
 					foreach my $k (@sk) {
-						my $serial = $k->get_name();
-						::rptMsg("  S/N: ".$serial." [".gmtime($k->get_timestamp())."]");
-# added 20141015; updated 20141111						
-						eval {
-							::rptMsg("  Device Parameters LastWrite: [".gmtime($k->get_subkey("Device Parameters")->get_timestamp())."]");
-						};
-						eval {
-							::rptMsg("  LogConf LastWrite          : [".gmtime($k->get_subkey("LogConf")->get_timestamp())."]");
-						};
-						eval {
-							::rptMsg("  Properties LastWrite       : [".gmtime($k->get_subkey("Properties")->get_timestamp())."]");
-						};
-						my $friendly;
-						eval {
-							$friendly = $k->get_value("FriendlyName")->get_data();
-						};
-						::rptMsg("    FriendlyName    : ".$friendly) if ($friendly ne "");
-						my $parent;
-						eval {
-							$parent = $k->get_value("ParentIdPrefix")->get_data();
-						};
-						::rptMsg("    ParentIdPrefix: ".$parent) if ($parent ne "");
-# Attempt to retrieve InstallDate/FirstInstallDate from Properties subkeys	
-# http://studioshorts.com/blog/2012/10/windows-8-device-property-ids-device-enumeration-pnpobject/					
+						::rptMsg("  ".$k->get_name());
 						
+						foreach my $v (@vals) {
+							eval {
+								my $x = $k->get_value($v)->get_data();
+								::rptMsg(sprintf "    %-15s: %-30s",$v,$x);
+							};
+						}
+# get Properties\{83da6326-97a6-4088-9453-a1923f573b29}						
 						eval {
-							my $t = $k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}\\00000064\\00000000")->get_value("Data")->get_data();
-							my ($t0,$t1) = unpack("VV",$t);
-							::rptMsg("    InstallDate     : ".gmtime(::getTime($t0,$t1))." UTC");
-							
-							$t = $k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}\\00000065\\00000000")->get_value("Data")->get_data();
-							($t0,$t1) = unpack("VV",$t);
-							::rptMsg("    FirstInstallDate: ".gmtime(::getTime($t0,$t1))." UTC");
+							getProperties($k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}"));
 						};
-						
-					}					
+					}
 				}
 				::rptMsg("");
 			}
@@ -120,4 +87,41 @@ sub pluginmain {
 		::rptMsg($key_path." not found.");
 	}
 }
+
+
+sub getProperties {
+	my $key = shift;
+
+	eval {
+		my $r = $key->get_subkey("0064")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","First Install",::format8601Date($t)."Z");
+	};
+
+	eval {
+		my $r = $key->get_subkey("0065")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","First Inserted",::format8601Date($t)."Z");
+	};
+	
+	eval {
+		my $r = $key->get_subkey("0066")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","Last Inserted",::format8601Date($t)."Z");
+	};
+	
+	eval {
+		my $r = $key->get_subkey("0067")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","Last Removal",::format8601Date($t)."Z");
+	};
+
+
+}
+
+
 1;

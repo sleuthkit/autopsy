@@ -3,14 +3,16 @@
 # Plugin for Registry Ripper
 #
 # Change history
+#    20200924 - MITRE update
+#    20200518 - updated date output format
 #    20120827 - updated
 #    20080324 - created
 #
 # References
 #   http://support.microsoft.com/kb/312169
 # 
-# copyright 2012 
-# Author: H. Carvey
+# copyright 2020 Quantum Analytics Research, LLC 
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package tsclient;
 use strict;
@@ -19,8 +21,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 0,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20120827);
+              MITRE         => "T1021\.001",
+              category      => "lateral movement",
+			  output		=> "report",
+              version       => 20200924);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -38,7 +42,9 @@ sub pluginmain {
 	my $ntuser = shift;
 	::logMsg("Launching tsclient v.".$VERSION);
 	::rptMsg("Launching tsclient v.".$VERSION);
-  ::rptMsg("(".getHive().") ".getShortDescr()."\n");
+	::rptMsg("(".getHive().") ".getShortDescr());
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 
@@ -47,7 +53,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("TSClient");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		my @vals = $key->get_list_of_values();
 		if (scalar(@vals) > 0) {
 			my %mrus;
@@ -71,17 +77,18 @@ sub pluginmain {
 	}
 	::rptMsg("");
 	
-	$key_path = 'Software\\Microsoft\\Terminal Server Client\\Servers';
+	my $key_path = 'Software\\Microsoft\\Terminal Server Client\\Servers';
+	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
 			foreach my $s (@subkeys) {
 				my $name = $s->get_name();
 				my $lw   = $s->get_timestamp();
-				::rptMsg($name."  LastWrite: ".gmtime($lw));
+				::rptMsg($name."  LastWrite time: ".::format8601Date($lw)."Z");
 				my $hint;
 				eval {
 					$hint = $s->get_value("UsernameHint")->get_data();

@@ -3,6 +3,7 @@
 # 
 #
 # Change history
+#    20200924 - MITRE update
 #    20140220 - updated
 #
 # References
@@ -19,9 +20,12 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20140220);
+              MITRE         => "",
+              category      => "user activity",
+			  output		=> "tln",
+              version       => 20200924);
 
+sub getConfig {return %config}
 sub getShortDescr {
 	return "Gets contents of user's RecentDocs key (TLN)";	
 }
@@ -50,8 +54,9 @@ sub pluginmain {
 #		::rptMsg("RecentDocs");
 #		::rptMsg("**All values printed in MRUList\\MRUListEx order.");
 #		::rptMsg($key_path);
-#		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+#		::rptMsg("LastWrite Time: ".gmtime($key->get_timestamp())." (UTC)");
 		$lw = $key->get_timestamp();
+		
 # Get RecentDocs values		
 		my %rdvals = getRDValues($key);
 		if (%rdvals) {
@@ -118,9 +123,9 @@ sub getRDValues {
 			else {
 # New code
 				$data = decode("ucs-2le", $data);
-				my $file = (split(/\x00/,$data))[0];
-#				my $file = (split(/\x00\x00/,$data))[0];
-#				$file =~ s/\x00//g;
+				my $file = (split(/\00/,$data))[0];
+#				my $file = (split(/\00\00/,$data))[0];
+#				$file =~ s/\00//g;
 				$rdvals{$name} = $file;
 			}
 		}

@@ -3,23 +3,27 @@
 # Plugin to determine the MSI packages installed on the system
 #
 # Change history:
+#   20200921 - MITRE update
+#   20200517 - updated date output format
 #   20090911 - created
 #
 # References:
 #   http://support.microsoft.com/kb/290134
 #   http://support.microsoft.com/kb/931401
 #
-# copyright 2009 H. Carvey, keydet89@yahoo.com
+# copyright 2020 H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package msis;
 use strict;
 
 my %config = (hive          => "Software",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20090911);
+			  output		=> "report",
+              version       => 20200921);
 
 sub getConfig{return %config}
 
@@ -49,7 +53,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		
 		my @subkeys = $key->get_list_of_subkeys();
@@ -79,7 +83,7 @@ sub pluginmain {
 			
 			
 			foreach my $t (reverse sort {$a <=> $b} keys %msi) {
-				::rptMsg(gmtime($t)." (UTC)");
+				::rptMsg(::format8601Date($t)."Z");
 				foreach my $item (@{$msi{$t}}) {
 					::rptMsg("  ".$item);
 				}
@@ -92,7 +96,6 @@ sub pluginmain {
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 1;

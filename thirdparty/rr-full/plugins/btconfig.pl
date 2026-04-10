@@ -3,9 +3,11 @@
 #
 #
 # History:
+#  20200911 - MITRE updates
+#  20200526 - updated date output format
 #  20130117 - created
 #
-# copyright 2013 Quantum Research Analytics, LLC
+# copyright 2020 Quantum Research Analytics, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package btconfig;
@@ -15,8 +17,10 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20130117);
+			  output		=> "report",
+              category      => "devices",
+              MITRE         => "",
+              version       => 20200911);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -34,7 +38,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching btconfig v.".$VERSION);
 	::rptMsg("Launching btconfig v.".$VERSION);
-	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
+	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
@@ -42,7 +46,6 @@ sub pluginmain {
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-#		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
 		::rptMsg("");
 		my @sk = $key->get_list_of_subkeys();
 		foreach my $s (@sk) {
@@ -50,7 +53,7 @@ sub pluginmain {
 			my $lw   = $s->get_timestamp();
 			
 			::rptMsg("Unique ID: ".$name);
-			::rptMsg("  LastWrite: ".gmtime($lw)." Z");
+			::rptMsg("  LastWrite: ".::format8601Date($lw)."Z");
 			
 			my $devname;
 			eval {

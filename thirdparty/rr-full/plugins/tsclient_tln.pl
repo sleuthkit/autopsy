@@ -3,6 +3,7 @@
 # Plugin for Registry Ripper
 #
 # Change history
+#    20200924 - MITRE update
 #    20120827 - updated; added "Servers" key check, translated to TLN output
 #    20080324 - created
 #
@@ -19,8 +20,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 0,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20120827);
+              MITRE         => "T1021\.001",
+              category      => "lateral movement",
+			  output		=> "tln",
+              version       => 20200924);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -64,7 +67,8 @@ sub pluginmain {
 	}
 	::rptMsg("");
 	
-	$key_path = 'Software\\Microsoft\\Terminal Server Client\\Servers';
+	my $key_path = 'Software\\Microsoft\\Terminal Server Client\\Servers';
+	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 #		::rptMsg($key_path);
 #		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");

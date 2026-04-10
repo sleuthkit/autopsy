@@ -5,13 +5,16 @@
 # by malware.
 #
 # Change history
+#   20200921 - MITRE updates
+#   20200517 - updated date output format
 #   20100811 - created
 #
 # References
+#   https://twitter.com/HuntressLabs/status/960507315630768128
 #   http://support.microsoft.com/kb/103865
 #   http://security.fnal.gov/cookbook/WinStartup.html
 # 
-# copyright 2010 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package load;
 use strict;
@@ -20,8 +23,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20100811);
+              MITRE         => "T1547\.001",
+              category      => "persistence",
+			  output		=> "report",
+              version       => 20200921);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -38,8 +43,10 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching load v.".$VERSION);
-	::rptMsg("load v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner 
+	::rptMsg("load v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr());
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+    ::rptMsg("");
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 
@@ -48,7 +55,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("load");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		my @vals = $key->get_list_of_values();
 		if (scalar(@vals) > 0) {
 			::rptMsg("");

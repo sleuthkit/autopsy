@@ -3,6 +3,9 @@
 # RR plugin to parse (Vista, Win7/Win2008R2) shell bags
 #
 # History:
+#   20200831 - MITRE updates
+#   20200824 - Unicode updates
+#   20200428 - updated output date format
 #   20190715 - updated to parse WPD devices better
 #   20180702 - update to parseGUID function
 #   20180117 - modification thanks to input/data from Mike Godfrey
@@ -35,23 +38,22 @@
 # Moore for writing the shell bag parser for Registry Decoder, as well as 
 # assistance with some parsing.
 #
-# 
-# copyright 2015 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package shellbags;
 use strict;
 use Time::Local;
 
-my %config = (hive          => "USRCLASS\.DAT",
-							hivemask      => 32,
-							output        => "report",
-							category      => "User Activity",
-              osmask        => 20, #Vista, Win7/Win2008R2
+my %config = (hive          => "USRCLASS\.DAT, NTUSER\.DAT",
+			  hivemask      => 32,
+			  output        => "report",
+			  category      => "user activity",
+              MITRE         => "", 
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20190715);
+              version       => 20200831);
 
 sub getConfig{return %config}
 
@@ -146,6 +148,7 @@ my %folder_types = ("{724ef170-a42d-4fef-9f26-b60e846fba4f}" => "Administrative 
     "{a8cdff1c-4878-43be-b5fd-f8091c1c60d0}" => "Documents",
     "{fdd39ad0-238f-46af-adb4-6c85480369c7}" => "Documents",
     "{374de290-123f-4565-9164-39c4925e467b}" => "Downloads",
+    "{088e3905-0323-4b02-9826-5d99428e115f}" => "Downloads",
     "{de61d971-5ebc-4f02-a3a9-6c82895e5c04}" => "Get Programs",
     "{a305ce99-f527-492b-8b1a-7e76fa98d6e4}" => "Installed Updates",
     "{871c5380-42a0-1069-a2ea-08002b30309d}" => "Internet Explorer (Homepage)",
@@ -394,7 +397,6 @@ sub parseVariableEntry {
 	  	while($t) {
 	  		my $sz = unpack("V",substr($stuff,$cnt,4));
 	  		my $id = unpack("V",substr($stuff,$cnt + 4,4));
-            return %item unless (defined $sz);
 #--------------------------------------------------------------
 # sub-segment types
 # 0x0a - file name
@@ -410,8 +412,8 @@ sub parseVariableEntry {
 	  			
 	  			my $num = unpack("V",substr($stuff,$cnt + 13,4));
 	  			my $str = substr($stuff,$cnt + 13 + 4,($num * 2));
-	  			$str =~ s/\00//g;
-	  			$item{name} = $str;
+#	  			$str =~ s/\00//g;
+	  			$item{name} = ::getUnicodeStr($str);
 	  		}
 	  		$cnt += $sz;
 	  	}
@@ -427,10 +429,12 @@ sub parseVariableEntry {
 		my ($n0, $n1, $n2) = unpack("VVV",substr($data,62,12));
 	
 		my $n0_name = substr($data,0x4A,($n0 * 2));
-		$n0_name =~ s/\00//g;
+		$n0_name = ::getUnicodeStr($n0_name);
+#		$n0_name =~ s/\00//g;
 		
 		my $n1_name = substr($data,(0x4A + ($n0 * 2)),($n1 * 2));
-		$n1_name =~ s/\00//g;
+		$n1_name = ::getUnicodeStr($n1_name);
+#		$n1_name =~ s/\00//g;
 		
 		if ($n0_name eq "") {
 			$item{name} = $n1_name;
@@ -443,19 +447,20 @@ sub parseVariableEntry {
 	elsif ($tag == 0x7b || $tag == 0xbb || $tag == 0xfb) {
 		my ($sz1,$sz2,$sz3) = unpack("VVV",substr($data,0x3e,12));
 		$item{name} = substr($data,0x4a,$sz1 * 2);
-		$item{name} =~ s/\00//g;
+		$item{name} = ::getUnicodeStr($item{name});
+#		$item{name} =~ s/\00//g;
 	}
 	elsif ($tag == 0x02 || $tag == 0x03) {
 		my ($sz1,$sz2,$sz3,$sz4) = unpack("VVVV",substr($data,0x26,16));
 		$item{name} = substr($data,0x36,$sz1 * 2);
-		$item{name} =~ s/\00//g;
+		$item{name} = ::getUnicodeStr($item{name});
+#		$item{name} =~ s/\00//g;
 	}
 	elsif (unpack("v",substr($data,6,2)) == 0x05) {
 		my $o = 0x26;
 		my $t = 1;
 		while ($t) {
 			my $i = substr($data,$o,1);
-            return %item unless (defined $i);
 			if ($i =~ m/\00/) {
 				$t = 0;
 			}
@@ -516,9 +521,11 @@ sub parseZipSubFolderItem {
 	my $sz2 = unpack("V",substr($data,0x58,4));
 		
 	my $str1 = substr($data,0x5C,$sz *2) if ($sz > 0);
-	$str1 =~ s/\00//g;
+	$str1 = ::getUnicodeStr($str1);
+#	$str1 =~ s/\00//g;
 	my $str2 = substr($data,0x5C + ($sz * 2),$sz2 *2) if ($sz2 > 0);
-	$str2 =~ s/\00//g;
+	$str2 = ::getUnicodeStr($str2);
+#	$str2 =~ s/\00//g;
 		
 	if ($sz2 > 0) {
 		$item{name} = $str1."\\".$str2;
@@ -581,10 +588,12 @@ sub parseURIEntry {
 	
 	my $sz = unpack("V",substr($data,0x2a,4));
 	my $uri = substr($data,0x2e,$sz);
-	$uri =~ s/\00//g;
+	$uri = ::getUnicodeStr($uri);
+#	$uri =~ s/\00//g;
 	
 	my $proto = substr($data,length($data) - 6, 6);
-	$proto =~ s/\00//g;
+	$proto = ::getUnicodeStr($proto);
+#	$proto =~ s/\00//g;
 	
 	$item{name} = $proto."://".$uri." [".gmtime($item{uritime})."]";
 	
@@ -645,7 +654,6 @@ sub parseGUID {
   else {
   	return $guid;
   }
- 
 }
 
 #-----------------------------------------------------------
@@ -669,7 +677,8 @@ sub parseDeviceEntry {
 	}
 	elsif ($tag == 2) {
 		$item{name} = substr($data,0x0a,($ofs + 6) - 0x0a);
-		$item{name} =~ s/\00//g;
+		$item{name} = ::getUnicodeStr($item{name});
+#		$item{name} =~ s/\00//g;
 	}
 	else {
     my $ver = unpack("C",substr($data,9,1));
@@ -690,9 +699,11 @@ sub parseDeviceEntry {
     	my $userlen = unpack("V",substr($data,30,4));
 			my $devlen  = unpack("V",substr($data,34,4));
 			my $user    = substr($data,0x28,$userlen * 2);
-			$user =~ s/\00//g;
+			$user = ::getUnicodeStr($user);
+#			$user =~ s/\00//g;
 			my $dev = substr($data,0x28 + ($userlen * 2),$devlen * 2);
-			$dev =~ s/\00//g;
+			$dev = ::getUnicodeStr($dev);
+#			$dev =~ s/\00//g;
 			$item{name} = $user;	
 		}
 # Version unknown    
@@ -779,7 +790,7 @@ sub parseFolderEntry {
 				$tag = 0;
 			}
 			else {
-			    $str .= $s;
+				$str .= $s;
 				$cnt++;
 			}
 		}	
@@ -794,12 +805,11 @@ sub parseFolderEntry {
 		my $str = "";
 		while($tag) {
 			my $s = substr($data,$ofs_shortname + $cnt,1);
-             return %item unless (defined $s);
 			if ($s =~ m/\00/ && ((($cnt + 1) % 2) == 0)) {
 				$tag = 0;
 			}
 			else {
-			    $str .= $s;
+				$str .= $s;
 				$cnt++;
 			}
 		}
@@ -810,9 +820,7 @@ sub parseFolderEntry {
 		my $tag = 1;
 		my $cnt = 0;
 		while ($tag) {
-            my $s = substr($data,$ofs + $cnt,2);
-            return %item unless (defined $s); 
-		    if (unpack("v",$s) == 0xbeef) {
+			if (unpack("v",substr($data,$ofs + $cnt,2)) == 0xbeef) {
 				$tag = 0;
 			}
 			else {
@@ -858,12 +866,14 @@ sub parseFolderEntry {
 	
 		my $str = substr($data,$ofs,length($data) - 30);
 		my $longname = (split(/\00\00/,$str,2))[0];
+#		$longname = ::getUnicodeStr($longname);
+		$longname =~ s/\00//g;
 	
 		if ($longname ne "") {
-			$item{name} = Utf16ToUtf8($longname);
+			$item{name} = $longname;
 		}
 		else {
-			$item{name} = UTF16ToUtf8($shortname);
+			$item{name} = $shortname;
 		}
 	}
 	return %item;
@@ -915,9 +925,7 @@ sub parseFolderEntry2 {
 	my $tag = 1;
 
 	while ($tag) {
-        my $s = substr($data,$ofs,2);
-        return %item unless (defined $s); 
-		if (unpack("v",$s) == 0xbeef) {
+		if (unpack("v",substr($data,$ofs,2)) == 0xbeef) {
 			$tag = 0;
 		}
 		else {
@@ -956,7 +964,8 @@ sub parseFolderEntry2 {
 	
 	$item{name} = (split(/\00\00/,$str,2))[0];
 	$item{name} =~ s/\13\20/\2D\00/;
-	$item{name} = Utf16ToUtf8($item{name});
+	$item{name} = ::getUnicodeStr($item{name});
+#	$item{name} =~ s/\00//g;
 	
 	return %item;
 }
@@ -1018,12 +1027,11 @@ sub shellItem0x52 {
 	
 	while ($tag) {
 		$d = substr($data,0x32 + $cnt,2);
-        return %item unless (defined $d);
 		if (unpack("v",$d) == 0) {
 			$tag = 0;
 		}
 		else {
-            $item{name} .= $d;
+			$item{name} .= $d;
 			$cnt += 2;
 		}
 	}	
@@ -1037,7 +1045,8 @@ sub shellItem0x52 {
 	}
 	$sz = unpack("V",substr($data,$ofs,4));
 	$item{str} = substr($data,$ofs + 4,$sz * 2);
-	$item{str} =~ s/\00//g;
+	$item{str} = ::getUnicodeStr($item{str});
+#	$item{str} =~ s/\00//g;
 	return %item;
 }
 
@@ -1117,16 +1126,5 @@ sub getNum48 {
 		return $n1 + $n2;
 	}
 }
-
-#---------------------------------------------------------------------
-# Utf16ToUtf8()
-#---------------------------------------------------------------------
-sub Utf16ToUtf8 {
-  my $str = $_[0];
-  Encode::from_to($str,'UTF-16LE','utf8');
-  $str = Encode::decode_utf8($str);
-  return $str;
-}
-
 
 1;

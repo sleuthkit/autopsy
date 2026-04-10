@@ -3,13 +3,14 @@
 # For Windows 7, Desktop Address Bar History
 #
 # Change history
+#   20201005 - MITRE update
 #   20120828 - updated to TLN format
 #	  20100330 - created
 #
 # References
 #   
 # 
-# copyright 2010 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package typedpaths_tln;
 use strict;
@@ -18,8 +19,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20120828);
+              MITRE         => "",
+              category      => "user activity",
+			  output		=> "tln",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -35,7 +38,7 @@ my $VERSION = getVersion();
 sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
-	::logMsg("Launching typedpaths v.".$VERSION);
+	::logMsg("Launching typedpaths_tln v.".$VERSION);
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 
@@ -52,7 +55,6 @@ sub pluginmain {
 			eval {
 			 	$path = $key->get_value("url1")->get_data();
 			 	::rptMsg($lw."|REG|||TypedPaths - ".$path);
-			 	
 			};
 		}
 		else {

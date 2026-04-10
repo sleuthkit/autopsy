@@ -4,25 +4,27 @@
 # Check key/value names in a hive for a leading null character
 #
 # Change history
+#   20200921 - MITRE update
 #   20160119 - created
 #
 # References:
 #   http://www.symantec.com/connect/blogs/kovter-malware-learns-poweliks-persistent-fileless-registry-update
-#
+#   https://attack.mitre.org/techniques/T1036/
 # 
-# copyright 2016 QAR, LLC
+# copyright 2020 QAR, LLC
 # Author: H. Carvey
 #-----------------------------------------------------------
 package null;
 use strict;
 
-my %config = (hive          => "All",
+my %config = (hive          => "all",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              category      => "malware",
-              version       => 20160119);
+              MITRE         => "T1036",
+              category      => "defense evasion",
+			  output		=> "report",
+              version       => 20200921);
 
 sub getConfig{return %config}
 sub getShortDescr {

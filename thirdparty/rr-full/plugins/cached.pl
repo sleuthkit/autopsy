@@ -4,6 +4,8 @@
 #   NTUSER.DAT hive
 #
 # History:
+#   20201012 - MITRE updates
+#   20200525 - updated date output format
 #   20150608 - created
 #
 # References:
@@ -11,22 +13,24 @@
 #   http://www.nobunkum.ru/analytics/en-com-hijacking
 #
 #
-# copyright 2015 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package cached;
 use strict;
 
-my %config = (hive          => "NTUSER.DAT",
+my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20150608);
+			  output 		=> "report",
+              MITRE         => "T1218\.002",
+              category      => "persistence",
+              version       => 20201012);
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Gets cached Shell Extensions from NTUSER.DAT hive";	
+	return "Gets cached Shell Extensions from NTUSER\.DAT hive";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -53,15 +57,17 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching cached v.".$VERSION);
-	::rptMsg("cached v.".$VERSION); # banner
-  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("cached v.".$VERSION); 
+	::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Cached";;
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 
 		my @vals = $key->get_list_of_values();
@@ -69,8 +75,8 @@ sub pluginmain {
 			foreach my $v (@vals) {
 				my ($clsid1, $clsid2, $mask) = split(/\s/,$v->get_name(),3);
 				my @t = unpack("VV",substr($v->get_data(),8,8));
-				my $tm = gmtime(::getTime($t[0],$t[1]));
-				my $str = $tm."  First Load: ".$clsid1." (";
+				my $tm = ::format8601Date(::getTime($t[0],$t[1]));
+				my $str = $tm."Z  First Load: ".$clsid1." (";
 				if (exists $clsids{$clsid2}) {
 					$str .= $clsids{$clsid2}.")";
 				}

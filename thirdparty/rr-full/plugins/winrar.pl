@@ -3,20 +3,27 @@
 # Get WinRAR\ArcHistory entries
 #
 # History
+#   20200916 - MITRE updates
+#   20200526 - updated date output format
 #   20080819 - created
 #
+# Ref:
+#   https://attack.mitre.org/techniques/T1074/001/
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package winrar;
 use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
-              osmask        => 22,
+              MITRE         => "T1074\.001",
+              category      => "data staged",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20080819);
+			  output		=> "report",
+              version       => 20200916);
 
 sub getConfig{return %config}
 
@@ -34,8 +41,10 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching winrar v.".$VERSION);
-	::rptMsg("winrar v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("winrar v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
@@ -44,7 +53,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("WinRAR");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		
 		my %arc;
@@ -65,8 +74,6 @@ sub pluginmain {
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
-	
 }
 1;

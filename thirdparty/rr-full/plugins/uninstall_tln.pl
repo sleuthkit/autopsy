@@ -10,6 +10,7 @@
 #    http://msdn.microsoft.com/en-us/library/ms954376.aspx
 #
 # Change History:
+#    20200916 - MITRE updates
 #    20120523 - updated to include 64-bit systems
 #    20100116 - Minor updates
 #    20090413 - Extract DisplayVersion info
@@ -21,16 +22,18 @@ package uninstall_tln;
 use strict;
 
 my %config = (hive          => "Software, NTUSER\.DAT",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "config", #installed software
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20120523);
+			  output		=> "tln",
+              version       => 20200916);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Gets contents of Uninstall keys from Software, NTUSER.DAT hives(TLN format)";	
+	return "Gets contents of Uninstall keys from Software, NTUSER\.DAT hives(TLN format)";	
 }
 sub getDescr{}
 sub getRefs {}

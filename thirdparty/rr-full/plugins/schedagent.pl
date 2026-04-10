@@ -1,18 +1,25 @@
 #-----------------------------------------------------------
 # schedagent
-# Get contents of SchedulingAgent key from Software hive
+# Get contents of SchedulingAgent key from Software hive 
 #
-# copyright 2010 Quantum Analytics Research, LLC
+# History
+#   20200925 - MITRE update
+#   20200518 - updated date output format
+#   20100817 - created
+#
+# copyright 2020 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package schedagent;
 use strict;
 
 my %config = (hive          => "Software",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              version       => 20100817);
+			  output		=> "report",
+              version       => 20200925);
 
 sub getConfig{return %config}
 
@@ -39,7 +46,7 @@ sub pluginmain {
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		
 		my ($oldname,$logpath,$folder,$lastrun,$size);
@@ -65,7 +72,7 @@ sub pluginmain {
 #		
 		eval {
 			$lastrun = $key->get_value("LastTaskRun")->get_data();
-			::rptMsg("LastTaskRun  = ".parseSystemTime($lastrun));
+			::rptMsg("LastTaskRun  = ".::convertSystemTime($lastrun)."Z");
 			::rptMsg("");
 			::rptMsg("Note: LastTaskRun time is written in local system time, not GMT");
 		};
@@ -74,16 +81,6 @@ sub pluginmain {
 	else {
 		::rptMsg($key_path." not found.");
 	}
-}
-
-sub parseSystemTime {
-	my ($yr,$mon,$dow,$day,$hr,$min,$sec,$mil) = unpack("v8",$_[0]);
-	$mon = "0".$mon unless ($mon =~ /^\d\d$/);
-	$day = "0".$day unless ($day =~ /^\d\d$/);
-	$hr = "0".$hr unless ($hr =~ /^\d\d$/);
-	$min = "0".$min unless ($min =~ /^\d\d$/);
-	$sec = "0".$sec unless ($sec =~ /^\d\d$/);
-	return "$yr-$mon-$day $hr:$min:$sec";
 }
 
 1;

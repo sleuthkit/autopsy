@@ -4,6 +4,8 @@
 # 
 #
 # Change history
+#   20200904 - MITRE updates
+#   20200515 - updated date output format
 #   20190506 - updated
 #   20140807 - created
 #
@@ -11,20 +13,22 @@
 #   https://metacpan.org/pod/Parse::Win32Registry
 #   https://github.com/msuhanov/regf/blob/master/Windows%20registry%20file%20format%20specification.md
 #
-# 
-# copyright 2019 QAR, LLC
+#   https://attack.mitre.org/techniques/T1485/
+#
+# copyright 2020 QAR, LLC
 # Author: H. Carvey
 #-----------------------------------------------------------
 package del;
 use strict;
 
-my %config = (hive          => "All",
+my %config = (hive          => "all",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
+			  output		=> "report",
+              MITRE         => "T1485",
               category      => "deleted",
-              version       => 20190506);
+              version       => 20200904);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -58,7 +62,9 @@ sub pluginmain {
 	my $reg = Parse::Win32Registry->new($file);
 	::logMsg("Launching del v.".$VERSION);
 	::rptMsg("del v.".$VERSION); # banner
-  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	
 	my $entry_iter = $reg->get_entry_iterator;
 	while (defined(my $entry = $entry_iter->get_next)) {
@@ -146,7 +152,7 @@ sub parseKeyNode {
 			$name = substr($data,$ofs + 0x4c,$len_name);
 			::rptMsg("Key name: ".$name);
 		}
-		::rptMsg("Key LastWrite time = ".gmtime($lw)." UTC");
+		::rptMsg("Key LastWrite time = ".::format8601Date($lw)."Z");
 		::rptMsg(sprintf "Offset to parent: 0x%x",$parent_ofs);
 	}
 }

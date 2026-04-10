@@ -3,6 +3,8 @@
 #
 #
 # History:
+#  20200924 - MITRE update
+#  20200511 - updated date output format
 #  20120509 - created
 #
 # References:
@@ -10,7 +12,7 @@
 #  http://answers.microsoft.com/en-us/windows/forum/windows_7-system/ms-removal
 #        -tool-malware-and-proxycheckexe/d0d6dc68-1ab0-4148-9501-374d80f0a064
 #
-# copyright 2012 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package tracing;
@@ -20,8 +22,10 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              osmask        => 22,
-              version       => 20120509);
+              MITRE         => "",
+              category      => "program execution",
+			  output		=> "report",
+              version       => 20200924);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -53,7 +57,7 @@ sub pluginmain {
 				next if (scalar(@subkeys) == 1);
 		    foreach my $s (@subkeys) {
 			  	my $lw = $s->get_timestamp();
-			  	my $t = gmtime($lw);
+			  	my $t = ::format8601Date($lw)."Z";
 			  	my $name = $s->get_name();
 			  	::rptMsg(sprintf "%-25s  %-50s",$t,$name);
 				}

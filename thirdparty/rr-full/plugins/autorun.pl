@@ -1,76 +1,115 @@
 #-----------------------------------------------------------
-# autorun.pl
-# Get autorun settings
-#
+# autorun
+#   
+#  
+#  
 # Change history
-#
+#   20221109 - created
 #
 # References
-#    http://support.microsoft.com/kb/953252
-#    http://www.microsoft.com/technet/prodtechnol/windows2000serv/reskit
-#         /regentry/91525.mspx?mfr=true
+#   https://www.samlogic.net/articles/autorun-enable-disable-nodrivetypeautorun.htm
+#   https://superuser.com/questions/1378243/nodrivetypeautorun-registry-key-missing-from-windows-10
+#   https://learn.microsoft.com/en-us/windows/win32/shell/autoplay-reg
 #
-# copyright 2008-2009 H. Carvey
+# Copyright 2022 QAR, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package autorun;
 use strict;
 
-my %config = (hive          => "NTUSER\.DAT",
+my %config = (hive          => "NTUSER\.DAT, Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20081212);
-
-sub getConfig{return %config}
-sub getShortDescr {
-	return "Gets autorun settings";	
-}
-sub getDescr{}
-sub getRefs {}
-sub getHive {return $config{hive};}
-sub getVersion {return $config{version};}
+              MITRE         => "T1204",
+              category      => "execution",
+			  output 		=> "report",
+              version       => 20221109);
 
 my $VERSION = getVersion();
 
+sub getConfig {return %config}
+sub getHive {return $config{hive};}
+sub getVersion {return $config{version};}
+sub getDescr {}
+sub getShortDescr {
+	return "Checks autorun settings";
+}
+sub getRefs {}
+
 sub pluginmain {
 	my $class = shift;
-	my $ntuser = shift;
-	::logMsg("Launching autorun v.".$VERSION);
-	::rptMsg("autorun v.".$VERSION); # banner
-    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
-	my $reg = Parse::Win32Registry->new($ntuser);
-	my $root_key = $reg->get_root_key;
+	my $hive = shift;
 
-	my $key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer";
+	::logMsg("Launching autorun v.".$VERSION);
+	::rptMsg("autorun v.".$VERSION);
+	::rptMsg("(".$config{hive}.") ".getShortDescr());   
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
+	my $reg = Parse::Win32Registry->new($hive);
+	my $root_key = $reg->get_root_key;
 	my $key;
+	
+	my %guess = ();
+	my $hive_guess = "";
+	my %guess = ::guessHive($hive);
+	foreach my $g (keys %guess) {
+		$hive_guess = $g if ($guess{$g} == 1);
+	}  
+# Set paths
+ 	my $key_path = ();
+ 	if ($hive_guess eq "software") {
+ 		$key_path = "Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer";
+ 	}
+ 	elsif ($hive_guess eq "ntuser") {
+ 		$key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer";
+ 	}
+ 	else {}
+	
+
 	if ($key = $root_key->get_subkey($key_path)) {
-#		::rptMsg($key_path);
-#		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg($key_path);
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
+		::rptMsg("");
 		
 		eval {
-			my $nodrive = $key->get_value("NoDriveTypeAutoRun")->get_data();
-			my $str = sprintf "%-20s 0x%x","NoDriveTypeAutoRun",$nodrive;
-			::rptMsg($str);
+			my $a = $key->get_value("NoDriveTypeAutoRun")->get_data();
+			::rptMsg(sprintf "%-20s 0x%04x","NoDriveTypeAutoRun",$a);
 		};
-		::rptMsg("Error: ".$@) if ($@);
-
-# http://support.microsoft.com/kb/953252		
+		::rptMsg("NoDriveTypeAutoRun value not found.") if ($@);
+		
 		eval {
-			my $honor = $key->get_value("HonorAutorunSetting")->get_data();
-			my $str = sprintf "%-20s 0x%x","HonorAutorunSetting",$honor;
-			::rptMsg($str);
+			my $a = $key->get_value("NoDriveAutoRun")->get_data();
+			::rptMsg(sprintf "%-20s 0x%04x","NoDriveAutoRun",$a);
 		};
-		::rptMsg("HonorAutorunSetting not found.") if ($@);
-		::rptMsg("");
-		::rptMsg("Autorun settings in the HKLM hive take precedence over those in");
-		::rptMsg("the HKCU hive.");
+		::rptMsg("NoDriveAutoRun value not found.") if ($@);
 	}
 	else {
-		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
+		::rptMsg($key_path." key not found.");
 	}
-
+	
+	if ($hive_guess eq "ntuser") {
+		::rptMsg("");
+		$key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\AutoplayHandlers";
+		if ($key = $root_key->get_subkey($key_path)) {
+			::rptMsg($key_path);
+			::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
+			::rptMsg("");
+			
+			eval {
+				my $a = $key->get_value("DisableAutoplay")->get_data();
+				::rptMsg(sprintf "%-20s 0x%04x","DisableAutoplay",$a);
+				::rptMsg("");
+				::rptMsg("1 - Autoplay disabled");
+				::rptMsg("0 - Autoplay enabled");
+			};
+			::rptMsg("DisableAutoplay value not found.") if ($@);
+	
+		}
+		else {
+			::rptMsg($key_path." key not found.");
+		}
+	}
 }
 
 1;

@@ -4,22 +4,27 @@
 # RunMru values 
 #
 # Change history
+#   20201005 - MITRE update
+#   20200525 - updated date output format
 #   20080324 - created
 #
 # References
 #
 # 
-# copyright 2008 H. Carvey
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package runmru;
 use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
+              category      => "execution",
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20080324);
+			  output		=> "report",
+              MITRE         => "T1204",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -36,8 +41,10 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching runmru v.".$VERSION);
-	::rptMsg("runmru v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("runmru v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 
@@ -46,7 +53,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("RunMru");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		my @vals = $key->get_list_of_values();
 		my %runvals;
 		my $mru;

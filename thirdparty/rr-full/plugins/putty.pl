@@ -3,26 +3,29 @@
 #   Extracts the saved SshHostKeys for PuTTY
 #
 # Change history
-#   20110830 [fpi] + banner, no change to the version number
+#   20200924 - MITRE update
+#   20200515 - date output format updated
+#   20110830 - created
 #
 # References
 #
-# copyright (c) 2011-02-04 Brendan Coles <bcoles@gmail.com>
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
-# Require #
 package putty;
 use strict;
 
-# Declarations #
 my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
-              hasRefs       => 1,
-              osmask        => 22,
-              version       => 20110204);
+              hasRefs       => 0,
+              MITRE         => "T1021",
+              category      => "lateral movement",
+			  output		=> "report",
+              version       => 20200924);
+
 my $VERSION = getVersion();
 
-# Functions #
 sub getDescr {}
 sub getConfig {return %config}
 sub getHive {return $config{hive};}
@@ -30,67 +33,46 @@ sub getVersion {return $config{version};}
 sub getShortDescr {
 	return "Extracts the saved SshHostKeys for PuTTY.";
 }
-sub getRefs {
-	my %refs = ("PuTTY Homepage:" =>
-	            "http://www.chiark.greenend.org.uk/~sgtatham/putty/");
-	return %refs;	
-}
+sub getRefs {}
 
-############################################################
-# pluginmain #
-############################################################
 sub pluginmain {
-
-	# Declarations #
 	my $class = shift;
 	my $hive = shift;
 
-	# Initialize #
 	::logMsg("Launching putty v.".$VERSION);
-    ::rptMsg("putty v.".$VERSION); # 20110830 [fpi] + banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
+	::rptMsg("putty v.".$VERSION); 
+	::rptMsg("(".getHive().") ".getShortDescr());
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");	
 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key;
 	my $key_path = "Software\\SimonTatham\\PuTTY\\SshHostKeys";
 
-	# If # PuTTY path exists #
 	if ($key = $root_key->get_subkey($key_path)) {
-
-		# Return # plugin name, registry key and last modified date #
 		::rptMsg("PuTTY");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite time: ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 
-		# Extract # all keys from PuTTY registry path #
 		my %keys;
 		my @vals = $key->get_list_of_values();
 
-		# If # registry keys exist in path #
 		if (scalar(@vals) > 0) {
-
-			# Extract # all key names+values for PuTTY registry path #
 			foreach my $v (@vals) {
 				$keys{$v->get_name()} = $v->get_data();
 				::rptMsg($v->get_name()." -> ".$v->get_data());
 			}
-
-		# Error # key value is null #
-		} else {
+		} 
+		else {
 			::rptMsg($key_path." has no values.");
 		}
-
-	# Error # PuTTY isn't here, try another castle #
-	} else {
+	} 
+	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
-
-	# Return # obligatory new-line #
 	::rptMsg("");
 }
 
-# Error # oh snap! #
 1;

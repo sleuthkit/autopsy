@@ -4,24 +4,27 @@
 #  for use with mixer.pl/mixer_tln.pl plugins
 #
 # Change history:
+#  20200814 - MITRE updates
+#  20200525 - minor updates
 #  20141112 - created
 # 
 # Ref:
 #  http://www.ghettoforensics.com/2014/11/dj-forensics-analysis-of-sound-mixer.html
 #
-# copyright 2014 QAR,LLC 
+# copyright 2020 QAR,LLC 
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package audiodev;
 use strict;
 
 my %config = (hive          => "Software",
-							category      => "devices",
+			  category      => "devices",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20141112);
+              MITRE         => "",
+			  output   		=> "report",
+              version       => 20200814);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -84,11 +87,5 @@ sub pluginmain {
 	else {
 		::rptMsg("Could not get root key\.");
 	}
-	
-	
-	
-	
-	
-	
 }
 1;

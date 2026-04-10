@@ -6,6 +6,8 @@
 # starts at 0x1c)
 #
 # Change history
+#    20200816 - MITRE updates
+#    20200515 - updated date output format
 #    20090413 - Created
 #
 # References
@@ -16,7 +18,8 @@
 #    as well as possibly an "Outerinfo" subkey indicating that spyware is 
 #    installed.
 # 
-# copyright 2009 H. Carvey
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package arpcache;
 use strict;
@@ -25,8 +28,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20090413);
+              MITRE         => "",
+			  output 		=> "report",
+              category      => "config",
+              version       => 20200816);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -54,7 +59,7 @@ sub pluginmain {
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
@@ -80,24 +85,22 @@ sub pluginmain {
 			
 			
 			foreach my $t (reverse sort {$a <=> $b} keys %arpcache) {
-				::rptMsg(gmtime($t)." (UTC)");
+				::rptMsg(::format8601Date($t)."Z");
 				foreach my $item (@{$arpcache{$t}}) {
 					my ($name,$path,$date) = split(/\|/,$item,3);
 					::rptMsg("  ".$name);
 					my $str = $path unless ($path eq "");
-					$str .= " [".gmtime($date)."]" unless ($date == 0);
+					$str .= " [".::format8601Date($date)."Z]" unless ($date == 0);
 					::rptMsg("    -> ".$str) unless ($str eq ""); 
 				}
 			}
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");
-			::logMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 
@@ -122,7 +125,6 @@ sub parsePath {
 		while($tag) {
 			$ofs += 2;
 			my $i = substr($data,$ofs,2);
-            last unless (defined $i);
 			if (unpack("v",$i) == 0) {
 				$tag = 0;
 			}
@@ -131,6 +133,6 @@ sub parsePath {
 			}
 		}
 	}	
-	$str =~ s/\x00//g;
+	$str =~ s/\00//g;
 	return $str;
 }

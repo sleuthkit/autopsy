@@ -5,6 +5,7 @@
 # not found" is a good thing.
 #
 # Change history
+#  20200921 - MITRE update
 #  20120608 - created
 #
 # References
@@ -21,8 +22,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20120608);
+              MITRE         => "",
+			  output		=> "tln",
+              category      => "config",
+              version       => 20200921);
 
 sub getConfig{return %config}
 sub getShortDescr {

@@ -3,9 +3,12 @@
 # Plugin for Registry Ripper; 
 # 
 # Change history
+#   20201005 - MITRE update
+#   20200526 - updated date output format
 #   20110316 - created
 #   
-# copyright 2011 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package termcert;
 use strict;
@@ -14,8 +17,10 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20110316);
+              MITRE         => "",
+              category      => "config",
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -32,8 +37,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching termcert v.".$VERSION);
-	::rptMsg("termcert v.".$VERSION); # banner
-	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+	::rptMsg("termcert v.".$VERSION); 
+	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -49,7 +54,7 @@ sub pluginmain {
 		my $ts;
 		if ($ts = $root_key->get_subkey($ts_path)) {
 			::rptMsg($ts_path);
-			::rptMsg("LastWrite Time ".gmtime($ts->get_timestamp())." (UTC)");
+			::rptMsg("LastWrite Time ".::format8601Date($ts->get_timestamp())."Z");
 			::rptMsg("");
 			
 			my $cert;

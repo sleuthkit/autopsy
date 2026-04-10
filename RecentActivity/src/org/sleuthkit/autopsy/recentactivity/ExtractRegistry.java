@@ -180,7 +180,7 @@ class ExtractRegistry extends Extract {
     final private static String RIP_PL_INCLUDE_FLAG = "-I";
     final private static int MS_IN_SEC = 1000;
     final private static String NEVER_DATE = "Never";
-    final private static String SECTION_DIVIDER = "-------------------------";
+    final private static String SECTION_DIVIDER = "----------------------------------------";
     final private static Logger logger = Logger.getLogger(ExtractRegistry.class.getName());
     private final List<String> rrCmd = new ArrayList<>();
     private final List<String> rrFullCmd = new ArrayList<>();
@@ -1200,12 +1200,10 @@ class ExtractRegistry extends Extract {
             while (line != null) {
                 line = line.trim();
 
-                if (line.matches("^adoberdr v.*")) {
+                if (line.matches("^adobe v.*")) {
                     parseAdobeMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Adobe());
                 } else if (line.matches("^mpmru v.*")) {
                     parseMediaPlayerMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Mediaplayer());
-                } else if (line.matches("^trustrecords v.*")) {
-                    parseOfficeTrustRecords(regFile, reader, Bundle.Recently_Used_Artifacts_Office_Trustrecords());
                 } else if (line.matches("^ArcHistory:")) {
                     parse7ZipMRU(regFile, reader, Bundle.Recently_Used_Artifacts_ArcHistory());
                 } else if (line.matches("^applets v.*")) {
@@ -1214,7 +1212,7 @@ class ExtractRegistry extends Extract {
                     parseGenericMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Mmc());
                 } else if (line.matches("^winrar v.*")) {
                     parseWinRARMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Winrar());
-                } else if (line.matches("^officedocs2010 v.*")) {
+                } else if (line.matches("^msoffice v.*")) {
                     parseOfficeDocs2010MRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Officedocs());
                 }
                 line = reader.readLine();
@@ -1309,7 +1307,7 @@ class ExtractRegistry extends Extract {
                 line = reader.readLine();
                 // Columns are
                 // Key name, file name, sDate, uFileSize, uPageCount
-                while (!line.contains(SECTION_DIVIDER)) {
+                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty()) {
                     // Split csv line, handles double quotes around individual file names
                     // since file names can contain commas
                     String tokens[] = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
@@ -1591,7 +1589,22 @@ class ExtractRegistry extends Extract {
             String tokens[] = line.split("\\|");
             Long docDate = Long.valueOf(tokens[0]);
             String fileNameTokens[] = tokens[4].split(" - ");
-            String fileName = fileNameTokens[1];
+            if (fileNameTokens[0].contains("MSOffice LastLoginTime")) {
+                line = reader.readLine();
+                line = line.trim();
+                continue;
+            }
+            String fileName;
+            if (fileNameTokens.length > 2) {
+                fileName = fileNameTokens[2];
+            } else {
+                fileName = fileNameTokens[1];
+            }
+            if (line.contains(" MRU ")) {
+                comment = Bundle.Recently_Used_Artifacts_Officedocs();                
+            } else { 
+                comment = Bundle.Recently_Used_Artifacts_Office_Trustrecords();                
+            }
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getDisplayName(), docDate));
@@ -1608,71 +1621,6 @@ class ExtractRegistry extends Extract {
             }
             line = reader.readLine();
             line = line.trim();
-        }
-        if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
-            postArtifacts(bbartifacts);
-        }
-    }
-
-    /**
-     * Create recently used artifacts to parse the Office trust records
-     * (trustrecords) Regipper plugin records
-     *
-     * @param regFile registry file the artifact is associated with
-     *
-     * @param reader  buffered reader to parse adobemru records
-     *
-     * @param comment string that will populate attribute TSK_COMMENT
-     *
-     * @throws FileNotFound and IOException
-     */
-    private void parseOfficeTrustRecords(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
-        String userProfile = regFile.getParentPath();
-        userProfile = userProfile.substring(0, userProfile.length() - 1);
-        List<BlackboardArtifact> bbartifacts = new ArrayList<>();
-        SimpleDateFormat pluginDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", US);
-        Long usedTime = Long.valueOf(0);
-        String line = reader.readLine();
-        while (!line.contains(SECTION_DIVIDER)) {
-            line = reader.readLine();
-            line = line.trim();
-            usedTime = Long.valueOf(0);
-            if (!line.contains("**") && !line.contains("----------") && !line.contains("LastWrite")
-                    && !line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("TrustRecords")
-                    && !line.contains("VBAWarnings =")) {
-                // Columns are
-                // Date : <File Name>/<Website>
-                // Split line on " : " which is the record delimiter between position and file
-                String fileName = null;
-                String tokens[] = line.split(" : ");
-                fileName = tokens[1];
-                fileName = fileName.replace("%USERPROFILE%", userProfile);
-                // Time in the format of Wed May 31 14:33:03 2017 Z 
-                try {
-                    String fileUsedTime = tokens[0].replaceAll(" Z", "");
-                    Date usedDate = pluginDateFormat.parse(fileUsedTime);
-                    usedTime = usedDate.getTime() / 1000;
-                } catch (ParseException ex) {
-                    // catching error and displaying date that could not be parsed
-                    // we set the timestamp to 0 and continue on processing
-                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for TrustRecords artifact.", tokens[0]), ex); //NON-NLS
-                }
-                Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getDisplayName(), usedTime));
-                attributes.add(new BlackboardAttribute(TSK_COMMENT, getDisplayName(), comment));
-                try {
-                    BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_RECENT_OBJECT, regFile, attributes);
-                    bbartifacts.add(bba);
-                    bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
-                    if (bba != null) {
-                        bbartifacts.add(bba);
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to create TSK_RECENT_OBJECT artifact for file %d", regFile.getId()), ex);
-                }
-                line = line.trim();
-            }
         }
         if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);

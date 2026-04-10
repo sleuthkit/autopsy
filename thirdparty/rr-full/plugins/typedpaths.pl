@@ -3,12 +3,14 @@
 # For Windows 7, Desktop Address Bar History
 #
 # Change history
+#   20201005 - MITRE update
+#   20200526 - updated date output format
 #	  20100330 - created
 #
 # References
 #   
-# 
-# copyright 2010 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package typedpaths;
 use strict;
@@ -17,8 +19,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20100330);
+              MITRE         => "",
+              category      => "user activity",
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -44,7 +48,7 @@ sub pluginmain {
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		my @vals = $key->get_list_of_values();
 		if (scalar(@vals) > 0) {

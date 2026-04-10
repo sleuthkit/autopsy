@@ -4,6 +4,10 @@
 # services
 # 
 # Change history
+#   20200831 - updated to include FailureCommand, MITRE updates
+#   20200511 - updated date output format
+# *Note: LastWrite time stamps not used, as they don't provide much value
+#   20191024 - updated parsing of value data that includes ;
 #   20080507 - Added collection of Type and Start values; separated
 #              data by Services vs. Drivers; created separate plugin
 #              for Drivers
@@ -12,17 +16,20 @@
 # References
 #
 # 
-# copyright 2008 H. Carvey
+# copyright 2020 QAR, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package services;
 #use strict;
 
-my %config = (hive          => "System",
+my %config = (hive          => "system",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20080507);
+              category      => "persistence",
+              MITRE         => "T1547",
+			  output		=> "report",
+              version       => 20200831);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -53,8 +60,10 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching services v.".$VERSION);
-	::rptMsg("services v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("services v.".$VERSION); 
+	::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -114,20 +123,26 @@ sub pluginmain {
 						$group = $s->get_value("Group")->get_data();
 					};
 					
-					my $str = $name.";".$display.";".$image.";".$type.";".$start.";".$group;
+					my $failcmd;
+					eval {
+						$failcmd = $s->get_value("FailureCommand")->get_data();
+					};
+					
+					my $str = $name."|".$display."|".$image."|".$type."|".$start."|".$group."|".$failcmd;
 					push(@{$svcs{$s->get_timestamp()}},$str) unless ($str eq "");
 				}
 			
 				foreach my $t (reverse sort {$a <=> $b} keys %svcs) {
-					::rptMsg(gmtime($t)."Z");
+					::rptMsg(gmtime($t)." Z");
 					foreach my $item (@{$svcs{$t}}) {
-						my ($n,$d,$i,$t,$s,$g) = split(/;/,$item,6);
-						::rptMsg("  Name      = ".$n);
-						::rptMsg("  Display   = ".$d);
-						::rptMsg("  ImagePath = ".$i);
-						::rptMsg("  Type      = ".$t);
-						::rptMsg("  Start     = ".$s);
-						::rptMsg("  Group     = ".$g);
+						my ($n,$d,$i,$t,$s,$g) = split(/\|/,$item,7);
+						::rptMsg("  Name           = ".$n);
+						::rptMsg("  Display        = ".$d);
+						::rptMsg("  ImagePath      = ".$i);
+						::rptMsg("  Type           = ".$t);
+						::rptMsg("  Start          = ".$s);
+						::rptMsg("  Group          = ".$g);
+						::rptMsg("  FailureCommand = ".$f);
 						::rptMsg("");
 					}
 				}
@@ -140,12 +155,10 @@ sub pluginmain {
 		}
 		else {
 			::rptMsg($s_path." not found.");
-			::logMsg($s_path." not found.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 

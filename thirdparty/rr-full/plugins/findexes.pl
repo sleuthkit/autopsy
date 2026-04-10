@@ -7,19 +7,26 @@
 # LastWrite time, and length of the data
 #
 # Change history
+#    20200911 - MITRE updates
+#    20200525 - updated date output format
 #    20090728 - Created
+#
+#	https://attack.mitre.org/techniques/T1564/
 # 
-# copyright 2009 H. Carvey
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package findexes;
 use strict;
 
-my %config = (hive          => "All",
+my %config = (hive          => "all",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20090728);
+              MITRE         => "T1564",
+              category      => "defense evasion",
+			  output		=> "report",
+              version       => 20200911);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -42,12 +49,14 @@ sub pluginmain {
 	my $reg = Parse::Win32Registry->new($file);
 	my $root_key = $reg->get_root_key;
 	::logMsg("Launching findexes v.".$VERSION);
-	::rptMsg("findexes v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner 
+	::rptMsg("findexes v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	traverse($root_key);
 # Data structure containing findings is a hash of hashes	
 	foreach my $k (keys %vals) {
-		::rptMsg("Key: ".$k."   LastWrite time: ".gmtime($vals{$k}{lastwrite}));
+		::rptMsg("Key: ".$k."   LastWrite time: ".::format8601Date($vals{$k}{lastwrite})."Z");
 		foreach my $i (keys %{$vals{$k}}) {
 			next if ($i eq "lastwrite");
 			::rptMsg("  Value: ".$i."  Length: ".$vals{$k}{$i}." bytes");
