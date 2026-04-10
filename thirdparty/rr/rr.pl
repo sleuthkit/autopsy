@@ -8,6 +8,18 @@
 # version
 #
 # Change History:
+#  20230822 - minor tweak in plugin processing
+#  20220714 - added JSON::PP based on input from Mark McKinnon
+#  20210302 - added Digest::MD5
+#  20201026 - added SelectAll(), Clear() functions for Textfield; fixed issue with ID'ing UsrClass.dat hives
+#  20200824 - Unicode parsing updates
+#  20200803 - updated to version 4.0 Pro
+#  20200511 - added code to provide date format in ISO 8601/RFC 3339 format
+#  20200401 - Added code to check hive type, collect plugins, and automatically run those
+#             plugins against the hive
+#  20200322 - multiple updates
+#  20190318 - modified code to allow the .exe to be run from anywhere within the file system
+#  20190128 - added Time::Local, modifications to module Key.pm
 #  20130429 - minor updates, including not adding .txt files to Profile list
 #  20130425 - added alertMsg() functionality, updated to v2.8
 #  20120505 - Updated to v2.5
@@ -34,15 +46,20 @@
 # Functionality: 
 #   - plugins file is selectable
 # 
-# copyright 2013 Quantum Research Analytics, LLC
+# copyright 2022 Quantum Research Analytics, LLC
 # Author: H. Carvey, keydet89@yahoo.com
-# 
-# This software is released via the GPL v3.0 license:
-# http://www.gnu.org/licenses/gpl.html
 #-----------------------------------------------------------
 #use strict;
 use Win32::GUI();
+#use Win32::GUI::Constants qw(CW_USEDEFAULT);
+use Time::Local;
 use Parse::Win32Registry qw(:REG_);
+use File::Spec;
+use Encode::Unicode;
+use Digest::MD5;
+use JSON::PP;
+require 'time.pl';
+require 'rr_helper.pl';
 
 # Included to permit compiling via Perl2Exe
 #perl2exe_include "Parse/Win32Registry.pm";
@@ -61,9 +78,11 @@ use Parse::Win32Registry qw(:REG_);
 #-----------------------------------------------------------
 # Global variables
 #-----------------------------------------------------------
-my $VERSION = "2\.8";
+my $VERSION = "4\.0";
 my %env; 
-my @alerts = ();
+my $plugindir;
+($^O eq "MSWin32") ? ($plugindir = $str."plugins/")
+                   : ($plugindir = File::Spec->catfile("plugins"));
 
 #-----------------------------------------------------------
 # GUI
@@ -82,6 +101,7 @@ my $menu = Win32::GUI::MakeMenu(
 my $main = new Win32::GUI::Window (
     -name     => "Main",
     -title    => "RegRipper, v.".$VERSION,
+    -left  => CW_USEDEFAULT,
     -pos      => [200, 200],
 # Format: [width, height]
     -maxsize  => [500, 420],
@@ -144,36 +164,19 @@ my $browse2 = $main->AddButton(
 		-tabstop  => 1,
 		-text => "Browse");
 
-$main->AddLabel(
-    -text   => "Profile:",
-    -left   => 20,
-    -top    => 90);
-
-# http://perl-win32-gui.sourceforge.net/cgi-bin/docs.cgi?doc=combobox
-my $combo = $main->AddCombobox(
- -name   => "Combobox",
-# -dropdown => 1,
- -dropdownlist => 1,
- -top    => 90,
- -left   => 100,
- -width  => 120,
- -height => 110,
- -tabstop=> 1,
- );
-
 my $testlabel = $main->AddLabel(
 	-text => "",
 	-name => "TestLabel",
-	-pos => [10,140],
-	-size => [445,160],
+	-pos => [10,90],
+	-size => [445,210],
 	-frame => etched,
 	-sunken => 1
 );
 
 my $report = $main->AddTextfield(
     -name      => "Report",
-    -pos       => [20,150],
-    -size      => [425,140],
+    -pos       => [20,100],
+    -size      => [425,190],
     -multiline => 1,
     -vscroll   => 1,
     -autohscroll => 1,
@@ -189,7 +192,7 @@ my $go = $main->AddButton(
 		-width => 50,
 		-height => 25,
 		-tabstop => 1,
-		-text => "Rip It");
+		-text => "Rip!");
 		
 $main->AddButton(
 		-name => 'close',
@@ -204,9 +207,17 @@ my $status = new Win32::GUI::StatusBar($main,
 		-text  => "RegRipper v.".$VERSION." opened\.",
 );
 
-populatePluginsList();
-$combo->Text("<Select>");
-$status->Text("Profile List Populated.");
+$status->Text("Ready.");
+
+#-----------------------------------------------------------
+# Added 20200322
+$report->Append("NOTE: This tool does NOT automatically process and incorporate Registry hive\r\n");
+$report->Append("transaction logs.  The tool will check to see if the hive is dirty.\r\n");
+$report->Append("\r\n");
+$report->Append("If you need to process/incorporate transaction logs, please consider using\r\n");
+$report->Append("yarp + registryFlush.py (Maxim Suhanov) or rla.exe (Eric Zimmerman).\r\n");
+$report->Append("\r\n");
+#-----------------------------------------------------------
 
 $main->Show();
 Win32::GUI::Dialog();
@@ -251,52 +262,102 @@ sub go_Click {
 		                       "Doh!!",16);
 		return;
 	}
-# Get the selected item from the Plugins file listbox
-# only allows for single selections at this time; defaults to ntuser
-# if none selected
-	my $pluginfile = $combo->GetLBText($combo->GetCurSel());
-	$pluginfile = "ntuser" if ($pluginfile eq "");
+	
+# added 20201026
+	$report->SelectAll();	
+	$report->Clear();	
+	
+# Guess the hive type, then run through all of the available plugins to get a list
+# to run against that hive.
+#----------------------------------------------------------------------------------------
+# added 20200322
+	my $dirty = checkHive($env{ntuser});
+	if ($dirty == 1) {
+		$status->Text("Hive is dirty.");
+		$report->Append("Hive is dirty.  If you need to process hive transaction logs, please consider\r\n");
+		$report->Append("doing so via yarp + registryFlush.py (Maxim Suhanov) or rla.exe (Eric Zimmerman).\r\n");
+		logMsg("Hive (".$env{ntuser}.") is dirty.\n");
+		rptMsg("Hive (".$env{ntuser}.") is dirty.");
+		rptMsg("If you need to process hive transasction logs, please consider using yarp + registryFlush.py");
+		rptMsg("(Maxim Suhanov) or rla.exe (Eric Zimmerman).\n");
+	}
+	elsif ($dirty == 0) {
+		$status->Text("Hive is not dirty.");
+		$report->Append("Hive is not dirty.\r\n");
+		logMsg("Hive (".$env{ntuser}.") is not dirty.\n");
+		rptMsg("Hive (".$env{ntuser}.") is not dirty.\n");
+	}
+	else {}
+#----------------------------------------------------------------------------------------
+
 	$report->Append("Logging to ".$env{logfile}."\r\n");
-	$report->Append("Using plugins file ".$pluginfile."\r\n");
+
 	logMsg("Log opened.");
 	logMsg("File: ".$env{ntuser});
 	logMsg("Environment set up.");
-	my %plugins = parsePluginsFile($pluginfile);
-	logMsg("Parsed Plugins file ".$pluginfile);
-	if (scalar(keys %plugins) == 0) {
-		Win32::GUI::MessageBox($main,$ENV{USERNAME}.", the plugins file has no plugins!!.\r\n",
-		                       "Doh!!",16);
-		return;
+
+#----------------------------------------------------------------------------------------
+# determine the type of hive file
+
+	my %guess = guessHive($env{ntuser});
+	my $type = "";
+	foreach my $g (keys %guess) {
+#		::rptMsg(sprintf "%-8s = %-2s",$g,$guess{$g});
+		$type = $g if ($guess{$g} == 1);
 	}
-	my $err_cnt = 0;
-	foreach my $i (sort {$a <=> $b} keys %plugins) {
+	$report->Append("Hive type: ".$type."\r\n");
+#----------------------------------------------------------------------------------------
+# get a list of plugins based on the hive type
+	$report->Append("Getting list of plugins based on hive type...\r\n");
+	my @plugins;
+	opendir(DIR,$plugindir) || die "Could not open $plugindir: $!\n";
+	@plugins = readdir(DIR);
+	closedir(DIR);
+# hash of lists to hold plugin names	
+	my %files = ();
+
+	foreach my $p (@plugins) {
+		next unless ($p =~ m/\.pl$/);
+# $pkg = name of plugin		
+		my $pkg = (split(/\./,$p,2))[0];
+# skip over plugins that end in _tln, _json, or _yara		
+		next if ($pkg =~ m/tln$/ || $pkg =~ m/json$/ || $pkg =~ m/yara$/ || $pkg =~ /csv$/);
+#		$p = $plugindir.$p;
+		$p = File::Spec->catfile($plugindir,$p);
 		eval {
-			require "plugins\\".$plugins{$i}."\.pl";
-			$plugins{$i}->pluginmain($env{ntuser});
+			require $p;
+			my $hive    = $pkg->getHive();
+			my @hives = split(/,/,$hive);
+			foreach my $lch (@hives) {
+				$lch =~ tr/A-Z/a-z/;
+				$lch =~ s/\.dat$//;
+				$lch =~ s/^\s+//;
+				$type =~ tr/A-Z/a-z/;
+				$files{$pkg} = 1 if ($lch eq $type);
+			}
+		};
+		print "Error: $@\n" if ($@);
+	}
+	$report->Append("...Done.\r\n");
+	$report->Append("Start ripping...\r\n");
+	my $err_cnt = 0;
+	foreach my $f (sort keys %files) {
+		eval {
+#			require "plugins/".$plugins{$i}."\.pl";
+			my $plugin_file = File::Spec->catfile($plugindir,$f.".pl");
+			require $plugin_file;
+			$f->pluginmain($env{ntuser});
 		};
 		if ($@) {
 			$err_cnt++;
-			logMsg("Error in ".$plugins{$i}.": ".$@);
+			logMsg("Error in ".$f.": ".$@);
 		}
-		
-		$report->Append($plugins{$i}."...Done.\r\n");
-		$status->Text($plugins{$i}." completed.");
-		
-		Win32::GUI::DoEvents();
-		logMsg($err_cnt." plugins completed with errors.");
-		logMsg($plugins{$i}." complete.");
+		$report->Append($f."...Done.\r\n");
+		$status->Text($f." complete.");
 		rptMsg("-" x 40);
+		Win32::GUI::DoEvents();
 	}
-# add output of alerts to the report file here	
-	if (scalar(@alerts) > 0) {
-#		rptMsg("");
-#		rptMsg("Alerts");
-#		rptMsg("-" x 40);
-		foreach my $a (@alerts) {
-			rptMsg($a);
-		}
-	}
-	
+
 	$report->Append($err_cnt." plugins completed with errors.\r\n");
 	$status->Text("Done.");
 }
@@ -304,10 +365,6 @@ sub go_Click {
 sub close_Click {
 	$main->Hide();
 	exit -1;
-}
-
-sub Combobox_CloseUp {
-	$status->Text("Profile = ".$combo->GetLBText($combo->GetCurSel()));	
 }
 
 # About box
@@ -318,7 +375,7 @@ sub RR_OnAbout {
      "Parses Registry hive (NTUSER\.DAT, System, etc.) files, placing pertinent info in a report ".
      "file in a readable manner.\r\n".
      "\r\n".
-     "Copyright 2013 Quantum Analytics Research, LLC.\r\n".
+     "Copyright 2023 Quantum Analytics Research, LLC.\r\n".
      "H\. Carvey, keydet89\@yahoo\.com",
      "About...",
      MB_ICONINFORMATION | MB_OK,
@@ -343,76 +400,8 @@ sub setUpEnv {
 # Assemble path to log file	
 	$f[scalar(@f) - 1] = "log";
 	$path[$last] = join('.',@f);
-	print join('\\',@path)."\n";
-	$env{logfile} = join('\\',@path);
-
-# Use the above code to set up the path to the Timeline
-# (.tln) file	
-# Assemble path to log file	
-#	$f[scalar(@f) - 1] = "tln";
-#	$path[$last] = join('.',@f);
 #	print join('\\',@path)."\n";
-#	$env{tlnfile} = join('\\',@path);
-
-}
-
-#-----------------------------------------------------------
-# get a list of plugins files from the plugins dir
-#-----------------------------------------------------------
-sub getProfiles {
-	my @pluginfiles;
-	opendir(DIR,"plugins");
-	my @files = readdir(DIR);
-	close(DIR);
-	
-	foreach my $f (@files) {
-		next if ($f =~ m/^\.$/ || $f =~ m/^\.\.$/);
-		next if ($f =~ m/\.pl$/ || $f =~ m/\.txt$/);
-		push(@pluginfiles,$f);
-	}
-	return @pluginfiles;
-}
-
-#-----------------------------------------------------------
-# populate the list of plugins files
-#-----------------------------------------------------------
-sub populatePluginsList {
-	my @files = getProfiles();
-	foreach my $f (@files) {
-		$combo->InsertItem($f);
-	}
-}
-
-#-----------------------------------------------------------
-# 
-#-----------------------------------------------------------
-sub parsePluginsFile {
-	my $file = $_[0];
-	my %plugins;
-# Parse a file containing a list of plugins
-# Future versions of this tool may allow for the analyst to 
-# choose different plugins files	
-	my $pluginfile = "plugins\\".$file;
-	if (-e $pluginfile) {
-		open(FH,"<",$pluginfile);
-		my $count = 1;
-		while(<FH>) {
-			chomp;
-			next if ($_ =~ m/^#/ || $_ =~ m/^\s+$/);
-#			next unless ($_ =~ m/\.pl$/);
-			next if ($_ eq "");
-			$_ =~ s/^\s+//;
-			$_ =~ s/\s+$//;
-			$plugins{$count++} = $_; 
-		}
-		close(FH);
-		$status->Text("Plugin file parsed and loaded.");
-		return %plugins;
-	}
-	else {
-		$report->Append($pluginfile." not found.\r\n");
-		return undef;
-	}
+	$env{logfile} = join('\\',@path);
 }
 
 sub logMsg {
@@ -428,27 +417,73 @@ sub rptMsg {
 	close(FH);
 }
 
-sub alertMsg {
-	push(@alerts,$_[0]);
+#-------------------------------------------------------------
+# guessHive()
+# updated 20200322
+#-------------------------------------------------------------
+sub guessHive {
+	my $hive = shift;
+	my $reg;
+	my $root_key;
+	my %guess;
+	eval {
+		$reg = Parse::Win32Registry->new($hive);
+	  $root_key = $reg->get_root_key;
+	};
+	$guess{unknown} = 1 if ($@);
+#-------------------------------------------------------------
+# updated 20200322
+# see if we can get the name from the hive file	
+	my $embed = $reg->get_embedded_filename();
+	my @n = split(/\\/,$embed);
+	my $r = $n[scalar(@n) - 1];
+	$r =~ tr/A-Z/a-z/;
+	my $name = (split(/\./,$r,2))[0];
+	$guess{$name} = 1;
+#-------------------------------------------------------------
+	
+# Check for SAM
+	eval {
+		$guess{sam} = 1 if (my $key = $root_key->get_subkey("SAM\\Domains\\Account\\Users"));
+	};
+# Check for Software	
+	eval {
+		$guess{software} = 1 if ($root_key->get_subkey("Microsoft\\Windows\\CurrentVersion") &&
+				$root_key->get_subkey("Microsoft\\Windows NT\\CurrentVersion"));
+	};
+
+# Check for System	
+	eval {
+		$guess{system} = 1 if ($root_key->get_subkey("MountedDevices") &&
+				$root_key->get_subkey("Select"));
+	};
+	
+# Check for Security	
+	eval {
+		$guess{security} = 1 if ($root_key->get_subkey("Policy\\Accounts") &&
+				$root_key->get_subkey("Policy\\PolAdtEv"));
+	};
+# Check for NTUSER.DAT	
+	eval {
+		$guess{ntuser} = 1 if ($root_key->get_subkey("Software\\Microsoft\\Windows\\CurrentVersion")&&
+				$root_key->get_subkey("Software\\Microsoft\\Windows NT\\CurrentVersion"));
+	};	
+	
+	eval {
+		$guess{usrclass} = 1 if ($root_key->get_subkey("Local Settings\\Software") &&
+				$root_key->get_subkey("lnkfile"));
+	};
+	
+	return %guess;
 }
 
 #-------------------------------------------------------------
-# getTime()
-# Translate FILETIME object (2 DWORDS) to Unix time, to be passed
-# to gmtime() or localtime()
+# checkHive()
+# check to see if hive is "dirty"
+# Added 20200322
 #-------------------------------------------------------------
-sub getTime($$) {
-	my $lo = shift;
-	my $hi = shift;
-	my $t;
-
-	if ($lo == 0 && $hi == 0) {
-		$t = 0;
-	} else {
-		$lo -= 0xd53e8000;
-		$hi -= 0x019db1de;
-		$t = int($hi*429.4967296 + $lo/1e7);
-	};
-	$t = 0 if ($t < 0);
-	return $t;
+sub checkHive {
+	my $hive = shift;
+	my $reg = Parse::Win32Registry->new($hive);
+	return $reg->is_dirty();
 }

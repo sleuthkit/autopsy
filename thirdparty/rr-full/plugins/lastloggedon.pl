@@ -1,26 +1,30 @@
 #-----------------------------------------------------------
 # lastloggedon
 # 
-# 
-# References
-#
 #
 # History:
+#  20201007 - MITRE update
+#  20200517 - updated date output format
 #  20180614 - Updated by Michael Godfrey
 #  20160531 - created
 #
-# copyright 2018 Quantum Analytics Research, LLC
+# Ref:
+#	 https://attack.mitre.org/techniques/T1078/
+#
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package lastloggedon;
 use strict;
 
-my %config = (hive          => "Software",
-              osmask        => 22,
+my %config = (hive          => "software",
+              MITRE         => "T1078",
+              category      => "user activity",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20160531);
+			  output 		=> "report",
+              version       => 20201007);
 
 sub getConfig{return %config}
 
@@ -51,7 +55,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("LastLoggedOn");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite: ".gmtime($key->get_timestamp()));
+		::rptMsg("LastWrite: ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 		
 		eval {

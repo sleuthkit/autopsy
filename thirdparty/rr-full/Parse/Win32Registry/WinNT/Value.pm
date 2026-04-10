@@ -280,7 +280,9 @@ sub as_regedit_export {
 #    }
 
     if ($type == REG_SZ) {
-        $export .= '"' . $self->get_data . '"';
+        my $data = $self->get_data;
+        $data = '' if !defined($data);
+        $export .= '"' . $data . '"';
         $export .= "\n";
     }
     elsif ($type == REG_BINARY) {

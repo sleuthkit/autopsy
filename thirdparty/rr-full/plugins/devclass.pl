@@ -4,22 +4,26 @@
 # hive (Disks and Volumes GUIDs)
 #
 # Change History:
+#   20200904 - MITRE updates
+#   20200525 - updated date output format
 #   20130630 - added additional device class check
 #   20100901 - spelling error in output corrected
 #   20080331 - created
 #
-# copyright 2013-2014 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package devclass;
 use strict;
 
 my %config = (hive          => "System",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "devices",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20130630);
+			  output		=> "report",
+              version       => 20200904);
 
 sub getConfig{return %config}
 
@@ -56,7 +60,8 @@ sub pluginmain {
 		return
 	}
 # Get devices from the Disk GUID
-	$key_path = $ccs."\\Control\\DeviceClasses\\{53f56307-b6bf-11d0-94f2-00a0c91efb8b}";
+	my $key_path = $ccs."\\Control\\DeviceClasses\\{53f56307-b6bf-11d0-94f2-00a0c91efb8b}";
+	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("DevClasses - Disks");
 		::rptMsg($key_path);
@@ -73,7 +78,7 @@ sub pluginmain {
 			}
 			
 			foreach my $t (reverse sort {$a <=> $b} keys %disks) {
-				::rptMsg(gmtime($t)." (UTC)");
+				::rptMsg(::format8601Date($t)."Z");
 				foreach my $item (@{$disks{$t}}) {
 					::rptMsg("  $item");
 				}
@@ -89,7 +94,8 @@ sub pluginmain {
 	}
 	::rptMsg("");
 # Get devices from the Volume GUID
-	$key_path = $ccs."\\Control\\DeviceClasses\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}";
+	my $key_path = $ccs."\\Control\\DeviceClasses\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}";
+	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("DevClasses - Volumes");
 		::rptMsg($key_path);
@@ -106,7 +112,7 @@ sub pluginmain {
 			}
 			
 			foreach my $t (reverse sort {$a <=> $b} keys %vols) {
-				::rptMsg(gmtime($t)." (UTC)");
+				::rptMsg(::format8601Date($t)."Z");
 				foreach my $item (@{$vols{$t}}) {
 					::rptMsg("  ParentIdPrefix: ".$item);
 				}
@@ -131,11 +137,11 @@ sub pluginmain {
 				my @n = split(/#/,$name);
 				if ($n[3] eq "USB") {
 					::rptMsg("Device   : ".$n[4]);
-					::rptMsg("LastWrite: ".gmtime($lw)." UTC");
+					::rptMsg("LastWrite: ".::format8601Date($lw)."Z");
 				}
 				elsif ($n[3] eq "WpdBusEnumRoot") {
 					::rptMsg("Device   : ".$n[8]."  SN: ".$n[9]);
-					::rptMsg("LastWrite: ".gmtime($lw)." UTC");
+					::rptMsg("LastWrite: ".::format8601Date($lw)."Z");
 				}
 				else {}
 

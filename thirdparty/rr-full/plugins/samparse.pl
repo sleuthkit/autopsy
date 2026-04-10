@@ -3,6 +3,10 @@
 # Parse the SAM hive file for user/group membership info
 #
 # Change history:
+#    20200825 - Unicode updates
+#    20200730 - MITRE ATT&CK Updates
+#    20200427 - updated output date format
+#    20200216 - Added RID Hijacking check (https://pentestlab.blog/2020/02/12/persistence-rid-hijacking/)
 #    20160203 - updated to include add'l values (randomaccess/Phill Moore contribution)
 #    20120722 - updated %config hash
 #    20110303 - Fixed parsing of SID, added check for account type
@@ -18,7 +22,9 @@
 #    Source available here: http://pogostick.net/~pnh/ntpasswd/
 #    http://accessdata.com/downloads/media/Forensic_Determination_Users_Logon_Status.pdf
 #
-# copyright 2016 Quantum Analytics Research, LLC
+#  https://attack.mitre.org/techniques/T1136/001/
+#
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package samparse;
@@ -29,12 +35,12 @@ use JSON::PP;
 my %config = (hive          => "SAM",
               hivemask      => 2,
               output        => "report",
-              category      => "",
-              osmask        => 63, #XP - Win8
+              category      => "user activity",
+              MITRE         => "T1136\.001", 
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              version       => 20160203);
+              version       => 20200825);
 
 sub getConfig{return %config}
 
@@ -66,13 +72,15 @@ my %acb_flags = (0x0001 => "Account Disabled",
 my %types = (0xbc => "Default Admin User",
              0xd4 => "Custom Limited Acct",
              0xb0 => "Default Guest Acct");
-             
+
 sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching samparse v.".$VERSION);
-	::rptMsg("samparse v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("samparse v.".$VERSION); 
+	::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	::rptMsg("");
@@ -81,24 +89,6 @@ sub pluginmain {
 	::rptMsg("-" x 25);
 	my $key_path = 'SAM\\Domains\\Account\\Users';
 	my $key;
-	my $local_sid = "";
-	my $account_key = $root_key->get_subkey("SAM\\Domains\\Account");
-	if (defined $account_key) {
-		my $account_value = $account_key->get_value("V");
-		if (defined $account_value) {
-			my $account_data = $account_value->get_data();
-			if (defined $account_data) {
-				my $data_len = length($account_data);
-				if ($data_len >= 12) {
-					my @vArray  = unpack("VVV",substr($account_data, $data_len-12, 12));
-					my $vArray_len = @vArray;
-					if ($vArray_len == 3) {
-						$local_sid = "S-1-5-21-".$vArray[0]."-".$vArray[1]."-".$vArray[2];
-					}
-				}
-			}
-		}
-	}
 	if ($key = $root_key->get_subkey($key_path)) {
 		my @user_list = $key->get_list_of_subkeys();
 		if (scalar(@user_list) > 0) {
@@ -120,17 +110,86 @@ sub pluginmain {
 							$c_date = $create->get_timestamp();
 						}
 					};
-				
+					
 					::rptMsg("Username        : ".$v_val{name}." [".$rid."]");
-					::rptMsg("SID             : ".$local_sid."-".$rid);
 					::rptMsg("Full Name       : ".$v_val{fullname});
 					::rptMsg("User Comment    : ".$v_val{comment});
 					::rptMsg("Account Type    : ".$v_val{type});
-					::rptMsg("Account Created : ".gmtime($c_date)." Z") if ($c_date > 0); 
+					::rptMsg("Account Created : ".::format8601Date($c_date)."Z") if ($c_date > 0); 
 					
 					my $f_value = $u->get_value("F");
 					my $f = $f_value->get_data();
 					my %f_val = parseF($f);
+					
+					my $lastlogin;
+					my $pwdreset;
+					my $pwdfail;
+					($f_val{last_login_date} == 0) ? ($lastlogin = "Never") : ($lastlogin = ::format8601Date($f_val{last_login_date})."Z");
+					($f_val{pwd_reset_date} == 0) ? ($pwdreset = "Never") : ($pwdreset = ::format8601Date($f_val{pwd_reset_date})."Z");
+					($f_val{pwd_fail_date} == 0) ? ($pwdfail = "Never") : ($pwdfail = ::format8601Date($f_val{pwd_fail_date})."Z");
+					
+					my $given;
+					my $surname;
+					eval {
+						$given = $u->get_value("GivenName")->get_data();
+						$given = ::getUnicodeStr($given);
+#						$given =~ s/\00//g;
+					};
+					
+					eval {
+						$surname = $u->get_value("SurName")->get_data();
+						$surname = ::getUnicodeStr($surname);
+#						$surname =~ s/\00//g;
+					};
+					
+					::rptMsg("Name            : ".$given." ".$surname);
+					
+					my $internet;
+					eval {
+						$internet = $u->get_value("InternetUserName")->get_data();
+						$internet = ::getUnicodeStr($internet);
+#						$internet =~ s/\00//g;
+						::rptMsg("InternetName    : ".$internet);
+					};
+					
+					my $pw_hint;
+					eval {
+						$pw_hint = $u->get_value("UserPasswordHint")->get_data();
+						$pw_hint = ::getUnicodeStr($pw_hint);
+#						$pw_hint =~ s/\00//g;
+					};
+					::rptMsg("Password Hint   : ".$pw_hint) unless ($@);
+					::rptMsg("Last Login Date : ".$lastlogin);
+					::rptMsg("Pwd Reset Date  : ".$pwdreset);
+					::rptMsg("Pwd Fail Date   : ".$pwdfail);
+					::rptMsg("Login Count     : ".$f_val{login_count});
+					::rptMsg("Embedded RID    : ".$f_val{rid});
+					
+					if ($rid != $f_val{rid}) {
+						::rptMsg("ALERT [T1089]: Possible RID hijacking found!");
+					}
+					
+					foreach my $flag (keys %acb_flags) {
+						::rptMsg("  --> ".$acb_flags{$flag}) if ($f_val{acb_flags} & $flag);
+					}
+					::rptMsg("");
+					
+					eval {
+						my $force = unpack("V",$u->get_value("ForcePasswordReset")->get_data());
+						::rptMsg("ForcePasswordReset      : ".$force);
+					};
+					
+					eval {
+						my $dont = unpack("V",$u->get_value("UserDontShowInLogonUI")->get_data());
+						::rptMsg("UserDontShowInLogonUI   : ".$dont);
+					};
+					
+#					::rptMsg("");
+#					eval {
+#						my $sup = $u->get_value("SupplementalCredentials")->get_data();
+#						::probe($sup);
+#					};
+#					::rptMsg("");
 					
 					eval {
 					    my $reset_data_value = $u->get_value("ResetData");
@@ -142,56 +201,16 @@ sub pluginmain {
 						my $question_1 = $reset_data_question_1->{'question'};
                         ::rptMsg("Security Questions:");
 						::rptMsg("    Question 1  : ".$question_1);
-						::rptMsg("    Answer 1    : ".$reset_data_question_1->{'answer'});
+						::rptMsg("    Answer      : ".$reset_data_question_1->{'answer'});
 						::rptMsg("    Question 2  : ".$reset_data_question_2->{'question'});
-						::rptMsg("    Answer 2    : ".$reset_data_question_2->{'answer'});
+						::rptMsg("    Answer      : ".$reset_data_question_2->{'answer'});
 						::rptMsg("    Question 3  : ".$reset_data_question_3->{'question'});
-						::rptMsg("    Answer 3    : ".$reset_data_question_3->{'answer'});
-					};
-										
-					my $lastlogin;
-					my $pwdreset;
-					my $pwdfail;
-					($f_val{last_login_date} == 0) ? ($lastlogin = "Never") : ($lastlogin = gmtime($f_val{last_login_date})." Z");
-					($f_val{pwd_reset_date} == 0) ? ($pwdreset = "Never") : ($pwdreset = gmtime($f_val{pwd_reset_date})." Z");
-					($f_val{pwd_fail_date} == 0) ? ($pwdfail = "Never") : ($pwdfail = gmtime($f_val{pwd_fail_date})." Z");
-					
-					my $given;
-					my $surname;
-					eval {
-						$given = $u->get_value("GivenName")->get_data();
-						$given =~ s/\x00//g;
-					};
-					
-					eval {
-						$surname = $u->get_value("SurName")->get_data();
-						$surname =~ s/\x00//g;
-					};
-					
-					::rptMsg("Name            : ".$given." ".$surname);
-					
-					my $internet;
-					eval {
-						$internet = $u->get_value("InternetUserName")->get_data();
-						$internet =~ s/\x00//g;
-						::rptMsg("InternetName    : ".$internet);
+						::rptMsg("    Answer      : ".$reset_data_question_3->{'answer'});
 					};
 					
 					
 					
-					my $pw_hint;
-					eval {
-						$pw_hint = $u->get_value("UserPasswordHint")->get_data();
-						$pw_hint =~ s/\x00//g;
-					};
-					::rptMsg("Password Hint   : ".$pw_hint) unless ($@);
-					::rptMsg("Last Login Date : ".$lastlogin);
-					::rptMsg("Pwd Reset Date  : ".$pwdreset);
-					::rptMsg("Pwd Fail Date   : ".$pwdfail);
-					::rptMsg("Login Count     : ".$f_val{login_count});
-					foreach my $flag (keys %acb_flags) {
-						::rptMsg("  --> ".$acb_flags{$flag}) if ($f_val{acb_flags} & $flag);
-					}
+					
 					::rptMsg("");
 				}
 			}
@@ -199,13 +218,12 @@ sub pluginmain {
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 	::rptMsg("-" x 25);
 	::rptMsg("Group Membership Information");
 	::rptMsg("-" x 25);
 # Get Group membership information	
-	$key_path = 'SAM\\Domains\\Builtin\\Aliases';
+	my $key_path = 'SAM\\Domains\\Builtin\\Aliases';
 	if ($key = $root_key->get_subkey($key_path)) {
 		my %grps;
 		my @groups = $key->get_list_of_subkeys();
@@ -223,7 +241,7 @@ sub pluginmain {
 				$name =~ s/^0000//;
 				my %c_val = parseC($grps{$k}{C_value});
 				::rptMsg("Group Name    : ".$c_val{group_name}." [".$c_val{num_users}."]");
-				::rptMsg("LastWrite     : ".gmtime($grps{$k}{LastWrite})." Z");
+				::rptMsg("LastWrite     : ".::format8601Date($grps{$k}{LastWrite})."Z");
 				::rptMsg("Group Comment : ".$c_val{comment});
 				if ($c_val{num_users} == 0) {
 					::rptMsg("Users         : None");
@@ -383,8 +401,8 @@ sub _translateSID {
 #---------------------------------------------------------------------
 sub _uniToAscii {
   my $str = $_[0];
-  Encode::from_to($str,'UTF-16LE','utf8');
-  $str = Encode::decode_utf8($str);
+  $str = ::getUnicodeStr($str);
+  $str =~ s/\00//g;
   return $str;
 }
 

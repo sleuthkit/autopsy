@@ -5,6 +5,7 @@
 #
 #
 # Change History:
+#    20200921 - MITRE update
 #    20150812 - updated to include Nla\Cache data
 #    20120608 - updated from networklist.pl to add TLN output
 #    20090812 - updated code to parse DateCreated and DateLastConnected
@@ -13,18 +14,20 @@
 #
 # References
 #
-# copyright 2015 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package networklist_tln;
 use strict;
 
 my %config = (hive          => "Software",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20150812);
+			  output		=> "tln",
+              version       => 20200921);
 
 sub getConfig{return %config}
 

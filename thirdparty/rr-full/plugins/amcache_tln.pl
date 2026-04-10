@@ -2,6 +2,7 @@
 # amcache_tln.pl 
 #   
 # Change history
+#   20200813 - MITRE update
 #   20180311 - updated to support newer version files, albeit without parsing devices
 #   20170315 - added output for Product Name and File Description values
 #   20160818 - added check for value 17
@@ -23,9 +24,10 @@ my %config = (hive          => "amcache",
               hasShortDescr => 1,
               hasDescr      => 1,
               hasRefs       => 1,
-              osmask        => 22,
+              MITRE         => "",
+			  output        => "tln",
               category      => "program execution",
-              version       => 20180311);
+              version       => 20200813);
 my $VERSION = getVersion();
 
 # Functions #

@@ -1,90 +1,116 @@
 #-----------------------------------------------------------
 # environment.pl
-#   Extracts user's Environment paths from NTUSER.DAT
+#   Extracts environment variables from NTUSER.DAT and System hives
 # 
 # Change history
-#   20150910 - added check for specific value, per Hexacorn blog
-#   20110830 [fpi] + banner, no change to the version number
+#   20201113 - minor updates
+#   20200911 - MITRE updates
+#   20200512 - created
 #
 # References
 #  http://www.hexacorn.com/blog/2014/11/14/beyond-good-ol-run-key-part-18/
+#  UserInitMprLogonScript value  - https://eqllib.readthedocs.io/en/latest/analytics/54fff7e8-f81d-4169-b820-4cbff0133e2d.html
+#                                - https://www.cybereason.com/blog/back-to-the-future-inside-the-kimsuky-kgh-spyware-suite
+#  Cor_profiler values           - https://redcanary.com/blog/cor_profiler-for-persistence/
+#  Seen used by Blue Mockingbird - https://redcanary.com/blog/blue-mockingbird-cryptominer/
 #
-# Copyright (c) 2011-02-04 Brendan Coles <bcoles@gmail.com>
+#
+#	https://attack.mitre.org/techniques/T1037/001/
+#
+# Copyright 2020 Quantum Analytics Research, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package environment;
 use strict;
 
-my %config = (hive          => "NTUSER\.DAT",
+my %config = (hive          => "System, NTUSER\.DAT",
               hasShortDescr => 1,
+              category      => "persistence",
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20150910);
+			  output 		=> "report",
+              MITRE         => "T1037\.007",
+              version       => 20201113);
+
 my $VERSION = getVersion();
 
-# Functions #
 sub getDescr {}
 sub getRefs {}
 sub getConfig {return %config}
 sub getHive {return $config{hive};}
 sub getVersion {return $config{version};}
 sub getShortDescr {
-	return "Extracts user's Environment paths from NTUSER.DAT";
+	return "Get environment vars from NTUSER\.DAT & System hives";
 }
 
 sub pluginmain {
-
-	# Declarations #
 	my $class = shift;
 	my $hive = shift;
 
-	# Initialize #
 	::logMsg("Launching environment v.".$VERSION);
-  ::rptMsg("environment v.".$VERSION); 
-  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); 
+	::rptMsg("environment v.".$VERSION); 
+	::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
-	my $key;
-	my $key_path = "Environment";
 
-	# If # Environment path exists #
+	my %guess = ();
+	my $hive_guess = "";
+	my %guess = ::guessHive($hive);
+	foreach my $g (keys %guess) {
+		$hive_guess = $g if ($guess{$g} == 1);
+	}
+	
+	my $key = ();
+	my $key_path = ();
+	
+	my @val_names = ("UserInitMprLogonScript","cor_enable_profiling","cor_profiler","cor_profiler_path");
+	
+	if ($hive_guess eq "system") {
+		my $ccs = ();
+		if ($key = $root_key->get_subkey('Select')) {
+			$ccs = "ControlSet00".$key->get_value("Current")->get_data();
+		}
+		$key_path = $ccs."\\Control\\Session Manager\\Environment";
+	}
+	elsif ($hive_guess eq "ntuser") {
+		$key_path = "Environment";
+	}
+	else {
+		$key_path = "Environment";
+	}
+	
 	if ($key = $root_key->get_subkey($key_path)) {
-
-		# Return # plugin name, registry key and last modified date #
-		::rptMsg("Environment");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time: ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
-
-		# Extract # all keys from Environment registry path #
 		my @vals = $key->get_list_of_values();
-
-		# If # registry keys exist in path #
 		if (scalar(@vals) > 0) {
 
-			# Extract # all key names+values for Environment registry path #
 			foreach my $v (@vals) {
 				my $name = $v->get_name();
-				::rptMsg($name." -> ".$v->get_data());
+				::rptMsg(sprintf "%-25s %-50s",$name,$v->get_data());
 				
-				if ($name eq "UserInitMprLogonScript") {
-					::rptMsg("**ALERT: UserInitMprLogonScript value found: ".$v->get_data());
+				foreach my $n (@val_names) {
+					if ($name eq $n) {
+						::rptMsg("**ALERT: ".$n." value found: ".$v->get_data());
+					}
 				}
-
 			}
-
-		# Error # key value is null #
+			::rptMsg("");
+			::rptMsg("Analysis Tip: Threat actors, such as Kimsuky (see Cybereason reference below) have been observed using the");
+			::rptMsg("\"UserInitMprLogonScript\" value for persistence, by including a script in the value data.");
+			::rptMsg("");
+			::rptMsg("Ref: https://www.cybereason.com/blog/back-to-the-future-inside-the-kimsuky-kgh-spyware-suite");
 		} 
 		else {
 			::rptMsg($key_path." has no values.");
 		}
-
-	# Error # Environment isn't here, try another castle #
 	} else {
 		::rptMsg($key_path." not found.");
 	}
-	# Return # obligatory new-line #
-	::rptMsg("");
+#	::rptMsg("");
 }
-# Error # oh snap! #
+
 1;

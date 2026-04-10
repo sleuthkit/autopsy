@@ -2,10 +2,11 @@
 # spp_clients
 #
 # History
+#  20201005 - MITRE update
 #  20130429 - added alertMsg() functionality
 #  20120914 - created
 #
-# copyright 2013 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package spp_clients;
@@ -15,8 +16,10 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 50, #Vista, Win7
-              version       => 20130429);
+              MITRE         => "",
+              category      => "config", 
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -34,7 +37,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching spp_clients v.".$VERSION);
 	::rptMsg("spp_clients v.".$VERSION); 
-  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); 
+	::rptMsg("(".getHive().") ".getShortDescr()."\n"); 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
@@ -43,16 +46,17 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("SPP_Clients");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
-		
+		::rptMsg("Monitored volumes: ");
 		my $mon;
 		eval {
 			$mon = $key->get_value("{09F7EDC5-294E-4180-AF6A-FB0E6A0E9513}")->get_data();
-			::rptMsg("Monitored volumes: ".$mon);
-			::alertMsg("ALERT: No volumes monitored by VSS\.") if ($mon eq "");
+			::rptMsg($mon);
+			::rptMsg("");
+			::rptMsg("Analysis Tip: This value indicates volumes that are monitored for VSCs. A threat actor can read this value");
+			::rptMsg("and use volumes not monitored, or modify the value.");
 		};
-		
 	}
 	else {
 		::rptMsg($key_path." not found.");

@@ -36,7 +36,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.modules.InstalledFileLocator;
@@ -44,6 +43,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -72,10 +72,8 @@ import static java.util.Locale.US;
 import java.util.Optional;
 import static java.util.TimeZone.getTimeZone;
 import java.util.stream.Collectors;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.ShellBagParser.ShellBag;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
@@ -118,6 +116,8 @@ import org.sleuthkit.datamodel.TskDataException;
     "RegRipperFullNotFound=Full version RegRipper executable not found.",
     "Progress_Message_Analyze_Registry=Analyzing Registry Files",
     "Shellbag_Artifact_Display_Name=Shell Bags",
+    "WSL_Artifact_Display_Name=Windows Subsystem For Linux",
+    "WSL_Kernal_Command_Attribute_Display_Name=Kernal Command",
     "Shellbag_Key_Attribute_Display_Name=Key",
     "Shellbag_Last_Write_Attribute_Display_Name=Last Write",
     "Sam_Security_Question_1_Attribute_Display_Name=Security Question 1",
@@ -134,6 +134,7 @@ import org.sleuthkit.datamodel.TskDataException;
     "Recently_Used_Artifacts_Officedocs=Recently opened according to Office MRU",
     "Recently_Used_Artifacts_Adobe=Recently opened according to Adobe MRU",
     "Recently_Used_Artifacts_Mediaplayer=Recently opened according to Media Player MRU",
+    "Recently_Used_Artifacts_WSL=Windows Subsystem For Linux",
     "Registry_System_Bam=Recently Executed according to Background Activity Moderator (BAM)"
 })
 class ExtractRegistry extends Extract {
@@ -180,7 +181,7 @@ class ExtractRegistry extends Extract {
     final private static String RIP_PL_INCLUDE_FLAG = "-I";
     final private static int MS_IN_SEC = 1000;
     final private static String NEVER_DATE = "Never";
-    final private static String SECTION_DIVIDER = "-------------------------";
+    final private static String SECTION_DIVIDER = "----------------------------------------";
     final private static Logger logger = Logger.getLogger(ExtractRegistry.class.getName());
     private final List<String> rrCmd = new ArrayList<>();
     private final List<String> rrFullCmd = new ArrayList<>();
@@ -194,8 +195,10 @@ class ExtractRegistry extends Extract {
     private String compName = "";
     private String domainName = "";
 
+    private static final String WSL_ARTIFACT_NAME = "WSL_NAME"; //NON-NLS
     private static final String SHELLBAG_ARTIFACT_NAME = "RA_SHELL_BAG"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_LAST_WRITE = "RA_SHELL_BAG_LAST_WRITE"; //NON-NLS
+    private static final String WSL_ATTRIBUTE_KERNAL_COMMAND = "WSL_KERNAL_COMMAND"; //NON-NLS
     private static final String SHELLBAG_ATTRIBUTE_KEY = "RA_SHELL_BAG_KEY"; //NON-NLS
     private static final String SAM_SECURITY_QUESTION_1 = "RA_SAM_QUESTION_1"; //NON-NLS;
     private static final String SAM_SECURITY_ANSWER_1 = "RA_SAM_ANSWER_1"; //NON-NLS;
@@ -207,7 +210,9 @@ class ExtractRegistry extends Extract {
 
     private static final SimpleDateFormat REG_RIPPER_TIME_FORMAT = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'", US);
 
+    private BlackboardArtifact.Type wslArtifactType = null;
     private BlackboardArtifact.Type shellBagArtifactType = null;
+    private BlackboardAttribute.Type kernalCommandAttributeType = null;
     private BlackboardAttribute.Type shellBagKeyAttributeType = null;
     private BlackboardAttribute.Type shellBagLastWriteAttributeType = null;
     
@@ -569,7 +574,7 @@ class ExtractRegistry extends Extract {
             result = result.replace('\0', ' '); // NON-NLS
             String enddoc = "</document>"; //NON-NLS
             String stringdoc = startdoc + result + enddoc;
-            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            DocumentBuilder builder = XMLUtil.getDocumentBuilder();
             Document doc = builder.parse(new InputSource(new StringReader(stringdoc)));
 
             // cycle through the elements in the doc
@@ -1200,12 +1205,10 @@ class ExtractRegistry extends Extract {
             while (line != null) {
                 line = line.trim();
 
-                if (line.matches("^adoberdr v.*")) {
+                if (line.matches("^adobe v.*")) {
                     parseAdobeMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Adobe());
                 } else if (line.matches("^mpmru v.*")) {
                     parseMediaPlayerMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Mediaplayer());
-                } else if (line.matches("^trustrecords v.*")) {
-                    parseOfficeTrustRecords(regFile, reader, Bundle.Recently_Used_Artifacts_Office_Trustrecords());
                 } else if (line.matches("^ArcHistory:")) {
                     parse7ZipMRU(regFile, reader, Bundle.Recently_Used_Artifacts_ArcHistory());
                 } else if (line.matches("^applets v.*")) {
@@ -1214,8 +1217,10 @@ class ExtractRegistry extends Extract {
                     parseGenericMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Mmc());
                 } else if (line.matches("^winrar v.*")) {
                     parseWinRARMRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Winrar());
-                } else if (line.matches("^officedocs2010 v.*")) {
+                } else if (line.matches("^msoffice v.*")) {
                     parseOfficeDocs2010MRUList(regFile, reader, Bundle.Recently_Used_Artifacts_Officedocs());
+                } else if (line.matches("^lxss v.*")) {
+                    parseWSL(regFile, reader, Bundle.Recently_Used_Artifacts_WSL());
                 }
                 line = reader.readLine();
             }
@@ -1309,7 +1314,7 @@ class ExtractRegistry extends Extract {
                 line = reader.readLine();
                 // Columns are
                 // Key name, file name, sDate, uFileSize, uPageCount
-                while (!line.contains(SECTION_DIVIDER)) {
+                while (!line.contains(SECTION_DIVIDER) && !line.isEmpty()) {
                     // Split csv line, handles double quotes around individual file names
                     // since file names can contain commas
                     String tokens[] = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
@@ -1591,7 +1596,22 @@ class ExtractRegistry extends Extract {
             String tokens[] = line.split("\\|");
             Long docDate = Long.valueOf(tokens[0]);
             String fileNameTokens[] = tokens[4].split(" - ");
-            String fileName = fileNameTokens[1];
+            if (fileNameTokens[0].contains("MSOffice LastLoginTime")) {
+                line = reader.readLine();
+                line = line.trim();
+                continue;
+            }
+            String fileName;
+            if (fileNameTokens.length > 2) {
+                fileName = fileNameTokens[2];
+            } else {
+                fileName = fileNameTokens[1];
+            }
+            if (line.contains(" MRU ")) {
+                comment = Bundle.Recently_Used_Artifacts_Officedocs();                
+            } else { 
+                comment = Bundle.Recently_Used_Artifacts_Office_Trustrecords();                
+            }
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getDisplayName(), docDate));
@@ -1615,8 +1635,8 @@ class ExtractRegistry extends Extract {
     }
 
     /**
-     * Create recently used artifacts to parse the Office trust records
-     * (trustrecords) Regipper plugin records
+     * Create recently used artifacts to parse the Windows Subsystem For Linux records
+     * Regripper Plugin output
      *
      * @param regFile registry file the artifact is associated with
      *
@@ -1626,53 +1646,54 @@ class ExtractRegistry extends Extract {
      *
      * @throws FileNotFound and IOException
      */
-    private void parseOfficeTrustRecords(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
-        String userProfile = regFile.getParentPath();
-        userProfile = userProfile.substring(0, userProfile.length() - 1);
+    private void parseWSL(AbstractFile regFile, BufferedReader reader, String comment) throws FileNotFoundException, IOException {
         List<BlackboardArtifact> bbartifacts = new ArrayList<>();
-        SimpleDateFormat pluginDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy", US);
-        Long usedTime = Long.valueOf(0);
         String line = reader.readLine();
+        line = line.trim();
+        // Reading to the SECTION DIVIDER to get next section of records to process.  Dates appear to have
+        // multiple spaces in them that makes it harder to parse so next section will be easier to parse 
         while (!line.contains(SECTION_DIVIDER)) {
             line = reader.readLine();
-            line = line.trim();
-            usedTime = Long.valueOf(0);
-            if (!line.contains("**") && !line.contains("----------") && !line.contains("LastWrite")
-                    && !line.contains(SECTION_DIVIDER) && !line.isEmpty() && !line.contains("TrustRecords")
-                    && !line.contains("VBAWarnings =")) {
-                // Columns are
-                // Date : <File Name>/<Website>
-                // Split line on " : " which is the record delimiter between position and file
-                String fileName = null;
-                String tokens[] = line.split(" : ");
-                fileName = tokens[1];
-                fileName = fileName.replace("%USERPROFILE%", userProfile);
-                // Time in the format of Wed May 31 14:33:03 2017 Z 
-                try {
-                    String fileUsedTime = tokens[0].replaceAll(" Z", "");
-                    Date usedDate = pluginDateFormat.parse(fileUsedTime);
-                    usedTime = usedDate.getTime() / 1000;
-                } catch (ParseException ex) {
-                    // catching error and displaying date that could not be parsed
-                    // we set the timestamp to 0 and continue on processing
-                    logger.log(Level.WARNING, String.format("Failed to parse date/time %s for TrustRecords artifact.", tokens[0]), ex); //NON-NLS
-                }
-                Collection<BlackboardAttribute> attributes = new ArrayList<>();
-                attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), fileName));
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getDisplayName(), usedTime));
-                attributes.add(new BlackboardAttribute(TSK_COMMENT, getDisplayName(), comment));
-                try {
-                    BlackboardArtifact bba = createArtifactWithAttributes(BlackboardArtifact.Type.TSK_RECENT_OBJECT, regFile, attributes);
-                    bbartifacts.add(bba);
-                    bba = createAssociatedArtifact(FilenameUtils.normalize(fileName, true), bba);
-                    if (bba != null) {
-                        bbartifacts.add(bba);
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to create TSK_RECENT_OBJECT artifact for file %d", regFile.getId()), ex);
-                }
-                line = line.trim();
+        }
+        line = reader.readLine();
+        while (!line.contains(SECTION_DIVIDER)) {
+            // record has the following format
+            // 1294283922|REG|||LXSS - Alpine - C:\Users\<UserName>\AppData\Local\Packages\36828agowa338.AlpineWSL_my43bytklc4nr\LocalStats
+            String tokens[] = line.split("\\|");
+            Long docDate = Long.valueOf(tokens[0]);
+            String fileNameTokens[] = tokens[4].split(" - ");
+            String filePath = "";
+            String imagePath = "";
+            String distro = "";
+            String kernalCommand;
+            if (fileNameTokens.length > 3) {
+                distro = fileNameTokens[1].replaceFirst(" ", "");
+                filePath = fileNameTokens[2];
+                imagePath = fileNameTokens[2] + "\\ext4.vhdx";
+                kernalCommand = fileNameTokens[3];
+            } else {
+                distro = fileNameTokens[1].replaceFirst(" ", "");
+                filePath = fileNameTokens[2];
+                imagePath = fileNameTokens[2] + "\\ext4.vhdx";
+                kernalCommand = "";
             }
+            comment = Bundle.Recently_Used_Artifacts_WSL();                
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            
+            try {
+                attributes.add(new BlackboardAttribute(TSK_NAME, getDisplayName(), distro));
+                attributes.add(new BlackboardAttribute(TSK_PATH, getDisplayName(), imagePath));
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED, getDisplayName(), docDate));
+                attributes.add(new BlackboardAttribute(getKernalCommandAttribute(), getDisplayName(), kernalCommand));
+                attributes.add(new BlackboardAttribute(TSK_COMMENT, getDisplayName(), comment));
+                BlackboardArtifact.Type wslArtifact = getWSLArtifact();
+                BlackboardArtifact bba = createArtifactWithAttributes(wslArtifact, regFile, attributes);
+                bbartifacts.add(bba);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to create TSK_RECENT_OBJECT artifact for file %d", regFile.getId()), ex);
+            }
+            line = reader.readLine();
+            line = line.trim();
         }
         if (!bbartifacts.isEmpty() && !context.dataSourceIngestIsCancelled()) {
             postArtifacts(bbartifacts);
@@ -1861,6 +1882,48 @@ class ExtractRegistry extends Extract {
         }
 
         return shellBagArtifactType;
+    }
+
+    /**
+     * Returns the custom WSL artifact type or creates it if it does not
+     * currently exist.
+     *
+     * @return BlackboardArtifact.Type for shellbag artifacts
+     *
+     * @throws TskCoreException
+     */
+    private BlackboardArtifact.Type getWSLArtifact() throws TskCoreException {
+        if (wslArtifactType == null) {
+            try {
+                wslArtifactType = tskCase.getBlackboard().getOrAddArtifactType(WSL_ARTIFACT_NAME, Bundle.WSL_Artifact_Display_Name());
+            } catch (BlackboardException ex) {
+                throw new TskCoreException(String.format("Failed to get WSL artifact type", WSL_ARTIFACT_NAME), ex);
+            }
+        }
+
+        return wslArtifactType;
+    }
+
+    /**
+     * Gets the custom BlackboardAttribute type. The attribute type is created
+     * if it does not currently exist.
+     *
+     * @return The BlackboardAttribute type
+     *
+     * @throws TskCoreException
+     */
+    private BlackboardAttribute.Type getKernalCommandAttribute() throws TskCoreException {
+        if (kernalCommandAttributeType == null) {
+            try {
+                kernalCommandAttributeType = tskCase.getBlackboard().getOrAddAttributeType(WSL_ATTRIBUTE_KERNAL_COMMAND,
+                        BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                        Bundle.WSL_Kernal_Command_Attribute_Display_Name());
+            } catch (BlackboardException ex) {
+                // Attribute already exists get it from the case
+                throw new TskCoreException(String.format("Failed to get custom attribute %s", WSL_ATTRIBUTE_KERNAL_COMMAND), ex);
+            }
+        }
+        return kernalCommandAttributeType;
     }
 
     /**

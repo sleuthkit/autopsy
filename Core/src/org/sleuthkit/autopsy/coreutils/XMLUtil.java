@@ -60,12 +60,20 @@ public class XMLUtil {
         System.setProperty("javax.xml.transform.TransformerFactory","com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl");
     }
     
-    private static DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
+    public static DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
         // See JIRA-6958 for details about class loading and jaxb.
         ClassLoader original = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(XMLUtil.class.getClassLoader());
             DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+            // Explicitly disable external entity loading and DOCTYPE to prevent XXE injection.
+            builderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true); //NON-NLS
+            builderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            builderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false); //NON-NLS
+            builderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false); //NON-NLS
+            builderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false); //NON-NLS
+            builderFactory.setXIncludeAware(false);
+            builderFactory.setExpandEntityReferences(false);
             return builderFactory.newDocumentBuilder();
         } finally {
             Thread.currentThread().setContextClassLoader(original);

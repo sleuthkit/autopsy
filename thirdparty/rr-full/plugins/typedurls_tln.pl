@@ -5,6 +5,7 @@
 # TypedURLs values 
 #
 # Change history
+#   20201012 - MITRE update
 #   20120827 - TLN version created
 #   20080324 - created
 #
@@ -26,8 +27,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              osmask        => 22,
-              version       => 20120827);
+              MITRE         => "",
+              category      => "user activity",
+			  output		=> "tln",
+              version       => 20201012);
 
 sub getConfig{return %config}
 sub getShortDescr {

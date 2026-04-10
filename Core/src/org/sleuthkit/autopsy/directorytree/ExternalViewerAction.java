@@ -22,6 +22,9 @@ import org.sleuthkit.autopsy.coreutils.Desktop;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.logging.Level;
@@ -113,25 +116,28 @@ public class ExternalViewerAction extends AbstractAction {
             logger.log(Level.WARNING, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
-        String tempPath = openCase.getTempDirectory();
-        tempPath = tempPath + File.separator + this.fileObject.getName();
-
-        // create the temporary file
-        File tempFile = new File(tempPath);
-        if (tempFile.exists()) {
-            tempFile.delete();
-        }
+        // Create a temp file atomically to avoid TOCTOU race conditions.
+        // fileObjectExt already includes the leading dot (e.g. ".pdf"), or is empty.
+        Path tempFilePath;
         try {
-            tempFile.createNewFile();
+            tempFilePath = Files.createTempFile(
+                    Paths.get(openCase.getTempDirectory()),
+                    this.fileObject.getName(),
+                    fileObjectExt);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Can't create temporary file.", ex); //NON-NLS
+            return;
+        }
+        File tempFile = tempFilePath.toFile();
+        tempFile.deleteOnExit();
+
+        try {
             ContentUtils.writeToFile(fileObject, tempFile);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Can't save to temporary file.", ex); //NON-NLS
         }
 
         ExternalViewerAction.openFile(fileObject.getMIMEType(), fileObjectExt, tempFile);
-
-        // delete the temporary file on exit
-        tempFile.deleteOnExit();
     }
 
     /**

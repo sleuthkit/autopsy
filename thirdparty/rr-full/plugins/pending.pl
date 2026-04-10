@@ -2,28 +2,30 @@
 # pending.pl
 #
 # History:
+#  20230510 - added reference
+#  20200922 - MITRE update
 #  20130711 - created
 #
 # References:
 #  http://technet.microsoft.com/en-us/library/cc960241.aspx
+#  https://github.com/gtworek/PSBits/blob/master/Misc/PendingFileRenameOperations.cmd
 #
 #
 # 
-# copyright 2013 Quantum Analytics Research, LLC
+# copyright 2023 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package pending;
 use strict;
 
 my %config = (hive          => "System",
-							hivemask      => 4,
-							output        => "report",
-							category      => "System Activity",
+			  output        => "report",
+			  category      => "persistence",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 31,  #XP - Win7
-              version       => 20130711);
+              MITRE         => "T1547",  
+              version       => 20230510);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -41,8 +43,10 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching pending v.".$VERSION);
-	::rptMsg("pending v.".$VERSION); # banner
-  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+	::rptMsg("pending v.".$VERSION); 
+	::rptMsg("(".$config{hive}.") ".getShortDescr());  
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -60,8 +64,12 @@ sub pluginmain {
 			
 			eval {
 				my $pend = $sm->get_value("PendingFileRenameOperations")->get_value();
-				
 				::rptMsg($pend);
+				::rptMsg("");
+				::rptMsg("Analysis Tip: While the Registry value is intended to record files to be renamed or deleted, it can also be ");
+				::rptMsg("used as a persistence mechanism.");
+				::rptMsg("");
+				::rptMsg("Ref: https://github.com/gtworek/PSBits/blob/master/Misc/PendingFileRenameOperations.cmd");
 			};
 			if ($@) {
 				::rptMsg("PendingFileRenameOperations value not found\.");

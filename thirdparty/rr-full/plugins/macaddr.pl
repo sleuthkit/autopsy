@@ -5,26 +5,31 @@
 # code
 # 
 # History:
+#  20210319 - added NetworkSetup2 check
+#  20201005 - MITRE update
+#  20200515 - updated date output format
 #  20190506 - updated
 #  20090118 - created
 #
-# copyright 2019, QAR, LLC
+# copyright 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package macaddr;
 use strict;
 
-my %config = (hive          => "System,Software",
-              osmask        => 22,
+my %config = (hive          => "system,software",
+              MITRE         => "",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20190506);
+			  report		=> "report",
+              version       => 20210319);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return " -- ";	
+	return "Various checks for MAC address(es)";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -37,8 +42,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching macaddr v.".$VERSION);
-	::rptMsg("macaddr v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("macaddr v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); 
 	my $guess = guessHive($hive);
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
@@ -65,11 +70,12 @@ sub pluginmain {
 						eval {
 							$na = $key->get_subkey($name)->get_value("NetworkAddress")->get_data();
 							::rptMsg("  ".$name.": NetworkAddress = ".$na);
-							::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+							::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 							$found = 1;
 						};	
 					}
-					::rptMsg("No NetworkAddress value found.") if ($found == 0);
+#					::rptMsg("No NetworkAddress value found.") if ($found == 0);
+					::rptMsg("");
 				}
 				else {
 					::rptMsg($key_path." has no subkeys.");
@@ -82,6 +88,31 @@ sub pluginmain {
 		else {
 			::rptMsg($key_path." not found.");
 		}
+# added 20210319
+		my $ccs = ::getCCS($root_key);
+		my $key_path = $ccs."\\Control\\NetworkSetup2\\Interfaces";
+		my $key;
+		if ($key = $root_key->get_subkey($key_path)) {
+			::rptMsg($key_path);
+			my @subkeys = $key->get_list_of_subkeys();
+			if (scalar(@subkeys) > 0) {
+				foreach my $s (@subkeys) {
+					
+					eval {
+						my $addr = $s->get_subkey("Kernel")->get_value("CurrentAddress")->get_data();
+						$addr = join(':',unpack("(H2)*",$addr));
+						$addr =~ tr/a-z/A-Z/;
+						::rptMsg("Interface     : ".$s->get_subkey("Kernel")->get_value("IfAlias")->get_data());
+						::rptMsg("CurrentAddress: ".$addr);
+						::rptMsg("");
+					};
+				}
+			}
+		}
+		else {
+			::rptMsg($key_path." not found.");
+		}		
+
 	}
 	elsif ($guess eq "Software") {
 		my $key_path = "Microsoft\\Windows Genuine Advantage";

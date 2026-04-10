@@ -4,12 +4,14 @@
 # that Win32/Hioles.C uses this key as a persistence mechanism
 # 
 # Change history
+#   20201005 - MITRE update
+#   20200526 - updated date output format
 #   20120312 - added Hostname
 #
 # References
-#   
+#   https://attack.mitre.org/techniques/T1547/005/
 # 
-# copyright 2012 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package securityproviders;
@@ -19,8 +21,10 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20120312);
+              MITRE         => "T1547\.005",
+              category      => "persistence",
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -38,7 +42,9 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching securityproviders v.".$VERSION);
 	::rptMsg("Launching securityproviders v.".$VERSION);
-	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+	::rptMsg("(".$config{hive}.") ".getShortDescr());  
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -53,7 +59,7 @@ sub pluginmain {
 		my $key_path = $ccs."\\Control\\SecurityProviders";
 		my $key;
 		if ($key = $root_key->get_subkey($key_path)) {
-			::rptMsg("LastWrite: ".gmtime($key->get_timestamp()));
+			::rptMsg("LastWrite: ".::format8601Date($key->get_timestamp())."Z");
 			::rptMsg("");
 			my $providers = $key->get_value("SecurityProviders")->get_data();
 			::rptMsg("SecurityPrividers = ".$providers);

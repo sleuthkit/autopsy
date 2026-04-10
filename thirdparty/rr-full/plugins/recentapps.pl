@@ -2,12 +2,15 @@
 # recentapps.pl
 #  
 # Change history
+#  20200922 - MITRE update
+#  20200515 - updated date output format
 #  20171013 - created
 #
 # References
-#  https://twitter.com/EricRZimmerman/status/916422135987474433
+#  https://df-stream.com/2017/10/recentapps/
 # 
-# copyright 2017 H. Carvey, keydet89@yahoo.com
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package recentapps;
 use strict;
@@ -16,8 +19,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20171013);
+              MITRE         => "",
+              category      => "user activity",
+			  output		=> "report",
+              version       => 20200922);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -49,7 +54,7 @@ sub pluginmain {
 					::rptMsg("AppId           : ".$s->get_value("AppId")->get_data());
 					my ($t1,$t2) = unpack("VV",$s->get_value("LastAccessedTime")->get_data());
 					my $lat = ::getTime($t1,$t2);
-					::rptMsg("LastAccessedTime: ".gmtime($lat)." UTC");
+					::rptMsg("LastAccessedTime: ".::format8601Date($lat)."Z");
 					::rptMsg("LaunchCount     : ".$s->get_value("LaunchCount")->get_data());
 				};
 				
@@ -62,7 +67,7 @@ sub pluginmain {
 					      ::rptMsg("  Path           : ".$r->get_value("Path")->get_data());
 					      my ($l1,$l2) = unpack("VV",$r->get_value("LastAccessedTime")->get_data());
 					      my $l = ::getTime($l1,$l2);
-					      ::rptMsg("  LastAccessedTime: ".gmtime($l)." UTC");
+					      ::rptMsg("  LastAccessedTime: ".::format8601Date($l)."Z");
 					      ::rptMsg("");
 				      };
 						}
@@ -70,6 +75,8 @@ sub pluginmain {
 				}
 				::rptMsg("");
 			}
+			::rptMsg("Analysis Tip: Info about apps accessed by the user.");
+			::rptMsg("https://df-stream.com/2017/10/recentapps/");
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");

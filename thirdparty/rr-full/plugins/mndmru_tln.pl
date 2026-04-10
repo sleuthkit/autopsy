@@ -4,6 +4,7 @@
 # Map Network Drive MRU parser
 #
 # Change history
+#   20200922 - MITRE update
 #   20120829 - updated to TLN
 #   20080324 - mndmru.pl created
 #
@@ -20,8 +21,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20120829);
+              MITRE         => "T1021\.002",
+              category      => "lateral movement",
+			  output		=> "tln",
+              version       => 20200922);
 
 sub getConfig{return %config}
 sub getShortDescr {

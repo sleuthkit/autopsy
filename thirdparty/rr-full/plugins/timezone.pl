@@ -4,6 +4,8 @@
 # contents of the TimeZoneInformation key
 # 
 # Change history
+#   20201005 - MITRE update
+#   20200518 - updated date output format
 #   20160318 - added display of TimeZoneKeyName value
 #   20130830 - updated
 #   20080324 - created
@@ -14,7 +16,7 @@
 #   http://msdn.microsoft.com/en-us/library/windows/desktop/ms725481(v=vs.85).aspx
 #   
 # 
-# copyright 2013 QAR, LLC
+# copyright 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package timezone;
@@ -24,8 +26,10 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20160318);
+              MITRE         => "",
+              category      => "config",
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -60,7 +64,7 @@ sub pluginmain {
 		if ($tz = $root_key->get_subkey($tz_path)) {
 			::rptMsg("TimeZoneInformation key");
 			::rptMsg($tz_path);
-			::rptMsg("LastWrite Time ".gmtime($tz->get_timestamp())." (UTC)");
+			::rptMsg("LastWrite Time ".::format8601Date($tz->get_timestamp())."Z");
 			my %tz_vals;
 			my @vals = $tz->get_list_of_values();
 			if (scalar(@vals) > 0) {

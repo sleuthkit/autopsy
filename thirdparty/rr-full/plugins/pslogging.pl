@@ -3,29 +3,31 @@
 #   
 #
 # Change history
+#   20200922 - MITRE update
+#   20200515 - minor updates
 #   20181209 - created
 #
 # References
 #   https://getadmx.com/?Category=Windows_10_2016&Policy=Microsoft.Policies.PowerShell::EnableTranscripting
 # 
 #
-# Copyright (c) 2018 QAR, LLC
+# Copyright 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package pslogging;
 use strict;
 
-# Declarations #
 my %config = (hive          => "NTUSER\.DAT, Software",
               hasShortDescr => 0,
               hasDescr      => 1,
               hasRefs       => 0,
-              osmask        => 22,
-              category      => "config settings",
-              version       => 20181209);
+              MITRE         => "",
+              category      => "config",
+			  output		=> "report",
+              version       => 20200922);
+
 my $VERSION = getVersion();
 
-# Functions #
 sub getConfig {return %config}
 sub getHive {return $config{hive};}
 sub getVersion {return $config{version};}
@@ -36,12 +38,9 @@ sub getShortDescr {
 sub getRefs {}
 
 sub pluginmain {
-
-	# Declarations #
 	my $class = shift;
 	my $hive = shift;
 
-	# Initialize #
 	::logMsg("Launching pslogging v.".$VERSION);
   ::rptMsg("pslogging v.".$VERSION); 
   ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n");  

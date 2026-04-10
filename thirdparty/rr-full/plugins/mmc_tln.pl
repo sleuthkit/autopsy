@@ -4,6 +4,7 @@
 # Microsoft Management Console Recent File List values 
 #
 # Change history
+#   20200922 - MITRE update
 #   20120828 - updated, transitioned to TLN format output
 #   20080324 - created
 #
@@ -20,8 +21,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20120828);
+			  output		=> "tln",
+              MITRE         => "T1059",
+              category      => "program execution",
+              version       => 20200922);
 
 sub getConfig{return %config}
 sub getShortDescr {

@@ -2,13 +2,14 @@
 # syscache_tln.pl 
 #   
 # Change history
+#   20201005 - MITRE update
 #   20190516 - tln output added
 #   20181209 - original plugin created
 #
 # References
 #   https://github.com/libyal/winreg-kb/blob/master/documentation/SysCache.asciidoc
 #
-# Copyright (c) 2019 QAR, LLC
+# Copyright 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package syscache_tln;
@@ -18,17 +19,20 @@ my %config = (hive          => "syscache",
               hasShortDescr => 0,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              category      => "program execution",
-              version       => 20190516);
+              MITRE         => "",
+              category      => "syscache",
+			  output		=> "tln",
+              version       => 20201005);
+
 my $VERSION = getVersion();
 
-# Functions #
 sub getConfig {return %config}
 sub getHive {return $config{hive};}
 sub getVersion {return $config{version};}
 sub getDescr {}
-sub getShortDescr {}
+sub getShortDescr {
+	return "Parse SysCache\.hve file (TLN output)";
+}
 sub getRefs {}
 
 sub pluginmain {

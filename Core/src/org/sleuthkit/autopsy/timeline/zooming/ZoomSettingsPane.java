@@ -79,6 +79,7 @@ public class ZoomSettingsPane extends TitledPane {
      *
      * @param controller TimeLineController this panel functions as a view for.
      */
+    @SuppressWarnings("this-escape")
     public ZoomSettingsPane(TimeLineController controller) {
         this.controller = controller;
         this.filteredEvents = controller.getEventsModel();

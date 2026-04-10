@@ -236,6 +236,7 @@ public class VideoPlayer extends BorderPane {
         }
     }
 
+    @SuppressWarnings("this-escape")
     public VideoPlayer(MediaPlayer mp, VideoFile file) {
         this.file = file;
         this.mp = mp;

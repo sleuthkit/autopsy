@@ -2,27 +2,29 @@
 # appcertdlls.pl
 #
 # History:
+#  20200813 - minor updates
+#  20200427 - updated output date format
 #  20120912 - created
 #
 # References:
-#  
+#  https://attack.mitre.org/techniques/T1546/009/
 #
 # 
-# copyright 2012 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package appcertdlls;
 use strict;
 
 my %config = (hive          => "System",
-							hivemask      => 4,
-							output        => "report",
-							category      => "malware",
+			  output        => "report",
+			  category      => "privilege escalation",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 31,  #XP - Win7
-              version       => 20120817);
+			  output        => "report",
+              MITRE         => "T1546\.009",  
+              version       => 20200813);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -41,6 +43,9 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching appcertdlls v.".$VERSION);
+	::rptMsg("Launching appcertdlls v.".$VERSION);
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -55,6 +60,8 @@ sub pluginmain {
 		my $appcert_path = $ccs."\\Control\\Session Manager\\AppCertDlls";
 		my $appcert;
 		if ($appcert = $root_key->get_subkey($appcert_path)) {
+			::rptMsg($appcert_path);
+			::rptMsg("LastWrite Time: ".::format8601Date($appcert->get_timestamp())."Z");
 			my @vals = $appcert->get_list_of_values();
 			if (scalar(@vals) > 0) {
 				foreach my $v (@vals) {

@@ -5,6 +5,9 @@
 # UserAssist values 
 #
 # Change history
+#  20230710 - added check of NoLog value
+#  20200916 - MITRE updates
+#  20200513 - updated date output format
 #  20170304 - removed alerts, added printing of values with no timestamps in the data
 #  20130603 - added alert functionality
 #  20100322 - Added CLSID list reference
@@ -23,8 +26,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20170204);
+              MITRE         => "T1204",
+              category      => "program execution",
+			  output		=> "report",
+              version       => 20230710);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -50,8 +55,24 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("UserAssist");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
+#-----------------------------------------------------------------------------		
+# Added 20230710
+# Ref: https://blog.didierstevens.com/programs/userassist/
+		eval {
+			my $n = $key->get_subkey("Settings")->get_value("NoLog")->get_data();
+			if ($n == 1) {
+				::rptMsg("Settings\\NoLog value set to \"1\", disabling creation of new entries on XP.");
+			}
+		};
+		::rptMsg("Settings\\NoLog value not found.") if ($@);
+		::rptMsg("");
+		::rptMsg("Analysis Tip: The \"Settings\\NoLog\" value set to \"1\" disables the creation of new entries on XP.");
+		::rptMsg("");
+		::rptMsg("Ref: https://blog.didierstevens.com/programs/userassist/");
+		::rptMsg("");
+#-----------------------------------------------------------------------------		
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
 			foreach my $s (@subkeys) {
@@ -128,7 +149,7 @@ sub processKey {
 			}
 		}
 		foreach my $t (reverse sort {$a <=> $b} keys %ua) {
-			::rptMsg(gmtime($t)." Z");
+			::rptMsg(::format8601Date($t)."Z");
 			foreach my $i (@{$ua{$t}}) {
 				::rptMsg("  ".$i);
 			}

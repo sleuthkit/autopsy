@@ -2,6 +2,8 @@
 # runonceex
 #
 # Change history:
+#  20201005 - MITRE update
+#  20200427 - updated output date format
 #  20190716 - created
 # 
 # Ref:
@@ -14,12 +16,13 @@ package runonceex;
 use strict;
 
 my %config = (hive          => "Software",
-							category      => "autostart",
+			  category      => "persistence",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20190716);
+              MITRE         => "T1547",
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -36,8 +39,10 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::rptMsg("Launching runonceex v.".$VERSION);
-	::rptMsg("runonceex v.".$VERSION); # banner
-	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+	::rptMsg("runonceex v.".$VERSION); 
+	::rptMsg("(".$config{hive}.") ".getShortDescr());  
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $key_path = ('Microsoft\\Windows\\CurrentVersion\\RunOnceEx');
 	
 	::rptMsg("RunOnceEx");
@@ -52,7 +57,7 @@ sub pluginmain {
 		if (scalar(@sk) > 0) {
 			foreach my $s (@sk) {
 				::rptMsg($s->get_name());
-				::rptMsg("LastWrite Time ".gmtime($s->get_timestamp())." (UTC)");
+				::rptMsg("LastWrite Time ".::format8601Date($s->get_timestamp())."Z");
 
 # Gets values and data				
 				my @vals = $s->get_list_of_values();
