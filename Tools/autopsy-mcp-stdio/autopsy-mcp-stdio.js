@@ -33,6 +33,9 @@ const LOG_PATH = path.join(MCP_DIR, "mcp-stdio.log");
 const MAX_LOG_BYTES = 1 * 1024 * 1024; // 1 MB — rotate when exceeded
 
 function log(level, message) {
+    // Only ERROR level is persisted to disk. INFO/DEBUG calls are no-ops
+    // by design — they would be too noisy in production and are visible
+    // during development via a debugger or by temporarily removing this guard.
     if (level !== "ERROR") return;
     try {
         // Rotate if the log has grown too large
@@ -241,7 +244,12 @@ if (process.argv.includes("--test")) {
     (async () => {
         log("INFO", `autopsy-mcp-stdio starting (pid ${process.pid})`);
         const transport = new StdioServerTransport();
-        await server.connect(transport);
-        log("INFO", "connected to stdio transport");
+        try {
+            await server.connect(transport);
+            log("INFO", "connected to stdio transport");
+        } catch (err) {
+            log("ERROR", `Failed to connect to stdio transport: ${err?.message ?? err}`);
+            process.exit(1);
+        }
     })();
 }

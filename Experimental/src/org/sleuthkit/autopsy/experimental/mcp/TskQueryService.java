@@ -591,6 +591,12 @@ class TskQueryService {
             where.append(" AND artifacts.data_source_obj_id = ").append(dataSourceId);
         }
 
+        // When no attribute post-filter is needed, push the limit into SQL so
+        // the database does not materialize the full result set.
+        if (attrTypeFilter == null && attrValueFilter == null) {
+            where.append(" LIMIT ").append(limit);
+        }
+
         // Fetch from the correct sub-table
         List<? extends BlackboardArtifact> artifacts = isAnalysis
                 ? skCase.getBlackboard().getAnalysisResultsWhere(where.toString())
@@ -895,8 +901,11 @@ class TskQueryService {
         AbstractFile file = skCase.getAbstractFileById(fileId);
         long fileSize = file.getSize();
 
-        if (offset < 0 || offset >= fileSize) {
+        if (offset < 0) {
             offset = 0;
+        }
+        if (offset >= fileSize) {
+            return Map.of("fileId", fileId, "offset", offset, "data", "", "truncated", false, "eof", true);
         }
 
         long available = fileSize - offset;
@@ -950,6 +959,9 @@ class TskQueryService {
         Interval interval = new Interval(startEpoch * 1000L, (endEpoch + 1) * 1000L, DateTimeZone.UTC);
         TimelineFilter.RootFilter filter = buildTimelineFilter(args);
 
+        // TimelineManager.getEvents() has no streaming or limit overload — it
+        // materializes the full result set. The limit is applied in Java below.
+        // A SQL-level limit would require a Blackboard API change.
         List<TimelineEvent> events = tm.getEvents(interval, filter);
 
         List<Map<String, Object>> result = new ArrayList<>(Math.min(events.size(), limit));

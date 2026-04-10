@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.experimental.mcp;
 
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import static io.javalin.apibuilder.ApiBuilder.*;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 import java.io.IOException;
@@ -74,32 +75,27 @@ public class McpServer {
 
     public void start() {
         app = Javalin.create(config -> {
-            config.jetty.defaultHost = "127.0.0.1"; // localhost only — never 0.0.0.0
+            config.routes.apiBuilder(() -> {
+                // Auth filter — every request must have valid Bearer token
+                before(ctx -> {
+                    String auth = ctx.header("Authorization");
+                    if (auth == null || !auth.equals("Bearer " + authToken)) {
+                        ctx.status(401).result("Unauthorized");
+                        ctx.skipRemainingHandlers();
+                    }
+                });
+
+                // MCP endpoint
+                post("/mcp", this::handleMcpRequest);
+            });
         });
 
-        // Auth filter — every request must have valid Bearer token
-        app.before(ctx -> {
-            String auth = ctx.header("Authorization");
-            if (auth == null || !auth.equals("Bearer " + authToken)) {
-                ctx.status(401).result("Unauthorized");
-                ctx.skipRemainingHandlers();
-            }
-        });
-
-        // MCP endpoint
-        app.post("/mcp", this::handleMcpRequest);
-
-        // SSE endpoint for streaming (MCP spec)
-        app.get("/mcp/sse", ctx -> {
-            // TODO: implement SSE transport if needed
-        });
-
-        app.start(DEFAULT_PORT);
+        app.start("127.0.0.1", DEFAULT_PORT); // localhost only — never 0.0.0.0
         try {
             writeTokenFile();
         } catch (IOException ex) {
             app.stop();
-            throw new Exception("MCP server started but failed to write token file — aborting", ex);
+            throw new RuntimeException("MCP server started but failed to write token file — aborting", ex);
         }
     }
 

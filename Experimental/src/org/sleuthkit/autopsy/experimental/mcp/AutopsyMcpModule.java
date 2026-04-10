@@ -56,7 +56,7 @@ public class AutopsyMcpModule implements Runnable {
 
         // Seed with any case already open at startup (e.g. auto-reopen on launch).
         try {
-            server.updateCase(Case.getCurrentCase());
+            mcpServer.updateCase(Case.getCurrentCase());
         } catch (IllegalStateException ex) {
             // No case open at startup — normal state, nothing to seed.
         }
