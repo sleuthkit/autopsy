@@ -506,12 +506,12 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
                 boolean hasDefinitelyNonAndroidFs = false;
                 for (FileSystem fs : ((Image) dataSource).getFileSystems()) {
                     switch (fs.getFsType()) {
-                        case TSK_FS_TYPE_EXT2:
                         case TSK_FS_TYPE_EXT3:
                         case TSK_FS_TYPE_EXT4:
-                        case TSK_FS_TYPE_EXT_DETECT:
                         case TSK_FS_TYPE_YAFFS2:
                         case TSK_FS_TYPE_YAFFS2_DETECT:
+                            // EXT3/4 and YAFFS2 are strongly associated with Android;
+                            // no further indicator-file check needed.
                             hasAndroidFs = true;
                             break;
                         case TSK_FS_TYPE_NTFS:
@@ -557,6 +557,7 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, String.format("Error searching for Android indicator file '%s'", fileInfo[0]), ex); //NON-NLS
+                return true; // Fail open: an inconclusive search is not a negative result.
             }
         }
         return false;
