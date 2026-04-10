@@ -33,6 +33,10 @@ const MCP_DIR = process.env.LOCALAPPDATA
 
 const DEFAULT_PORT = 8743;
 
+// How long to wait for a single Autopsy HTTP response before giving up.
+// Raise this if you have very large result sets that take longer to generate.
+const CALL_TIMEOUT_MS = 30_000;
+
 function readConfigPort() {
     const configPath = path.join(MCP_DIR, "mcp-config.properties");
     try {
@@ -214,14 +218,32 @@ function readToken() {
 async function callJava(method, params) {
     const token = readToken(); // fresh read each call — handles case reopen
     log("INFO", `-> ${method}`);
-    const res = await fetch(`${MCP_BASE_URL}/mcp`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ jsonrpc: "2.0", id: "1", method, params })
-    });
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), CALL_TIMEOUT_MS);
+
+    let res;
+    try {
+        res = await fetch(`${MCP_BASE_URL}/mcp`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ jsonrpc: "2.0", id: "1", method, params }),
+            signal: controller.signal
+        });
+    } catch (err) {
+        clearTimeout(timer);
+        if (err.name === "AbortError") {
+            const msg = `Autopsy MCP timed out after ${CALL_TIMEOUT_MS / 1000}s (${method})`;
+            log("ERROR", msg);
+            throw new Error(msg);
+        }
+        throw err;
+    }
+    clearTimeout(timer);
+
     if (!res.ok) {
         const msg = `Autopsy HTTP error ${res.status}. Is Autopsy running with a case open?`;
         log("ERROR", `<- ${method} HTTP ${res.status}`);

@@ -72,11 +72,11 @@ class McpProtocolHandler {
                 case "tools/list"   -> TOOLS_LIST_SERVICE.listTools();
                 case "tools/call"   -> dispatchToolCall(params);
                 case "initialize"   -> handleInitialize();
-                default             -> throw new McpException("Unknown method: " + method);
+                default             -> throw new McpException("Unknown method: " + method, McpException.ERR_METHOD_NOT_FOUND);
             };
             return buildSuccess(id, result);
         } catch (McpException ex) {
-            return buildError(id, ERR_METHOD_NOT_FOUND, ex.getMessage());
+            return buildError(id, ex.getJsonRpcCode(), ex.getMessage());
         } catch (Exception ex) {
             return buildError(id, ERR_INTERNAL_ERROR, ex.getMessage());
         }
@@ -98,7 +98,8 @@ class McpProtocolHandler {
         TskQueryService qs = queryService;
         if (qs == null) {
             throw new McpException(
-                "No case is currently open in Autopsy. Open a case first to use MCP tools.");
+                "No case is currently open in Autopsy. Open a case first to use MCP tools.",
+                McpException.ERR_INTERNAL_ERROR);
         }
 
         Object toolResult = switch (toolName) {
@@ -119,7 +120,7 @@ class McpProtocolHandler {
             case "get_object_children"         -> qs.getObjectChildren(args);
             case "list_reports"                -> qs.listReports();
             case "get_report_content"          -> qs.getReportContent(args);
-            default -> throw new McpException("Unknown tool: " + toolName);
+            default -> throw new McpException("Unknown tool: " + toolName, McpException.ERR_METHOD_NOT_FOUND);
         };
 
         return wrapWithCaseId(toolResult, qs.getCaseName());

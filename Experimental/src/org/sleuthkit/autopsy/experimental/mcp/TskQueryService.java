@@ -294,8 +294,8 @@ class TskQueryService {
                 "accountId (the identifier, e.g. user@example.com or +15551234567). " +
                 "Returns the matched account plus all related accounts with relationship counts.",
                 Map.of(
-                    "accountType", param("string", "Account type e.g. EMAIL, PHONE"),
-                    "accountId",   param("string", "Type-specific identifier e.g. user@example.com or +15551234567")
+                    "accountType", param("string", "Account type e.g. EMAIL, PHONE (required)"),
+                    "accountId",   param("string", "Type-specific identifier e.g. user@example.com or +15551234567 (required)")
                 )),
 
             toolWithNote("get_object_children",
@@ -1134,23 +1134,22 @@ class TskQueryService {
         if (accountId == null) {
             throw new McpException("accountId is required");
         }
+        if (accountTypeStr == null) {
+            throw new McpException("accountType is required");
+        }
 
         CommunicationsManager cm = skCase.getCommunicationsManager();
         CommunicationsFilter filter = new CommunicationsFilter();
 
-        // Find the target AccountDeviceInstance by account ID (and optionally type)
+        // Find the target AccountDeviceInstance by exact account ID and type
         AccountDeviceInstance targetAdi = null;
         for (AccountDeviceInstance adi : cm.getAccountDeviceInstancesWithRelationships(filter)) {
             Account account = adi.getAccount();
-            if (!account.getTypeSpecificID().equalsIgnoreCase(accountId)) {
-                continue;
+            if (account.getTypeSpecificID().equalsIgnoreCase(accountId)
+                    && account.getAccountType().getTypeName().equalsIgnoreCase(accountTypeStr)) {
+                targetAdi = adi;
+                break;
             }
-            if (accountTypeStr != null && !account.getAccountType().getTypeName()
-                    .equalsIgnoreCase(accountTypeStr)) {
-                continue;
-            }
-            targetAdi = adi;
-            break;
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
@@ -1163,20 +1162,24 @@ class TskQueryService {
         List<AccountDeviceInstance> related = cm.getRelatedAccountDeviceInstances(targetAdi, filter);
 
         List<Map<String, Object>> relationships = new ArrayList<>();
+        long totalRelationships = 0;
         for (AccountDeviceInstance relAdi : related) {
+            // Count only sources shared between targetAdi and relAdi (not relAdi's total)
+            long pairCount = cm.getRelationshipSources(targetAdi, relAdi, filter).size();
+            totalRelationships += pairCount;
             Map<String, Object> item = new LinkedHashMap<>();
             Account relAccount = relAdi.getAccount();
             item.put("accountType",       relAccount.getAccountType().getDisplayName());
             item.put("accountId",         relAccount.getTypeSpecificID());
             item.put("deviceId",          relAdi.getDeviceId());
-            item.put("relationshipCount", cm.getRelationshipSourcesCount(relAdi, filter));
+            item.put("relationshipCount", pairCount);
             relationships.add(item);
         }
 
         result.put("account",            targetAdi.getAccount().getTypeSpecificID());
         result.put("accountType",        targetAdi.getAccount().getAccountType().getDisplayName());
         result.put("deviceId",           targetAdi.getDeviceId());
-        result.put("totalRelationships", cm.getRelationshipSourcesCount(targetAdi, filter));
+        result.put("totalRelationships", totalRelationships);
         result.put("relatedAccounts",    relationships);
         return result;
     }
