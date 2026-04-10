@@ -1,28 +1,30 @@
 #! c:\perl\bin\perl.exe
 #-----------------------------------------------------------
 # slack.pl
-# 
+# Check contents of key/value slack space
 #
 # Change history
+#   20201005 - MITRE update
+#   20200517 - minor updates
 #   20180926 - created
 #
 # References:
 #   
 #
-# 
-# copyright 2018 QAR, LLC
+# copyright 2020 QAR, LLC
 # Author: H. Carvey
 #-----------------------------------------------------------
 package slack;
 use strict;
 
-my %config = (hive          => "All",
+my %config = (hive          => "all",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
+              MITRE         => "",
               category      => "slack",
-              version       => 20180926);
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {

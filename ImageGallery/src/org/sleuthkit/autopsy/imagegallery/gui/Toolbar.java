@@ -387,6 +387,7 @@ public class Toolbar extends ToolBar {
         });
     }
 
+    @SuppressWarnings("this-escape")
     public Toolbar(ImageGalleryController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS

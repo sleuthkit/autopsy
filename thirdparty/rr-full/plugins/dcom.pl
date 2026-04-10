@@ -8,12 +8,14 @@
 #
 #
 # Change history
+#   20200904 - MITRE updates
+#   20200525 - updated date output format
 #   20151203 - created
 #
 # References
 #   http://blog.backslasher.net/setting-dynamic-rpc-port-ranges.html
 #
-# Copyright (c) 2015 QAR, LLC
+# Copyright (c) 2020 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package dcom;
@@ -24,9 +26,11 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              category      => "system config",
-              version       => 20151203);
+              MITRE         => "",
+			  output        => "report",
+              category      => "config",
+              version       => 20200904);
+
 my $VERSION = getVersion();
 
 # Functions #
@@ -43,8 +47,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching dcom v.".$VERSION);
-  ::rptMsg("dcom v.".$VERSION); 
-  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n");  
+	::rptMsg("dcom v.".$VERSION); 
+	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n");  
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key;
@@ -53,7 +57,7 @@ sub pluginmain {
 	my $key_path = "Microsoft\\Rpc\\Internet";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		::rptMsg("");
 
 		eval {

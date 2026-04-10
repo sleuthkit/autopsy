@@ -129,7 +129,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     private ShowInTimelineDialog(TimeLineController controller, Collection<Long> eventIDS) throws TskCoreException {
 
         //load dialog content fxml
-        final String name = "nbres:/" + StringUtils.replace(ShowInTimelineDialog.class.getPackage().getName(), ".", "/") + "/ShowInTimelineDialog.fxml"; // NON-NLS
+        final String name = "nbres:/" + ShowInTimelineDialog.class.getPackage().getName().replace(".", "/") + "/ShowInTimelineDialog.fxml"; // NON-NLS
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(new URL(name));
             fxmlLoader.setRoot(contentRoot);

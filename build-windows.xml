@@ -10,8 +10,6 @@
     <property name="crt" location="${basedir}/thirdparty/crt" />
     <property name="tsk_logical_imager_dir" location="${basedir}/Core/release/tsk_logical_imager"/>
  
-    <import file="build-windows-installer.xml" />
-    
     <target name="makeBaseLibDirs" description="Set up folder hierarchy under release/modules/lib">
         <mkdir dir="${amd64}"/>
         <mkdir dir="${x86_64}"/>

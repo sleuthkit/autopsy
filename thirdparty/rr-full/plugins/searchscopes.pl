@@ -1,15 +1,16 @@
 #-----------------------------------------------------------
 # searchscopes.pl
-# Plugin for Registry Ripper, NTUSER.DAT edition - gets the 
-# ACMru values 
+#  
 #
 # Change history
+#   20201005 - MITRE update
+#   20200517 - updated date output format
 #   20180406 - created (per request submitted by John McCash)
 #
 # References
 #  https://www.online-tech-tips.com/internet-explorer-tips/change-default-search-engine-ie/
 # 
-# copyright 2018 QAR, LLC
+# copyright 2020 QAR, LLC
 # author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package searchscopes;
@@ -19,8 +20,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20180406);
+              MITRE         => "",
+              category      => "user activity",
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -47,15 +50,13 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("SearchScopes");
 		::rptMsg($key_path);
-        if (defined($key->get_value("DefaultScope"))) {
-            ::rptMsg("DefaultScope: ".$key->get_value("DefaultScope")->get_data());
-            ::rptMsg("");
-        }
+		::rptMsg("DefaultScope: ".$key->get_value("DefaultScope")->get_data());
+		::rptMsg("");
 #		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
 			foreach my $s (@subkeys) { 
-				::rptMsg($s->get_name()." [".gmtime($s->get_timestamp())." (UTC)]");
+				::rptMsg($s->get_name()." [".::format8601Date($s->get_timestamp())."Z]");
 				eval {
 					::rptMsg ("DisplayName: ".$s->get_value("DisplayName")->get_data());
 				};

@@ -2,6 +2,9 @@
 # appcompatcache.pl
 #
 # History:
+#  20220920 - updated Win8.1 parsing 
+#  20200730 - minor updates
+#  20200428 - updated output date format
 #  20190112 - updated parsing for Win8.1
 #  20180311 - updated for more recent version of Win10/Win2016
 #  20160528 - updated code to not de-dup entries based on filename
@@ -30,21 +33,20 @@
 # This plugin is based solely on the work and examples provided by Mandiant;
 # thanks to them for sharing this information, and making the plugin possible.
 # 
-# copyright 2016 Quantum Analytics Research, LLC
+# copyright 2022 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package appcompatcache;
 use strict;
 
 my %config = (hive          => "System",
-							hivemask      => 4,
-							output        => "report",
-							category      => "Program Execution",
+			  category      => "file existence",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 31,  #XP - Win7
-              version       => 20190112);
+              MITRE         => "",
+			  output        => "report",
+              version       => 20220920);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -64,102 +66,94 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching appcompatcache v.".$VERSION);
 	::rptMsg("appcompatcache v.".$VERSION); # banner
-  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
 # going to be used over and over again in plugins that access the system
 # file
-	my ($current,$ccs);
-	my $key_path = 'Select';
+	my $ccs = ::getCCS($root_key);
 	my $key;
-	if ($key = $root_key->get_subkey($key_path)) {
-		$current = $key->get_value("Current")->get_data();
-		$ccs = "ControlSet00".$current;
-		my $appcompat_path = $ccs."\\Control\\Session Manager";
-		my $appcompat;
-		if ($appcompat = $root_key->get_subkey($appcompat_path)) {
+	my $appcompat;
+	my $appcompat_path = $ccs."\\Control\\Session Manager";
+	if ($appcompat = $root_key->get_subkey($appcompat_path)) {
 			
-			my $app_data;
+		my $app_data;
 			
-			eval {
-				$app_data = $appcompat->get_subkey("AppCompatibility")->get_value("AppCompatCache")->get_data();
-				::rptMsg($appcompat_path."\\AppCompatibility");
-			  ::rptMsg("LastWrite Time: ".gmtime($appcompat->get_subkey("AppCompatibility")->get_timestamp())." Z");
-			};
+		eval {
+			$app_data = $appcompat->get_subkey("AppCompatibility")->get_value("AppCompatCache")->get_data();
+			::rptMsg($appcompat_path."\\AppCompatibility");
+		  ::rptMsg("LastWrite Time: ".::format8601Date($appcompat->get_subkey("AppCompatibility")->get_timestamp())."Z");
+		};
 			
-			eval {
-				$app_data = $appcompat->get_subkey("AppCompatCache")->get_value("AppCompatCache")->get_data();
-				::rptMsg($appcompat_path."\\AppCompatCache");
-			  ::rptMsg("LastWrite Time: ".gmtime($appcompat->get_subkey("AppCompatCache")->get_timestamp())." Z");
-			};
+		eval {
+			$app_data = $appcompat->get_subkey("AppCompatCache")->get_value("AppCompatCache")->get_data();
+			::rptMsg($appcompat_path."\\AppCompatCache");
+		  ::rptMsg("LastWrite Time: ".::format8601Date($appcompat->get_subkey("AppCompatCache")->get_timestamp())."Z");
+		};
 				
-#			::rptMsg("Length of data: ".length($app_data));
-#			probe($app_data);
-			my $sig = unpack("V",substr($app_data,0,4));
-			::rptMsg(sprintf "Signature: 0x%x",$sig);
+#		::rptMsg("Length of data: ".length($app_data));
+#		::probe($app_data);
+		my $sig = unpack("V",substr($app_data,0,4));
+		::rptMsg(sprintf "Signature: 0x%x",$sig);
 			
-			if ($sig == 0xdeadbeef) {
-				eval {
-					appXP32Bit($app_data);
-				};
-			}
-			elsif ($sig == 0xbadc0ffe) {
-				eval {
-					appWin2k3($app_data);
-				};
-			}
-			elsif ($sig == 0xbadc0fee) {
-				eval {
-					appWin7($app_data);
-				};
+		if ($sig == 0xdeadbeef) {
+			eval {
+				appXP32Bit($app_data);
+			};
+		}
+		elsif ($sig == 0xbadc0ffe) {
+			eval {
+				appWin2k3($app_data);
+			};
+		}
+		elsif ($sig == 0xbadc0fee) {
+			eval {
+				appWin7($app_data);
+			};
 			
-			}
-			elsif ($sig == 0x80) {
+		}
+		elsif ($sig == 0x80) {
 #				::rptMsg("Possible Win8 system\.");
 #				::rptMsg(sprintf "Data Length: 0x%08x",length($app_data));
-				appWin8($app_data);
+			appWin8($app_data);
 #				probe($app_data);
 				
-			}
-			elsif ($sig == 0x0) {
+		}
+		elsif ($sig == 0x0) {
 # possible win 8.1 system
-				appWin81($app_data);			
+			appWin81($app_data);			
 #				print $app_data;	
-			}
-			elsif ($sig == 0x30 || $sig == 0x34) {
+		}
+		elsif ($sig == 0x30 || $sig == 0x34) {
 # Windows 10 system
-				appWin10($app_data);				
-			}
-			else {
-				::rptMsg(sprintf "Unknown signature: 0x%x",$sig);
-#				probe($app_data);
-			}
-# this is where we print out the files
-			foreach my $f (keys %files) {
-#				::rptMsg($f);
-
-				my $modtime = $files{$f}{modtime};
-				if ($modtime == 0) {
-					$modtime = "";
-				}
-				else {
-					$modtime = gmtime($modtime)." Z";
-				}
-				
-				$str = $files{$f}{filename}."  ".$modtime;
-				$str .= "  ".gmtime($files{$f}{updtime})." Z" if (exists $files{$f}{updtime});
-				$str .= "  ".$files{$f}{size}." bytes" if (exists $files{$f}{size});
-				$str .= "  Executed" if (exists $files{$f}{executed});
-				::rptMsg($str);
-			}
+			appWin10($app_data);				
 		}
 		else {
-			::rptMsg($appcompat_path." not found.");
+			::rptMsg(sprintf "Unknown signature: 0x%x",$sig);
+#				probe($app_data);
+		}
+# this is where we print out the files
+		foreach my $f (keys %files) {
+#				::rptMsg($f);
+
+			my $modtime = $files{$f}{modtime};
+			if ($modtime == 0) {
+				$modtime = "";
+			}
+			else {
+				$modtime = ::format8601Date($modtime);
+			}
+				
+			$str = $files{$f}{filename}."  ".$modtime;
+			$str .= "  ".::format8601Date($files{$f}{updtime}) if (exists $files{$f}{updtime});
+			$str .= "  ".$files{$f}{size}." bytes" if (exists $files{$f}{size});
+			$str .= "  Executed" if (exists $files{$f}{executed});
+			::rptMsg($str);
 		}
 	}
 	else {
-		::rptMsg($key_path." not found.");
+		::rptMsg($appcompat_path." not found.");
 	}
 }
 
@@ -304,7 +298,6 @@ sub appWin8 {
 	
 	while($ofs < $len) {
 		my $tag = unpack("V",substr($data,$ofs,4));
-        last unless (defined $tag);
 # 32-bit		
 		if ($tag == 0x73746f72) {
 			$jmp = unpack("V",substr($data,$ofs + 8,4));
@@ -350,8 +343,7 @@ sub appWin81 {
 	
 	while ($ofs < $len) {
 		$tag = substr($data,$ofs,4);
-        last unless (defined $tag);
-		if ($tag eq "10ts") {
+		if ($tag eq "10ts" || $tag eq "00ts") {
 			
 			$sz = unpack("V",substr($data,$ofs + 0x08,4));
 			$name_len   = unpack("v",substr($data,$ofs + 0x0c,2));
@@ -424,63 +416,4 @@ sub alertCheckADS {
 	::alertMsg("ALERT: appcompatcache: Poss. ADS found in path: ".$path) if grep(/:/,$last);
 }
 
-
-#-----------------------------------------------------------
-# probe()
-#
-# Code the uses printData() to insert a 'probe' into a specific
-# location and display the data
-#
-# Input: binary data of arbitrary length
-# Output: Nothing, no return value.  Displays data to the console
-#-----------------------------------------------------------
-sub probe {
-	my $data = shift;
-	my @d = printData($data);
-	
-	foreach (0..(scalar(@d) - 1)) {
-		print $d[$_]."\n";
-	}
-}
-
-#-----------------------------------------------------------
-# printData()
-# subroutine used primarily for debugging; takes an arbitrary
-# length of binary data, prints it out in hex editor-style
-# format for easy debugging
-#-----------------------------------------------------------
-sub printData {
-	my $data = shift;
-	my $len = length($data);
-	
-	my @display = ();
-	
-	my $loop = $len/16;
-	$loop++ if ($len%16);
-	
-	foreach my $cnt (0..($loop - 1)) {
-# How much is left?
-		my $left = $len - ($cnt * 16);
-		
-		my $n;
-		($left < 16) ? ($n = $left) : ($n = 16);
-
-		my $seg = substr($data,$cnt * 16,$n);
-		my $lhs = "";
-		my $rhs = "";
-		foreach my $i ($seg =~ m/./gs) {
-# This loop is to process each character at a time.
-			$lhs .= sprintf(" %02X",ord($i));
-			if ($i =~ m/[ -~]/) {
-				$rhs .= $i;
-    	}
-    	else {
-				$rhs .= ".";
-     	}
-		}
-		$display[$cnt] = sprintf("0x%08X  %-50s %s",$cnt,$lhs,$rhs);
-
-	}
-	return @display;
-}
 1;

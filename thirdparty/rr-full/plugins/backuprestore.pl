@@ -2,16 +2,25 @@
 # backuprestore.pl
 #   Access System hive file to get the contents of the FilesNotToSnapshot, KeysNotToRestore, and FilesNotToBackup keys
 # 
+# Threat actors have been observed modifying the contents of the FilesNotToSnapshot OutlookOST value, and then
+# stealing a copy of user OST files by creating a snapshot, or via esentutl.exe.
+# 
 # Change history
-#   20130904: cleaned up code
-#   9/14/2012: retired the filesnottosnapshot.pl plugin since BackupRestore checks the same key
+#   20201012 - MITRE updates
+#   20200517 - updated date output format
+#   20130904 - cleaned up code
+#   9/14/2012 - retired the filesnottosnapshot.pl plugin since BackupRestore checks the same key
 #
 # References
 #   Troy Larson's Windows 7 presentation slide deck http://computer-forensics.sans.org/summit-archives/2010/files/12-larson-windows7-foreniscs.pdf
 #   QCCIS white paper Reliably recovering evidential data from Volume Shadow Copies http://www.qccis.com/downloads/whitepapers/QCC%20VSS
 #	http://msdn.microsoft.com/en-us/library/windows/desktop/bb891959(v=vs.85).aspx
 # 
-# copyright 2012 Corey Harrell (Journey Into Incident Response)
+#   https://attack.mitre.org/techniques/T1562/001/
+#
+# original plugin written by Corey Harrell (Journey Into Incident Response)
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package backuprestore;
 use strict;
@@ -20,8 +29,10 @@ my %config = (hive          => "System",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20130904);
+			  output        => "report",
+              MITRE         => "T1562\.001",
+              category      => "defense evasion",
+              version       => 20201012);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -38,9 +49,10 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching backuprestore v.".$VERSION);
-  ::rptMsg("backuprestore v.".$VERSION); 
-  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); 
-	
+	::rptMsg("backuprestore v.".$VERSION); 
+	::rptMsg("(".$config{hive}.") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -58,7 +70,7 @@ sub pluginmain {
 		if ($fns = $root_key->get_subkey($fns_path)) {
 #			::rptMsg("FilesNotToSnapshot key");
 			::rptMsg($fns_path);
-			::rptMsg("LastWrite Time ".gmtime($fns->get_timestamp())." (UTC)");
+			::rptMsg("LastWrite Time ".::format8601Date($fns->get_timestamp())."Z");
 			::rptMsg("The listed directories/files are not backed up in Volume Shadow Copies");
 			::rptMsg("");
 		
@@ -78,6 +90,9 @@ sub pluginmain {
 						::rptMsg("  $item");
 					}
 				}
+				::rptMsg("Analysis Tip: A threat actor can add entries in order to gain access to files that are normally");
+				::rptMsg("locked; creating a VSC would then allow them to access that file.");
+#				::rptMsg("");
 			}
 			else {
 				::rptMsg($fns_path." has no values.");
@@ -92,7 +107,7 @@ sub pluginmain {
 		if ($fnb = $root_key->get_subkey($fnb_path)) {
 			::rptMsg("FilesNotToBackup key");
 			::rptMsg($fnb_path);
-			::rptMsg("LastWrite Time ".gmtime($fnb->get_timestamp())." (UTC)");
+			::rptMsg("LastWrite Time ".::format8601Date($fnb->get_timestamp())."Z");
 			::rptMsg("Specifies the directories and files that backup applications should not backup or restore");
 			::rptMsg("");
 		
@@ -126,7 +141,7 @@ sub pluginmain {
 		if ($knr = $root_key->get_subkey($knr_path)) {
 			::rptMsg("KeysNotToRestore key");
 			::rptMsg($knr_path);
-			::rptMsg("LastWrite Time ".gmtime($knr->get_timestamp())." (UTC)");
+			::rptMsg("LastWrite Time ".::format8601Date($knr->get_timestamp())."Z");
 			::rptMsg("");
 			::rptMsg("Specifies the names of the registry subkeys and values that backup applications should not restore");
 			::rptMsg("");

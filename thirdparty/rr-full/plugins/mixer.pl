@@ -4,15 +4,16 @@
 #   to indicate that malware (DarkComet) that includes the option to listen
 #   in on the user may have been active
 #
-# Category: Malware
 #
 # Change history
+#  20200922 - MITRE update
+#  20200517 - updated date output format
 #  20141112 - created
 #
 # References
 #   http://www.ghettoforensics.com/2014/11/dj-forensics-analysis-of-sound-mixer.html
 # 
-# copyright 2014 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package mixer;
@@ -22,8 +23,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20141112);
+              MITRE         => "",
+			  output		=> "report",
+              category      => "devices",
+              version       => 20200922);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -41,8 +44,8 @@ sub pluginmain {
 	my $ntuser = shift;
 	
 	::logMsg("Launching mixer v.".$VERSION);
-	::rptMsg("mixer v.".$VERSION); # banner
-	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+	::rptMsg("mixer v.".$VERSION); 
+	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n");  
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	
@@ -61,7 +64,7 @@ sub pluginmain {
 					my ($p1,$p2) = split(/\|/,$def,2);
 					my $dev = (split(/}\./,$p1,2))[1];
 					my $app = (split(/%b/,$p2,2))[0];
-					::rptMsg(gmtime($lw).",".$app.",".$dev);
+					::rptMsg(::format8601Date($lw)."Z,".$app.",".$dev);
 				};
 			}
 		}

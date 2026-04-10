@@ -32,57 +32,51 @@ import org.openide.util.NbBundle;
  */
 public final class TextConverter {
 
-    private static final char[] TMP = "hgleri21auty84fwe".toCharArray(); //NON-NLS
+    private static final char[] KEY = "hgleri21auty84fwe".toCharArray(); //NON-NLS
     private static final byte[] SALT = {(byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12};
 
     /**
-     * Convert text to hex text.
+     * Convert input text to hex text.
      *
      * @param property Input text string.
      *
-     * @return Converted hex string.
+     * @return Hex text string.
      *
      * @throws org.sleuthkit.autopsy.coreutils.TextConverterException
      */
     public static String convertTextToHexText(String property) throws TextConverterException {
         try {
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES"); //NON-NLS
-            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
+            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(KEY));
             Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES"); //NON-NLS
             pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-            return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
+            return Base64.getEncoder().encodeToString(pbeCipher.doFinal(property.getBytes("UTF-8"))); //NON-NLS
         } catch (Exception ex) {
             throw new TextConverterException(NbBundle.getMessage(TextConverter.class, "TextConverter.convert.exception.txt"));
         }
     }
 
-    public static String base64Encode(byte[] bytes) {
-        return Base64.getEncoder().encodeToString(bytes);
-    }
-
     /**
-     * Convert hex text back to text.
+     * Convert hex text to text.
      *
      * @param property Input hex text string.
      *
-     * @return Converted text string.
+     * @return Text string.
      *
      * @throws org.sleuthkit.autopsy.coreutils.TextConverterException
      */
     public static String convertHexTextToText(String property) throws TextConverterException {
         try {
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES"); //NON-NLS
-            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
+            SecretKey key = keyFactory.generateSecret(new PBEKeySpec(KEY));
             Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES"); //NON-NLS
             pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-            return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
+            return new String(pbeCipher.doFinal(Base64.getDecoder().decode(property)), "UTF-8"); //NON-NLS
         } catch (Exception ex) {
             throw new TextConverterException(NbBundle.getMessage(TextConverter.class, "TextConverter.convertFromHex.exception.txt"));
         }
     }
 
-    public static byte[] base64Decode(String property) {
-        return Base64.getDecoder().decode(property);
+    private TextConverter() {
     }
-
 }

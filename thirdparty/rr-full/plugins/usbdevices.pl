@@ -3,21 +3,31 @@
 # Parses contents of Enum\USB key for USB devices (not only USB storage devices)
 # 
 # History
+#   20220524 - Updated
+#   20200916 - MITRE updates
+#   20200525 - updated date output format
 # 	20140416 - updated to include WPD devices (Jasmine Chau)
 #   20120522 - updated to report only USBStor devices
 #   20100219 - created
 #
-# copyright 2014 Quantum Analytics Research, LLC
+# References:
+#	http://www.swiftforensics.com/2013/11/windows-8-new-registry-artifacts-part-1.html
+#   https://www.researchgate.net/publication/318514858_USB_Storage_Device_Forensics_for_Windows_10
+#
+# copyright 2022 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package usbdevices;
 use strict;
 
 my %config = (hive          => "System",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "devices",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20140416);
+			  output		=> "report",
+              version       => 20220524);
 
 sub getConfig{return %config}
 
@@ -38,81 +48,40 @@ sub pluginmain {
 	$reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	::logMsg("Launching usbdevices v.".$VERSION);
-	::rptMsg("usbdevices v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
-# Code for System file, getting CurrentControlSet
-	my $current;
-	my $ccs;
-	my $key_path = 'Select';
+	::rptMsg("usbdevices v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n");
+
 	my $key;
-	if ($key = $root_key->get_subkey($key_path)) {
-		$current = $key->get_value("Current")->get_data();
-		$ccs = "ControlSet00".$current;
-	}
-	else {
-		::rptMsg($key_path." not found.");
-		return;
-	}
+	my $ccs = ::getCCS($root_key);
+	my $key_path = $ccs."\\Enum\\USB";
+	my $key;
 	
-	$key_path = $ccs."\\Enum\\USB";
+	my @vals = ("DeviceDesc","Mfg","Service","FriendlyName");
+	
 	if ($key = $root_key->get_subkey($key_path)) {
 		
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar @subkeys > 0) {
 			foreach my $s (@subkeys) {
+				::rptMsg($s->get_name());
 				my @sk = $s->get_list_of_subkeys();
 				if (scalar @sk > 0) {
-					foreach my $s2 (@sk) {
-
-						my ($desc,$class,$serv,$loc,$mfg,$fname);
+					foreach my $k (@sk) {
+						::rptMsg("  ".$k->get_name());
 						
-						eval {
-							$desc = $s2->get_value("DeviceDesc")->get_data();
-#							::rptMsg($desc." [".$s->get_name()."\\".$s2->get_name()."]");
-						};
-						
-						eval {
-							$class = $s2->get_value("Class")->get_data();
-						};
-						
-						eval {
-							$serv = $s2->get_value("Service")->get_data();
-						};
-						
-						eval {
-							$loc = $s2->get_value("LocationInformation")->get_data();
-						};
-						
-						eval {
-							$mfg = $s2->get_value("Mfg")->get_data();
-						};
-						
-						eval {
-							$fname = $s2->get_value("FriendlyName")->get_data();
-						};
-						
-						if ($serv eq "USBSTOR") {
-							::rptMsg($s->get_name());
-							::rptMsg("LastWrite: ".gmtime($s->get_timestamp()));
-							::rptMsg("  SN       : ".$s2->get_name());
-							::rptMsg("  LastWrite: ".gmtime($s2->get_timestamp()));
-#							::rptMsg("DeviceDesc: ".$desc);
-#							::rptMsg("Class     : ".$class);
-#							::rptMsg("Location  : ".$loc);
-#							::rptMsg("MFG       : ".$mfg);
-							::rptMsg("");
+						foreach my $v (@vals) {
+							eval {
+								my $x = $k->get_value($v)->get_data();
+								::rptMsg(sprintf "    %-15s: %-30s",$v,$x);
+							};
 						}
-						elsif (($class eq "WPD") && ($serv eq "WUDFRd")) {
-							::rptMsg($s->get_name());
-							::rptMsg("LastWrite: ".gmtime($s->get_timestamp()));
-							::rptMsg("  SN       : ".$s2->get_name());
-							::rptMsg("  LastWrite: ".gmtime($s2->get_timestamp()));
-							::rptMsg("MFG       : ".$mfg);
-							::rptMsg("FriendlyName: ".$fname);
-							::rptMsg("");
-						}
+# get Properties\{83da6326-97a6-4088-9453-a1923f573b29}						
+						eval {
+							getProperties($k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}"));
+						};
 					}
 				}
+				::rptMsg("");
 			}
 		}
 		else {
@@ -123,4 +92,41 @@ sub pluginmain {
 		::rptMsg($key_path." not found.");
 	}
 }
+
+
+sub getProperties {
+	my $key = shift;
+
+	eval {
+		my $r = $key->get_subkey("0064")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","First Install",::format8601Date($t)."Z");
+	};
+
+	eval {
+		my $r = $key->get_subkey("0065")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","First Inserted",::format8601Date($t)."Z");
+	};
+	
+	eval {
+		my $r = $key->get_subkey("0066")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","Last Inserted",::format8601Date($t)."Z");
+	};
+	
+	eval {
+		my $r = $key->get_subkey("0067")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","Last Removal",::format8601Date($t)."Z");
+	};
+
+
+}
+
+
 1;

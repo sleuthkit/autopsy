@@ -2,6 +2,8 @@
 # disablelastaccess.pl
 #
 # History:
+#  20200911 - MITRE updates
+#  20200517 - updated date output format
 #  20181207 - updated for Win10 v.1803 (Maxim, David Cohen)
 #  20090118 - 
 # 
@@ -12,17 +14,21 @@
 #		 http://support.microsoft.com/kb/555041
 #    http://support.microsoft.com/kb/894372
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+#	https://attack.mitre.org/techniques/T1564/004/
+#
+# copyright 2020 H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package disablelastaccess;
 use strict;
 
 my %config = (hive          => "System",
-              osmask        => 22,
+              MITRE         => "T1564\.004",
+              category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20181207);
+			  output		=> "report",
+              version       => 20200911);
 
 sub getConfig{return %config}
 
@@ -45,8 +51,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching disablelastaccess v.".$VERSION);
-	::rptMsg("disablelastaccess v.".$VERSION); # banner
-    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
+	::rptMsg("disablelastaccess v.".$VERSION); 
+    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
@@ -68,6 +74,7 @@ sub pluginmain {
 		my @vals = $key->get_list_of_values();
 		my $found = 0;
 		if (scalar(@vals) > 0) {
+			::rptMsg("Key LastWrite time: ".::format8601Date($key->get_timestamp())."Z");
 			foreach my $v (@vals) {
 				if ($v->get_name() eq "NtfsDisableLastAccessUpdate") {
 					my $dat = $v->get_data();

@@ -56,6 +56,7 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final TreeView<GroupTreeNode> groupTree = new TreeView<>(groupTreeRoot);
 
+    @SuppressWarnings("this-escape")
     public GroupTree(ImageGalleryController controller) {
         super(controller);
         FXMLConstructor.construct(this, "NavPanel.fxml"); //NON-NLS

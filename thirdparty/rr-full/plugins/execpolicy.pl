@@ -2,24 +2,27 @@
 # execpolicy
 #
 # Change history:
+#  20200911 - MITRE updates
+#  20200517 - updated date output format
 #  20180618 - created
 # 
 # Ref:
 #  https://blogs.technet.microsoft.com/operationsguy/2011/04/21/remotely-tweak-powershell-execution-policies-without-powershell-remoting/
 #
-# copyright 2018 QAR,LLC 
+# copyright 2020 QAR,LLC 
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package execpolicy;
 use strict;
 
 my %config = (hive          => "Software",
-							category      => "config",
+			  category      => "config",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20180618);
+              MITRE         => "",
+			  output        => "report",
+              version       => 20200911);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -45,6 +48,9 @@ sub pluginmain {
 	
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
+		::rptMsg($key_path);
+		::rptMsg("LastWrite time: ".::format8601Date($key->get_timestamp())."Z");
+		::rptMsg("");
 		my $policy = "";
 		eval {
 			$policy = $key->get_value("ExecutionPolicy")->get_data();

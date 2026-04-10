@@ -23,11 +23,12 @@ package installedcomp;
 use strict;
 
 my %config = (hive          => "Software",
-							category      => "malware",
+			  category      => "malware",
               osmask        => 22,
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
+			  output		=> "report",
               version       => 20130911);
 
 sub getConfig{return %config}

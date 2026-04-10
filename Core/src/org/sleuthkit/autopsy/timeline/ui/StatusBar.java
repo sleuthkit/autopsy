@@ -43,6 +43,7 @@ public class StatusBar extends ToolBar {
     @FXML
     private Label messageLabel;
 
+    @SuppressWarnings("this-escape")
     public StatusBar(TimeLineController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "StatusBar.fxml"); // NON-NLS

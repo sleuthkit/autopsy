@@ -1,7 +1,13 @@
 #-----------------------------------------------------------
 # networkcards
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# History
+#  20200921 - MITRE update
+#	 20200518 - update date output format
+#  20080325 - created 
+#
+# copyright 2020 Quantum Analytics Research, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package networkcards;
 use strict;
@@ -10,12 +16,14 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20080325);
+              MITRE         => "",
+              category      => "config",
+			  output		=> "report",
+              version       => 20200921);
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Get NetworkCards";	
+	return "Get NetworkCards Info";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -28,8 +36,8 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching networkcards v.".$VERSION);
-	::rptMsg("networkcards v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("networkcards v.".$VERSION); 
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key_path = "Microsoft\\Windows NT\\CurrentVersion\\NetworkCards";
@@ -40,25 +48,21 @@ sub pluginmain {
 		::rptMsg("");
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
-			my %nc;
+			::rptMsg(sprintf "%-50s %-50s","Description","Key LastWrite time");
 			foreach my $s (@subkeys) {
-				my $service = $s->get_value("ServiceName")->get_data();
-				$nc{$service}{descr} = $s->get_value("Description")->get_data();
-				$nc{$service}{lastwrite} = $s->get_timestamp();
-			}
-			
-			foreach my $n (keys %nc) {
-				::rptMsg($nc{$n}{descr}."  [".gmtime($nc{$n}{lastwrite})."]");
+				eval {
+					my $desc = $s->get_value("Description")->get_data();
+					::rptMsg(sprintf "%-50s %-50s",$desc,::format8601Date($s->get_timestamp())."Z");
+				};
+
 			}
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");
-			::logMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 1;

@@ -226,6 +226,7 @@ public class AddManualEvent extends Action {
             private final ValidationSupport validationSupport = new ValidationSupport();
             private final TimeLineController controller;
 
+            @SuppressWarnings("this-escape")
             private EventCreationDialogPane(TimeLineController controller, Long epochMillis) {
                 this.controller = controller;
                 FXMLConstructor.construct(this, "EventCreationDialog.fxml"); //NON-NLS

@@ -3,21 +3,27 @@
 # Get WinRAR\ArcHistory entries
 #
 # History
+#   20200916 - MITRE updates
 #   20120829 - updated to TLN 
 #   20080819 - created (winrar.pl)
 #
+# Ref:
+#   https://attack.mitre.org/techniques/T1074/001/
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# copyright 2020 QAR, LLC
+# H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package winrar_tln;
 use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
-              osmask        => 22,
+              MITRE         => "T1074\.001",
+              category      => "data staged",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20120829);
+			  output		=> "tln",
+              version       => 20200916);
 
 sub getConfig{return %config}
 

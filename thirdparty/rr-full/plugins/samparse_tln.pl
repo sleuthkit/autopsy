@@ -3,6 +3,8 @@
 # Parse the SAM hive file for user/group membership info
 #
 # Change history:
+#    20200825 - Unicode updates
+#    20200730 - MITRE ATT&CK updates
 #    20120827 - TLN version created from original samparse.pl
 #    20120722 - updated %config hash
 #    20110303 - Fixed parsing of SID, added check for account type
@@ -18,7 +20,9 @@
 #    Source available here: http://pogostick.net/~pnh/ntpasswd/
 #    http://accessdata.com/downloads/media/Forensic_Determination_Users_Logon_Status.pdf
 #
-# copyright 2012 Quantum Analytics Research, LLC
+#  https://attack.mitre.org/techniques/T1136/001/
+#
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package samparse_tln;
@@ -26,15 +30,14 @@ use strict;
 
 my %config = (hive          => "SAM",
               hivemask      => 2,
-              output        => "report",
-              category      => "User Activity",
-              class         => 0, # system
-              output        => "TLN",
-              osmask        => 63, #XP - Win8
+              category      => "user activity",
+              class         => 0, 
+              output        => "tln",
+              MITRE         => "T1136\.001", 
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 1,
-              version       => 20120827);
+              version       => 20200825);
 
 sub getConfig{return %config}
 
@@ -100,28 +103,16 @@ sub pluginmain {
 						}
 					};
 				
-#					::rptMsg("Username        : ".$v_val{name}." [".$rid."]");
-#					::rptMsg("Full Name       : ".$v_val{fullname});
-# 				::rptMsg("User Comment    : ".$v_val{comment});
-#	  			::rptMsg("Account Type    : ".$v_val{type});
-#					::rptMsg("Account Created : ".gmtime($c_date)." Z") if ($c_date > 0); 
-					
 					my $f_value = $u->get_value("F");
 					my $f = $f_value->get_data();
 					my %f_val = parseF($f);
-					
-#					my $lastlogin;
-#					my $pwdreset;
-#					my $pwdfail;
-#					($f_val{last_login_date} == 0) ? ($lastlogin = "Never") : ($lastlogin = gmtime($f_val{last_login_date})." Z");
-#					($f_val{pwd_reset_date} == 0) ? ($pwdreset = "Never") : ($pwdreset = gmtime($f_val{pwd_reset_date})." Z");
-#					($f_val{pwd_fail_date} == 0) ? ($pwdfail = "Never") : ($pwdfail = gmtime($f_val{pwd_fail_date})." Z");
-					
+									
 					my $pw_hint;
 					my $c_descr = "Acct Created (".$v_val{type}.")";
 					eval {
 						$pw_hint = $u->get_value("UserPasswordHint")->get_data();
-						$pw_hint =~ s/\x00//g;
+						$pw_hint = ::getUnicodeStr($pw_hint);
+#						$pw_hint =~ s/\00//g;
 						$c_descr .= " (Pwd Hint: ".$pw_hint.")";
 					};
 					
@@ -140,8 +131,6 @@ sub pluginmain {
 					if ($f_val{last_login_date} > 0) {
 						::rptMsg($f_val{last_login_date}."|SAM||".$v_val{name}."|Last Login (".$f_val{login_count}.")");
 					}
-					
-					
 				}
 			}
 		}
@@ -278,7 +267,8 @@ sub _translateSID {
 #---------------------------------------------------------------------
 sub _uniToAscii {
   my $str = $_[0];
-  $str =~ s/\x00//g;
+  $str = ::getUnicodeStr($str);
+#  $str =~ s/\00//g;
   return $str;
 }
 

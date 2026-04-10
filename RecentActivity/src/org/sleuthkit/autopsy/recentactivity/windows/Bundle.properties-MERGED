@@ -1,0 +1,3 @@
+ExtractThumbcache_module_name=Thumbcache Analyzer
+Thumbcache_Files_Not_Found=Thumbcache files not found
+Thumbcache_process_error_executing_export_thumbcache_program=Error running thumbcache program

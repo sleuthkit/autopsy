@@ -32,7 +32,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -168,8 +167,7 @@ class SearchEngineURLQueryAnalyzer extends Extract {
             String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFILE;
             File f = new File(path);
             logger.log(Level.INFO, "Load successful"); //NON-NLS
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
+            DocumentBuilder db = XMLUtil.getDocumentBuilder();
             xmlinput = db.parse(f);
 
             if (!XMLUtil.xmlIsValid(xmlinput, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {

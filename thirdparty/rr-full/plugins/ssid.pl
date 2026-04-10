@@ -4,6 +4,8 @@
 #
 #
 # Change History:
+#    20201005 - MITRE update
+#    20200515 - updated date output format
 #    20100301 - Updated References; removed dwCtlFlags being 
 #               printed; minor adjustments to formatting
 #    20091102 - added code to parse EAPOL values for SSIDs
@@ -13,7 +15,8 @@
 # References
 #    http://msdn.microsoft.com/en-us/library/aa448338.aspx
 #
-# copyright 2010 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package ssid;
 use strict;
@@ -22,12 +25,14 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20100301);
+              MITRE         => "",
+              category      => "config",
+			  output		=> "report",
+              version       => 20201005);
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Get WZCSVC SSID Info";	
+	return "Get WZCSVC key SSID Info";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -67,7 +72,7 @@ sub pluginmain {
 				my $name = $s->get_name();
 				if (exists($nc{$name})) {
 					::rptMsg("NIC: ".$nc{$name}{descr});
-					::rptMsg("Key LastWrite: ".gmtime($s->get_timestamp())." UTC");
+					::rptMsg("Key LastWrite: ".::format8601Date($s->get_timestamp())."Z");
 					::rptMsg("");
 					my @vals = $s->get_list_of_values();
 					if (scalar(@vals) > 0) {
@@ -87,7 +92,7 @@ sub pluginmain {
 								
 								my ($t1,$t2) = unpack("VV",substr($data,0x2B8,8));
 								my $t        = ::getTime($t1,$t2);
-								my $str = sprintf gmtime($t)." MAC: %-18s %-8s",$mac,$ssid;
+								my $str = sprintf ::format8601Date($t)."Z  MAC: %-18s %-8s",$mac,$ssid;
 								::rptMsg($str);
 							}
 						}
@@ -109,7 +114,8 @@ sub pluginmain {
 # Now, go to the EAPOL key, locate the appropriate subkeys and parse out
 # any available SSIDs	
 # EAPOL is Extensible Authentication Protocol over LAN
-	$key_path = "Microsoft\\EAPOL\\Parameters\\Interfaces";
+	my $key_path = "Microsoft\\EAPOL\\Parameters\\Interfaces";
+	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("");
 		::rptMsg($key_path);
@@ -124,7 +130,7 @@ sub pluginmain {
 				else {
 					::rptMsg("NIC: ".$name);
 				}
-				::rptMsg("LastWrite time: ".gmtime($s->get_timestamp())." UTC");
+				::rptMsg("LastWrite time: ".::format8601Date($s->get_timestamp())."Z");
 				
 				my @vals = $s->get_list_of_values();
 				my %eapol;

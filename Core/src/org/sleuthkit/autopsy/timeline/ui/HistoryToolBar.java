@@ -48,6 +48,7 @@ public class HistoryToolBar extends ToolBar {
      *
      * @param controller the TimeLineController this ToolBar interacts with.
      */
+    @SuppressWarnings("this-escape")
     public HistoryToolBar(TimeLineController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "HistoryToolBar.fxml");

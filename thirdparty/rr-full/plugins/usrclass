@@ -1,8 +1,12 @@
-assoc
-cmd_shell_u
-msedge_win10
+appx
+appx_tln
+clsid
+clsid_tln
 muicache
 photos
-photos_win10
+recyclepersist
+scriptleturl
 shellbags
-shellbags_test
+shellbags_tln
+shellbags_xp
+uacbypass

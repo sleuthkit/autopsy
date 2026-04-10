@@ -1,28 +1,30 @@
 #-----------------------------------------------------------
-# bitbucket
-# Get HKLM\..\BitBucket keys\values (if any)
-# 
+# bitbucket.pl
+#  
 # Change history
-#   20091020 - Updated; collected additional values
+#  20221129 - created
 #
 # References
-#
-# copyright 2009 H. Carvey, keydet89@yahoo.com
+#  
+# 
+# copyright 2022 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package bitbucket;
 use strict;
 
-my %config = (hive          => "Software",
-              osmask        => 22,
+my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20080418);
+			  output		=> "report",
+              category      => "defense evasion", 
+              MITRE         => "T1562\.001",
+              version       => 20221129);
 
 sub getConfig{return %config}
-
 sub getShortDescr {
-	return "Get HKLM\\..\\BitBucket keys\\values";	
+	return "Gets user's BitBucket settings";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -33,50 +35,47 @@ my $VERSION = getVersion();
 
 sub pluginmain {
 	my $class = shift;
-	my $hive = shift;
+	my $ntuser = shift;
 	::logMsg("Launching bitbucket v.".$VERSION);
-	::rptMsg("bitbucket v.".$VERSION); # banner
-    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
-	my $reg = Parse::Win32Registry->new($hive);
+	::rptMsg("bitbucket v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr());  
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
+	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 
-	my $key_path = "Microsoft\\Windows\\CurrentVersion\\Explorer\\BitBucket";
+	my $key_path = 'Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\BitBucket\\Volume';
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
-		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
-		::rptMsg("");
-		
-		eval {
-			my $global = $key->get_value("UseGlobalSettings")->get_data();
-			::rptMsg("UseGlobalSettings = ".$global);
-		};
-		
-		eval {
-			my $nuke = $key->get_value("NukeOnDelete")->get_data();
-			::rptMsg("NukeOnDelete      = ".$nuke);
-		};	
-		::rptMsg("");
-		
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
 			foreach my $s (@subkeys) {
-				::rptMsg($key_path."\\".$s->get_name());
-				::rptMsg("LastWrite Time = ".gmtime($s->get_timestamp())." (UTC)");
+				::rptMsg("Volume GUID: ".$s->get_name());
+				::rptMsg("LastWrite time: ".::format8601Date($s->get_timestamp())."Z");
+				
 				eval {
-					my $vol = $s->get_value("VolumeSerialNumber")->get_data();
-					::rptMsg("VolumeSerialNumber = 0x".uc(sprintf "%1x",$vol));
+					my $c = $s->get_value("MaxCapacity")->get_data();
+					::rptMsg(sprintf "%-15s %-8s MB","MaxCapacity",$c);
+				};
+				
+				eval {
+					my $n = $s->get_value("NukeOnDelete")->get_data();
+					::rptMsg(sprintf "%-15s 0x%04x","NukeOnDelete",$n);
 				};
 				::rptMsg("");
 			}
 		}
 		else {
-			::rptMsg($key_path." has no subkeys.");
+			::rptMsg($key_path." has no values.");
 		}
+		::rptMsg("Analysis Tip: Volume GUIDs can be mapped to MountedDevices key to determine drive letter(s).");
+		::rptMsg("MaxCapacity is max capacity of the Recycle Bin for the volume, in MB.");
+		::rptMsg("NukeOnDelete corresponds to \"Don't move files to the Recycle Bin\. Remove files immediately when deleted.\"");
+		::rptMsg("  0 - disabled");
+		::rptMsg("  1 - enabled");
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 

@@ -1,25 +1,38 @@
 #-----------------------------------------------------------
-# usbstor2
-# Similar to usbstor plugin, but prints output in .csv format;
-# also checks MountedDevices keys
+# usbdevices.pl 
+# Parses contents of Enum\USB key for USB devices (not only USB storage devices)
 # 
+# History
+#   20220524 - Updated
+#   20200916 - MITRE updates
+#   20200525 - updated date output format
+# 	20140416 - updated to include WPD devices (Jasmine Chau)
+#   20120522 - updated to report only USBStor devices
+#   20100219 - created
 #
-# copyright 2008 H. Carvey, keydet89@yahoo.com
+# References:
+#	http://www.swiftforensics.com/2013/11/windows-8-new-registry-artifacts-part-1.html
+#   https://www.researchgate.net/publication/318514858_USB_Storage_Device_Forensics_for_Windows_10
+#
+# copyright 2022 Quantum Analytics Research, LLC
+# author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package usbstor2;
 use strict;
 
 my %config = (hive          => "System",
-              osmask        => 22,
+              MITRE         => "",
+              category      => "devices",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20080825);
+			  output		=> "report",
+              version       => 20220524);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Get USBStor key info; csv output";	
+	return "Parses Enum\\USB key for USB & WPD devices";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -30,106 +43,90 @@ my $VERSION = getVersion();
 my $reg;
 
 sub pluginmain {
-	::logMsg("Launching usbstor2 v.".$VERSION);
-	::rptMsg("usbstor2 v.".$VERSION); # banner
 	my $class = shift;
 	my $hive = shift;
 	$reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
+	::logMsg("Launching usbdevices v.".$VERSION);
+	::rptMsg("usbdevices v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr()."\n");
 
-# Code for System file, getting CurrentControlSet
-	my $current;
-	my $ccs;
-	my $key_path = 'Select';
 	my $key;
-	if ($key = $root_key->get_subkey($key_path)) {
-		$current = $key->get_value("Current")->get_data();
-		$ccs = "ControlSet00".$current;
-	}
-	else {
-		::rptMsg($key_path." not found.");
-		return;
-	}
+	my $ccs = ::getCCS($root_key);
+	my $key_path = $ccs."\\Enum\\USBStor";
+	my $key;
 	
-	my $name_path = $ccs."\\Control\\ComputerName\\ComputerName";
-	my $comp_name;
-	eval {
-		$comp_name = $root_key->get_subkey($name_path)->get_value("ComputerName")->get_data();
-	};
-	$comp_name = "Test" if ($@);
+	my @vals = ("DeviceDesc","Mfg","Service","FriendlyName");
 	
-	$key_path = $ccs."\\Enum\\USBStor";
 	if ($key = $root_key->get_subkey($key_path)) {
-
+		
 		my @subkeys = $key->get_list_of_subkeys();
-		if (scalar(@subkeys) > 0) {
+		if (scalar @subkeys > 0) {
 			foreach my $s (@subkeys) {
-				my $dev_class = $s->get_name();
+				::rptMsg($s->get_name());
 				my @sk = $s->get_list_of_subkeys();
-				if (scalar(@sk) > 0) {
+				if (scalar @sk > 0) {
 					foreach my $k (@sk) {
-						my $serial = $k->get_name();
-						my $sn_lw = $k->get_timestamp();
-						my $str = $comp_name.",".$dev_class.",".$serial.",".$sn_lw;
+						::rptMsg("  ".$k->get_name());
 						
-						my $friendly;
+						foreach my $v (@vals) {
+							eval {
+								my $x = $k->get_value($v)->get_data();
+								::rptMsg(sprintf "    %-15s: %-30s",$v,$x);
+							};
+						}
+# get Properties\{83da6326-97a6-4088-9453-a1923f573b29}						
 						eval {
-							$friendly = $k->get_value("FriendlyName")->get_data();
-							$str .= ",".$friendly;
+							getProperties($k->get_subkey("Properties\\{83da6326-97a6-4088-9453-a1923f573b29}"));
 						};
-						$str .= ", " if ($@);
-
-						my $parent;
-						eval {
-							$parent = $k->get_value("ParentIdPrefix")->get_data();
-							$str .= ",".$parent;
-							
-							my $dev = checkMountedDevices($parent);
-							$str .= ",".$dev if ($dev);
-							
-						};
-
-
-						::rptMsg($str);
 					}
 				}
+				::rptMsg("");
 			}
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");
-			::logMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
 }
 
-sub checkMountedDevices {
-	my $pip = shift;
-	my $root_key = $reg->get_root_key;
-	my $key_path = 'MountedDevices';
-	my $key;
-	my %md;
-	if ($key = $root_key->get_subkey($key_path)) {
-		my @vals = $key->get_list_of_values();
-		if (scalar(@vals) > 0) {
-			foreach my $v (@vals) {
-				my $name = $v->get_name();
-				next unless ($name =~ m/^\\DosDevices/);
-				my $data = $v->get_data();
-				if (length($data) > 12) {
-					$data =~ s/\x00//g; 
-					return $name if (grep(/$pip/,$data));
-				}
-			}
-		}
-	}
-	else {
-		return undef;
-	}
-	return undef;
+
+sub getProperties {
+	my $key = shift;
+
+	eval {
+		my $r = $key->get_subkey("0064")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","First Install",::format8601Date($t)."Z");
+	};
+
+	eval {
+		my $r = $key->get_subkey("0065")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","First Inserted",::format8601Date($t)."Z");
+	};
+	
+	eval {
+		my $r = $key->get_subkey("0066")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","Last Inserted",::format8601Date($t)."Z");
+	};
+	
+	eval {
+		my $r = $key->get_subkey("0067")->get_value("")->get_data();
+		my ($t0,$t1) = unpack("VV",$r);
+		my $t = ::getTime($t0,$t1);
+		::rptMsg(sprintf "    %-15s: %-25s","Last Removal",::format8601Date($t)."Z");
+	};
+
+
 }
+
 
 1;

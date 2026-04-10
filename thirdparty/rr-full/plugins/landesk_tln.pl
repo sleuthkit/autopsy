@@ -4,6 +4,7 @@
 #
 #
 # Change history
+#   20201005 - MITRE update
 #   20160822 - minor updates based on client engagement
 #   20130214 - updated with Logon info
 #   20090729 - updates, H. Carvey
@@ -15,11 +16,13 @@ package landesk_tln;
 use strict;
 
 my %config = (hive          => "Software",
-              osmask        => 22,
+              MITRE         => "T1204",
+              category      => "execution",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20130214);
+			  output		=> "tln",
+              version       => 20201005);
 
 sub getConfig{return %config}
 

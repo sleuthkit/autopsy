@@ -3,6 +3,9 @@
 # For Windows 7
 #
 # Change history
+#   20200916 - MITRE updates
+#   20200824 - Unicode update
+#   20200526 - updated date output format
 #	  20100330 - created
 #
 # References
@@ -17,8 +20,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20100330);
+              MITRE         => "",
+              category      => "user activity",
+			  output		=> "report",
+              version       => 20200916);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -44,7 +49,7 @@ sub pluginmain {
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		my @vals = $key->get_list_of_values();
 		if (scalar(@vals) > 0) {
 			my @list;
@@ -57,8 +62,7 @@ sub pluginmain {
 				}
 				else {
 					my $data = $v->get_data();
-					$data =~ s/\x00//g;
-					$wwq{$name} = $data;
+					$wwq{$name} = ::getUnicodeStr($data);
 				}
 			}
 # list searches in MRUListEx order

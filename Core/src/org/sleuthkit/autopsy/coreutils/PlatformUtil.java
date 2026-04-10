@@ -37,14 +37,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.swing.filechooser.FileSystemView;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
@@ -560,34 +558,39 @@ public class PlatformUtil {
             return "";
         }
 
-        Map<Character, String> likeEscapeSequences = new HashMap<>() {
-            {
-                put('%', ".*");
-                put('_', ".");
-            }
-        };
+        // Build the regex by quoting each literal segment and replacing wildcards.
+        // The original implementation incorrectly called Pattern.quote() on the
+        // entire string before substituting wildcards, which placed the substituted
+        // ".*" and "." inside the \Q...\E literal region where they are not treated
+        // as regex metacharacters.
+        StringBuilder regex = new StringBuilder();
+        StringBuilder literal = new StringBuilder();
 
-        String regexQuoted = Pattern.quote(originalLikeStatement);
-        char[] charArr = regexQuoted.toCharArray();
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < charArr.length; i++) {
-            char curChar = charArr[i];
-            String regexReplacement = likeEscapeSequences.get(curChar);
-            if (regexReplacement == null) {
-                sb.append(curChar);
-            } else {
-                Character nextChar = charArr.length > i + 1 ? charArr[i + 1] : null;
-                if (nextChar != null && curChar == nextChar) {
-                    sb.append(curChar);
+        char[] chars = originalLikeStatement.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            char cur = chars[i];
+            if (cur == '%' || cur == '_') {
+                // Doubled wildcard (e.g. %% or __) is treated as an escaped literal.
+                if (i + 1 < chars.length && chars[i + 1] == cur) {
+                    literal.append(cur);
                     i++;
                 } else {
-                    sb.append(regexReplacement);
+                    if (literal.length() > 0) {
+                        regex.append(Pattern.quote(literal.toString()));
+                        literal.setLength(0);
+                    }
+                    regex.append(cur == '%' ? ".*" : "."); //NON-NLS
                 }
+            } else {
+                literal.append(cur);
             }
         }
 
-        return sb.toString();
+        if (literal.length() > 0) {
+            regex.append(Pattern.quote(literal.toString()));
+        }
+
+        return regex.toString();
     }
 
     /**
@@ -599,64 +602,32 @@ public class PlatformUtil {
      *         it couldn't be determined
      */
     public static synchronized long[] getJavaPIDs(String argsSubQuery) {
+        // Previously this method used WMIC on Windows and "ps -ef | grep" on
+        // Linux/Mac by constructing shell commands with Runtime.getRuntime().exec().
+        // Those approaches had a shell injection vulnerability (argsSubQuery was
+        // interpolated directly into the WMIC query string), and the Linux pipe
+        // was likely broken because exec(String) does not invoke a shell.
+        // Both were replaced with ProcessHandle (requires Java 9+, fine since
+        // Autopsy now requires Java 21).
+        //
+        // Known limitation: on Windows, ProcessHandle.Info.commandLine() returns
+        // Optional.empty() for processes owned by other users or running as a
+        // service. The old WMIC approach did not have this restriction. In
+        // practice this should not matter because Autopsy starts Solr under the
+        // same user account, but if getJavaPIDs() ever starts returning empty
+        // results when a matching process is known to exist, cross-user
+        // visibility is the first thing to investigate.
+        String regexStr = ".*java.*" + convertSqlLikeToRegex(argsSubQuery) + ".*"; //NON-NLS
         try {
-        if (isWindowsOS()) {
-            
-            ProcessBuilder pb = new ProcessBuilder("wmic process where \"name='java.exe' AND commandline LIKE '%" + argsSubQuery + "%'\" get ProcessID");
-            String output = IOUtils.toString(pb.start().getInputStream(), StandardCharsets.UTF_8);
-            String[] lines = output.split("\\r?\\n");
-            
-            return Stream.of(lines).skip(1).map(ln -> {
-                if (ln == null || ln.trim().isEmpty()) {
-                    return null;
-                }
-                
-                try {
-                    return Long.parseLong(ln.trim());
-                } catch (NumberFormatException ex) {
-                    return null;
-                }
-            })
-                    .filter(num -> num != null)
-                    .mapToLong(l -> l)
+            Pattern pattern = Pattern.compile(regexStr, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+            return ProcessHandle.allProcesses()
+                    .filter(ph -> ph.info().commandLine()
+                            .map(cmd -> pattern.matcher(cmd).matches())
+                            .orElse(false))
+                    .mapToLong(ProcessHandle::pid)
                     .toArray();
-
-        } else {
-            String sigarRegexQuery = convertSqlLikeToRegex(argsSubQuery);
-            ProcessBuilder pb = new ProcessBuilder("sh", "-c", "ps -ef | grep -E 'java.*" + sigarRegexQuery + ".*'");
-            String output = IOUtils.toString(pb.start().getInputStream(), StandardCharsets.UTF_8);
-            List<String> lines = Arrays.asList(output.split("\\r?\\n"));
-            
-            if (lines.size() > 0) {
-                // ignore last one as it will be the same as this command
-                lines.remove(lines.size() - 1);
-            }
-            
-            return lines.stream().skip(1).map(ln -> {
-                if (ln == null || ln.trim().isEmpty()) {
-                    return null;
-                }
-                
-                ln = ln.trim();
-                
-                String[] pieces = ln.split("\\s*");
-                if (pieces.length < 2) {
-                    return null;
-                }
-                
-                try {
-                    return Long.parseLong(pieces[1]);
-                } catch (NumberFormatException ex) {
-                    return null;
-                }
-            })
-                    .filter(num -> num != null)
-                    .mapToLong(l -> l)
-                    .toArray();
-        }
-        } catch (IOException ex) {
-            System.out.println("An exception occurred while fetching java pids with query: " + argsSubQuery + " with IO Exception: " + ex.getMessage());
-            ex.printStackTrace();
+        } catch (Exception ex) {
+            System.out.println("An exception occurred while fetching java pids with query: " + argsSubQuery + " : " + ex.getMessage());
             return null;
         }
     }

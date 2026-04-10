@@ -7,6 +7,10 @@
 #   "ELEVATECREATEPROCESS" "RUNASADMIN" "WINXPSP2 RUNASADMIN"
 #
 # Change history
+#   20220328 - pulled out TelemetryController key content, to make it's own plugin
+#   20200730 - updated with MITRE ATT&CK 
+#   20200609 - updates
+#   20200525 - updated date output format
 #   20130930 - added support for Windows 8 Store key (thanks to
 #              Eric Zimmerman for supplying test data)
 #   20130905 - added support for both NTUSER.DAT and Software hives;
@@ -17,24 +21,24 @@
 # References
 #   http://msdn.microsoft.com/en-us/library/bb756937.aspx
 #
-# Copyright (c) 2011-02-04 Brendan Coles <bcoles@gmail.com>
-# updated 20130706, H. Carvey, keydet89@yahoo.com
+#  https://attack.mitre.org/techniques/T1546/011/
+#
+# Copyright 2022 Quantum Analytics Research, LLC
+# H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
-# Require #
 package appcompatflags;
 use strict;
 
-# Declarations #
 my %config = (hive          => "NTUSER\.DAT, Software",
               hasShortDescr => 1,
               hasDescr      => 1,
               hasRefs       => 1,
-              osmask        => 22,
-              category      => "program execution",
-              version       => 20130930);
+              MITRE         => "T1546\.011",
+              category      => "persistence",
+			  output        => "report",
+              version       => 20220328);
 my $VERSION = getVersion();
 
-# Functions #
 sub getConfig {return %config}
 sub getHive {return $config{hive};}
 sub getVersion {return $config{version};}
@@ -46,7 +50,7 @@ sub getDescr {
 	       '"ELEVATECREATEPROCESS" "RUNASADMIN" "WINXPSP2 RUNASADMIN"';
 }
 sub getShortDescr {
-	return "Extracts AppCompatFlags for Windows.";
+	return "Extracts AppCompatFlags values.";
 }
 sub getRefs {
 	my %refs = ("Application Compatibility: Program Compatibility Assistant" =>
@@ -54,19 +58,15 @@ sub getRefs {
 	return %refs;	
 }
 
-############################################################
-# pluginmain #
-############################################################
 sub pluginmain {
-
-	# Declarations #
 	my $class = shift;
 	my $hive = shift;
 
-	# Initialize #
 	::logMsg("Launching appcompatflags v.".$VERSION);
-  ::rptMsg("appcompatflags v.".$VERSION); # 20110830 [fpi] + banner
-  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # 20110830 [fpi] + banner     
+	::rptMsg("appcompatflags v.".$VERSION); 
+	::rptMsg("(".$config{hive}.") ".getShortDescr()."\n");    
+	::rptMsg("MITRE ATT&CK subtechnique ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key;
@@ -77,37 +77,24 @@ sub pluginmain {
 	             "Wow6432Node\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers");
 	
 	foreach my $key_path (@paths) {
-	# If AppCompatFlags path exists #
 		if ($key = $root_key->get_subkey($key_path)) {
-
-		# Return # plugin name, registry key and last modified date #
 			::rptMsg($key_path);
-			::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+			::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 			::rptMsg("");
 
-		# Extract # all keys from AppCompatFlags registry path #
 			my @vals = $key->get_list_of_values();
-
-		# If # registry keys exist in path #
 			if (scalar(@vals) > 0) {
-
-			# Extract # all key names+values for AppCompatFlags registry path #
 				foreach my $v (@vals) {
 					::rptMsg($v->get_name()." -> ".$v->get_data());
 				}
-
-		# Error # key value is null #
 			} else {
 				::rptMsg($key_path." found, has no values.");
 			}
 		}
 		else {
-# We're checking several keys in each hive, so if $key_path isn't found,
-# don't generate a report 			
 #			::rptMsg($key_path." not found.");
 		}
 	} 
-	# Return # obligatory new-line #
 	::rptMsg("");
 	
 # Get all programs for which PCA "came up", for a user, even if no compatibility modes were
@@ -132,13 +119,10 @@ sub pluginmain {
 			}
 		}
 		else {
-# As above, don't report on key paths not found			
 #			::rptMsg($key_path." not found\.");
 		}
 	}
 	
-# Get Store key contents
-# selected	
 # Added 20130930 by H. Carvey
 	@paths = ("Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Store",
 	          "Wow6432Node\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Compatibility Assistant\\Store",
@@ -155,15 +139,14 @@ sub pluginmain {
 					my ($t0,$t1) = unpack("VV",substr($v->get_data(),0x2C,8));
 					my $t = ::getTime($t0,$t1);
 					
-					::rptMsg("  ".gmtime($t)." - ".$v->get_name());
+					::rptMsg("  ".::format8601Date($t)."Z - ".$v->get_name());
 				}
 			}
 			else {
 				::rptMsg($key_path." found, has no values\.");
 			}
 		}
-		else {
-# As above, don't report on key paths not found			
+		else {		
 #			::rptMsg($key_path." not found\.");
 		}
 	}	
@@ -176,7 +159,7 @@ sub pluginmain {
 		if (scalar @subkeys > 0) {
 			foreach my $sk (@subkeys) {
 				::rptMsg("Key name: ".$sk->get_name());
-				::rptMsg("LastWrite time: ".gmtime($sk->get_timestamp()));
+				::rptMsg("LastWrite time: ".::format8601Date($sk->get_timestamp())."Z");
 				
 				my @vals = $sk->get_list_of_values();
 				if (scalar @vals > 0) {
@@ -184,8 +167,8 @@ sub pluginmain {
 						my $name = $v->get_name();
 						my ($t0,$t1) = unpack("VV",$v->get_data());
 						my $l = ::getTime($t0,$t1);
-						my $ts   = gmtime($l);
-						::rptMsg("  ".$name."  ".$ts);
+						my $ts   = ::format8601Date($l);
+						::rptMsg("  ".$name."  ".$ts."Z");
 					}
 				}
 				::rptMsg("");
@@ -193,7 +176,7 @@ sub pluginmain {
 		}
 	}
 	
-	$key_path = "Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\InstalledSDB";
+	my $key_path = "Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\InstalledSDB";
 	if ($key = $root_key->get_subkey($key_path)) {
 		my @subkeys = $key->get_list_of_subkeys($key);
 		if (scalar @subkeys > 0) {
@@ -212,15 +195,14 @@ sub pluginmain {
 				eval {
 					my ($t0,$t1) = unpack("VV",$sk->get_value("DatabaseInstallTimeStamp")->get_data());
 					my $l = ::getTime($t0,$t1);
-					$ts = gmtime($l);
-					::rptMsg("  Install TimeStamp: ".$ts);
+					$ts = ::format8601Date($l);
+					::rptMsg("  Install TimeStamp: ".$ts."Z");
 				};
-				
 				::rptMsg("");
-				
 			}
 		}
 	}
+
 }
 
 1;

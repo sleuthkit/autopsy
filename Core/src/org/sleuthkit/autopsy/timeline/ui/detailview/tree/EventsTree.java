@@ -80,6 +80,7 @@ final public class EventsTree extends BorderPane {
     private ComboBox<TreeComparator> sortByBox;
     private final ObservableList<DetailViewEvent> selectedEvents = FXCollections.observableArrayList();
 
+    @SuppressWarnings("this-escape")
     public EventsTree(TimeLineController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "EventsTree.fxml"); // NON-NLS 

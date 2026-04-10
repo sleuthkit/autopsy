@@ -4,6 +4,8 @@
 # Parses RecentDocs keys/values in NTUSER.DAT 
 #
 # Change history
+#    20200924 - MITRE update
+#    20200427 - updated output date format
 #    20100405 - Updated to use Encode::decode to translate strings
 #    20090115 - Minor update to keep plugin from printing terminating
 #               MRUListEx value of 0xFFFFFFFF
@@ -14,7 +16,7 @@
 # References
 #
 # 
-# copyright 2010 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package recentdocs;
 use strict;
@@ -24,9 +26,12 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20100405);
+              MITRE         => "",
+              category      => "user activity",
+			  output		=> "report",
+              version       => 20200924);
 
+sub getConfig {return %config}
 sub getShortDescr {
 	return "Gets contents of user's RecentDocs key";	
 }
@@ -42,7 +47,7 @@ sub pluginmain {
 	my $ntuser = shift;
 	::logMsg("Launching recentdocs v.".$VERSION);
 	::rptMsg("recentdocs v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 
@@ -52,7 +57,7 @@ sub pluginmain {
 		::rptMsg("RecentDocs");
 		::rptMsg("**All values printed in MRUList\\MRUListEx order.");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time: ".::format8601Date($key->get_timestamp())."Z");
 # Get RecentDocs values		
 		my %rdvals = getRDValues($key);
 		if (%rdvals) {
@@ -82,7 +87,7 @@ sub pluginmain {
 		if (scalar(@subkeys) > 0) {
 			foreach my $s (@subkeys) {
 				::rptMsg($key_path."\\".$s->get_name());
-				::rptMsg("LastWrite Time ".gmtime($s->get_timestamp())." (UTC)");
+				::rptMsg("LastWrite Time ".::format8601Date($s->get_timestamp())."Z");
 				
 				my %rdvals = getRDValues($s);
 				if (%rdvals) {
@@ -147,9 +152,9 @@ sub getRDValues {
 			else {
 # New code
 				$data = decode("ucs-2le", $data);
-				my $file = (split(/\x00/,$data))[0];
-#				my $file = (split(/\x00\x00/,$data))[0];
-#				$file =~ s/\x00//g;
+				my $file = (split(/\00/,$data))[0];
+#				my $file = (split(/\00\00/,$data))[0];
+#				$file =~ s/\00//g;
 				$rdvals{$name} = $file;
 			}
 		}

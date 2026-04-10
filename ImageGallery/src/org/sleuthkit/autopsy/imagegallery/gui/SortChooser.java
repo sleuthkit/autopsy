@@ -56,6 +56,7 @@ public class SortChooser<X, Y extends Comparator<X>> extends HBox {
     private final SimpleBooleanProperty sortOrderDisabled = new SimpleBooleanProperty(false);
     private final SimpleObjectProperty<ValueType> valueType = new SimpleObjectProperty<>(ValueType.LEXICOGRAPHIC);
 
+    @SuppressWarnings("this-escape")
     public SortChooser(ObservableList<Y> comps) {
         this.comparators = comps;
         FXMLConstructor.construct(this, "SortChooser.fxml");

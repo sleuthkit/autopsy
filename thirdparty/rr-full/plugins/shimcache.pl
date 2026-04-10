@@ -5,6 +5,9 @@
 # works within an analysis process.
 #
 # History:
+#  20220920 - updated Win8.1 parsing
+#  20201005 - MITRE update
+#  20200428 - updated output date format
 #  20190112 - updated parsing for Win8.1
 #  20180311 - updated for more recent version of Win10/Win2016
 #  20160528 - updated
@@ -20,21 +23,20 @@
 # This plugin is based solely on the work and examples provided by Mandiant;
 # thanks to them for sharing this information, and making the plugin possible.
 # 
-# copyright 2016 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package shimcache;
 use strict;
 
 my %config = (hive          => "System",
-							hivemask      => 4,
-							output        => "report",
-							category      => "Program Execution",
+			  category      => "file existence",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 31,  
-              version       => 20190112);
+              MITRE         => "",  
+			  output		=> "report",
+              version       => 20220920);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -81,13 +83,13 @@ sub pluginmain {
 			eval {
 				$app_data = $appcompat->get_subkey("AppCompatibility")->get_value("AppCompatCache")->get_data();
 				::rptMsg($appcompat_path."\\AppCompatibility");
-			  ::rptMsg("LastWrite Time: ".gmtime($appcompat->get_subkey("AppCompatibility")->get_timestamp())." Z");
+			  ::rptMsg("LastWrite Time: ".::format8601Date($appcompat->get_subkey("AppCompatibility")->get_timestamp())."Z");
 			};
 			
 			eval {
 				$app_data = $appcompat->get_subkey("AppCompatCache")->get_value("AppCompatCache")->get_data();
 				::rptMsg($appcompat_path."\\AppCompatCache");
-			  ::rptMsg("LastWrite Time: ".gmtime($appcompat->get_subkey("AppCompatCache")->get_timestamp())." Z");
+			  ::rptMsg("LastWrite Time: ".::format8601Date($appcompat->get_subkey("AppCompatCache")->get_timestamp())."Z");
 			};
 			
 			my $sig = unpack("V",substr($app_data,0,4));
@@ -130,11 +132,11 @@ sub pluginmain {
 					$modtime = "";
 				}
 				else {
-					$modtime = gmtime($modtime)." Z";
+					$modtime = ::format8601Date($modtime);
 				}
 				
 				$str = $files{$f}{filename}."  ".$modtime;
-				$str .= "  ".gmtime($files{$f}{updtime})." Z" if (exists $files{$f}{updtime});
+				$str .= "  ".::format8601Date($files{$f}{updtime}) if (exists $files{$f}{updtime});
 				$str .= "  ".$files{$f}{size}." bytes" if (exists $files{$f}{size});
 				$str .= "  Executed" if (exists $files{$f}{executed});
 				::rptMsg($str);
@@ -288,7 +290,6 @@ sub appWin8 {
 	
 	while($ofs < $len) {
 		my $tag = unpack("V",substr($data,$ofs,4));
-        last unless (defined $tag);
 # 32-bit		
 		if ($tag == 0x73746f72) {
 			$jmp = unpack("V",substr($data,$ofs + 8,4));
@@ -334,8 +335,7 @@ sub appWin81 {
 	
 	while ($ofs < $len) {
 		$tag = substr($data,$ofs,4);
-        last unless (defined $tag);
-		if ($tag eq "10ts") {
+		if ($tag eq "10ts" || $tag eq "00ts") {
 			
 			$sz = unpack("V",substr($data,$ofs + 0x08,4));
 			$name_len   = unpack("v",substr($data,$ofs + 0x0c,2));

@@ -4,6 +4,8 @@
 # MountPoints2 key parser
 #
 # Change history
+#   20200921 - MITRE update
+#   20200526 - updated date output format
 #   20120330 - updated to include parsing of UUID v1 GUIDs to get unique
 #              MAC addresses
 #   20091116 - updated output/sorting; added getting 
@@ -12,8 +14,9 @@
 #
 # References
 #   http://support.microsoft.com/kb/932463
+#   https://attack.mitre.org/techniques/T1021/002/
 # 
-# copyright 2012 Quantum Analytics Research, LLC
+# copyright 2020 Quantum Analytics Research, LLC
 # Author: H. Carvey
 #-----------------------------------------------------------
 package mp2;
@@ -23,8 +26,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20120330);
+			  output		=> "report",
+              MITRE         => "T1021\.002",
+              category      => "user activity",
+              version       => 20200921);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -41,8 +46,10 @@ sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
 	::logMsg("Launching mp2 v.".$VERSION);
-	::rptMsg("mp2 v.".$VERSION); # banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # banner
+	::rptMsg("mp2 v.".$VERSION); 
+    ::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my %drives;
 	my %volumes;
 	my %remote;
@@ -56,7 +63,7 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("MountPoints2");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z");
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar @subkeys > 0) {
 			foreach my $s (@subkeys) {
@@ -90,7 +97,7 @@ sub pluginmain {
 			::rptMsg("");
 			::rptMsg("Remote Drives:");
 			foreach my $t (reverse sort {$a <=> $b} keys %remote) {
-				::rptMsg(gmtime($t)." (UTC)");
+				::rptMsg(::format8601Date($t)."Z");
 				foreach my $item (@{$remote{$t}}) {
 					::rptMsg("  $item");
 				}
@@ -99,7 +106,7 @@ sub pluginmain {
 			::rptMsg("");
 			::rptMsg("Volumes:");
 			foreach my $t (reverse sort {$a <=> $b} keys %volumes) {
-				::rptMsg(gmtime($t)." (UTC)");
+				::rptMsg(::format8601Date($t)."Z");
 				foreach my $item (@{$volumes{$t}}) {
 					::rptMsg("  $item");
 				}
@@ -108,7 +115,7 @@ sub pluginmain {
 			::rptMsg("Drives:");
 			foreach my $t (reverse sort {$a <=> $b} keys %drives) {
 				my $d = join(',',(@{$drives{$t}}));
-				::rptMsg(gmtime($t)." (UTC) - ".$d);
+				::rptMsg(::format8601Date($t)."Z - ".$d);
 			}
 			::rptMsg("");
 			::rptMsg("Unique MAC Addresses:");

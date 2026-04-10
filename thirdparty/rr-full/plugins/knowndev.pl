@@ -2,6 +2,8 @@
 # knowndev.pl
 #
 # History
+#  20200927 - MITRE update
+#  20200515 - updated date output format
 #  20190714 - updated
 #  20140414 - created
 #
@@ -18,8 +20,10 @@ my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              osmask        => 22,
-              version       => 20190714);
+              MITRE         => "",
+			  output		=> "report",
+              category      => "devices",
+              version       => 20200927);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -47,13 +51,13 @@ sub pluginmain {
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("KnownDevices");
 		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)\n");
+		::rptMsg("LastWrite Time ".::format8601Date($key->get_timestamp())."Z\n");
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar @subkeys > 0) {
 			foreach my $s (@subkeys) {
 				my $name = $s->get_name();
-				my $lw   = gmtime($s->get_timestamp());
-				::rptMsg($name."  ".$lw." Z");
+				my $lw   = ::format8601Date($s->get_timestamp());
+				::rptMsg($name."  ".$lw."Z");
 				
 				eval {
 					my $label = $s->get_value("Label")->get_data();

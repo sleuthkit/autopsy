@@ -1,8 +1,6 @@
 #-----------------------------------------------------------
 # psscript.pl 
 # 
-#
-#
 #  http://www.hexacorn.com/blog/2017/01/07/beyond-good-ol-run-key-part-52/
 #
 # Also, check folders:
@@ -11,24 +9,29 @@
 #
 #
 # Change history
+#   20200922 - MITRE update
+#   20200525 - updated date output format
 #   20170107 - created
 #
-# Copyright 2017 QAR, LLC
+# Copyright 2020 QAR, LLC
+# H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package psscript;
 use strict;
 
-my %config = (hive          => "Software",
-              osmask        => 22,
+my %config = (hive          => "Software, NTUSER\.DAT",
+              MITRE         => "T1546",
+              category      => "persistence",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20170107);
+			  output		=> "report",
+              version       => 20200922);
 
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Get PSScript\.ini values";	
+	return "Get values assoc with PSScript\.ini";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -42,23 +45,34 @@ sub pluginmain {
 	my $class = shift;
 	my $hive = shift;
 	::logMsg("Launching psscript v.".$VERSION);
+	::rptMsg("psscript v.".$VERSION); 
+	::rptMsg("(".getHive().") ".getShortDescr()); 
+	::rptMsg("MITRE: ".$config{MITRE}." (".$config{category}.")");
+	::rptMsg("");
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 
-# updated added 20130326  
   my @paths = ("Microsoft\\Windows\\CurrentVersion\\Group Policy\\State\\Machine\\Scripts\\Startup\\0\\0",
-               "Microsoft\\Windows\\CurrentVersion\\Group Policy\\Scripts\\Startup\\0\\0");
+               "Microsoft\\Windows\\CurrentVersion\\Group Policy\\Scripts\\Startup\\0\\0",
+               "Microsoft\\Windows\\CurrentVersion\\Group Policy\\History\\{42B5FAAE-6536-11d2-AE5A-0000F87571E3}\\0");
     
 	foreach my $key_path (@paths) {
 		my $key;
 		if ($key = $root_key->get_subkey($key_path)) {
 			::rptMsg($key_path);
-			::rptMsg("LastWrite: ".gmtime($key->get_timestamp()));
+			::rptMsg("LastWrite time: ".::format8601Date($key->get_timestamp())."Z");
 			::rptMsg("");
 			my @vals = $key->get_list_of_values();
 			if (scalar @vals > 0) {
 				foreach my $v (@vals) {
 					::rptMsg($v->get_name()." - ".$v->get_data());
+					
+					if ($v->get_name() eq "ExecTime") {
+						my $t = ::convertSystemTime($v->get_data());
+						::rptMsg("ExecTime: ".$t);
+					
+					}
+			
 				}	
 				::rptMsg("");
 			}
@@ -78,7 +92,7 @@ sub pluginmain {
 		if ($key = $root_key->get_subkey($key_path)) {
 			::rptMsg("");	
 			::rptMsg($key_path);
-			::rptMsg("LastWrite: ".gmtime($key->get_timestamp()));
+			::rptMsg("LastWrite: ".::format8601Date($key->get_timestamp())."Z");
 			::rptMsg("");	
 		
 			my @vals = $key->get_list_of_values();
