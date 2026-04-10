@@ -160,7 +160,7 @@ class TskQueryService {
                     "artifactType",   param("string",  "TSK artifact type name e.g. TSK_WEB_HISTORY"),
                     "attributeType",  param("string",  "Filter by attribute type name e.g. TSK_URL"),
                     "attributeValue", param("string",  "Filter by attribute value substring"),
-                    "dataSourceId",   param("integer", "Limit to a specific data source"),
+                    "dataSourceId",   param("integer", "Object ID of the data source to limit results to (from query_data_sources objectId field)"),
                     "limit",          param("integer", "Max results, default 50, max 500")
                 )),
 
@@ -195,7 +195,7 @@ class TskQueryService {
                     "artifactType",   param("string",  "TSK artifact type name e.g. TSK_KEYWORD_HIT"),
                     "attributeType",  param("string",  "Filter by attribute type name e.g. TSK_KEYWORD"),
                     "attributeValue", param("string",  "Filter by attribute value substring"),
-                    "dataSourceId",   param("integer", "Limit to a specific data source"),
+                    "dataSourceId",   param("integer", "Object ID of the data source to limit results to (from query_data_sources objectId field)"),
                     "limit",          param("integer", "Max results, default 50, max 500")
                 )),
 
@@ -239,7 +239,7 @@ class TskQueryService {
                 Map.ofEntries(
                     Map.entry("startTime",    param("string",  "ISO 8601 start of time range (inclusive)")),
                     Map.entry("endTime",      param("string",  "ISO 8601 end of time range (inclusive)")),
-                    Map.entry("dataSourceId", param("integer", "Limit to a specific data source")),
+                    Map.entry("dataSourceId", param("integer", "Object ID of the data source to limit results to (from query_data_sources objectId field)")),
                     Map.entry("textFilter",   param("string",  "Filter events whose description contains this substring")),
                     Map.entry("limit",        param("integer", "Max results, default 100, max 1000"))
                 )),
@@ -253,7 +253,7 @@ class TskQueryService {
                 Map.of(
                     "startTime",    param("string",  "ISO 8601 start of time range (inclusive)"),
                     "endTime",      param("string",  "ISO 8601 end of time range (inclusive)"),
-                    "dataSourceId", param("integer", "Limit to a specific data source")
+                    "dataSourceId", param("integer", "Object ID of the data source to limit results to (from query_data_sources objectId field)")
                 )),
 
             toolWithNote("get_os_accounts",
@@ -283,7 +283,7 @@ class TskQueryService {
                 "requests beyond that are rejected — use offset+maxBytes to page through larger files. " +
                 "Returns the content string, actual bytes read, file size, and whether the content was truncated.",
                 Map.of(
-                    "fileId",   param("integer", "Object ID of the file (from query_files id field)"),
+                    "fileId",   param("integer", "Object ID of the file (from query_files objectId field)"),
                     "offset",   param("integer", "Byte offset to start reading from, default 0"),
                     "maxBytes", param("integer", "Maximum bytes to read, default 65536, max 1048576")
                 )),
@@ -309,6 +309,26 @@ class TskQueryService {
                 "systems; etc.).",
                 Map.of(
                     "objectId", param("integer", "Object ID of the item whose children you want (required)")
+                )),
+
+            toolWithNote("list_reports",
+                "List all reports that have been generated for the current case. " +
+                "Returns id, reportName, sourceModule, path, createdTime, size, and contentType " +
+                "(text/plain or text/html) for each report. Use this before get_report_content " +
+                "to discover available report IDs and names.",
+                Map.of()),
+
+            toolWithNote("get_report_content",
+                "Read the content of a case report by its id (from list_reports). " +
+                "Reports may be plain text or HTML — check the contentType field. " +
+                "Files larger than 65536 bytes require an explicit maxBytes parameter up to 1048576 (1 MB); " +
+                "requests beyond that are rejected — use offset+maxBytes to page through larger reports. " +
+                "Returns reportId, reportName, path, fileSize, contentType, offset, bytesRead, " +
+                "truncated, and content.",
+                Map.of(
+                    "reportId", param("integer", "Object ID of the report (from list_reports objectId field)"),
+                    "offset",   param("integer", "Byte offset to start reading from, default 0"),
+                    "maxBytes", param("integer", "Maximum bytes to read, default 65536, max 1048576")
                 ))
         );
     }
@@ -486,7 +506,7 @@ class TskQueryService {
         Map<String, Object> item = new LinkedHashMap<>();
 
         // Identity
-        item.put("id", f.getId());
+        item.put("objectId", f.getId());
         item.put("name", f.getName());
         try {
             item.put("path", f.getUniquePath());
@@ -634,7 +654,7 @@ class TskQueryService {
             }
 
             Map<String, Object> item = new LinkedHashMap<>();
-            item.put("id",           artifact.getArtifactID());
+            item.put("objectId",     artifact.getId());
             item.put("sourceFileId", artifact.getObjectID());
             item.put("artifactType", artifact.getArtifactTypeName());
             item.put("dataSourceId", artifact.getDataSourceObjectID());
@@ -703,7 +723,7 @@ class TskQueryService {
      */
     private Map<String, Object> buildDataSourceItem(Content ds) throws TskCoreException {
         Map<String, Object> item = new LinkedHashMap<>();
-        item.put("id", ds.getId());
+        item.put("objectId", ds.getId());
         item.put("name", ds.getName());
         item.put("type", ds.getClass().getSimpleName());
         item.put("size", ds.getSize());
@@ -804,7 +824,7 @@ class TskQueryService {
 
     private Map<String, Object> buildVolumeSystemNode(VolumeSystem vs) throws TskCoreException {
         Map<String, Object> node = new LinkedHashMap<>();
-        node.put("id", vs.getId());
+        node.put("objectId", vs.getId());
         node.put("type", "VolumeSystem");
         node.put("vsType", vs.getType().getName());
         node.put("offset", vs.getOffset());
@@ -820,7 +840,7 @@ class TskQueryService {
 
     private Map<String, Object> buildVolumeNode(Volume vol) throws TskCoreException {
         Map<String, Object> node = new LinkedHashMap<>();
-        node.put("id", vol.getId());
+        node.put("objectId", vol.getId());
         node.put("type", "Volume");
         node.put("addr", vol.getAddr());
         node.put("description", vol.getDescription());
@@ -839,7 +859,7 @@ class TskQueryService {
 
     private Map<String, Object> buildFileSystemNode(FileSystem fs) throws TskCoreException {
         Map<String, Object> node = new LinkedHashMap<>();
-        node.put("id", fs.getId());
+        node.put("objectId", fs.getId());
         node.put("type", "FileSystem");
         node.put("fsType", fs.getFsType().getDisplayName());
         node.put("imageOffset", fs.getImageOffset());
@@ -874,7 +894,7 @@ class TskQueryService {
                 item.put("comment", tag.getComment());
                 item.put("itemType", "file");
                 Content content = tag.getContent();
-                item.put("itemId", content.getId());
+                item.put("objectId", content.getId());
                 item.put("itemName", content.getName());
                 result.add(item);
             }
@@ -885,7 +905,7 @@ class TskQueryService {
                 item.put("comment", tag.getComment());
                 item.put("itemType", "artifact");
                 BlackboardArtifact artifact = tag.getArtifact();
-                item.put("itemId", artifact.getArtifactID());
+                item.put("objectId", artifact.getId());
                 item.put("itemName", artifact.getArtifactTypeName());
                 result.add(item);
             }
@@ -1033,7 +1053,7 @@ class TskQueryService {
         OsAccountManager oam = skCase.getOsAccountManager();
         for (OsAccount account : oam.getOsAccounts()) {
             Map<String, Object> item = new LinkedHashMap<>();
-            item.put("id",        account.getId());
+            item.put("objectId",  account.getId());
             item.put("addr",      account.getAddr().orElse(null));        // SID or UID
             item.put("loginName", account.getLoginName().orElse(null));
             item.put("fullName",  account.getFullName().orElse(null));
@@ -1203,12 +1223,11 @@ class TskQueryService {
      */
     private Map<String, Object> buildContentSummary(Content c) throws TskCoreException {
         Map<String, Object> item = new LinkedHashMap<>();
-        item.put("id", c.getId());
+        item.put("objectId", c.getId());
 
         if (c instanceof BlackboardArtifact) {
             BlackboardArtifact artifact = (BlackboardArtifact) c;
             item.put("objectType",    "artifact");
-            item.put("artifactId",    artifact.getArtifactID());
             item.put("artifactType",  artifact.getArtifactTypeName());
             item.put("sourceObjectId", artifact.getObjectID());
             item.put("dataSourceId",  artifact.getDataSourceObjectID());
@@ -1275,6 +1294,109 @@ class TskQueryService {
         }
 
         return item;
+    }
+
+    // -------------------------------------------------------------------------
+    // list_reports
+    // -------------------------------------------------------------------------
+
+    List<Map<String, Object>> listReports() throws TskCoreException {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Report report : skCase.getAllReports()) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("objectId",     report.getId());
+            item.put("reportName",   report.getReportName());
+            item.put("sourceModule", report.getSourceModuleName());
+            item.put("path",         report.getPath());
+            item.put("createdTime",  epochToIso(report.getCreatedTime()));
+            item.put("size",         report.getSize());
+            String pathLower = report.getPath().toLowerCase();
+            item.put("contentType",  (pathLower.endsWith(".html") || pathLower.endsWith(".htm"))
+                    ? "text/html" : "text/plain");
+            result.add(item);
+        }
+        return result;
+    }
+
+    // -------------------------------------------------------------------------
+    // get_report_content
+    // -------------------------------------------------------------------------
+
+    Map<String, Object> getReportContent(JsonNode args) throws TskCoreException, McpException {
+        if (args.path("reportId").isMissingNode()) {
+            throw new McpException("reportId is required");
+        }
+        long reportId = args.path("reportId").asLong();
+        long offset   = args.path("offset").asLong(0);
+        int  maxBytes = args.path("maxBytes").asInt(65536);
+        if (maxBytes <= 0 || maxBytes > 1_048_576) {
+            maxBytes = 65536;
+        }
+
+        Report report = null;
+        for (Report r : skCase.getAllReports()) {
+            if (r.getId() == reportId) {
+                report = r;
+                break;
+            }
+        }
+        if (report == null) {
+            throw new McpException("No report found with id " + reportId);
+        }
+
+        String pathLower = report.getPath().toLowerCase();
+        String contentType = (pathLower.endsWith(".html") || pathLower.endsWith(".htm"))
+                ? "text/html" : "text/plain";
+        long fileSize = report.getSize();
+
+        if (offset < 0) {
+            offset = 0;
+        }
+        if (offset >= fileSize) {
+            Map<String, Object> empty = new LinkedHashMap<>();
+            empty.put("reportId",    reportId);
+            empty.put("reportName",  report.getReportName());
+            empty.put("path",        report.getPath());
+            empty.put("fileSize",    fileSize);
+            empty.put("contentType", contentType);
+            empty.put("offset",      offset);
+            empty.put("bytesRead",   0);
+            empty.put("truncated",   false);
+            empty.put("content",     "");
+            return empty;
+        }
+
+        long available = fileSize - offset;
+        int  toRead    = (int) Math.min(maxBytes, available);
+        boolean truncated = available > maxBytes;
+
+        byte[] buf = new byte[toRead];
+        int bytesRead = report.read(buf, offset, toRead);
+        if (bytesRead < toRead) {
+            buf = java.util.Arrays.copyOf(buf, Math.max(bytesRead, 0));
+        }
+
+        CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPLACE)
+                .onUnmappableCharacter(CodingErrorAction.REPLACE);
+        CharBuffer chars;
+        try {
+            chars = decoder.decode(ByteBuffer.wrap(buf));
+        } catch (java.nio.charset.CharacterCodingException ex) {
+            chars = CharBuffer.wrap(new String(buf, StandardCharsets.ISO_8859_1));
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("reportId",    reportId);
+        result.put("reportName",  report.getReportName());
+        result.put("path",        report.getPath());
+        result.put("fileSize",    fileSize);
+        result.put("contentType", contentType);
+        result.put("offset",      offset);
+        result.put("bytesRead",   buf.length);
+        result.put("truncated",   truncated);
+        result.put("content",     chars.toString());
+        return result;
     }
 
     // -------------------------------------------------------------------------

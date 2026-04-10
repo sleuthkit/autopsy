@@ -117,6 +117,8 @@ class McpProtocolHandler {
             case "get_communications_accounts" -> qs.getCommunicationsAccounts(args);
             case "get_account_relationships"   -> qs.getAccountRelationships(args);
             case "get_object_children"         -> qs.getObjectChildren(args);
+            case "list_reports"                -> qs.listReports();
+            case "get_report_content"          -> qs.getReportContent(args);
             default -> throw new McpException("Unknown tool: " + toolName);
         };
 
