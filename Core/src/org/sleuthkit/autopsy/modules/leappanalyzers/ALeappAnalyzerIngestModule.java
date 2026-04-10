@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -54,9 +55,12 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Data source ingest module that runs aLeapp against logical iOS files.
@@ -72,6 +76,13 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
     private static final String ALEAPP_PATHS_FILE = "aLeapp_paths.txt"; //NON-NLS
 
     private static final String XMLFILE = "aleapp-artifact-attribute-reference.xml"; //NON-NLS
+
+    // Android-specific files used to detect whether the data source is from an Android device.
+    // Filename and parent-path pairs searched in order; finding any one is sufficient.
+    private static final List<String[]> ANDROID_INDICATOR_FILES = Arrays.asList(
+            new String[]{"build.prop", "/system/"},                                               //NON-NLS
+            new String[]{"packages.xml", "/data/system/"},                                        //NON-NLS
+            new String[]{"settings.db", "/data/com.android.providers.settings/databases/"});      //NON-NLS
 
     private File aLeappExecutable;
 
@@ -122,9 +133,18 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
         "ALeappAnalyzerIngestModule.has.run=aLeapp",
         "ALeappAnalyzerIngestModule.aLeapp.cancelled=aLeapp run was canceled",
         "ALeappAnalyzerIngestModule.completed=aLeapp Processing Completed",
-        "ALeappAnalyzerIngestModule.report.name=aLeapp Html Report"})
+        "ALeappAnalyzerIngestModule.report.name=aLeapp Html Report",
+        "ALeappAnalyzerIngestModule.notAndroid.skipped=aLeapp skipped: data source does not appear to be an Android device."})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
+
+        if (!isAndroidDataSource(dataSource)) {
+            logger.log(Level.INFO, "aLeapp: data source does not appear to be Android, skipping."); //NON-NLS
+            IngestMessage message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
+                    MODULE_NAME, Bundle.ALeappAnalyzerIngestModule_notAndroid_skipped());
+            IngestServices.getInstance().postMessage(message);
+            return ProcessResult.OK;
+        }
 
         statusHelper.switchToIndeterminate();
         statusHelper.progress(Bundle.ALeappAnalyzerIngestModule_running_aLeapp());
@@ -466,6 +486,80 @@ public class ALeappAnalyzerIngestModule implements DataSourceIngestModule {
                         filePath.toString(), aLeappFile.getId()), ex); //NON-NLS
             }
         }
+    }
+
+    /**
+     * Determines whether the data source appears to be from an Android device.
+     * For disk images, checks filesystem types first (fast, no I/O). Ext2/3/4
+     * and YAFFS2 are Android-positive; NTFS, HFS, and APFS are
+     * Android-negative. FAT-only or ambiguous images, and logical file sets,
+     * fall through to a file-based check.
+     *
+     * @param dataSource the data source to evaluate
+     *
+     * @return true if the data source appears to be Android
+     */
+    private boolean isAndroidDataSource(Content dataSource) {
+        if (dataSource instanceof Image) {
+            try {
+                boolean hasAndroidFs = false;
+                boolean hasDefinitelyNonAndroidFs = false;
+                for (FileSystem fs : ((Image) dataSource).getFileSystems()) {
+                    switch (fs.getFsType()) {
+                        case TSK_FS_TYPE_EXT2:
+                        case TSK_FS_TYPE_EXT3:
+                        case TSK_FS_TYPE_EXT4:
+                        case TSK_FS_TYPE_EXT_DETECT:
+                        case TSK_FS_TYPE_YAFFS2:
+                        case TSK_FS_TYPE_YAFFS2_DETECT:
+                            hasAndroidFs = true;
+                            break;
+                        case TSK_FS_TYPE_NTFS:
+                        case TSK_FS_TYPE_NTFS_DETECT:
+                        case TSK_FS_TYPE_HFS:
+                        case TSK_FS_TYPE_HFS_DETECT:
+                        case TSK_FS_TYPE_APFS:
+                        case TSK_FS_TYPE_APFS_DETECT:
+                            hasDefinitelyNonAndroidFs = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                if (hasAndroidFs) {
+                    return true;
+                }
+                if (hasDefinitelyNonAndroidFs) {
+                    return false;
+                }
+                // FAT-only or no recognized FS: fall through to file check
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, "Error checking filesystem types for aLeapp Android detection", ex); //NON-NLS
+            }
+        }
+        return hasAndroidIndicatorFiles(dataSource);
+    }
+
+    /**
+     * Searches for a small set of files that are present on virtually all
+     * Android devices. Returns true as soon as any one is found.
+     *
+     * @param dataSource the data source to search
+     *
+     * @return true if at least one Android indicator file is found
+     */
+    private boolean hasAndroidIndicatorFiles(Content dataSource) {
+        FileManager fileManager = getCurrentCase().getServices().getFileManager();
+        for (String[] fileInfo : ANDROID_INDICATOR_FILES) {
+            try {
+                if (!fileManager.findFiles(dataSource, fileInfo[0], fileInfo[1]).isEmpty()) {
+                    return true;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.WARNING, String.format("Error searching for Android indicator file '%s'", fileInfo[0]), ex); //NON-NLS
+            }
+        }
+        return false;
     }
 
     /**
