@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.experimental.mcp;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Map;
@@ -32,6 +33,10 @@ import java.util.Map;
  * definitions are static). tools/call returns a clean error when null.
  */
 class McpProtocolHandler {
+
+    // JSON-RPC 2.0 reserved error codes
+    private static final int ERR_METHOD_NOT_FOUND = -32601;
+    private static final int ERR_INTERNAL_ERROR   = -32603;
 
     // Used solely for tools/list — listTools() has no case dependency.
     private static final TskQueryService TOOLS_LIST_SERVICE = new TskQueryService(null, null);
@@ -57,7 +62,9 @@ class McpProtocolHandler {
         JsonNode request = mapper.readTree(requestJson);
         String method = request.path("method").asText();
         JsonNode params = request.path("params");
-        String id = request.path("id").asText();
+        // Preserve the id as a JsonNode so its original type (number, string, null,
+        // or absent) is returned unchanged in the response, as the JSON-RPC spec requires.
+        JsonNode id = request.has("id") ? request.get("id") : NullNode.getInstance();
 
         try {
             Object result = switch (method) {
@@ -68,7 +75,9 @@ class McpProtocolHandler {
             };
             return buildSuccess(id, result);
         } catch (McpException ex) {
-            return buildError(id, -32601, ex.getMessage());
+            return buildError(id, ERR_METHOD_NOT_FOUND, ex.getMessage());
+        } catch (Exception ex) {
+            return buildError(id, ERR_INTERNAL_ERROR, ex.getMessage());
         }
     }
 
@@ -110,18 +119,18 @@ class McpProtocolHandler {
         );
     }
 
-    private String buildSuccess(String id, Object result) throws Exception {
+    private String buildSuccess(JsonNode id, Object result) throws Exception {
         ObjectNode response = mapper.createObjectNode();
         response.put("jsonrpc", "2.0");
-        response.put("id", id);
+        response.set("id", id);
         response.set("result", mapper.valueToTree(result));
         return mapper.writeValueAsString(response);
     }
 
-    private String buildError(String id, int code, String message) throws Exception {
+    private String buildError(JsonNode id, int code, String message) throws Exception {
         ObjectNode response = mapper.createObjectNode();
         response.put("jsonrpc", "2.0");
-        response.put("id", id);
+        response.set("id", id);
         ObjectNode error = mapper.createObjectNode();
         error.put("code", code);
         error.put("message", message);

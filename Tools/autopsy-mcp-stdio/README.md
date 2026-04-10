@@ -10,8 +10,8 @@ the Java side, this wrapper picks them up automatically with no changes needed.
 
 ## How it works
 
-1. Autopsy starts an HTTP MCP server on `127.0.0.1:8765` when a case is opened
-2. Autopsy writes an ephemeral auth token to `~/.autopsy/mcp-token`
+1. Autopsy starts an HTTP MCP server on `127.0.0.1:8765` at application startup
+2. Autopsy writes an ephemeral auth token to `%LOCALAPPDATA%\autopsy\mcp\mcp-token` (Windows)
 3. This wrapper reads that token and forwards stdio MCP calls to the HTTP server
 4. When the case is closed, the token file is deleted and calls will fail gracefully
 
@@ -20,7 +20,7 @@ the Java side, this wrapper picks them up automatically with no changes needed.
 
 Install the single dependency (the MCP SDK):
 
-```
+```bash
 cd Tools/autopsy-mcp-stdio
 npm install
 ```
@@ -61,7 +61,7 @@ or its dependencies change.
 
 ### Build steps
 
-```
+```bash
 cd Tools\autopsy-mcp-stdio
 npm install
 npm run package
@@ -79,7 +79,7 @@ into the `bin\` folder of the distribution ZIP.
 ## Troubleshooting
 
 **"No Autopsy case is currently open"** — Open a case in Autopsy first. The MCP
-server only runs while a case is open.
+server runs continuously but tool calls require an open case.
 
 **"Autopsy HTTP error 401"** — The token file is stale from a previous session.
 Close and reopen the case in Autopsy to generate a fresh token.

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.experimental.mcp;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -183,15 +185,18 @@ public class McpOptionsPanel extends JPanel {
      * doubled as required by JSON string encoding.
      */
     private static String buildConfigSnippet(String exePath) {
-        // Double every backslash for JSON encoding
-        String jsonPath = exePath.replace("\\", "\\\\"); //NON-NLS
-        return "{\n"
-             + "  \"mcpServers\": {\n"
-             + "    \"autopsy\": {\n"
-             + "      \"command\": \"" + jsonPath + "\"\n"
-             + "    }\n"
-             + "  }\n"
-             + "}";
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode autopsy = mapper.createObjectNode();
+            autopsy.put("command", exePath); //NON-NLS
+            ObjectNode servers = mapper.createObjectNode();
+            servers.set("autopsy", autopsy); //NON-NLS
+            ObjectNode root = mapper.createObjectNode();
+            root.set("mcpServers", servers); //NON-NLS
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(root);
+        } catch (Exception ex) {
+            return ""; // Should never happen for simple string input
+        }
     }
 
     /**

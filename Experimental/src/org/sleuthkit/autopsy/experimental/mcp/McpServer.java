@@ -95,7 +95,12 @@ public class McpServer {
         });
 
         app.start(DEFAULT_PORT);
-        writeTokenFile();
+        try {
+            writeTokenFile();
+        } catch (IOException ex) {
+            app.stop();
+            throw new Exception("MCP server started but failed to write token file — aborting", ex);
+        }
     }
 
     public void stop() {
@@ -134,15 +139,11 @@ public class McpServer {
         return getMcpDir().resolve("mcp-token");
     }
 
-    private void writeTokenFile() {
-        try {
-            Path tokenPath = getTokenPath();
-            Files.createDirectories(tokenPath.getParent());
-            Files.writeString(tokenPath, authToken);
-            tokenPath.toFile().deleteOnExit();
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed to write MCP token file", ex);
-        }
+    private void writeTokenFile() throws IOException {
+        Path tokenPath = getTokenPath();
+        Files.createDirectories(tokenPath.getParent());
+        Files.writeString(tokenPath, authToken);
+        tokenPath.toFile().deleteOnExit();
     }
 
     private void deleteTokenFile() {

@@ -1293,9 +1293,11 @@ class TskQueryService {
         if (s == null) {
             return fallback != null ? fallback : 0L;
         }
-        // Accept "2012-03-02" (date-only) by appending T00:00:00Z
+        // Accept date-only strings (e.g. "2012-03-02").
+        // For endTime, treat as end-of-day so the full day is included.
+        // For startTime and others, treat as start-of-day (midnight UTC).
         if (s.length() == 10) {
-            s = s + "T00:00:00Z";
+            s = s + ("endTime".equals(field) ? "T23:59:59Z" : "T00:00:00Z");
         }
         return Instant.parse(s).getEpochSecond();
     }
