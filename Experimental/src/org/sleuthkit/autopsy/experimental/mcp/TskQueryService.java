@@ -1309,9 +1309,7 @@ class TskQueryService {
             item.put("path",         report.getPath());
             item.put("createdTime",  epochToIso(report.getCreatedTime()));
             item.put("size",         report.getSize());
-            String pathLower = report.getPath().toLowerCase();
-            item.put("contentType",  (pathLower.endsWith(".html") || pathLower.endsWith(".htm"))
-                    ? "text/html" : "text/plain");
+            item.put("contentType",  guessReportTypeByExtension(report.getPath()));
             result.add(item);
         }
         return result;
@@ -1332,20 +1330,12 @@ class TskQueryService {
             maxBytes = 65536;
         }
 
-        Report report = null;
-        for (Report r : skCase.getAllReports()) {
-            if (r.getId() == reportId) {
-                report = r;
-                break;
-            }
-        }
+        Report report = skCase.getReportById(reportId);
         if (report == null) {
             throw new McpException("No report found with id " + reportId);
         }
 
-        String pathLower = report.getPath().toLowerCase();
-        String contentType = (pathLower.endsWith(".html") || pathLower.endsWith(".htm"))
-                ? "text/html" : "text/plain";
+        String contentType = guessReportTypeByExtension(report.getPath());
         long fileSize = report.getSize();
 
         if (offset < 0) {
@@ -1484,6 +1474,14 @@ class TskQueryService {
         }
         String text = child.asText().trim();
         return text.isEmpty() ? null : text;
+    }
+
+    private static String guessReportTypeByExtension(String path) {
+        String p = path.toLowerCase();
+        if (p.endsWith(".html") || p.endsWith(".htm") || p.endsWith(".xhtml")) {
+            return "text/html";
+        }
+        return "text/plain";
     }
 
     private static String escapeSql(String value) {
