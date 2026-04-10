@@ -52,6 +52,10 @@ class TskQueryService {
         this.caseName = caseName;
     }
 
+    String getCaseName() {
+        return caseName;
+    }
+
     // -------------------------------------------------------------------------
     // Tool definitions (what Claude sees)
     // -------------------------------------------------------------------------
@@ -61,13 +65,22 @@ class TskQueryService {
      */
     List<Map<String, Object>> listTools() {
         return List.of(
-            tool("get_case_summary",
-                "Get a summary of the currently open case including name, " +
-                "data sources, file count, and artifact count. Call this first " +
-                "for any general question about the case.",
+            tool("get_server_status",
+                "Returns the status of the Autopsy MCP server and whether a case is currently open. " +
+                "Call this tool first: it confirms that the Autopsy MCP server is running and tells " +
+                "you whether a case is open. If caseOpen is false, no other tools will work until the " +
+                "examiner opens a case in Autopsy. If caseOpen is true, caseName contains the name of " +
+                "the open case and all other tools are available.",
                 Map.of()),
 
-            tool("query_files",
+            toolWithNote("get_case_summary",
+                "Get a summary of the currently open case including name, " +
+                "data sources, file count, and artifact count. Call this first " +
+                "for any general question about the case. Returns a message " +
+                "instead of an error if no case is currently open.",
+                Map.of()),
+
+            toolWithNote("query_files",
                 "Search for files in the current case. All parameters optional. " +
                 "Returns full file metadata matching Autopsy's UI columns: name, path, " +
                 "timestamps (modified/changed/accessed/created), size, flags, known status, " +
@@ -93,7 +106,7 @@ class TskQueryService {
                     Map.entry("orderBy",        param("string",  "Sort order: size_desc, size_asc, name_asc, name_desc, modified_desc, modified_asc, created_desc, created_asc"))
                 )),
 
-            tool("query_data_artifacts",
+            toolWithNote("query_data_artifacts",
                 "Search for data artifacts in the current case. Data artifacts represent facts " +
                 "extracted from the data — browser history, messages, contacts, installed programs, " +
                 "GPS locations, etc. Use artifactType to filter by type. " +
@@ -151,7 +164,7 @@ class TskQueryService {
                     "limit",          param("integer", "Max results, default 50, max 500")
                 )),
 
-            tool("query_analysis_results",
+            toolWithNote("query_analysis_results",
                 "Search for analysis results in the current case. Analysis results are conclusions " +
                 "drawn by ingest modules — hash hits, keyword hits, encryption detection, EXIF data, " +
                 "etc. Each result includes a score (significance + priority) indicating how notable " +
@@ -186,19 +199,19 @@ class TskQueryService {
                     "limit",          param("integer", "Max results, default 50, max 500")
                 )),
 
-            tool("query_data_sources",
+            toolWithNote("query_data_sources",
                 "List all data sources (disk images, logical file sets) in the current case. " +
                 "Returns id, name, type, size, timezone, and for disk images: image type, " +
                 "sector size, file paths, and acquisition hashes (MD5/SHA-1/SHA-256).",
                 Map.of()),
 
-            tool("get_hosts",
+            toolWithNote("get_hosts",
                 "List all hosts in the case. Each host groups one or more data sources " +
                 "that belong to the same device or machine. Use this as the top of the " +
                 "storage hierarchy before drilling into data sources.",
                 Map.of()),
 
-            tool("get_data_source_tree",
+            toolWithNote("get_data_source_tree",
                 "Returns the full storage hierarchy for one or all data sources: " +
                 "Image → VolumeSystem → Volume → FileSystem. " +
                 "Use this to understand how a disk image is partitioned and what file systems it contains. " +
@@ -209,13 +222,13 @@ class TskQueryService {
                     "dataSourceId", param("integer", "Object ID of the data source to inspect. Omit to return all data sources.")
                 )),
 
-            tool("query_tags",
+            toolWithNote("query_tags",
                 "Find files or artifacts that have been tagged by the examiner.",
                 Map.of(
                     "tagName", param("string", "Filter by tag name e.g. \"Notable Item\"")
                 )),
 
-            tool("query_timeline",
+            toolWithNote("query_timeline",
                 "Return timeline events in a time range, sorted by time. " +
                 "Covers all event types in a single query: file system timestamps (modified, accessed, " +
                 "changed, created) and artifact events (web history, downloads, searches, cookies, " +
@@ -231,7 +244,7 @@ class TskQueryService {
                     Map.entry("limit",        param("integer", "Max results, default 100, max 1000"))
                 )),
 
-            tool("summarize_timeline",
+            toolWithNote("summarize_timeline",
                 "Return counts of timeline events grouped by category for a time range. " +
                 "Categories are: File System (file timestamps), Web Activity (history, downloads, " +
                 "cookies, bookmarks, searches), and Misc (installed programs, USB devices, etc.). " +
@@ -243,7 +256,7 @@ class TskQueryService {
                     "dataSourceId", param("integer", "Limit to a specific data source")
                 )),
 
-            tool("get_os_accounts",
+            toolWithNote("get_os_accounts",
                 "List OS user accounts discovered in the case. Returns SID/UID, login name, " +
                 "full name, account type, status, creation time, extended attributes " +
                 "(e.g., home directory, login script, last login), and which data sources " +
@@ -251,7 +264,7 @@ class TskQueryService {
                 "Useful for identifying users, admins, and service accounts on examined systems.",
                 Map.of()),
 
-            tool("get_communications_accounts",
+            toolWithNote("get_communications_accounts",
                 "List accounts found in communications data: email addresses, phone numbers, " +
                 "Skype/Facebook/WhatsApp/Twitter/Instagram usernames, etc. Optionally filter " +
                 "by account type. Available types: CREDIT_CARD, DEVICE, EMAIL, FACEBOOK, " +
@@ -263,7 +276,7 @@ class TskQueryService {
                     "limit",       param("integer", "Max results, default 100")
                 )),
 
-            tool("get_file_content",
+            toolWithNote("get_file_content",
                 "Read the text content of a file by its object ID. Returns UTF-8 text with " +
                 "undecodable bytes replaced by '?'. " +
                 "Files larger than 65536 bytes require an explicit maxBytes parameter up to 1048576 (1 MB); " +
@@ -275,7 +288,7 @@ class TskQueryService {
                     "maxBytes", param("integer", "Maximum bytes to read, default 65536, max 1048576")
                 )),
 
-            tool("get_account_relationships",
+            toolWithNote("get_account_relationships",
                 "Get communications relationships for a specific account — who it communicated " +
                 "with and how many messages/calls. Supply the accountType (e.g. EMAIL) and " +
                 "accountId (the identifier, e.g. user@example.com or +15551234567). " +
@@ -285,7 +298,7 @@ class TskQueryService {
                     "accountId",   param("string", "Type-specific identifier e.g. user@example.com or +15551234567")
                 )),
 
-            tool("get_object_children",
+            toolWithNote("get_object_children",
                 "Return the parent and children of any object in the case database by its object ID. " +
                 "All TSK objects (files, directories, artifacts, images, volume systems, volumes, " +
                 "file systems) share a common parent-child hierarchy. A file's children may include " +
@@ -905,7 +918,8 @@ class TskQueryService {
             offset = 0;
         }
         if (offset >= fileSize) {
-            return Map.of("fileId", fileId, "offset", offset, "data", "", "truncated", false, "eof", true);
+            return Map.of("fileId", fileId, "fileName", file.getName(), "fileSize", fileSize,
+                    "offset", offset, "bytesRead", 0, "truncated", false, "eof", true, "content", "");
         }
 
         long available = fileSize - offset;
@@ -1093,9 +1107,13 @@ class TskQueryService {
     // get_account_relationships
     // -------------------------------------------------------------------------
 
-    Map<String, Object> getAccountRelationships(JsonNode args) throws TskCoreException {
+    Map<String, Object> getAccountRelationships(JsonNode args) throws TskCoreException, McpException {
         String accountTypeStr = textOrNull(args, "accountType");
         String accountId      = textOrNull(args, "accountId");
+
+        if (accountId == null) {
+            throw new McpException("accountId is required");
+        }
 
         CommunicationsManager cm = skCase.getCommunicationsManager();
         CommunicationsFilter filter = new CommunicationsFilter();
@@ -1104,7 +1122,7 @@ class TskQueryService {
         AccountDeviceInstance targetAdi = null;
         for (AccountDeviceInstance adi : cm.getAccountDeviceInstancesWithRelationships(filter)) {
             Account account = adi.getAccount();
-            if (accountId != null && !account.getTypeSpecificID().equalsIgnoreCase(accountId)) {
+            if (!account.getTypeSpecificID().equalsIgnoreCase(accountId)) {
                 continue;
             }
             if (accountTypeStr != null && !account.getAccountType().getTypeName()
@@ -1312,6 +1330,14 @@ class TskQueryService {
             s = s + ("endTime".equals(field) ? "T23:59:59Z" : "T00:00:00Z");
         }
         return Instant.parse(s).getEpochSecond();
+    }
+
+    private static final String CASE_ID_NOTE =
+        "Note: caseId in the response reflects the currently open case — " +
+        "if this changes between calls, alert the user.";
+
+    private Map<String, Object> toolWithNote(String name, String description, Map<String, Object> properties) {
+        return tool(name, description + " " + CASE_ID_NOTE, properties);
     }
 
     private Map<String, Object> tool(String name, String description, Map<String, Object> properties) {

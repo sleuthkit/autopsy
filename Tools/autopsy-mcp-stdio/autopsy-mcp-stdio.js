@@ -39,13 +39,19 @@ function readConfigPort() {
         const text = fs.readFileSync(configPath, "utf8");
         for (const line of text.split(/\r?\n/)) {
             const trimmed = line.trim();
-            if (trimmed.startsWith("#") || trimmed.startsWith("!") || !trimmed.includes("=")) continue;
-            const eqIdx = trimmed.indexOf("=");
-            const key = trimmed.substring(0, eqIdx).trim();
-            const value = trimmed.substring(eqIdx + 1).trim();
+            if (trimmed.startsWith("#") || trimmed.startsWith("!")) continue;
+            const sepIdx = Math.min(
+                trimmed.includes("=") ? trimmed.indexOf("=") : Infinity,
+                trimmed.includes(":") ? trimmed.indexOf(":") : Infinity
+            );
+            if (sepIdx === Infinity) continue;
+            const key = trimmed.substring(0, sepIdx).trim();
+            const value = trimmed.substring(sepIdx + 1).trim();
             if (key === "port") {
-                const port = parseInt(value, 10);
-                if (!isNaN(port) && port > 0 && port <= 65535) return port;
+                if (/^\d+$/.test(value)) {
+                    const port = parseInt(value, 10);
+                    if (port >= 1 && port <= 65535) return port;
+                }
             }
         }
     } catch { /* file missing or unreadable — fall through to default */ }
@@ -104,7 +110,7 @@ async function runTest() {
     // 2. HTTP reachability
     let data;
     try {
-        const res = await fetch("${MCP_BASE_URL}/mcp", {
+        const res = await fetch(`${MCP_BASE_URL}/mcp`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -153,7 +159,7 @@ async function runTest() {
 
     // 5. Case status — call get_case_summary to see if a case is open
     try {
-        const caseRes = await fetch("${MCP_BASE_URL}/mcp", {
+        const caseRes = await fetch(`${MCP_BASE_URL}/mcp`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -208,7 +214,7 @@ function readToken() {
 async function callJava(method, params) {
     const token = readToken(); // fresh read each call — handles case reopen
     log("INFO", `-> ${method}`);
-    const res = await fetch("${MCP_BASE_URL}/mcp", {
+    const res = await fetch(`${MCP_BASE_URL}/mcp`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

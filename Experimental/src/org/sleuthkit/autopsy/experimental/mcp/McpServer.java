@@ -120,7 +120,10 @@ public class McpServer {
             String response = protocolHandler.handle(requestBody);
             ctx.contentType("application/json").result(response);
         } catch (Exception ex) {
-            ctx.status(500).result("{\"error\": \"Internal server error\"}");
+            String msg = ex.getMessage() != null ? ex.getMessage().replace("\"", "'") : "Internal error";
+            String body = "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":" + McpProtocolHandler.ERR_INTERNAL_ERROR + ","
+                    + "\"message\":\"Internal error\",\"data\":\"" + msg + "\"},\"id\":null}";
+            ctx.status(500).contentType("application/json").result(body);
         }
     }
 

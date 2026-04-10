@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -34,9 +35,9 @@ import java.util.Map;
  */
 class McpProtocolHandler {
 
-    // JSON-RPC 2.0 reserved error codes
-    private static final int ERR_METHOD_NOT_FOUND = -32601;
-    private static final int ERR_INTERNAL_ERROR   = -32603;
+    // JSON-RPC 2.0 reserved error codes (package-private for reuse in McpServer)
+    static final int ERR_METHOD_NOT_FOUND = -32601;
+    static final int ERR_INTERNAL_ERROR   = -32603;
 
     // Used solely for tools/list — listTools() has no case dependency.
     private static final TskQueryService TOOLS_LIST_SERVICE = new TskQueryService(null, null);
@@ -85,20 +86,29 @@ class McpProtocolHandler {
         String toolName = params.path("name").asText();
         JsonNode args = params.path("arguments");
 
+        // Tools that work regardless of whether a case is open
+        if ("get_server_status".equals(toolName)) {
+            return buildServerStatus();
+        }
+        if ("get_case_summary".equals(toolName) && queryService == null) {
+            return wrapWithCaseId(
+                Map.of("message", "No case is currently open in Autopsy."), null);
+        }
+
         TskQueryService qs = queryService;
         if (qs == null) {
             throw new McpException(
                 "No case is currently open in Autopsy. Open a case first to use MCP tools.");
         }
 
-        return switch (toolName) {
-            case "query_files"        -> qs.queryFiles(args);
-            case "query_data_artifacts"    -> qs.queryDataArtifacts(args);
-            case "query_analysis_results"  -> qs.queryAnalysisResults(args);
-            case "get_hosts"            -> qs.getHosts();
-            case "query_data_sources"   -> qs.queryDataSources();
-            case "get_data_source_tree" -> qs.getDataSourceTree(args);
-            case "get_case_summary"   -> qs.getCaseSummary();
+        Object toolResult = switch (toolName) {
+            case "query_files"                 -> qs.queryFiles(args);
+            case "query_data_artifacts"        -> qs.queryDataArtifacts(args);
+            case "query_analysis_results"      -> qs.queryAnalysisResults(args);
+            case "get_hosts"                   -> qs.getHosts();
+            case "query_data_sources"          -> qs.queryDataSources();
+            case "get_data_source_tree"        -> qs.getDataSourceTree(args);
+            case "get_case_summary"            -> qs.getCaseSummary();
             case "get_file_content"            -> qs.getFileContent(args);
             case "query_tags"                  -> qs.queryTags(args);
             case "query_timeline"              -> qs.queryTimeline(args);
@@ -109,6 +119,28 @@ class McpProtocolHandler {
             case "get_object_children"         -> qs.getObjectChildren(args);
             default -> throw new McpException("Unknown tool: " + toolName);
         };
+
+        return wrapWithCaseId(toolResult, qs.getCaseName());
+    }
+
+    private Map<String, Object> wrapWithCaseId(Object result, String caseId) {
+        Map<String, Object> wrapper = new LinkedHashMap<>();
+        wrapper.put("caseId", caseId); // null when no case is open
+        wrapper.put("result", result);
+        return wrapper;
+    }
+
+    private Map<String, Object> buildServerStatus() {
+        TskQueryService qs = queryService;
+        boolean caseOpen = qs != null;
+        Map<String, Object> status = new LinkedHashMap<>();
+        status.put("server", "autopsy-mcp");
+        status.put("status", "running");
+        status.put("caseOpen", caseOpen);
+        if (caseOpen) {
+            status.put("caseName", qs.getCaseName());
+        }
+        return status;
     }
 
     private Object handleInitialize() {
