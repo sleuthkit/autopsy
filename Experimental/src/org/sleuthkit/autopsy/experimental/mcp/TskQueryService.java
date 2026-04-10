@@ -413,22 +413,18 @@ class TskQueryService {
 
         // --- mtime ---
         if (!args.path("modifiedAfter").isMissingNode()) {
-            long epoch = Instant.parse(args.path("modifiedAfter").asText()).getEpochSecond();
-            conditions.add("mtime >= " + epoch);
+            conditions.add("mtime >= " + parseTimeArg(args, "modifiedAfter", 0L));
         }
         if (!args.path("modifiedBefore").isMissingNode()) {
-            long epoch = Instant.parse(args.path("modifiedBefore").asText()).getEpochSecond();
-            conditions.add("mtime <= " + epoch);
+            conditions.add("mtime <= " + parseTimeArg(args, "modifiedBefore", 0L));
         }
 
         // --- crtime (birth/creation time) ---
         if (!args.path("createdAfter").isMissingNode()) {
-            long epoch = Instant.parse(args.path("createdAfter").asText()).getEpochSecond();
-            conditions.add("crtime >= " + epoch);
+            conditions.add("crtime >= " + parseTimeArg(args, "createdAfter", 0L));
         }
         if (!args.path("createdBefore").isMissingNode()) {
-            long epoch = Instant.parse(args.path("createdBefore").asText()).getEpochSecond();
-            conditions.add("crtime <= " + epoch);
+            conditions.add("crtime <= " + parseTimeArg(args, "createdBefore", 0L));
         }
 
         // --- parent path ---
@@ -1449,10 +1445,11 @@ class TskQueryService {
             return fallback != null ? fallback : 0L;
         }
         // Accept date-only strings (e.g. "2012-03-02").
-        // For endTime, treat as end-of-day so the full day is included.
-        // For startTime and others, treat as start-of-day (midnight UTC).
+        // End-boundary fields (endTime, *Before) expand to 23:59:59 so the full
+        // day is included; start-boundary fields expand to 00:00:00 (midnight UTC).
         if (s.length() == 10) {
-            s = s + ("endTime".equals(field) ? "T23:59:59Z" : "T00:00:00Z");
+            boolean isEndBoundary = "endTime".equals(field) || field.endsWith("Before");
+            s = s + (isEndBoundary ? "T23:59:59Z" : "T00:00:00Z");
         }
         return Instant.parse(s).getEpochSecond();
     }
