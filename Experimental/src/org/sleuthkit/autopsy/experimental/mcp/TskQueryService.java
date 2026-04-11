@@ -283,7 +283,7 @@ class TskQueryService {
                 "requests beyond that are rejected — use offset+maxBytes to page through larger files. " +
                 "Returns the content string, actual bytes read, file size, and whether the content was truncated.",
                 Map.of(
-                    "fileId",   param("integer", "Object ID of the file (from query_files objectId field)"),
+                    "objectId",   param("integer", "Object ID of the file (from query_files objectId field)"),
                     "offset",   param("integer", "Byte offset to start reading from, default 0"),
                     "maxBytes", param("integer", "Maximum bytes to read, default 65536, max 1048576")
                 )),
@@ -323,10 +323,10 @@ class TskQueryService {
                 "Reports may be plain text or HTML — check the contentType field. " +
                 "Files larger than 65536 bytes require an explicit maxBytes parameter up to 1048576 (1 MB); " +
                 "requests beyond that are rejected — use offset+maxBytes to page through larger reports. " +
-                "Returns reportId, reportName, path, fileSize, contentType, offset, bytesRead, " +
+                "Returns objectId, reportName, path, fileSize, contentType, offset, bytesRead, " +
                 "truncated, and content.",
                 Map.of(
-                    "reportId", param("integer", "Object ID of the report (from list_reports objectId field)"),
+                    "objectId", param("integer", "Object ID of the report (from list_reports objectId field)"),
                     "offset",   param("integer", "Byte offset to start reading from, default 0"),
                     "maxBytes", param("integer", "Maximum bytes to read, default 65536, max 1048576")
                 ))
@@ -914,9 +914,9 @@ class TskQueryService {
     // -------------------------------------------------------------------------
 
     Map<String, Object> getFileContent(JsonNode args) throws TskCoreException {
-        long fileId  = args.path("fileId").asLong(-1);
+        long fileId  = args.path("objectId").asLong(-1);
         if (fileId < 0) {
-            throw new TskCoreException("fileId is required");
+            throw new TskCoreException("objectId is required");
         }
 
         long offset   = args.path("offset").asLong(0);
@@ -934,7 +934,7 @@ class TskQueryService {
             offset = 0;
         }
         if (offset >= fileSize) {
-            return Map.of("fileId", fileId, "fileName", file.getName(), "fileSize", fileSize,
+            return Map.of("objectId", fileId, "fileName", file.getName(), "fileSize", fileSize,
                     "offset", offset, "bytesRead", 0, "truncated", false, "eof", true, "content", "");
         }
 
@@ -962,7 +962,7 @@ class TskQueryService {
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("fileId",    fileId);
+        result.put("objectId",    fileId);
         result.put("fileName",  file.getName());
         result.put("fileSize",  fileSize);
         result.put("offset",    offset);
@@ -1320,10 +1320,10 @@ class TskQueryService {
     // -------------------------------------------------------------------------
 
     Map<String, Object> getReportContent(JsonNode args) throws TskCoreException, McpException {
-        if (args.path("reportId").isMissingNode()) {
-            throw new McpException("reportId is required");
+        if (args.path("objectId").isMissingNode()) {
+            throw new McpException("objectId is required");
         }
-        long reportId = args.path("reportId").asLong();
+        long reportId = args.path("objectId").asLong();
         long offset   = args.path("offset").asLong(0);
         int  maxBytes = args.path("maxBytes").asInt(65536);
         if (maxBytes <= 0 || maxBytes > 1_048_576) {
@@ -1343,7 +1343,7 @@ class TskQueryService {
         }
         if (offset >= fileSize) {
             Map<String, Object> empty = new LinkedHashMap<>();
-            empty.put("reportId",    reportId);
+            empty.put("objectId",    reportId);
             empty.put("reportName",  report.getReportName());
             empty.put("path",        report.getPath());
             empty.put("fileSize",    fileSize);
@@ -1376,7 +1376,7 @@ class TskQueryService {
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("reportId",    reportId);
+        result.put("objectId",    reportId);
         result.put("reportName",  report.getReportName());
         result.put("path",        report.getPath());
         result.put("fileSize",    fileSize);
