@@ -124,6 +124,7 @@ public class McpServer {
             String response = protocolHandler.handle(requestBody);
             ctx.contentType("application/json").result(response);
         } catch (Exception ex) {
+            logger.log(Level.SEVERE, "MCP protocol handler threw unexpectedly", ex);
             String msg = ex.getMessage() != null ? ex.getMessage() : "Internal error";
             Map<String, Object> errorDetail = new LinkedHashMap<>();
             errorDetail.put("code",    McpProtocolHandler.ERR_INTERNAL_ERROR);
@@ -137,7 +138,7 @@ public class McpServer {
             try {
                 body = MAPPER.writeValueAsString(envelope);
             } catch (Exception jsonEx) {
-                // Absolute last resort — envelope itself failed to serialize
+                logger.log(Level.SEVERE, "Failed to serialize MCP error response", jsonEx);
                 body = "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":" + McpProtocolHandler.ERR_INTERNAL_ERROR + ",\"message\":\"Internal error\"},\"id\":null}";
             }
             ctx.status(500).contentType("application/json").result(body);

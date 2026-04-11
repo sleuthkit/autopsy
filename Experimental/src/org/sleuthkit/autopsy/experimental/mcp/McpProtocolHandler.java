@@ -26,6 +26,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Parses incoming MCP JSON-RPC requests, routes tool calls to TskQueryService,
@@ -35,6 +37,8 @@ import java.util.Map;
  * definitions are static). tools/call returns a clean error when null.
  */
 class McpProtocolHandler {
+
+    private static final Logger logger = Logger.getLogger(McpProtocolHandler.class.getName());
 
     // JSON-RPC 2.0 reserved error codes (package-private for reuse in McpServer)
     static final int ERR_PARSE_ERROR      = -32700;
@@ -81,10 +85,14 @@ class McpProtocolHandler {
             };
             return buildSuccess(id, result);
         } catch (JsonProcessingException ex) {
+            logger.log(Level.WARNING, "MCP request contained malformed JSON", ex);
             return buildError(NullNode.getInstance(), ERR_PARSE_ERROR, "Parse error");
         } catch (McpException ex) {
+            // Expected protocol-level errors (unknown method/tool, bad params, no case open)
+            // are client-visible in the response — no need to flood the Autopsy log.
             return buildError(id, ex.getJsonRpcCode(), ex.getMessage());
         } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Unexpected error handling MCP request", ex);
             return buildError(id, ERR_INTERNAL_ERROR, ex.getMessage());
         }
     }
