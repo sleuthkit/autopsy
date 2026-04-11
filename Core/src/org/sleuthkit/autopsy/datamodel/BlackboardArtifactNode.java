@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -158,6 +159,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
         BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ITEM.getTypeID()
     };
+
+    private static final java.util.Collection<? extends ArtifactPropertyEnricher> ENRICHERS
+            = Lookup.getDefault().lookupAll(ArtifactPropertyEnricher.class);
 
     private final BlackboardArtifact artifact;
     private final BlackboardArtifact.Type artifactType;
@@ -1150,17 +1154,17 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             backgroundTasksPool.submit(scoTask);
         }
 
-        for (ArtifactPropertyEnricher enricher : Lookup.getDefault().lookupAll(ArtifactPropertyEnricher.class)) {
+        for (ArtifactPropertyEnricher enricher : ENRICHERS) {
             try {
-                Sheet.Set enrichmentSet = enricher.getEnrichment(artifact);
-                if (enrichmentSet != null) {
-                    if (sheet.get(enrichmentSet.getName()) != null) {
+                Optional<Sheet.Set> enrichmentSet = enricher.getEnrichment(artifact);
+                enrichmentSet.ifPresent(s -> {
+                    if (sheet.get(s.getName()) != null) {
                         logger.log(Level.WARNING, String.format("Enricher %s returned a Sheet.Set with duplicate name '%s' for artifact %d; skipping to avoid overwriting existing properties",
-                                enricher.getClass().getName(), enrichmentSet.getName(), artifact.getArtifactID()));
+                                enricher.getClass().getName(), s.getName(), artifact.getArtifactID()));
                     } else {
-                        sheet.put(enrichmentSet);
+                        sheet.put(s);
                     }
-                }
+                });
             } catch (Exception ex) {
                 logger.log(Level.WARNING, String.format("Error getting property enrichment from %s for artifact %d",
                         enricher.getClass().getName(), artifact.getArtifactID()), ex);

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Optional;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -37,7 +38,8 @@ public interface ArtifactPropertyEnricher {
 
     /**
      * Returns an additional Sheet.Set to append to the property sheet for the
-     * given artifact, or null if this enricher has no supplemental data for it.
+     * given artifact, or an empty Optional if this enricher has no supplemental
+     * data for it.
      *
      * Implementations must be efficient: this is called on every node
      * expansion. Results should be cached where appropriate.
@@ -49,10 +51,11 @@ public interface ArtifactPropertyEnricher {
      *
      * @param artifact The artifact whose property sheet is being built.
      *
-     * @return A Sheet.Set to append, or null if none.
+     * @return An Optional containing a Sheet.Set to append, or an empty
+     *         Optional if none.
      *
      * @throws TskCoreException If there is an error accessing the case
      *                          database.
      */
-    Sheet.Set getEnrichment(BlackboardArtifact artifact) throws TskCoreException;
+    Optional<Sheet.Set> getEnrichment(BlackboardArtifact artifact) throws TskCoreException;
 }
