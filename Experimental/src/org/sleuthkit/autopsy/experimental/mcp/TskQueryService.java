@@ -201,7 +201,7 @@ class TskQueryService {
 
             toolWithNote("query_data_sources",
                 "List all data sources (disk images, logical file sets) in the current case. " +
-                "Returns id, name, type, size, timezone, and for disk images: image type, " +
+                "Returns objectId, name, type, size, timezone, and for disk images: image type, " +
                 "sector size, file paths, and acquisition hashes (MD5/SHA-1/SHA-256).",
                 Map.of()),
 
@@ -286,7 +286,8 @@ class TskQueryService {
                     "objectId",   param("integer", "Object ID of the file (from query_files objectId field)"),
                     "offset",   param("integer", "Byte offset to start reading from, default 0"),
                     "maxBytes", param("integer", "Maximum bytes to read, default 65536, max 1048576")
-                )),
+                ),
+                List.of("objectId")),
 
             toolWithNote("get_account_relationships",
                 "Get communications relationships for a specific account — who it communicated " +
@@ -296,7 +297,8 @@ class TskQueryService {
                 Map.of(
                     "accountType", param("string", "Account type e.g. EMAIL, PHONE (required)"),
                     "accountId",   param("string", "Type-specific identifier e.g. user@example.com or +15551234567 (required)")
-                )),
+                ),
+                List.of("accountType", "accountId")),
 
             toolWithNote("get_object_children",
                 "Return the parent and children of any object in the case database by its object ID. " +
@@ -304,32 +306,34 @@ class TskQueryService {
                 "file systems) share a common parent-child hierarchy. A file's children may include " +
                 "both derived files and blackboard artifacts. An image's children include volume systems " +
                 "and file systems. Use this to navigate the object tree starting from any known ID. " +
-                "Each child entry includes its id, objectType, and type-specific summary fields " +
+                "Each child entry includes its objectId, objectType, and type-specific summary fields " +
                 "(name/path/size for files; artifactType/attributes for artifacts; fsType for file " +
                 "systems; etc.).",
                 Map.of(
                     "objectId", param("integer", "Object ID of the item whose children you want (required)")
-                )),
+                ),
+                List.of("objectId")),
 
             toolWithNote("list_reports",
                 "List all reports that have been generated for the current case. " +
-                "Returns id, reportName, sourceModule, path, createdTime, size, and contentType " +
+                "Returns objectId, reportName, sourceModule, path, createdTime, size, and contentType " +
                 "(text/plain or text/html) for each report. Use this before get_report_content " +
                 "to discover available report IDs and names.",
                 Map.of()),
 
             toolWithNote("get_report_content",
-                "Read the content of a case report by its id (from list_reports). " +
+                "Read the content of a case report by its objectId (from list_reports). " +
                 "Reports may be plain text or HTML — check the contentType field. " +
                 "Files larger than 65536 bytes require an explicit maxBytes parameter up to 1048576 (1 MB); " +
                 "requests beyond that are rejected — use offset+maxBytes to page through larger reports. " +
                 "Returns objectId, reportName, path, fileSize, contentType, offset, bytesRead, " +
-                "truncated, and content.",
+                "truncated, eof, and content.",
                 Map.of(
                     "objectId", param("integer", "Object ID of the report (from list_reports objectId field)"),
                     "offset",   param("integer", "Byte offset to start reading from, default 0"),
                     "maxBytes", param("integer", "Maximum bytes to read, default 65536, max 1048576")
-                ))
+                ),
+                List.of("objectId"))
         );
     }
 
@@ -1351,6 +1355,7 @@ class TskQueryService {
             empty.put("offset",      offset);
             empty.put("bytesRead",   0);
             empty.put("truncated",   false);
+            empty.put("eof",         true);
             empty.put("content",     "");
             return empty;
         }
@@ -1384,6 +1389,7 @@ class TskQueryService {
         result.put("offset",      offset);
         result.put("bytesRead",   buf.length);
         result.put("truncated",   truncated);
+        result.put("eof",         !truncated);
         result.put("content",     chars.toString());
         return result;
     }
@@ -1452,6 +1458,10 @@ class TskQueryService {
         return tool(name, description + " " + CASE_ID_NOTE, properties);
     }
 
+    private Map<String, Object> toolWithNote(String name, String description, Map<String, Object> properties, List<String> required) {
+        return tool(name, description + " " + CASE_ID_NOTE, properties, required);
+    }
+
     private Map<String, Object> tool(String name, String description, Map<String, Object> properties) {
         return Map.of(
             "name", name,
@@ -1459,6 +1469,18 @@ class TskQueryService {
             "inputSchema", Map.of(
                 "type", "object",
                 "properties", properties
+            )
+        );
+    }
+
+    private Map<String, Object> tool(String name, String description, Map<String, Object> properties, List<String> required) {
+        return Map.of(
+            "name", name,
+            "description", description,
+            "inputSchema", Map.of(
+                "type", "object",
+                "properties", properties,
+                "required", required
             )
         );
     }

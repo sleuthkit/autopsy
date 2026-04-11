@@ -149,16 +149,35 @@ async function runTest() {
     }
     checks.push(`  [OK] Valid MCP JSON-RPC response received`);
 
-    // 4. Tools list
+    // 4. Tools list — expect at least 15 tools and spot-check 5 known ones
     const tools = data.result;
-    if (!Array.isArray(tools) || tools.length === 0) {
-        checks.push(`  [FAIL] tools/list returned no tools`);
+    if (!Array.isArray(tools) || tools.length < 15) {
+        checks.push(`  [FAIL] tools/list returned ${Array.isArray(tools) ? tools.length : 0} tools (expected ≥ 15)`);
         printTestResults(checks, false);
         return;
     }
-    checks.push(`  [OK] ${tools.length} tools available:`);
-    for (const t of tools) {
-        checks.push(`       - ${t.name}`);
+    checks.push(`  [OK] ${tools.length} tools available`);
+
+    const SPOT_CHECK = [
+        "get_case_summary",
+        "query_files",
+        "query_data_sources",
+        "query_data_artifacts",
+        "get_file_content",
+    ];
+    const toolNames = new Set(tools.map(t => t.name));
+    let spotFail = false;
+    for (const name of SPOT_CHECK) {
+        if (toolNames.has(name)) {
+            checks.push(`  [OK] spot-check tool present: ${name}`);
+        } else {
+            checks.push(`  [FAIL] expected tool missing: ${name}`);
+            spotFail = true;
+        }
+    }
+    if (spotFail) {
+        printTestResults(checks, false);
+        return;
     }
 
     // 5. Case status — call get_case_summary to see if a case is open
@@ -267,14 +286,33 @@ const server = new Server(
     { capabilities: { tools: {} } }
 );
 
-// Proxy tools/list straight through — tool definitions live only in Java
+// Synthetic fallback tool returned when Autopsy is not reachable.
+// Keeps Claude Desktop from reporting the server as broken.
+const UNAVAILABLE_TOOL = {
+    name: "get_server_status",
+    description:
+        "Autopsy is not reachable. Make sure the Autopsy desktop application is running " +
+        "with a case open and that the MCP server is enabled. Then ask Claude to try again.",
+    inputSchema: { type: "object", properties: {} }
+};
+
+// Proxy tools/list straight through — tool definitions live only in Java.
+// If Autopsy is not running, return a single status tool so Claude Desktop
+// can report a useful message rather than failing to load the server entirely.
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-    const tools = await callJava("tools/list", {});
-    log("INFO", `tools/list returned ${tools.length} tools`);
-    return { tools };
+    try {
+        const tools = await callJava("tools/list", {});
+        log("INFO", `tools/list returned ${tools.length} tools`);
+        return { tools };
+    } catch (err) {
+        log("ERROR", `tools/list failed — Autopsy not reachable: ${err.message}`);
+        return { tools: [UNAVAILABLE_TOOL] };
+    }
 });
 
-// Proxy tools/call straight through
+// Proxy tools/call straight through.
+// On failure, return the error as text content rather than throwing so Claude
+// receives a readable message instead of a transport-level error.
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const toolName = request.params.name;
     log("INFO", `tools/call ${toolName}`);
@@ -288,7 +326,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
     } catch (err) {
         log("ERROR", `tools/call ${toolName} failed: ${err.message}`);
-        throw err;
+        return {
+            content: [{ type: "text", text: `Autopsy is not reachable: ${err.message}` }],
+            isError: true
+        };
     }
 });
 
