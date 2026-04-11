@@ -33,11 +33,15 @@
         <os family="windows"/>  
     </condition>  
     
-    <condition property="os.family" value="mac">  
-        <os family="mac"/>  
-    </condition> 
-     
-    <import file="build-${os.family}.xml"/> 
+    <condition property="os.family" value="mac">
+        <os family="mac"/>
+    </condition>
+
+    <condition property="is.windows">
+        <os family="windows"/>
+    </condition>
+
+    <import file="build-${os.family}.xml"/>
     
     <!-- Third party tools dependencies -->
     <!-- import ant-contrib tools -->
@@ -86,10 +90,10 @@
         </subant>
     </target>
     
-    <!-- Compile the MCP STDIO exe only when the JS source is newer than the existing exe.
+    <!-- Compile the MCP STDIO exe only on Windows and only when the JS source is newer than the existing exe.
          The exe is excluded from git; it must be built locally before packaging a release.
          If compilation fails, make sure Claude Desktop is closed — it locks the EXE. -->
-    <target name="compile-mcp-stdio" description="Compile autopsy-mcp-stdio.exe if source has changed">
+    <target name="compile-mcp-stdio" if="is.windows" description="Compile autopsy-mcp-stdio.exe if source has changed (Windows only)">
         <uptodate property="mcp.stdio.uptodate"
                   srcfile="${basedir}/Tools/autopsy-mcp-stdio/autopsy-mcp-stdio.js"
                   targetfile="${basedir}/Tools/autopsy-mcp-stdio/dist/autopsy-mcp-stdio.exe"/>
@@ -103,18 +107,17 @@
         <echo message="autopsy-mcp-stdio.js has changed — recompiling autopsy-mcp-stdio.exe..."/>
         <echo message="NOTE: If this fails, close Claude Desktop first (it locks the EXE while running)."/>
         <mkdir dir="${basedir}/Tools/autopsy-mcp-stdio/dist"/>
-        <exec executable="cmd" dir="${basedir}/Tools/autopsy-mcp-stdio" failonerror="true">
-            <arg value="/c"/>
-            <arg value="npm run package"/>
+        <exec executable="npm" dir="${basedir}/Tools/autopsy-mcp-stdio" failonerror="true">
+            <arg value="run"/>
+            <arg value="package"/>
         </exec>
         <echo message="autopsy-mcp-stdio.exe compiled successfully."/>
     </target>
 
     <target name="-npm-install-if-needed" unless="mcp.stdio.npm.installed">
         <echo message="node_modules not found — running npm install in Tools/autopsy-mcp-stdio..."/>
-        <exec executable="cmd" dir="${basedir}/Tools/autopsy-mcp-stdio" failonerror="true">
-            <arg value="/c"/>
-            <arg value="npm install"/>
+        <exec executable="npm" dir="${basedir}/Tools/autopsy-mcp-stdio" failonerror="true">
+            <arg value="install"/>
         </exec>
     </target>
 
@@ -172,7 +175,12 @@
         </copy>
         
         <copy file="${basedir}/Tools/ManifestTool/ManifestTool.exe" todir="${zip-tmp}/${app.name}/bin"/>
-        <copy file="${basedir}/Tools/autopsy-mcp-stdio/dist/autopsy-mcp-stdio.exe" todir="${zip-tmp}/${app.name}/bin"/>
+        <if>
+            <isset property="is.windows"/>
+            <then>
+                <copy file="${basedir}/Tools/autopsy-mcp-stdio/dist/autopsy-mcp-stdio.exe" todir="${zip-tmp}/${app.name}/bin"/>
+            </then>
+        </if>
         
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         
