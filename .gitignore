@@ -109,3 +109,6 @@ hs_err_pid*.log
 /thirdparty/yara/yarabridge/.vs/
 
 */path_list.txt
+
+/Tools/autopsy-mcp-stdio/node_modules/
+/Tools/autopsy-mcp-stdio/dist/

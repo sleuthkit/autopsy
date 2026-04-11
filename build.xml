@@ -86,7 +86,39 @@
         </subant>
     </target>
     
-    <!-- This target is similar to the regular test target that calls test on all nbm's, 
+    <!-- Compile the MCP STDIO exe only when the JS source is newer than the existing exe.
+         The exe is excluded from git; it must be built locally before packaging a release.
+         If compilation fails, make sure Claude Desktop is closed — it locks the EXE. -->
+    <target name="compile-mcp-stdio" description="Compile autopsy-mcp-stdio.exe if source has changed">
+        <uptodate property="mcp.stdio.uptodate"
+                  srcfile="${basedir}/Tools/autopsy-mcp-stdio/autopsy-mcp-stdio.js"
+                  targetfile="${basedir}/Tools/autopsy-mcp-stdio/dist/autopsy-mcp-stdio.exe"/>
+        <antcall target="-compile-mcp-stdio-if-needed"/>
+    </target>
+
+    <target name="-compile-mcp-stdio-if-needed" unless="mcp.stdio.uptodate">
+        <available property="mcp.stdio.npm.installed"
+                   file="${basedir}/Tools/autopsy-mcp-stdio/node_modules" type="dir"/>
+        <antcall target="-npm-install-if-needed"/>
+        <echo message="autopsy-mcp-stdio.js has changed — recompiling autopsy-mcp-stdio.exe..."/>
+        <echo message="NOTE: If this fails, close Claude Desktop first (it locks the EXE while running)."/>
+        <mkdir dir="${basedir}/Tools/autopsy-mcp-stdio/dist"/>
+        <exec executable="cmd" dir="${basedir}/Tools/autopsy-mcp-stdio" failonerror="true">
+            <arg value="/c"/>
+            <arg value="npm run package"/>
+        </exec>
+        <echo message="autopsy-mcp-stdio.exe compiled successfully."/>
+    </target>
+
+    <target name="-npm-install-if-needed" unless="mcp.stdio.npm.installed">
+        <echo message="node_modules not found — running npm install in Tools/autopsy-mcp-stdio..."/>
+        <exec executable="cmd" dir="${basedir}/Tools/autopsy-mcp-stdio" failonerror="true">
+            <arg value="/c"/>
+            <arg value="npm install"/>
+        </exec>
+    </target>
+
+    <!-- This target is similar to the regular test target that calls test on all nbm's,
     but this target excludes the Testing nbm which runs the regression tests -->
     <target name="test-no-regression" depends="build" description="Runs tests for all modules in the suite excluding the regression tests of the Testing NBM.">
         <!--taken from https://stackoverflow.com/a/1176101/2375948 ; remove "Testing" from the modules and provide 'modulesNoTesting' as result. -->
@@ -290,7 +322,7 @@
     </target>
     
     <!-- override build to add branding -->
-    <target name="build" depends="build-core-test-libs,build-brand,suite.build,chmod_executables" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
+    <target name="build" depends="build-core-test-libs,build-brand,suite.build,chmod_executables,compile-mcp-stdio" description="Compiles autopsy and produces a basic branded build that can run on a dev system" />
  
     <target name="build-brand" depends="-init">
         
