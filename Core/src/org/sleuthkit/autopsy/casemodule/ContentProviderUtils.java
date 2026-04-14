@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.ContentStreamProvider;
@@ -34,6 +36,8 @@ import org.sleuthkit.datamodel.ContentStreamProvider;
  * major.minor (X.Y) is identical.
  */
 class ContentProviderUtils {
+
+    private static final Logger logger = Logger.getLogger(ContentProviderUtils.class.getName());
 
     private ContentProviderUtils() {
     }
@@ -55,7 +59,7 @@ class ContentProviderUtils {
             return Optional.empty();
         }
         String[] parts = name.substring(lastUnderscore + 1).split("\\.");
-        if (parts.length < 3) {
+        if (parts.length != 3) {
             return Optional.empty();
         }
         try {
@@ -154,9 +158,13 @@ class ContentProviderUtils {
             if (provider != null
                     && (StringUtils.equalsIgnoreCase(createdName, provider.getName())
                         || isVersionCompatible(createdName, provider.getName()))) {
-                ContentStreamProvider contentProvider = provider.load();
-                if (contentProvider != null) {
-                    return contentProvider;
+                try {
+                    ContentStreamProvider contentProvider = provider.load();
+                    if (contentProvider != null) {
+                        return contentProvider;
+                    }
+                } catch (Exception ex) {
+                    logger.log(Level.WARNING, "Content provider " + provider.getName() + " threw an exception during load(); skipping.", ex);
                 }
             }
         }

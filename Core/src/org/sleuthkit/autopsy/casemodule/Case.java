@@ -2782,6 +2782,9 @@ public class Case {
         "Case.exceptionMessage.contentProviderVersionMismatch=The installed content provider plugin is not compatible with this case.",
         "# {0} - provider name", "Case.contentProviderNotFound.message=This case requires a content provider plugin (''{0}'') that is not installed. Please install the appropriate plugin.",
         "Case.contentProviderNotFound.title=Content Provider Not Found",
+        "# {0} - provider name", "Case.contentProviderLoadFailed.message=The content provider plugin (''{0}'') is installed but could not be loaded. Check the module for errors.",
+        "Case.contentProviderLoadFailed.title=Content Provider Load Failed",
+        "Case.exceptionMessage.contentProviderLoadFailed=The content provider plugin is installed but failed to load.",
         "Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. See Tools, Options, Multi-User."
     })
     private void openCaseDataBase(ProgressIndicator progressIndicator) throws CaseActionException {
@@ -2794,23 +2797,30 @@ public class Case {
                 String createdName = metadata.getContentProviderName().trim();
                 Optional<AutopsyContentProvider> installedProvider = ContentProviderUtils.findInstalledProvider(createdName);
                 if (installedProvider.isPresent()) {
-                    String baseName = ContentProviderUtils.parseProviderBaseName(createdName).orElse(createdName);
-                    String requiredVersion = ContentProviderUtils.parseProviderVersion(createdName)
-                            .map(v -> v[0] + "." + v[1] + "." + v[2]).orElse(createdName);
-                    String installedVersion = ContentProviderUtils.parseProviderVersion(installedProvider.get().getName())
-                            .map(v -> v[0] + "." + v[1] + "." + v[2]).orElse(installedProvider.get().getName());
-                    JOptionPane.showMessageDialog(
-                            WindowManager.getDefault().getMainWindow(),
-                            Bundle.Case_versionMismatch_message(baseName, requiredVersion, installedVersion),
-                            Bundle.Case_versionMismatch_title(),
-                            JOptionPane.ERROR_MESSAGE);
-                    throw new CaseActionException(Bundle.Case_exceptionMessage_contentProviderVersionMismatch());
+                    if (RuntimeProperties.runningWithGUI()) {
+                        try {
+                            SwingUtilities.invokeAndWait(() -> JOptionPane.showMessageDialog(
+                                    WindowManager.getDefault().getMainWindow(),
+                                    Bundle.Case_contentProviderLoadFailed_message(createdName),
+                                    Bundle.Case_contentProviderLoadFailed_title(),
+                                    JOptionPane.ERROR_MESSAGE));
+                        } catch (InterruptedException | InvocationTargetException ex) {
+                            logger.log(Level.WARNING, "Error showing content provider load failed dialog", ex);
+                        }
+                    }
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_contentProviderLoadFailed());
                 } else {
-                    JOptionPane.showMessageDialog(
-                            WindowManager.getDefault().getMainWindow(),
-                            Bundle.Case_contentProviderNotFound_message(createdName),
-                            Bundle.Case_contentProviderNotFound_title(),
-                            JOptionPane.ERROR_MESSAGE);
+                    if (RuntimeProperties.runningWithGUI()) {
+                        try {
+                            SwingUtilities.invokeAndWait(() -> JOptionPane.showMessageDialog(
+                                    WindowManager.getDefault().getMainWindow(),
+                                    Bundle.Case_contentProviderNotFound_message(createdName),
+                                    Bundle.Case_contentProviderNotFound_title(),
+                                    JOptionPane.ERROR_MESSAGE));
+                        } catch (InterruptedException | InvocationTargetException ex) {
+                            logger.log(Level.WARNING, "Error showing content provider not found dialog", ex);
+                        }
+                    }
                     throw new CaseActionException(Bundle.Case_exceptionMessage_contentProviderCouldNotBeFound());
                 }
             }

@@ -109,6 +109,9 @@ Case.servicesException.notificationTitle={0} Error
 # {0} - service name
 # {1} - exception message
 Case.servicesException.serviceResourcesCloseError=Could not close case resources for {0} service: {1}
+# {0} - provider name, {1} - required version, {2} - installed version
+Case.versionMismatch.message=This case requires version {1} of the ''{0}'' plugin but version {2} is installed. Please upgrade the module to version {1} or a compatible version.
+Case.versionMismatch.title=Content Provider Version Mismatch
 Case_caseType_multiUser=Multi-user case
 Case_caseType_singleUser=Single-user case
 Case_checkImagePaths_exceptionOccurred=An exception occurred while checking if image paths are present

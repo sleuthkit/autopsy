@@ -82,10 +82,7 @@ public class ExtractActionHelper {
      * @param event
      * @param selectedFile Selected file
      */
-    @NbBundle.Messages({"ExtractActionHelper.noOpenCase.errMsg=No open case available.",
-        "ExtractActionHelper.extractOverwrite.title=Export to csv file",
-        "# {0} - fileName",
-        "ExtractActionHelper.extractOverwrite.msg=A file already exists at {0}.  Do you want to overwrite the existing file?"
+    @NbBundle.Messages({"ExtractActionHelper.noOpenCase.errMsg=No open case available."
     })
     private void extractFile(ActionEvent event, AbstractFile selectedFile) {
         Case openCase;
