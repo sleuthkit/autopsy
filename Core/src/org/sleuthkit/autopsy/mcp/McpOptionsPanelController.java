@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.mcp;
+package org.sleuthkit.autopsy.mcp;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_MCP",
-        iconBase = "org/sleuthkit/autopsy/experimental/images/options-icon.png",
+        iconBase = "org/sleuthkit/autopsy/mcp/options-icon.png",
         position = 800,
         keywords = "#OptionsCategory_Keywords_MCP",
         keywordsCategory = "AI: MCP Server")

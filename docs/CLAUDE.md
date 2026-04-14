@@ -19,3 +19,7 @@ static AutopsyContentProvider findInstalledProvider(String createdName) { ... } 
 ```
 
 This applies to all new helper and utility methods. It does not apply to framework callbacks or interface overrides whose contract requires returning null (e.g., NetBeans/Swing APIs).
+
+## Refactoring
+
+When moving files and packages, use 'git mv' instead of deleting a file and creating a new file. 
