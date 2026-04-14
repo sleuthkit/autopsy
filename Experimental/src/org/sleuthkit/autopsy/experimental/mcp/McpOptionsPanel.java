@@ -48,11 +48,11 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 @Messages({
     "McpOptionsPanel.descriptionLabel.text=<html>The Autopsy MCP (Model Context Protocol) server allows AI assistants "
         + "such as Claude to query the currently open case using natural language. "
-        + "When enabled, a local HTTP server starts on 127.0.0.1 when Autopsy starts, "
-        + "and an auth token is written to ~/.autopsy/mcp-token for use by the STDIO wrapper.</html>",
+        + "When enabled, Autopsy opens a network port for local connections only. "
+        + "The STDIO CLI program listed below is launched by Claude Desktop and connects to the Autopsy port.</html>",
     "McpOptionsPanel.enabledCheckBox.text=Enable MCP server",
     "McpOptionsPanel.windowsOnlyLabel.text=MCP server is only supported on Windows.",
-    "McpOptionsPanel.stdioLocationLabel.text=STDIO wrapper location:",
+    "McpOptionsPanel.stdioLocationLabel.text=STDIO CLI Tool location:",
     "McpOptionsPanel.stdioNotFoundLabel.text=Not found",
     "McpOptionsPanel.restartNoteLabel.text=Changes take effect after restarting Autopsy.",
     "McpOptionsPanel.restartDialogTitle.text=Restart Required",
