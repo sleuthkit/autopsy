@@ -82,14 +82,12 @@ public final class McpOptionsPanelController extends OptionsPanelController {
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
-        if (pcs.getPropertyChangeListeners().length == 0) {
-            pcs.addPropertyChangeListener(l);
-        }
+        pcs.addPropertyChangeListener(l);
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
-        // See CommandLineIngestSettingsPanelController — NB framework does not call this.
+        pcs.removePropertyChangeListener(l);
     }
 
     private McpOptionsPanel getPanel() {

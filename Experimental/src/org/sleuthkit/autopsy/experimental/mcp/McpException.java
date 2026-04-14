@@ -21,14 +21,37 @@ package org.sleuthkit.autopsy.experimental.mcp;
 /**
  * Checked exception for MCP protocol errors (unknown methods, unknown tools,
  * bad parameters). The message is included directly in the JSON-RPC error response.
+ * The jsonRpcCode is returned verbatim in the JSON-RPC error object's "code" field.
  */
 class McpException extends Exception {
 
+    /** Unknown method or tool name. */
+    static final int ERR_METHOD_NOT_FOUND = -32601;
+    /** Missing or invalid parameter. */
+    static final int ERR_INVALID_PARAMS   = -32602;
+    /** Internal server error. */
+    static final int ERR_INTERNAL_ERROR   = -32603;
+
+    private final int jsonRpcCode;
+
+    /** Parameter-validation error (defaults to ERR_INVALID_PARAMS). */
     McpException(String message) {
         super(message);
+        this.jsonRpcCode = ERR_INVALID_PARAMS;
     }
 
+    McpException(String message, int jsonRpcCode) {
+        super(message);
+        this.jsonRpcCode = jsonRpcCode;
+    }
+
+    /** Wraps a cause; defaults to ERR_INTERNAL_ERROR. */
     McpException(String message, Throwable cause) {
         super(message, cause);
+        this.jsonRpcCode = ERR_INTERNAL_ERROR;
+    }
+
+    int getJsonRpcCode() {
+        return jsonRpcCode;
     }
 }

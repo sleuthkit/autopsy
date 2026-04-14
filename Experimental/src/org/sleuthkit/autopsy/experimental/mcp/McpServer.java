@@ -18,15 +18,23 @@
  */
 package org.sleuthkit.autopsy.experimental.mcp;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import static io.javalin.apibuilder.ApiBuilder.*;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,7 +51,10 @@ import java.util.logging.Logger;
 public class McpServer {
 
     private static final Logger logger = Logger.getLogger(McpServer.class.getName());
-    private static final int DEFAULT_PORT = 8765;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final int DEFAULT_PORT = 8743;
+    private static final String CONFIG_FILE_NAME = "mcp-config.properties";
+    private static final String PORT_PROPERTY = "port";
 
     private final String authToken;
     private final McpProtocolHandler protocolHandler;
@@ -74,28 +85,29 @@ public class McpServer {
 
     public void start() {
         app = Javalin.create(config -> {
-            config.jetty.defaultHost = "127.0.0.1"; // localhost only — never 0.0.0.0
+            config.routes.apiBuilder(() -> {
+                // Auth filter — every request must have valid Bearer token
+                before(ctx -> {
+                    String auth = ctx.header("Authorization");
+                    if (auth == null || !auth.equals("Bearer " + authToken)) {
+                        ctx.status(401).result("Unauthorized");
+                        ctx.skipRemainingHandlers();
+                    }
+                });
+
+                // MCP endpoint
+                post("/mcp", this::handleMcpRequest);
+            });
         });
 
-        // Auth filter — every request must have valid Bearer token
-        app.before(ctx -> {
-            String auth = ctx.header("Authorization");
-            if (auth == null || !auth.equals("Bearer " + authToken)) {
-                ctx.status(401).result("Unauthorized");
-                ctx.skipRemainingHandlers();
-            }
-        });
-
-        // MCP endpoint
-        app.post("/mcp", this::handleMcpRequest);
-
-        // SSE endpoint for streaming (MCP spec)
-        app.get("/mcp/sse", ctx -> {
-            // TODO: implement SSE transport if needed
-        });
-
-        app.start(DEFAULT_PORT);
-        writeTokenFile();
+        int port = readOrCreateConfigPort();
+        app.start("127.0.0.1", port); // localhost only — never 0.0.0.0
+        try {
+            writeTokenFile();
+        } catch (IOException ex) {
+            app.stop();
+            throw new RuntimeException("MCP server started but failed to write token file — aborting", ex);
+        }
     }
 
     public void stop() {
@@ -112,8 +124,67 @@ public class McpServer {
             String response = protocolHandler.handle(requestBody);
             ctx.contentType("application/json").result(response);
         } catch (Exception ex) {
-            ctx.status(500).result("{\"error\": \"Internal server error\"}");
+            logger.log(Level.SEVERE, "MCP protocol handler threw unexpectedly", ex);
+            String msg = ex.getMessage() != null ? ex.getMessage() : "Internal error";
+            Map<String, Object> errorDetail = new LinkedHashMap<>();
+            errorDetail.put("code",    McpProtocolHandler.ERR_INTERNAL_ERROR);
+            errorDetail.put("message", "Internal error");
+            errorDetail.put("data",    msg);
+            Map<String, Object> envelope = new LinkedHashMap<>();
+            envelope.put("jsonrpc", "2.0");
+            envelope.put("error",   errorDetail);
+            envelope.put("id",      null);
+            String body;
+            try {
+                body = MAPPER.writeValueAsString(envelope);
+            } catch (Exception jsonEx) {
+                logger.log(Level.SEVERE, "Failed to serialize MCP error response", jsonEx);
+                body = "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":" + McpProtocolHandler.ERR_INTERNAL_ERROR + ",\"message\":\"Internal error\"},\"id\":null}";
+            }
+            ctx.status(500).contentType("application/json").result(body);
         }
+    }
+
+    /**
+     * Reads the port from mcp-config.properties in the MCP directory. If the
+     * file does not exist it is created with the default port so users have a
+     * file they can edit. Returns the configured port, or DEFAULT_PORT if the
+     * file cannot be read or contains an invalid value.
+     */
+    private int readOrCreateConfigPort() {
+        Path configPath = getMcpDir().resolve(CONFIG_FILE_NAME);
+        Properties props = new Properties();
+
+        if (Files.exists(configPath)) {
+            try (InputStream in = Files.newInputStream(configPath)) {
+                props.load(in);
+                String portStr = props.getProperty(PORT_PROPERTY, "").trim();
+                int port = Integer.parseInt(portStr);
+                if (port > 0 && port <= 65535) {
+                    return port;
+                }
+                logger.log(Level.WARNING, "Invalid port in MCP config ({0}), using default {1}",
+                        new Object[]{portStr, DEFAULT_PORT});
+            } catch (IOException | NumberFormatException ex) {
+                logger.log(Level.WARNING, "Could not read MCP config port, using default", ex);
+            }
+        } else {
+            // Create the file so users know it exists and can edit it.
+            try {
+                Files.createDirectories(configPath.getParent());
+                props.setProperty(PORT_PROPERTY, String.valueOf(DEFAULT_PORT));
+                try (OutputStream out = Files.newOutputStream(configPath,
+                        StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                    props.store(out,
+                            "Autopsy MCP server configuration\n"
+                            + "# Change the port number below if it conflicts with another application.\n"
+                            + "# Restart Autopsy after editing this file.");
+                }
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Could not create MCP config file, using default port", ex);
+            }
+        }
+        return DEFAULT_PORT;
     }
 
     private String generateToken() {
@@ -134,15 +205,11 @@ public class McpServer {
         return getMcpDir().resolve("mcp-token");
     }
 
-    private void writeTokenFile() {
-        try {
-            Path tokenPath = getTokenPath();
-            Files.createDirectories(tokenPath.getParent());
-            Files.writeString(tokenPath, authToken);
-            tokenPath.toFile().deleteOnExit();
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Failed to write MCP token file", ex);
-        }
+    private void writeTokenFile() throws IOException {
+        Path tokenPath = getTokenPath();
+        Files.createDirectories(tokenPath.getParent());
+        Files.writeString(tokenPath, authToken);
+        tokenPath.toFile().deleteOnExit();
     }
 
     private void deleteTokenFile() {

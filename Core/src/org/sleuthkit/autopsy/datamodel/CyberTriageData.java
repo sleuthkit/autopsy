@@ -25,8 +25,9 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -303,8 +304,8 @@ public class CyberTriageData implements AutopsyVisitableItem {
     public static class ErrorNode extends DisplayableItemNode {
 
         private static final String ICON_PATH = "org/sleuthkit/autopsy/images/warning-icon-16.png";
-        private static final SimpleDateFormat DATE_FORMAT
-                = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        private static final DateTimeFormatter DATE_FORMAT
+                = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);
 
         private final CtError error;
 
@@ -346,7 +347,7 @@ public class CyberTriageData implements AutopsyVisitableItem {
             props.put(new NodeProperty<>("Description", "Description", "Error description",
                     error.description != null ? error.description : ""));
             props.put(new NodeProperty<>("Timestamp", "Timestamp", "When the error occurred",
-                    DATE_FORMAT.format(new Date(error.timestamp * 1000))));
+                    DATE_FORMAT.format(Instant.ofEpochSecond(error.timestamp))));
             props.put(new NodeProperty<>("StackTrace", "Stack Trace", "Error stack trace",
                     error.stackTrace != null ? error.stackTrace : ""));
             return sheet;

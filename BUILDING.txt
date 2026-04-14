@@ -9,7 +9,7 @@ correct C libraries.
 
 
 STEPS:
-1) Get Java Setup
+1) Get Prerequisites Setup
 
 1a) Download and install 64-bit JDK version 17.
 
@@ -18,23 +18,26 @@ Autopsy has been used and tested with java 17 which can be downloaded from here:
 
 1b) Ensure that JDK_HOME is set to the root JDK directory.
 
-1c) (optional) Download and install Netbeans IDE (https://netbeans.apache.org/download/index.html)
+1c) Download and install Node.js (which includes npm) from https://nodejs.org/.
+    npm is required to build the MCP server component bundled with Autopsy.
+
+1d) (optional) Download and install Netbeans IDE (https://netbeans.apache.org/download/index.html)
 Note: Netbeans IDE is not required to build and run Autopsy,
 but it is a recommended IDE to use for development of Autopsy modules.
 
-1d) (optional) If you are going to package Autopsy, then you'll also
+1e) (optional) If you are going to package Autopsy, then you'll also
 need to set JRE_HOME_32 to the root 32-bit JRE directory and/or JRE_HOME_64
-to the root 64-bit JRE directory. 
+to the root 64-bit JRE directory.
 
-1e) (optional) For some Autopsy features to be functional, you need to add the 
+1f) (optional) For some Autopsy features to be functional, you need to add the
     java executable to the system PATH.
 
 
 2) Get Sleuth Kit Setup
 2a) Download and build a Release version of Sleuth Kit (TSK) 4.0. See
-    win32\BUILDING.txt in the TSK package for more information. You need to 
+    win32\BUILDING.txt in the TSK package for more information. You need to
     build the tsk_jni project. Select the Release Win32 or x64 target,
-    depending upon your target build. You can use a released version or download 
+    depending upon your target build. You can use a released version or download
     the latest from github:
 - git://github.com/sleuthkit/sleuthkit.git
 
@@ -76,7 +79,7 @@ Then, clone your fork and work on that source-tree:
 
 git clone https://github.com/YOUR_USERNAME/autopsy.git
 
-You will be able to submit patches by committing and pushing changes to your fork 
+You will be able to submit patches by committing and pushing changes to your fork
 and by submitting pull requests to the main Autopsy repository.
 
 5) Compile Autopsy
@@ -99,17 +102,17 @@ the build process.
 
 - The Sleuth Kit Java datamodel JAR file has native JNI libraries
 that are copied into it. These JNI libraries have dependencies on
-libewf, zlib, libintl-8, libeay32, and ssleay32 DLL files. On non-Windows 
-platforms, the JNI library also has a dependency on libtsk (on Windows, 
+libewf, zlib, libintl-8, libeay32, and ssleay32 DLL files. On non-Windows
+platforms, the JNI library also has a dependency on libtsk (on Windows,
 it is compiled into libtsk_jni).
 
 - NetBeans uses ant to build Autopsy. The build target copies the
 TSK datamodel JAR file into the project.
 
-- On a Windows system, the compile-time ant target copies the 
+- On a Windows system, the compile-time ant target copies the
 dependency libraries into the Autopsy code structure so that they can
 be found when Autopsy is run and packaged.  At run-time, the native
-library inside of the JAR file will be extracted and used. 
+library inside of the JAR file will be extracted and used.
 
 - On a Unix system, the ant target copies only the JNI library and
 then relies on the other libraries (libtsk, libewf, zilb, etc.) to
@@ -117,8 +120,8 @@ be installed on the system in their standard locations (i.e.
 /usr/local).
 
 - Every time that you do a source code update of TSK, make sure you
-rebuild both the libtsk_dll, the JAR file, and then rebuild Autopsy 
-so that it copies the latest data model JAR file. 
+rebuild both the libtsk_dll, the JAR file, and then rebuild Autopsy
+so that it copies the latest data model JAR file.
 
 
 ---------------

@@ -53,6 +53,13 @@ public class AutopsyMcpModule implements Runnable {
             return;
         }
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this::onCaseEvent);
+
+        // Seed with any case already open at startup (e.g. auto-reopen on launch).
+        try {
+            mcpServer.updateCase(Case.getCurrentCase());
+        } catch (IllegalStateException ex) {
+            // No case open at startup — normal state, nothing to seed.
+        }
     }
 
     private void onCaseEvent(PropertyChangeEvent evt) {
