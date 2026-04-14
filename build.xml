@@ -107,7 +107,7 @@
         <echo message="autopsy-mcp-stdio.js has changed — recompiling autopsy-mcp-stdio.exe..."/>
         <echo message="NOTE: If this fails, close Claude Desktop first (it locks the EXE while running)."/>
         <mkdir dir="${basedir}/Tools/autopsy-mcp-stdio/dist"/>
-        <exec executable="npm" dir="${basedir}/Tools/autopsy-mcp-stdio" failonerror="true">
+        <exec executable="npm.cmd" dir="${basedir}/Tools/autopsy-mcp-stdio" failonerror="true">
             <arg value="run"/>
             <arg value="package"/>
         </exec>
@@ -116,7 +116,7 @@
 
     <target name="-npm-install-if-needed" unless="mcp.stdio.npm.installed">
         <echo message="node_modules not found — running npm install in Tools/autopsy-mcp-stdio..."/>
-        <exec executable="npm" dir="${basedir}/Tools/autopsy-mcp-stdio" failonerror="true">
+        <exec executable="npm.cmd" dir="${basedir}/Tools/autopsy-mcp-stdio" failonerror="true">
             <arg value="install"/>
         </exec>
     </target>
