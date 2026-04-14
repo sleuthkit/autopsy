@@ -100,6 +100,7 @@ The following topics are available here:
 
 - Experimental Module
   - \subpage experimental_page
+  - \ref claude_mcp_page
   - \ref auto_ingest_page
   - \ref object_detection_page
   - \ref volatility_dsp_page
