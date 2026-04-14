@@ -37,11 +37,14 @@ public interface AutopsyContentProvider {
     ContentStreamProvider load();
 
     /**
-     * Returns the uniquely identifying name of this FileContentProvider. This
+     * Returns the uniquely identifying name of this content provider. This
      * name will be stored in the .AUT file and used for lookup when the case is
-     * opened.
+     * opened. Providers that wish to support version-compatible case opening
+     * should follow the naming convention "BASENAME_X.Y.Z", where X.Y.Z is the
+     * provider's semantic version.
      *
      * @return The unique name.
      */
     String getName();
+
 }

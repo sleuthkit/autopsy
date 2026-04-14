@@ -4,6 +4,7 @@ OsAccountDataPanel_basic_admin=Administrator
 OsAccountDataPanel_basic_creationDate=Creation Date
 OsAccountDataPanel_basic_fullname=Full Name
 OsAccountDataPanel_basic_login=Login
+OsAccountDataPanel_basic_objId=Object ID
 OsAccountDataPanel_basic_title=Basic Properties
 OsAccountDataPanel_basic_type=Type
 OsAccountDataPanel_data_accessed_title=Last Login

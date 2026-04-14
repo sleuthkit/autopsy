@@ -181,13 +181,16 @@ Progress_Message_Chrome_Cache=Chrome Cache
 Progress_Message_Chrome_Cookies=Chrome Cookies Browser {0}
 # {0} - browserName
 Progress_Message_Chrome_Downloads=Chrome Downloads Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Extensions=Chrome Extensions {0}
+# {0} - browserName
 Progress_Message_Chrome_Favicons=Chrome Downloads Favicons {0}
 Progress_Message_Chrome_FormHistory=Chrome Form History
 # {0} - browserName
 Progress_Message_Chrome_History=Chrome History Browser {0}
 # {0} - browserName
 Progress_Message_Chrome_Logins=Chrome Logins Browser {0}
+# {0} - browserName
 Progress_Message_Chrome_Profiles=Chrome Profiles {0}
 Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks
 Progress_Message_Edge_Cookies=Microsoft Edge Cookies
