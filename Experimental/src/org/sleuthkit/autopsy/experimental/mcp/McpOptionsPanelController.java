@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
         iconBase = "org/sleuthkit/autopsy/experimental/images/options-icon.png",
         position = 800,
         keywords = "#OptionsCategory_Keywords_MCP",
-        keywordsCategory = "AI / MCP")
+        keywordsCategory = "AI: MCP Server")
 public final class McpOptionsPanelController extends OptionsPanelController {
 
     private McpOptionsPanel panel;
