@@ -148,7 +148,7 @@
     <!-- This target takes the NB-built ZIP, unzips it into the dist folder, copies in
     additional files, and renames the folder to include the version number.  The folder
     is left in place for manual signing before running build-installer. -->
-    <target name="build-zip" depends="set-release-build, build, doxygen, suite.build-zip"> <!--,findJRE" -->
+    <target name="build-zip" depends="set-release-build, build, suite.build-zip"> <!--,findJRE" -->
         
         <property name="release.dir" value="${nbdist.dir}/${app.name}"/>
 
@@ -181,11 +181,6 @@
         </if>
 
         <copy file="${basedir}/icons/icon.ico" tofile="${release.dir}/icon.ico" overwrite="true"/>
-
-        <!-- Copy the Autopsy documentation to the docs folder -->
-        <copy flatten="true" todir="${release.dir}/docs">
-            <fileset dir="${basedir}/docs/doxygen-user/user-docs"/>
-        </copy>
 
         <property name="app.property.file" value="${release.dir}/etc/${app.name}.conf" />
         <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-XX:+UseStringDeduplication -J-Dprism.order=sw  -J--add-opens=java.base/java.lang=ALL-UNNAMED -J--add-opens=java.base/java.net=ALL-UNNAMED -J--add-opens=java.desktop/javax.swing=ALL-UNNAMED -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=java.desktop/sun.awt=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED -J--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED"/>
