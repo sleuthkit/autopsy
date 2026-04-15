@@ -2,7 +2,7 @@
 
 [TOC]
 
-\section Overview
+\section Claude Overview
 
 The MCP feature of Autopsy allows you to connect a GenAI MCP Client to Autopsy and query its data. Claude Desktop is often used for this, but other MCP Clients can be as well. 
 
