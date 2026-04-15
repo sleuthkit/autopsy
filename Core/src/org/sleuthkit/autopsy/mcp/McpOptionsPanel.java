@@ -35,7 +35,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.NbPreferences;
@@ -54,9 +53,8 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
     "McpOptionsPanel.windowsOnlyLabel.text=MCP server is only supported on Windows.",
     "McpOptionsPanel.stdioLocationLabel.text=STDIO CLI Tool location:",
     "McpOptionsPanel.stdioNotFoundLabel.text=Not found",
-    "McpOptionsPanel.restartNoteLabel.text=Changes take effect after restarting Autopsy.",
-    "McpOptionsPanel.restartDialogTitle.text=Restart Required",
-    "McpOptionsPanel.restartDialogMessage.text=Autopsy must be restarted for MCP server changes to take effect.",
+    "McpOptionsPanel.startErrorTitle.text=MCP Server Error",
+    "McpOptionsPanel.startErrorMessage.text=Failed to start the MCP server: {0}",
     "McpOptionsPanel.claudeConfigLabel.text=Claude configuration (paste into claude_desktop_config.json or .claude.json):",
     "McpOptionsPanel.copyButton.text=Copy to Clipboard"
 })
@@ -97,9 +95,6 @@ public class McpOptionsPanel extends JPanel {
         if (PlatformUtil.isWindowsOS()) {
             enabledCheckBox.addActionListener(e -> controller.changed());
             add(enabledCheckBox, gbc);
-
-            gbc.gridy++;
-            add(new JLabel(Bundle.McpOptionsPanel_restartNoteLabel_text()), gbc);
         } else {
             add(new JLabel(Bundle.McpOptionsPanel_windowsOnlyLabel_text()), gbc);
         }
@@ -164,7 +159,7 @@ public class McpOptionsPanel extends JPanel {
 
     /**
      * Saves current UI state to preferences. Called when OK or Apply is clicked.
-     * Shows a restart-required dialog if the enabled state changed.
+     * Starts or stops the MCP server immediately if the enabled state changed.
      */
     void store() {
         boolean wasEnabled = isMcpEnabled();
@@ -172,11 +167,26 @@ public class McpOptionsPanel extends JPanel {
         NbPreferences.forModule(McpOptionsPanel.class)
                 .putBoolean(PREF_MCP_ENABLED, nowEnabled);
         if (wasEnabled != nowEnabled) {
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
-                    this,
-                    Bundle.McpOptionsPanel_restartDialogMessage_text(),
-                    Bundle.McpOptionsPanel_restartDialogTitle_text(),
-                    JOptionPane.WARNING_MESSAGE));
+            AutopsyMcpModule mod = AutopsyMcpModule.getInstance();
+            if (mod != null) {
+                if (nowEnabled) {
+                    try {
+                        mod.enableServer();
+                    } catch (Exception ex) {
+                        // Roll back — leave the server off and restore the pref.
+                        NbPreferences.forModule(McpOptionsPanel.class)
+                                .putBoolean(PREF_MCP_ENABLED, false);
+                        enabledCheckBox.setSelected(false);
+                        JOptionPane.showMessageDialog(
+                                this,
+                                Bundle.McpOptionsPanel_startErrorMessage_text(ex.getMessage()),
+                                Bundle.McpOptionsPanel_startErrorTitle_text(),
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    mod.disableServer();
+                }
+            }
         }
     }
 

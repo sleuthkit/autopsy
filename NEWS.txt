@@ -1,3 +1,31 @@
+---------------- VERSION 4.23.0 ---------------
+New Features
+- MCP over STDIO Server
+- Signed EXE
+- Extract Thumbnails (Mark McKinon)
+- Added PropertySheetEnrichment extension point
+- Added list of RMM tools (Mark McKinnon)
+
+
+Updates
+- Solr Performance: Use Bin Protocol instead of XML and reduce Tika initializations (SKL)
+- Disable email (regexp) search during ingest by default
+- iLeapp bails out faster if not a phone (SKL)
+- Upgrade regripper to v4 (Mark McKinnon)
+- Increase zookeeper timeout (Mark McKinnon)
+- Parse thumbcache (Mark McKinnon)
+- lxss regripper for Windows Subsystem (Mark McKinnon)
+- Update SRU (Mark McKinnon)
+- Update Prefetch (Mark McKinnon)
+- Update Commons-lang library. Update c3p0 (SKL)
+- Fixed progress bar bug that didn't reset for data source modules (SKL)
+- Expanded ContentProvider to support versions and feedback messages (SKL)
+- Cyber Triage Errors are shown in new node in the tree
+
+NOTE: We have observed SIGNIFICANT slowdowns if you have an EDR monitoring both the case folders and the disk images. Exclude those folders to improve performance. 
+
+
+
 ---------------- VERSION 4.22.1 ---------------
 Library Updates
 - Use Sleuthkit 4.14.0 from Sleuth Kit Labs
