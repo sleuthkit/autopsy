@@ -23,3 +23,7 @@ This applies to all new helper and utility methods. It does not apply to framewo
 ## Refactoring
 
 When moving files and packages, use 'git mv' instead of deleting a file and creating a new file. 
+
+## Error Handling
+
+Do now ignore or swallow errors. Catch them and at a minimum log them. If they are in response to a user request, ensure they get basic feedback that an error occured. 
