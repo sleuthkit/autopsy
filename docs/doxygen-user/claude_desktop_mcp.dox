@@ -1,4 +1,4 @@
-/*! \page claude_mcp_page MCP (Claude Desktop)P Integration
+/*! \page claude_mcp_page MCP (Claude Desktop) Integration
 
 [TOC]
 
@@ -31,7 +31,7 @@ The following are the steps for Claude Desktop.
 
 Launch Autopsy, go to the Options panel, and navigate to the "AI: MCP Server" panel (far right). 
 
-\image html mcp_options.png
+\image html mcp_options.png width=600px
 
 Check to enable the feature. 
 
