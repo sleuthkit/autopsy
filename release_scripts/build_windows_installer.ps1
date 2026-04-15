@@ -250,13 +250,13 @@ Write-Host "--- Building MSI ---"
 Invoke-AI @('/build', $aip64)
 
 # Move the output MSI to the dist directory
-$outputDir = Join-Path $distDir "installer_autopsy_64-SetupFiles"
-$msiSrc    = Join-Path $outputDir "installer_autopsy_64.msi"
+$outputDir = Join-Path $distDir "installer_autopsy_$Version-64-SetupFiles"
+$msiSrc    = Join-Path $outputDir "installer_autopsy_$Version-64.msi"
 $msiDest   = Join-Path $distDir  "autopsy-$Version-64bit.msi"
 Move-Item $msiSrc $msiDest -Force
 
 # Clean up the AI build cache
-$cacheDir = Join-Path $distDir "installer_autopsy_64-cache"
+$cacheDir = Join-Path $distDir "installer_autopsy_$Version-64-cache"
 if (Test-Path $cacheDir) { Remove-Item -Recurse -Force $cacheDir }
 
 Write-Host ""
