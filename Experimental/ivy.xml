@@ -6,7 +6,5 @@
     </configurations>
     <dependencies>
         <dependency conf="experimental->default" org="net.sf.jtidy" name="jtidy" rev="r938"/>
-        <!-- MCP server: Javalin HTTP + transitive Jetty/Kotlin deps -->
-        <dependency conf="experimental->default" org="io.javalin" name="javalin" rev="7.1.0"/>
     </dependencies>
 </ivy-module>

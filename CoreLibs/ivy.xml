@@ -6,6 +6,8 @@
         
     </configurations>
     <dependencies>
+        <!-- MCP server: Javalin HTTP + transitive Jetty/Kotlin deps -->
+        <dependency conf="autopsy_core->default" org="io.javalin" name="javalin" rev="7.1.0"/>
         <dependency conf="autopsy_core->default" org="org.openjfx" name="javafx-fxml" rev="${javafx.version}">
             <artifact name="javafx-fxml" type="jar" />
             <artifact name="javafx-fxml" type="jar" e:classifier="win"/>

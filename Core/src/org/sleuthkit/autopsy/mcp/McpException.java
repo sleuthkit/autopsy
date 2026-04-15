@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.mcp;
+package org.sleuthkit.autopsy.mcp;
 
 /**
  * Checked exception for MCP protocol errors (unknown methods, unknown tools,
