@@ -8,5 +8,5 @@ McpOptionsPanel.restartNoteLabel.text=Changes take effect after restarting Autop
 McpOptionsPanel.stdioLocationLabel.text=STDIO CLI Tool location:
 McpOptionsPanel.stdioNotFoundLabel.text=Not found
 McpOptionsPanel.windowsOnlyLabel.text=MCP server is only supported on Windows.
-OptionsCategory_Name_MCP=AI / MCP
+OptionsCategory_Name_MCP=AI: MCP Server
 OptionsCategory_Keywords_MCP=mcp ai claude llm server

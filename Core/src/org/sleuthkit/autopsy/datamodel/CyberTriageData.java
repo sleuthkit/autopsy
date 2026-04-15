@@ -347,7 +347,7 @@ public class CyberTriageData implements AutopsyVisitableItem {
             props.put(new NodeProperty<>("Description", "Description", "Error description",
                     error.description != null ? error.description : ""));
             props.put(new NodeProperty<>("Timestamp", "Timestamp", "When the error occurred",
-                    DATE_FORMAT.format(Instant.ofEpochSecond(error.timestamp))));
+                    DATE_FORMAT.format(Instant.ofEpochMilli(error.timestamp))));
             props.put(new NodeProperty<>("StackTrace", "Stack Trace", "Error stack trace",
                     error.stackTrace != null ? error.stackTrace : ""));
             return sheet;

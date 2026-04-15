@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import com.basistech.df.cybertriage.autopsy.CTIntegrationMissingDialog;
 import org.sleuthkit.autopsy.featureaccess.FeatureAccessUtils;
 import com.google.common.annotations.Beta;
 import com.google.common.eventbus.Subscribe;
@@ -49,6 +48,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -182,7 +182,6 @@ public class Case {
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
     private static final String NO_NODE_ERROR_MSG_FRAGMENT = "KeeperErrorCode = NoNode";
-    private static final String CT_PROVIDER_PREFIX = "CTStandardContentProvider_";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
@@ -2777,6 +2776,15 @@ public class Case {
         "# {0} - exception message", "Case.exceptionMessage.couldNotOpenCaseDatabase=Failed to open case database:\n{0}.",
         "# {0} - exception message", "Case.exceptionMessage.unsupportedSchemaVersionMessage=Unsupported case database schema version:\n{0}.",
         "Case.exceptionMessage.contentProviderCouldNotBeFound=Content provider was specified for the case but could not be loaded.",
+        "# {0} - provider name, {1} - required version, {2} - installed version",
+        "Case.versionMismatch.message=This case requires version {1} of the ''{0}'' plugin but version {2} is installed. Please upgrade the module to version {1} or a compatible version.",
+        "Case.versionMismatch.title=Content Provider Version Mismatch",
+        "Case.exceptionMessage.contentProviderVersionMismatch=The installed content provider plugin is not compatible with this case.",
+        "# {0} - provider name", "Case.contentProviderNotFound.message=This case requires a content provider plugin (''{0}'') that is not installed. Please install the appropriate plugin.",
+        "Case.contentProviderNotFound.title=Content Provider Not Found",
+        "# {0} - provider name", "Case.contentProviderLoadFailed.message=The content provider plugin (''{0}'') is installed but could not be loaded. Check the module for errors.",
+        "Case.contentProviderLoadFailed.title=Content Provider Load Failed",
+        "Case.exceptionMessage.contentProviderLoadFailed=The content provider plugin is installed but failed to load.",
         "Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. See Tools, Options, Multi-User."
     })
     private void openCaseDataBase(ProgressIndicator progressIndicator) throws CaseActionException {
@@ -2784,12 +2792,37 @@ public class Case {
         try {
             String databaseName = metadata.getCaseDatabaseName();
 
-            ContentStreamProvider contentProvider = loadContentProvider(metadata.getContentProviderName());
+            ContentStreamProvider contentProvider = ContentProviderUtils.getContentProvider(metadata.getContentProviderName());
             if (StringUtils.isNotBlank(metadata.getContentProviderName()) && contentProvider == null) {
-                if (metadata.getContentProviderName().trim().toUpperCase().startsWith(CT_PROVIDER_PREFIX.toUpperCase())) {
-                    new CTIntegrationMissingDialog(WindowManager.getDefault().getMainWindow(), true).showDialog(null);
+                String createdName = metadata.getContentProviderName().trim();
+                Optional<AutopsyContentProvider> installedProvider = ContentProviderUtils.findInstalledProvider(createdName);
+                if (installedProvider.isPresent()) {
+                    if (RuntimeProperties.runningWithGUI()) {
+                        try {
+                            SwingUtilities.invokeAndWait(() -> JOptionPane.showMessageDialog(
+                                    WindowManager.getDefault().getMainWindow(),
+                                    Bundle.Case_contentProviderLoadFailed_message(createdName),
+                                    Bundle.Case_contentProviderLoadFailed_title(),
+                                    JOptionPane.ERROR_MESSAGE));
+                        } catch (InterruptedException | InvocationTargetException ex) {
+                            logger.log(Level.WARNING, "Error showing content provider load failed dialog", ex);
+                        }
+                    }
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_contentProviderLoadFailed());
+                } else {
+                    if (RuntimeProperties.runningWithGUI()) {
+                        try {
+                            SwingUtilities.invokeAndWait(() -> JOptionPane.showMessageDialog(
+                                    WindowManager.getDefault().getMainWindow(),
+                                    Bundle.Case_contentProviderNotFound_message(createdName),
+                                    Bundle.Case_contentProviderNotFound_title(),
+                                    JOptionPane.ERROR_MESSAGE));
+                        } catch (InterruptedException | InvocationTargetException ex) {
+                            logger.log(Level.WARNING, "Error showing content provider not found dialog", ex);
+                        }
+                    }
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_contentProviderCouldNotBeFound());
                 }
-                throw new CaseActionException(Bundle.Case_exceptionMessage_contentProviderCouldNotBeFound());
             }
 
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
@@ -2845,33 +2878,6 @@ public class Case {
     }
     
      
-    /**
-     * Attempts to load a content provider for the provided arguments. Returns
-     * null if no content provider for the arguments can be identified.
-     *
-     * @param providerName The name of the content provider.
-     * @param args The arguments.
-     * @return The content provider or null if no content provider can be
-     * provisioned for the arguments
-     */
-    private static ContentStreamProvider loadContentProvider(String providerName) {
-        Collection<? extends AutopsyContentProvider> customContentProviders = Lookup.getDefault().lookupAll(AutopsyContentProvider.class);
-        if (customContentProviders != null) {
-            for (AutopsyContentProvider customProvider : customContentProviders) {
-                // ensure the provider matches the name
-                if (customProvider == null || !StringUtils.equalsIgnoreCase(providerName, customProvider.getName())) {
-                    continue;
-                }
-                
-                ContentStreamProvider contentProvider = customProvider.load();
-                if (contentProvider != null) {
-                    return contentProvider;
-                }
-            }
-        }
-        
-        return null;
-    }
 
 
     /**

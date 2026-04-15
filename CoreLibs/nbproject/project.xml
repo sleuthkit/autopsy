@@ -560,15 +560,18 @@
                 <package>org.slf4j.event</package>
                 <package>org.slf4j.helpers</package>
                 <package>org.slf4j.spi</package>
+                <!-- Javalin packages used directly by Core MCP code -->
+                <package>io.javalin</package>
+                <package>io.javalin.config</package>
+                <package>io.javalin.http</package>
+                <package>io.javalin.apibuilder</package>
+                <package>io.javalin.router</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/animal-sniffer-annotations-1.24.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/animal-sniffer-annotations-1.24.jar</binary-origin>
             </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/annotations-4.1.1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/annotations-4.1.1.4.jar</binary-origin>
-            </class-path-extension>
+
             <class-path-extension>
                 <runtime-relative-path>ext/ant-1.10.15.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/ant-1.10.15.jar</binary-origin>
@@ -1140,6 +1143,154 @@
             <class-path-extension>
                 <runtime-relative-path>ext/webp-imageio-sejda-0.1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/webp-imageio-sejda-0.1.0.jar</binary-origin>
+            </class-path-extension>
+            <!-- Javalin MCP server and all transitive runtime dependencies -->
+            <class-path-extension>
+                <runtime-relative-path>ext/javalin-7.1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/javalin-7.1.0.jar</binary-origin>
+            </class-path-extension>
+            <!-- Jetty 12 core -->
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-server-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-server-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-http-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-http-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-io-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-io-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-util-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-util-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-security-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-security-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-session-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-session-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-xml-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-xml-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-plus-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-plus-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-jndi-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-jndi-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-annotations-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-annotations-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <!-- Jetty 12 EE10 (Jakarta EE 10 / Servlet 6) -->
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-ee-webapp-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-ee-webapp-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-ee10-servlet-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-ee10-servlet-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-ee10-webapp-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-ee10-webapp-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-ee10-annotations-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-ee10-annotations-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-ee10-plus-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-ee10-plus-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <!-- Jetty 12 WebSocket -->
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-websocket-core-common-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-websocket-core-common-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-websocket-core-server-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-websocket-core-server-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-websocket-jetty-api-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-websocket-jetty-api-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-websocket-jetty-common-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-websocket-jetty-common-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-websocket-jetty-server-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-websocket-jetty-server-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-ee10-websocket-jetty-server-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-ee10-websocket-jetty-server-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jetty-ee10-websocket-servlet-12.1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jetty-ee10-websocket-servlet-12.1.6.jar</binary-origin>
+            </class-path-extension>
+            <!-- Jakarta EE 10 APIs -->
+            <class-path-extension>
+                <runtime-relative-path>ext/jakarta.servlet-api-6.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.servlet-api-6.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jakarta.annotation-api-2.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.annotation-api-2.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jakarta.enterprise.cdi-api-4.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.enterprise.cdi-api-4.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jakarta.enterprise.lang-model-4.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.enterprise.lang-model-4.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jakarta.inject-api-2.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.inject-api-2.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jakarta.interceptor-api-2.1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.interceptor-api-2.1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jakarta.transaction-api-2.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jakarta.transaction-api-2.0.1.jar</binary-origin>
+            </class-path-extension>
+            <!-- ASM (bytecode library used by Jetty annotations) -->
+            <class-path-extension>
+                <runtime-relative-path>ext/asm-9.9.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/asm-9.9.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/asm-commons-9.9.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/asm-commons-9.9.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/asm-tree-9.9.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/asm-tree-9.9.1.jar</binary-origin>
+            </class-path-extension>
+            <!-- Kotlin stdlib (merged jdk7/jdk8 in Kotlin 2.x) -->
+            <class-path-extension>
+                <runtime-relative-path>ext/kotlin-stdlib-2.2.20.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/kotlin-stdlib-2.2.20.jar</binary-origin>
+            </class-path-extension>
+            <!-- JetBrains annotations (upgraded from 4.1.1.4 to satisfy Javalin/Kotlin 2.x) -->
+            <class-path-extension>
+                <runtime-relative-path>ext/annotations-26.1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/annotations-26.1.0.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
