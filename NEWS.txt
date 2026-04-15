@@ -8,8 +8,8 @@ New Features
 
 
 Updates
+- Disable Keyword Search module and emaill (regexp) search during ingest by default (its slow..)
 - Solr Performance: Use Bin Protocol instead of XML and reduce Tika initializations (SKL)
-- Disable email (regexp) search during ingest by default
 - iLeapp bails out faster if not a phone (SKL)
 - Upgrade regripper to v4 (Mark McKinnon)
 - Increase zookeeper timeout (Mark McKinnon)
