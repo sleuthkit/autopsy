@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-    Step 2 of the Autopsy Windows release process: build the installer from a
-    signed ZIP package.
+    Step 2 of the Autopsy Windows release process: build the installer from
+    the versioned folder produced by ant build-zip.
 
 .DESCRIPTION
     The release process is split into two steps so that EXEs can be signed
@@ -9,24 +9,20 @@
 
       Step 1  (build machine):
               ant build-zip
-              Produces: dist\autopsy-X.Y.Z.zip
+              Produces: dist\autopsy-X.Y.Z\
 
-      [sign]  Extract the ZIP, sign the EXEs inside (autopsy64.exe, etc.),
-              re-zip with the same internal layout, and save it as:
-              dist\autopsy-X.Y.Z-signed.zip
+      [sign]  Sign the EXEs in dist\autopsy-X.Y.Z\bin\ (autopsy64.exe, etc.)
 
       Step 2  (this script, run from the repo root on a machine with
               Advanced Installer installed):
               .\release_scripts\build_windows_installer.ps1 X.Y.Z
               Produces: dist\autopsy-X.Y.Z-64bit.msi
 
-    The script looks for dist\autopsy-X.Y.Z-signed.zip first. If found it
-    uses that; otherwise it prompts before falling back to the unsigned ZIP.
-    It extracts the ZIP to a staging directory, bundles a JRE with jlink,
-    configures the Advanced Installer project, and builds the MSI.
+    The script uses the dist\autopsy-X.Y.Z\ folder directly, bundles a JRE
+    with jlink, configures the Advanced Installer project, and builds the MSI.
 
 .PARAMETER Version
-    The Autopsy version number (e.g. 21.0.0). Used to locate the ZIP files
+    The Autopsy version number (e.g. 21.0.0). Used to locate the folder
     and name all output artifacts.
 
 .PARAMETER AiPath
@@ -45,7 +41,7 @@ param(
     [Parameter(Mandatory = $true, Position = 0)]
     [string]$Version,
 
-    [string]$AiPath = "C:\Program Files (x86)\Caphyon\Advanced Installer 22.3\bin\x86\AdvancedInstaller.com",
+    [string]$AiPath = "C:\Program Files (x86)\Caphyon\Advanced Installer 23.5.1\bin\x86\AdvancedInstaller.com",
 
     [string]$JdkHome = $env:JDK_HOME
 )
@@ -74,9 +70,8 @@ function Invoke-AI {
 # this script's directory (release_scripts/).
 $repoRoot   = Split-Path -Parent $PSScriptRoot
 $distDir    = Join-Path $repoRoot "dist"
-$unsignedZip = Join-Path $distDir "autopsy-$Version.zip"
-$signedZip   = Join-Path $distDir "autopsy-$Version-signed.zip"
-$instDir    = Join-Path $distDir  "autopsy-$Version"  # the folder the ZIP extracts into
+$instDir    = Join-Path $distDir  "autopsy-$Version"
+$appDir     = Join-Path $instDir  "autopsy-$Version"
 $aipSrc     = Join-Path $repoRoot "installer_autopsy\installer_autopsy.aip"
 $aipBase    = Join-Path $distDir  "installer_autopsy_$Version-base.aip"
 $aip64      = Join-Path $distDir  "installer_autopsy_$Version-64.aip"
@@ -85,20 +80,11 @@ $aip64      = Join-Path $distDir  "installer_autopsy_$Version-64.aip"
 # Validate inputs
 # ---------------------------------------------------------------------------
 
-# Prefer the signed ZIP; fall back to unsigned with confirmation.
-if (Test-Path $signedZip) {
-    Write-Host "  Signed ZIP found — using: $signedZip"
-    $ZipFile = $signedZip
-} elseif (Test-Path $unsignedZip) {
-    Write-Warning "Signed ZIP not found: $signedZip"
-    Write-Warning "The installer will contain UNSIGNED executables."
-    $answer = Read-Host "Proceed with unsigned ZIP 'autopsy-$Version.zip'? [y/N]"
-    if ($answer -notmatch '^[Yy]$') {
-        throw "Build cancelled. Sign the EXEs and place the result at:`n  $signedZip"
-    }
-    $ZipFile = $unsignedZip
-} else {
-    throw "No ZIP found for version $Version. Expected:`n  $signedZip`n  $unsignedZip"
+if (-not (Test-Path $instDir)) {
+    throw "Folder not found: $instDir`nRun 'ant build-zip' first to produce this folder."
+}
+if (-not (Test-Path $appDir)) {
+    throw "Expected subfolder not found: $appDir`nEnsure the folder produced by 'ant build-zip' contains a subfolder named 'autopsy-$Version'."
 }
 
 if (-not (Test-Path $AiPath)) {
@@ -119,26 +105,10 @@ if (-not (Test-Path $aipSrc)) {
 Write-Host ""
 Write-Host "=== Autopsy Windows installer build ==="
 Write-Host "  Version:     $Version"
-Write-Host "  ZIP:         $ZipFile"
-Write-Host "  Staging dir: $instDir"
+Write-Host "  Folder:      $instDir"
 Write-Host "  JDK:         $JdkHome"
 Write-Host "  AI:          $AiPath"
 Write-Host ""
-
-# ---------------------------------------------------------------------------
-# Extract the ZIP to the staging directory
-# ---------------------------------------------------------------------------
-
-Write-Host "--- Extracting ZIP ---"
-if (Test-Path $instDir) {
-    Write-Host "  Removing existing staging directory..."
-    Remove-Item -Recurse -Force $instDir
-}
-Expand-Archive -Path $ZipFile -DestinationPath $distDir
-if (-not (Test-Path $instDir)) {
-    throw "Expected folder not found after extraction: $instDir`nEnsure the ZIP contains a root folder named 'autopsy-$Version'."
-}
-Write-Host "  Done."
 
 # ---------------------------------------------------------------------------
 # Bundle a JRE using jlink
@@ -146,7 +116,7 @@ Write-Host "  Done."
 
 Write-Host ""
 Write-Host "--- Bundling JRE ---"
-$jreDir = Join-Path $instDir "jre"
+$jreDir = Join-Path $appDir "jre"
 if (Test-Path $jreDir) { Remove-Item -Recurse -Force $jreDir }
 
 & "$JdkHome\bin\jlink.exe" `
@@ -164,7 +134,7 @@ Write-Host "  JRE written to $jreDir"
 
 Write-Host ""
 Write-Host "--- Updating autopsy.conf ---"
-$confFile = Join-Path $instDir "etc\autopsy.conf"
+$confFile = Join-Path $appDir "etc\autopsy.conf"
 if (-not (Test-Path $confFile)) { throw "autopsy.conf not found in staging dir: $confFile" }
 
 $jvmArgs = (
@@ -224,33 +194,28 @@ Write-Host "--- Adding files to installer ---"
 
 # Add each top-level item from the staging directory (Advanced Installer
 # recurses into directories automatically).
-foreach ($item in Get-ChildItem $instDir) {
+foreach ($item in Get-ChildItem $appDir) {
     $type = if ($item.PSIsContainer) { 'Folder' } else { 'File' }
     Invoke-AI @('/edit', $aip64, "/Add$type", 'APPDIR', $item.FullName)
 }
 
 # Remove the 32-bit autopsy.exe (keep autopsy64.exe)
-Invoke-AI @('/edit', $aip64, '/DelFile',   'APPDIR\bin\autopsy.exe')
+# Invoke-AI @('/edit', $aip64, '/DelFile',   'APPDIR\bin\autopsy.exe')
 
 # Remove 32-bit GStreamer binaries
-Invoke-AI @('/edit', $aip64, '/DelFolder', 'APPDIR\autopsy\gstreamer\1.0\x86')
+# Invoke-AI @('/edit', $aip64, '/DelFolder', 'APPDIR\autopsy\gstreamer\1.0\x86')
 
-# Remove 32-bit ewfexport binaries
-Invoke-AI @('/edit', $aip64, '/DelFolder', 'APPDIR\autopsy\ewfexport_exec\32-bit')
-
-# Remove 32-bit Plaso
-Invoke-AI @('/edit', $aip64, '/DelFolder', 'APPDIR\autopsy\plaso\plaso-20180818-Win32')
 
 # Replace the mixed-arch lib folder with only the amd64 DLLs
 $libRelPath  = 'autopsy\modules\lib'
-$libInstPath = Join-Path $instDir "autopsy\modules\lib\amd64"
+$libInstPath = Join-Path $appDir "autopsy\modules\lib\amd64"
 Invoke-AI @('/edit', $aip64, '/DelFolder', "APPDIR\$libRelPath")
 foreach ($dll in Get-ChildItem $libInstPath -File) {
     Invoke-AI @('/edit', $aip64, '/AddFile', "APPDIR\$libRelPath", $dll.FullName)
 }
 
 # Replace the mixed-arch PhotoRec folder with only the 64-bit binaries
-$photorecInst = Join-Path $instDir "autopsy\photorec_exec"
+$photorecInst = Join-Path $appDir "autopsy\photorec_exec"
 Invoke-AI @('/edit', $aip64, '/DelFolder', 'APPDIR\autopsy\photorec_exec')
 Invoke-AI @('/edit', $aip64, '/AddFolder', 'APPDIR\autopsy\photorec_exec', "$photorecInst\64-bit\bin")
 
@@ -264,7 +229,7 @@ Invoke-AI @('/edit', $aip64, '/AddFolder', 'AppDataFolder\autopsy', $etcSrc)
 
 Write-Host ""
 Write-Host "--- Adding shortcuts ---"
-$iconPath = Join-Path $instDir "icon.ico"
+$iconPath = Join-Path $appDir "icon.ico"
 Invoke-AI @('/edit', $aip64, '/NewShortcut',
     '-name',   "Autopsy $Version",
     '-dir',    'DesktopFolder',
