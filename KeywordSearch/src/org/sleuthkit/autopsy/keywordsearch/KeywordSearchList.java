@@ -127,7 +127,7 @@ abstract class KeywordSearchList {
         List<Keyword> emails = new ArrayList<>();
         emails.add(new Keyword(EMAIL_ADDRESS_REGEX, false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL));
         lockedLists.add("Email Addresses");
-        addList("Email Addresses", emails, true, false, true);
+        addList("Email Addresses", emails, false, false, true);
 
         //URL
         List<Keyword> urls = new ArrayList<>();
