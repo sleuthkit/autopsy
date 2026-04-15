@@ -43,7 +43,7 @@ public class AutopsyMcpModule implements Runnable {
     private static AutopsyMcpModule instance;
 
     private volatile McpServer mcpServer;
-    private boolean caseListenerRegistered = false;
+    private volatile boolean caseListenerRegistered = false;
 
     /**
      * Returns the singleton instance created by the {@code @OnStart} machinery,
@@ -71,7 +71,7 @@ public class AutopsyMcpModule implements Runnable {
      *
      * @throws Exception if the server fails to bind or write its token file
      */
-    public void enableServer() throws Exception {
+    public synchronized void enableServer() throws Exception {
         if (mcpServer == null) {
             startServer();
         }
@@ -81,7 +81,7 @@ public class AutopsyMcpModule implements Runnable {
      * Stops the MCP server and removes the token file. No-op if the server is
      * not running.
      */
-    public void disableServer() {
+    public synchronized void disableServer() {
         McpServer server = mcpServer;
         mcpServer = null;
         if (server != null) {
@@ -93,7 +93,7 @@ public class AutopsyMcpModule implements Runnable {
      * Starts the server and wires up case-event tracking. Propagates any
      * startup exception to the caller so the UI can report it.
      */
-    private void startServer() throws Exception {
+    private synchronized void startServer() throws Exception {
         McpServer server = new McpServer();
         server.start();   // throws on port-bind failure or token-file error
         mcpServer = server;
