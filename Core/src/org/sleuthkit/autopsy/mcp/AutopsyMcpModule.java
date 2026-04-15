@@ -31,34 +31,84 @@ import org.sleuthkit.autopsy.casemodule.Case;
  * the active case reference inside the server — the HTTP listener itself never
  * stops. When no case is open, tools/list still works but tools/call returns a
  * clean "no case open" error message.
+ *
+ * A static singleton is held so that the options panel can enable or disable
+ * the server at runtime without requiring an application restart.
  */
 @OnStart
 public class AutopsyMcpModule implements Runnable {
 
     private static final Logger logger = Logger.getLogger(AutopsyMcpModule.class.getName());
 
+    private static AutopsyMcpModule instance;
+
     private volatile McpServer mcpServer;
+    private boolean caseListenerRegistered = false;
+
+    /**
+     * Returns the singleton instance created by the {@code @OnStart} machinery,
+     * or {@code null} if the module has not yet been initialized.
+     */
+    public static AutopsyMcpModule getInstance() {
+        return instance;
+    }
 
     @Override
     public void run() {
-        if (!McpOptionsPanel.isMcpEnabled()) {
-            return;
+        instance = this;
+        if (McpOptionsPanel.isMcpEnabled()) {
+            try {
+                startServer();
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Failed to start Autopsy MCP server", ex);
+            }
         }
-        try {
-            McpServer server = new McpServer();
-            server.start();
-            mcpServer = server;
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Failed to start Autopsy MCP server", ex);
-            return;
-        }
-        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this::onCaseEvent);
+    }
 
-        // Seed with any case already open at startup (e.g. auto-reopen on launch).
+    /**
+     * Starts the MCP server and wires up case-event tracking. No-op if the
+     * server is already running.
+     *
+     * @throws Exception if the server fails to bind or write its token file
+     */
+    public void enableServer() throws Exception {
+        if (mcpServer == null) {
+            startServer();
+        }
+    }
+
+    /**
+     * Stops the MCP server and removes the token file. No-op if the server is
+     * not running.
+     */
+    public void disableServer() {
+        McpServer server = mcpServer;
+        mcpServer = null;
+        if (server != null) {
+            server.stop();
+        }
+    }
+
+    /**
+     * Starts the server and wires up case-event tracking. Propagates any
+     * startup exception to the caller so the UI can report it.
+     */
+    private void startServer() throws Exception {
+        McpServer server = new McpServer();
+        server.start();   // throws on port-bind failure or token-file error
+        mcpServer = server;
+
+        // Register the case listener once; it guards against a null server internally.
+        if (!caseListenerRegistered) {
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), this::onCaseEvent);
+            caseListenerRegistered = true;
+        }
+
+        // Seed with any case already open (e.g. auto-reopen on launch, or enabled mid-session).
         try {
             mcpServer.updateCase(Case.getCurrentCase());
         } catch (IllegalStateException ex) {
-            // No case open at startup — normal state, nothing to seed.
+            // No case open — normal state, nothing to seed.
         }
     }
 
