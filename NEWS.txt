@@ -1,6 +1,6 @@
 ---------------- VERSION 4.23.0 ---------------
 New Features
-- MCP over STDIO Server
+- MCP over STDIO Server (Windows only)
 - Signed EXE
 - Extract Thumbnails (Mark McKinon)
 - Added PropertySheetEnrichment extension point
