@@ -60,6 +60,7 @@ public final class IngestJobSettings {
     
     private static final Set<String> DEFAULT_DISABLED_MODULES = Stream.of(
             "Plaso",
+            "Keyword Search",
             MalwareScanIngestModuleFactory.getDisplayName()
     ).collect(Collectors.toSet());
     

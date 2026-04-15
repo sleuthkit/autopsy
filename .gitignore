@@ -112,3 +112,5 @@ hs_err_pid*.log
 
 /Tools/autopsy-mcp-stdio/node_modules/
 /Tools/autopsy-mcp-stdio/dist/
+
+.claude
