@@ -70,8 +70,7 @@ function Invoke-AI {
 # this script's directory (release_scripts/).
 $repoRoot   = Split-Path -Parent $PSScriptRoot
 $distDir    = Join-Path $repoRoot "dist"
-$instDir    = Join-Path $distDir  "autopsy-$Version"
-$appDir     = Join-Path $instDir  "autopsy-$Version"
+$appDir     = Join-Path $distDir  "autopsy-$Version"
 $aipSrc     = Join-Path $repoRoot "installer_autopsy\installer_autopsy.aip"
 $aipBase    = Join-Path $distDir  "installer_autopsy_$Version-base.aip"
 $aip64      = Join-Path $distDir  "installer_autopsy_$Version-64.aip"
@@ -79,10 +78,6 @@ $aip64      = Join-Path $distDir  "installer_autopsy_$Version-64.aip"
 # ---------------------------------------------------------------------------
 # Validate inputs
 # ---------------------------------------------------------------------------
-
-if (-not (Test-Path $instDir)) {
-    throw "Folder not found: $instDir`nRun 'ant build-zip' first to produce this folder."
-}
 if (-not (Test-Path $appDir)) {
     throw "Expected subfolder not found: $appDir`nEnsure the folder produced by 'ant build-zip' contains a subfolder named 'autopsy-$Version'."
 }
@@ -105,7 +100,7 @@ if (-not (Test-Path $aipSrc)) {
 Write-Host ""
 Write-Host "=== Autopsy Windows installer build ==="
 Write-Host "  Version:     $Version"
-Write-Host "  Folder:      $instDir"
+Write-Host "  Folder:      $appDir"
 Write-Host "  JDK:         $JdkHome"
 Write-Host "  AI:          $AiPath"
 Write-Host ""

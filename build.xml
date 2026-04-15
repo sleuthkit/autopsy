@@ -148,41 +148,43 @@
     <!-- This target takes the NB-built ZIP, unzips it into the dist folder, copies in
     additional files, and renames the folder to include the version number.  The folder
     is left in place for manual signing before running build-installer. -->
-    <target name="build-zip" depends="set-release-build, build, suite.build-zip"> <!--,findJRE" -->
-        
-        <property name="release.dir" value="${nbdist.dir}/${app.name}"/>
+    <target name="build-zip" depends="set-release-build, build, suite.build-zip"> 
+
+        <property name="dist_app_dir" value="${nbdist.dir}/${app.name}"/>
+        <property name="dist_app_ver_dir" value="${nbdist.dir}/${app.name}-${app.version}"/>
 
         <!-- step (2) unzip the result into the dist folder -->
-        <delete dir="${release.dir}"/>
+        <delete dir="${dist_app_dir}"/>
+        <delete dir="${dist_app_ver_dir}"/>
         <unzip src="${nbdist.dir}/${app.name}.zip" dest="${nbdist.dir}"/>
 
         <!-- Disable the Experimental module by default for the installed version.  Need to update .lastModified time for change to be seen. -->
-        <replace file="${release.dir}/autopsy/config/Modules/org-sleuthkit-autopsy-experimental.xml" token="&lt;param name=&quot;enabled&quot;&gt;true&lt;/param&gt;" value="&lt;param name=&quot;enabled&quot;&gt;false&lt;/param&gt;"/>
-        <echo file="${release.dir}/autopsy/.lastModified" message="" />
+        <replace file="${dist_app_dir}/autopsy/config/Modules/org-sleuthkit-autopsy-experimental.xml" token="&lt;param name=&quot;enabled&quot;&gt;true&lt;/param&gt;" value="&lt;param name=&quot;enabled&quot;&gt;false&lt;/param&gt;"/>
+        <echo file="${dist_app_dir}/autopsy/.lastModified" message="" />
 
         <!-- step (3) do your copying stuff here, check the ant doc for copy, move, etc file -->
         <copy file="${nbplatform.active.dir}/platform/modules/ext/junit-4.10.jar"
-              tofile="${release.dir}/platform/modules/ext/junit-4.10.jar"/>
-        <copy file="${basedir}/README.txt" tofile="${release.dir}/README.txt"/>
-        <copy file="${basedir}/LICENSE-2.0.txt" tofile="${release.dir}/LICENSE-2.0.txt"/>
-        <copy file="${basedir}/NEWS.txt" tofile="${release.dir}/NEWS.txt"/>
-        <copy file="${basedir}/Running_Linux_OSX.md" tofile="${release.dir}/Running_Linux_OSX.md"/>
-        <copy file="${basedir}/unix_setup.sh" tofile="${release.dir}/unix_setup.sh"/>
-        <copy flatten="false" todir="${release.dir}/linux_macos_install_scripts">
+              tofile="${dist_app_dir}/platform/modules/ext/junit-4.10.jar"/>
+        <copy file="${basedir}/README.txt" tofile="${dist_app_dir}/README.txt"/>
+        <copy file="${basedir}/LICENSE-2.0.txt" tofile="${dist_app_dir}/LICENSE-2.0.txt"/>
+        <copy file="${basedir}/NEWS.txt" tofile="${dist_app_dir}/NEWS.txt"/>
+        <copy file="${basedir}/Running_Linux_OSX.md" tofile="${dist_app_dir}/Running_Linux_OSX.md"/>
+        <copy file="${basedir}/unix_setup.sh" tofile="${dist_app_dir}/unix_setup.sh"/>
+        <copy flatten="false" todir="${dist_app_dir}/linux_macos_install_scripts">
             <fileset dir="${basedir}/linux_macos_install_scripts"/>
         </copy>
 
-        <copy file="${basedir}/Tools/ManifestTool/ManifestTool.exe" todir="${release.dir}/bin"/>
+        <copy file="${basedir}/Tools/ManifestTool/ManifestTool.exe" todir="${dist_app_dir}/bin"/>
         <if>
             <isset property="is.windows"/>
             <then>
-                <copy file="${basedir}/Tools/autopsy-mcp-stdio/dist/autopsy-mcp-stdio.exe" todir="${release.dir}/bin"/>
+                <copy file="${basedir}/Tools/autopsy-mcp-stdio/dist/autopsy-mcp-stdio.exe" todir="${dist_app_dir}/bin"/>
             </then>
         </if>
 
-        <copy file="${basedir}/icons/icon.ico" tofile="${release.dir}/icon.ico" overwrite="true"/>
+        <copy file="${basedir}/icons/icon.ico" tofile="${dist_app_dir}/icon.ico" overwrite="true"/>
 
-        <property name="app.property.file" value="${release.dir}/etc/${app.name}.conf" />
+        <property name="app.property.file" value="${dist_app_dir}/etc/${app.name}.conf" />
         <var name="jvm-value" value="--branding ${app.name} -J-Xms24m -J-Xmx4G -J-XX:+UseStringDeduplication -J-Dprism.order=sw  -J--add-opens=java.base/java.lang=ALL-UNNAMED -J--add-opens=java.base/java.net=ALL-UNNAMED -J--add-opens=java.desktop/javax.swing=ALL-UNNAMED -J--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED -J--add-exports=java.desktop/sun.awt=ALL-UNNAMED -J--add-exports=javafx.controls/com.sun.javafx.scene.control.inputmap=ALL-UNNAMED -J--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED"/>
         <!-- for Japanese localized version add option:  -Duser.language=ja -->
         
@@ -209,7 +211,7 @@
         These files are legacy from when we used to copy the dlls to this location.
         This check should do away in the future. Added Sept '13-->
         <delete failonerror="false">
-            <fileset dir="${release.dir}/autopsy/modules/lib">
+            <fileset dir="${dist_app_dir}/autopsy/modules/lib">
                 <include name="libtsk_jni.dll" />
                 <include name="libewf.dll" />
                 <include name="libvmdk.dll"/>
@@ -224,19 +226,19 @@
         </delete>
 
         <!-- Remove 32-bit binaries; only 64-bit is shipped -->
-        <delete file="${release.dir}/bin/${app.name}.exe" failonerror="false"/>
-        <delete dir="${release.dir}/autopsy/ewfexport_exec/32-bit" failonerror="false"/>
-        <delete dir="${release.dir}/autopsy/plaso/plaso-20180818-Win32" failonerror="false"/>
+        <delete file="${dist_app_dir}/bin/${app.name}.exe" failonerror="false"/>
+        <delete dir="${dist_app_dir}/autopsy/ewfexport_exec/32-bit" failonerror="false"/>
+        <delete dir="${dist_app_dir}/autopsy/plaso/plaso-20180818-Win32" failonerror="false"/>
 
         <!-- step (4) rename the folder to include the version number -->
-        <move file="${release.dir}" tofile="${nbdist.dir}/${app.name}-${app.version}"/>
+	<move file="${dist_app_dir}" tofile="${dist_app_ver_dir}"/>
 
         <echo message=" "/>
         <echo message="=== build-zip complete ===" />
-        <echo message="  Folder: ${nbdist.dir}/${app.name}-${app.version}" />
+        <echo message="  Folder: ${dist_app_ver_dir}" />
         <echo message=" "/>
         <echo message="Manual steps before building the installer:" />
-        <echo message="  1. Sign the EXEs in ${nbdist.dir}/${app.name}-${app.version}/bin (autopsy64.exe, etc.)." />
+        <echo message="  1. Sign the EXEs in ${dist_app_ver_dir}/bin (autopsy64.exe, etc.)." />
         <echo message="  2. powershell.exe .\release_scripts\build_windows_installer.ps1 ${app.version}" />
     </target>
     
