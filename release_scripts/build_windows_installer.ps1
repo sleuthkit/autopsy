@@ -254,6 +254,11 @@ Move-Item $msiSrc $msiDest -Force
 $cacheDir = Join-Path $distDir "installer_autopsy_$Version-64-cache"
 if (Test-Path $cacheDir) { Remove-Item -Recurse -Force $cacheDir }
 
+# Clean up intermediate AIP files and the SetupFiles folder
+if (Test-Path $aipBase)   { Remove-Item -Force $aipBase }
+if (Test-Path $aip64)     { Remove-Item -Force $aip64 }
+if (Test-Path $outputDir) { Remove-Item -Recurse -Force $outputDir }
+
 Write-Host ""
 Write-Host "=== Done ==="
 Write-Host "  Installer: $msiDest"
