@@ -10,13 +10,11 @@ Autopsy provides "MCP over STDIO". It is NOT over HTTP.
 
 More information about MCP can be found here: https://www.cybertriage.com/ai/intro-to-mcp-servers-for-dfir-and-soc-investigations-using-ai/
 
-The \ref experimental_page must be enabled to use this feature. 
-
 You are responsible for knowing where your MCP client sends data and what the retention and sharing policies are of that server. For example, a default Claude Desktop installation will send data to Anthropic servers and their access to your data will depend on your settings. 
 
 \section MCP and Autopsy Basics
 
-* Your MCP Client (such as Claude) has **read-only** access to your Autopsy data. It can't issue any commands to update or change your data set. We may change this in the future to allow it to *add*, but not remove, a score or label. 
+* If enabled, your MCP Client (such as Claude) has **read-only** access to your Autopsy data. It can't issue any commands to update or change your data set. We may change this in the future to allow it to *add*, but not remove, a score or label. 
 * You need to run Autopsy on the same system that Claude Desktop is running on. 
 * You need to open the Case in Autopsy first and then Claude can access that data. 
 
@@ -24,21 +22,20 @@ You are responsible for knowing where your MCP client sends data and what the re
 \section Install MCP Client - Claude Desktop
 
 The following are the steps for Claude Desktop. 
-* Download Claude Desktop 
-* Setup an account at https://claude.ai or configure your cloud provider, such as AWS Bedrook, to obtain access to an Anthropic model. 
+* Download Claude Desktop : https://support.claude.com/en/articles/10065433-install-claude-desktop
+* Setup an account at https://claude.ai or configure your cloud provider, such as AWS Bedrook, to obtain access to an Anthropic model. You can use a private instance of Claude (or whatever model you use that is compatible with your MCP client). 
 * Launch Claude Desktop and login to your account
 
 
 \section Enable the MCP Server
 
-First, launch Autopsy, go to the Options panel, and navigate to the "AI: MCP Server" panel.
+Launch Autopsy, go to the Options panel, and navigate to the "AI: MCP Server" panel (far right). 
 
 \image html mcp_options.png
 
 Check to enable the feature. 
 
 Copy the file path that you see. It should be something like:
-
 
     C:\\Program Files\\Autopsy-XXX\\bin\\autopsy-mcp-stdio.exe
     
@@ -48,8 +45,6 @@ Autopsy will need to restart for the MCP server to be enabled.
 
 
 \section Configure Claude Desktop
-
-Download Claude Desktop (or Code or other MCP Client) and install it. Launch it and log into your Anthropic account. 
 
 Next, find your `claude_desktop_config.json` file. These apps change quickly, but this is currently where to find it: 
 
@@ -113,9 +108,13 @@ If you have both Cyber Triage and Autopsy, the section would look like this:
 After you edit the configuration file, shut down Claude Desktop ENTIRELY. 
 
 
-NOTE: On Windows, Claude Desktop is still running even after you close the window. You need to go to your task bar and kill it from there before it fully shuts down and reloads the configuration file!
+NOTE 1: On Windows, Claude Desktop is still running even after you close the window. You need to go to your task bar and kill it from there before it fully shuts down and reloads the configuration file!
 
-NOTE: Because the version number is in the Autopsy path, you will need to update the above path for each upgrade. 
+NOTE 2: Because the version number is in the Autopsy path, you will need to update the above path for each upgrade. 
+
+NOTE 3: Be VERY careful if you do in fact have both Cyber Triage and Autopy as MCP servers and they are both open at the same time. If you are not specific in each prompt about which tool to use, then it may jump between data sets!
+
+
 
 \section Using Claude Desktop To Analyze Data
 
@@ -128,6 +127,11 @@ Next, open a Case. You can now ask it "is there an autopsy case open?".
 Make sure your prompts are specific about if they should be for a single host or all of them in the case. 
 
 For example: "make a timeline of all USB Devices" vs "make a timeline of USB Devices from host X". 
+
+
+Other things to note:
+- Claude will prompt you to use each tool. This is a security feature. There doesn't seem to be anything we can do about it. Other clients may not prompt you so much.
+- Results cannot be more than 1MB. So if you give a very broad request, you may hit that limit. Please let us know if this happens so that we can know what kinds of questions should be more optimized. 
 
 
 \section Debugging
