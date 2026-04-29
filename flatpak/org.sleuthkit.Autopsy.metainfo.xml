@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.sleuthkit.Autopsy</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <name>Autopsy</name>
+  <summary>Extensible digital forensics platform</summary>
+  <description>
+    <p>
+      Autopsy® is the premier open source forensics platform which is fast,
+      easy-to-use, and capable of analyzing all types of mobile devices and
+      digital media. Its plug-in architecture enables extensibility from
+      community-developed or custom-built modules. Autopsy evolves to meet the
+      needs of hundreds of thousands of professionals in law enforcement,
+      national security, litigation support, and corporate investigation.
+    </p>
+    <p>
+      Note: Due to the system access necessary for Autopsy to perform forensics
+      work, this Flatpak uses --device=all to access block devices. Raw disk
+      access may additionally require running with appropriate OS permissions
+      (e.g., membership in the disk group).
+    </p>
+    <p>Known limitations on Linux compared to Windows:</p>
+    <ul>
+      <li>Recent Activity module is non-functional</li>
+      <li>LEAPP processors are non-functional</li>
+      <li>HEIF image processing is unavailable</li>
+      <li>Video thumbnails are unavailable</li>
+    </ul>
+  </description>
+  <url type="homepage">https://www.autopsy.com/</url>
+  <url type="bugtracker">https://github.com/sleuthkit/autopsy/issues</url>
+  <url type="vcs-browser">https://github.com/sleuthkit/autopsy</url>
+  <categories>
+    <category>Science</category>
+    <category>Security</category>
+  </categories>
+  <keywords>
+    <keyword>forensics</keyword>
+    <keyword>dfir</keyword>
+    <keyword>sleuthkit</keyword>
+    <keyword>disk</keyword>
+  </keywords>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Autopsy case dashboard</caption>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="4.23.0" date="2025-01-01">
+      <description>
+        <p>Current development build from the develop branch.</p>
+      </description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>
