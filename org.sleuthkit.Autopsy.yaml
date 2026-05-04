@@ -14,7 +14,7 @@ runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.openjdk17
-command: /app/autopsy/bin/autopsywrapper.sh
+command: autopsywrapper.sh
 
 build-options:
   # --share=network allows the autopsy module's ant build-zip to download the NetBeans
@@ -311,6 +311,9 @@ modules:
 
       # Install wrapper and desktop integration
       - install -Dm755 flatpak/autopsywrapper.sh /app/autopsy/bin/autopsywrapper.sh
+      # Symlink into /app/bin so the .desktop Exec line resolves at runtime
+      # (the runtime PATH only includes /app/bin, not /app/autopsy/bin).
+      - ln -sf /app/autopsy/bin/autopsywrapper.sh /app/bin/autopsywrapper.sh
       - install -Dm644 flatpak/org.sleuthkit.Autopsy.desktop /app/share/applications/org.sleuthkit.Autopsy.desktop
       - install -Dm644 flatpak/org.sleuthkit.Autopsy.metainfo.xml /app/share/metainfo/org.sleuthkit.Autopsy.metainfo.xml
       - install -Dm644 snap/gui/autopsy.png /app/share/icons/hicolor/256x256/apps/org.sleuthkit.Autopsy.png

@@ -2,7 +2,7 @@
 Name=Autopsy
 Comment=A graphical interface to The Sleuth Kit and other digital forensics tools.
 GenericName=DFIR Tool
-Exec=org.sleuthkit.Autopsy
+Exec=autopsywrapper.sh
 Icon=org.sleuthkit.Autopsy
 Type=Application
 Categories=System;Security;

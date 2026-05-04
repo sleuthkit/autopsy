@@ -41,11 +41,11 @@
     <keyword>disk</keyword>
   </keywords>
   <releases>
-    <release version="4.21.0" date="2024-03-01">
+    <release version="4.23.0" date="2025-09-15">
       <description>
         <p>See the GitHub release page for full release notes.</p>
       </description>
-      <url>https://github.com/sleuthkit/autopsy/releases/tag/autopsy-4.21.0</url>
+      <url>https://github.com/sleuthkit/autopsy/releases/tag/autopsy-4.23.0</url>
     </release>
   </releases>
   <content_rating type="oars-1.1"/>
