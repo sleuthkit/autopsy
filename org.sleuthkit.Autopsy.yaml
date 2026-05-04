@@ -39,6 +39,7 @@ finish-args:
   - --env=JAVA_HOME=/app/jdk
   - --env=SOLR_JAVA_HOME=/app/jdk
   - --env=LD_LIBRARY_PATH=/app/lib
+  - --env=PERL5LIB=/app/lib/perl5/5.42/x86_64-linux-gnu:/app/lib/perl5/5.42:/app/lib/perl5/vendor_perl/5.42/x86_64-linux-gnu:/app/lib/perl5/vendor_perl/5.42
   - --env=SOLR_LOGS_DIR=/var/data/autopsy/solr/logs
   - --env=SOLR_PID_DIR=/var/data/autopsy/solr/logs
 
@@ -242,6 +243,16 @@ modules:
       - cp bindings/java/lib/mchange-commons-java-0.4.0.jar /app/tsk-build/bindings/java/lib/
       - cp bindings/java/lib/SparseBitSet-1.3.jar /app/tsk-build/bindings/java/lib/
 
+  # perl is in the SDK but not the Platform runtime. Copy the binary, libperl.so,
+  # and stdlib modules so that the Recent Activity module's regripper scripts work.
+  - name: perl
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 /usr/bin/perl /app/bin/perl
+      - install -Dm755 /usr/lib/perl5/5.42/x86_64-linux-gnu/CORE/libperl.so /app/lib/libperl.so
+      - cp -a /usr/lib/perl5/ /app/lib/perl5/
+    sources: []
+
   - name: autopsy
     buildsystem: simple
     sources:
@@ -256,6 +267,24 @@ modules:
         # module to /app/tsk-build/.
         TSK_HOME: /app/tsk-build
     build-commands:
+      # Patch ExtractRegistry to find perl at /app/bin/perl (Flatpak bundles perl there;
+      # the Platform runtime does not include perl, only the SDK does).
+      - |
+        python3 -c "
+        path = 'RecentActivity/src/org/sleuthkit/autopsy/recentactivity/ExtractRegistry.java'
+        with open(path) as f:
+            s = f.read()
+        old = '            } else {\n                throw new IngestModuleException(\"perl not found in your system\");\n            }'
+        new = ('            } else if (new File(\"/app/bin/perl\").canExecute()) {\n'
+               '                perl = \"/app/bin/perl\";\n'
+               '            } else {\n'
+               '                throw new IngestModuleException(\"perl not found in your system\");\n'
+               '            }')
+        assert old in s, 'Pattern not found — check ExtractRegistry.java for upstream changes'
+        with open(path, 'w') as f:
+            f.write(s.replace(old, new, 1))
+        print('Patched ExtractRegistry.java: added /app/bin/perl fallback')
+        "
       # Build Autopsy ZIP (NetBeans platform is downloaded if missing)
       - |
         NETBEANS_PLAT_VER=$(grep "netbeans-plat-version=" nbproject/platform.properties | cut -d'=' -f2)

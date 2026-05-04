@@ -22,7 +22,6 @@
     </p>
     <p>Known limitations on Linux compared to Windows:</p>
     <ul>
-      <li>Recent Activity module is non-functional</li>
       <li>LEAPP processors are non-functional</li>
       <li>HEIF image processing is unavailable</li>
       <li>Video thumbnails are unavailable</li>

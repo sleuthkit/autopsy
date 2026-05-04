@@ -99,7 +99,6 @@ is a performance trade-off only (not a functional blocker).
 ## Known limitations
 
 Inherited from Autopsy's Linux support:
-- Recent Activity module is non-functional
 - LEAPP processors are non-functional
 - HEIF image processing is unavailable
 - Video thumbnails are unavailable
