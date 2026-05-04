@@ -23,7 +23,7 @@ build-options:
     - --share=network
   env:
     JAVA_HOME: /usr/lib/sdk/openjdk17/jvm/openjdk-17
-    PATH: /usr/lib/sdk/openjdk17/bin:/app/ant/bin:/usr/bin:/bin
+    PATH: /usr/lib/sdk/openjdk17/bin:/app/ant/bin:/app/bin:/usr/bin:/bin
 
 finish-args:
   - --device=all
