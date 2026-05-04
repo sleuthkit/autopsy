@@ -18,6 +18,19 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      # ubuntu-latest only ships ~14 GB free; the NetBeans platform download,
+      # Autopsy compilation, and flatpak overlay together need ≥20 GB.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Install Flatpak and flatpak-builder
         run: |
           sudo apt-get update
@@ -44,8 +57,12 @@ jobs:
             build-dir \
             org.sleuthkit.Autopsy.yaml
 
+      # --runtime-repo embeds the Flathub repo URL so first-time installs on
+      # clean systems can fetch the required org.freedesktop.Platform runtime.
       - name: Create single-file bundle
-        run: flatpak build-bundle repo autopsy.flatpak org.sleuthkit.Autopsy
+        run: |
+          flatpak build-bundle repo autopsy.flatpak org.sleuthkit.Autopsy \
+            --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
 
       - name: Upload bundle as release asset
         if: startsWith(github.ref, 'refs/tags/')
