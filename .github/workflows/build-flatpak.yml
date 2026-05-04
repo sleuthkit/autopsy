@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # ubuntu-latest only ships ~14 GB free; the NetBeans platform download,
       # Autopsy compilation, and flatpak overlay together need ≥20 GB.
@@ -72,7 +72,7 @@ jobs:
 
       - name: Upload bundle as workflow artifact
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: autopsy-flatpak
           path: autopsy.flatpak
