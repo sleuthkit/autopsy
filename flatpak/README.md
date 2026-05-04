@@ -52,6 +52,21 @@ flatpak install --user autopsy.flatpak
 flatpak run org.sleuthkit.Autopsy
 ```
 
+## Updating versions for a new release
+
+When cutting a new Autopsy release, update the following locations in `org.sleuthkit.Autopsy.yaml`:
+
+1. **Sleuth Kit tag** — under the `sleuthkit` module's `sources`, change the `tag:` field (e.g.
+   `sleuthkit-4.15.0`) and update the `sleuthkit-*.jar` filenames referenced in `build-commands`.
+2. **Sleuth Kit Maven JARs** — if TSK's Java binding dependencies changed, update the `url`/`sha256`
+   entries under the `sleuthkit` module's `sources`. Checksums can be verified with
+   `sha256sum <downloaded-jar>`.
+3. **Metainfo release entry** — add a new `<release>` block at the top of the `<releases>` list in
+   `flatpak/org.sleuthkit.Autopsy.metainfo.xml` with the correct version and date.
+
+The CI workflow (`build-flatpak.yml`) builds and attaches `autopsy.flatpak` to the GitHub Release
+automatically when a tag matching `autopsy-*` is pushed.
+
 ## CI / GitHub Actions
 
 `.github/workflows/build-flatpak.yml` builds the bundle automatically on tag pushes
@@ -91,7 +106,7 @@ Inherited from Autopsy's Linux support:
 
 ## Module build order
 
-1. `openjdk` — installs JDK 17 from the SDK extension into `/app/jdk`
+1. `openjdk` — installs JDK 17 from the SDK extension into `/app/jre`, then symlinks `/app/jdk → /app/jre` (Autopsy's launcher resolves `jdkhome` via this path)
 2. `ant` — installs Apache Ant 1.10.15 into `/app/ant`
 3. `libewf` (legacy) — E01 forensics image support
 4. `libafflib` — AFF forensics format support

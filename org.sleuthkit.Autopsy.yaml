@@ -47,7 +47,10 @@ modules:
   - name: openjdk
     buildsystem: simple
     build-commands:
+      # install.sh places the JDK at /app/jre; symlink /app/jdk so that the
+      # jdkhome env var and Autopsy's launcher both resolve correctly.
       - /usr/lib/sdk/openjdk17/install.sh
+      - ln -s /app/jre /app/jdk
     sources: []
 
   - name: ant
@@ -262,18 +265,14 @@ modules:
             -Dnbplatform.default.harness.dir="$AUTOPSY_HARNESS_PATH" \
             build-zip
 
-      # Extract the built ZIP into /app/autopsy (use /app/ to avoid /tmp space limits)
+      # Move the built directory into /app/autopsy.
+      # ant build-zip produces dist/autopsy-${version}/ (a directory, not a zip).
       - |
         set -e
-        AUTOPSY_ZIP=$(find dist -maxdepth 1 -name "autopsy-*.zip" | head -1)
-        echo "Autopsy ZIP: $AUTOPSY_ZIP"
-        test -n "$AUTOPSY_ZIP" && test -f "$AUTOPSY_ZIP" || { echo "ERROR: autopsy ZIP not found in dist/"; exit 1; }
-        unzip "$AUTOPSY_ZIP" -d /app/autopsy_extract
-        AUTOPSY_EXTRACTED=$(find /app/autopsy_extract -maxdepth 1 -mindepth 1 -name "autopsy-*" -type d | head -1)
-        echo "Extracted dir: $AUTOPSY_EXTRACTED"
-        test -n "$AUTOPSY_EXTRACTED" && test -d "$AUTOPSY_EXTRACTED" || { echo "ERROR: extracted dir not found"; exit 1; }
-        mv "$AUTOPSY_EXTRACTED" /app/autopsy
-        rm -rf /app/autopsy_extract
+        AUTOPSY_DIR=$(find dist -maxdepth 1 -name "autopsy-*" -type d | head -1)
+        echo "Autopsy dir: $AUTOPSY_DIR"
+        test -n "$AUTOPSY_DIR" && test -d "$AUTOPSY_DIR" || { echo "ERROR: autopsy directory not found in dist/"; exit 1; }
+        mv "$AUTOPSY_DIR" /app/autopsy
 
       # Run unix_setup.sh to copy TSK JAR and set permissions
       - |

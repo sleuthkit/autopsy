@@ -41,16 +41,12 @@
     <keyword>sleuthkit</keyword>
     <keyword>disk</keyword>
   </keywords>
-  <screenshots>
-    <screenshot type="default">
-      <caption>Autopsy case dashboard</caption>
-    </screenshot>
-  </screenshots>
   <releases>
-    <release version="4.23.0" date="2025-01-01">
+    <release version="4.21.0" date="2024-03-01">
       <description>
-        <p>Current development build from the develop branch.</p>
+        <p>See the GitHub release page for full release notes.</p>
       </description>
+      <url>https://github.com/sleuthkit/autopsy/releases/tag/autopsy-4.21.0</url>
     </release>
   </releases>
   <content_rating type="oars-1.1"/>

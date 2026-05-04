@@ -5,6 +5,6 @@ GenericName=DFIR Tool
 Exec=org.sleuthkit.Autopsy
 Icon=org.sleuthkit.Autopsy
 Type=Application
-Categories=Science;Security;
+Categories=System;Security;
 Keywords=autopsy;sleuth;kit;dfir;forensics;
 StartupNotify=true

@@ -31,9 +31,9 @@ jobs:
       - name: Install Flatpak runtime and SDK
         run: |
           flatpak install --user --noninteractive \
-            org.freedesktop.Platform//24.08 \
-            org.freedesktop.Sdk//24.08 \
-            org.freedesktop.Sdk.Extension.openjdk17//24.08
+            org.freedesktop.Platform//25.08 \
+            org.freedesktop.Sdk//25.08 \
+            org.freedesktop.Sdk.Extension.openjdk17//25.08
 
       - name: Build Flatpak
         run: |
