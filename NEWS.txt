@@ -1,3 +1,6 @@
+---------------- VERSION 4.23.1 ---------------
+No code changes. Just a better release that is marked as RELEASE instead of DEVELOP.
+
 ---------------- VERSION 4.23.0 ---------------
 New Features
 - MCP over STDIO Server (Windows only)
