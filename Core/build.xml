@@ -130,7 +130,7 @@
     
     <target name="getTSKJars" depends="findTSK">
         <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-${TSK_VERSION}.jar" 
+        <copy file="${env.TSK_JAVA_LIB_PATH}/sleuthkit-${TSK_VERSION}.jar"
               tofile="${ext.dir}/sleuthkit-${TSK_VERSION}.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.49.1.0.jar"
               tofile="${ext.dir}/sqlite-jdbc-3.49.1.0.jar"/>
@@ -142,7 +142,7 @@
               tofile="${ext.dir}/mchange-commons-java-0.4.0.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.3.jar"
               tofile="${ext.dir}/SparseBitSet-1.3.jar"/>	
-        <copy file="${env.TSK_HOME}/case-uco/java/dist/sleuthkit-caseuco-${TSK_VERSION}.jar" 
+        <copy file="${env.TSK_JAVA_LIB_PATH}/sleuthkit-caseuco-${TSK_VERSION}.jar"
               tofile="${ext.dir}/sleuthkit-caseuco-${TSK_VERSION}.jar"/>  
     </target>
 
