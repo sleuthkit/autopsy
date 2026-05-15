@@ -303,14 +303,17 @@ class FileSearchPanel extends javax.swing.JPanel {
 
         //String query = "SELECT " + tempQuery + " FROM tsk_files WHERE ";
         String query = "";
+        String[] data = new String[20];
         int i = 0;
         for (FileSearchFilter f : this.getEnabledFilters()) {
             String result = f.getPredicate();
             if (!result.isEmpty()) {
                 if (i > 0) {
                     query += " AND (" + result + ")"; //NON-NLS
+                    data[i] = result; 
                 } else {
                     query += " (" + result + ")"; //NON-NLS
+                    data[i] = result;
                 }
                 ++i;
             }
