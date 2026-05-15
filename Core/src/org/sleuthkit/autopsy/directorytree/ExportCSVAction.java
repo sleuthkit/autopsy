@@ -25,7 +25,12 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -319,7 +324,8 @@ public final class ExportCSVAction extends AbstractAction {
 
             CsvMapper mapper = new CsvMapper();
             ObjectWriter writer = mapper.writerFor(Map.class).with(schema);
-            try (SequenceWriter seqWriter = writer.writeValues(outputFile)) {
+            try (OutputStreamWriter outWriter = new OutputStreamWriter(Files.newOutputStream(outputFile.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE), StandardCharsets.UTF_8); 
+                    SequenceWriter seqWriter = writer.writeValues(outWriter)) {
                 // Write each line
                 Iterator<?> nodeIterator = nodesToExport.iterator();
                 while (nodeIterator.hasNext()) {

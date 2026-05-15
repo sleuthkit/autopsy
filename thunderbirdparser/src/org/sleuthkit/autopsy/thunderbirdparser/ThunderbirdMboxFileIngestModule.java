@@ -770,9 +770,15 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 ATTRIBUTE_TYPE.TSK_MSG_ID, bbattributes);
 
         try {
-             addArtifactAttribute((email.hasAttachment() ? "Yes" : ""), 
-                    blackboard.getOrAddAttributeType("EMAIL_HAS_ATTACHMENT", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Has Attachments"),
+             if (email.hasAttachment()) {
+                 addArtifactAttribute("Yes", 
+                    blackboard.getOrAddAttributeType("EMAIL_HAS_ATTACHMENT", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Has Attachment"),
                     bbattributes);
+             } else {
+                 addArtifactAttribute("No", 
+                    blackboard.getOrAddAttributeType("EMAIL_HAS_ATTACHMENT", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Has Attachment"),
+                    bbattributes);
+             }
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Unable to create EMAIL_HAS_ATTACHMENT attribute" , ex); //NON-NLS 
         }        
