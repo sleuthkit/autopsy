@@ -7,7 +7,7 @@
     "@modelcontextprotocol/sdk": "^1.10.2"
   },
   "devDependencies": {
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.1",
     "pkg": "^5.8.1"
   },
   "scripts": {
